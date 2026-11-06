@@ -1,3 +1,23 @@
+## tz_unify 时间戳归一执行（2026-11-06 第四批）
+
+- **迁移**：[20261106000000_tz_unify_timestamp_without_tz.sql](database/migrations/20261106000000_tz_unify_timestamp_without_tz.sql)
+  （幂等 DO 块，`timestamp without time zone → timestamptz`，`USING col AT TIME ZONE 'UTC'`）。
+- **prod（方案 A，零操作）**：`apply-forward --prod --only 20261106000000` + 16 条 defer；
+  窗口 `18:25:28–18:25:34`（**6 s**）；账本 `578 → 579`，仅新增该 1 条（checksum `6231cd0a…` 与本地 SHA-384 一致）；
+  NOTICE `处理 0 列`；naive 列 `0 → 0`；`audit_logs` `362 → 362`；pid `74405` 未变（未重启）。
+- **prod 冒烟**：超管字典 `77`、探针租户 `1111…` `0`、通知 `200`、租户 `…0001` `77`；
+  `/health`、`/api/server/ready`、`/api/server/health` 均 200。
+- **本地对齐**：同迁移处理 **26 列 / 9 表**；26/26 变 `timestamp with time zone`；9 表 **18 个索引**全部保留；
+  finance 16 行 UTC 归一后逐字段 0 差异（`18:32:45+08 ⇔ 10:32:45 UTC`）；幂等复跑 `处理 0 列`；
+  5 条读写路径事务内往返通过、`ROLLBACK` 无残留；本地账本 `551 → 552`。
+- **测试**：`cargo test -p topems-mes -p topems-finance` 主用例 `1086 / 1088` 全绿；
+  mes `integration_tests` 45 passed / **2 failed**（`ck_batch_records_status_standard` 枚举不含 `in_stock`、
+  `completed_quantity` `NUMERIC` vs `i64`），均为既有 schema/测试漂移，与时间类型无关，未改测试；
+  `openapi_extract` 栈溢出为既有问题。
+- **文档**：[tz-unify-evaluation-2026-11-06.md](docs/quality/tz-unify-evaluation-2026-11-06.md) 第 8 节执行记录。
+- **遗留**：`mes.basics.rs` 读路径未加 `AT TIME ZONE` cast（naive + 有数据时 `DateTime<Utc>` 解码会失败）；
+  本地/prod 已对齐，当前不影响，**本轮不改代码**；其他未迁移库（prepare/5433）需后续统一。
+
 ## prod 窗口执行总表（2026-11-06 第三批，本地演练已通过）
 
 - **总表**：[prod-window-execution-master-2026-11-06.md](docs/quality/prod-window-execution-master-2026-11-06.md)

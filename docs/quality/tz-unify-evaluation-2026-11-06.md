@@ -257,8 +257,110 @@ ROLLBACK 后复查 → 0 行（演练无残留）✅
 
 ---
 
-## 7. 本轮未做（等你定窗口）
+## 7. 执行前状态（2026-11-06 18:25 前）
 
 - prod 未执行任何 DDL/账本写入；
 - 未启动窗口、未改迁移文件、未改 `checksums.txt`；
 - 演练克隆库 `topems_tz_drill_20261106` 已用后即弃（不进入任何发布物）。
+
+---
+
+## 8. 执行记录（2026-11-06 18:25–18:29，方案 A + 本地对齐）
+
+### 8.1 prod 短窗口：**零操作**（仅账本 1 行）
+
+| 项 | 值 |
+| --- | --- |
+| 主机 / 库 | `xingzhai@192.168.110.115` / `topems_prod`（SSH 执行物模式） |
+| 执行物 | `/tmp/topems_window_tz_20261106/20261106000000_tz_unify_timestamp_without_tz.sql` |
+| sha256（本地 = 远端） | `c9d4143656f6ec3a04ad8d2e3e2f58f915328324a78a53d2b8e33fbdb8986cb6` |
+| 守卫 | `check-destructive-sql --check-file` → `OK`（DO 块内 `pg_catalog`/`pg_attribute` 为守卫窗口） |
+| 命令 | `WINDOW_TARGET=prod apply-forward.sh --prod --anchor 20261105235700 --only 20261106000000 --defer <16 条>` |
+| 窗口起止 | `18:25:28` → `18:25:34`，**6 s**（扫描 + 单事务执行 + 账本写入） |
+| 白名单拒绝 | 清单外 0 条；白名单版本被扫描到 1/1；`--only` + `--defer` 覆盖全部 17 条 pending |
+| 账本前 | `total=578`、`max(version)=20261107000013` |
+| 账本后 | `total=579`、`max(version)=20261107000013`（新行 version 小于当前 max，max 不变） |
+| 新增 | **仅** `20261106000000`，`success=t`、`execution_time=0`、`installed_on=2026-11-06 18:25:34.052375+08` |
+| checksum（账本） | `6231cd0ad147ce079a7b5460aca045dc36c2f20e9a276dbabd7dd5dd9d6444443a70feb3074054cd4a3aceda252102f3`（= 本地 `shasum -a 384`） |
+| prod NOTICE | `NOTICE:  B4 timestamp→timestamptz 归一：处理 0 列` |
+| naive 列（前/后） | `0 / 0` |
+| 服务 pid（前/后） | `74405 / 74405`（`state=running`，`last exit code=(never exited)`；**未重启**） |
+| `audit_logs`（前/后） | `362 / 362`（冒烟通知不写审计） |
+
+执行后仍 pending 的 **16 条**（账本 `IN (...)` 计数 = 0，全部保持未应用）：
+
+`20261105235800`、`20261106000001`、`20261107000001`、`20261107000002`、`20261107000003`、
+`20261107000004`、`20261107000005`、`20261107000006`、`20261107000007`、`20261107000009`、
+`20261107000010`、`20261107000011`、`20261107000012`、`20261107000014`、`20261107000015`、
+`20261107000016`。
+
+冒烟（4 项，prod 主机内以 `JWT_SECRET` 现签 15 分钟 token，未落盘）：
+
+| 检查 | 结果 |
+| --- | --- |
+| 超管字典列表 | HTTP 200，`total=77`，legacy 4 类齐全 |
+| 探针租户 `1111…`（`wangy`） | HTTP 200，`total=0`（无系统字典泄露） |
+| 通知创建 | HTTP 200（`id=7752a939-…`） |
+| 补测租户 `…0001` | HTTP 200，`total=77` |
+| `/health` | 200 `{"data":"healthy"}` |
+| `/api/server/ready` | 200 `{"status":"ready","degraded_modules":[]}` |
+| `/api/server/health` | 200 `{"status":"ok","server":"topems-server","modules":31,…}` |
+
+> 结论：prod 侧 **26 列均为 0 次 ALTER**，窗口内无 `ACCESS EXCLUSIVE`、无表重写、无重启；
+> 与第 0 节评估一致，属幂等空转 + 账本登记。
+
+### 8.2 本地 `topems` 对齐
+
+备份（`/tmp/tz_local_backup/`）：
+
+| 产物 | 内容 |
+| --- | --- |
+| `finance_core_finance_currencies_before.csv` | 16 行整行（含 `created_at`/`updated_at`），md5 `7b46b3f6…` |
+| `columns_before.txt` | 26 个 naive 列 × 9 表（列名 + 类型） |
+| `indexes_before.txt` | 9 表索引 **18 个** |
+| 另 8 表 CSV | `mes.*` / `public.*` 各 0 行（md5 为纯表头） |
+
+执行（`apply-forward.sh --db topems --anchor 20261105235700 --only 20261106000000`，defer 13 条）：
+`NOTICE: B4 timestamp→timestamptz 归一：处理 26 列`；本地账本 `551 → 552`。
+
+| 核对项 | 前 | 后 |
+| --- | --- | --- |
+| naive 列（`atttypid = timestamp without time zone`） | 26 | **0** |
+| 26 列类型 | `timestamp without time zone` | **26/26 `timestamp with time zone`** |
+| 索引（9 表） | 18 | **18**（`diff` 为空，名称全部保留） |
+| finance 16 行 | `created_at` naive | 按 UTC 解释；整行 10 列 **0 字段差异**（UTC 归一后逐字段比对） |
+| 值语义对照 | `2026-10-21 10:32:45.733833`（naive，按 UTC） | `2026-10-21 18:32:45.733833+08` ⇔ `AT TIME ZONE 'UTC'` = `2026-10-21 10:32:45.733833` |
+| 幂等复跑（直接 `psql -f` 同一文件） | — | `NOTICE: 处理 0 列`，`DO` 成功，无报错、账本未重复写入 |
+| 读写往返（事务内 INSERT/SELECT/UPDATE → `ROLLBACK`） | — | `workshops` / `shifts` / `production_lines` / `work_calendars` / `currencies` 全部 `timestamp with time zone` 且读回正常；回滚后残留 `0` 行 |
+
+### 8.3 受影响包测试（`cargo test -p topems-mes -p topems-finance`）
+
+| 测试目标 | 结果 |
+| --- | --- |
+| `topems-mes` lib/bin | **1086 passed / 0 failed** |
+| `topems-finance` bin | **1088 passed / 0 failed**（1 filtered） |
+| `topems-mes` `integration_tests` | **45 passed / 2 failed** |
+| `topems-finance` `openapi_extract` | **stack overflow**（`extract_openapi_spec`，与时间类型无关） |
+| 其余 integration 二进制 | 全部 `ignored`（需外部依赖） |
+
+2 个失败均为**既有 schema/测试口径漂移**，与时间戳类型无关，**未改测试**：
+
+1. `tests::test_batch_record_crud`（`integration_tests.rs:1599`）：插入 `mes.batch_records`
+   被 `ck_batch_records_status_standard` 拒绝——测试使用的 `status='in_stock'` 不在当前约束枚举内。
+   手工 `psql` 复现为同一 `ERROR: new row ... violates check constraint`。
+2. `tests::test_create_production_order_crud`（`integration_tests.rs:224`）：
+   `completed_quantity` 列为 `NUMERIC`，测试按 `i64`（`INT8`）解码 → `ColumnDecode mismatched types`。
+
+`openapi_extract` 的栈溢出在改动前后均可复现（OpenAPI 递归展开），与本迁移无关；
+加 `--skip extract_openapi_spec` 后，除上述 2 个既有失败外其余用例全绿。
+**没有任何测试或断言依赖 naive 时间类型而失败。**
+
+### 8.4 遗留：`mes.basics.rs` 解码隐患（**本轮不改代码**）
+
+- [basics.rs](../../svc/mes/src/modules/basics.rs) 的 `list_workshops` / `list_production_lines` /
+  `list_shifts` / `list_work_calendars` 直接用 `SELECT ... created_at, updated_at` 映射
+  `r.get::<_, DateTime<Utc>>()`，SQL 未加 `AT TIME ZONE` 转换；
+- 列一旦为 naive 且**有数据**，sqlx 解码 `DateTime<Utc>` 会失败（0 行时被掩盖）；
+- 本地已对齐为 `timestamptz`（prod 早已是 `timestamptz`），当前不影响这两处环境；
+- 仍待处理：其他未迁移库（prepare/5433 等）或未来新建库若残留 naive 列，需二选一——
+  加 `AT TIME ZONE 'UTC'` cast，或把迁移链纳入该库初始化；本轮按要求不改代码。
