@@ -3,6 +3,18 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service_shared, build_application, run, ServiceConfig};
 use topems_shared_db::scope::Db;
 
+/// 管理类路由动作门：仅 `communication:admin` 可访问；个人类路由不加此门（auth 即放行）。
+/// 以 MethodRouter 粒度挂载，同一路径的读/写可分别归类（如 `/notifications` 的 GET
+/// 是个人、POST 是管理）。
+fn admin_only<S>(route: axum::routing::MethodRouter<S>) -> axum::routing::MethodRouter<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    route.layer(axum::middleware::from_fn(require_permission(
+        "communication:admin",
+    )))
+}
+
 mod im;
 mod im_location;
 mod mail;
@@ -65,38 +77,46 @@ async fn main() -> anyhow::Result<()> {
             "/notification/notifications/archived",
             get(notification::list_archived_notifications),
         )
+        // 归档策略属租户级配置 → 管理类
         .route(
             "/notification/notifications/archive/config",
-            get(notification::get_archive_config),
+            admin_only(get(notification::get_archive_config)),
         )
         .route(
             "/notification/notification-templates",
-            get(notification::list_templates),
+            admin_only(get(notification::list_templates)),
         )
         .route(
             "/notification/notification-templates/{id}",
-            get(notification::get_template),
+            admin_only(get(notification::get_template)),
         )
-        .route("/notification/channels", get(notification::list_channels))
+        .route(
+            "/notification/channels",
+            admin_only(get(notification::list_channels)),
+        )
         .route(
             "/notification/channels/{id}",
-            get(notification::get_channel),
+            admin_only(get(notification::get_channel)),
         )
         .route(
             "/notification/channels/{id}/metrics",
-            get(notification::get_channel_metrics),
+            admin_only(get(notification::get_channel_metrics)),
         );
 
-    // ===== 通知写入路由（需要认证） =====
+    // ===== 通知写入路由（个人类仅需认证；管理类挂 admin_only） =====
     let notification_write = Router::new()
-        .route("/notify/send", post(notification::send_notification))
+        // 主动推送 / 给他人创建通知 / 群发 → 管理类
+        .route(
+            "/notify/send",
+            admin_only(post(notification::send_notification)),
+        )
         .route(
             "/notification/notifications",
-            post(notification::create_notification),
+            admin_only(post(notification::create_notification)),
         )
         .route(
             "/notify/broadcast",
-            post(notification::broadcast_notification),
+            admin_only(post(notification::broadcast_notification)),
         )
         .route("/notify/{id}/read", post(notification::mark_as_read))
         .route("/notify/read-all", post(notification::mark_all_as_read))
@@ -136,38 +156,42 @@ async fn main() -> anyhow::Result<()> {
             "/notification/notifications",
             delete(notification::delete_all_notifications),
         )
+        // 归档策略配置 / 归档任务 → 管理类
         .route(
             "/notification/notifications/archive/config",
-            put(notification::update_archive_config),
+            admin_only(put(notification::update_archive_config)),
         )
         .route(
             "/notification/notifications/archive/run",
-            post(notification::run_auto_archive),
+            admin_only(post(notification::run_auto_archive)),
         )
         .route(
             "/notification/notification-templates",
-            post(notification::create_template),
+            admin_only(post(notification::create_template)),
         )
         .route(
             "/notification/notification-templates/{id}",
-            put(notification::update_template),
+            admin_only(put(notification::update_template)),
         )
         .route(
             "/notification/notification-templates/{id}",
-            delete(notification::delete_template),
-        )
-        .route("/notification/channels", post(notification::create_channel))
-        .route(
-            "/notification/channels/{id}",
-            put(notification::update_channel),
+            admin_only(delete(notification::delete_template)),
         )
         .route(
+            "/notification/channels",
+            admin_only(post(notification::create_channel)),
+        )
+        .route(
             "/notification/channels/{id}",
-            delete(notification::delete_channel),
+            admin_only(put(notification::update_channel)),
+        )
+        .route(
+            "/notification/channels/{id}",
+            admin_only(delete(notification::delete_channel)),
         )
         .route(
             "/notification/channels/{id}/test",
-            post(notification::test_channel),
+            admin_only(post(notification::test_channel)),
         );
 
     // ===== IM 路由（需要认证） =====
@@ -226,14 +250,18 @@ async fn main() -> anyhow::Result<()> {
                     "/locations/message",
                     post(im_location::send_location_message),
                 )
-                .route("/locations/geofences", post(im_location::create_geofence))
+                // 围栏为组织级配置（影响全员定位判定）→ 管理类；POI 搜索与位置消息属个人行为
                 .route(
-                    "/locations/geofences/{id}",
-                    put(im_location::update_geofence),
+                    "/locations/geofences",
+                    admin_only(post(im_location::create_geofence)),
                 )
                 .route(
                     "/locations/geofences/{id}",
-                    delete(im_location::delete_geofence),
+                    admin_only(put(im_location::update_geofence)),
+                )
+                .route(
+                    "/locations/geofences/{id}",
+                    admin_only(delete(im_location::delete_geofence)),
                 )
                 .route("/pois/search", post(im_location::unified_search_pois)),
         );
@@ -247,7 +275,8 @@ async fn main() -> anyhow::Result<()> {
     let mail_write = Router::new()
         .route("/mail/emails", post(mail::send_email))
         .route("/mail/emails/{id}/read", post(mail::mark_as_read))
-        .route("/mail/emails/resend", post(mail::resend_emails))
+        // 批量重发历史邮件（可能覆盖他人邮件）→ 管理类
+        .route("/mail/emails/resend", admin_only(post(mail::resend_emails)))
         .route("/mail/emails/{id}", delete(mail::delete_email));
 
     // 合并所有路由（Db 作为 state；租户中间件仍使用原生池），build_application 自动加 auth/rate_limit/CORS/Prometheus/telemetry
@@ -262,9 +291,7 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission(
-            "communication:admin",
-        )))
+        // 个人类路由仅需认证；管理类路由在各自的 MethodRouter 上挂 admin_only。
         .with_state(db.clone());
 
     let public_routes = Router::new().route("/health", get(health_handler));
