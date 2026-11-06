@@ -2084,6 +2084,20 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.150 审计整改第二十九批：菜单收敛与域分组（批 29，2026-11-07）
+
+- **精确盘点（实测）**：35 个模块 config.ts、**449** 个 navItems 元素；其中 35 个 `-dashboard` 后缀项由渲染层自动隐藏、28 个批 1~4 已手动下沉，**当前侧栏实际可见 386**，需再收敛 226。
+- **一级菜单 35 → 10（域分组）**：分组权威配置集中在 `apps/web/src/config/moduleTiers.ts`（沿用"只在此处维护"约定），新增 `DomainGroupCode` / `DomainGroupDef` / `DOMAIN_GROUPS`（10 组）/ 派生的 `DOMAIN_GROUP_MAP`（域→组，freeze）/ `DOMAIN_GROUP_BY_CODE`。组归属：生产制造 mes/wms/aps、供应链 scm/srm/tms/crm、财务 finance/erp、人力 hrm、研发 rd/pdm、质量 qms/lims、设备资产 asset/ehs、平台管理 admin/iam/integration/plugin/master/automation、数据分析 bi/report/gis/ai、协同办公 pm/workflow/doc/ticket/notification/monitor/mobile/oa/im。单一定位不重复挂载；未分组域兜底回退为独立一级入口，不隐藏。
+- **i18n**：新建 `locales/{zh,en}/domain-group.json`（各 10 key），由 `import.meta.glob` 自动发现命名空间；`GlobalLayoutV3` 命名空间预加载集合显式加入 `domain-group`。10 个组图标全部命中 `iconMapping.tsx` 白名单。
+- **渲染层三级改造**（`GlobalLayoutV3.tsx`）：`buildNavItems` 改为"先收集 moduleItems，再按 DOMAIN_GROUPS 聚合"——一级=域组、二级=模块、三级=navItems。`SidebarNavGroup` 已原生支持递归（`depth` 参数 + children 递归 + `isActive` 递归），**零组件改动**；组头有 children 时点击为展开/折叠而非导航，与分组语义匹配；组 id 稳定（`group:<code>`）与批 4 localStorage 折叠状态兼容。
+- **navItems 收敛 386 → 166**（-57%，220 项下沉）：统一 spec 三类处置（保留 / 下沉=新增 `showInSidebar: false` / 合并=仅 path 完全相同时删除）。**本批 0 合并**——全站无 path 完全重复项。35 模块**全部达标**（mes 37→8、wms 24→7、hrm 20→7、pdm 20→7、qms 18→6、scm 18→7、finance 18→6、crm 14→6、admin 16→7、lims 15→6、rd 15→6、ehs 13→5、srm 13→5、ai 13→5、aps 12→5、bi 12→5、master 12→5、tms 12→5、mobile 12→4、pm 11→5、workflow 11→5、integration 9→4、report 9→4、monitor 7→3、notification 7→2、doc 6→4、asset 5→3、automation 5→3、gis 5→3、iam 5→3、oa 5→3、plugin 3→2、im 2→1、ticket 2→1）。
+- **改动纯净度实测**：28 个 config.ts，**220 行新增 / 8 行删除，非 `showInSidebar` 增删行 0**；finance 的 `entities`/`permissionResource` 0 改动（批 26/27 修正未被触碰）；`path`/`permission`/`code`/`labelKey`/页面组件/i18n 全 0 改动。
+- **DB 种子同步**（迁移 `20261107000025_seed_menus_batch29.sql`）：平台级 tenant 补 77 个菜单组（94 中 17 已存在）+ 267 项菜单 + 1 项 path 对齐 + 2 项历史清理（软删重复登记 `mes-work-orders`、失效路由 `scm-contracts`）。平台级 core_menus **184 → 449**，与前端 449 navItems 完全一致。permission 植入的是 navItems **真实字段值**（仅 `hrm-setup` 前端本无 permission，回退 `hrm:read`）。**幂等实测**：连跑两遍，第二遍 `INSERT 0 267`（全走 DO UPDATE）+ `UPDATE 0`，行数不变。
+- **下沉不会被 DB 补种绕开**：`getSidebarNavItems` 已在注册表层 `.filter(item => item.showInSidebar !== false)`（`NavigationRegistryV2.ts:152`），`GlobalLayoutV3` 的 dbMenus 过滤作用在其之后；`core_menus` 无 `visible` 列，侧栏可见性唯一真源是 `showInSidebar`。
+- **菜单对账归零**：`audit_menu_consistency.py --with-backfill <0025迁移>` → **449 navItems / 449 DB 种子**，`orphan_FE` 0 / `orphan_DB` 0 / `path_mismatch` 0 / `dup_in_fe` 0。顺带修正脚本三处口径（增取 permission/showInSidebar、orphan_fe 带 permission、parse_backfill 兼容 tenant 前缀与 schema 前缀 UPDATE 与软删识别）。**22 个模块的 DB 注册补齐一次性关闭**，无需再分批。
+- **验证**：tsc 0；全量 vitest 621/622 文件通过、6639 passed，唯一失败 `smoke-batch.test.tsx`（`ForceChangePasswordPage` 全量并发 120s 超时，**单跑 1491/1491 通过**，与批 28 同因，判定偶发）；eslint 0；迁移四件套 PASS（Errors 0 / Checksum errors 0 / drift 0 / RLS PASS）；route path 与权限码**零改动**，不存在 404/403 风险。
+- 产出：`docs/audit/P3-19_菜单收敛与域分组_批29_执行记录_2026-11-07.md`、`apps/web/src/config/moduleTiers.ts`（+68 行分组层）、`apps/web/src/layouts/GlobalLayoutV3.tsx`、`apps/web/src/i18n/locales/{zh,en}/domain-group.json`、`database/migrations/20261107000025_seed_menus_batch29.sql`、`scripts/audit_menu_consistency.py`
+
 ## v1.149 审计整改第二十八批：域管理码缺口补齐与 10 个域经理角色落地（批 28，2026-11-07）
 
 - **E 项两处缺口直接补齐**（迁移 `20261107000022`）：`admin:iam:delete` → admin（`admin:admin`/`admin:iam:admin` 均不存在、规则5 的 `iam:iam:delete` 也不存在，只能补授权）；`pdm:drawing:read`（原零持有，admin 无 `pdm:admin` 通配）→ admin + pdm_manager + superadmin。首 `INSERT 0 1` / `0 3`，二次全 0。

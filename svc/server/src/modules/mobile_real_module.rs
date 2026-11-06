@@ -11,9 +11,11 @@
 #![cfg(feature = "module-mobile")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
+use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
 use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::Claims;
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
@@ -78,6 +80,9 @@ impl MobileRealModule {
         let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
             .merge(topems_mobile::modules::contract_fallback::routes())
             .layer(axum::middleware::from_fn(require_module_access("mobile")))
+            // 写操作独立权限点：与独立部署 :8070 的 `require_mobile_write` 同口径，
+            // 非只读方法仍需 mobile:admin，防止 mobile:read 角色从 BFF 侧绕过动作门。
+            .layer(axum::middleware::from_fn(require_mobile_write))
             .with_state(state);
 
         // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）
@@ -128,4 +133,31 @@ impl Module for MobileRealModule {
             ModuleHealth::unhealthy(self.name(), self.group(), "database disconnected")
         }
     }
+}
+
+/// 移动端写操作的独立权限点：模块门只负责「能进移动端」，读接口持有任一
+/// `mobile:` 前缀码即可；非只读方法仍要求 `mobile:admin`（审批、设备控制、
+/// 媒体上传、离线同步等敏感动作）。与独立部署 `svc/mobile/src/main.rs` 同口径。
+async fn require_mobile_write(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::Method;
+    if matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS) {
+        return next.run(req).await;
+    }
+    let allowed = req
+        .extensions()
+        .get::<Claims>()
+        .map(|c| c.has_permission("mobile:admin"))
+        .unwrap_or(false);
+    if allowed {
+        return next.run(req).await;
+    }
+    (
+        axum::http::StatusCode::FORBIDDEN,
+        [(axum::http::header::CONTENT_TYPE, "application/json")],
+        r#"{"success":false,"message":"权限不足：需要移动端管理员权限（mobile:admin）","code":403}"#,
+    )
+        .into_response()
 }

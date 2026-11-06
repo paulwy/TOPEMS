@@ -1024,6 +1024,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:quality_control:read',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-quality-control_desc'),
     },
     {
@@ -1079,6 +1080,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:apqp:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-apqp_desc'),
     },
     {
@@ -1090,6 +1092,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:fmea:read',
       order: 5,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-fmea_desc'),
     },
     {
@@ -1112,6 +1115,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:spc:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-spc_desc'),
     },
     {
@@ -1124,6 +1128,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'analytics',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-quality-cost_desc'),
     },
     // ---- BI 分析页导航（6 个） ----
@@ -1136,6 +1141,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-quality-trend_desc'),
     },
     {
@@ -1147,6 +1153,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 4,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-defect-pareto_desc'),
     },
     {
@@ -1158,6 +1165,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 5,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-cost-analysis_desc'),
     },
     {
@@ -1169,6 +1177,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 6,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-spc-control-chart_desc'),
     },
     {
@@ -1180,6 +1189,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 7,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-fmea-risk-matrix_desc'),
     },
     {
@@ -1191,6 +1201,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:standard:read',
       order: 9,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-inspection-standard_desc'),
     },
     {
@@ -1202,6 +1213,7 @@ export const qmsNavConfig: ModuleNavConfig = {
       permission: 'qms:analytics:read',
       order: 8,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('qms.nav.qms-audit-compliance_desc'),
     },
   ],

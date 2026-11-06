@@ -8,6 +8,7 @@ mod services;
 mod shared;
 
 use anyhow::Result;
+use axum::response::IntoResponse;
 use axum::{extract::State, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use serde_json::json;
@@ -15,7 +16,8 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::auth_middleware;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::Claims;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_bootstrap::{
     bootstrap_service_shared, resolve_port, run, Application, ServiceConfig,
@@ -112,7 +114,7 @@ async fn main() -> Result<()> {
         .with_state(app_state.clone());
 
     // Protected 中间件链（axum 后挂先执行 → 实际顺序）：
-    // auth（验 token 注入 Claims）→ require_permission → tenant → rls → request_context
+    // auth（验 token 注入 Claims）→ require_mobile_write → require_module_access → tenant → rls → request_context
     let protected_routes = protected_routes
         .layer(axum::middleware::from_fn(request_context_middleware))
         .layer(axum::middleware::from_fn_with_state(
@@ -123,9 +125,11 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission(
-            "mobile:admin",
-        )))
+        .layer(axum::middleware::from_fn(require_module_access("mobile")))
+        // 写操作独立权限点：模块门放宽到只读码后，非只读方法仍需 mobile:admin，
+        // 保持改门前「无 mobile:admin 不能写」的实际效果，避免 mobile:read 角色
+        // 经放宽后的模块门直达审批/设备控制/数据写入端点。
+        .layer(axum::middleware::from_fn(require_mobile_write))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -218,4 +222,34 @@ async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<se
         json!({ "items": records, "total": total }),
         "获取移动任务成功",
     ))
+}
+
+/// 移动端写操作的独立权限点：模块门（`require_module_access("mobile")`）只负责
+/// 「能进移动端」，读接口持有任一 `mobile:` 前缀码即可；非只读方法（POST/PUT/
+/// PATCH/DELETE）仍要求 `mobile:admin`，覆盖审批（approve/reject/delegate）、
+/// 设备注册与推送控制、媒体上传、离线同步等敏感动作。与 BFF 侧
+/// `mobile_real_module` 的 `require_mobile_write` 保持同一口径，避免从 :8099
+/// 绕过 :8070 的动作门。
+async fn require_mobile_write(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::Method;
+    if matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS) {
+        return next.run(req).await;
+    }
+    let allowed = req
+        .extensions()
+        .get::<Claims>()
+        .map(|c| c.has_permission("mobile:admin"))
+        .unwrap_or(false);
+    if allowed {
+        return next.run(req).await;
+    }
+    (
+        axum::http::StatusCode::FORBIDDEN,
+        [(axum::http::header::CONTENT_TYPE, "application/json")],
+        r#"{"success":false,"message":"权限不足：需要移动端管理员权限（mobile:admin）","code":403}"#,
+    )
+        .into_response()
 }

@@ -977,6 +977,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:organization:read',
       order: 3,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-organization_desc'),
     },
     {
@@ -988,6 +989,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:position:read',
       order: 4,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-positions_desc'),
     },
     {
@@ -1010,6 +1012,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:company:read',
       order: 6,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-company_desc'),
     },
     {
@@ -1055,6 +1058,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:salary_adjustment:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-salary-adjustment_desc'),
     },
     {
@@ -1077,6 +1081,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:training:read',
       order: 6,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-training_desc'),
     },
     {
@@ -1088,6 +1093,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:performance:read',
       order: 7,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-performance_desc'),
     },
     {
@@ -1100,6 +1106,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'analytics',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-reports_desc'),
     },
     {
@@ -1111,6 +1118,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:overview:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-overview_desc'),
     },
     {
@@ -1122,6 +1130,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       order: 0,
       group: 'setting',
       showInTabs: false,
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-setup_desc'),
     },
     {
@@ -1133,6 +1142,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:attendance_rule:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-attendance-rule_desc'),
     },
     {
@@ -1144,6 +1154,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:payroll_template:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-payroll-template_desc'),
     },
     {
@@ -1155,6 +1166,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:recruitment_flow:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-recruitment-flow_desc'),
     },
     {
@@ -1166,6 +1178,7 @@ export const hrmNavConfig: ModuleNavConfig = {
       permission: 'hrm:training_plan:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('hrm.nav.hrm-training-plan_desc'),
     },
   ],

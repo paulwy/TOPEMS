@@ -172,7 +172,7 @@ export const assetNavConfig: ModuleNavConfig = {
       path: ASSET_PATHS.categories,
       permission: 'asset:category:read',
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
     },
     {
       code: 'asset-depreciation',

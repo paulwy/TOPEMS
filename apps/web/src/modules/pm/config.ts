@@ -351,6 +351,7 @@ export const pmNavConfig: ModuleNavConfig = {
       permission: 'pm:project:read',
       order: 2,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('pm.nav.pm-project-list_desc'),
     },
     {
@@ -374,6 +375,7 @@ export const pmNavConfig: ModuleNavConfig = {
       permission: 'pm:project:create',
       order: 4,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('pm.nav.pm-project-wizard_desc'),
     },
     {
@@ -408,6 +410,7 @@ export const pmNavConfig: ModuleNavConfig = {
       permission: 'pm:template:read',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('pm.nav.pm-templates_desc'),
     },
     {
@@ -419,6 +422,7 @@ export const pmNavConfig: ModuleNavConfig = {
       permission: 'pm:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('pm.project_type_config.desc'),
     },
     {
@@ -442,6 +446,7 @@ export const pmNavConfig: ModuleNavConfig = {
       permission: 'pm:dashboard:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('pm.nav.pm-timeline_desc'),
     },
   ],

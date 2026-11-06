@@ -217,6 +217,7 @@ export const automationNavConfig: ModuleNavConfig = {
       permission: 'automation:variable:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('automation.nav.automation-variables_desc'),
     },
   ],

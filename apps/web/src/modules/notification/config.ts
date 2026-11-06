@@ -251,6 +251,7 @@ export const notificationNavConfig: ModuleNavConfig = {
       permission: 'notification:dashboard:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('notification.nav.notification-archive_desc'),
     },
     {
@@ -273,6 +274,7 @@ export const notificationNavConfig: ModuleNavConfig = {
       permission: 'notification:dashboard:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('notification.nav.notification-templates_desc'),
     },
     {
@@ -284,6 +286,7 @@ export const notificationNavConfig: ModuleNavConfig = {
       permission: 'notification:dashboard:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('notification.nav.notification-statistics_desc'),
     },
     {
@@ -295,6 +298,7 @@ export const notificationNavConfig: ModuleNavConfig = {
       permission: 'notification:dashboard:read',
       order: 5,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('notification.nav.notification-settings_desc'),
     },
   ],

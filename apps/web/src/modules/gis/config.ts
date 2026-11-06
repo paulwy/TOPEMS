@@ -181,6 +181,7 @@ export const gisNavConfig: ModuleNavConfig = {
       permission: 'gis:dashboard:read',
       order: 5,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('gis.nav.gis-devices_desc'),
     },
   ],

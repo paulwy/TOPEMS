@@ -186,6 +186,7 @@ export const iamNavConfig: ModuleNavConfig = {
       permission: 'iam:permission:read',
       order: 12,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('iam.nav.iam-permission_desc'),
     },
     {

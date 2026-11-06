@@ -1522,6 +1522,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:work_station:read',
       order: 4,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-teams_desc'),
     },
     {
@@ -1533,6 +1534,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:team:read',
       order: 5,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-material-requirement_desc'),
     },
     {
@@ -1544,6 +1546,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:material:read',
       order: 6,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-process-routes_desc'),
     },
     {
@@ -1566,6 +1569,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:process_flow:read',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-production-process_desc'),
     },
     {
@@ -1577,6 +1581,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:production_process:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-production-schedule_desc'),
     },
     {
@@ -1588,6 +1593,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:production_schedule:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-wip_desc'),
     },
     {
@@ -1621,6 +1627,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:traceability:read',
       order: 8,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-production-kanban_desc'),
     },
     {
@@ -1644,6 +1651,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:production_record:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-work-report_desc'),
     },
     {
@@ -1655,6 +1663,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:work_report:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-equipment-oee_desc'),
     },
     {
@@ -1666,6 +1675,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:oee:read',
       order: 4,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-production-dashboard_desc'),
     },
     {
@@ -1688,6 +1698,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:production_schedule:read',
       order: 6,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-production-cost_desc'),
     },
     {
@@ -1699,6 +1710,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:production_cost:read',
       order: 6,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-energy-management_desc'),
     },
     {
@@ -1710,6 +1722,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:energy_management:read',
       order: 7,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-anomaly-detection_desc'),
     },
     {
@@ -1743,6 +1756,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:material:read',
       order: 8,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-material-issue_desc'),
     },
     {
@@ -1754,6 +1768,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:material:update',
       order: 9,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-material-return_desc'),
     },
     {
@@ -1765,6 +1780,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:material:update',
       order: 10,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-quality_desc'),
     },
     {
@@ -1776,6 +1792,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:quality:read',
       order: 9,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-oee_desc'),
     },
     {
@@ -1787,6 +1804,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 9,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-delivery_desc'),
     },
     {
@@ -1798,6 +1816,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 10,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-quality-pareto_desc'),
     },
     {
@@ -1809,6 +1828,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 11,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-mtbf_desc'),
     },
     {
@@ -1820,6 +1840,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 12,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-energy_desc'),
     },
     {
@@ -1831,6 +1852,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 13,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-analytics-capacity_desc'),
     },
     {
@@ -1842,6 +1864,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:analytics:read',
       order: 14,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-quality-template_desc'),
     },
     {
@@ -1853,6 +1876,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:quality_template:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-bom-version-policy_desc'),
     },
     {
@@ -1864,6 +1888,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:bom_version_policy:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-aps-config_desc'),
     },
     {
@@ -1875,6 +1900,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:aps_config:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-equipment-threshold_desc'),
     },
     {
@@ -1886,6 +1912,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:equipment_threshold:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-equipment-threshold_desc'),
     },
     {
@@ -1897,6 +1924,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:workshop:read',
       order: 5,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-master-data_desc'),
     },
     {
@@ -1908,6 +1936,7 @@ export const mesNavConfig: ModuleNavConfig = {
       permission: 'mes:workshop:read',
       order: 6,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('mes.nav.mes-capacity_desc'),
     },
   ],

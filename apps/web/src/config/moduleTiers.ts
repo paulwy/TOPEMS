@@ -79,3 +79,134 @@ export function domainOfModuleCode(moduleCode: string): string {
   const idx = moduleCode.indexOf(':');
   return idx === -1 ? moduleCode : moduleCode.slice(0, idx);
 }
+
+// ============================================================================
+// 域分组（批 29）：一级菜单由 35 个业务域收敛为 10 个业务域组
+// ============================================================================
+//
+// 背景：侧边栏此前把 35 个 `apps/web/src/modules/<domain>` 全部平铺为一级入口，
+// 域多时首屏扫读成本高。本层只做【呈现分组】，不改任何 route path、权限码或模块
+// 内部结构：一级 = 10 个域组，二级 = 组内模块，三级 = 模块内 navItems。
+//
+// 维护约定（与 DOMAIN_TIER_MAP 相同）：新增业务域必须在此登记，否则该域不会
+// 出现在任何一级组（渲染层对未分组域兜底回退为独立一级入口，不会隐藏）。
+//
+// 单一定位原则：一个域只归属一个组，跨组语义模糊者按主业务归属，不重复挂载。
+
+/** 一级业务域组 */
+export type DomainGroupCode =
+  | 'manufacturing'
+  | 'supplychain'
+  | 'finance'
+  | 'hr'
+  | 'rd'
+  | 'quality'
+  | 'asset'
+  | 'platform'
+  | 'analytics'
+  | 'collab';
+
+export interface DomainGroupDef {
+  code: DomainGroupCode;
+  /** i18n key（locales/<lang>/domain-group.json） */
+  labelKey: string;
+  /** lucide 图标名（lib/iconMapping.tsx 白名单内） */
+  icon: string;
+  order: number;
+  /** 组内业务域 code，与 modules/<domain>/config.ts 顶层 code 一致 */
+  domains: readonly string[];
+}
+
+/**
+ * 10 个一级域组。顺序即侧边栏顺序：业务主线在前，平台与分析在后。
+ *
+ * 归属说明：
+ *  - crm 归 supplychain（销售/客户是商贸链一端）；
+ *  - master/automation 归 platform（主数据与自动化任务属平台能力）；
+ *  - oa/im 归 collab（与 pm/doc/workflow 同属协同）；
+ *  - mobile 归 collab（Web 侧侧栏隐藏，移动端独立渲染，但配置共用）。
+ */
+export const DOMAIN_GROUPS: readonly DomainGroupDef[] = [
+  {
+    code: 'manufacturing',
+    labelKey: 'domain-group.nav.manufacturing',
+    icon: 'Factory',
+    order: 0,
+    domains: ['mes', 'wms', 'aps'],
+  },
+  {
+    code: 'supplychain',
+    labelKey: 'domain-group.nav.supplychain',
+    icon: 'Truck',
+    order: 1,
+    domains: ['scm', 'srm', 'tms', 'crm'],
+  },
+  {
+    code: 'finance',
+    labelKey: 'domain-group.nav.finance',
+    icon: 'Wallet',
+    order: 2,
+    domains: ['finance', 'erp'],
+  },
+  { code: 'hr', labelKey: 'domain-group.nav.hr', icon: 'Users', order: 3, domains: ['hrm'] },
+  {
+    code: 'rd',
+    labelKey: 'domain-group.nav.rd',
+    icon: 'FlaskConical',
+    order: 4,
+    domains: ['rd', 'pdm'],
+  },
+  {
+    code: 'quality',
+    labelKey: 'domain-group.nav.quality',
+    icon: 'ShieldCheck',
+    order: 5,
+    domains: ['qms', 'lims'],
+  },
+  {
+    code: 'asset',
+    labelKey: 'domain-group.nav.asset',
+    icon: 'Wrench',
+    order: 6,
+    domains: ['asset', 'ehs'],
+  },
+  {
+    code: 'platform',
+    labelKey: 'domain-group.nav.platform',
+    icon: 'Settings',
+    order: 7,
+    domains: ['admin', 'iam', 'integration', 'plugin', 'master', 'automation'],
+  },
+  {
+    code: 'analytics',
+    labelKey: 'domain-group.nav.analytics',
+    icon: 'BarChart3',
+    order: 8,
+    domains: ['bi', 'report', 'gis', 'ai'],
+  },
+  {
+    code: 'collab',
+    labelKey: 'domain-group.nav.collab',
+    icon: 'MessageSquare',
+    order: 9,
+    domains: ['pm', 'workflow', 'doc', 'ticket', 'notification', 'monitor', 'mobile', 'oa', 'im'],
+  },
+];
+
+/** 域 code → 组 code（由 DOMAIN_GROUPS 派生，勿手工维护） */
+export const DOMAIN_GROUP_MAP: Readonly<Record<string, DomainGroupCode>> = Object.freeze(
+  DOMAIN_GROUPS.reduce<Record<string, DomainGroupCode>>((acc, group) => {
+    for (const domain of group.domains) {
+      acc[domain] = group.code;
+    }
+    return acc;
+  }, {})
+);
+
+/** 组 code → 组定义，渲染层按组聚合时使用 */
+export const DOMAIN_GROUP_BY_CODE: Readonly<Record<string, DomainGroupDef>> = Object.freeze(
+  DOMAIN_GROUPS.reduce<Record<string, DomainGroupDef>>((acc, group) => {
+    acc[group.code] = group;
+    return acc;
+  }, {})
+);

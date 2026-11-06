@@ -1,0 +1,12 @@
+{
+  "domain-group.nav.manufacturing": "生产制造",
+  "domain-group.nav.supplychain": "供应链",
+  "domain-group.nav.finance": "财务",
+  "domain-group.nav.hr": "人力资源",
+  "domain-group.nav.rd": "研发",
+  "domain-group.nav.quality": "质量",
+  "domain-group.nav.asset": "设备资产",
+  "domain-group.nav.platform": "平台管理",
+  "domain-group.nav.analytics": "数据分析",
+  "domain-group.nav.collab": "协同办公"
+}

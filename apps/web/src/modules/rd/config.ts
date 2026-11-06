@@ -525,6 +525,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:overview:read',
       order: 2,
       group: 'overview',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-overview_desc'),
     },
     {
@@ -590,6 +591,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 11,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-code_desc'),
     },
     {
@@ -638,6 +640,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-review_desc'),
     },
     {
@@ -650,6 +653,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-deploy_desc'),
     },
     {
@@ -662,6 +666,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 6,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-release_desc'),
     },
     {
@@ -673,6 +678,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:milestone:read',
       order: 7,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-milestone_desc'),
     },
     {
@@ -685,6 +691,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 12,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-doc_desc'),
     },
     {
@@ -697,6 +704,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'analytics',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-report_desc'),
     },
     {
@@ -708,6 +716,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:settings:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-settings_desc'),
     },
   ],

@@ -245,6 +245,7 @@ export const monitorNavConfig: ModuleNavConfig = {
       permission: 'monitor:alert:read',
       order: 2,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('monitor.nav.monitor-alert-history_desc'),
     },
     {
@@ -256,6 +257,7 @@ export const monitorNavConfig: ModuleNavConfig = {
       permission: 'monitor:rule:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('monitor.nav.monitor-rules_desc'),
     },
     {
@@ -291,6 +293,7 @@ export const monitorNavConfig: ModuleNavConfig = {
       permission: 'monitor:dashboard:admin',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('monitor.nav.monitor-settings_desc'),
     },
   ],

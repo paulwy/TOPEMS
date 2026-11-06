@@ -549,6 +549,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:purchase_item:read',
       order: 3,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-purchase-items_desc'),
     },
     {
@@ -586,6 +587,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:supplier_evaluation:read',
       order: 1,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-supplier-evaluation_desc'),
     },
     {
@@ -597,6 +599,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:delivery_appointment:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-delivery-appointment_desc'),
     },
     {
@@ -619,6 +622,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:mrp_suggestion:read',
       order: 5,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-mrp-suggestion_desc'),
     },
     {
@@ -642,6 +646,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:inventory_turnover:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-inventory-turnover_desc'),
     },
     {
@@ -653,6 +658,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:price_comparison:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-price-comparison_desc'),
     },
     {
@@ -686,6 +692,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:purchase_order:read',
       order: 8,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-incoming-inspections_desc'),
     },
     {
@@ -697,6 +704,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:sourcing_strategy:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-sourcing-strategy_desc'),
     },
     {
@@ -708,6 +716,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:quota_template:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-quota-template_desc'),
     },
     {
@@ -719,6 +728,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:purchase_threshold:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-purchase-threshold_desc'),
     },
     {
@@ -730,6 +740,7 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:supplier_tier:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-supplier-tier_desc'),
     },
   ],

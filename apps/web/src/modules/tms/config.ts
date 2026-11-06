@@ -490,6 +490,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 0,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-dashboard_desc'),
     },
     {
@@ -501,6 +502,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-vehicles_desc'),
     },
     {
@@ -512,6 +514,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-drivers_desc'),
     },
     {
@@ -523,6 +526,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-carriers_desc'),
     },
     {
@@ -534,6 +538,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 4,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-routes_desc'),
     },
     {
@@ -545,6 +550,7 @@ export const tmsNavConfig: ModuleNavConfig = {
       permission: 'tms:analytics:read',
       order: 5,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('tms.nav.tms-shipments_desc'),
     },
   ],

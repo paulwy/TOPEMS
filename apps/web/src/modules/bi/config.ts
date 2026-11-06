@@ -319,6 +319,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:comparison:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-comparison_desc'),
     },
     {
@@ -330,6 +331,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:data_source:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-data-source_desc'),
     },
     {
@@ -341,6 +343,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:dataset:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-dataset_desc'),
     },
     {
@@ -375,6 +378,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:report:write',
       order: 5,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-report-builder_desc'),
     },
     {
@@ -386,6 +390,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:dashboard:admin',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-permission_desc'),
     },
     {
@@ -397,6 +402,7 @@ export const biNavConfig: ModuleNavConfig = {
       permission: 'bi:index:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('bi.nav.bi-index_desc'),
     },
     {

@@ -275,7 +275,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:schema:read',
       order: 1,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.schema_registry.desc'),
     },
     {
@@ -287,7 +287,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:lineage:read',
       order: 2,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.lineage_analytics.desc'),
     },
     {
@@ -299,7 +299,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:ai_governance:read',
       order: 3,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.ai_governance.desc'),
     },
     {
@@ -335,7 +335,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:versioning:read',
       order: 6,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.versioning.desc'),
     },
     {
@@ -371,7 +371,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:knowledge:read',
       order: 9,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.knowledgeGraph.desc'),
     },
     {
@@ -383,7 +383,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:semantic:read',
       order: 10,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.semanticSearch.desc'),
     },
     {
@@ -395,7 +395,7 @@ export const masterNavConfig: ModuleNavConfig = {
       permission: 'master-data:disaster:read',
       order: 11,
       group: 'master',
-      showInSidebar: true,
+      showInSidebar: false,
       description: i18n.t('master.disasterRecovery.desc'),
     },
   ],

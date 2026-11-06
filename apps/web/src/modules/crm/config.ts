@@ -472,6 +472,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:return:read',
       order: 5,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-returns_desc'),
     },
     {
@@ -483,6 +484,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:customer_segmentation:read',
       order: 5,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-customer-segmentation_desc'),
     },
     {
@@ -494,6 +496,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:rfm:read',
       order: 6,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-rfm_desc'),
     },
     {
@@ -505,6 +508,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:forecast:read',
       order: 7,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-forecast-algorithm_desc'),
     },
     {
@@ -516,6 +520,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:customer_scoring:read',
       order: 8,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-customer-scoring_desc'),
     },
     {
@@ -539,6 +544,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:sales_forecast:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-sales-forecast_desc'),
     },
     {
@@ -561,6 +567,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:recommendation:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-recommendation_desc'),
     },
     {
@@ -572,6 +579,7 @@ export const crmNavConfig: ModuleNavConfig = {
       permission: 'crm:customer:read',
       order: 9,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('crm.nav.crm-tags_desc'),
     },
   ],

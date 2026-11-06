@@ -298,6 +298,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       order: 0,
       group: 'overview',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-home_desc'),
     },
     {
@@ -321,6 +322,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-attendance_desc'),
     },
     {
@@ -356,6 +358,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-inventory_desc'),
     },
     {
@@ -367,6 +370,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       permission: 'mobile:quality:read',
       order: 5,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-quality_desc'),
     },
     {
@@ -378,6 +382,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       permission: 'mobile:production:read',
       order: 6,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-production_desc'),
     },
     {
@@ -401,6 +406,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       permission: 'mobile:notification:read',
       order: 8,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-notifications_desc'),
     },
     {
@@ -413,6 +419,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'setting',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-profile_desc'),
     },
     {
@@ -424,6 +431,7 @@ export const mobileNavConfig: ModuleNavConfig = {
       permission: 'mobile:home:admin',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('mobile.nav.mobile-settings_desc'),
     },
   ],
