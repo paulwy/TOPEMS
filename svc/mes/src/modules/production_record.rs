@@ -15,20 +15,13 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
 
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -102,6 +95,25 @@ pub struct ListRecordsResponse {
     pub total: i64,
     pub page: i64,
     pub page_size: i64,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct ProductionRecordRow {
+    id: Uuid,
+    order_id: Uuid,
+    process_id: Option<Uuid>,
+    work_station_id: Option<Uuid>,
+    equipment_id: Option<Uuid>,
+    operator_id: Option<Uuid>,
+    operator: String,
+    start_time: DateTime<Utc>,
+    end_time: Option<DateTime<Utc>>,
+    quantity_produced: BigDecimal,
+    quantity_defective: Option<i32>,
+    status: String,
+    notes: Option<String>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
@@ -465,7 +477,9 @@ pub async fn update_record(
         "in_progress"
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         UPDATE mes.production_records SET
             process_id = COALESCE($2, process_id),
@@ -476,23 +490,24 @@ pub async fn update_record(
             status = $7,
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
             completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
-        id,
-        req.process_id,
-        req.work_station_id,
-        req.operator_id,
-        req.end_time,
-        f64_to_big_decimal(req.quantity_produced),
-        status,
-        req.notes,
-        now,
     )
+    .bind(id)
+    .bind(req.process_id)
+    .bind(req.work_station_id)
+    .bind(req.operator_id)
+    .bind(req.end_time)
+    .bind(f64_to_big_decimal(req.quantity_produced))
+    .bind(status)
+    .bind(req.notes)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -538,13 +553,16 @@ pub async fn delete_record(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
         UPDATE mes.production_records SET deleted_at = NOW()
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -588,22 +606,25 @@ pub async fn complete_record(
 
     let now = Utc::now();
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         UPDATE mes.production_records SET
             end_time = $2,
             status = 'completed',
             updated_at = $2
-        WHERE id = $1 AND status = 'in_progress' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'in_progress' AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
             completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
-        id,
-        now,
     )
+    .bind(id)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

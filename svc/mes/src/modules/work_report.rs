@@ -11,6 +11,7 @@ use std::str::FromStr;
 use topems_shared_core::error::TopemsError;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
@@ -24,12 +25,30 @@ use topems_shared_event::event::{commit_retry, EventType, MesWorkReportSubmitted
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
+/// 报工 RETURNING 列（与 work_reports 表字段对齐）
+#[derive(Debug, sqlx::FromRow)]
+struct WorkReportRow {
+    id: Uuid,
+    report_no: Option<String>,
+    work_order_id: Option<Uuid>,
+    work_order_no: Option<String>,
+    order_id: Option<Uuid>,
+    order_no: Option<String>,
+    work_station_id: Option<Uuid>,
+    work_station_name: Option<String>,
+    reporter_name: Option<String>,
+    report_date: Option<DateTime<Utc>>,
+    shift: Option<String>,
+    output_quantity: Option<BigDecimal>,
+    defect_quantity: Option<BigDecimal>,
+    labor_hours: Option<BigDecimal>,
+    remark: Option<String>,
+    status: Option<String>,
+    approved_by: Option<String>,
+    approved_at: Option<DateTime<Utc>>,
+    approval_remark: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -787,7 +806,9 @@ pub async fn update_work_report(
         .labor_hours
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
         SET
@@ -806,7 +827,8 @@ pub async fn update_work_report(
             remark = COALESCE($13, remark),
             status = COALESCE($14, status),
             updated_at = NOW()
-        WHERE id = $15 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $15
+          AND ($16::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $16::uuid)
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -815,22 +837,23 @@ pub async fn update_work_report(
             status, approved_by, approved_at, approval_remark,
             created_at, updated_at
         "#,
-        work_order_id,
-        body.work_order_no,
-        order_id,
-        body.order_no,
-        work_station_id,
-        body.work_station_name,
-        body.reporter_name,
-        report_date,
-        body.shift,
-        output_quantity,
-        defect_quantity,
-        labor_hours,
-        body.remark,
-        body.status,
-        uuid,
     )
+    .bind(work_order_id)
+    .bind(body.work_order_no)
+    .bind(order_id)
+    .bind(body.order_no)
+    .bind(work_station_id)
+    .bind(body.work_station_name)
+    .bind(body.reporter_name)
+    .bind(report_date)
+    .bind(body.shift)
+    .bind(output_quantity)
+    .bind(defect_quantity)
+    .bind(labor_hours)
+    .bind(body.remark)
+    .bind(body.status)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -900,12 +923,14 @@ pub async fn delete_work_report(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(get_tenant_id(&claims))
     .execute(&state.pool)
     .await;
 
@@ -951,7 +976,7 @@ pub async fn approve_work_report(
 
     let approver = Uuid::parse_str(&claims.username).ok();
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
         SET
@@ -959,7 +984,8 @@ pub async fn approve_work_report(
             approved_by = $1::uuid,
             approved_at = NOW(),
             updated_at = NOW()
-        WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $2
+          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -968,9 +994,10 @@ pub async fn approve_work_report(
             status, approved_by, approved_at, approval_remark,
             created_at, updated_at
         "#,
-        approver,
-        uuid,
     )
+    .bind(approver)
+    .bind(uuid)
+    .bind(get_tenant_id(&claims))
     .fetch_one(&state.pool)
     .await;
 
@@ -1045,7 +1072,7 @@ pub async fn reject_work_report(
     let approver = Uuid::parse_str(&claims.username).ok();
     let remark = body.remark.unwrap_or_default();
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
         SET
@@ -1053,7 +1080,8 @@ pub async fn reject_work_report(
             approved_by = $1::uuid,
             approval_remark = $2,
             updated_at = NOW()
-        WHERE id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $3
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -1062,10 +1090,11 @@ pub async fn reject_work_report(
             status, approved_by, approved_at, approval_remark,
             created_at, updated_at
         "#,
-        approver,
-        remark,
-        uuid,
     )
+    .bind(approver)
+    .bind(remark)
+    .bind(uuid)
+    .bind(get_tenant_id(&claims))
     .fetch_one(&state.pool)
     .await;
 

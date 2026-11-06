@@ -9,13 +9,15 @@
 //   pending → requisitioned → sourced → satisfied / shortage，cancelled 为终态
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     routing::{get, post},
     Json, Router,
 };
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::{get_tenant_id_from_claims, resolve_create_tenant};
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -122,11 +124,13 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 )]
 pub async fn list_material_plans(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListMaterialPlansQuery>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let status = params.status.clone();
     let search = params.search.clone();
@@ -138,11 +142,13 @@ pub async fn list_material_plans(
            AND ($2::text IS NULL OR plan_no ILIKE '%' || $2 || '%' \
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
-           AND ($3::uuid IS NULL OR plan_id = $3)",
+           AND ($3::uuid IS NULL OR plan_id = $3) \
+           AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)",
     )
     .bind(&status)
     .bind(&search)
     .bind(plan_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -157,11 +163,13 @@ pub async fn list_material_plans(
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
            AND ($3::uuid IS NULL OR plan_id = $3) \
-         ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+           AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid) \
+         ORDER BY created_at DESC LIMIT $5 OFFSET $6",
     )
     .bind(&status)
     .bind(&search)
     .bind(plan_id)
+    .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -197,15 +205,18 @@ pub async fn list_material_plans(
 )]
 pub async fn get_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
                 supply_type, status, tenant_id::text, created_at, updated_at \
-         FROM mes.material_plans WHERE id = $1",
+         FROM mes.material_plans WHERE id = $1 \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
+    .bind(get_tenant_id_from_claims(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -224,8 +235,18 @@ pub async fn get_material_plan(
 
 pub async fn create_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 租户来源统一为 Claims（超管/服务身份落公共行 NULL），不再接受请求体指定租户
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            let status = StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST);
+            return Err((status, ApiResponse::bad_request(&msg)));
+        }
+    };
+
     let required_qty = req.required_quantity.unwrap_or(0.0);
     let available_qty = req.available_quantity.unwrap_or(0.0);
     let shortfall = (required_qty - available_qty).max(0.0);
@@ -253,7 +274,7 @@ pub async fn create_material_plan(
     .bind(required_date)
     .bind(&supply_type)
     .bind(&status)
-    .bind(&req.tenant_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -268,6 +289,7 @@ pub async fn create_material_plan(
 
 pub async fn update_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -286,7 +308,8 @@ pub async fn update_material_plan(
          supply_type = COALESCE($9, supply_type), \
          status = COALESCE($10, status), \
          updated_at = NOW() \
-         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
+         WHERE id = $1 \
+           AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid) \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id::text, created_at, updated_at",
@@ -301,6 +324,7 @@ pub async fn update_material_plan(
     .bind(required_date)
     .bind(&req.supply_type)
     .bind(&req.status)
+    .bind(get_tenant_id_from_claims(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -319,12 +343,17 @@ pub async fn update_material_plan(
 
 pub async fn delete_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let result = sqlx::query("DELETE FROM mes.material_plans WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "DELETE FROM mes.material_plans WHERE id = $1 \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+    )
+    .bind(id)
+    .bind(get_tenant_id_from_claims(&claims))
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(res) => {
@@ -350,16 +379,19 @@ async fn transition_status(
     state: &AppState,
     id: Uuid,
     new_status: &str,
+    tenant_id: Uuid,
 ) -> Result<Option<sqlx::postgres::PgRow>, sqlx::Error> {
     sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
-         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
+         WHERE id = $1 \
+           AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id::text, created_at, updated_at",
     )
     .bind(id)
     .bind(new_status)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await
 }
@@ -379,9 +411,16 @@ async fn transition_status(
 )]
 pub async fn submit_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let row = transition_status(&state, id, "requisitioned").await;
+    let row = transition_status(
+        &state,
+        id,
+        "requisitioned",
+        get_tenant_id_from_claims(&claims),
+    )
+    .await;
     match row {
         Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已提交")),
         Ok(None) => Err((
@@ -410,9 +449,10 @@ pub async fn submit_material_plan(
 )]
 pub async fn requisition_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let row = transition_status(&state, id, "sourced").await;
+    let row = transition_status(&state, id, "sourced", get_tenant_id_from_claims(&claims)).await;
     match row {
         Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已请购")),
         Ok(None) => Err((
@@ -441,9 +481,10 @@ pub async fn requisition_material_plan(
 )]
 pub async fn cancel_material_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let row = transition_status(&state, id, "cancelled").await;
+    let row = transition_status(&state, id, "cancelled", get_tenant_id_from_claims(&claims)).await;
     match row {
         Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已取消")),
         Ok(None) => Err((

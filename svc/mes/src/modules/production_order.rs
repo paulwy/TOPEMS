@@ -12,13 +12,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::resolve_create_tenant;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{commit_retry, EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
@@ -507,11 +502,11 @@ pub async fn create_production_order(
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
     // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    let tenant_opt: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let rls_tenant = tenant_opt.unwrap_or(Uuid::nil());
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -520,7 +515,7 @@ pub async fn create_production_order(
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(tenant_id.to_string())
+        .bind(rls_tenant.to_string())
         .execute(&mut *tx)
         .await
     {
@@ -556,7 +551,7 @@ req.planned_start_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
         now,
-        tenant_id,
+        tenant_opt,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -676,7 +671,13 @@ pub async fn create_order_from_erp(
         .or(req.erp_order.delivery_date)
         .unwrap_or_else(|| now + chrono::Duration::days(7));
 
-    // 服务间调用（service token）：事务内设置 nil 租户上下文，确保与 INSERT 同一连接（RLS 放行）
+    // 租户来源统一为 Claims：服务身份（tenant 为空）落 NULL 公共行；
+    // 事务内显式设置同一租户上下文，保证与 INSERT 同一连接（RLS WITH CHECK 放行）
+    let tenant_opt: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let rls_tenant = tenant_opt.unwrap_or(Uuid::nil());
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -685,7 +686,7 @@ pub async fn create_order_from_erp(
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(Uuid::nil().to_string())
+        .bind(rls_tenant.to_string())
         .execute(&mut *tx)
         .await
     {
@@ -723,7 +724,7 @@ planned_start.date_naive(),
         req.workshop_id,
         req.notes,
         now,
-        Uuid::nil(),
+        tenant_opt,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -798,7 +799,9 @@ pub async fn get_production_order(
         return e;
     }
 
-    let result = sqlx::query!(
+    // 详情读取同样按 Claims 租户隔离 + 过滤软删除，避免跨租户 200 或已删单可读。
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query(
         r#"
         SELECT 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
@@ -808,10 +811,12 @@ pub async fn get_production_order(
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM production_orders
-        WHERE id = $1
+        WHERE id = $1 AND deleted_at IS NULL
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -826,25 +831,63 @@ pub async fn get_production_order(
     match result {
         Some(r) => {
             let order = ProductionOrderResponse {
-                id: r.id,
-                order_no: r.order_no,
-                product_id: r.product_id,
-                product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: r.quantity.unwrap_or_default(),
-                completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
-                source: r.source.unwrap_or_else(|| "manual".to_string()),
-                source_order_id: r.source_order_id,
-                source_order_number: r.source_order_number,
-                planned_start_date: r.planned_start_date,
-                planned_end_date: r.planned_end_date,
-                actual_start_date: r.actual_start_date,
-                actual_end_date: r.actual_end_date,
-                workshop_id: r.workshop_id,
-                notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                order_no: r.try_get::<String, _>("order_no").unwrap_or_default(),
+                product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+                product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
+                product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
+                quantity: r
+                    .try_get::<Option<f64>, _>("quantity")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default(),
+                completed_quantity: r
+                    .try_get::<Option<f64>, _>("completed_quantity")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default(),
+                status: r.try_get::<String, _>("status").unwrap_or_default(),
+                source: r
+                    .try_get::<Option<String>, _>("source")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r
+                    .try_get::<Option<Uuid>, _>("source_order_id")
+                    .ok()
+                    .flatten(),
+                source_order_number: r
+                    .try_get::<Option<String>, _>("source_order_number")
+                    .ok()
+                    .flatten(),
+                planned_start_date: r
+                    .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
+                    .ok()
+                    .flatten(),
+                planned_end_date: r
+                    .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
+                    .ok()
+                    .flatten(),
+                actual_start_date: r
+                    .try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
+                    .ok()
+                    .flatten(),
+                actual_end_date: r
+                    .try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
+                    .ok()
+                    .flatten(),
+                workshop_id: r.try_get::<Option<Uuid>, _>("workshop_id").ok().flatten(),
+                notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+                created_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(Utc::now),
+                updated_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(Utc::now),
             };
             ApiResponse::success(order, "获取生产工单成功")
         }

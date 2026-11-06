@@ -12,18 +12,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -479,7 +472,8 @@ pub async fn update_work_station(
             process_id = COALESCE($8, process_id),
             description = COALESCE($9, description),
             updated_at = $10
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1
+          AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -496,6 +490,7 @@ pub async fn update_work_station(
     .bind(process_id)
     .bind(&req.description)
     .bind(Utc::now())
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -524,13 +519,15 @@ pub async fn delete_work_station(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE work_stations SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(get_tenant_id(&claims))
     .execute(&state.pool)
     .await;
 
@@ -578,7 +575,8 @@ pub async fn activate_work_station(
         UPDATE work_stations SET
             status = 'active',
             updated_at = $2
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1
+          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -587,6 +585,7 @@ pub async fn activate_work_station(
     )
     .bind(id)
     .bind(Utc::now())
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -633,7 +632,8 @@ pub async fn deactivate_work_station(
         UPDATE work_stations SET
             status = 'inactive',
             updated_at = $2
-        WHERE id = $1 AND status = 'active' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND status = 'active'
+          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -642,6 +642,7 @@ pub async fn deactivate_work_station(
     )
     .bind(id)
     .bind(Utc::now())
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 

@@ -15,20 +15,13 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -438,9 +431,11 @@ pub async fn get_equipment(
             description, created_at, updated_at
         FROM equipment
         WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -483,6 +478,8 @@ pub async fn update_equipment(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let result = sqlx::query(
         r#"
         UPDATE equipment SET
@@ -498,7 +495,7 @@ pub async fn update_equipment(
             next_maintenance_date = COALESCE($11, next_maintenance_date),
             description = COALESCE($12, description),
             updated_at = $13
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($14::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $14::uuid)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -519,6 +516,7 @@ pub async fn update_equipment(
     .bind(req.next_maintenance_date)
     .bind(&req.description)
     .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -559,13 +557,16 @@ pub async fn delete_equipment(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
         UPDATE equipment SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -607,6 +608,8 @@ pub async fn maintenance_equipment(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let now = Utc::now();
     let today =
         chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap_or_default();
@@ -619,7 +622,7 @@ pub async fn maintenance_equipment(
             last_maintenance_date = $2,
             next_maintenance_date = $3,
             updated_at = $4
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -631,6 +634,7 @@ pub async fn maintenance_equipment(
     .bind(today)
     .bind(next_maintenance_date)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -971,6 +975,23 @@ pub async fn create_maintenance(
     )
 }
 
+#[derive(sqlx::FromRow)]
+struct MaintenanceStatusRow {
+    id: Uuid,
+    equipment_id: Uuid,
+    maintenance_type: String,
+    description: String,
+    maintainer: String,
+    start_time: DateTime<Utc>,
+    end_time: Option<DateTime<Utc>>,
+    cost: Option<BigDecimal>,
+    result: Option<String>,
+    status: String,
+    remarks: Option<String>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["mes:update"])),
@@ -996,24 +1017,26 @@ pub async fn update_maintenance_status(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, MaintenanceStatusRow>(
         r#"
         UPDATE equipment_maintenance_records SET
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
         RETURNING 
             id, equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at
         "#,
-        id,
-        req.status,
-        req.result,
-        now,
     )
+    .bind(id)
+    .bind(req.status)
+    .bind(req.result)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::shared::aps_fsm::production_plan_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
@@ -97,14 +98,6 @@ pub struct ApprovalRequest {
 // ==================== Database Init ====================
 
 // ==================== Helpers ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 fn can_transition(from: &str, to: &str) -> bool {
     production_plan_can_transition(from, to).is_ok()
@@ -397,7 +390,7 @@ pub async fn submit_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -415,10 +408,11 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -453,7 +447,7 @@ pub async fn approve_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -471,10 +465,11 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -509,7 +504,7 @@ pub async fn reject_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -527,10 +522,11 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
