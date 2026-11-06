@@ -40,6 +40,7 @@ use futures_util::stream::BoxStream;
 use sqlx::postgres::{PgConnection, PgQueryResult, PgRow, PgStatement, PgTypeInfo, Postgres};
 use sqlx::{Execute, Executor, PgPool, SqlStr, Transaction};
 use std::sync::Arc;
+use uuid::Uuid;
 
 /// 模块级数据库句柄（进程单池之上的类型化视图）。
 #[derive(Clone)]
@@ -86,6 +87,37 @@ impl Db {
         };
         scope.apply_search_path().await?;
         scope.apply_request_tenant().await?;
+        Ok(scope)
+    }
+
+    /// 系统读作用域（只读事务 + 显式 nil 租户 + `app.rls_system='on'`）。
+    ///
+    /// 用于后台任务、脚本、启动期自愈等**没有请求上下文**的场景。
+    /// 与「不设 GUC」不同：显式 nil 是策略里的系统分支，可读全量；
+    /// 不设 GUC 在策略下是 fail-closed（NULL 不匹配任何分支）。
+    pub async fn scope_read_system(&self) -> sqlx::Result<ScopedTxn<'_>> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION READ ONLY")
+            .execute(&mut *tx)
+            .await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Owned(tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(Uuid::nil(), true).await?;
+        Ok(scope)
+    }
+
+    /// 系统写作用域（读写事务 + 显式 nil 租户 + `app.rls_system='on'`）。
+    pub async fn scope_system(&self) -> sqlx::Result<ScopedTxn<'_>> {
+        let tx = self.pool.begin().await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Owned(tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(Uuid::nil(), true).await?;
         Ok(scope)
     }
 
@@ -181,12 +213,17 @@ impl ScopedTxn<'_> {
         let Some(ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
             return Ok(());
         };
+        self.apply_explicit_tenant(ctx.tenant, ctx.system).await
+    }
+
+    /// 显式设置租户通道 GUC（系统通道 = nil UUID + `rls_system='on'`）。
+    async fn apply_explicit_tenant(&mut self, tenant: Uuid, system: bool) -> sqlx::Result<()> {
         sqlx::query(
             "SELECT set_config('app.tenant_id', $1, true), \
                     set_config('app.rls_system', $2, true)",
         )
-        .bind(ctx.tenant.to_string())
-        .bind(if ctx.system { "on" } else { "off" })
+        .bind(tenant.to_string())
+        .bind(if system { "on" } else { "off" })
         .execute(&mut *self)
         .await?;
         Ok(())
