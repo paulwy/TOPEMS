@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use sqlx::Row;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
@@ -177,11 +178,13 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 )]
 async fn list_projects(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
 ) -> ApiResponse<ProjectListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
@@ -193,14 +196,12 @@ async fn list_projects(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects
-        WHERE (current_setting('app.tenant_id', true) IS NULL
-               OR current_setting('app.tenant_id', true) = ''
-               OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
-               OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+        WHERE ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         ORDER BY created_at DESC
         "#
     ))
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -410,9 +411,11 @@ async fn create_project(
 )]
 async fn get_project(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<Project> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         r#"
@@ -423,14 +426,12 @@ async fn get_project(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects WHERE deleted_at IS NULL AND id = $1
-        AND (current_setting('app.tenant_id', true) IS NULL
-             OR current_setting('app.tenant_id', true) = ''
-             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
-             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+        AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         "#
     ))
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

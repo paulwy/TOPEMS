@@ -7,6 +7,7 @@ use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -200,10 +201,12 @@ async fn create_settlement(
 
 async fn update_settlement(
     State(state): State<SettlementState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementRequest>,
 ) -> ApiResponse<Settlement> {
     // actual_amount->amount, description->remarks。
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
@@ -212,7 +215,7 @@ async fn update_settlement(
             amount = COALESCE($3, amount),
             remarks = COALESCE($4, remarks),
             updated_at = $5
-        WHERE id = $6 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $6 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid) RETURNING *"
     ))
     .bind(req.settlement_name)
     .bind(req.status)
@@ -220,6 +223,7 @@ async fn update_settlement(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -256,6 +260,7 @@ async fn approve_settlement(
     // 与 INSERT 同源：superuser 会话回退默认租户，普通用户取会话租户；
     // 操作人取 JWT 真实 sub（与 pdm created_by 写法一致），不再写死 "system"。
     let tenant_id = effective_tenant_id(&ctx, &claims);
+    let rls_tenant = get_tenant_id_from_claims(&claims);
     let approved_by = claims.sub.clone();
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
@@ -263,9 +268,10 @@ async fn approve_settlement(
             status = 'approved',
             approved_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
+    .bind(rls_tenant)
     .fetch_one(&state.pool)
     .await;
 
@@ -392,9 +398,11 @@ async fn create_settlement_item(
 )]
 async fn update_settlement_item(
     State(state): State<SettlementState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementItemRequest>,
 ) -> ApiResponse<SettlementItem> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let item = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "UPDATE pm.settlement_items SET
             item_name = COALESCE($1, item_name),
@@ -404,7 +412,7 @@ async fn update_settlement_item(
             variance_percent = CASE WHEN $3 IS NOT NULL AND budget_amount != 0 THEN (($3 - budget_amount) / budget_amount) * 100 ELSE variance_percent END,
             description = COALESCE($4, description),
             updated_at = $5
-        WHERE id = $6 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"),
+        WHERE id = $6 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid) RETURNING *"),
     )
     .bind(req.item_name)
     .bind(req.category)
@@ -412,6 +420,7 @@ async fn update_settlement_item(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -427,13 +436,16 @@ async fn update_settlement_item(
 
 async fn delete_settlement_item(
     State(state): State<SettlementState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.settlement_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.settlement_items WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
