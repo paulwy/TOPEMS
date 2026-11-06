@@ -144,7 +144,9 @@ async fn add_local_todo(
         r#"
         INSERT INTO portal.portal_todos
             (user_id, title, service_code, service_name, due_date, priority, todo_type, tenant_id)
-        VALUES ($1::uuid, $2, $3, $4, $5, $6, 'personal', $7)
+        VALUES ($1::uuid, $2, $3, $4, $5, $6, 'personal',
+                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                         '00000000-0000-0000-0000-000000000000'::uuid))
         RETURNING id, title, service_code, service_name, due_date, priority, completed, todo_type, link_url
         "#
     )
@@ -154,7 +156,6 @@ async fn add_local_todo(
     .bind(service_name)
     .bind(due_date)
     .bind(&todo.priority)
-    .bind(uuid::Uuid::nil())
     .fetch_one(&mut scope)
     .await;
 

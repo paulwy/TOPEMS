@@ -76,7 +76,6 @@ pub async fn sync_records(
     let mut failed: Vec<MobileSyncFailedItem> = Vec::new();
 
     for record in req.records {
-        let tenant_id = Uuid::nil();
         let user_id = Uuid::nil();
 
         match sqlx::query(only_own_schema_query!(
@@ -84,12 +83,13 @@ pub async fn sync_records(
             r#"
             INSERT INTO mobile.core_mobile_offline_records
             (id, tenant_id, user_id, module, action, data, status)
-            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-            ON CONFLICT (id) DO UPDATE SET data = $6, status = 'pending', updated_at = NOW()
+            VALUES ($1, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                '00000000-0000-0000-0000-000000000000'::uuid),
+                    $2, $3, $4, $5, 'pending')
+            ON CONFLICT (id) DO UPDATE SET data = $5, status = 'pending', updated_at = NOW()
             "#
         ))
         .bind(Uuid::parse_str(&record.id).unwrap_or_else(|_| Uuid::new_v4()))
-        .bind(tenant_id)
         .bind(user_id)
         .bind(&record.module)
         .bind(&record.action)

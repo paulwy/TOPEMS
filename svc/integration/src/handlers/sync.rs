@@ -139,7 +139,6 @@ pub async fn create_task(
     >,
     Json(req): Json<CreateSyncTaskRequest>,
 ) -> ApiResponse<SyncTask> {
-    let tenant_id = Uuid::nil();
     let now = chrono::Utc::now();
     let task_id = Uuid::new_v4();
 
@@ -161,12 +160,14 @@ pub async fn create_task(
         INSERT INTO integration.core_inter_module_sync
             (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
              status, started_at, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
+        VALUES ($1,
+                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                         '00000000-0000-0000-0000-000000000000'::uuid),
+                $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING *
         "#
     ))
     .bind(task_id)
-    .bind(tenant_id)
     .bind(&req.sync_type)
     .bind(&req.source_module)
     .bind(&req.target_module)
@@ -592,12 +593,14 @@ pub async fn trigger_scm_wms(
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
                      status, started_at, created_at, updated_at)
-                VALUES ($1, $2, 'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', $4, $5, $6)
+                VALUES ($1,
+                        COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                 '00000000-0000-0000-0000-000000000000'::uuid),
+                        'purchase_order_sync', 'scm', 'wms', 'purchase_order', $2, 'pending', $3, $4, $5)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
-            .bind(Uuid::nil())
             .bind(serde_json::json!([id.to_string()]))
             .bind(now)
             .bind(now)
@@ -657,12 +660,14 @@ pub async fn trigger_wms_crm(
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
                      status, started_at, created_at, updated_at)
-                VALUES ($1, $2, 'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', $4, $5, $6)
+                VALUES ($1,
+                        COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                 '00000000-0000-0000-0000-000000000000'::uuid),
+                        'outbound_order_sync', 'wms', 'crm', 'outbound_order', $2, 'pending', $3, $4, $5)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
-            .bind(Uuid::nil())
             .bind(serde_json::json!([id.to_string()]))
             .bind(now)
             .bind(now)
@@ -722,12 +727,14 @@ pub async fn trigger_srm_scm(
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, source_entity,
                      source_id, status, retry_count, max_retries, created_at, updated_at)
-                VALUES ($1, $2, 'supplier_sync', 'srm', 'scm', 'supplier', $3, 'pending', 0, 3, $4, $5)
+                VALUES ($1,
+                        COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                 '00000000-0000-0000-0000-000000000000'::uuid),
+                        'supplier_sync', 'srm', 'scm', 'supplier', $2, 'pending', 0, 3, $3, $4)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
-            .bind(Uuid::nil())
             .bind(id)
             .bind(now)
             .bind(now)
