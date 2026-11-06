@@ -1395,3 +1395,75 @@ init 脚本是装机引导用的另一条路径，prod 只跑了 `_sqlx_migratio
 | 租户 fallback | `svc/unified-core/src/modules/iam/auth.rs:306-319`；`public.core_tenants` 1 行（默认租户） |
 | 部署版本 | prod `/Users/xingzhai/topems` HEAD `0c11b5b9`；`_sqlx_migrations` max version `20261107000018` |
 
+## 15. 登录审计修复：`last_login_at` 回写 + 写失败可见（2026-11-07 本地执行）
+
+### 15.1 失败口径（先定规则，再落码）
+
+| 场景 | 是否写 `core_login_logs` | 是否建 session | 是否回写 `last_login_at` | 失败时响应 |
+|---|---|---|---|---|
+| 登录成功 | 是（`success`，与 session/refresh 同事务） | 是 | 是（含 `last_login_ip`） | 审计/凭据写失败 → 整体回滚 → 500，不签发 token |
+| 参数缺失 / 用户不存在 / 账号禁用 / 密码错误 / 查询异常 | 是（`failed` + `error_message`） | 否 | 否（不污染「最近活跃」口径） | 审计写失败 → 仅 ERROR + 指标，仍返回原 400/401 |
+| refresh 换发 | 否（不是一次新登录） | 是（`core_sessions` 新增） | 否 | — |
+
+**为什么失败登录也要记**：撞库/暴力破解回溯需要失败样本；失败尝试不产生 session，写入成本低。
+**为什么成功路径要 fail-closed**：审计与 session 必须同源，宁可本次登录 500，也不能出现「session 已建但审计缺失」。
+
+### 15.2 根因（比「不回写」更严重）
+
+1. `iam.users.last_login_at` / `last_login_ip` 在登录成功路径**从未 UPDATE**（列存在、可空，此前无人写）。
+2. `core_login_logs.ip_address` 的实际契约是 `varchar(128) NOT NULL`，而旧 INSERT 用 `$4::inet` 直接绑定 `Option<&str>`；直连请求没有 `X-Forwarded-For` 时 `None → NULL`，**INSERT 因非空约束失败**，又被 `let _ =` 吞掉。
+3. 因此存在一条完全静默的断档：**session 写入成功（ip 可空）+ 登录日志写入失败（ip 非空）+ 登录照常 200**。11-06 的「1055 会话 / 0 成功日志」与此吻合（另有 refresh 轮换也会新增 session 但不写登录日志，两者叠加）。
+4. 失败登录此前也走同一 INSERT，所以「无 XFF 的失败登录」同样丢日志；只有经代理带 IP 的请求才留下记录。
+
+### 15.3 代码改动
+
+| 位置 | 改动 |
+|---|---|
+| `svc/unified-core/src/modules/iam/auth.rs:402-478` | 成功路径改为单事务：`set_config(app.tenant_id)` → session → refresh token → 登录审计 → `UPDATE iam.users SET last_login_at=NOW(), last_login_ip=$2::inet` → commit；任一失败整体回滚并返回 500 |
+| `svc/unified-core/src/modules/iam/auth.rs:80-110,206,246,259,274,295` | 5 处失败登录统一走 `record_failed_login`；显式消费 Result，不再 `let _ =` |
+| `svc/unified-core/src/modules/audit/login_log_handlers.rs:288-322` | 新增唯一 INSERT 实现 `insert_login_log`，支持 `&mut *tx`（同源）与 `&PgPool`（best-effort） |
+| `svc/unified-core/src/modules/audit/login_log_handlers.rs:304-310` | `ip_address` 空值落 `''`、超长截断 128，去掉 `::inet` 强转（列本就是 varchar） |
+| `svc/unified-core/src/modules/audit/login_log_handlers.rs:329-365` | `record_login_event` 写失败输出 ERROR（`audit_write_failed=true`）+ 计数 |
+| `lib/shared-core/src/metrics.rs:69-76` | 新增 `topems_audit_write_failures_total{kind}` 指标 |
+| `svc/unified-core/src/modules/audit/middleware.rs` | 操作审计写入失败同样计数（kind=`operation_log`） |
+
+**无迁移**：只改代码，未改 schema；`ip_address` 仍保持 `varchar(128) NOT NULL` 的历史契约。
+
+**已知债（本轮不改）**：`core_login_logs.tenant_id` 仍写 `nil`，而 session 写真实租户。原因是列表/详情/删除与 RLS 均按 `nil` 过滤，单独改为真实租户会让非超管看不到日志、超管删不掉新日志。租户列对齐需与读路径（`list_login_logs` / `get_login_log` / `delete_login_log` / `batch_delete_login_logs`）同批改造。为同时满足「同事务」与 RLS，成功路径在 session/refresh 落库后把事务内 `app.tenant_id` 临时切回 nil，再写登录日志（见 `auth.rs:436-449`）。
+
+### 15.4 本地实测（本地 PG，2026-11-07）
+
+| 用例 | 结果 |
+|---|---|
+| 成功登录（带 XFF） | 200；`last_login_at` 由 NULL → 非 NULL；`last_login_ip=127.0.0.1`；success +1；sessions +1 |
+| 成功登录（无 XFF） | 200；success +1；`ip_address=''`（不再因非空约束失败）；sessions +1 |
+| 密码错误 | 401；failed +1；`last_login_at` 不变；sessions 不变 |
+| 用户不存在 | 401；failed +1 |
+| 参数为空 | 400；failed +1 |
+| 强制写失败（本地临时 `CHECK (status <> 'success') NOT VALID`） | **500**；sessions 1339→1339、success 6→6、`last_login_at` 不变 → 证明四件事同事务、无半写；日志出现 `audit_write_failed=true audit_kind="login_credentials"` ERROR |
+| 移除约束后恢复 | 200；sessions +1；success +1；`last_login_at` 更新 |
+
+失败登录写失败的可观测痕迹（本地真实输出）：
+
+```text
+ERROR topems_unified_core::modules::audit::login_log_handlers:
+登录审计日志写入失败（已计数；调用方按原语义处理）
+audit_write_failed=true audit_kind="login_log" login_status=failed username=admin
+error=null value in column "ip_address" of relation "core_login_logs" violates not-null constraint
+```
+
+> 该 ERROR 正是修复前被 `let _ =` 吞掉的失败；现在既进日志，也进 `topems_audit_write_failures_total{kind="login_log"}`。
+
+### 15.5 同领域「静默写」清单（只列不改）
+
+| 位置 | 吞掉的内容 | 影响 |
+|---|---|---|
+| `svc/unified-core/src/modules/iam/role.rs:189-196` | `INSERT core_role_permissions` 失败 | 角色创建时权限**静默漏绑**；可解释部分「有码 0 授权」 |
+| `svc/unified-core/src/modules/iam/role.rs:426-434` | 同上（角色更新路径） | 同上，且 Uuid 解析失败也静默跳过 |
+| `svc/srm/src/modules/data_sync.rs`（4 处）、`svc/scm/.../data_sync.rs`（13 处）、`svc/wms/.../data_sync.rs`（2 处） | `record_sync_log` | 数据同步日志断档，不影响主流程 |
+| `svc/crm/src/modules/{opportunity,customer,contact}.rs`（共 12 处） | `log_audit_event` | CRM 审计断档 |
+| `svc/qms/src/modules/{eight_d,quality_inspection}.rs`（共 12 处） | `*_audit_logs` INSERT | QMS 审计断档 |
+| `svc/unified-core/src/modules/audit/middleware.rs` | 操作审计写入 | 已有 ERROR 日志；本轮补指标 |
+
+结论：登录审计是本轮唯一要求 fail-closed 的链路；其余 best-effort 审计建议统一接入同一计数器，再分批治理。
+

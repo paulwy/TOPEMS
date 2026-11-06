@@ -280,6 +280,52 @@ pub async fn batch_delete_login_logs(
     }))
 }
 
+/// 登录审计 INSERT 的唯一实现。
+///
+/// - 登录成功路径：在凭据事务（session + refresh token）内以 `&mut *tx` 调用，
+///   保证登录日志与 session 同源、同成败；
+/// - 登录失败路径：经 [`record_login_event`] best-effort 调用（不阻断 4xx 响应）。
+pub async fn insert_login_log<'e, E>(
+    executor: E,
+    tenant_id: Uuid,
+    user_id: Option<Uuid>,
+    username: &str,
+    ip_address: Option<&str>,
+    user_agent: Option<&str>,
+    status: &str,
+    error_message: Option<&str>,
+) -> Result<(), sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    // core_login_logs.ip_address 是历史契约 `varchar(128) NOT NULL`（与 core_sessions
+    // 的 nullable inet 不一致）。缺省 IP（直连无 X-Forwarded-For）必须落空串而不是 NULL，
+    // 否则审计 INSERT 会因非空约束失败；超长 header 截断到 128，避免写入失败。
+    let ip_address: String = ip_address.unwrap_or("").chars().take(128).collect();
+
+    sqlx::query(
+        r#"
+        INSERT INTO public.core_login_logs
+            (tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(user_id)
+    .bind(username)
+    .bind(ip_address)
+    .bind(user_agent)
+    .bind(status)
+    .bind(error_message)
+    .execute(executor)
+    .await
+    .map(|_| ())
+}
+
+/// best-effort 写入一条登录审计（失败登录路径专用）。
+///
+/// 写失败不再静默：输出 ERROR 结构化日志（`audit_write_failed=true`）并累加
+/// `topems_audit_write_failures_total{kind="login_log"}`，便于在 /metrics 与日志侧告警。
 pub async fn record_login_event(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
@@ -290,21 +336,32 @@ pub async fn record_login_event(
     status: &str,
     error_message: Option<&str>,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        INSERT INTO public.core_login_logs
-            (tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time)
-        VALUES ($1, $2, $3, $4::inet, $5, $6, $7, NOW())
-        "#,
+    let result = insert_login_log(
+        pool,
+        tenant_id,
+        user_id,
+        username,
+        ip_address,
+        user_agent,
+        status,
+        error_message,
     )
-    .bind(tenant_id)
-    .bind(user_id)
-    .bind(username)
-    .bind(ip_address)
-    .bind(user_agent)
-    .bind(status)
-    .bind(error_message)
-    .execute(pool)
-    .await
-    .map(|_| ())
+    .await;
+
+    if let Err(e) = &result {
+        topems_shared_core::metrics::AUDIT_WRITE_FAILURES_TOTAL
+            .with_label_values(&["login_log"])
+            .inc();
+        tracing::error!(
+            audit_write_failed = true,
+            audit_kind = "login_log",
+            login_status = %status,
+            username = %username,
+            user_id = ?user_id,
+            error = %e,
+            "登录审计日志写入失败（已计数；调用方按原语义处理）"
+        );
+    }
+
+    result
 }

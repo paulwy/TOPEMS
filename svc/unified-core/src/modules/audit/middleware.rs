@@ -158,7 +158,15 @@ pub async fn operation_audit_middleware(
     let pool = state.pool.clone();
     tokio::spawn(async move {
         if let Err(e) = record_operation_log(&pool, record).await {
-            tracing::error!("[OperationAudit] 写入操作审计日志失败: {}", e);
+            topems_shared_core::metrics::AUDIT_WRITE_FAILURES_TOTAL
+                .with_label_values(&["operation_log"])
+                .inc();
+            tracing::error!(
+                audit_write_failed = true,
+                audit_kind = "operation_log",
+                error = %e,
+                "[OperationAudit] 写入操作审计日志失败"
+            );
         }
     });
 

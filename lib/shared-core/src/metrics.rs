@@ -63,6 +63,18 @@ pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     .expect("Failed to register DB_QUERY_DURATION histogram")
 });
 
+/// 审计类写入失败总数（kind = login_log / login_credentials / operation_log）。
+/// 用于让"审计写坏了"在 /metrics 上可见，而不是被 `let _ =` 静默吞掉。
+#[allow(clippy::expect_used)]
+pub static AUDIT_WRITE_FAILURES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_audit_write_failures_total",
+        "Total number of audit write failures",
+        &["kind"]
+    )
+    .expect("Failed to register AUDIT_WRITE_FAILURES_TOTAL counter")
+});
+
 // ==================== 缓存指标 ====================
 
 /// 缓存命中总数（按 service、entity、operation 分类）
