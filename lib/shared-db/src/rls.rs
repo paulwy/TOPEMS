@@ -79,6 +79,16 @@ impl RlsMiddleware {
                 .execute(pool)
                 .await?;
 
+            // P0：与 owner 身份解耦。未 FORCE 时表 owner（应用角色）会完全绕过 RLS，
+            // 策略是否 fail-closed 都形同不存在；FORCE 后才能保证受限身份也受策略约束。
+            let force_rls = format!(
+                "ALTER TABLE IF EXISTS {}.{} FORCE ROW LEVEL SECURITY",
+                schema, table_name
+            );
+            sqlx::query(sqlx::AssertSqlSafe(force_rls))
+                .execute(pool)
+                .await?;
+
             let policy_name = format!("tenant_isolation_{}", table_name);
             // PostgreSQL 18 不支持 CREATE POLICY IF NOT EXISTS（语法错误），
             // 需先判断策略是否存在：存在则 ALTER POLICY 更新，否则 CREATE POLICY。
@@ -94,41 +104,34 @@ impl RlsMiddleware {
             .fetch_one(pool)
             .await?;
 
-            // 空安全：current_setting('app.tenant_id') 未设置时返回空串，''::UUID 会报错；
-            // 使用 NULLIF(...,'')::UUID 使未设置租户时仅放行 tenant_id IS NULL 的行。
-            // nil 上下文（超管/服务令牌由 tenant_middleware 固定为 nil UUID）全量放行，
-            // 与 tenant.rs 注释「超管/服务调用在受限 DB 用户下仍可全量访问」保持一致。
+            // 策略形态的唯一真相源是迁移 `20261106120100_p0_rls_fail_closed.sql`，此处保持同一条谓词：
+            //   nil UUID（超管/服务身份）→ 全量
+            //   精确租户匹配 → 本租户
+            //   GUC 未设置 / 被 RESET 成空串 → 两侧为 NULL → 全拒（fail-closed）
+            // ⚠️ 禁止再退回 `tenant_id IS NULL` / `current_setting(...) = ''` 的"未设即豁免"分支
+            //   （会把未设租户的查询放大成全量，等于关闭隔离）；CI 门禁见
+            //   `scripts/ci/check-rls-policy-shape.sh`。
             let nil_uuid = "00000000-0000-0000-0000-000000000000";
+            let pred = format!(
+                "(NULLIF(current_setting('app.tenant_id', true), ''))::uuid = '{nil_uuid}'::uuid
+                 OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid"
+            );
             let policy_sql = if policy_exists {
                 format!(
-                    "ALTER POLICY {} ON {}.{} USING (
-                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID
-                        OR tenant_id IS NULL
-                        OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
-                    )",
-                    policy_name,
-                    schema,
-                    table_name,
-                    nil = nil_uuid
+                    "ALTER POLICY {} ON {}.{} USING ({pred}) WITH CHECK ({pred})",
+                    policy_name, schema, table_name
                 )
             } else {
                 format!(
-                    "CREATE POLICY {} ON {}.{} FOR ALL USING (
-                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID
-                        OR tenant_id IS NULL
-                        OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
-                    )",
-                    policy_name,
-                    schema,
-                    table_name,
-                    nil = nil_uuid
+                    "CREATE POLICY {} ON {}.{} FOR ALL TO PUBLIC USING ({pred}) WITH CHECK ({pred})",
+                    policy_name, schema, table_name
                 )
             };
             sqlx::query(sqlx::AssertSqlSafe(policy_sql))
                 .execute(pool)
                 .await?;
 
-            debug!("Enabled RLS for table: {}", table_name);
+            debug!("Enabled FORCE RLS for table: {}", table_name);
         }
 
         Ok(())
