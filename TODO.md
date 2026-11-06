@@ -1905,6 +1905,17 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.139 审计整改第十六批：模块级 → 资源级 权限码细化（27 码 + 10 页面接入 + 跨域核实）（批 18，2026-11-06）✅
+
+- **缺口本质**：notification / ticket / plugin / migration / integration 五模块只有模块级码（`notification:read|write`、`ticket:admin|dashboard`、`plugin:dashboard`、migration 零三段码），无资源级码 → 8 个带 CRUD 的页面无法接入。
+- **建码（逐条核实实体，不造无依据的码）**：9 资源 × 3 = **27 码**（迁移 `20261107000007_module_resource_level_codes.sql`，`[batch18]` 标记 + 回滚）。依据：notification←`core_notifications` 表 + `/api/core/notification`；notification:archived←`archived_notifications` 表；integration 三个←`/api/integration/lims-qms`、`svc/integration/src/mes_erp_sync.rs` + `/api/integration/mes-erp`、wms-scm 同步模块；ticket←`core_tickets` 表 + `/api/ticket`；plugin←`core_plugins` 表 + `svc/plugin-registry`；migration←`core_migration_history` + `svc/unified-core/modules/migration`；finance:account←`core_finance_accounts` 表 + `/api/finance/accounts` 路由。幂等实测 首次 `INSERT 0 27` + 授权 `0 54`/`0 3`，二次 `0 0`；DB 1202 → **1229**。
+- **跨域 3 项核实后分化**：① `erp:fixedAssets`（entity `finance_fixed_asset`，`svc/erp/src/modules/fixed_asset.rs` 存在）→ 接**同域 `erp:asset`**（四码齐），不改 module；② `finance:accounts`（`api.module=finance`，路由 `/api/finance/accounts` 存在，表 `core_finance_accounts`）→ 补 `finance:account:*` 后接入（**归 finance 域而非补 `admin:account`**，后者是系统账号，语义不同）；③ `erp:vouchers` → **停手登记**：接 `finance:voucher` 属跨域、补 `erp:voucher` 会与既有 `finance:voucher` 造同义双码（违反收敛方向），正解是改 `api.module` 但会动请求路径（`/api/erp/vouchers`→`/api/finance/vouchers`），按纪律先停。
+- **接入 10 个页面**：notification 2 + integration 3 + ticket 1 + plugin 1 + migration 1 + fixedAsset 1 + account 1，全部 `permissionResource` 一行、页面零改动；累计注入 **83 个文件**（批16 17 + 批17 56 + 批18 10）。
+- **角色核对（10 前缀 × 3 = 30 码）**：admin/superadmin **30/30**；erp_manager 3（`erp:asset` 既有）；finance_manager 3（`finance:account`）；其余 14 个域经理 **0**；employee/finance_user **0**。
+- **角色规划登记（不造角色）**：workflow 6 码、monitor 9 码、notification/ticket/plugin/migration/integration 27 码、九域 87 码，均只有 admin/superadmin 持有；建议按业务线新建 `workflow_manager`/`monitor_manager`/`support_manager` 或维持 admin-only——**属产品决策，不自行造空壳角色**。
+- **验证**：全站 vitest **624 files / 6669 passed / 1 skipped / 0 failed**（与基线一致）；tsc 0 error；eslint 0 error；迁移四件套 PASS（Errors 0 / Warnings 4 / Checksum 0 / drift 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1085**（+27）。
+- **遗留**：`erp:vouchers` 待确认实际请求路径；`admin:invoices`/`tenant:invoices`/`admin:tenantUsers` 属 tenant 模块（零三段码），需 tenant 域资源码规划；`admin:auditLogs` 维持只读不接入；角色规划 6 组待拍板。
+
 ## v1.138 审计整改第十五批：API 资源名 → DB 资源名 语义映射（69 项逐条判定 + 补 30 码 + 56 个 schema 接入）（批 17，2026-11-06）✅
 
 - **判定方法**：69 项逐条读 `entity` + API 方法 + DB 同模块资源清单做**人工语义判定**，不依赖字符串相似度（相似度最高的候选多次是错的，如 `mes:materialIssues` 最高分是 `mes:material`，但领料单 ≠ 物料主数据）。

@@ -139,6 +139,9 @@ export const mesErpSyncSchema: EntitySchema = {
     resource: 'mesErpSyncs',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'integration:mes_erp_sync',
+
   fields: mesErpFields,
 
   list: {

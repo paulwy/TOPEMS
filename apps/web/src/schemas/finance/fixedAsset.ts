@@ -11,6 +11,9 @@ export const fixedAssetSchema: EntitySchema = {
     resource: 'fixedAssets',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'erp:asset',
+
   fields: [
     {
       name: 'asset_code',

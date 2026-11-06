@@ -74,6 +74,9 @@ export const getNotificationSchema = (): EntitySchema => ({
     resource: 'notifications',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'notification:notification',
+
   fields: [
     {
       name: 'title',

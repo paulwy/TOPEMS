@@ -133,6 +133,9 @@ export const wmsScmSyncSchema: EntitySchema = {
     resource: 'wmsScmSyncs',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'integration:wms_scm_sync',
+
   fields: wmsScmFields,
 
   list: {

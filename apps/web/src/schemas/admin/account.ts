@@ -110,6 +110,9 @@ export const getAccountSchema = (): EntitySchema => ({
     resource: 'accounts',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'finance:account',
+
   fields: [
     {
       name: 'code',
