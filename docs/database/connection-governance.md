@@ -853,9 +853,62 @@ C.4 的既有 5 项白名单未变。
 RLS 关闭；权威表 `public.core_notification_templates` 为 **0 行**。B.10.9 该行与
 「communication A/B 租户隔离」结论均已按此更正。
 
-**遗留**：`communication.core_notification_templates` / `core_geofences` 等同类影子表仍由
-`schema_defense` 复活，属本轮 B 扫描的高危清单，见
-[runtime-ddl-shadow-audit.md](../quality/runtime-ddl-shadow-audit.md)（本轮只出清单，不批量改）。
+**遗留（已在 2026-11-06 处置，见 B.10.11）**：`communication.core_notification_templates` /
+`core_geofences` 等同类影子表仍由 `schema_defense` 复活，属本轮 B 扫描的高危清单，见
+[runtime-ddl-shadow-audit.md](../quality/runtime-ddl-shadow-audit.md)。
+
+#### B.10.11 高危 4 张运行期影子表清理（2026-11-06）
+
+范围：`master_data.core_dict_types`、`master_data.core_dict_items`、
+`communication.core_notification_templates`、`communication.core_geofences`。
+
+**数据前置处理（本地）**
+
+| 对象 | 处理 | 证据 |
+| --- | --- | --- |
+| `master_data.core_dict_*` | 旧版运行期种子 38 类 / 189 项（`tenant_id` 全 NULL、`name_en` 全空、2026-07-13 30ms 内批量写入）先 `pg_dump` 备份，再删除 | 备份 `/Users/air/topems/backups/local_shadow_dict_20261106.dump`；删除后两表 0 行 |
+| `communication.core_notification_templates` | 删除批 3 测试行 `B3-TPL-A` / `B3模板` | 删除 2 行，表归零 |
+| `public.core_dict_*` | 现版 `seed_dict_data` 重灌（临时 example 调用，跑完即删） | **73 类 / 379 项**，`tenant_id` 全为 `…0001`，`name_en` 全 NULL（现版 seed 不写该列） |
+| `public.core_geofences` | 本地该表仅有 `id/deleted_at` 2 列（历史漂移；prod 为完整 20 列），按 `20261029173000` 的 17 条 `ADD COLUMN` 本地补列 | 补列后 20 列 |
+
+**代码**
+
+| 位置 | 内容 |
+| --- | --- |
+| `svc/master-data/src/schema_defense.rs#L21` | `TABLE_DEFS` 7→5，删除两张字典副本定义；文件头注明权威在 `public` |
+| `svc/master-data/src/modules/dict/handlers.rs`、`seed.rs` | 裸名 `core_dict_types` 8 处、`core_dict_items` 9 处 → `public.*` |
+| `svc/communication/src/schema_defense.rs#L28` | `TABLE_DEFS` 3→1（仅 `core_location_messages`）；测试断言 5 张表不得再出现 |
+| `svc/communication/src/notification.rs` | `core_notification_templates` 7 处裸名 → `public.*` |
+| `svc/communication/src/im_location.rs` | `core_geofences` 8 处裸名 → `public.*` |
+
+**迁移**：[20261107000004_drop_high_risk_shadow_tables.sql](../../database/migrations/20261107000004_drop_high_risk_shadow_tables.sql)
+按依赖顺序（先 `core_dict_items` 后 `core_dict_types`）删除 4 张副本；每张要求 `public` 权威表存在且副本 0 行，
+否则 `RAISE NOTICE` 跳过；**不用 CASCADE**；本地应用后 `_sqlx_migrations` 新增 `20261107000004 success=t`。
+
+**验证（本地）**
+
+- 裸名命中数：`core_dict_types 8→0`、`core_dict_items 9→0`、`core_notification_templates 7→0`、`core_geofences 8→0`。
+- 连续两次重启：两次 `/api/server/ready` 均 200；4 张副本 `to_regclass(...) IS NULL`；两份启动日志中
+  针对这 4 张表的 `CREATE TABLE` / `ALTER TABLE` 命中数均为 **0**。
+- 通知模板租户隔离：A/B 各建一条（`B4-TPL-A` / `B4-TPL-B`），列表 A 只见 A、B 只见 B；
+  `public.core_notification_templates` 中 `tenant_id` 分别为 `…0001` / `…0002`。
+- 围栏：`public.core_geofences` 无 `tenant_id`、无 RLS，隔离依赖 `chat_id` 过滤；A 用 A 会话、B 用 B 会话各
+  只看到自己的围栏，属应用层过滤而非租户策略。
+- 字典：读写落点均为 `public`，但**租户隔离不成立**（见下）。
+
+**新发现（存量风险，本轮未改）**
+
+1. `public.core_dict_types/items` 的 `rls_tenant_isolation` 把 GUC `app.tenant_id` 为 NULL / 空 / `0` 视为全放行；
+   而 `master-data` 的 dict handlers 直连池、未注入请求租户。实测：本地 B 租户可读到 A 租户的 73 类种子；
+   prod 在无 GUC 下 `SELECT` 可见全部 7 类 / 24 项。dict 写接口还会以 `tenant_id = 0` 落库（A 新建的
+   `B4-DICT-A` 即 `tenant_id=…0000`），对全部租户可见。
+   建议：将 dict handlers 切到请求级 `scope_with`（复用 `RlsTxnCell`）并绑定 claims 租户，随后把策略中的
+   NULL/空/`0` 全放行分支收紧；改策略前先在 prod 只读验证受影响调用方。
+2. **prod 字典本身灌不全**：`public.core_dict_types` 仅 7 行，其中 6 个业务类 `department_type` / `education` /
+   `employee_status` / `gender` / `marital_status` / `position_level`（24 项），另 1 行 `zz_b4_probe2` 为历史测试残留；
+   现版标准种子为 73 类 / 379 项，**缺 71 类 / 约 355 项**，且 4 个现存类不在现版种子清单内。
+   建议单独排期：备份后按 `seed_dict_data` 灌入标准种子（需显式设置租户 GUC），再清理 `zz_b4_probe2`；本轮 prod 未做任何 DML。
+
 
 
 ## C. schema 前缀规则（可执行门禁）

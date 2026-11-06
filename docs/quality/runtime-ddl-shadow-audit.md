@@ -15,6 +15,16 @@
 | prod 中运行期定义表的存在性 | **607 / 607 存在，0 缺失** |
 | 危险度 | **高 4、中 16、低 587** |
 
+### 处置状态（2026-11-06，高危 4 张已落地）
+
+高危 4 张已按「先代码 → 后迁移 → 两次重启」处置完毕，本文表格保留审计时点数据：
+
+- 代码：`svc/master-data` `TABLE_DEFS` 7→5、`svc/communication` 3→1；4 张表裸名命中数 8/9/7/8 → **0**。
+- 迁移：`20261107000004_drop_high_risk_shadow_tables.sql` 守卫式删除，4/4 副本已不存在，账本 `success=t`。
+- 本地数据：旧版 38 类 / 189 项字典种子备份后清理，现版 seed 重灌 `public`（73 类 / 379 项，tenant `…0001`）；批 3 的 2 行模板测试数据已删。
+- 遗留（不在本轮批量改）：`master_data` 字典仍存在**租户隔离缺口**——`public.core_dict_*` 的 `rls_tenant_isolation` 策略把 GUC 未设置/空/`0` 视为全放行，而 dict handlers 直连池、不注入请求租户；见 `connection-governance.md` B.10.11。
+
+
 关键共性数据（对 607 条定义与 prod 交叉统计）：
 
 - 184 张表在 prod 中存在同名跨 schema 副本；

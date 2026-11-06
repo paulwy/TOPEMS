@@ -1,3 +1,26 @@
+## 高危 4 张运行期影子表清理（2026-11-06）
+
+| 表 | 裸名命中 | 处置 |
+| --- | --- | --- |
+| `master_data.core_dict_types` | 8 → 0 | `TABLE_DEFS` 删除 + SQL 改 `public.*` |
+| `master_data.core_dict_items` | 9 → 0 | 同上 |
+| `communication.core_notification_templates` | 7 → 0 | 同上 |
+| `communication.core_geofences` | 8 → 0 | 同上 |
+
+- 前向迁移 `20261107000004_drop_high_risk_shadow_tables.sql`：守卫（权威表存在 + 副本 0 行）、不 CASCADE；
+  本地 `_sqlx_migrations` 新增 `success=t`，4/4 副本不存在。
+- 连续两次重启 `/ready` 均 200，4 张副本仍 NULL；两份日志对 4 张表的建表/补列命中 **0**。
+- 本地数据：旧版字典 38 类 / 189 项备份后清理，现版 seed 重灌 `public` 为 **73 类 / 379 项**（tenant `…0001`，
+  `name_en` 全 NULL）；批 3 模板测试 2 行已删；本地 `public.core_geofences` 由 2 列补到 20 列（prod 本就完整）。
+- 租户隔离：模板 A/B 互不可见（落 `public`，tenant `…0001/…0002`）；围栏靠 `chat_id` 过滤（无 tenant_id/RLS）；
+  **字典不通过**——`rls_tenant_isolation` 把 GUC 未设置/空/`0` 视为全放行，dict handlers 直连池不注入租户，
+  B 可见 A 的 73 类，写接口以 `tenant_id=0` 落库。
+- **prod 只读新发现**：`public.core_dict_types` 仅 7 行（6 业务类 + `zz_b4_probe2` 测试残留）/ 24 项；
+  标准种子 73 类 / 379 项，缺 71 类；4 个现存类不在现版种子清单内。建议单独排期回灌 + 清理残留，本轮无 prod DML。
+
+**后续（需拍板）**：① dict handlers 切请求级 `scope_with` 并收紧 RLS 全放行分支；② prod 字典回灌与
+`zz_b4_probe2` 清理；③ 中危 16 张按审计文档继续（portal 帮助中心/联邦网关/master_data 自造）。
+
 ## 通知链路修复 + 运行期 DDL 影子表扫描（2026-11-06）
 
 ### A. 通知链路（已完成并验证）
