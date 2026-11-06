@@ -1943,6 +1943,17 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.144 审计整改第二十一批：CrudPage 写权限全域接入（批 23，2026-11-06）
+
+- **方法论修正（关键）**：映射基准从 `api.resource`（API 路径名）改为 `entity`（业务实体名）。先按 resource 跑出 102 候选，逐条复核即暴露 5 类错配：`finance/{cost,ledger,asset}.ts` 的 resource 都是 `accounts`（会错映射到 `finance:account`，正确是 `finance:cost/ledger/asset`）、`rd/review.ts` resource=`builds`（实体是 review）、`rd/code.ts` resource=`projects`（实体是 code_repo）。改用 entity 后 135 个待接入 schema → 97 个三码齐全可直连、38 个待人工判定。
+- **接入 116 个 schema / 113 个去重前缀**（页面零改动，仅 schema 加一行 `permissionResource`）：首轮 97（entity 直映射）；次轮 11（`fields:` 锚点缺失的工厂函数/变量引用写法，改在 `entity:` 行后注入）；三轮 19 中补 8。按域：finance 12、rd 11、wms 10、pdm 10、hrm 9、srm 9、lims 8(7)、ehs 7(6)、crm 6、qms 6、tms 4、pm 3、aps 3、monitor 3(2)、integration 3、erp 2、bi 2、workflow 2，iam/mobile/doc/report/scm/mes 各 1。
+- **19 项不接入（登记不造码）**：`rd:release|review|code`、`aps:material_plan|production_plan`、`workflow:template` 均仅 read 单码；`mes/materialBom`（BOM≠物料）、`qms/qualityControl`（质量问题≠质量控制）、`ehs/compliance`(法规≠合规) 语义不符；`ehs/check|safetyIssue`、`report/report`、`pdm/productConfig`、`srm/supplierProduct` 一对多（批17 已登记）；`notification/template`、`srm/scoringDimension` 无资源码；`admin/tenantInvoice`、`admin/auditLog` 批19 已结论；`admin/dictionary` 跨域 system。
+- **覆盖收敛（核心成效）**：`permissionResource` 去重前缀 77 → **182**；`db_only` 中"被运行时动态拼码使用"的 CRUD 细码 217 → **524（+307）**；未覆盖候选 436 → **129（-307）**。`db_only` 总数仍 653（本批未建码）。
+- **角色核对（无功能回归）**：14 个域 manager 对本域已接入前缀的三码覆盖**全部 100%**（erp 13/13、finance 15/15、mes 16/16、scm 14/14、pdm 12/12、hrm 12/12、wms 11/11、srm 10/10、ehs 10/10、lims 9/9、qms 8/8、crm 7/7、pm 3/3、report 1/1）；employee 与 finance_user **0/182**；admin/superadmin 181/182（唯一例外 `tenant:member` 无 create，批19 有意）。
+- **无 manager 的 15 个域**（aps/bi/doc/iam/integration/migration/mobile/monitor/notification/plugin/rd/tenant/ticket/tms/workflow，41 前缀）写操作仅 admin/superadmin → 角色规划待拍板（未自造角色）。
+- **验证**：tsc 0 error（三轮各验）；eslint 116 文件 0；全量 vitest **621 files / 6643 passed / 1 skipped / EXIT 0**；对账全部不变（permissionResource 是两段前缀不进三段集合）；无迁移。
+- 产出：`docs/audit/P3-13_CrudPage写权限全域接入_批23_执行记录_2026-11-06.md`
+
 ## v1.143 审计整改第二十批：erp_manager 跨域只读 + 无人引用权限码盘点（批 22，2026-11-06）
 
 - **erp_manager 补 `finance:voucher:read`（只读，不补 write）**：迁移 `20261107000010_erp_manager_finance_voucher_read.sql`，`NOT EXISTS` 判重，实跑首次 `INSERT 0 1` / 二次 `0 0`，附 ROLLBACK 段。授权后持有者：admin / superadmin / finance_manager / **erp_manager**。未建新码 → `core_permissions` 仍 1087。

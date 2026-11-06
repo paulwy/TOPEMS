@@ -11,6 +11,9 @@ export const processSchema: EntitySchema = {
     resource: 'processes',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'pdm:process',
+
   fields: [
     {
       name: 'process_no',

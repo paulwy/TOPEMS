@@ -148,6 +148,8 @@ const eventFields: SchemaField[] = [
 
 export const integrationEventSchema: EntitySchema = {
   entity: 'integration_event',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'integration:event',
   title: i18n.t('shared.event.k18'),
   description: i18n.t('shared.event.k19'),
 

@@ -37,6 +37,9 @@ export const testSchema: EntitySchema = {
     resource: 'tests',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'rd:test',
+
   fields: [
     {
       name: 'case_no',

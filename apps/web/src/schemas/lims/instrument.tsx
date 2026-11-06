@@ -16,6 +16,9 @@ export const instrumentSchema: EntitySchema = {
     resource: 'instruments',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'lims:instrument',
+
   fields: [
     {
       name: 'code',

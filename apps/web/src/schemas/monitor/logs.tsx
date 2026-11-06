@@ -273,6 +273,8 @@ export const getLogSchema = (): EntitySchema => {
 
   return {
     entity: 'monitor_log',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'monitor:log',
     title: i18n.t('shared.logs.k22'),
     description: i18n.t('shared.logs.k23'),
 

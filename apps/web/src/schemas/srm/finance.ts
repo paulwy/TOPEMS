@@ -13,6 +13,9 @@ export const financeSchema: EntitySchema = {
     resource: 'finance',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'srm:finance',
+
   fields: [
     {
       name: 'record_no',

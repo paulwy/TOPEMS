@@ -11,6 +11,9 @@ export const occupationalDiseaseSchema: EntitySchema = {
     resource: 'occupationalDiseases',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'ehs:occupational_disease',
+
   fields: [
     {
       name: 'case_no',

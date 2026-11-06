@@ -178,6 +178,8 @@ const mappingFields: SchemaField[] = [
 
 export const integrationMappingSchema: EntitySchema = {
   entity: 'integration_mapping',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'integration:mapping',
   title: i18n.t('shared.mapping.k15'),
   description: i18n.t('shared.mapping.k16'),
 

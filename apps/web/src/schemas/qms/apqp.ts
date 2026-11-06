@@ -205,6 +205,9 @@ export const apqpSchema: EntitySchema & {
     resource: 'apqp',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'qms:apqp',
+
   fields: [
     {
       name: 'project_no',

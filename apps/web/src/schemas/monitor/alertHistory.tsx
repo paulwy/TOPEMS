@@ -381,6 +381,8 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
 
 export const alertHistorySchema: EntitySchema = {
   entity: 'monitor_alert_history',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'monitor:alert',
   title: i18n.t('shared.alert_history.k18'),
   description: i18n.t('shared.alert_history.k19'),
 

@@ -236,6 +236,8 @@ export const getAlertSchema = (): EntitySchema => {
   const alertFields = getAlertFields();
   return {
     entity: 'monitor_alert',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'monitor:alert',
     title: i18n.t('shared.alert.k15'),
     description: i18n.t('shared.alert.k16'),
 

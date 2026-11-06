@@ -54,6 +54,8 @@ export const getEmployeeSchema = (): EntitySchema => {
 
   return {
     entity: 'hrm_employee',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'hrm:employee',
     title: i18n.t('hrm.employee.k17'),
     description: i18n.t('hrm.employee.k18'),
 

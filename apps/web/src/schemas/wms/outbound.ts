@@ -13,6 +13,9 @@ export const outboundOrderSchema: EntitySchema = {
     resource: 'outbound-orders',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'wms:outbound',
+
   fields: [
     {
       name: 'order_number',
