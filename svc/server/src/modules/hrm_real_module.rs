@@ -84,7 +84,7 @@ impl HrmRealModule {
             ..Default::default()
         };
         let state = ApiState {
-            db: ctx.db.clone(),
+            db: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,

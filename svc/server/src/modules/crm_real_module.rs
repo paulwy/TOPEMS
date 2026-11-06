@@ -107,7 +107,7 @@ impl CrmRealModule {
         let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(crm_l2_config("dict")));
         let dashboard_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("dashboard")));
         let state = ApiState {
-            db: ctx.db.clone(),
+            db: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,

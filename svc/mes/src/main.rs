@@ -242,7 +242,7 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: ctx.db.clone(),
+        pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
         health_config,
         event_publisher: ctx.event_publisher.clone(),
         erp_client,

@@ -56,7 +56,7 @@ impl MobileRealModule {
         // 2. 构造 mobile AppState（复用 svc/mobile 类型）
         let state = topems_mobile::shared::AppState {
             auth_state: ctx.auth_state.clone(),
-            pool: ctx.db.clone(),
+            pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
             wms_client,
             hrm_client,
@@ -76,6 +76,10 @@ impl MobileRealModule {
             .layer(axum::middleware::from_fn(require_permission(
                 "mobile:admin",
             )))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
             .with_state(state);
 
         // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）

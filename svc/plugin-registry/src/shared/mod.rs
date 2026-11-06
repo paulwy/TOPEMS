@@ -7,12 +7,13 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::ScopedPool;
 use topems_shared_core::health::SystemMetrics;
 
 #[derive(Clone)]
 pub struct AppState {
     // 插件模块 handlers 直接访问 .pool
-    pub pool: PgPool,
+    pub pool: ScopedPool,
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
@@ -26,7 +27,7 @@ impl FromRef<AppState> for AuthState {
 
 impl FromRef<AppState> for PgPool {
     fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
+        state.pool.inner().clone()
     }
 }
 

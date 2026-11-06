@@ -1,5 +1,5 @@
 use chrono::Utc;
-use sqlx::postgres::PgPool;
+use topems_shared_auth::ScopedPool;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -8,7 +8,7 @@ use topems_shared_auth::security::encryption::FieldEncryptionService;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 
 pub struct EmployeeService {
-    db: PgPool,
+    db: ScopedPool,
     encryption: FieldEncryptionService,
     tenant_id: Uuid,
     /// 请求语言 SQL 值（`"zh"` / `"en"`），用于 `e.name` 的双语 CASE 切换。
@@ -17,7 +17,7 @@ pub struct EmployeeService {
 
 impl EmployeeService {
     pub fn new(
-        db: PgPool,
+        db: ScopedPool,
         encryption: FieldEncryptionService,
         tenant_id: Uuid,
         locale: &'static str,

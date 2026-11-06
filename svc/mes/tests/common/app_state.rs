@@ -14,7 +14,7 @@ pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
             "test-refresh-secret-0123456789abcdef0123456789abcdef".to_string(),
             86400,
         ),
-        pool,
+        pool: topems_shared_auth::ScopedPool::new(pool),
         health_config: SimpleHealthConfig::new("test-mes"),
         event_publisher: None,
         erp_client: None,
