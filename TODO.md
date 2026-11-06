@@ -1,3 +1,19 @@
+## 字典租户隔离修复（2026-11-06）
+
+- **代码**：`master-data` 全部 dict handlers 从直连池改为请求级 `RlsTxnCell` + `scope_with`（复用
+  `tenant_middleware` 注入的事务与 `app.tenant_id`）；写路径（types/items/batch）显式绑定租户：
+  普通用户 = `claims.tenant_id`，超管/service = 系统租户 `…0001`，不再落 `tenant_id=0`。
+- **系统通道**：新增显式 GUC `app.rls_system='on'`，仅 `tenant_middleware` 的超管/service 分支与
+  `seed_dict_data` 事务内设置；普通请求显式置 `off`。策略不再把 NULL/空/`0` 视为放行。
+- **迁移**：`20261107000008_dict_tenant_isolation_strict.sql` 重建两张字典表策略（先清空历史策略，
+  再建唯一 `rls_tenant_isolation`：`rls_system='on' OR tenant_id=app.tenant_id`）；本地已应用，账本新增一行。
+- **证据（本地）**：A/B 双向列表互不可见 + 交叉 GET 均 404；落库 `tenant_id` 分别为 A/B 租户；
+  seed 在系统通道下重灌 **73 类 / 379 项**（单租户 `…0001`）；超管列表可见 A+B（75 行）。
+- **prod 影响面（只读）**：7 类 / 24 项全部 `…0001`，无 NULL/0；`category='system'` 为 0（seed 守卫不会跳过）；
+  无 GUC 直连将 fail-closed，DBA 排查需 `SET app.rls_system='on'`。
+- **prod 回灌方案**（未执行）：[prod-dict-seed-replay-plan-2026-11-06.md](docs/database/prod-dict-seed-replay-plan-2026-11-06.md)。
+- **遗留**：prod 回灌与 `zz_b4_probe2` 清理待窗口执行；4 个非标准存量类保留需业务确认。
+
 ## 高危 4 张运行期影子表清理（2026-11-06）
 
 | 表 | 裸名命中 | 处置 |

@@ -162,9 +162,9 @@ pub fn tenant_middleware() -> impl Fn(
 
             // 服务身份（service token）与超管会话豁免租户上下文：服务间调用是全局
             // 基础设施，无租户维度（service token 不携带 tenant_id）；超管亦无
-            // tenant_id。两者都将租户上下文固定为 nil UUID —— 配合 RLS 策略中的
-            // `OR current = nil` 豁免条件，超管/服务间调用在受限 DB 用户下仍可全量
-            // 访问（与 owner 绕过行为一致），而普通用户请求维持租户隔离。
+            // tenant_id。两者都将租户上下文固定为 nil UUID，并打开显式系统通道
+            // `app.rls_system='on'` —— 新策略只认这一开关做全量放行，不再把
+            // NULL/空/`0` 的租户 GUC 当作放行条件；普通租户请求维持租户隔离。
             if is_service_claims(claims) || claims.is_superuser {
                 tracing::debug!(
                     "service claims: set nil tenant context for {}",
@@ -183,6 +183,12 @@ pub fn tenant_middleware() -> impl Fn(
                     .await
                 {
                     tracing::error!("Failed to set nil RLS context: {}", e);
+                }
+                if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+                    .execute(&mut *txn)
+                    .await
+                {
+                    tracing::error!("Failed to enable RLS system channel: {}", e);
                 }
                 let mut req = req;
                 let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
@@ -226,13 +232,9 @@ pub fn tenant_middleware() -> impl Fn(
                     return next.run(req).await;
                 }
             };
-            // superuser 会话：RLS 使用 nil 租户（配合策略零值豁免条件全量可见），
-            // TenantContext 保留实际租户供业务过滤使用
-            let rls_tenant = if claims.is_superuser {
-                Uuid::nil()
-            } else {
-                tenant_id
-            };
+            // 普通租户请求：RLS 使用 claims 中的真实租户；超管/service 已在上面
+            // 的系统通道分支返回，不会走到这里。
+            let rls_tenant = tenant_id;
             match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
                 .bind(rls_tenant.to_string())
                 .execute(&mut *txn)
@@ -244,6 +246,14 @@ pub fn tenant_middleware() -> impl Fn(
                     rls_tenant
                 ),
                 Err(e) => tracing::error!("Failed to set RLS context: {}", e),
+            }
+            // 普通租户请求显式关闭系统通道：即使连接上有残留会话级开关，
+            // 也不会把本请求提升为跨租户放行。
+            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'off', true)")
+                .execute(&mut *txn)
+                .await
+            {
+                tracing::error!("Failed to disable RLS system channel: {}", e);
             }
 
             let user_id = match claims.user_id() {

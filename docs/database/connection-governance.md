@@ -909,6 +909,81 @@ RLS 关闭；权威表 `public.core_notification_templates` 为 **0 行**。B.10
    现版标准种子为 73 类 / 379 项，**缺 71 类 / 约 355 项**，且 4 个现存类不在现版种子清单内。
    建议单独排期：备份后按 `seed_dict_data` 灌入标准种子（需显式设置租户 GUC），再清理 `zz_b4_probe2`；本轮 prod 未做任何 DML。
 
+#### B.10.12 字典租户隔离修复（2026-11-06）
+
+**根因**（B.10.11 遗留）：`public.core_dict_types/items` 的租户策略把 `app.tenant_id` 为 NULL / 空 /
+`0` 视为全放行；同时 dict handlers 直连 `PgPool`，没有复用 `tenant_middleware` 的请求事务与租户 GUC，
+导致读跨租户、写落 `tenant_id=0`。
+
+**1. handlers 改为请求级事务**
+
+| 文件 | 改动 |
+| --- | --- |
+| `svc/master-data/src/modules/dict/handlers.rs` | 11 个 handler（types/items 的 list/get/create/update/delete、batch、export）全部改为 `Extension<RlsTxnCell>`，`state.rls_db.scope_with(txn)` 后在同一事务内执行；COUNT 与 SELECT 共享同一快照 |
+| `svc/master-data/src/shared/mod.rs` | `AppState` 新增 `rls_db: topems_shared_db::Db`（`search_path = master_data, public, shared`），原 `db` 保留给未治理模块 |
+| `svc/server/src/modules/master_data_real_module.rs`、`svc/master-data/src/main.rs`、`tests/mdm_crud_integration.rs` | 同步构造 `rls_db` |
+
+写路径租户绑定（`create_tenant_id`）：
+
+- 普通用户：`claims.tenant_id`（middleware 已保证存在且合法）；
+- 超管 / service token：系统租户 `00000000-0000-0000-0000-000000000001`（与标准种子一致），
+  **不再以全零 UUID 落库**；
+- `batch_create_dict_items` 失败时显式 rollback 并摘除事务句柄，避免复用请求事务导致部分提交。
+
+**2. 显式系统通道 `app.rls_system`**
+
+| 通道 | 设置点 | 作用 |
+| --- | --- | --- |
+| 超管 HTTP 会话 | `tenant_middleware` 的 `claims.is_superuser` 分支：`app.tenant_id=nil` + `app.rls_system='on'` | 保持管理端跨租户读写 |
+| service token | 同一分支（`is_service_claims`） | 服务间调用无租户维度，保持全量 |
+| 启动期 / 运维 seed | `seed_dict_data` 事务内 `set_config('app.rls_system','on',true)` | seed 可读写，仍固定写 `…0001` |
+| 普通租户请求 | 显式 `set_config('app.rls_system','off',true)` | 防止连接残留把请求提升为跨租户 |
+| 迁移 / DBA 脚本 | 需在同一会话或事务内 `SET app.rls_system='on'`（或使用 superuser/bypassrls 账号） | 否则 fail-closed |
+
+迁移脚本本身只做 DDL，不读写字典行，不需要系统通道。历史迁移字节未改。
+
+**3. 策略收紧**
+
+[20261107000008_dict_tenant_isolation_strict.sql](../../database/migrations/20261107000008_dict_tenant_isolation_strict.sql)：
+
+1. 对 `public.core_dict_types` / `core_dict_items` 逐一 `DROP` 该表全部历史策略（本地 `tenant_isolation_core_dict_*`、
+   prod `rls_tenant_isolation`），避免多条 permissive 策略按 OR 叠加；
+2. 重建唯一策略：
+
+```sql
+USING (
+  COALESCE(current_setting('app.rls_system', true), '') = 'on'
+  OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+)
+```
+
+`WITH CHECK` 同表达式；GUC 缺失时比较为 NULL → 不放行（fail-closed）。表不存在时跳过，不 CASCADE、不删数据；
+末尾断言每表恰好 1 条策略且包含 `app.rls_system`。
+
+**4. 验证（本地，2026-11-06）**
+
+| 项 | 结果 |
+| --- | --- |
+| 策略直查（无显式 GUC） | types 0 行（DB 级默认 `…0000` 不再放行） |
+| `app.tenant_id=…0001` | 73 类；`=A(1111…)` 0 类 / 0 项 |
+| `app.rls_system='on'` | 73 类 / 379 项 |
+| seed 重灌（清空后经系统通道） | `system_types=73 items=379 distinct_tenants=1` |
+| A/B 列表 | A total=1 仅见 `zz_iso_a`；B total=1 仅见 `zz_iso_b` |
+| A/B 交叉 GET | A 读 B id = 404；B 读 A id = 404；A 读自己 = 200 |
+| 写落库 | `zz_iso_a → 1111…`、`zz_iso_b → 2222…`、`item_a → 1111…`（无全零） |
+| 超管列表 | total=75（73 系统 + A + B），跨租户读取正常 |
+| 门禁 | `cargo check --workspace`、`clippy --workspace --all-targets -- -D warnings`、`fmt --check` 全绿；`topems-master-data` / `topems-shared-auth` 测试通过 |
+| 迁移账本 | 本地 `_sqlx_migrations` 新增 `20261107000008 success=t`；`checksums.txt` 仅新增行 |
+
+**5. prod 影响面（只读核对，未执行 DML）**
+
+- `core_dict_types` 7 行 / `core_dict_items` 24 行，`tenant_id` 全为 `…0001`，**无 NULL、无全零行**；
+  `category='system'` 为 0 → `seed_dict_data` 幂等守卫不会跳过。
+- 新策略对 prod 的行为变化只在“无 GUC 的直连路径”：由原先全表可见变为 0 行；应用 HTTP 普通租户、
+  超管/service 均不受影响（有 middleware 注入）。
+- 回灌与 `zz_b4_probe2` 清理的执行方案（备份、显式 GUC、核对 SQL、回滚、窗口）见
+  [prod-dict-seed-replay-plan-2026-11-06.md](prod-dict-seed-replay-plan-2026-11-06.md)。
+
 
 
 ## C. schema 前缀规则（可执行门禁）

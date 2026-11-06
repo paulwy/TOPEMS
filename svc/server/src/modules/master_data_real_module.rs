@@ -63,6 +63,7 @@ impl MasterDataRealModule {
         // 2. 构建业务 AppState（与独立部署 main.rs 一致）
         let app_state = AppState {
             db: ctx.db.clone(),
+            rls_db: topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared"),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,

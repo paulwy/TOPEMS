@@ -53,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
     // 把 ServiceContext 转换为下游 modules 依赖的 legacy AppState（零改造）
     let app_state = AppState {
         db: ctx.db.clone(),
+        rls_db: topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared"),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::clone(&ctx.metrics),
         start_time: ctx.start_time,

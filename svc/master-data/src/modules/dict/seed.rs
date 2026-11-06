@@ -8,14 +8,28 @@ use sqlx::PgPool;
 /// 预置系统基础字典数据
 ///
 /// 包含：通用状态、性别、是/否、用户类型、审批状态、优先级、货币、单位等
+///
+/// 该函数不经过请求中间件，必须显式打开系统通道（`app.rls_system='on'`）：
+/// 紧收后的 `rls_tenant_isolation` 不再把"无租户 GUC / 全零 GUC"视为放行，
+/// 否则 seed 的读写都会被 RLS 拒绝或看不见既有行。
 pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind("00000000-0000-0000-0000-000000000001")
+        .execute(&mut *tx)
+        .await?;
+
     // 检查是否已初始化（避免重复插入）
     let count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_dict_types WHERE category = 'system'")
-            .fetch_one(pool)
+            .fetch_one(&mut *tx)
             .await?;
 
     if count > 0 {
+        tx.rollback().await?;
         tracing::info!("字典数据已存在，跳过初始化（{} 条系统字典类型）", count);
         return Ok(());
     }
@@ -35,7 +49,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         .bind(type_code)
         .bind(type_name)
         .bind(format!("系统预置 - {}", type_name))
-        .fetch_one(pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // 批量插入字典项
@@ -50,10 +64,12 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
             .bind(name)
             .bind(value)
             .bind(idx as i32)
-            .execute(pool)
+            .execute(&mut *tx)
             .await?;
         }
     }
+
+    tx.commit().await?;
 
     tracing::info!(
         "系统基础字典数据初始化完成（{} 个字典类型）",
