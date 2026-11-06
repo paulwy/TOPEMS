@@ -1037,9 +1037,15 @@ pub async fn list_payables(
 
 pub async fn create_payable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
+    // 超管/服务身份落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400
+    let tenant_opt: Option<Uuid> = match topems_shared_auth::middleware::resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let invoice_number = req
@@ -1055,7 +1061,7 @@ pub async fn create_payable(
         r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
                                  category, amount, invoice_date, due_date, status,
                                  paid_amount, payment_schedule, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1091,6 +1097,7 @@ pub async fn create_payable(
     }))
     .bind(now)
     .bind(now)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

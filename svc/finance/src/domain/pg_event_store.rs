@@ -170,6 +170,10 @@ impl EventStore for PgEventStore {
         metadata: Option<EventMetadata>,
     ) -> Result<Vec<EventRecord>, TopemsError> {
         let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(Uuid::nil().to_string())
+            .execute(&mut *tx)
+            .await?;
 
         let current_version_row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -203,7 +207,7 @@ impl EventStore for PgEventStore {
 
             let row = sqlx::query(
                 only_own_schema_query!("finance", "INSERT INTO cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
                  RETURNING id, aggregate_id::text, aggregate_type, event_type, version, payload, metadata, occurred_at"),
             )
             .bind(id)
@@ -213,6 +217,7 @@ impl EventStore for PgEventStore {
             .bind(version as i64)
             .bind(&payload_json)
             .bind(&metadata_json)
+            .bind(Uuid::nil())
             .fetch_one(&mut *tx)
             .await
             ?;

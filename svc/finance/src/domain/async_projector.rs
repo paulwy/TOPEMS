@@ -97,13 +97,20 @@ impl AsyncProjector {
                 })
             }
             None => {
+                let mut tx = self.pool.begin().await?;
+                sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+                    .bind(Uuid::nil().to_string())
+                    .execute(&mut *tx)
+                    .await?;
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.cqrs_projection_progress (view_name, processed_count, error_count, tenant_id) VALUES ($1, 0, 0, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
+                    only_own_schema_query!("finance", "INSERT INTO finance.cqrs_projection_progress (view_name, processed_count, error_count, tenant_id) VALUES ($1, 0, 0, $2)"),
                 )
                 .bind(view_name)
-                .execute(&self.pool)
+                .bind(Uuid::nil())
+                .execute(&mut *tx)
                 .await
                 ?;
+                tx.commit().await?;
 
                 Ok(ProjectionProgress {
                     view_name: view_name.to_string(),
