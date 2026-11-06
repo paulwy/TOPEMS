@@ -106,5 +106,5 @@ pub fn has_mobile_permission(claims: &Claims, permission: &MobilePermission) -> 
         return true;
     }
     let perm_str = permission.to_string();
-    claims.has_permission(&perm_str) || claims.has_permission("system:admin")
+    claims.has_permission(&perm_str) || claims.has_permission("mobile:admin")
 }

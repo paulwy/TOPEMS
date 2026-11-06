@@ -13,7 +13,7 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
@@ -77,9 +77,7 @@ impl MobileRealModule {
         //     待上游支持后替换为真实 handler。与 build_protected_routes 同层 merge。
         let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
             .merge(topems_mobile::modules::contract_fallback::routes())
-            .layer(axum::middleware::from_fn(require_permission(
-                "mobile:admin",
-            )))
+            .layer(axum::middleware::from_fn(require_module_access("mobile")))
             .with_state(state);
 
         // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）
