@@ -6,14 +6,27 @@
 //! - 自动化工作流 (MDMWorkflowEngine): 工作流模板、步骤管理、审批/驳回、状态流转
 //! - 数据产品化 (DataProductManager): 数据产品管理、数据契约、API暴露、血缘追踪
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // K1 接真表：SQL 错误统一出口（Ok 透传 / Err → Json 500）
 macro_rules! db_exec {
@@ -152,6 +165,7 @@ struct GovernanceMaturity;
 impl GovernanceMaturity {
     async fn assess_maturity(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
     ) -> Result<MaturityAssessment, TopemsError> {
@@ -179,7 +193,7 @@ impl GovernanceMaturity {
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_INSERT_COLS}, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"
         )))
         .bind(&assessment.id)
         .bind(dimension_str(&assessment.dimension))
@@ -189,19 +203,21 @@ impl GovernanceMaturity {
         .bind(serde_json::to_value(&assessment.gaps).unwrap_or_default())
         .bind(serde_json::to_value(&assessment.recommendations).unwrap_or_default())
         .bind(assessment.assessed_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度评估失败: {e}")))?;
 
         sqlx::query(
             "INSERT INTO master_data.mdm_maturity_history (id, dimension, score, level, recorded_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5, $6)",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(dimension_str(&assessment.dimension))
         .bind(assessment.score)
         .bind(maturity_level_str(&assessment.current_level))
         .bind(now.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度历史失败: {e}")))?;
@@ -229,6 +245,7 @@ impl GovernanceMaturity {
 
     async fn create_improvement_plan(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
         actions: Vec<String>,
@@ -245,7 +262,7 @@ impl GovernanceMaturity {
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_improvement_plans ({IMPROVEMENT_PLAN_COLS}, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+             VALUES ($1,$2,$3,$4,$5,$6,$7, $8)"
         )))
         .bind(&plan.id)
         .bind(dimension_str(&plan.dimension))
@@ -254,6 +271,7 @@ impl GovernanceMaturity {
         .bind(&plan.priority)
         .bind(&plan.due_date)
         .bind(&plan.status)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入改进计划失败: {e}")))?;
@@ -402,6 +420,7 @@ struct MDMWorkflowEngine;
 impl MDMWorkflowEngine {
     async fn create_workflow(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         name: String,
         workflow_type: WorkflowType,
         steps: Vec<WorkflowStepV58>,
@@ -419,7 +438,7 @@ impl MDMWorkflowEngine {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"
         )))
         .bind(&workflow.id)
         .bind(&workflow.name)
@@ -429,6 +448,7 @@ impl MDMWorkflowEngine {
         .bind(status_str(&workflow.status))
         .bind(workflow.created_at.to_rfc3339())
         .bind(workflow.updated_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建工作流失败: {e}")))?;
@@ -815,6 +835,7 @@ struct DataProductManager;
 impl DataProductManager {
     async fn create_data_product(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         name: String,
         description: String,
         owner: String,
@@ -837,7 +858,7 @@ impl DataProductManager {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12)"
         )))
         .bind(&product.id)
         .bind(&product.name)
@@ -850,6 +871,7 @@ impl DataProductManager {
         .bind(product_status_str(&product.status))
         .bind(product.created_at.to_rfc3339())
         .bind(product.updated_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建数据产品失败: {e}")))?;
@@ -972,6 +994,7 @@ impl DataProductManager {
 
     async fn expose_as_api(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         product_id: &str,
         auth_type: String,
         rate_limit: String,
@@ -993,7 +1016,7 @@ impl DataProductManager {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, $8)"
         )))
         .bind(&exposure.id)
         .bind(&exposure.product_id)
@@ -1002,6 +1025,7 @@ impl DataProductManager {
         .bind(&exposure.rate_limit)
         .bind(exposure.enabled)
         .bind(exposure.created_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入 API 暴露失败: {e}")))?;
@@ -1258,8 +1282,10 @@ pub struct ExposeApiRequest {
 )]
 pub async fn assess_maturity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AssessMaturityRequest>,
 ) -> ApiResponse<MaturityAssessment> {
+    let tenant = tenant_of(&claims);
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return ApiResponse::bad_request("无效的维度类型"),
@@ -1270,7 +1296,13 @@ pub async fn assess_maturity(
         .and_then(parse_maturity_level)
         .unwrap_or(MaturityLevel::Optimized);
 
-    let result = db_exec!(GovernanceMaturity::assess_maturity(&state.db, dimension, target).await);
+    let result = db_exec!(GovernanceMaturity::assess_maturity(
+        &state.db,
+        tenant,
+        dimension,
+        target
+    )
+    .await);
     ApiResponse::success(result, "成熟度评估完成")
 }
 
@@ -1331,8 +1363,10 @@ pub async fn get_dimension_scores(
 )]
 pub async fn create_improvement_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ImprovementPlanRequest>,
 ) -> ApiResponse<ImprovementPlan> {
+    let tenant = tenant_of(&claims);
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return ApiResponse::bad_request("无效的维度类型"),
@@ -1343,8 +1377,14 @@ pub async fn create_improvement_plan(
     };
 
     let plan = db_exec!(
-        GovernanceMaturity::create_improvement_plan(&state.db, dimension, target, req.actions)
-            .await
+        GovernanceMaturity::create_improvement_plan(
+            &state.db,
+            tenant,
+            dimension,
+            target,
+            req.actions
+        )
+        .await
     );
     ApiResponse::success(plan, "改进计划已创建")
 }
@@ -1413,8 +1453,10 @@ pub async fn get_benchmark(State(state): State<AppState>) -> ApiResponse<Vec<Ben
 )]
 pub async fn create_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> ApiResponse<WorkflowV58> {
+    let tenant = tenant_of(&claims);
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
         None => return ApiResponse::bad_request("无效的工作流类型"),
@@ -1443,7 +1485,7 @@ pub async fn create_workflow(
         .collect();
 
     let workflow = db_exec!(
-        MDMWorkflowEngine::create_workflow(&state.db, req.name, workflow_type, steps).await
+        MDMWorkflowEngine::create_workflow(&state.db, tenant, req.name, workflow_type, steps).await
     );
     ApiResponse::success(workflow, "工作流已创建")
 }
@@ -1636,8 +1678,10 @@ pub async fn get_workflow_history(
 )]
 pub async fn create_data_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDataProductRequest>,
 ) -> ApiResponse<DataProduct> {
+    let tenant = tenant_of(&claims);
     let sla = req
         .sla_level
         .as_deref()
@@ -1647,6 +1691,7 @@ pub async fn create_data_product(
     let product = db_exec!(
         DataProductManager::create_data_product(
             &state.db,
+            tenant,
             req.name,
             req.description,
             req.owner,
@@ -1662,8 +1707,10 @@ pub async fn create_data_product(
 /// 与 mdm-v58/create_data_product 走同一管理器。
 pub async fn create_data_product_compat(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<DataProduct> {
+    let tenant = tenant_of(&claims);
     let name = req
         .get("name")
         .and_then(|v| v.as_str())
@@ -1691,8 +1738,16 @@ pub async fn create_data_product_compat(
         .unwrap_or(SlaLevel::Silver);
 
     let product = db_exec!(
-        DataProductManager::create_data_product(&state.db, name, description, owner, domain, sla)
-            .await
+        DataProductManager::create_data_product(
+            &state.db,
+            tenant,
+            name,
+            description,
+            owner,
+            domain,
+            sla
+        )
+        .await
     );
     ApiResponse::success(product, "数据产品已创建")
 }
@@ -1833,13 +1888,15 @@ pub async fn get_contract_status(
 )]
 pub async fn expose_as_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ExposeApiRequest>,
 ) -> ApiResponse<ApiExposure> {
+    let tenant = tenant_of(&claims);
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
-    match db_exec!(DataProductManager::expose_as_api(&state.db, &id, auth, rate).await) {
+    match db_exec!(DataProductManager::expose_as_api(&state.db, tenant, &id, auth, rate).await) {
         Some(e) => ApiResponse::success(e, "API 已暴露"),
         None => ApiResponse::not_found("未找到数据产品"),
     }

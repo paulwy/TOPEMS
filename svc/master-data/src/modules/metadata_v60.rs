@@ -6,13 +6,26 @@
 //! - 数据血缘增强: 多层级血缘追踪、影响分析、血缘图谱、导出
 //! - 生命周期管理: 阶段管理、策略配置、自动转换、批量操作
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：真表映射（master_data.mdm_metadata_objects） ====================
 
@@ -439,8 +452,10 @@ pub struct BulkTransitionRequest {
 )]
 pub async fn create_metadata(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMetadataRequest>,
 ) -> ApiResponse<MetadataObject> {
+    let tenant = tenant_of(&claims);
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
         None => return ApiResponse::bad_request("无效的元数据对象类型"),
@@ -463,7 +478,7 @@ pub async fn create_metadata(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_metadata_objects
            (id, name, object_type, description, owner, tags, attributes, created_at, updated_at, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, $10)"#,
     )
     .bind(&obj.id)
     .bind(&obj.name)
@@ -474,6 +489,7 @@ pub async fn create_metadata(
     .bind(&obj.attributes)
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -487,8 +503,10 @@ pub async fn create_metadata(
 /// 与 mdm-v60/create_metadata 落库路径保持一致。
 pub async fn create_metadata_compat(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<MetadataObject> {
+    let tenant = tenant_of(&claims);
     let object_type = match req
         .get("object_type")
         .and_then(|v| v.as_str())
@@ -537,7 +555,7 @@ pub async fn create_metadata_compat(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_metadata_objects
            (id, name, object_type, description, owner, tags, attributes, created_at, updated_at, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, $10)"#,
     )
     .bind(&obj.id)
     .bind(&obj.name)
@@ -548,6 +566,7 @@ pub async fn create_metadata_compat(
     .bind(&obj.attributes)
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -686,9 +705,11 @@ pub async fn search_metadata_compat(
 )]
 pub async fn update_metadata(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateMetadataRequest>,
 ) -> ApiResponse<MetadataObject> {
+    let tenant = tenant_of(&claims);
     // K1：真表更新（COALESCE 仅覆盖传入字段），updated_at 刷新。
     let tags_json = req
         .tags
@@ -702,7 +723,7 @@ pub async fn update_metadata(
                tags = COALESCE($5, tags),
                attributes = COALESCE($6, attributes),
                updated_at = $7
-           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           WHERE id = $1 AND ($8::uuid IS NULL OR tenant_id = $8)"#,
     )
     .bind(&id)
     .bind(&req.name)
@@ -711,6 +732,7 @@ pub async fn update_metadata(
     .bind(&tags_json)
     .bind(&req.attributes)
     .bind(chrono::Utc::now().to_rfc3339())
+    .bind(tenant)
     .execute(&state.db)
     .await;
 
@@ -749,11 +771,14 @@ pub async fn update_metadata(
 )]
 pub async fn delete_metadata(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
+    let tenant = tenant_of(&claims);
     // K1：真表删除。
-    let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
         .bind(&id)
+        .bind(tenant)
         .execute(&state.db)
         .await;
 

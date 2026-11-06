@@ -6,13 +6,26 @@
 //! - 计量计费 (MeteringService): 使用记录、账单生成、费率卡、成本计算
 //! - SLA 保障 (SLAGuarantee): SLA 配置、度量、违约计算、事故管理
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：真表映射（master_data.mdm_api_products / mdm_subscriptions） ====================
 
@@ -452,8 +465,10 @@ pub struct SLAReportQuery {
 )]
 pub async fn create_api_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAPIProductRequest>,
 ) -> ApiResponse<APIProduct> {
+    let tenant = tenant_of(&claims);
     let tier = req
         .tier
         .as_deref()
@@ -475,7 +490,7 @@ pub async fn create_api_product(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_api_products
            (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&product.id)
     .bind(&product.name)
@@ -485,6 +500,7 @@ pub async fn create_api_product(
     .bind(serde_json::to_value(&product.features).unwrap_or(serde_json::json!([])))
     .bind(product.price_monthly)
     .bind(product.active)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -694,15 +710,18 @@ pub async fn list_subscriptions(
 )]
 pub async fn cancel_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let tenant = tenant_of(&claims);
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
-           WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
+           WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {SUBSCRIPTION_COLS}"#,
     )))
     .bind(&id)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {
@@ -730,9 +749,11 @@ pub async fn cancel_subscription(
 )]
 pub async fn upgrade_tier(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
+    let tenant = tenant_of(&claims);
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
@@ -754,10 +775,11 @@ pub async fn upgrade_tier(
         .unwrap_or(current.tier);
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))",
+        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2::uuid AND ($3::uuid IS NULL OR tenant_id = $3)",
     )
     .bind(product_tier_to_string(&new_tier))
     .bind(&id)
+    .bind(tenant)
     .execute(&state.db)
     .await
     {
@@ -1154,15 +1176,18 @@ pub async fn get_rate_cards(State(state): State<AppState>) -> ApiResponse<Vec<Ra
 )]
 pub async fn mark_bill_paid(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<BillingRecord> {
+    let tenant = tenant_of(&claims);
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
-           WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
+           WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {BILLING_COLS}"#,
     )))
     .bind(&id)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {

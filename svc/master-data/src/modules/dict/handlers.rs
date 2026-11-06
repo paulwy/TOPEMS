@@ -1,8 +1,9 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -16,6 +17,18 @@ use super::models::{
     DictItemListResponse, DictItemQuery, DictType, DictTypeListResponse, DictTypeQuery,
     UpdateDictItemRequest, UpdateDictTypeRequest,
 };
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 fn dict_type_columns(locale_placeholder: &str) -> String {
     format!(
@@ -182,9 +195,11 @@ pub async fn get_dict_type(
 )]
 pub async fn create_dict_type(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
+    let tenant = tenant_of(&claims);
     if req.code.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "字典类型编码不能为空".to_string(),
@@ -198,7 +213,7 @@ pub async fn create_dict_type(
 
     let sql = format!(
         r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ($1, $2, $3, $4, $5, 'active', $7)
            RETURNING {}"#,
         dict_type_columns("$6")
     );
@@ -210,6 +225,7 @@ pub async fn create_dict_type(
         .bind(req.category.unwrap_or_else(|| "general".to_string()))
         .bind(req.description)
         .bind(Locale::from_headers(&headers).as_sql())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .fetch_one(&state.db)
         .await
     {
@@ -460,9 +476,11 @@ pub async fn get_dict_item(
 )]
 pub async fn create_dict_item(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
+    let tenant = tenant_of(&claims);
     if req.code.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "字典项编码不能为空".to_string(),
@@ -476,7 +494,7 @@ pub async fn create_dict_item(
 
     let sql = format!(
         r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $10)
            RETURNING {}"#,
         dict_item_columns("$9")
     );
@@ -491,6 +509,7 @@ pub async fn create_dict_item(
         .bind(req.parent_id)
         .bind(req.extra_data)
         .bind(Locale::from_headers(&headers).as_sql())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .fetch_one(&state.db)
         .await
     {
