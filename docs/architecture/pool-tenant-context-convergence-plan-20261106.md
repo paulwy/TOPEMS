@@ -254,6 +254,101 @@
 
 ---
 
+### 7.5 追平 origin/main 与回补（2026-11-06）
+
+**决策**：`origin/main` 的 `Db/scope` 为权威机制，B0 的 `ScopedPool` 退役；一次性全量追平，
+语义修正逐条回补。备份 ref：`backup/main-before-catchup-20261106` / tag
+`before-catchup-20261106`（均指向 `46384cf0e`）。
+
+#### 7.5.1 合并
+
+- 追平 `1b9a56200`（fetch 后实际落后 46 个提交，非 1 个）；merge commit `835984fd1`。
+- 28 个内容冲突全部取 `origin/main` 侧：`Db/scope`、`master-data.rls_db`、
+  mobile/plugin-registry 的模块 `search_path` 与 state 类型、handler 的
+  `scope()/scope_read()/scope_with()`、plugin-registry `check_health()`。
+- 合并后 `SQLX_OFFLINE=true cargo check --workspace` PASS、`apps/web pnpm typecheck` PASS。
+
+#### 7.5.2 fail-closed 回补（对 origin/main 的有意语义修改）
+
+`origin/main` 的 `lib/shared-auth/src/middleware/tenant.rs` 在
+`pool.begin()` / `set_config` 失败时 `return next.run(req)` 或仅打日志继续，属 fail-open。
+本次改为 **500 直接终止**（新增 `internal_error()`）：
+
+| 位置 | 原行为 | 现行为 |
+|---|---|---|
+| 系统通道 `pool.begin()` 失败 | `next.run(req)` 继续 | 500 `事务开启失败` |
+| 系统通道 `set_config(app.tenant_id=nil)` 失败 | 仅 `tracing::error!` | rollback + 500 `租户上下文设置失败` |
+| 系统通道 `set_config(app.rls_system=on)` 失败 | 仅 `tracing::error!` | rollback + 500 `系统通道设置失败` |
+| 普通租户 `pool.begin()` 失败 | `next.run(req)` 继续 | 500 `事务开启失败` |
+| 普通租户 `set_config(app.tenant_id)` 失败 | 仅 `tracing::error!` | rollback + 500 `租户上下文设置失败` |
+| 普通租户 `set_config(app.rls_system=off)` 失败 | 仅 `tracing::error!` | rollback + 500 `系统通道设置失败` |
+
+`require_tenant_status` 内 3 处 `next.run(req)` 属 public 路径与超管短路，不持有事务、
+不涉及 GUC，未改动。验证方式：代码级路径覆盖 + 第 3 段运行期实测（见 7.5.6）。
+
+#### 7.5.3 中间件统一
+
+`origin/main` 同时存在两套租户中间件：`shared-auth::tenant_middleware`（Claims + 请求事务级
+`SET LOCAL`）与 `shared-db::rls::rls_middleware`（`x-tenant-id` 头 + 会话级 GUC + RESET）。
+后者把 GUC 设在它自己独占的连接上，而 `Db::scope()` 另起一条连接，**GUC 根本传不到查询**，
+且每请求多占一条连接。统一结论：
+
+1. **保留 `shared-auth::tenant_middleware`** 作为唯一租户入口（claims 可信、请求事务可复用、
+   fail-closed 可落地）；
+2. **移除全部 `shared-db::rls::rls_middleware` 挂载**（30 处，含 mes/mobile 双挂）；
+3. **补齐 `Db` 侧 GUC 接线**：`auth_middleware` 验签后把租户上下文写入 task-local
+   （`RlsRequestTenant`），`Db::scope()/scope_read()/scope_with()` 在
+   `apply_search_path()` 之后追加 `apply_request_tenant()`，对独立事务执行
+   `set_config('app.tenant_id', …)` + `set_config('app.rls_system', on/off)`。
+
+> 为什么必须补第 3 点：`Db::scope()` 与 `tenant_middleware` 的事务不是同一条连接，
+> 全仓 `scope()` 255 处、`scope_read()` 268 处若不带 GUC，策略与内联谓词里的
+> `current_setting('app.tenant_id', true)` 为 NULL，会命中「未设即豁免」分支＝跨租户放行。
+
+#### 7.5.4 租户边界实测（topems_test 库）
+
+策略形态统计（`pg_policies`）：大量策略仍带 `IS NULL` 豁免或 `USING (true)`，
+**不能只依赖 RLS**：
+
+| schema | 策略数 | allow-all/无 qual | 含 `IS NULL` 豁免 |
+|---|---|---|---|
+| gis | 23 | 18 | 5 |
+| integration | 23 | 9 | 14 |
+| master_data | 94 | 2 | 92 |
+| mobile | 29 | 19 | 10 |
+| pm | 44 | 31 | 13 |
+
+因此保留/恢复**显式谓词**：pm 的 `project/settlement`、gis、mobile 的
+`tenant_filter` 与 `current_setting` 谓词在 GUC 接线后即为有效边界；integration 的
+`lims_qms / wms_scm / mes_erp / conversion_rules / sync` 保留其 `current_setting` 谓词。
+
+#### 7.5.5 nil 租户写入修复
+
+`origin/main` 在 5 类 INSERT 里硬绑 `Uuid::nil()` 作 `tenant_id`，正常租户读回时
+`tenant_id = GUC` 不匹配，行不可见（写入成功但永久不可见）。改为由事务 GUC 物化：
+
+```sql
+COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+         '00000000-0000-0000-0000-000000000000'::uuid)
+```
+
+涉及：`svc/portal/src/modules/todos.rs`、`svc/mobile/src/modules/offline_records.rs`、
+`svc/integration/src/handlers/{sync×3, lims_qms, wms_scm, mes_erp, events}.rs`。
+
+#### 7.5.6 验证与残留风险
+
+- `cargo check --workspace` PASS；`pnpm typecheck` PASS；
+  `pnpm test:component` 503 文件全过、3944 用例 3943 pass / 1 skip / **0 fail**
+  （合并前基线 6 个 `useAuth` 失败已被 origin/main 修复）。
+- 残留风险（记录，未改他人语义）：
+  1. public 路由无 task-local → `Db::scope()` 不带 GUC，含 `IS NULL` 豁免的策略会放行全量；
+  2. 后台任务（`tokio::spawn`）无请求上下文，同样无 GUC；
+  3. 策略层 `IS NULL` 豁免需靠 `database/migrations_deferred/` 的 P0 迁移收紧，本阶段未执行；
+  4. `master-data` 字典超管写入落 `0001`（`resolve_create_tenant` 返回 None → `tenant_uuid` 兜底），
+     非 nil；系统通道读取可见，但租户 2 不可见标准字典种子。
+
+---
+
 ## 附录 A：逐文件盘点（329 个文件）
 
 > 读/写点为「接收者是池」的调用次数；路由列取文件内前 2 条，`E2E✓` 表示该路径出现在 `tests/e2e`。
