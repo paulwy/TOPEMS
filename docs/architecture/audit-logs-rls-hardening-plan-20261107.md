@@ -194,24 +194,46 @@ DDL 走正常迁移链，不手写 prod。迁移需配套 `sqlx migrate` 编号�
 
 ## 8. prod 应用窗口与验收清单
 
-**窗口**：低峰 30 分钟（应用约 10 分钟，其余为验收/观察）。本轮不执行。
+**建议窗口（待用户确认；D4 未定）**：2026-11-15（周日）02:00–03:30（Asia/Shanghai），预留 90 分钟；
+其中 DDL 约 15 分钟，其余为逐 schema 验收与观察。**本轮 prod 未执行任何 DDL。**
+
+### 8.1 跨批次依赖顺序（与「审计可见性 origin」批次合并）
+
+1. **DDL（严格按编号）**：
+   1. `20261107000010_audit_logs_tenant_id_5tables.sql`（补 5 表 `tenant_id`）
+   2. `20261107000011_audit_logs_rls_phase2_18tables.sql`（RLS Phase 2 策略，本方案）
+   3. `20261107000012_audit_logs_origin_column_18tables.sql`（18 表 `origin VARCHAR(16)` + 部分索引）
+2. **再发布应用代码**：审计可见性改造版本（显式 tenant/user/origin 写入）。
+   **禁止**在 `000012` 之前发布该代码，否则 `UPDATE ... SET origin = $1` 会因列不存在导致 CRM 审计写入失败。
+3. **三身份矩阵抽样复核**（A 超管 / B 租户 0001 / C 租户 0002）。
+4. **回滚顺序与执行相反**：
+   1. 先回滚应用（停写 origin，或确保 `CreateAuditLogRequest.origin = None`）；
+   2. 执行 `database/scripts/audit_logs_origin_rollback.sql`；
+   3. 再按 `database/scripts/audit_logs_rls_phase2_rollback.sql` 回滚 `000011`；
+   4. 最后回滚 `000010`（`DROP COLUMN tenant_id`，需确认无代码依赖）。
+
+编号/文件名已核对，与仓库实际一致：`000010` / `000011` / `000012` 三个迁移及两份回滚脚本均存在。
 
 前置检查（只读）：
-- [ ] prod 各 `audit_logs` 行数与 §1.1 一致（crm 13，其余 0）；
-- [ ] 确认 P0-a/P0-b 已发布到 prod（审计服务与读端点都走 `Db::scope*`）；
-- [ ] 备份可用、`pg_policies` 快照已保存；
+- [ ] prod 各 `audit_logs` 行数与 §1.1 一致（crm 13，其余 0；shared 306 行 nil）；
+- [ ] 确认 Phase 0（P0-a/P0-b）已发布到 prod（审计服务与读端点都走 `Db::scope*`）；
+- [ ] 确认 origin 写入版本**尚未**发布（必须在 `000012` 之后）；
+- [ ] 备份可用、`pg_policies` 快照已保存（`000011` 执行前）；
 - [ ] 无长事务/大批导入任务在跑。
 
-执行与验收（逐 schema）：
+DDL 执行与验收（逐 schema，单 schema 单事务）：
 - [ ] `BEGIN; DROP POLICY ...; CREATE POLICY ...; ENABLE/FORCE; COMMIT;` 单 schema 单事务；
 - [ ] 0002 用户读该 schema：0 行（无法看到 0001 行）；
 - [ ] 0001 用户读该 schema：仅本租户；
 - [ ] 超管读该 schema：与迁移前一致；
 - [ ] 触发一次该服务的审计写入：成功、`tenant_id` 正确、列表可见；
 - [ ] 后台任务审计：成功、`tenant_id` nil；
-- [ ] 无 5xx、无 `[Audit] failed` / `Failed to insert audit` 日志。
+- [ ] `000012` 执行后确认 18 表 `origin` 列与部分索引存在（`information_schema.columns` / `pg_indexes`）；
+- [ ] `000012` 之后才发布应用代码；发布后触发一次 CRM 审计写入，确认无 `column "origin" does not exist`；
+- [ ] 无 5xx、无 `[Audit] failed` / `Failed to insert audit` / `请求审计写入失败` / `记录审计日志失败` 日志。
 
 回滚判定：上述任一 ❌ 且 5 分钟内无法定位 → 执行该 schema 的 down 迁移。
+`000011` 失败只回单个 schema；`000012` 回滚必须先确保应用停止写 `origin`。
 
 ## 9. 已确认决策
 
