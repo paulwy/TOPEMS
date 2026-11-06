@@ -6,3 +6,5 @@
 
 pub mod handlers;
 pub mod models;
+// 批 13：业务域 tier 统一映射（basic/standard/enterprise）
+pub mod tier;

@@ -15,6 +15,7 @@ import { lucideIcons } from '@/lib/iconMapping';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import type { DbMenuItem } from '@/api/core/menus';
 import { useMenuAuthority } from '@/hooks/useMenuAuthority';
+import { useTenantModules } from '@/hooks/useTenantModules';
 import i18n, { ensureNamespacesLoaded, subscribeResourceVersion, getResourceVersion } from '@/i18n';
 
 /**
@@ -97,13 +98,17 @@ function useI18nResourceVersion(): number {
 function buildSidebarItems(
   checkPermission: (permission: string) => boolean,
   unreadCount: number,
-  dbMenus: Map<string, DbMenuItem> | null
+  dbMenus: Map<string, DbMenuItem> | null,
+  activeDomains: Set<string> | null = null
 ): NavItem[] {
   // P2-1 mobile 模块 Web 侧隐藏：mobile 为移动端专用入口（MobileNav 独立渲染，
   // 移动端导航仍展示），Web 侧边栏不再显示 mobile 模块组。
   const registryItems = navigationRegistryV2
     .getTopNavItems(checkPermission)
     .filter((item) => item.code !== 'mobile')
+    // 批 13：租户激活业务域过滤。activeDomains 为 null（无激活记录/接口不可用/加载中）
+    // 时兜底放行，不过滤任何模块；未在 moduleTiers 登记的域同样放行，避免误隐藏。
+    .filter((item) => !activeDomains || activeDomains.has(item.code))
     .slice()
     .sort((a, b) => {
       const orderA = MODULE_ORDER_INDEX.get(a.code) ?? Number.MAX_SAFE_INTEGER;
@@ -188,6 +193,8 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   const resourceVersion = useI18nResourceVersion();
   // Phase 1：默认优先消费 DB 菜单接口；?menu_authority=config 或接口失败时回退 config。
   const { dbMenus } = useMenuAuthority();
+  // 批 13：租户模块激活状态（决定一级业务域是否展示）
+  const { activeDomains } = useTenantModules();
 
   // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
   const unreadCount = useUnreadNotificationCount();
@@ -230,7 +237,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   // 菜单内容完全由 navigationRegistryV2 动态生成：
   // P1-4：模块/子项权限均在 registry 查询时过滤；未读数注入 notification 组徽标
   const items = useMemo<NavItem[]>(
-    () => buildSidebarItems(checkPermission, unreadCount, dbMenus),
+    () => buildSidebarItems(checkPermission, unreadCount, dbMenus, activeDomains),
     // resourceVersion 变化代表模块命名空间翻译已异步注入，需要重新解析 label
     [checkPermission, unreadCount, resourceVersion, dbMenus]
   );

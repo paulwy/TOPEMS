@@ -396,6 +396,27 @@ async fn activate_basic_modules(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     tenant_id: Uuid,
 ) -> Result<(), TopemsError> {
+    // 批 13：先按业务域写域级条目 `<domain>:core`，使 core_tenant_modules 的
+    // module_code 前缀与前端一级菜单 code 对齐（菜单可见性按域前缀判定）。
+    // 使用与下方功能级条目相同的 SQL 模板，sqlx 离线缓存可复用。
+    for domain in crate::modules::tenant::tier::basic_domains() {
+        sqlx::query(
+            r#"
+            INSERT INTO core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
+            VALUES ($1, $2, $3, 'basic', TRUE)
+            ON CONFLICT (tenant_id, module_code) DO NOTHING
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(format!("{domain}:core"))
+        .bind(format!("{domain} 基础套件"))
+        .execute(&mut **tx)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("Failed to activate basic domain {domain}: {}", e))
+        })?;
+    }
+
     for (module_code, module_name) in BASIC_MODULE_CODES.iter() {
         sqlx::query(
             r#"

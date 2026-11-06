@@ -1844,6 +1844,16 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.134 审计整改第十一批：tier 与 module_code 体系统一 + 菜单按域过滤（批 13，2026-11-06）✅
+
+- **盘点结论**：`module_code` 与前端一级菜单是两套体系——前者仅 `erp:`/`pm:` 两前缀（50 条功能级），后者 36 个业务域 code；格式（`<域>:<功能>`）本身合法，缺的是**域覆盖**，直接按前缀过滤会把 34 个域隐藏、打挂应用。
+- **tier 36 域映射定稿**：basic 15（admin iam notification workflow doc erp mes wms scm crm finance asset hrm oa master）/ standard 11（pm qms aps lims pdm srm tms ehs bi report mobile）/ enterprise 10（ai gis monitor plugin im integration automation rd registry ticket）。FE `config/moduleTiers.ts` 与 BE `modules/tenant/tier.rs` **同源双份**。
+- **FE 菜单过滤**：`useTenantModules` 拉租户模块 → 按 module_code 前缀聚合业务域；`is_active && (expires_at 空或未到期)` 才生效；**无记录/接口异常/加载中一律 `null` 兜底放行**，`GlobalLayoutV3` 一级导航按 `activeDomains` 过滤。一次性生效，无灰度开关。
+- **BE 适配**：`activate_basic_modules` 在功能级循环前新增域级循环写 `<domain>:core`（复用同一 SQL 模板，sqlx 缓存可复用、`ON CONFLICT DO NOTHING` 幂等）。
+- **DB 无改动**：tier 列批 11 已落地；表 0 行无存量改写；按拍板不预置激活记录。
+- **验证**：FE 单测 9 passed（三级不重叠/并集 36/聚合/到期/兜底）、BE `tier::tests` 2 passed、`cargo check` ✅、typecheck ✅、eslint ✅、`src/layouts`+`src/hooks` 113 tests passed、迁移四件套 Errors 0、RLS ✅、drift 0、权限基线 fe 442/be 577/db 893/rename_groups 0。
+- **未落地登记**：存量 50 条 `erp:*`/`pm:*` 不改写（已合法且改授权表有风险）；菜单过滤正例未实测（表 0 行，需造数）；`models.rs` 注释仍为 advanced/infrastructure，随批 14 清理。
+
 ## v1.133 审计整改第十批：ListPageTemplate 行操作权限开关 + mes 首批约束（批 12，2026-11-06）✅
 
 - **通用能力**：`DataTableColumn.writeOnly?: boolean`（标记写操作列）+ `ListPageTemplateProps.writePermission?: string`；模板内 `canWrite = !writePermission || checkPermission(...)`，无权限时整列隐藏。**不传 writePermission 则不过滤**——存量数十页面零回归，可增量采用。
