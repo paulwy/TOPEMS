@@ -477,6 +477,23 @@ rls_tenant_isolation|((COALESCE(current_setting('app.tenant_id'::text, true), ''
 - **新发现（仅记录，未扩大范围）**：① LIMS `approve_report` 未挂载路由；② rd `ProjectService`/repository 的 update·delete·batch_delete 无外部调用者（服务未挂载）；③ rd `batch_create` 仍显式写 nil（非 GUC 模式，本次未改）；④ `lib/shared-db/src/rls.rs` 的 RLS 策略生成器仍用 GUC（机制本身，P0 迁移需与之对齐口径）。
 - **环境**：`SQLX_OFFLINE=true`编译；补漏后重新构建并重启（`/health` 恢复约 15s）；本轮备份 `topems-server-b3-20261106.bak`。
 
+**B4 执行记录（2026-11-06，master-data / mobile）**
+
+- **可达性盘点（先证后用）**：结论 **全部在用，无死代码，无需登记归档**。
+  - `svc/server/Cargo.toml` 默认 features 含 `module-advanced`（master-data + analytics）与 `module-mobile`；`svc/server/src/main.rs` 注册 `MasterDataRealModule`、`MobileRealModule`。
+  - `svc/master-data/src/modules/mod.rs` 将 10 个 V5x（quality_v51 / lineage_v52 / knowledge_v53 / versioning_v54 / commercial_v55 / disaster_v56 / semantic_v57 / governance_v58 / ai_governance_v59 / metadata_v60）+ schema-registry + dict + master_data 全部 nest 进 `create_routes()`；`master_data_real_module` 以 `/api/master-data` 前缀挂载（auth + require_module_access + rls 三层中间件）。
+  - 前端可达：master-data 各模块均有对应 API 封装与页面引用；mobile 侧 web 33 个文件 + `apps/mobile` 均调用 `/api/mobile`，`mobile_real_module` 注册 99 条受保护路由，offline / offline_records / media / missing_endpoints 路由均已挂载。
+- **对账（同一扫描器 `/tmp/scan_per_stmt.py`）**：master-data pool 执行 GUC 语句 **80 处 / 11 文件 → 0**（计划表记 10 文件，实测多出 `dict/handlers.rs` 2 处）；mobile **7 处 / 5 文件 → 0**。全仓剩余 **3 处**：`svc/crm/src/tests/rls_isolation_test.rs`、`lib/shared-auth/tests/rls_middleware_e2e.rs`（两个 RLS 单测）、`lib/shared-db/src/rls.rs`（RLS 策略生成 DDL，机制本身），按设计保留。`&mut **txn` 193 处不计入。
+- **统一口径（沿用 B3）**：谓词 `($N::uuid IS NULL OR tenant_id = $N)`，N = 语句现有最大参数 +1，末尾 `.bind(tenant)`；请求链路租户来自 `claims`（`Option<Uuid>`，超管 / 无租户 → `None` = 全量）；同文件同类调用点一次改干净。
+- **关键修正（NOT NULL nil-safe）**：`tenant_of` 对超管返回 `None`，若 INSERT 直接绑定会写 SQL NULL，而 `master_data.mdm_recovery_points / recovery_plans / continuity_plans` 等表 `tenant_id` 为 NOT NULL（旧代码写 nil UUID），会触发 23502。所有 INSERT 统一改为 `.bind(tenant.unwrap_or_else(uuid::Uuid::nil))`，保持超管落 nil 行的既有语义。
+- **口径一致性修正（ai_governance_v59）**：其辅助方法原复用 `req_tenant_uuid`（返回 nil UUID），会让超管 UPDATE 只命中 nil 行；已把 4 个谓词方法参数改为 `Option<Uuid>`、handler 改用 `tenant_of(&claims)`，与其余模块的"`None` = 全量"对齐。
+- **验证（8099 实测，三身份：租户1 / 租户2 / nil）**：
+  - disaster 恢复点创建：T1（超管）`200` 且落库 `tenant_id=0000…0000`；N1 `200` → `0001`；N2 `200` → `0002`；TN（无租户普通身份）`400`「缺少租户ID」（模块访问前置要求租户，符合预期）。
+  - quality 治理建议：N1 创建 `200` → `0001`；N2 跨租户 approve `404「未找到治理建议」`；N1 本租户 approve `200`，DB `status=approved` → **P0 跨租户 UPDATE 已消除**。
+  - mobile offline sync：N1 / N2 / TN 均 `200`；DB 分别 `completed/0001`、`completed/0002`、`completed/NULL`，service token 的显式 nil 语义保持不变（对应决策点 3）。
+- **新发现（仅记录，未扩大范围 / 未删代码）**：① `dict/handlers.rs` 的 `core_dict_types` 未做 schema 限定，进程 `SEARCH_PATH`（`flow, mobile, rs, erp, public, iam, shared`）解析到 `master_data.core_dict_types`，该表**无 `tenant_id` 列**（`public.core_dict_types` 才有），`POST` 创建字典类型恒 `500`（`column "tenant_id" of relation "core_dict_types" does not exist`）。旧代码同样引用 `tenant_id`，属**改造前既有缺陷**，非本轮引入，待用户决定（补列 / 加 schema 限定）。② `batch_create_dict_items` 另起事务仍写 nil（按挂账不处置）。③ `delete_dict_item` 无租户谓词（非 GUC 模式）。
+- **环境**：`SQLX_OFFLINE=true` 通过 `cargo check -p topems-master-data / topems-mobile / topems-server`；`cargo build -p topems-server` 后替换二进制并重启（`/health=200`）；本轮备份 `topems-server-b4-20261106.bak`。
+
 **验证通用手段**
 
 1. **HTTP 对照**：保留修复前二进制（`/Users/xingzhai/topems/bin/topems-server-before-step2-20261106.bak`），同请求打旧/新两版，比对状态码与 `data` 是否为空。
