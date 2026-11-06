@@ -21,6 +21,11 @@
 #   scripts/db/dict-replay-window.sh smoke --base-url http://127.0.0.1:8099 \
 #     --super-token "$SUPER" --tenant-token "$TENANT" --notify-user-id "$UUID"
 #
+# SSH 模式（prod 主机本地执行，不暴露 DSN）：
+#   --ssh-host xingzhai@host --remote-db topems_prod --remote-dir /tmp/topems_window_xxx
+#   seed 二进制从本地投递到 <remote-dir>/bin 并逐件 sha256 校验；verify 用
+#   --app-role topems_app 通过 SET ROLE 实测 RLS。WINDOW_SSH_LOCAL_SIM=1 仅用于本地演练。
+#
 # 安全：replay / cleanup / release / rollback-* 必须设置 DICT_WINDOW_CONFIRM=yes。
 # 期望值默认：types=77, items=397, 标准类=73/380, legacy=4/17（prod 2026-11-06 只读基线）。
 # =============================================================================
@@ -43,6 +48,16 @@ TENANT_ID=""
 NOTIFY_USER_ID=""
 EXPECT_TENANT_TOTAL=""
 SINCE=""
+SSH_HOST="${DICT_WINDOW_SSH_HOST:-${WINDOW_SSH_HOST:-}}"
+REMOTE_DB="${DICT_WINDOW_REMOTE_DB:-${WINDOW_REMOTE_DB:-}}"
+REMOTE_DIR="${DICT_WINDOW_REMOTE_DIR:-${WINDOW_REMOTE_DIR:-}}"
+REMOTE_PGHOST="${WINDOW_REMOTE_PGHOST:-/tmp}"
+REMOTE_PGUSER="${WINDOW_REMOTE_PGUSER:-xingzhai}"
+REMOTE_DSN="${DICT_WINDOW_REMOTE_DSN:-${WINDOW_REMOTE_DSN:-}}"
+LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
+SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
+SCP_BIN="${WINDOW_SCP_BIN:-scp}"
+APP_ROLE="${DICT_APP_ROLE:-}"
 EXPECTED_TYPES="${DICT_EXPECTED_TYPES:-77}"
 EXPECTED_ITEMS="${DICT_EXPECTED_ITEMS:-397}"
 EXPECTED_STANDARD_TYPES="${DICT_EXPECTED_STANDARD_TYPES:-73}"
@@ -66,13 +81,29 @@ while [[ $# -gt 0 ]]; do
     --notify-user-id) NOTIFY_USER_ID="$2"; shift 2 ;;
     --expect-tenant-total) EXPECT_TENANT_TOTAL="$2"; shift 2 ;;
     --since) SINCE="$2"; shift 2 ;;
+    --ssh-host) SSH_HOST="$2"; shift 2 ;;
+    --remote-db) REMOTE_DB="$2"; shift 2 ;;
+    --remote-dir) REMOTE_DIR="$2"; shift 2 ;;
+    --remote-dsn) REMOTE_DSN="$2"; shift 2 ;;
+    --app-role) APP_ROLE="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
 
 [[ -n "$STAGE" ]] || { usage; exit 2; }
-[[ -n "$DSN" ]] || { echo "缺少 --dsn（或 DICT_WINDOW_DSN / DATABASE_URL）" >&2; exit 2; }
+
+SSH_MODE=0
+[[ -n "$SSH_HOST" ]] && SSH_MODE=1
+if [[ $SSH_MODE -eq 1 ]]; then
+  [[ -n "$REMOTE_DB" ]] || { echo "SSH 模式需要 --remote-db" >&2; exit 2; }
+  [[ -n "$REMOTE_DIR" ]] || { echo "SSH 模式需要 --remote-dir" >&2; exit 2; }
+else
+  # smoke 只走 HTTP，不需要数据库连接
+  if [[ "$STAGE" != "smoke" ]]; then
+    [[ -n "$DSN" ]] || { echo "缺少 --dsn（或 DICT_WINDOW_DSN / DATABASE_URL）" >&2; exit 2; }
+  fi
+fi
 
 if [[ -z "$OUT_DIR" ]]; then
   OUT_DIR="$ROOT/tmp/dict-window-$(date +%Y%m%d_%H%M%S)"
@@ -86,7 +117,32 @@ require_confirm() {
   fi
 }
 
-psql_x() { psql "$DSN" -X -v ON_ERROR_STOP=1 "$@"; }
+sq() { printf '%q' "$1"; }
+remote_run() {
+  local cmd="$1"
+  if [[ "$LOCAL_SIM" == "1" ]]; then bash -c "$cmd"; else "$SSH_BIN" "$SSH_HOST" "$cmd"; fi
+}
+remote_psql() {
+  local cmd
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") psql -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  local a
+  for a in "$@"; do cmd+=" $(sq "$a")"; done
+  remote_run "$cmd"
+}
+copy_to_remote() {
+  local src="$1" dest="$2"
+  if [[ "$LOCAL_SIM" == "1" ]]; then cp -f "$src" "$dest"; else "$SCP_BIN" "$src" "$SSH_HOST:$dest"; fi
+}
+copy_from_remote() {
+  local src="$1" dest="$2"
+  if [[ "$LOCAL_SIM" == "1" ]]; then cp -f "$src" "$dest"; else "$SCP_BIN" "$SSH_HOST:$src" "$dest"; fi
+}
+local_sha256() { shasum -a 256 "$1" | awk '{print $1}'; }
+remote_sha256() { remote_run "shasum -a 256 $(sq "$1")" | awk '{print $1}'; }
+
+psql_x() {
+  if [[ $SSH_MODE -eq 1 ]]; then remote_psql "$@"; else psql "$DSN" -X -v ON_ERROR_STOP=1 "$@"; fi
+}
 
 latest_dump_for() {
   # $1 = 表名（core_dict_types / core_dict_items）
@@ -95,25 +151,44 @@ latest_dump_for() {
 }
 
 stage_backup() {
-  local ts txt dump csv qualified table count
+  local ts txt dump csv qualified table count rdump rcsv rsha lsha
   ts="$(date +%Y%m%d_%H%M%S)"
   mkdir -p "$BACKUP_DIR"
   txt="$OUT_DIR/dict_before_${ts}.txt"
+  if [[ $SSH_MODE -eq 1 ]]; then remote_run "mkdir -p $(sq "$REMOTE_DIR/backups")"; fi
 
   for table in core_dict_types core_dict_items; do
     qualified="public.$table"
     dump="$BACKUP_DIR/${table}_${ts}.dump"
     csv="$BACKUP_DIR/${table}_${ts}.csv"
 
-    echo "[backup] pg_dump -> $dump"
-    PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_dump "$DSN" -Fc \
-      -t "$qualified" --enable-row-security -f "$dump"
-    shasum -a 256 "$dump" > "$dump.sha256"
+    if [[ $SSH_MODE -eq 1 ]]; then
+      rdump="$REMOTE_DIR/backups/${table}_${ts}.dump"
+      rcsv="$REMOTE_DIR/backups/${table}_${ts}.csv"
+      echo "[backup] remote pg_dump -> $rdump"
+      remote_run "PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS='-c app.rls_system=on' pg_dump -d $(sq "$REMOTE_DB") -Fc -t $(sq "$qualified") --enable-row-security -f $(sq "$rdump")"
+      rsha="$(remote_sha256 "$rdump")"
+      copy_from_remote "$rdump" "$dump"
+      lsha="$(local_sha256 "$dump")"
+      [[ "$rsha" == "$lsha" ]] || { echo "[backup] sha256 不一致 $table remote=${rsha:-<missing>} local=$lsha" >&2; exit 1; }
+      printf '%s  %s\n' "$lsha" "$dump" > "$dump.sha256"
 
-    echo "[backup] CSV -> $csv"
-    psql_x -q -c "SET app.rls_system='on'" \
-      -c "\copy (SELECT * FROM $qualified) TO '$csv' WITH (FORMAT csv, HEADER true)"
-    count="$(psql_x -q -A -t -c "SET app.rls_system='on'" -c "SELECT count(*) FROM $qualified")"
+      echo "[backup] remote CSV -> $rcsv"
+      remote_psql -q -c "SET app.rls_system='on'" \
+        -c "\\copy (SELECT * FROM $qualified) TO '$rcsv' WITH (FORMAT csv, HEADER true)"
+      copy_from_remote "$rcsv" "$csv"
+      count="$(remote_psql -q -A -t -c "SET app.rls_system='on'" -c "SELECT count(*) FROM $qualified")"
+    else
+      echo "[backup] pg_dump -> $dump"
+      PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_dump "$DSN" -Fc \
+        -t "$qualified" --enable-row-security -f "$dump"
+      shasum -a 256 "$dump" > "$dump.sha256"
+
+      echo "[backup] CSV -> $csv"
+      psql_x -q -c "SET app.rls_system='on'" \
+        -c "\copy (SELECT * FROM $qualified) TO '$csv' WITH (FORMAT csv, HEADER true)"
+      count="$(psql_x -q -A -t -c "SET app.rls_system='on'" -c "SELECT count(*) FROM $qualified")"
+    fi
     echo "[backup] $table rows=$count"
     printf '%s\t%s\t%s\n' "$table" "$count" "$dump" >> "$OUT_DIR/backup_manifest.tsv"
   done
@@ -144,9 +219,24 @@ stage_replay() {
   if [[ ! -f "$OUT_DIR/window_start.txt" ]]; then
     psql_x -q -A -t -c "SELECT now()" > "$OUT_DIR/window_start.txt"
   fi
-  echo "[replay] $SEED_BIN -> $DSN"
-  DATABASE_URL="$DSN" DICT_REPLAY_CONFIRM=yes "$SEED_BIN"
-  echo "[replay] OK"
+  if [[ $SSH_MODE -eq 1 ]]; then
+    local remote_bin lsha rsha dsn
+    remote_bin="$REMOTE_DIR/bin/$(basename "$SEED_BIN")"
+    dsn="${REMOTE_DSN:-postgres://${REMOTE_PGUSER}@localhost/${REMOTE_DB}?host=%2Ftmp}"
+    remote_run "mkdir -p $(sq "$REMOTE_DIR/bin")"
+    copy_to_remote "$SEED_BIN" "$remote_bin"
+    remote_run "chmod +x $(sq "$remote_bin")"
+    lsha="$(local_sha256 "$SEED_BIN")"
+    rsha="$(remote_sha256 "$remote_bin")"
+    [[ "$lsha" == "$rsha" ]] || { echo "[replay] seed sha256 不一致 local=$lsha remote=${rsha:-<missing>}" >&2; exit 1; }
+    echo "[replay] remote $remote_bin -> $REMOTE_DB (local sha=$lsha)"
+    remote_run "DATABASE_URL=$(sq "$dsn") DICT_REPLAY_CONFIRM=yes $(sq "$remote_bin")"
+    echo "[replay] OK"
+  else
+    echo "[replay] $SEED_BIN -> $DSN"
+    DATABASE_URL="$DSN" DICT_REPLAY_CONFIRM=yes "$SEED_BIN"
+    echo "[replay] OK"
+  fi
 }
 
 stage_cleanup() {
@@ -185,21 +275,35 @@ SQL
 }
 
 stage_verify() {
-  echo "[verify] 6 组核对"
-  psql_x \
-    -v expected_types="$EXPECTED_TYPES" \
-    -v expected_items="$EXPECTED_ITEMS" \
-    -v expected_standard_types="$EXPECTED_STANDARD_TYPES" \
-    -v expected_standard_items="$EXPECTED_STANDARD_ITEMS" \
-    -v expected_legacy_types="$EXPECTED_LEGACY_TYPES" \
-    -v expected_legacy_items="$EXPECTED_LEGACY_ITEMS" \
-    -f "$ROOT/scripts/db/sql/dict_replay_verify.sql"
+  echo "[verify] 6 组核对（app 角色视角）"
+  local expected_args=(
+    -v expected_types="$EXPECTED_TYPES"
+    -v expected_items="$EXPECTED_ITEMS"
+    -v expected_standard_types="$EXPECTED_STANDARD_TYPES"
+    -v expected_standard_items="$EXPECTED_STANDARD_ITEMS"
+    -v expected_legacy_types="$EXPECTED_LEGACY_TYPES"
+    -v expected_legacy_items="$EXPECTED_LEGACY_ITEMS"
+  )
+  if [[ $SSH_MODE -eq 1 ]]; then
+    if [[ -n "$APP_ROLE" ]]; then
+      remote_psql -q -c "SET ROLE $APP_ROLE" "${expected_args[@]}" \
+        -f "$REMOTE_DIR/sql/dict_replay_verify.sql"
+    else
+      remote_psql -q "${expected_args[@]}" -f "$REMOTE_DIR/sql/dict_replay_verify.sql"
+    fi
+  else
+    psql_x "${expected_args[@]}" -f "$ROOT/scripts/db/sql/dict_replay_verify.sql"
+  fi
   echo "[verify] OK"
 }
 
 stage_release() {
   require_confirm
   [[ -n "$ANCHOR" ]] || { echo "release 需要 --anchor <version>" >&2; exit 2; }
+  if [[ $SSH_MODE -eq 1 ]]; then
+    echo "拒绝：SSH 模式的发布段由 window-execution.sh 的 s4 统一执行（带 --only 白名单）" >&2
+    exit 2
+  fi
   echo "[release] 前向迁移（> ${ANCHOR}）"
   bash "$ROOT/scripts/migration/apply-forward.sh" --dsn "$DSN" \
     --anchor "$ANCHOR" $PROD_FLAG
@@ -274,6 +378,10 @@ JSON
 
 stage_incremental() {
   require_confirm
+  if [[ $SSH_MODE -eq 1 ]]; then
+    echo "拒绝：SSH 模式的回滚需人工在主机本地执行（本脚本不做远程回滚）" >&2
+    exit 2
+  fi
   local since="${SINCE:-}"
   if [[ -z "$since" ]]; then
     [[ -f "$OUT_DIR/window_start.txt" ]] || {
@@ -313,6 +421,10 @@ SQL
 
 stage_restore() {
   require_confirm
+  if [[ $SSH_MODE -eq 1 ]]; then
+    echo "拒绝：SSH 模式的回滚需人工在主机本地执行（本脚本不做远程回滚）" >&2
+    exit 2
+  fi
   local dump_types dump_items
   dump_types="${DICT_WINDOW_DUMP_TYPES:-$(latest_dump_for core_dict_types)}"
   dump_items="${DICT_WINDOW_DUMP_ITEMS:-$(latest_dump_for core_dict_items)}"
