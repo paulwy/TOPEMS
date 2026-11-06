@@ -1691,16 +1691,19 @@ pub async fn update_company_mapping(
 
 pub async fn delete_company_mapping(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, mapping_id)): Path<(String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let tenant_id = tenant_uuid(&claims);
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)"
     ))
     .bind(mid)
     .bind(conn_uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await
     {
@@ -1754,17 +1757,20 @@ pub async fn update_entity_mapping(
 
 pub async fn delete_entity_mapping(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let tenant_id = tenant_uuid(&claims);
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"
     ))
     .bind(mid)
     .bind(conn_uuid)
     .bind(&entity)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await
     {
