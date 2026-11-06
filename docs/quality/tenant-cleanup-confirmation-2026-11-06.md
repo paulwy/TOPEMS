@@ -30,8 +30,8 @@
   新增业务行时间戳：`RET-20261106-000002` 13:52:59、`RSK-5A29F56A` 13:53:07、`ENV-17992915/14D12964` 13:53:04。
 - 因此：§1 的 **194 是“已定口径”，14:14 实测为 198**（121 + 19 + 20 + 38）；窗口执行时**必须现场重测**，
   并把 `DELETE` 的期望行数改成现场值，**不要把 194/258 写死**。每条目标行的定位条件本身不变。
-- 探针来源已定位（§14）：`scripts/web_contract_smoke.py` / `mobile_contract_smoke.py` 在 prod 机上对
-  `localhost:8099` 跑契约冒烟；不先停它，清理后仍会回涨。
+- 探针来源已定位（§14）：prod 仓库的 **pre-commit 钩子 `web-contract-smoke`** 执行
+  `scripts/web_contract_smoke.py` 打 `localhost:8099`；不先处理它，清理后仍会回涨。
 
 ## 1. 总览表
 
@@ -514,7 +514,7 @@ WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NU
 | D9 | 窗口内是否建库内备份表 | 允许 / 禁止 | 建议**禁止**，改用 dump 文件 | ⏳ 窗口确认 |
 | D10 | 明文口令 payload（B 组 `create\|user`） | 一并处理 / 另立安全项 | 建议**另立安全项**（历史数据脱敏） | ⏳ 待定 |
 | D11 | 30 张可收紧表的时点 | 清理后 / 并行 | 建议**清理确认并验证后再收紧** | ⏳ 待定 |
-| D12 | `…0099` 合成探针写入源 | 停 / 不停 / 改脚本 | **已定位为契约冒烟脚本**（§14）；处置由你决定，本轮未停任何任务、未改配置 | ⏳ 待你决定 |
+| D12 | `…0099` 合成探针写入源 | 停 / 不停 / 改脚本 | **已定位为 prod 仓库 pre-commit `web-contract-smoke` 钩子**（§14）；处置由你决定，本轮未停任何任务、未改配置 | ⏳ 待你决定 |
 | D13 | prod 写权限窗口 | 由你指定时点 | A 组 DML 与 B 组标记均需授权窗口 | ⏳ 待授权 |
 
 ## 9. 证据与可复现 SQL（只读）
@@ -574,8 +574,8 @@ SELECT 'customers' t, count(*) FILTER (WHERE NOT (tenant_id='00000000-0000-0000-
    前端状态映射无需改动。
 6. **prod `app.rls_system` 之外的超管查询路径**：本稿依据 `lib/shared-auth/src/middleware/tenant.rs:166-252`；
    若收紧时新增/改名开关，本稿 §7.6 / §13 的“超管可见”前提需重新核对。
-7. **探针写入的来源**：**已定位**（§14）：`scripts/web_contract_smoke.py` / `mobile_contract_smoke.py`
-   在 prod 机对 `localhost:8099` 跑的契约冒烟。仍未确定的是“由谁/哪次会话触发”；本轮未停任务、未改配置。
+7. **探针写入的来源**：**已定位**（§14）：prod 仓库 pre-commit 钩子 `web-contract-smoke` 在 13:52 的一次提交尝试中
+   执行 `scripts/web_contract_smoke.py`（默认打 `localhost:8099`）。仍未确定的是“谁/哪次提交”；本轮未停任务、未改配置。
 8. **audit 目标集的时效性**：快照 258、14:14 已 271；窗口开始时重测的数才是基线，任何固定数字都可能过期。
 
 ## 11. 本轮边界声明
@@ -755,20 +755,24 @@ SQL
 
 ### 14.1 结论
 
-写入源是仓库内的**契约冒烟脚本**，在 prod 主机上对 `localhost:8099`（模块化单体）执行；**不是定时任务**：
+写入源是 **pre-commit 钩子 `web-contract-smoke`** 在 prod 仓库上的一次提交尝试——钩子执行
+`scripts/web_contract_smoke.py`，脚本默认打 `localhost:8099`（该机上的单体服务），于是把 `…0099`
+合成探针写进了 prod。**不是定时任务，也不是 mobile 脚本。**
 
-- `scripts/web_contract_smoke.py`：`TEST_UUID = 00000000-0000-0000-0000-000000000099`、
-  `TEST_UID = e91e2228-…`，默认 `WEB_BFF_URL=http://localhost:8099`；扫描 `apps/web/src/api/**` 端点，
-  把路径里的 `:id` 替换为 `…0099`，未登记 body 的 POST/PUT 发送 `{}`。
-- `scripts/mobile_contract_smoke.py`：同一组 `TEST_UID/TEST_UUID`；base 探测 **8099 优先、8098 兜底**；
-  `prepare_data()` 还会用 `DATABASE_URL` 直接 `psql` 写 `mobile.mobile_users` / `iam.users` / `hrm.employees`。
-
-两条脚本的**默认目标就是 prod 单体**，不是本地测试库。
+- `lefthook.yml:393-407`：仅当暂存区含 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、
+  `svc/server/src/`、`lib/shared-service-client/src/` 且 **8099 在监听**时，才跑该脚本；
+  有 FAIL 则 `exit 1` 阻断提交，日志固定写 `/tmp/web_smoke_precommit.log`。
+- `scripts/web_contract_smoke.py`：`TEST_UUID = 00000000-0000-0000-0000-000000000099`（路径 `:id` 统一替换）、
+  默认 `WEB_BFF_URL=http://localhost:8099`、JWT `sub = TEST_UID = e91e2228-…`、未登记 body 的 POST/PUT 发 `{}`；
+  扫描 `apps/web/src/api/**` 得到 4668 个端点。
+- `scripts/mobile_contract_smoke.py` 本轮**没有运行**：`/tmp/mobile_smoke_precommit.log` 不存在
+  （mobile 钩子需 8070 在监听，未触发）。
 
 ### 14.2 证据链（逐条可复现）
 
-1. **时间窗与行数吻合**：13:52:37–13:56:34 共 **15 行**，之后至 14:14 无新增。一轮的产物恰好是
-   13 行合成 audit（`…0099`）+ `crm.returns` 1 + `ehs.qa_ehs_risks` 1 + `ehs.qa_ehs_environment_monitors` 2。
+1. **时间窗与行数吻合**：13:52:37–13:56:34 共 **15 行**，之后至 14:14 无新增。该时长正好等于
+   `/tmp/web_smoke_precommit.log` 记录的 4668 端点跑批；一轮产物恰好是 13 行合成 audit（`…0099`）
+   + `crm.returns` 1 + `ehs.qa_ehs_risks` 1 + `ehs.qa_ehs_environment_monitors` 2。
 2. **逐行指纹**（prod 只读实测）：
 
    | 时间 | action | entity_type | entity_id | status | tenant | request_details |
@@ -783,31 +787,42 @@ SQL
    - `apps/web/src/api/ai/writeOps.ts:11` → `DELETE /vectors/{id}`；`apps/web/src/api/ai/documents.ts:42` → `DELETE /documents/{id}`；
      `svc/ai/src/modules/document.rs:401-405` 记录 `delete_document`，`vector.rs:565` / `document.rs:341` 为服务层；
      `…0099` 不存在 → `status=failed`；`log_document_operation` 不传 tenant → `lib/shared-db/src/audit.rs` COALESCE 落 `…0000`。
-   - `e91e…` 是 mobile 脚本 `prepare_data()` 预建的 `iam.users` 测试账号，`REAL_IDS["user"]=TEST_UID`；
-     `/user/change-password` 命中该实体 → `update`/`user`。
+   - `e91e…` 是 web 脚本签发的 JWT `sub`（`scripts/web_contract_smoke.py:97`），`/users/me` 类端点会更新
+     该账号 → `update`/`user`；与「钩子跑 web 脚本」一致，mobile 无关。
    - budget/contract/project/risk 的空 payload 是 web 脚本“未登记 body 发 `{}`”的直接产物。
-4. **旁证**：
-   - 15 行 `user_name` / `user_agent` / `ip_address` **全部 NULL**（14 行 `status=failed`，1 行 success），
-     与脚本不带 `x-username`、审计表无 UA/IP 列一致。
-   - `~/TOPEMS/logs/server.out` mtime **10:44**（PID 76088 于 10:44:15 启动）→ 服务日志未覆盖 13:52；
-     `nginx access.log` mtime **04:33** → 请求绕过 nginx，直连 `:8099`。
-   - `crontab -l` / `launchctl list` 无 smoke 任务；14:14 `ps` 无 smoke 进程；`~/.zsh_history` 无调用记录。
+4. **钩子运行痕迹（决定性证据）**：
+   - `/tmp/web_smoke_precommit.log` **mtime 13:57**，内容：`4668` 端点、`4663/4668 PASS, 5 FAIL`；
+     这正是 `lefthook.yml:393-407` 钩子的固定日志路径。
+   - prod 仓库 `git log`：13:40:42 / 13:40:43 / 13:40:59 → **13:52–13:57 无提交记录** → 该次提交被 5 个 FAIL 阻断
+     （钩子 `exit 1`，所以只留下日志、没有 commit）。
+   - 5 个 FAIL 均为 ERP/Mobile 的 GET（`/api/erp/hr/employees`、`/api/mobile/workbench`），
+     **不是**本次的 delete 端点；delete 的 404 在脚本里按可接受处理，后端仍记 `status=failed`。
+   - 其他旁证：15 行 `user_name` / `user_agent` / `ip_address` **全部 NULL**（脚本不带 `x-username`，表无 UA/IP 列）；
+     `~/TOPEMS/logs/server.out` mtime **10:44**（PID 76088 于 10:44:15 启动）→ 未覆盖 13:52；
+     `nginx access.log` mtime **04:33** → 请求绕过 nginx 直连 `:8099`；
+     `crontab -l` / `launchctl list` 无 smoke 任务；14:14 `ps` 无 smoke 进程；`~/.zsh_history` 无调用记录。
 
 ### 14.3 已排除
 
 | 假设 | 排除依据 |
 | --- | --- |
-| cron / launchd 定时任务 | 无条目 |
-| 仓库 e2e 测试（`cargo test`） | 测试连本地测试库，无写 prod 的路径；且窗口内无进程 |
+| cron / launchd 定时任务 | `crontab -l` / `launchctl list` 无 smoke 条目 |
+| 仓库 e2e 测试（`cargo test`） | 测试连本地测试库，无写 prod 的路径；且窗口内无 cargo 进程 |
+| mobile 契约脚本 | `/tmp/mobile_smoke_precommit.log` 不存在（mobile 钩子未触发），8070 未监听 |
 | nginx 反代流量 | access.log 不覆盖该窗口（11-06 04:33 之后无写入） |
 | 正常业务请求 | `…0099` / `e91e…` 是脚本常量，payload 全 null/空 |
-| 8098 另一实例（PID 18497） | 不能完全排除其为入口，但它与 8099 实例都指向同一 prod DB；脚本 8099 优先，故 8099 命中 |
+| 8098 另一实例（PID 18497） | 钩子显式检查 8099；`web_contract_smoke.py` 默认只打 8099，不回落 8098 |
 
 ### 14.4 未定位项与建议（**本轮未停任务、未改配置**）
 
-- **未定位“谁触发”**：无 shell history、无 CI 运行记录、无服务端请求日志；只能确定是这两条脚本在 prod 主机执行。
+- **未定位“是谁/哪个分支的提交”**：13:52–13:57 的提交尝试没有留下 commit（被 5 FAIL 阻断），
+  也没有 shell history / CI 记录；但“钩子 + 日志 + 时间窗”三者已闭合，可确定是 prod 仓库上的
+  `web-contract-smoke` 钩子触发，**不是后台任务**。
 - 处置选项（供你决定，均未执行）：
-  a) 给脚本加 `--dry-run` / 环境变量守卫，默认拒绝打 prod；
-  b) 把 `TEST_UUID` / `BASE` 指到一次性测试库；
+  a) 钩子增加“目标环境”守卫：prod 库位运行 `web_contract_smoke.py` 时要求显式 `ALLOW_PROD_SMOKE=1`，
+     否则 SKIP；
+  b) 把 prod 仓库的 8099 从钩子探测中排除（或把 `WEB_BFF_URL` 指到一次性测试库）；
   c) 保持现状，但在清理后把“合成探针”视为常态噪声，靠 RLS + `_orphan` 标记区分。
-- 只要脚本仍在 prod 上跑，A 组清理与 B 组标记**之后仍会回涨**（本轮已观察到 258 → 271、72 → 74）。
+- 只要钩子仍能在 prod 上跑，A 组清理与 B 组标记**之后仍会回涨**（本轮已观察到 258 → 271、72 → 74）。
+- **另注**：prod 仓库 13:40:59 / 14:07:15 的提交登记了 `--no-verify` 例外（`46384cf0e` / `e80c675c3`），
+  与本轮“禁止 `--no-verify`”的约束冲突，建议复核该登记流程；本轮未触碰。
