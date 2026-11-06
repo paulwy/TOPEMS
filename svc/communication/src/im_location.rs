@@ -278,7 +278,7 @@ async fn check_geofence_triggers(
 ) -> Vec<serde_json::Value> {
     let geofences = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE chat_id = $1 AND status = 'active'"
+        "SELECT * FROM public.core_geofences WHERE chat_id = $1 AND status = 'active'"
     ))
     .bind(chat_id)
     .fetch_all(&mut *scope)
@@ -375,7 +375,7 @@ pub async fn create_geofence(
     let created = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         r#"
-        INSERT INTO core_geofences (
+        INSERT INTO public.core_geofences (
             name, description, chat_id, creator_id, shape_type,
             coordinates, radius, event_types, trigger_cooldown,
             notify_channels, notify_users, status, start_at, end_at
@@ -423,7 +423,7 @@ pub async fn create_geofence(
 
                 let _ = sqlx::query(only_own_schema_query!(
                     "public",
-                    "UPDATE core_geofences SET gis_fence_id = $1 WHERE id = $2"
+                    "UPDATE public.core_geofences SET gis_fence_id = $1 WHERE id = $2"
                 ))
                 .bind(gis_id)
                 .bind(created.id)
@@ -465,7 +465,7 @@ pub async fn get_geofence(
     };
     match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE id = $1"
+        "SELECT * FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
     .fetch_one(&mut scope)
@@ -494,7 +494,7 @@ pub async fn list_geofences(
             return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
-    let mut sql = String::from("SELECT * FROM core_geofences WHERE 1=1");
+    let mut sql = String::from("SELECT * FROM public.core_geofences WHERE 1=1");
     let mut bind_chat_id: Option<Uuid> = None;
     let mut bind_status: Option<String> = None;
     let mut bind_shape_type: Option<String> = None;
@@ -566,7 +566,7 @@ pub async fn update_geofence(
     };
     let current = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE id = $1"
+        "SELECT * FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
     .fetch_one(&mut scope)
@@ -594,7 +594,7 @@ pub async fn update_geofence(
     let updated = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_geofences
+        UPDATE public.core_geofences
         SET name = $1, description = $2, coordinates = $3, radius = $4,
             event_types = $5, status = $6, updated_at = NOW()
         WHERE id = $7
@@ -665,7 +665,7 @@ pub async fn delete_geofence(
     };
     match sqlx::query(only_own_schema_query!(
         "public",
-        "DELETE FROM core_geofences WHERE id = $1"
+        "DELETE FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut scope)

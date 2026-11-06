@@ -2307,7 +2307,7 @@ pub async fn list_templates(
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         SELECT id, name, title_template, content_template, notification_type, description, created_by, created_at, updated_at
-        FROM core_notification_templates
+        FROM public.core_notification_templates
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         "#),
@@ -2398,7 +2398,7 @@ pub async fn get_template(
         "public",
         r#"
         SELECT id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
-        FROM core_notification_templates
+        FROM public.core_notification_templates
         WHERE id = $1
         "#
     ))
@@ -2488,7 +2488,7 @@ pub async fn render_template(
         "public",
         r#"
         SELECT title_template AS title, content_template AS content
-        FROM core_notification_templates
+        FROM public.core_notification_templates
         WHERE id = $1
         "#
     ))
@@ -2629,7 +2629,7 @@ pub async fn create_template(
     };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, tenant_id, created_at)
+        INSERT INTO public.core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, tenant_id, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         RETURNING id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
         "#),
@@ -2732,7 +2732,7 @@ pub async fn update_template(
 
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        UPDATE core_notification_templates
+        UPDATE public.core_notification_templates
         SET name = COALESCE($1, name),
             title_template = COALESCE($2, title_template),
             content_template = COALESCE($3, content_template),
@@ -2845,7 +2845,7 @@ pub async fn delete_template(
 
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notification_templates SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE public.core_notification_templates SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut scope)
@@ -3933,7 +3933,7 @@ pub async fn batch_update_template_status(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notification_templates
+        UPDATE public.core_notification_templates
         SET status = $1, updated_at = NOW()
         WHERE id = ANY($2) AND ($3::uuid IS NULL OR tenant_id = $3)
         "#

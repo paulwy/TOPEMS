@@ -2,8 +2,9 @@
 //!
 //! - Service tag: `communication`
 //! - Schema: `communication`
-//! - Tables: 3（core_notifications / core_emails / core_email_templates 的权威表在
-//!   `public`，不再由启动期 DDL 在 communication 重建副本）
+//! - Tables: 1（core_notifications / core_emails / core_email_templates /
+//!   core_notification_templates / core_geofences 的权威表均在 `public`，
+//!   不再由启动期 DDL 在 communication 重建副本）
 //!
 //! This module drives idempotent table creation and column reconciliation via
 //! `topems_shared_db::schema::run_schema_defense`, mirroring the pattern used by
@@ -25,23 +26,7 @@ const SERVICE_TAG: &str = "communication";
 /// of `(column_name, column_ddl)` pairs. The `id` primary-key column is
 /// intentionally excluded; it is created by `run_schema_migration_and_verify`.
 const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
-    // 1. core_notification_templates（注意：权威表在 public，本副本仍待清理，见
-    //    docs/quality/runtime-ddl-shadow-audit.md 高危清单第 3 项）
-    (
-        "core_notification_templates",
-        &[
-            ("name", "VARCHAR(128) NOT NULL"),
-            ("title_template", "VARCHAR(256) NOT NULL"),
-            ("content_template", "TEXT NOT NULL"),
-            ("notification_type", "VARCHAR(64) DEFAULT 'info'"),
-            ("description", "TEXT"),
-            ("created_by", "UUID"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    // 2. core_location_messages
+    // 1. core_location_messages
     (
         "core_location_messages",
         &[
@@ -67,30 +52,7 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
         ],
     ),
-    // 3. core_geofences
-    (
-        "core_geofences",
-        &[
-            ("name", "VARCHAR(255) NOT NULL"),
-            ("description", "TEXT"),
-            ("chat_id", "UUID NOT NULL"),
-            ("creator_id", "UUID NOT NULL"),
-            ("creator_name", "VARCHAR(255)"),
-            ("shape_type", "VARCHAR(50) NOT NULL"),
-            ("coordinates", "JSONB NOT NULL"),
-            ("radius", "DOUBLE PRECISION"),
-            ("event_types", "JSONB DEFAULT '[\"enter\"]'"),
-            ("status", "VARCHAR(50) NOT NULL DEFAULT 'active'"),
-            ("trigger_cooldown", "INTEGER DEFAULT 300"),
-            ("notify_channels", "JSONB DEFAULT '[\"notification\"]'"),
-            ("notify_users", "JSONB DEFAULT '[]'"),
-            ("gis_fence_id", "UUID"),
-            ("start_at", "TIMESTAMP WITH TIME ZONE"),
-            ("end_at", "TIMESTAMP WITH TIME ZONE"),
-            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
-        ],
-    ),
+    // core_geofences / core_notification_templates 的权威表在 public，已移出本清单。
     // 10. core_chat_rooms
     // 11. core_chat_members
     // 12. core_chat_messages
@@ -142,19 +104,19 @@ mod tests {
     }
 
     #[test]
-    fn test_table_defs_count_is_three() {
-        assert_eq!(table_defs_for_test().len(), 3);
+    fn test_table_defs_count_is_one() {
+        assert_eq!(table_defs_for_test().len(), 1);
     }
 
     #[test]
     fn test_table_defs_names_known() {
         let names: Vec<&str> = table_defs_for_test().iter().map(|(n, _)| *n).collect();
-        assert!(names.contains(&"core_notification_templates"));
         assert!(names.contains(&"core_location_messages"));
-        assert!(names.contains(&"core_geofences"));
         assert!(!names.contains(&"core_notifications"));
         assert!(!names.contains(&"core_emails"));
         assert!(!names.contains(&"core_email_templates"));
+        assert!(!names.contains(&"core_notification_templates"));
+        assert!(!names.contains(&"core_geofences"));
     }
 
     #[test]

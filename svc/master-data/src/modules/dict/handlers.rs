@@ -72,7 +72,7 @@ pub async fn list_dict_types(
     let search = query.search.clone();
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_dict_types
+        r#"SELECT COUNT(*) FROM public.core_dict_types
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
@@ -91,7 +91,7 @@ pub async fn list_dict_types(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_dict_types
+        r#"SELECT {} FROM public.core_dict_types
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
@@ -145,7 +145,7 @@ pub async fn get_dict_type(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DictType> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
         dict_type_columns("$2")
     );
 
@@ -197,7 +197,7 @@ pub async fn create_dict_type(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status, tenant_id)
+        r#"INSERT INTO public.core_dict_types (code, name, name_en, category, description, status, tenant_id)
            VALUES ($1, $2, $3, $4, $5, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_type_columns("$6")
@@ -245,7 +245,7 @@ pub async fn update_dict_type(
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
     let sql = format!(
-        r#"UPDATE core_dict_types
+        r#"UPDATE public.core_dict_types
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
                name_en = COALESCE($8, name_en),
@@ -302,10 +302,11 @@ pub async fn delete_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query(r#"UPDATE core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query(r#"UPDATE public.core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("字典类型删除成功".to_string()),
@@ -350,7 +351,7 @@ pub async fn list_dict_items(
     let status = query.status.clone();
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_dict_items
+        r#"SELECT COUNT(*) FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
@@ -369,7 +370,7 @@ pub async fn list_dict_items(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items
+        r#"SELECT {} FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
@@ -423,7 +424,7 @@ pub async fn get_dict_item(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DictItem> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
         dict_item_columns("$2")
     );
 
@@ -475,7 +476,7 @@ pub async fn create_dict_item(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+        r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_item_columns("$9")
@@ -526,7 +527,7 @@ pub async fn update_dict_item(
     Json(req): Json<UpdateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
     let sql = format!(
-        r#"UPDATE core_dict_items
+        r#"UPDATE public.core_dict_items
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
                name_en = COALESCE($10, name_en),
@@ -587,10 +588,11 @@ pub async fn delete_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query(r#"UPDATE core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query(r#"UPDATE public.core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("字典项删除成功".to_string()),
@@ -634,7 +636,7 @@ pub async fn batch_create_dict_items(
     };
 
     let insert_sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+        r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_item_columns("$9")
@@ -692,7 +694,7 @@ pub async fn export_dict_items(
     Path(dict_type_id): Path<Uuid>,
 ) -> String {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items
+        r#"SELECT {} FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
            ORDER BY sort_order ASC, created_at DESC"#,
         dict_item_columns("$2")

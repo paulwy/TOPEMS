@@ -11,7 +11,7 @@ use sqlx::PgPool;
 pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 检查是否已初始化（避免重复插入）
     let count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_dict_types WHERE category = 'system'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_dict_types WHERE category = 'system'")
             .fetch_one(pool)
             .await?;
 
@@ -27,7 +27,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
     for (type_code, type_name, items) in &system_dicts {
         // 插入字典类型
         let type_id: uuid::Uuid = sqlx::query_scalar(
-            r#"INSERT INTO core_dict_types (code, name, category, description, tenant_id)
+            r#"INSERT INTO public.core_dict_types (code, name, category, description, tenant_id)
                VALUES ($1, $2, 'system', $3, '00000000-0000-0000-0000-000000000001')
                ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
                RETURNING id"#,
@@ -41,7 +41,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         // 批量插入字典项
         for (idx, (code, name, value)) in items.iter().enumerate() {
             sqlx::query(
-                r#"INSERT INTO core_dict_items (dict_type_id, code, name, value, sort_order, tenant_id)
+                r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, value, sort_order, tenant_id)
                    VALUES ($1, $2, $3, $4, $5, '00000000-0000-0000-0000-000000000001')
                    ON CONFLICT (dict_type_id, code) DO UPDATE SET name = EXCLUDED.name, value = EXCLUDED.value"#,
             )
