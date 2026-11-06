@@ -723,3 +723,82 @@ UA 分布（全部自动化）：Playwright/1.62 CI 618、HeadlessChrome 151 525
 - 备份：`/Users/air/topems/backups/*_20261106_163239.{dump,csv,dump.sha256}`（9 张表全部指纹一致）
 - 演练库已 DROP；`select datname ... like 'topems_window%'` 返回 0 行；主开发库 `topems` 未改动。
 - **prod 仅做过只读盘点（账本/角色/计数）；未产生任何 DML/DDL/重启/部署。**
+
+---
+
+## 14. 追加短窗口：`20261107000017` / `20261107000018`（2026-11-06 19:16）
+
+- 授权范围：**仅**这两条迁移；prod 其余操作只读，未重启、未部署。
+- 锚点 `20261107000013`（执行前账本最大版本），白名单 `--only 20261107000017,20261107000018`，
+  显式 `--defer 20261107000014,20261107000015,20261107000016`；SSH 执行物模式，
+  两个迁移文件先投递到 `/tmp/topems_window_20261107/migrations/` 并逐件 sha256 一致
+  （`4d56cfd8…4907`、`7b40b872…15bb`）。
+
+### 14.1 执行前现场重测（2026-11-06 19:15，prod 只读）
+
+| 指标 | 实测 |
+|---|---|
+| 账本行数 / max(success) / failed | **579** / `20261107000013` / 0 |
+| `mes.production_orders` 行数 / 小数行 | **22** / **0** |
+| `quantity` / `completed_quantity` 类型 | `bigint` / `bigint`（prod 已是目标态） |
+| 行合计 `quantity/completed_quantity` | **1224 / 0** |
+| 全表指纹（`md5(string_agg(t::text … ORDER BY id))`） | **`28e3f2359729ccb6b68335852ea7f7a9`** |
+| `mes.batch_records` 行数 / `ck_batch_records_status_standard` 存在数 | **0** / **0**（本就不存在） |
+
+### 14.2 fail-closed 负例（正式执行前，零 DDL）
+
+不带 `--defer` 运行时：
+
+```
+== 拒绝：检测到 3 条清单外 pending 迁移（未产生任何 DDL）
+  20261107000014_tenant_modules_tier_public_only.sql
+  20261107000015_auth_rls_system_context_branch.sql
+  20261107000016_drop_iam_refresh_token_privileged_functions.sql
+  本轮 --only: 20261107000017,20261107000018
+  已评审 defer: <未设置>
+清单外迁移必须先评审并显式加入 --only 或 --defer；不允许提示后继续。
+```
+
+exit 1；执行后复核账本仍 579、约束仍 0 → 确认负例未产生任何 DDL。
+
+### 14.3 正式执行
+
+```
+== 待应用 2 条（anchor=20261107000013，only=20261107000017,20261107000018）
+== 显式 defer 3 条（保持 pending）：
+  20261107000014_tenant_modules_tier_public_only.sql
+  20261107000015_auth_rls_system_context_branch.sql
+  20261107000016_drop_iam_refresh_token_privileged_functions.sql
+-- 20261107000017_mes_production_orders_quantity_bigint.sql
+-- 20261107000018_mes_drop_ck_batch_records_status_standard.sql
+== OK：应用 2 条，失败 0
+real 2.80
+```
+
+窗口墙钟：**19:16:08 → 19:16:16（约 8 s）**，脚本 `real 2.80s`。
+17 为幂等空转（`quantity/completed_quantity` 已是 `bigint`，跳过转换），18 输出
+`NOTICE: P10：ck_batch_records_status_standard 不存在（已清理）`。
+
+### 14.4 执行后核对
+
+| 项 | 结果 |
+|---|---|
+| 账本 | **579 → 581**，diff 仅 `+20261107000017|true`、`+20261107000018|true`，failed 0 |
+| 账本 checksum | `\x8563d251…305c` / `\x66001ff3…9d41`，与本地 `shasum -a 384` 两文件完全一致 |
+| 列类型 | `quantity` / `completed_quantity` 实测均为 **`bigint`** |
+| 数据指纹 | 22 行逐行 `id|md5(row)` **diff 为空**；全表指纹仍 **`28e3f2359729ccb6b68335852ea7f7a9`**；合计仍 **1224 / 0**，无取整 |
+| 约束 | `ck_batch_records_status_standard` 计数 **0** |
+| `batch_records` 其它约束/索引 | 5 个约束 + 3 个索引（`batch_records_pkey`、`batch_records_batch_no_key`、`idx_batch_records_batch_no`）与执行前逐行一致 |
+| 14 条 20261107 待定版本 | `IN (…01–07,09–12,14–16)` 账本计数 **0**（仍未记账，符合 defer） |
+| 冒烟四项 | super dict 200（77 项，legacy 4 项齐全）/ probe dict 200（0 项，租户隔离生效）/ notify 200 / tenant0001 dict 200 |
+| 健康检查 | `/health` 200 healthy；`/api/server/ready` 200 ready（degraded 空）；`/api/server/health` 200 ok（31 模块） |
+| 服务 | **未重启**：pid **74405**，启动时间 `2026-11-06 18:01:14`（窗口前），跑在本窗口前后同一进程 |
+
+### 14.5 证据与结论
+
+- 证据目录：`/tmp/topems_window_20261107/`
+  - `ledger_before.txt` / `ledger_after.txt`（579 → 581）
+  - `po_rows_before.txt` / `po_rows_after.txt`（22 行逐行指纹，diff 空）
+  - `batch_after.txt`、`failclosed_neg.log`、`apply.log`、`smoke_after.log`
+- 结论：两条迁移在 prod 为**空转 + 2 行账本**，结构与数据零变化；未触碰 14/15/16 及任何其它迁移；
+  未重启、未部署，prod 保持可用。
