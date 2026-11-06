@@ -402,10 +402,27 @@ const VERSION_COLUMNS: &str = r#"
 #[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn list_versions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<DocumentVersion>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -427,7 +444,7 @@ pub async fn list_versions(
     )))
     .bind(tenant_id)
     .bind(document_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match result {
         Ok(versions) => ApiResponse::success(versions, "获取文档版本成功"),
@@ -441,11 +458,28 @@ pub async fn list_versions(
 #[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions", request_body = CreateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn create_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> ApiResponse<DocumentVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -461,7 +495,7 @@ pub async fn create_version(
     }
     let changes = req.changes.unwrap_or_default();
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
-    let doc_type = get_document_type(&state, tenant_id, document_id).await;
+    let doc_type = get_document_type(&mut scope, tenant_id, document_id).await;
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         INSERT INTO pdm_document_versions (
@@ -483,7 +517,7 @@ pub async fn create_version(
     .bind(&changes)
     .bind(&created_by)
     .bind(&req.created_by_name)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -498,10 +532,27 @@ pub async fn create_version(
 #[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn get_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<DocumentVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -523,7 +574,7 @@ pub async fn get_version(
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(version)) => ApiResponse::success(version, "获取文档版本成功"),
@@ -538,11 +589,28 @@ pub async fn get_version(
 #[utoipa::path(put, path = "/api/pdm/documents/{documentId}/versions/{versionId}", request_body = UpdateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn update_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentVersionRequest>,
 ) -> ApiResponse<DocumentVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -588,7 +656,7 @@ pub async fn update_version(
     .bind(req.created_by_name)
     .bind(req.reviewed_by)
     .bind(req.approved_by)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(version)) => ApiResponse::success(version, "更新文档版本成功"),
@@ -603,10 +671,27 @@ pub async fn update_version(
 #[utoipa::path(delete, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn delete_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -623,7 +708,7 @@ pub async fn delete_version(
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除文档版本成功"),
@@ -639,10 +724,27 @@ pub async fn delete_version(
 #[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions/{versionId}/publish", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:admin"])))]
 pub async fn publish_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<DocumentVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -653,14 +755,6 @@ pub async fn publish_version(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("启动发布事务失败: {}", e);
-            return ApiResponse::server_error("发布文档版本失败");
-        }
-    };
-
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_document_versions
@@ -672,7 +766,7 @@ pub async fn publish_version(
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut scope)
     .await;
 
     let version = match result {
@@ -697,18 +791,14 @@ pub async fn publish_version(
     .bind(&version.version_number)
     .bind(&version.file_url)
     .bind(version.filesize)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("同步文档当前版本失败: {}", e);
         return ApiResponse::server_error("发布文档版本失败");
     }
 
-    if let Err(e) = tx.commit().await {
-        tracing::error!("提交发布事务失败: {}", e);
-        return ApiResponse::server_error("发布文档版本失败");
-    }
-
+    // 提交/回滚由 RLS 事务中间件统一负责
     ApiResponse::success(version, "发布文档版本成功")
 }
 
@@ -716,11 +806,28 @@ pub async fn publish_version(
 #[utoipa::path(post, path = "/api/pdm/documents/{documentId}/upload", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn upload_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     mut multipart: Multipart,
 ) -> ApiResponse<DocumentVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -753,8 +860,8 @@ pub async fn upload_version(
         Some(b) if !b.is_empty() => b,
         _ => return ApiResponse::bad_request("上传文件不能为空"),
     };
-    let doc_type = get_document_type(&state, tenant_id, document_id).await;
-    let version_number = next_version_number(&state, tenant_id, document_id).await;
+    let doc_type = get_document_type(&mut scope, tenant_id, document_id).await;
+    let version_number = next_version_number(&mut scope, tenant_id, document_id).await;
     let title = filename
         .clone()
         .unwrap_or_else(|| format!("版本 {}", version_number));
@@ -791,7 +898,7 @@ pub async fn upload_version(
     .bind(&changes)
     .bind("system")
     .bind(bytes)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -806,10 +913,27 @@ pub async fn upload_version(
 #[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}/download", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn download_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<String> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -831,7 +955,7 @@ pub async fn download_version(
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -858,26 +982,34 @@ pub async fn download_version(
     }
 }
 
-async fn get_document_type(state: &AppState, tenant_id: Uuid, document_id: Uuid) -> Option<String> {
+async fn get_document_type(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    tenant_id: Uuid,
+    document_id: Uuid,
+) -> Option<String> {
     sqlx::query_scalar::<_, Option<String>>(
         "SELECT document_type FROM pdm_documents WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(document_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(scope)
     .await
     .ok()
     .flatten()
     .flatten()
 }
 
-async fn next_version_number(state: &AppState, tenant_id: Uuid, document_id: Uuid) -> String {
+async fn next_version_number(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    tenant_id: Uuid,
+    document_id: Uuid,
+) -> String {
     let count = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM pdm_document_versions WHERE tenant_id = $1 AND document_id = $2",
     )
     .bind(tenant_id)
     .bind(document_id)
-    .fetch_one(&state.pool)
+    .fetch_one(scope)
     .await
     .unwrap_or(0);
     format!("{}.0", count + 1)

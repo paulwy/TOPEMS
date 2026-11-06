@@ -1,15 +1,17 @@
 use axum::extract::FromRef;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    /// 连接治理 B：模块不再持有连接池，所有查询经 `Db` 作用域
+    /// （事务级 `SET LOCAL search_path = "pdm, public"`）。
+    pub db: Db,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
@@ -18,6 +20,12 @@ pub struct AppState {
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for Db {
+    fn from_ref(state: &AppState) -> Self {
+        state.db.clone()
     }
 }
 

@@ -103,9 +103,26 @@ pub struct StartWorkflowRequest {
 )]
 pub async fn list_workflows(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -128,7 +145,7 @@ pub async fn list_workflows(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -156,10 +173,27 @@ pub async fn list_workflows(
 )]
 pub async fn create_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> ApiResponse<WorkflowDefinition> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -206,7 +240,7 @@ pub async fn create_workflow(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -231,10 +265,27 @@ pub async fn create_workflow(
 )]
 pub async fn get_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<WorkflowDefinition> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -256,7 +307,7 @@ pub async fn get_workflow(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -283,11 +334,28 @@ pub async fn get_workflow(
 )]
 pub async fn update_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<WorkflowDefinition> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -321,7 +389,7 @@ pub async fn update_workflow(
     .bind(status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -347,10 +415,27 @@ pub async fn update_workflow(
 )]
 pub async fn delete_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -366,7 +451,7 @@ pub async fn delete_workflow(
         sqlx::query("UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
@@ -389,10 +474,27 @@ pub async fn delete_workflow(
 )]
 pub async fn start_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<StartWorkflowRequest>,
 ) -> ApiResponse<WorkflowInstance> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -409,7 +511,7 @@ pub async fn start_workflow(
     )
     .bind(req.workflow_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let workflow = match workflow_result {
@@ -479,7 +581,7 @@ pub async fn start_workflow(
     )
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -500,9 +602,26 @@ pub async fn start_workflow(
 )]
 pub async fn list_workflow_instances(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -525,7 +644,7 @@ pub async fn list_workflow_instances(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -556,10 +675,27 @@ pub async fn list_workflow_instances(
 )]
 pub async fn get_workflow_instance(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<WorkflowInstance> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -582,7 +718,7 @@ pub async fn get_workflow_instance(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -609,11 +745,28 @@ pub async fn get_workflow_instance(
 )]
 pub async fn advance_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<WorkflowInstance> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -636,7 +789,7 @@ pub async fn advance_workflow(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let instance = match instance_result {
@@ -657,7 +810,7 @@ pub async fn advance_workflow(
     )
     .bind(instance.workflow_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let workflow = match workflow_result {
@@ -744,7 +897,7 @@ pub async fn advance_workflow(
     .bind(history_value)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {

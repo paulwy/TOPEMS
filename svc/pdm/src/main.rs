@@ -13,11 +13,12 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, default_init_db, prometheus_metrics_handler, run,
+    bootstrap_service_shared, build_application, default_init_db, prometheus_metrics_handler, run,
     ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 pub use shared::AppState;
 
@@ -27,8 +28,6 @@ use modules::ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "pdm, public, shared");
-
     let config = ServiceConfig {
         name: "topems-pdm",
         port: 8031,
@@ -42,7 +41,10 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
+
+    // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
+    let db = Db::new(ctx.db.clone(), "pdm, public");
 
     if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("PDM database init warning: {}", e);
@@ -91,9 +93,18 @@ async fn main() -> anyhow::Result<()> {
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
         let cache = dict_cache.clone();
-        let pool = ctx.db.clone();
+        let warmup_db = db.clone();
         tokio::spawn(async move {
             tracing::info!("[pdm] 开始缓存预热...");
+
+            // 预热查询使用裸表名，必须走模块作用域（事务级 search_path）
+            let mut scope = match warmup_db.scope_read().await {
+                Ok(scope) => scope,
+                Err(e) => {
+                    tracing::warn!("[pdm] 缓存预热建立作用域失败: {}", e);
+                    return;
+                }
+            };
 
             // 预热物料列表（第一页，默认参数）
             match sqlx::query_scalar::<_, serde_json::Value>(
@@ -112,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
                 ) t
                 "#,
             )
-            .fetch_optional(&pool)
+            .fetch_optional(&mut scope)
             .await
             {
                 Ok(Some(data)) => {
@@ -129,19 +140,20 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("[pdm] 缓存预热事务提交失败: {}", e);
+            }
             tracing::info!("[pdm] 缓存预热完成");
         });
     }
 
-    if let Err(e) =
-        event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await
-    {
+    if let Err(e) = event_handlers::start_event_subscribers(db.clone(), dict_cache.clone()).await {
         tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
     }
 
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: ctx.db.clone(),
+        db,
         health_config: SimpleHealthConfig::new("topems-pdm").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         dict_cache,
@@ -167,7 +179,7 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
         .layer(axum::middleware::from_fn_with_state(
-            api_state.pool.clone(),
+            ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn(require_permission("pdm:admin")))
@@ -225,10 +237,10 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    use topems_shared_bootstrap::build_detailed_health_response;
+    use topems_shared_bootstrap::build_detailed_health_response_db;
     let modules = serde_json::json!({ "pdm": "active" });
-    let resp = build_detailed_health_response(
-        &state.pool,
+    let resp = build_detailed_health_response_db(
+        &state.db,
         "pdm-service",
         modules,
         "1.0.0",

@@ -124,10 +124,27 @@ pub struct WorkflowStep {
 )]
 pub async fn list_documents(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListDocumentsQuery>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -161,7 +178,7 @@ pub async fn list_documents(
     .bind(&query.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -177,7 +194,7 @@ pub async fn list_documents(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -208,10 +225,27 @@ pub async fn list_documents(
 )]
 pub async fn search_documents(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(query): Json<DocumentSearchRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -251,7 +285,7 @@ pub async fn search_documents(
     .bind(&query.date_to)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -273,7 +307,7 @@ pub async fn search_documents(
             .bind(&query.status)
             .bind(&query.date_from)
             .bind(&query.date_to)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -304,10 +338,27 @@ pub async fn search_documents(
 )]
 pub async fn create_document(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentRequest>,
 ) -> ApiResponse<Document> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -354,7 +405,7 @@ pub async fn create_document(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -383,10 +434,27 @@ pub async fn create_document(
 )]
 pub async fn get_document(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Document> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -408,7 +476,7 @@ pub async fn get_document(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -435,11 +503,28 @@ pub async fn get_document(
 )]
 pub async fn update_document(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentRequest>,
 ) -> ApiResponse<Document> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -460,7 +545,7 @@ pub async fn update_document(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let existing = match existing {
@@ -510,7 +595,7 @@ pub async fn update_document(
     .bind(&status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -536,11 +621,28 @@ pub async fn update_document(
 )]
 pub async fn update_document_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentStatusRequest>,
 ) -> ApiResponse<Document> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -567,7 +669,7 @@ pub async fn update_document_status(
     .bind(id)
     .bind(tenant_id)
     .bind(&req.status)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -593,10 +695,27 @@ pub async fn update_document_status(
 )]
 pub async fn delete_document(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -612,7 +731,7 @@ pub async fn delete_document(
         sqlx::query("UPDATE pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
@@ -645,11 +764,28 @@ pub struct StartDocumentApprovalRequest {
 )]
 pub async fn start_document_approval(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<StartDocumentApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -666,7 +802,7 @@ pub async fn start_document_approval(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let document = match document_result {
@@ -690,7 +826,7 @@ pub async fn start_document_approval(
     )
     .bind(req.workflow_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let workflow = match workflow_result {
@@ -753,7 +889,7 @@ pub async fn start_document_approval(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -764,7 +900,7 @@ pub async fn start_document_approval(
             .bind(now)
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
             .ok();
 
@@ -802,10 +938,27 @@ pub async fn start_document_approval(
 )]
 pub async fn get_document_approval_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -828,7 +981,7 @@ pub async fn get_document_approval_history(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -876,9 +1029,26 @@ pub async fn get_document_approval_history(
 )]
 pub async fn list_pending_documents(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -903,7 +1073,7 @@ pub async fn list_pending_documents(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {

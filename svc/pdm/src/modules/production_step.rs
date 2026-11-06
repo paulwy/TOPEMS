@@ -72,10 +72,27 @@ pub struct StepQuery {
 )]
 pub async fn list_steps(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<StepQuery>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -105,7 +122,7 @@ pub async fn list_steps(
     .bind(query.process_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -119,7 +136,7 @@ pub async fn list_steps(
             )
             .bind(tenant_id)
             .bind(query.process_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -151,10 +168,27 @@ pub async fn list_steps(
 )]
 pub async fn create_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateStepRequest>,
 ) -> ApiResponse<ProductionStep> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -188,7 +222,7 @@ pub async fn create_step(
     .bind(&req.equipment_requirement)
     .bind(&req.quality_check)
     .bind(&status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -213,10 +247,27 @@ pub async fn create_step(
 )]
 pub async fn get_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<ProductionStep> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -237,7 +288,7 @@ pub async fn get_step(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -264,11 +315,28 @@ pub async fn get_step(
 )]
 pub async fn update_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStepRequest>,
 ) -> ApiResponse<ProductionStep> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -305,7 +373,7 @@ pub async fn update_step(
     .bind(&req.quality_check)
     .bind(&req.status)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -331,10 +399,27 @@ pub async fn update_step(
 )]
 pub async fn delete_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -351,7 +436,7 @@ pub async fn delete_step(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {

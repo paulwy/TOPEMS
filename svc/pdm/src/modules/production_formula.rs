@@ -355,10 +355,27 @@ pub struct FormulaQuery {
 )]
 pub async fn list_formulas(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<FormulaQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -398,7 +415,7 @@ pub async fn list_formulas(
     .bind(locale)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -416,7 +433,7 @@ pub async fn list_formulas(
             .bind(&search_pattern)
             .bind(&query.status)
             .bind(query.product_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -448,10 +465,27 @@ pub async fn list_formulas(
 )]
 pub async fn create_formula(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
 ) -> ApiResponse<ProductionFormula> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -489,7 +523,7 @@ pub async fn create_formula(
     .bind(&req.description)
     .bind(&formula_items)
     .bind(&status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -514,10 +548,27 @@ pub async fn create_formula(
 )]
 pub async fn get_formula(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<ProductionFormula> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -543,7 +594,7 @@ pub async fn get_formula(
     .bind(id)
     .bind(tenant_id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -570,11 +621,28 @@ pub async fn get_formula(
 )]
 pub async fn update_formula(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> ApiResponse<ProductionFormula> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -611,7 +679,7 @@ pub async fn update_formula(
     .bind(&req.status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -637,10 +705,27 @@ pub async fn update_formula(
 )]
 pub async fn delete_formula(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -657,7 +742,7 @@ pub async fn delete_formula(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {

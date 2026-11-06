@@ -1,10 +1,10 @@
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
     MasterDataDomain, MasterDataEvent, ProductionOrderCreatedPayload, PurchaseOrderCreatedPayload,
@@ -15,12 +15,12 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct PdmEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
     pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl PdmEventHandlers {
-    pub fn new(db: PgPool, dict_cache: Arc<AsyncL2Cache<serde_json::Value>>) -> Self {
+    pub fn new(db: Db, dict_cache: Arc<AsyncL2Cache<serde_json::Value>>) -> Self {
         Self { db, dict_cache }
     }
 
@@ -77,12 +77,24 @@ impl PdmEventHandlers {
             payload.total_amount
         );
 
-        let material_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM pdm_materials WHERE status = 'active'",
-        )
-        .fetch_one(&self.db)
-        .await
-        .unwrap_or(0);
+        let material_count = match self.db.scope_read().await {
+            Ok(mut scope) => {
+                let count = sqlx::query_scalar::<_, i64>(
+                    "SELECT COUNT(*) FROM pdm_materials WHERE status = 'active'",
+                )
+                .fetch_one(&mut scope)
+                .await
+                .unwrap_or(0);
+                if let Err(e) = scope.commit().await {
+                    tracing::warn!("[pdm] 事件查询事务提交失败: {}", e);
+                }
+                count
+            }
+            Err(e) => {
+                tracing::warn!("[pdm] 事件查询建立作用域失败: {}", e);
+                0
+            }
+        };
 
         tracing::info!(
             "[pdm] 采购订单创建触发物料数据同步，当前 PDM 物料总数: {}",
@@ -112,13 +124,25 @@ impl PdmEventHandlers {
         );
 
         if let Some(product_id) = payload.product_id {
-            let config_count = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM pdm_configurations WHERE product_id = $1",
-            )
-            .bind(product_id)
-            .fetch_one(&self.db)
-            .await
-            .unwrap_or(0);
+            let config_count = match self.db.scope_read().await {
+                Ok(mut scope) => {
+                    let count = sqlx::query_scalar::<_, i64>(
+                        "SELECT COUNT(*) FROM pdm_configurations WHERE product_id = $1",
+                    )
+                    .bind(product_id)
+                    .fetch_one(&mut scope)
+                    .await
+                    .unwrap_or(0);
+                    if let Err(e) = scope.commit().await {
+                        tracing::warn!("[pdm] 事件查询事务提交失败: {}", e);
+                    }
+                    count
+                }
+                Err(e) => {
+                    tracing::warn!("[pdm] 事件查询建立作用域失败: {}", e);
+                    0
+                }
+            };
 
             if config_count > 0 {
                 tracing::info!(
@@ -154,10 +178,22 @@ impl PdmEventHandlers {
             payload.received_by
         );
 
-        let material_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_materials")
-            .fetch_one(&self.db)
-            .await
-            .unwrap_or(0);
+        let material_count = match self.db.scope_read().await {
+            Ok(mut scope) => {
+                let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_materials")
+                    .fetch_one(&mut scope)
+                    .await
+                    .unwrap_or(0);
+                if let Err(e) = scope.commit().await {
+                    tracing::warn!("[pdm] 事件查询事务提交失败: {}", e);
+                }
+                count
+            }
+            Err(e) => {
+                tracing::warn!("[pdm] 事件查询建立作用域失败: {}", e);
+                0
+            }
+        };
 
         tracing::info!(
             "[pdm] 收货事件触发物料数据同步检查，当前物料总数: {}",
@@ -213,30 +249,41 @@ impl PdmEventHandlers {
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
-        let result = sqlx::query(
-            r#"INSERT INTO pdm_master_data_refs
-               (master_data_id, tenant_id, domain, code, name, status, source_service,
-                local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
-               ON CONFLICT (master_data_id) DO UPDATE
-               SET name = EXCLUDED.name,
-                   status = EXCLUDED.status,
-                   code = EXCLUDED.code,
-                   payload_snapshot = EXCLUDED.payload_snapshot,
-                   last_synced_at = NOW(),
-                   updated_at = NOW()"#,
-        )
-        .bind(&event.master_data_id)
-        .bind(event.tenant_id)
-        .bind(&domain_str)
-        .bind(&event.code)
-        .bind(name)
-        .bind(status)
-        .bind(&event.source_service)
-        .bind(local_entity_type)
-        .bind(&event.payload)
-        .execute(&self.db)
-        .await;
+        let result = match self.db.scope().await {
+            Ok(mut scope) => {
+                let result = sqlx::query(
+                    r#"INSERT INTO pdm_master_data_refs
+                       (master_data_id, tenant_id, domain, code, name, status, source_service,
+                        local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
+                       ON CONFLICT (master_data_id) DO UPDATE
+                       SET name = EXCLUDED.name,
+                           status = EXCLUDED.status,
+                           code = EXCLUDED.code,
+                           payload_snapshot = EXCLUDED.payload_snapshot,
+                           last_synced_at = NOW(),
+                           updated_at = NOW()"#,
+                )
+                .bind(&event.master_data_id)
+                .bind(event.tenant_id)
+                .bind(&domain_str)
+                .bind(&event.code)
+                .bind(name)
+                .bind(status)
+                .bind(&event.source_service)
+                .bind(local_entity_type)
+                .bind(&event.payload)
+                .execute(&mut scope)
+                .await;
+                if result.is_ok() {
+                    if let Err(e) = scope.commit().await {
+                        tracing::warn!("[pdm-mdm] ref 同步事务提交失败: {}", e);
+                    }
+                }
+                result
+            }
+            Err(e) => Err(e),
+        };
 
         match result {
             Ok(_) => {
@@ -262,7 +309,7 @@ impl PdmEventHandlers {
 }
 
 pub async fn start_event_subscribers(
-    db: PgPool,
+    db: Db,
     dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), TopemsError> {
     let handlers = PdmEventHandlers::new(db, dict_cache.clone());

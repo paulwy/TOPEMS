@@ -188,10 +188,27 @@ const PROJECT_COLUMNS: &str = r#"
 #[utoipa::path(get, path = "/api/pdm/projects", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn list_projects(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProjectQuery>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<PdmProject>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -220,7 +237,7 @@ pub async fn list_projects(
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(&query.phase)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -235,10 +252,27 @@ pub async fn list_projects(
 #[utoipa::path(post, path = "/api/pdm/projects", request_body = CreatePdmProjectRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn create_project(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreatePdmProjectRequest>,
 ) -> ApiResponse<PdmProject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -281,7 +315,7 @@ pub async fn create_project(
     .bind(req.budget)
     .bind(progress)
     .bind(&req.created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -300,10 +334,27 @@ pub async fn create_project(
 #[utoipa::path(get, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn get_project(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<PdmProject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -324,7 +375,7 @@ pub async fn get_project(
     )))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -340,11 +391,28 @@ pub async fn get_project(
 #[utoipa::path(put, path = "/api/pdm/projects/{id}", request_body = UpdatePdmProjectRequest, tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn update_project(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdatePdmProjectRequest>,
 ) -> ApiResponse<PdmProject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -390,7 +458,7 @@ pub async fn update_project(
     .bind(progress)
     .bind(req.created_by)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -406,10 +474,27 @@ pub async fn update_project(
 #[utoipa::path(delete, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn delete_project(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -425,7 +510,7 @@ pub async fn delete_project(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -442,11 +527,28 @@ pub async fn delete_project(
 #[utoipa::path(put, path = "/api/pdm/projects/{id}/status", request_body = UpdateProjectStatusRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_project_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectStatusRequest>,
 ) -> ApiResponse<PdmProject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -466,7 +568,7 @@ pub async fn update_project_status(
     .bind(id)
     .bind(tenant_id)
     .bind(&req.status)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(project)) => ApiResponse::success(project, "更新项目状态成功"),
@@ -481,11 +583,28 @@ pub async fn update_project_status(
 #[utoipa::path(put, path = "/api/pdm/projects/{id}/phase", request_body = UpdateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn update_project_phase(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseRequest>,
 ) -> ApiResponse<PdmProject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -505,7 +624,7 @@ pub async fn update_project_phase(
     .bind(id)
     .bind(tenant_id)
     .bind(&req.phase)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(project)) => ApiResponse::success(project, "更新项目阶段成功"),
@@ -520,10 +639,27 @@ pub async fn update_project_phase(
 #[utoipa::path(get, path = "/api/pdm/projects/{projectId}/members", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn list_members(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<ProjectMember>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -545,7 +681,7 @@ pub async fn list_members(
     )
     .bind(tenant_id)
     .bind(project_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match result {
         Ok(members) => ApiResponse::success(members, "获取项目成员成功"),
@@ -560,11 +696,28 @@ pub async fn list_members(
 #[utoipa::path(post, path = "/api/pdm/projects/{projectId}/members", request_body = AddProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn add_member(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<AddProjectMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -596,7 +749,7 @@ pub async fn add_member(
     .bind(&req.user_name)
     .bind(&req.user_email)
     .bind(&req.role)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
     match result {
         Ok(member) => ApiResponse::success(member, "保存项目成员成功"),
@@ -611,11 +764,28 @@ pub async fn add_member(
 #[utoipa::path(put, path = "/api/pdm/projects/{projectId}/members/{userId}", request_body = UpdateProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_member(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((project_id, user_id)): Path<(Uuid, String)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -643,7 +813,7 @@ pub async fn update_member(
     .bind(req.user_name)
     .bind(req.user_email)
     .bind(req.role)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(member)) => ApiResponse::success(member, "更新项目成员成功"),
@@ -659,10 +829,27 @@ pub async fn update_member(
 #[utoipa::path(delete, path = "/api/pdm/projects/{projectId}/members/{userId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn remove_member(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((project_id, user_id)): Path<(Uuid, String)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -679,7 +866,7 @@ pub async fn remove_member(
     .bind(tenant_id)
     .bind(project_id)
     .bind(&user_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "移除项目成员成功"),
@@ -694,10 +881,27 @@ pub async fn remove_member(
 #[utoipa::path(get, path = "/api/pdm/projects/{projectId}/phases", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
 pub async fn list_phases(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -719,7 +923,7 @@ pub async fn list_phases(
     )
     .bind(tenant_id)
     .bind(project_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match result {
         Ok(phases) => ApiResponse::success(phases, "获取项目阶段成功"),
@@ -733,11 +937,28 @@ pub async fn list_phases(
 #[utoipa::path(post, path = "/api/pdm/projects/{projectId}/phases", request_body = CreateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:bom:write"])))]
 pub async fn create_phase(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProjectPhaseRequest>,
 ) -> ApiResponse<ProjectPhase> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -770,7 +991,7 @@ pub async fn create_phase(
     .bind(req.end_date)
     .bind(&status)
     .bind(&req.deliverables)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
     match result {
         Ok(phase) => ApiResponse::success(phase, "创建项目阶段成功"),
@@ -784,11 +1005,28 @@ pub async fn create_phase(
 #[utoipa::path(put, path = "/api/pdm/projects/{projectId}/phases/{phaseId}", request_body = UpdateProjectPhaseByIdRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
 pub async fn update_phase(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseByIdRequest>,
 ) -> ApiResponse<ProjectPhase> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -825,7 +1063,7 @@ pub async fn update_phase(
     .bind(req.end_date)
     .bind(req.status)
     .bind(req.deliverables)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(phase)) => ApiResponse::success(phase, "更新项目阶段成功"),
@@ -840,10 +1078,27 @@ pub async fn update_phase(
 #[utoipa::path(delete, path = "/api/pdm/projects/{projectId}/phases/{phaseId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:delete"])))]
 pub async fn delete_phase(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<bool> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -860,7 +1115,7 @@ pub async fn delete_phase(
     .bind(tenant_id)
     .bind(project_id)
     .bind(phase_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除项目阶段成功"),
