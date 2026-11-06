@@ -802,3 +802,112 @@ real 2.80
   - `batch_after.txt`、`failclosed_neg.log`、`apply.log`、`smoke_after.log`
 - 结论：两条迁移在 prod 为**空转 + 2 行账本**，结构与数据零变化；未触碰 14/15/16 及任何其它迁移；
   未重启、未部署，prod 保持可用。
+
+---
+
+## 15. 短窗口批次 1：`000003` / `000004` / `000014` / `000016`（2026-11-06 20:06）
+
+- 授权范围：**仅**上述 4 条；prod 不重启、不部署、不改其它迁移字节。
+- 锚点：**`20261107000002`**（方案 A）。原因见 15.0：这 4 条版本号 **≤ 账本 max `20261107000018`**
+  且账本未登记，`apply-forward.sh` 只扫 `version > anchor`，用 max 作锚点会把这 4 条直接过滤掉。
+- 白名单：`--only 20261107000003,20261107000004,20261107000014,20261107000016`；
+  `--defer 000005,000006,000007,000008,000009,000010,000011,000012,000013,000015,000017,000018`
+  （其中 08/13/17/18 账本已有记录，脚本按「已应用」跳过；实际保持 pending 的是 8 条）。
+- SSH 执行物模式：4 个文件先投递到 `/tmp/topems_window_20261107/migrations/`，本地/远端 sha256 逐件一致。
+
+### 15.0 锚点冲突与选路（首次按 max 锚点的负例）
+
+按 `--anchor 20261107000018` 先跑，脚本在任何 DDL 之前拒绝：
+
+```
+== 拒绝：白名单版本 20261107000004 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL
+EXIT=1
+```
+
+复核：账本仍 581 / max `20261107000018` / failed 0，7 张副本全部仍在 → 负例零 DDL。
+改用 `--anchor 20261107000002`（紧邻批次之前的 superseded 版本）后，扫描范围覆盖
+`000003–000018`，白名单与 defer 均被逐一分类，fail-closed 仍生效。
+
+### 15.1 执行前现场重测（20:06:18，只读）
+
+| 指标 | 实测 |
+|---|---|
+| 账本行数 / max(success) / failed | **581** / `20261107000018` / **0** |
+| 4 条目标版本在账本 | **0 行**（均未登记） |
+| 7 张影子副本存在性 / 行数 | 全部存在，全部 **0 行** |
+| `communication.core_email_templates` | 存在，0 行，RLS=true/force=true，含 `tenant_id` |
+| `master_data.core_dict_*` | 存在，0 行，RLS=true/force=true，含 `tenant_id` |
+| `communication.core_notifications / core_emails / core_notification_templates / core_geofences` | 存在，0 行，RLS=false，无 `tenant_id` |
+| `public.core_email_templates` | **不存在**（守卫会跳过 communication 副本） |
+| 权威表行数 | `core_notifications` **6**、`core_emails` 0、`core_notification_templates` 0、`core_geofences` 0、字典 **77 / 397** |
+| `public.core_tenant_modules.tier` | `character varying`、`null=YES`、默认 `'basic'`；表 0 行 |
+| `iam_refresh_token_lookup/revoke` | **0 个** |
+| 权限码 | **986**，指纹 **`af46d75dadf351c752989fee40f2e719`** |
+| 结构指纹（排除 7 张目标副本） | **`f2731dde8c93b1fe12fc0da478b70cd0`**；表数 **1351** |
+| 依赖 | 7 张副本无外键、无视图/物化视图引用 |
+| 二进制 | pid 74405，`topems-server` 17:17 构建，sha256 `aa9b73f7…`；`strings` 命中的表名均为带 `public.` 的 SQL，**无 TABLE_DEFS 独立建表字面量**；prod 仓库 `0c11b5b90` 的 `TABLE_DEFS` 已移除这些表 |
+
+### 15.2 投递校验（sha256）
+
+| 文件 | sha256 |
+|---|---|
+| `20261107000003_drop_communication_notification_shadow_tables.sql` | `70c75d11fd54b2940328576bd78804a4ac619e26c74a7aa82f605f0b5912b314` |
+| `20261107000004_drop_high_risk_shadow_tables.sql` | `701e3e12944181259d2d0fa95072bcb48657c9247bb472d09f5a41629c90b223` |
+| `20261107000014_tenant_modules_tier_public_only.sql` | `5637810cb347e10cf09c3024cd13d178d50e95154e259d94fb084c96cb0cb001` |
+| `20261107000016_drop_iam_refresh_token_privileged_functions.sql` | `07100464e98c15b828a5949845ced11b572c0dc32d6d2f24c5de678f3c759c9d` |
+
+### 15.3 正式执行（20:06:57 → 20:07:03，脚本墙钟 6.175s）
+
+```
+== 待应用 4 条（anchor=20261107000002，only=000003,000004,000014,000016）
+== 显式 defer 8 条（保持 pending）：
+  000005 / 000006 / 000007 / 000009 / 000010 / 000011 / 000012 / 000015
+-- 20261107000003_drop_communication_notification_shadow_tables.sql
+-- 20261107000004_drop_high_risk_shadow_tables.sql
+-- 20261107000014_tenant_modules_tier_public_only.sql
+-- 20261107000016_drop_iam_refresh_token_privileged_functions.sql
+== OK：应用 4 条，失败 0
+real 6.175s
+```
+
+### 15.4 执行后核对
+
+| 项 | 结果 |
+|---|---|
+| 账本 | **581 → 585**，仅新增 4 条，均 `success=t`；failed 0；max 仍 `20261107000018` |
+| 账本 checksum | `000003`=`21e90a5f…471c`、`000004`=`f47b90df…44b8`、`000014`=`4e29e202…2359`、`000016`=`5df8bdc6…3668`，与本地 `shasum -a 384` **逐条一致** |
+| 6 张副本 | `communication.core_notifications`、`communication.core_emails`、`master_data.core_dict_items`、`master_data.core_dict_types`、`communication.core_notification_templates`、`communication.core_geofences` 的 `to_regclass` **全部为空** |
+| `communication.core_email_templates` | **保留**（`to_regclass` 非空），行数 0 |
+| 保留原因（显式） | `public.core_email_templates` 在 prod **不存在**，`000003` 的权威表守卫因此跳过该副本；`svc/communication/src/mail.rs`（870/992/1098/1200/1309/1401/2161）仍以**裸名** `core_email_templates` 访问，`search_path` 解析到 communication 副本。**标注为「已知功能缺口，待单独修复」，本轮未处理**（不是漏删） |
+| `000014` | **空转**：`tier` 仍为 `character varying`、`null=YES`、默认 `'basic'`。迁移的 `ADD COLUMN IF NOT EXISTS` 不会把既有可空列改为 NOT NULL → **`NOT NULL` 未达成，需补迁移**（不在本窗口） |
+| `000016` | **空转**：`iam_refresh_token_lookup/revoke` 执行前后均 **0 个**，DROP 无对象 |
+| 字典 | `77 / 397` 不变；`public.core_dict_types/items` 正常可读 |
+| 通知 | `public.core_notifications` **6 → 6**（冒烟创建 1 行后按 id+title 删除该行；库内另有 1 行上窗口遗留的同名冒烟行，未触碰） |
+| 权限码 | **986**，指纹 **`af46d75dadf351c752989fee40f2e719`** 不变 |
+| 其它结构 | 排除 7 张目标副本后的结构指纹 **`f2731dde8c93b1fe12fc0da478b70cd0`** 不变；表数 **1351 → 1345**（恰好 −6，无连带对象） |
+| 剩余 pending | 8 条：`000005/000006/000007/000009/000010/000011/000012/000015`（均未记账，符合 defer） |
+
+### 15.5 冒烟与健康（服务不重启）
+
+| 项 | 结果 |
+|---|---|
+| 超管字典 | HTTP **200**，`total=77` |
+| 普通租户 `…0001`（非超管）字典 | HTTP **200**，`total=77` |
+| probe 租户 `1111…1111`（非超管）字典 | HTTP **200**，`total=0`（租户隔离生效） |
+| 通知创建 | HTTP **200**，返回 id `e21d1cc0…bd902`；已按 id+title 清理，行数恢复 6 |
+| `/health` | **200** `{"data":"healthy"}` |
+| `/api/server/ready` | **200** `{"status":"ready","degraded_modules":[]}` |
+| `/api/server/health` | **200** `{"status":"ok","modules":31}` |
+| 服务进程 | pid **74405**，启动时间 **2026-11-06 18:01:14**（窗口前），**未重启** |
+
+### 15.6 结论与遗留
+
+- 本窗口只做 **6 张 0 行影子副本 DROP + 2 条空转对账**，加 **4 行账本**；业务数据与字典/权限零变化，
+  服务未重启。
+- **遗留 1（已知功能缺口）**：`communication.core_email_templates` 因 `public` 权威表缺失而保留，
+  `mail.rs` 裸名依赖；后续要么建 `public.core_email_templates` 并迁数据，要么明确长期保留 communication 副本，
+  **不写「已处理」**。
+- **遗留 2**：`public.core_tenant_modules.tier` 的可空性未收紧（`000014` 空转），如要求与声明一致需另开
+  `ALTER COLUMN tier SET NOT NULL`（0 行，安全），不得改 `000014` 字节。
+- 证据：本文件 15.1–15.5 的现场数字、账本 checksum 对照、逐张 `to_regclass`、冒烟/健康输出；
+  执行脚本墙钟 6.175s，窗口总墙钟 20:06:18 → 20:07:03。

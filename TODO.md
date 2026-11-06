@@ -1,3 +1,17 @@
+## prod 短窗口批次 1 执行（2026-11-06 第八批）
+
+- 记录：[窗口执行总表 §15](docs/quality/prod-window-execution-master-2026-11-06.md#15-短窗口批次-1-000003--000004--000014--0000162026-11-06-2006)。
+- 锚点 `20261107000002`（方案 A）：4 条目标版本 ≤ 账本 max `20261107000018` 且未记账，用 max 会扫不到；
+  首次 max 锚点负例 exit 1、零 DDL。
+- 执行：`--only 000003,000004,000014,000016`，其余 12 条显式 `--defer`（实际仍 pending 8 条）；
+  脚本墙钟 **6.175s**，账本 **581 → 585**，4 条 `success=t`，checksum 与本地 SHA-384 一致。
+- 结果：6 张 0 行影子副本 `to_regclass` 为空；`communication.core_email_templates` 按守卫**保留**
+  （`public` 权威表缺失 + `mail.rs` 裸名依赖，**已知功能缺口，待单独修复**）。
+- `000014` 空转：`tier` 仍可空，**`NOT NULL` 未达成，需补迁移**；`000016` 空转（函数本就 0 个）。
+- 前后不变：字典 77/397、权限 986 + 指纹 `af46d75d…`、结构指纹 `f2731dde…`；表数 1351 → 1345（−6）。
+- 冒烟：super/t0001/probe 字典 200（77/77/0）+ 通知创建 200（自建行已清理，通知表 6 → 6）；
+  `/health`、`/api/server/ready`、`/api/server/health` 均 200；pid 74405 未重启。
+
 ## 000011 列序修复与 INSERT 形态门禁（2026-11-06 第七批）
 
 - 文档：[migration-000011-column-order-fix-2026-11-06.md](docs/quality/migration-000011-column-order-fix-2026-11-06.md)。
