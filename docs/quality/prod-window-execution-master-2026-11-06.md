@@ -495,6 +495,58 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 - 修正：账本查询加 `</dev/null`；新增 fail-closed 断言（`--only` 版本必须被扫描到），提交 `bb886972b`；
   在 prod 主机临时库 `topems_window_ssh_drill` 走真实 SSH 路径验证后重跑 s4，成功（库已 DROP）。
 
+### 9.2 prod `JWT_SECRET` 轮换（2026-11-06 17:32–17:35）
+
+**原因**：一次排查命令的终端输出带出了远端进程环境变量，按“已暴露”处置。
+
+#### 9.2.1 依赖清单（只读排查，值一律未打印）
+
+| 位置 | 用途 | 是否存在 prod 密钥 | 轮换后是否需处理 |
+| --- | --- | --- | --- |
+| prod `~/topems/.env` | 单体进程运行配置 | 是（活跃） | **已更新**（`fba6af…`，len 64） |
+| prod `~/Library/LaunchAgents/com.topems.server.plist` | launchd 环境 | 是（活跃） | **已更新**，与 `.env` 前缀一致 |
+| prod `~/topems/.env.bak-20261030-151348` | 旧配置副本 | 是（旧值） | 已移入 `.secrets/retired-20261106/`（600） |
+| prod `com.topems.server.plist.bak-be08 / .bak-ehs-20261031 / .prev` | 旧 plist 副本 | 是（旧值） | 同上移入受限目录 |
+| 其它 launchd 服务（nginx、logrotate、be08-*） | — | 否 | 无需处理 |
+| 仓库 `.env.production` / `.env.local` / `docker/.env` / `config/standalone.env` | 本地/容器开发 | 否（前缀均非 prod） | 无需处理（且均未被 git 跟踪） |
+| `config/env/*.template`、`config/production.yaml.example`、`.env.example` | 模板占位 | 否（`<SET_YOUR_OWN…>`） | 无需处理 |
+| CI（`.github/workflows/*`）、e2e | 固定测试密钥，非 prod | 否 | 无需处理 |
+| `apps/web` 构建 | 不引用 `JWT_SECRET` | 否 | 无需重新构建 |
+| `scripts/mobile_contract_smoke.py`、`web_contract_smoke.py` | 由调用方显式传 token | 否 | 冒烟时用新 token 即可 |
+| `scripts/lib/service.sh`、`scripts/deploy/*` | 生成/读取 `.env` | 否（不内嵌 prod 值） | 无需处理 |
+| `JWT_REFRESH_SECRET`（prod 亦存在） | refresh token 签名 | **独立密钥，本次未轮换** | 见 9.2.4 影响面 |
+
+#### 9.2.2 变更与留档
+
+- 新密钥：`openssl rand -hex 32` 在主机内生成，**未打印**、未入仓库/文档；
+- 旧值留档：`~/topems/.secrets/jwt-secret-pre-rotate-20261106.txt`（目录 700、文件 600）；
+- 旧副本归档：`~/topems/.secrets/retired-20261106/`（3 个文件，600）；
+- 一致性核对：`env_prefix=fba6af env_len=64 plist_prefix=fba6af plist_len=64 consistency=SAME`，`plutil -lint=ok`。
+
+#### 9.2.3 重启与验证
+
+| 步骤 | 结果 |
+| --- | --- |
+| 重启前 pid | `59426` |
+| `launchctl kickstart -k` | pid `64853`，但**旧 token 仍 200**（launchd 沿用已加载的旧环境） |
+| `launchctl bootout` + `bootstrap` | pid `65124`，`state=running`，新环境生效 |
+| 旧 token（旧密钥签发） | **401** |
+| 新超管 token | 200，`total=77` |
+| 新租户 token（`1111…`） | 200，`total=0`（无泄露） |
+| 新租户 token（`…0001`） | 200，`total=77` |
+| 登录接口 `/api/core/iam/auth/login` | 错误凭据返回 **401**（服务与 DB 正常） |
+| 通知创建 | 200，`id=eee73aad-686b-4cd3-b8a8-8d1c806e344f`，落 `public.core_notifications` |
+| `/health` / `/api/server/ready` | 200 / 200 |
+
+#### 9.2.4 影响面与回滚
+
+- **旧 access token 全部失效**：已登录 web/mobile 用户在下次请求会收到 401，**需重新登录**；
+- **refresh token 仍有效**：其签名使用独立的 `JWT_REFRESH_SECRET`（本次未轮换），旧 refresh token 仍可换发新 access token，
+  直到 refresh 过期；若需强制全量重登，需再轮换 `JWT_REFRESH_SECRET` 并重启（本次未执行，留待决策）；
+- 无其它在线服务依赖该密钥（CI/e2e/前端构建均不使用 prod 值）；
+- 回滚：从 `~/topems/.secrets/jwt-secret-pre-rotate-20261106.txt` 恢复旧值到 `.env` 与 plist，
+  再 `launchctl bootout` + `bootstrap`（不可仅 `kickstart -k`）。
+
 ---
 
 ## 10. 演练发现的问题与修正
@@ -515,6 +567,7 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 | 12 | prod 主机仓库停在 `0c11b5b90`，直接借主机代码会跑旧逻辑 | 执行物与发布基线不一致 | 从干净 HEAD 构建 `seed_dict_replay`，与 SQL/迁移一起投递并逐件 sha256 校验；不使用主机仓库代码 |
 | 13 | 本地提交基于落后 4 个提交的 origin/main，pre-push `stale-base` 拦截 | 无法推送，且远端已重编号迁移 14–16 | `git pull --rebase origin main` 后重跑演练与门禁；defer 清单补 `14/15/16`，白名单仍为 `08+13` |
 | 14 | **prod 窗口实测**：SSH 模式下 `while read` 循环内的远端 `psql` 吞掉进程替换 stdin，pending 扫描第 1 条即结束 | `--only` 白名单未被扫描到 → 报“无待应用迁移”，迁移被静默跳过（fail-open，零 DDL） | 账本查询加 `</dev/null`；新增 fail-closed 断言（`--only` 每个版本必须被扫描到，否则 exit 1）；提交 `bb886972b`；本地演练不覆盖 SSH stdin 行为，需真实主机路径验证 |
+| 15 | **密钥轮换实测**：`launchctl kickstart -k` 只重启进程，不重读 plist | 新 `JWT_SECRET` 未生效，旧 token 仍 200 | 改为 `launchctl bootout gui/$UID/<job>` + `bootstrap gui/$UID <plist>`；回滚同样必须走 bootout/bootstrap |
 
 ---
 
