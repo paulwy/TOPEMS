@@ -433,3 +433,138 @@ SELECT count(*) FROM public.audit_logs WHERE entity_type ILIKE '%train%';
 ```
 
 本轮 **无代码改动、prod 无 DDL/DML/重启**。
+
+---
+
+## 10. `000001` 补应用与邮件模板链路拆解（2026-11-06 只读，待拍板）
+
+本轮**只读**：未改代码、prod 无 DDL/DML/重启。
+
+### 10.1 `20261107000001` 到底做什么
+
+文件：`database/migrations/20261107000001_iam_core_public_authority_sync.sql`。
+目标表：`public.core_permissions`。语义：`INSERT ... WHERE NOT EXISTS(code)`，**无 UPDATE、无 DELETE、无授权 SQL**。
+`id`/`created_at` 走表默认（`gen_random_uuid()` / `now()`）；`level` 显式不写 → **NULL**（prod 现有 653 行同样为 NULL，口径一致）。
+
+| # | code | name | resource | action | level | prod 现状 |
+|---|---|---|---|---|---|---|
+| 1 | `bi:data_source:write` | BI 数据源写入 | `bi` | write | NULL | **不存在** |
+| 2 | `mes:work_order:write` | MES 工单写入 | `mes` | write | NULL | **不存在** |
+| 3 | `wms:stocktake:read` | WMS 盘点读取 | `wms` | read | NULL | **已存在**（name 为码本身、resource=`wms:stocktake`、level=1、0 授权） |
+| 4 | `wms:stocktake:write` | WMS 盘点写入 | `wms` | write | NULL | **不存在** |
+
+- **预计影响行数**：`INSERT` **3** 行（第 3 条被 `NOT EXISTS` 跳过，且**不会**覆盖既有行的 name/resource）。
+- 该迁移**不授予任何角色**，所以 `core_role_permissions` 变化为 **0**。
+
+### 10.2 与 `000012` 的关系
+
+`000012` 的 92 码删除集合 vs 上述 4 码：**交集 0**。
+**结论：补应用不会复活任何已删码**；两者码空间完全不相交（`000012` 删的是 ehs/finance/crm/pm/lims/pdm/report 域，`000001` 补的是 bi/mes/wms 的 `:write`/`:read`）。
+
+### 10.3 prod 现状核对
+
+| 维度 | 结果 |
+|---|---|
+| 码是否存在 | 4 条中 1 条存在（`wms:stocktake:read`），3 条缺失 |
+| 是否已授权 | 4 条**全部 0 授权**（`admin` 也没授） |
+| 前端引用 | `wms:stocktake:read`：路由 `requiredPermissions` 2 处 + `permissions.ts` 注册；`wms:stocktake:write`：`StockTakePage.tsx` 写按钮；`mes:work_order:write`：仅测试夹具（无生产 UI）；`bi:data_source:write`：**0 处**（页面走 `permissionResource: 'bi:data_source'` 派生 create/update/delete） |
+| 后端强制点 | `mes:work_order:write` 8 个工单写接口、`wms:stocktake:read/write` 4+1 个接口、`bi:data_source:write` 分析插件 1 处 |
+| 结论 | 码缺失时这些接口对非超管**403**；补码后仍**无人被授权** → 功能面仍不可用，需另拍授权 |
+
+### 10.4 补应用后的确切结果（预期值 vs 不符怎么判）
+
+前置：账本 **592**、权限码 **1109**、授权 **854**、`admin` **214**（批次 3 后实测）。
+
+| 项 | 预期 | 不符时怎么判 |
+|---|---|---|
+| 账本 | 592 → **593**（+1） | +0 → 迁移未记账，停止；+2 → 扫到清单外版本，停止 |
+| 权限码 | 1109 → **1112**（+3） | 1113 → `wms:stocktake:read` 被意外删除，停止；1111 → 只插 2 条，停止 |
+| 角色授权 | **854 不变** | 有任何增减 → 迁移行为超出声明，停止 |
+| `admin` 授权 | **214 不变** | 变化 → 同上，停止 |
+| 结构/字典/通知/审计 | 不变 | 任何变化 → 停止 |
+
+### 10.5 与 `000002` 的关系
+
+- `000002`（`tenant_modules_tier_column.sql`）是 `core_tenant_modules.tier` 的 DDL，属于 **tenant/tier 域**，与 `000001`（权限数据）**无交集、无冲突**。
+- 它被 `000014`（public-only 修正版）**取代**：原写法同时 `ALTER public` 与 `iam`，一旦 `iam.core_tenant_modules` 不存在即整事务回滚。
+  现场实测：prod 两张表都存在，`public.tier` 已存在但 **nullable、无 default**；`iam.tier` 不存在。
+  `000014` 的 `ADD COLUMN IF NOT EXISTS` 对已存在的 public 列是 no-op → 这正是批次 1「`tier` 的 `NOT NULL` 未达成，需补迁移」的来源。
+- **结论：`000002` 应永久不应用**（由 `000014` 取代；应用它只会给 iam 加一列，仍修不好 public 的 NOT NULL）。它与 `000001` 不冲突。
+
+### 10.6 前置与窗口
+
+- **锚点**：必须低于 `000001`，用 **`20261107000000`**（`version > anchor` 恰好只扫到 000001 起的版本，避开 `20261106000001`）。
+- **defer**：`20261107000002`、`20261107000015`；其余 pending 已全部记账，脚本自动跳过。
+- **备份**：建议 `pg_dump -t public.core_permissions`（986→1112，表小），非强制（仅 INSERT、可 rollback）。
+- **零交集校验**：已做，`000012` 删除集合交集 **0**；前端引用**有**（wms 路由/按钮），这是「补回在用码」，不是「删除在用码」，红线不适用。
+- **预计时长**：投递+执行 < 10 s，核对+冒烟约 2–3 min。
+
+---
+
+### 10.7 邮件模板链路：到底要做什么
+
+#### A. 是否在用（证据）
+
+| 证据 | 结果 |
+|---|---|
+| 模板 CRUD/发送函数 | `svc/communication/src/mail.rs`：`list_templates`(820) / `create_template`(925) / `get_template`(1033) / `update_template`(1139) / `delete_template`(1251) / `send_with_template`(1339) / `send_with_template_by_code`(2085) |
+| 裸名 SQL | 7 处 `core_email_templates`：870/992/1098/1200/1309/1401/2161；`only_own_schema_query!` **不改写 SQL**，按模块 search_path（`communication, public`）解析 → 命中 `communication.core_email_templates` |
+| 路由（独立服务 8084） | `svc/communication/src/main.rs` 246–259：templates CRUD + `/{id}/send` + `emails/send-with-template` |
+| 路由（prod 实跑 8099） | `svc/server/src/modules/communication_real_module.rs` 512–526：**无** `emails/send-with-template`；模板相关只有 `/templates*`，另有 stub `/templates/render`、`/templates/{id}/status` |
+| 前端 | `apps/web/src/modules/im/config.ts` 挂 `/im/mail`（要求 `im:mail:read`）；`apps/web/src/api/mail/index.ts` 调 send-with-template；`SendEmailDialog` 用 `t.code` |
+| prod 实测（超管 token） | `GET /api/communication/mail/templates` **200 空数组**；`/mail/emails` **200 空**；`/mail/emails/stats` **200 全 0** |
+| 数据 | `communication.core_email_templates` **0 行**；`public.core_email_templates` **不存在**；`public.core_emails` **0 行**；`communication.core_notification_deliveries` **0 行**；`public.core_notification_templates` **0 行**；`communication.notification_channels` **0 行** |
+| SMTP | prod `.env` 有键：`SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` / `SMTP_FROM_ADDRESS`（只核键名，未读值） |
+| 通知邮件 | 仅在 `notification.rs:241` 且请求 `send_email=true` 时触发；FE **无任何** `send_email: true` 调用点 → 从未触发 |
+| 密码重置邮件 | `unified-core/.../auth.rs:63` 投递到 `/api/communication/mail/send`，但**该路由不存在**（后端只有 `/mail/emails`）→ 静默 404 |
+| 使用痕迹 | 审计 `action/entity_type` 含 mail/email **0 行**；nginx access 日志 `/mail/` **0 命中**；`logs/topems.log` 为空文件 |
+
+**判定**：模板子链路**从未被使用**，且在 prod 上是**断的**（FE 期望 `code`，DB/API 均无 `code`；FE 调 `send-with-template`，8099 无该路由；密码重置路由不存在）。通知与密码重置**不依赖模板表**。
+
+#### B. 路径 A（下线模板子链路，保留直发邮件）
+
+要删/改：
+
+1. 后端：`mail.rs` 7 个模板函数（820/925/1033/1139/1251/1339/2085）及 7 处裸名 SQL；
+2. 路由：`svc/communication/src/main.rs` 246–259 模板路由；`svc/server/src/modules/communication_real_module.rs` 519–526 模板路由 + 184–185 stub；
+3. 前端：`api/mail/index.ts` 模板方法（约 L128–165）、`SendEmailDialog` 模板下拉、`EmailTemplate` 类型；保留直发 `emails` 与 `/im/mail` 菜单；
+4. 迁移：`DROP TABLE IF EXISTS communication.core_email_templates`（先确认 0 行；带 `to_regclass` 守卫）；
+5. 权限：`im:mail:read` 保留（直发页面仍用）。
+
+影响：**不破坏通知**（通知邮件走独立 `queue_email`，且从未触发）；**不破坏直发邮件**（`/emails` 保留，SMTP 键齐全）。
+代价：需一次应用重启（先发代码删路由，再跑 DROP；否则窗口内调用模板路由会 500）。工作量：后端 2 文件、前端 3 文件、迁移 1 条，风险低。
+
+#### C. 路径 B（补建权威表 `public.core_email_templates`）
+
+参考来源：`communication.core_email_templates` 现有 10 列（全部 `NOT NULL` 除外）：
+
+```sql
+CREATE TABLE IF NOT EXISTS public.core_email_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name varchar NOT NULL,
+  subject_template varchar NOT NULL,
+  body_template text NOT NULL,
+  description text,
+  tenant_id uuid NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  deleted_at timestamptz,
+  name_en varchar
+);
+```
+
+但只建表 **等于白做**，原因：
+
+1. 服务 search_path 是 `communication, public`，裸名优先命中 `communication` 副本 → 新表被**遮蔽**；必须同时把 `mail.rs` 7 处改成 `public.` 限定，并决定是否删/保留副本；
+2. 数据迁移：副本 **0 行**，`INSERT ... SELECT` 搬过去是 0 行 → 建完仍是空表；
+3. FE/API 仍缺 `code` 字段、`send-with-template` 路由仍不存在、密码重置仍打错路径 → **零行为变化**；
+4. 迁移顺序：建 public 表 → 改 7 处限定 → 部署 →（可选）删 communication 副本；顺序错会出现双表并存/写错表。
+
+工作量：后端 1 文件 7 处 + 迁移 1–2 条 + 一次部署；风险中（改限定名可能影响其它裸名查询）。
+
+#### D. 推荐
+
+**选路径 A（下线模板子链路）**。理由：模板链路 0 数据、0 使用痕迹、prod 上本身就是断的；通知与密码重置不依赖它；A 的改动面比 B 小，且能顺带删掉 7 处裸名 SQL 这一类运行时隐患。
+
+若选 B：会保留一张永远 0 行、且被 search_path 遮蔽的 public 表，7 处裸名、FE 的 `code` 契约、`send-with-template` 路由、密码重置错误路径**全部仍在**——等于只做了一次「结构对齐」，功能面仍是断的。
+
