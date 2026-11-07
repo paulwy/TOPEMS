@@ -18,7 +18,7 @@ use topems_finance::shared::AppState;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
 use topems_shared_auth::Claims;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -34,11 +34,6 @@ impl FinanceRealModule {
     /// 异步构建真实财务模块：
     /// 初始化数据库 → 事件总线 → 服务客户端 → 业务路由
     pub async fn build() -> Result<Self> {
-        // 与独立 finance 服务一致：search_path 优先 finance schema。
-        // .env 默认 SEARCH_PATH=iam,shared,public 会解析到 iam schema 的旧表
-        // （无 reco_type 列），导致 init_database 建索引失败。
-        std::env::set_var("SEARCH_PATH", "finance, public");
-
         let config = ServiceConfig {
             name: "topems-finance",
             port: 8011,
@@ -55,7 +50,10 @@ impl FinanceRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器
-        let ctx = bootstrap_service(&config).await?;
+        //    与独立 finance 服务一致：search_path 优先 finance schema（显式传入，不依赖进程变量）。
+        //    .env 默认 SEARCH_PATH=iam,shared,public 会解析到 iam schema 的旧表
+        //    （无 reco_type 列），导致 init_database 建索引失败。
+        let ctx = bootstrap_service_with_search_path(&config, "finance, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
