@@ -70,7 +70,8 @@ export const supplierSchema: EntitySchema = {
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
       renderCell: (row: Record<string, unknown>) => {
-        // 列表展示：优先 getNameZh(category_code)；无 code 或未命中时回退原 category 自由文本
+        // 批 35：列表展示优先 getNameZh(category_code)；无 code 或未命中时回退原 category 自由文本。
+        // 自由文本 fallback 仅用于展示历史值，不做业务判断；当前数据全部有 category_code，fallback 永不触发。
         const code = row.category_code;
         const fallback = (row.category as string) || '';
         if (!code) return fallback || '-';
@@ -229,6 +230,8 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       {
+        // 批 35：filter id 仍叫 'category'（query param 兼容），但后端已按 category_code 过滤。
+        // value 是 category_code（raw_material / packaging 等），不是自由文本。
         id: 'category',
         label: i18n.t('srm.supplier.k35'),
         type: 'select',

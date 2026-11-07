@@ -34,7 +34,6 @@ pub mod fixed_asset;
 pub mod health;
 pub mod holidays;
 pub mod hr_proxy;
-pub mod hrm_integration_example;
 pub mod inventory;
 pub mod inventory_calc;
 pub mod leave_request;
@@ -156,7 +155,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(vehicles::create_routes())
         .merge(documents::create_routes())
         .merge(announcement::create_routes())
-        .merge(hrm_integration_example::create_routes())
         .merge(production_order::create_routes())
         .merge(purchase_order::create_routes())
         .merge(erp_plugin::create_routes())

@@ -158,7 +158,8 @@ const SrmSupplierDetailPage: React.FC = () => {
 
   const basicInfoSection = useMemo<SectionConfig>(() => {
     if (!supplier) return { id: 'basic', content: null };
-    // 分类展示：优先 getNameZh(category_code)；无 category_code 或未命中时回退原 category 自由文本
+    // 分类展示：优先 getNameZh(category_code)；无 category_code 或未命中时回退原 category 自由文本。
+    // 批 35：自由文本 fallback 仅用于展示历史值，不做业务判断；当前数据全部有 category_code，fallback 永不触发。
     const categoryDisplay = supplier.category_code
       ? getNameZh(supplier.category_code, supplier.category || '')
       : supplier.category || '';

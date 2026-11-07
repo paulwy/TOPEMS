@@ -19,10 +19,6 @@ export const erpReadOps2 = {
     apiClient.erp.get('/master-data/services'),
   listComplianceRules: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data-refs/list-compliance-rules-handler'),
-  listDepartmentsFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/example/departments'),
-  listCompaniesFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/example/companies'),
   listArchiveRecords: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/mdm-v49/archive/records'),
   listConflicts: async (): Promise<ApiResponse<Record<string, unknown>>> =>
@@ -49,8 +45,4 @@ export const erpReadOps2 = {
     apiClient.erp.get('/hr/companies'),
   proxyListPayrolls2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/hr/payrolls'),
-  listDepartmentsFromHrm2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/example/departments'),
-  listCompaniesFromHrm2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/example/companies'),
 };

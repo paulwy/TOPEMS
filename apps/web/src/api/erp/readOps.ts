@@ -101,6 +101,4 @@ export const erpReadApi = {
     apiClient.erp.get('/hr/attendances'),
   proxyGetAttendance2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/hr/attendances/{id}'),
-  listEmployeesFromHrm2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/example/employees'),
 };

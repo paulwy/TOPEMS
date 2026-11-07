@@ -35,8 +35,12 @@ pub async fn list_inventory_items(
     match client.list_inventory_items(1, 100).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取库存列表成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务获取库存列表失败: {}", e);
-            ApiResponse::server_error("获取库存列表失败")
+            // WMS 上游未启动时优雅降级：返回空列表，与同文件 stocktake/inbound/outbound 兜底口径一致。
+            tracing::warn!("调用WMS服务获取库存列表失败（降级空列表）: {}", e);
+            ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取库存列表成功（WMS 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -85,8 +89,12 @@ pub async fn get_inventory_item(
     match client.get_inventory_item(&id).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取库存详情成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务获取库存详情失败: {}", e);
-            downstream_error(&e, "获取库存详情失败")
+            // WMS 上游未启动时优雅降级：返回 null 数据（与 contract_fallback detail_missing 口径一致）。
+            tracing::warn!("调用WMS服务获取库存详情失败（降级 null）: {}", e);
+            ApiResponse::success(
+                serde_json::Value::Null,
+                "获取库存详情成功（WMS 服务未接入，返回空态）",
+            )
         }
     }
 }

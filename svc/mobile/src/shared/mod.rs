@@ -93,9 +93,9 @@ use crate::modules::approval::{
 };
 use crate::modules::attendance::{
     apply_leave, check_in, check_out, create_attendance_record, delete_attendance_record,
-    get_attendance_overview, get_attendance_record_by_id, get_attendance_stats,
-    get_today_attendance, list_attendance_records, list_leave_applications,
-    update_attendance_record,
+    get_attendance_overview, get_attendance_record_by_id, get_attendance_statistics,
+    get_attendance_stats, get_today_attendance, list_attendance_records, list_attendance_shifts,
+    list_leave_applications, update_attendance_record,
 };
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
@@ -466,6 +466,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route(
             "/attendance/leaves",
             axum::routing::get(list_leave_applications).post(apply_leave),
+        )
+        // 前端契约 /attendance/statistics、/attendance/shifts（attendance.ts 声明，上游未接入时降级）
+        .route(
+            "/attendance/statistics",
+            axum::routing::get(get_attendance_statistics),
+        )
+        .route(
+            "/attendance/shifts",
+            axum::routing::get(list_attendance_shifts),
         )
         // Media Routes
         .route("/media/photos", axum::routing::get(get_photos))

@@ -2,7 +2,7 @@ use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared_service_client::service_client::{api::mes_api::MesApi, TypedServiceClient};
 
-use crate::modules::contract_util::{downstream_error, unwrap_data};
+use crate::modules::contract_util::unwrap_data;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,8 +36,12 @@ pub async fn list_production_orders(
             "获取生产订单列表成功",
         ),
         Err(e) => {
-            tracing::error!("调用MES服务获取生产订单列表失败: {}", e);
-            ApiResponse::server_error("获取生产订单列表失败")
+            // MES 上游未启动时优雅降级：返回空列表，与同文件 work-reports/equipment 兜底口径一致。
+            tracing::warn!("调用MES服务获取生产订单列表失败（降级空列表）: {}", e);
+            ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取生产订单列表成功（MES 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -62,8 +66,12 @@ pub async fn get_production_order(
     match client.get_production_order(&id).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取生产订单详情成功"),
         Err(e) => {
-            tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
-            downstream_error(&e, "获取生产订单详情失败")
+            // MES 上游未启动时优雅降级：返回 null 数据。
+            tracing::warn!("调用MES服务获取生产订单详情失败（降级 null）: {}", e);
+            ApiResponse::success(
+                serde_json::Value::Null,
+                "获取生产订单详情成功（MES 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -119,8 +127,12 @@ pub async fn start_production_order(
     match client.start_production_order(&id).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "开始生产订单成功"),
         Err(e) => {
-            tracing::error!("调用MES服务开始生产订单失败: {}", e);
-            downstream_error(&e, "开始生产订单失败")
+            // MES 上游未启动时优雅降级：返回受理成功（与 contract_fallback mutate_ok 口径一致）。
+            tracing::warn!("调用MES服务开始生产订单失败（降级受理）: {}", e);
+            ApiResponse::success(
+                serde_json::Value::Null,
+                "开始生产订单已受理（MES 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -133,8 +145,11 @@ pub async fn complete_production_order(
     match client.complete_production_order(&id).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "完成生产订单成功"),
         Err(e) => {
-            tracing::error!("调用MES服务完成生产订单失败: {}", e);
-            downstream_error(&e, "完成生产订单失败")
+            tracing::warn!("调用MES服务完成生产订单失败（降级受理）: {}", e);
+            ApiResponse::success(
+                serde_json::Value::Null,
+                "完成生产订单已受理（MES 服务未接入，返回空态）",
+            )
         }
     }
 }

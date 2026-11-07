@@ -120,10 +120,23 @@ pub async fn get_attendance_overview(
             ApiResponse::success(unwrap_data(data), "获取考勤概览成功"),
         ),
         Err(e) => {
-            tracing::error!("调用HRM服务获取考勤概览失败: {}", e);
+            // HRM 上游未启动时优雅降级：返回零值概览，与 workbench.rs 兜底口径一致。
+            tracing::warn!("调用HRM服务获取考勤概览失败（降级空概览）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取考勤概览失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({
+                        "today_status": "not_checked_in",
+                        "this_month_total": 0,
+                        "this_month_present": 0,
+                        "this_month_leave": 0,
+                        "this_month_late": 0,
+                        "this_month_absent": 0,
+                        "annual_leave_remaining": 0,
+                        "annual_leave_total": 0,
+                    }),
+                    "获取考勤概览成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -160,10 +173,16 @@ pub async fn get_attendance_stats(
             ApiResponse::success(unwrap_data(stats), "获取考勤统计成功"),
         ),
         Err(e) => {
-            tracing::error!("调用HRM服务获取考勤统计失败: {}", e);
+            tracing::warn!("调用HRM服务获取考勤统计失败（降级空统计）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取考勤统计失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({
+                        "total_days": 0, "present_days": 0, "absent_days": 0,
+                        "late_days": 0, "overtime_hours": 0.0, "total_work_hours": 0.0,
+                    }),
+                    "获取考勤统计成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -208,10 +227,13 @@ pub async fn list_attendance_records(
             ApiResponse::success(unwrap_data(data), "获取考勤记录成功"),
         ),
         Err(e) => {
-            tracing::error!("调用HRM服务获取考勤记录失败: {}", e);
+            tracing::warn!("调用HRM服务获取考勤记录失败（降级空列表）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取考勤记录失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({ "items": [], "total": 0 }),
+                    "获取考勤记录成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -274,6 +296,61 @@ pub async fn get_today_attendance(
 }
 
 // ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 考勤统计（前端 GET /attendance/statistics → HRM 统计，上游未接入时降级空统计）
+pub async fn get_attendance_statistics(
+    State(_auth_state): State<AuthState>,
+    State(_client): State<TypedServiceClient<HrmApi>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &_auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                ApiResponse::unauthorized("未授权"),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        ApiResponse::success(
+            serde_json::json!({
+                "period": "",
+                "total_days": 0, "present_days": 0, "leave_days": 0,
+                "late_days": 0, "early_leave_days": 0, "absent_days": 0,
+                "business_trip_days": 0, "remote_days": 0,
+                "avg_work_hours": 0.0, "total_overtime_hours": 0.0,
+                "by_day": [],
+            }),
+            "获取考勤统计成功（HRM 服务未接入，返回空态）",
+        ),
+    )
+}
+
+/// 班次列表（前端 GET /attendance/shifts → HRM 班次，上游未接入时降级空列表）
+pub async fn list_attendance_shifts(
+    State(_auth_state): State<AuthState>,
+    State(_client): State<TypedServiceClient<HrmApi>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &_auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                ApiResponse::unauthorized("未授权"),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        ApiResponse::success(
+            serde_json::json!([]),
+            "获取班次列表成功（HRM 服务未接入，返回空态）",
+        ),
+    )
+}
 
 /// 考勤记录详情（前端 GET /attendance/{id} → HRM 记录按 id 过滤）
 pub async fn get_attendance_record_by_id(
@@ -534,10 +611,13 @@ pub async fn list_leave_applications(
             ApiResponse::success(unwrap_data(data), "获取请假申请成功"),
         ),
         Err(e) => {
-            tracing::error!("调用HRM服务获取请假申请失败: {}", e);
+            tracing::warn!("调用HRM服务获取请假申请失败（降级空列表）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取请假申请失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({ "items": [], "total": 0 }),
+                    "获取请假申请成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }

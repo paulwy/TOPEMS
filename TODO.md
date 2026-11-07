@@ -2084,6 +2084,24 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.156 审计整改第三十五批：smoke 500 清零与 category 收敛（批 35，2026-11-07）
+
+原则：**一步到位** + **门禁不得依赖运行环境**。本批消灭批 34 登记的 15 项 smoke 既有 500——这批 FAIL 让 `web-contract-smoke` 长期红，批 34 只能靠 `--no-verify` 绕过。
+
+> **关键认知（修正了 `TODO:2069-2075` 的旧结论）**：同一批 500 曾被判定为「下游服务未运行、非代码缺陷」，处置是「起 IAM/HRM/MES/WMS 四服务后 4667/4667 PASS」。这只治标——pre-commit 门禁不可能每次提交前先拉起 5 个微服务，否则门禁永远红、`--no-verify` 永远有借口。本批改从**契约层**修：不依赖下游也能通过的端点改优雅降级、确认死掉的删掉。**smoke 门禁从此与运行环境解耦**。
+
+- **15 项根因分类（每项均经「真实 500 响应 + handler 源码 + 全仓消费面」三重取证，无一项靠推测）**：
+  - **`[erp] /api/erp/example/{employees,departments,companies}` 3 项 → 纯示例代码，双向删除**。`hrm_integration_example.rs` 文件头自述「架构改进计划的最佳实践示例」，handler 走 `state.hrm_client`（`TypedServiceClient<HrmApi>` → `http://localhost:{port}`）跨服务调 HRM。取证：后端仅 `svc/erp/src/modules/mod.rs:37`（模块声明）与 `:159`（路由 merge）两处出现、**前端无任何页面/组件 import、无测试引用、仅历史文档提及**。处置：删整文件 + `mod.rs` 两处 + 前端 `readOps.ts:104-105`、`readOps2.ts:22-25,52-55`（**两端同步删**，只删一端会从 `handler_error` 转为 `route_missing` 仍 FAIL）。`hrm_client` **保留**——取证有真实业务消费者（`hr_proxy.rs` 17 处代理路由、`addressbook.rs` 8 处通讯录查询）。
+  - **`[mobile] attendance/statistics` 与 `attendance/shifts` 2 项 → 真根因是「缺路由」，非 handler 失败**。`/attendance/{id}` 把 `statistics`/`shifts` 这两个字面量当成 `record_id` 匹配，命中 `get_attendance_record_by_id`——**这正是两项 message 都是「获取考勤记录详情失败」的原因**。前端声明来自 commit `b02cb3297`「批量扩展 API bindings」，**后端从未实现过**（`git log -S` 无命中）。处置：新增精确路由（axum 更具体路径优先于 `{id}` 通配）。
+  - **`[mobile] attendance/{overview,records,leaves,stats}` + `inventory/{items,items/:id}` + `production/{orders,orders/:id,start,complete}` 10 项 → 跨服务客户端失败，改优雅降级**。均走 `TypedServiceClient` 调 HRM/WMS/MES，服务不在线即 500。**6 个 attendance 端点被 `MobileAttendancePage.tsx:74,83,92` 真实调用**——注意这些页面经 `@/api/mobile` barrel 间接引用，直接 grep 子模块路径会漏判成「零消费」，故不能删。降级范式沿用仓内既有：`workbench.rs`（上游失败返 `0`/`not_checked_in`）、同文件 `stocktake/inbound/outbound`（返空列表）、`contract_fallback.rs`（165 个端点统一 200 空态）。**降级 message 统一标注「HRM/WMS/MES 服务未接入，返回空态」，不把降级伪装成真实空结果**（守「宁缺勿假」底线）。
+  - **未选「直连 DB」的理由**：HRM/WMS/MES 数据在独立 schema，mobile 的 pool 只授权 `mobile,public,shared`，跨 schema 直查会被 RLS/边界保护拦——这是架构约束而非偷懒。
+- **smoke 门禁结果（重启 8099 后主实例实跑，未用临时实例、未用 `--no-verify`）**：`[erp] 363/366→363/363 0 FAIL`、`[mobile] 283/295→295/295 0 FAIL`、`[master] 286/286 未波动`；**总计 `4661/4661 PASS, 0 FAIL`（已知非后端缺口豁免 0）**，端点总数 4664→4661（−3，恰为删除的 3 条 example 路径）。39 个域全部 0 FAIL。
+- **`category` 自由文本收敛（走向 B：仍有消费 → 统一走 `category_code`）**：实测 287/287 行 `category` 与 `category_code` 并存（仅自由文本无 code = **0**，双 NULL = **0**，仅 code = **0**）；按值分组为 `raw_material/raw_material` 195 行（scm 来源）+ `原材料/raw_material` 92 行（srm 来源）——**`category` 实为反向同步镜像，不是权威源**。DB 侧无索引/视图/触发器依赖 `category`，RLS 只依赖 `tenant_id`；前端展示 fallback 因所有行 code 非 NULL 而**永不触发**。**查出并修复真 bug**：`supplier_master.rs:94` list filter 用 `WHERE category = $2` 按自由文本过滤，前端传英文码时**漏掉 92 行中文值数据** → 改 `WHERE category_code = $2`。create/update 仍写 `category`（为 `srm.suppliers.category NOT NULL` 兼容）；迁移 `20261107000035` 加 `COMMENT ON COLUMN` 标废弃。**未动 `scm`/`srm` 的 `category` 列**（其 `category` 是同步目标语义）。
+- **`scm↔srm` 既有 `data_sync.rs` 处置：保留为独立通道 + 标记停用（不删代码）**。取证差异表：`data_sync.rs` 读 `scm.srm_supplier_snapshots` 快照表、按 `scm.suppliers.id` 幂等、8 个基础字段、写 `sync_from_*=TRUE`、**独有全量批量 `sync_all_suppliers_from_srm`**；mdm `supplier_sync.rs` 读权威主表、按 `supplier_no` ON CONFLICT、全字段、双向、写 `sync_from_*=FALSE`。实测 `sync_from_srm=true` = **0** / `sync_from_scm=true` = **0**（从未跑过，不冲突）；前端 `scm/writeOps.ts` 的 `syncSupplierFromSrm` **无 UI 组件调用**（死封装）。按用户边界**不删除代码**，在 `data_sync.rs` 模块头写清「已被 mdm 侧取代、保留作独立通道、启用前必须重新评估环与幂等键冲突」。
+- **vite dev proxy 核实（结论：不改）**：`apps/web/vite.config.ts:151` 指向 `BACKEND_PORTS['master-data']`（`src/config/ports.ts:56` = 8090），配置本身正确；实测 `curl 127.0.0.1:8090` 返回 `connect=000`（连接失败）→ **500 的成因是本地联调时 mdm 服务没起，不是配置缺陷**。
+- **验证（全绿）**：`cargo check -p topems-erp -p topems-mobile -p topems-master-data -p topems-scm -p topems-srm` exit 0（3m02s 零新增 warning）；`cargo build -p topems-server` 14.98s；`cargo fmt --check` 0 Diff；typecheck 0；eslint 0 error 0 warning；**全量 vitest 621 files / 6640 passed / 1 skipped / 0 failed（563.26s，与基线一致）**；迁移四件套 Errors 0 / Checksum 0 / drift 0（645 表）/ RLS 权限校验通过 / schema 边界全 PASS；DB 基线未变 `287/195/92/0`。
+- **执行期副作用（如实登记）**：本批途中磁盘一度 100% 满（`target/debug/incremental` 独占 186G，属 cargo 增量缓存累积、非本批代码导致），清理后恢复至 60%（173Gi 可用）；期间导致两个包的编译中断一次，均已重跑。
+
 ## v1.155 审计整改第三十四批：供应商双向闭环与资产分类改名（批 34，2026-11-07）
 
 原则：**一步到位** + **双向闭环可用**。本批处理批 33 遗留核心项，把供应商主数据从「权威表孤岛」做成「双向闭环可用」。**用户拍板 3 项**：`mdm_suppliers` RLS 超管旁路**保留**（平台级超管需看全量，文档写明口径即可）、`erp.customers` 剩 1 行**保留只登记**（被 `SO-TEST-0001` 引用）、`mdm_asset_categories` 改名**一次改完不拆批**。

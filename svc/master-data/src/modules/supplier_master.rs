@@ -12,6 +12,23 @@
 //! 租户隔离：与同服务 master_data.rs 公共主数据域一致——直连 `state.db`，
 //! 请求级从 `x-tenant-id` 头取租户；nil/全零视为超管放行，其余按 tenant_id 过滤。
 //! RLS（FORCE + tenant_isolation_mdm_suppliers）在连接层兜底，与手动过滤双保险。
+//!
+//! ── 批 35 · category 自由文本收敛 ─────────────────────────────────────────
+//! `mdm_suppliers.category` 是自由文本列（可 NULL），与 `category_code` 并存。
+//! 取证结论（2026-11-07，全量 287 行）：
+//!   * 287/287 行同时有 category_code 与 category；仅自由文本无 code 的行 = 0。
+//!   * category 实际是反向同步镜像：scm 来源写 'raw_material'（195 行），
+//!     srm 来源写 '原材料'（92 行），category_code 均为 'raw_material'。
+//!   * 数据库侧无索引/视图/触发器依赖 category；RLS 只依赖 tenant_id。
+//!   * 前端展示 fallback 永不触发（所有行 category_code 非 NULL）。
+//! 处置（走向 B：仍有消费 → 统一走 category_code）：
+//!   * list filter 从 `category = $2` 改为 `category_code = $2`（修复漏数据 bug）。
+//!   * create/update 仍写 category：为 srm.suppliers.category NOT NULL 兼容保留，
+//!     前端 `fillCategoryFromCode` 会从字典补 name_zh；后端 `supplier_sync.rs`
+//!     翻译 srm 侧时也用 category 作兜底。
+//!   * category 列不删除（删列需独立迁移，且要先把 srm NOT NULL 兜底改由同步
+//!     管道内部生成，风险大；当前保留写兼容）。
+//!   * 下一步（待拍板）：若确认零读零写，迁移 0035+ 可 DROP COLUMN。
 
 use axum::{
     extract::{Path, Query, State},
@@ -72,6 +89,7 @@ pub struct SupplierQuery {
     /// 关键词：模糊匹配 supplier_no / name / contact_person / phone / email
     pub keyword: Option<String>,
     pub status: Option<String>,
+    /// DEPRECATED：参数名保留兼容，实际按 category_code 过滤（见 SUPPLIER_FILTER 注释）。
     pub category: Option<String>,
 }
 
@@ -83,15 +101,21 @@ pub struct SupplierListResponse {
     pub page_size: i64,
 }
 
-const SUPPLIER_COLUMNS: &str = r#"id::text, supplier_no, name, legal_name, category, category_code, status,
+const SUPPLIER_COLUMNS: &str = r#"id::text, supplier_no, name, legal_name,
+       category, category_code,  -- category 自由文本已废弃：仅作展示兜底（前端 fallback 到历史值），读取/过滤一律走 category_code
+       status,
        tax_id, address, contact_person, phone, email, website,
        credit_rating, risk_level, bank_name, bank_account, remarks,
        name_en, lead_time_days, source_system, source_id::text,
        created_at, updated_at"#;
 
+// 批 35：category 自由文本已废弃（详见模块头注释）。
+// filter 参数名仍叫 `category`（兼容前端 query param），但实际按 category_code 过滤。
+// 旧实现 `category = $2` 会漏数据：mdm.category 是反向同步镜像（scm 来源写 'raw_material'、
+// srm 来源写 '原材料'），同一 category_code 对应两种自由文本值，按自由文本过滤必然漏一半。
 const SUPPLIER_FILTER: &str = r#"deleted_at IS NULL
   AND ($1::text IS NULL OR status = $1)
-  AND ($2::text IS NULL OR category = $2)
+  AND ($2::text IS NULL OR category_code = $2)
   AND ($3::text IS NULL OR supplier_no ILIKE '%' || $3 || '%'
        OR name ILIKE '%' || $3 || '%'
        OR contact_person ILIKE '%' || $3 || '%'
