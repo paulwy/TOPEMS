@@ -20,7 +20,7 @@
 pub mod handlers;
 pub mod models;
 
-use crate::shared::middleware::{require_auth, require_permission};
+use crate::shared::middleware::require_permission;
 use crate::AppState;
 use axum::{
     routing::{get, post, put},
@@ -281,7 +281,8 @@ pub fn create_routes() -> Router<AppState> {
         )));
 
     // --- Simple API (compatibility shim) ---
-    let simple_api_routes = Router::new()
+    // Batch40: split read/write and attach permission middleware (was bare auth-only)
+    let simple_api_read = Router::new()
         .route(
             "/api/plugins/installed",
             get(simple_api::list_installed_plugins),
@@ -294,6 +295,11 @@ pub fn create_routes() -> Router<AppState> {
             "/api/plugins/{plugin_code}/details",
             get(simple_api::get_plugin_details),
         )
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:read",
+        )));
+
+    let simple_api_write = Router::new()
         .route(
             "/api/plugins/{plugin_code}/install",
             post(simple_api::install_plugin_simple),
@@ -310,7 +316,11 @@ pub fn create_routes() -> Router<AppState> {
             "/api/plugins/{plugin_code}/disable",
             post(simple_api::disable_plugin_simple),
         )
-        .layer(axum::middleware::from_fn(require_auth()));
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:write",
+        )));
+
+    let simple_api_routes = simple_api_read.merge(simple_api_write);
 
     // --- R4 registry marker (re-establishes `plugin` prefix in backendModuleSet
     // after B2 rename admin:plugin:*; never routed to in practice, scan-only) ---

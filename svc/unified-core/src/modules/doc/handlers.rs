@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use super::models::*;
 use super::services::{DocumentService, FolderService, TemplateService};
+use crate::middleware::permission::require_permission;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
@@ -622,28 +623,22 @@ pub async fn get_dashboard_handler(
     ApiResponse::success(stats, "查询成功")
 }
 
-pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        // ---------- 已有路由 ----------
-        .route("/dashboard", axum::routing::get(get_dashboard_handler))
-        .route("/health", axum::routing::get(doc_health))
+pub fn create_routes(state: &AppState) -> Router<AppState> {
+    // Batch40: split flagged bare endpoints into permission-grouped sub-routers.
+    // Read endpoints (doc:read)
+    let read = Router::new()
         .route("/documents", axum::routing::get(list_documents))
-        .route("/documents", axum::routing::post(create_document))
         .route("/documents/{document_id}", axum::routing::get(get_document))
-        .route(
-            "/documents/{document_id}",
-            axum::routing::put(update_document),
-        )
-        .route(
-            "/documents/{document_id}",
-            axum::routing::delete(delete_document),
-        )
         .route("/folders", axum::routing::get(list_folders))
-        .route("/folders", axum::routing::post(create_folder))
         .route("/folders/{folder_id}", axum::routing::get(get_folder))
-        .route("/folders/{folder_id}", axum::routing::put(update_folder))
-        .route("/folders/{folder_id}", axum::routing::delete(delete_folder))
-        // ---------- 文档版本（已有） ----------
+        .route(
+            "/templates/categories",
+            axum::routing::get(list_template_categories),
+        )
+        .route(
+            "/templates/categories/{tail}",
+            axum::routing::get(list_template_categories),
+        )
         .route(
             "/documents/{document_id}/versions",
             axum::routing::get(list_document_versions),
@@ -652,102 +647,64 @@ pub fn create_routes() -> Router<AppState> {
             "/documents/{document_id}/versions/{version}",
             axum::routing::get(get_document_version),
         )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("doc:read"),
+        ));
+
+    // Dashboard endpoint (doc:dashboard:read)
+    let dashboard = Router::new()
+        .route("/dashboard", axum::routing::get(get_dashboard_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("doc:dashboard:read"),
+        ));
+
+    // Write endpoints (doc:write)
+    let write = Router::new()
+        .route("/documents", axum::routing::post(create_document))
+        .route(
+            "/documents/{document_id}",
+            axum::routing::put(update_document),
+        )
+        .route("/folders", axum::routing::post(create_folder))
+        .route(
+            "/folders/{folder_id}",
+            axum::routing::put(update_folder),
+        )
         .route(
             "/documents/{document_id}/versions/{version}/restore",
             axum::routing::post(restore_document_version),
         )
-        // ---------- 文档版本扩展 stub ----------
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("doc:write"),
+        ));
+
+    // Admin/delete endpoints (doc:admin)
+    let admin = Router::new()
         .route(
-            "/documents/{document_id}/versions/{version}/publish",
-            axum::routing::post(publish_version_stub),
+            "/documents/{document_id}",
+            axum::routing::delete(delete_document),
         )
         .route(
-            "/documents/{document_id}/versions/{version}/unpublish",
-            axum::routing::post(unpublish_version_stub),
+            "/folders/{folder_id}",
+            axum::routing::delete(delete_folder),
         )
         .route(
-            "/documents/{document_id}/diff/{version_a}/{version_b}",
-            axum::routing::get(diff_versions_stub),
+            "/templates/{template_id}",
+            axum::routing::delete(delete_template),
         )
-        .route(
-            "/documents/{document_id}/lock",
-            axum::routing::get(get_lock_stub),
-        )
-        .route(
-            "/documents/{document_id}/lock",
-            axum::routing::post(acquire_lock_stub),
-        )
-        .route(
-            "/documents/{document_id}/lock",
-            axum::routing::delete(release_lock_stub),
-        )
-        // ---------- 协作者 stub ----------
-        .route(
-            "/documents/{document_id}/collaborators",
-            axum::routing::get(list_collaborators_stub),
-        )
-        .route(
-            "/documents/{document_id}/collaborators",
-            axum::routing::post(add_collaborators_stub),
-        )
-        .route(
-            "/documents/{document_id}/collaborators/{user_id}",
-            axum::routing::put(update_collaborator_stub),
-        )
-        .route(
-            "/documents/{document_id}/collaborators/{user_id}",
-            axum::routing::delete(remove_collaborator_stub),
-        )
-        // ---------- 评论 stub ----------
-        .route(
-            "/documents/{document_id}/comments",
-            axum::routing::get(list_comments_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments",
-            axum::routing::post(create_comment_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments/{comment_id}",
-            axum::routing::put(update_comment_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments/{comment_id}",
-            axum::routing::delete(delete_comment_stub),
-        )
-        // ---------- 活动记录 stub ----------
-        .route(
-            "/documents/{document_id}/activities",
-            axum::routing::get(list_activities_stub),
-        )
-        // ---------- 分享 stub ----------
-        .route(
-            "/documents/{document_id}/share",
-            axum::routing::get(list_shares_stub),
-        )
-        .route(
-            "/documents/{document_id}/share",
-            axum::routing::post(create_share_stub),
-        )
-        .route(
-            "/documents/{document_id}/share/{share_id}",
-            axum::routing::delete(delete_share_stub),
-        )
-        // ---------- 模板（已有，静态在前） ----------
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("doc:admin"),
+        ));
+
+    // Remaining routes (health, stubs, unflagged template CRUD, workspaces) — auth-only
+    let rest = Router::new()
+        .route("/health", axum::routing::get(doc_health))
         .route("/templates", axum::routing::get(list_templates))
         .route("/templates", axum::routing::post(create_template))
-        .route(
-            "/templates/categories",
-            axum::routing::get(list_template_categories),
-        )
-        // smoke 容忍：前端只调 /templates/categories（无尾段），
-        // contract checker 误将 query 折叠为路径段 categories/{uuid}，
-        // 补容忍路由复用同一 handler，避免裸 404。
-        .route(
-            "/templates/categories/{tail}",
-            axum::routing::get(list_template_categories),
-        )
-        // 模板审批静态路由（必须在 /templates/{template_id} 之前）
         .route(
             "/templates/approvals/pending",
             axum::routing::get(list_pending_approvals_stub),
@@ -780,7 +737,6 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/approvals/{approval_id}/cancel",
             axum::routing::post(cancel_approval_stub),
         )
-        // 模板使用统计静态路由
         .route(
             "/templates/usage/stats",
             axum::routing::get(get_usage_stats_stub),
@@ -789,17 +745,11 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/usage/top",
             axum::routing::get(get_top_templates_stub),
         )
-        // 模板详情动态路由
         .route("/templates/{template_id}", axum::routing::get(get_template))
         .route(
             "/templates/{template_id}",
             axum::routing::put(update_template),
         )
-        .route(
-            "/templates/{template_id}",
-            axum::routing::delete(delete_template),
-        )
-        // 模板扩展操作
         .route(
             "/templates/{template_id}/render",
             axum::routing::post(render_template_stub),
@@ -812,7 +762,6 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/{template_id}/toggle-status",
             axum::routing::put(toggle_template_status_stub),
         )
-        // 模板审批（按模板）
         .route(
             "/templates/{template_id}/approvals",
             axum::routing::get(list_template_approvals_stub),
@@ -825,7 +774,6 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/{template_id}/submit",
             axum::routing::post(submit_template_stub),
         )
-        // 模板分配
         .route(
             "/templates/{template_id}/assignments",
             axum::routing::get(list_assignments_stub),
@@ -850,7 +798,6 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/{template_id}/export",
             axum::routing::post(export_template_stub),
         )
-        // 模板依赖
         .route(
             "/templates/{template_id}/dependencies",
             axum::routing::get(list_dependencies_stub),
@@ -863,7 +810,6 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/{template_id}/dependencies/{dep_id}",
             axum::routing::delete(remove_dependency_stub),
         )
-        // 模板版本（静态 history/changelog 在动态 {version} 之前）
         .route(
             "/templates/{template_id}/versions/history",
             axum::routing::get(get_version_history_stub),
@@ -912,7 +858,78 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/{template_id}/versions/{version}/diff",
             axum::routing::get(get_version_diff_stub),
         )
-        // ---------- 工作区 stub ----------
+        .route(
+            "/documents/{document_id}/versions/{version}/publish",
+            axum::routing::post(publish_version_stub),
+        )
+        .route(
+            "/documents/{document_id}/versions/{version}/unpublish",
+            axum::routing::post(unpublish_version_stub),
+        )
+        .route(
+            "/documents/{document_id}/diff/{version_a}/{version_b}",
+            axum::routing::get(diff_versions_stub),
+        )
+        .route(
+            "/documents/{document_id}/lock",
+            axum::routing::get(get_lock_stub),
+        )
+        .route(
+            "/documents/{document_id}/lock",
+            axum::routing::post(acquire_lock_stub),
+        )
+        .route(
+            "/documents/{document_id}/lock",
+            axum::routing::delete(release_lock_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators",
+            axum::routing::get(list_collaborators_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators",
+            axum::routing::post(add_collaborators_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators/{user_id}",
+            axum::routing::put(update_collaborator_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators/{user_id}",
+            axum::routing::delete(remove_collaborator_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments",
+            axum::routing::get(list_comments_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments",
+            axum::routing::post(create_comment_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments/{comment_id}",
+            axum::routing::put(update_comment_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments/{comment_id}",
+            axum::routing::delete(delete_comment_stub),
+        )
+        .route(
+            "/documents/{document_id}/activities",
+            axum::routing::get(list_activities_stub),
+        )
+        .route(
+            "/documents/{document_id}/share",
+            axum::routing::get(list_shares_stub),
+        )
+        .route(
+            "/documents/{document_id}/share",
+            axum::routing::post(create_share_stub),
+        )
+        .route(
+            "/documents/{document_id}/share/{share_id}",
+            axum::routing::delete(delete_share_stub),
+        )
         .route("/workspaces", axum::routing::get(list_workspaces_stub))
         .route("/workspaces", axum::routing::post(create_workspace_stub))
         .route(
@@ -966,7 +983,9 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/workspaces/{workspace_id}/stats",
             axum::routing::get(get_workspace_stats_stub),
-        )
+        );
+
+    read.merge(dashboard).merge(write).merge(admin).merge(rest)
 }
 
 #[utoipa::path(

@@ -22,6 +22,7 @@ use axum::{
 };
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
 use topems_shared_auth::auth::auth_middleware;
+use topems_shared_auth::middleware::require_permission;
 
 use topems_shared_core::api_version::create_api_info_router;
 
@@ -191,20 +192,20 @@ pub fn create_routes(
         )
         .with_state(app_state.clone());
 
-    let protected_routes = Router::new()
-        .route("/chat", post(ai_handlers::chat))
-        .route("/search", post(ai_handlers::ai_search))
-        .route("/generate", post(ai_handlers::generate))
-        .route("/validate", post(ai_handlers::validate))
-        .route("/complete", post(ai_handlers::complete))
-        .route("/summarize", post(ai_handlers::summarize))
-        .route("/templates", get(ai_handlers::list_templates))
+    // ===== 三分法路由分组（batch40 反向鉴权修复）=====
+    // C1 运维/管理面：ai:admin（admin + superadmin）
+    // C2 业务数据面：ai:read（employee + admin + superadmin）
+    // C3 个人自服务：仅登录（任意已认证用户）
+
+    // --- C1 运维/管理面：ai:admin ---
+    let ai_admin_routes = Router::new()
+        // 全局设置
         .route(
             "/settings",
             get(crate::modules::settings::get_settings)
                 .put(crate::modules::settings::update_settings),
         )
-        // ========== AI 仪表盘（known_gap A 补全，2026-09-09）==========
+        // AI 仪表盘
         .route(
             "/dashboard/stats",
             get(model_admin_handlers::get_dashboard_stats),
@@ -213,7 +214,6 @@ pub fn create_routes(
             "/dashboard/activity-trend",
             get(model_admin_handlers::get_activity_trend),
         )
-        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dashboard/activity-trend/{tail}
         .route(
             "/dashboard/activity-trend/{tail}",
             get(model_admin_handlers::get_activity_trend),
@@ -222,10 +222,9 @@ pub fn create_routes(
             "/dashboard/feature-usage",
             get(model_admin_handlers::get_feature_usage),
         )
-        // ========== 模型管理（known_gap A 补全，2026-09-09）==========
+        // 模型管理
         .route("/models", get(model_admin_handlers::list_models))
         .route("/models/usage", get(model_admin_handlers::get_model_usage))
-        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /models/usage/{tail}
         .route(
             "/models/usage/{tail}",
             get(model_admin_handlers::get_model_usage),
@@ -235,43 +234,17 @@ pub fn create_routes(
             get(model_admin_handlers::get_model_config)
                 .put(model_admin_handlers::update_model_config),
         )
-        // ========== Prompt 模板（known_gap A 补全，2026-09-09）==========
+        // Prompt 模板管理（写操作）
         .route(
             "/prompts/templates",
-            get(prompt_handlers::list_prompt_templates)
-                .post(prompt_handlers::create_prompt_template),
+            post(prompt_handlers::create_prompt_template),
         )
         .route(
             "/prompts/templates/{id}",
-            get(prompt_handlers::get_prompt_template)
-                .put(prompt_handlers::update_prompt_template)
+            put(prompt_handlers::update_prompt_template)
                 .delete(prompt_handlers::delete_prompt_template),
         )
-        .route(
-            "/prompts/templates/{id}/favorite",
-            post(prompt_handlers::toggle_prompt_favorite),
-        )
-        .route(
-            "/prompts/templates/{id}/use",
-            post(prompt_handlers::use_prompt_template),
-        )
-        .route(
-            "/prompts/categories",
-            get(prompt_handlers::get_prompt_categories),
-        )
-        // AI 智能助手 Phase 3
-        .route("/assistant/report", post(ai_handlers::report_assistant))
-        .route("/assistant/flow", post(ai_handlers::flow_assistant))
-        .route(
-            "/assistant/anomaly/predict",
-            post(ai_handlers::anomaly_predict),
-        )
-        .route("/assistant/knowledge/ask", post(ai_handlers::knowledge_ask))
-        // 文档处理 API - 使用 DocumentApi 模块
-        .route(
-            "/documents",
-            get(crate::modules::document::list).post(crate::modules::document::create),
-        )
+        // 文档摄入与管理（写操作）
         .route("/documents/upload", post(crate::modules::document::upload))
         .route(
             "/documents/vectorize-from-file",
@@ -279,66 +252,15 @@ pub fn create_routes(
         )
         .route(
             "/documents/{id}",
-            get(crate::modules::document::get)
-                .put(crate::modules::document::update)
-                .delete(crate::modules::document::delete),
-        )
-        // 前端契约收口（2026-10-06）：文档原始文件下载（附件流）
-        .route(
-            "/documents/{id}/download",
-            get(crate::modules::document::download),
+            put(crate::modules::document::update).delete(crate::modules::document::delete),
         )
         .route(
             "/documents/{id}/process",
             post(crate::modules::document::process),
         )
-        .route(
-            "/documents/{id}/extract",
-            post(crate::modules::document::extract),
-        )
-        .route(
-            "/documents/{id}/summarize",
-            post(crate::modules::document::summarize),
-        )
-        .route(
-            "/documents/{id}/key-points",
-            post(crate::modules::document::extract_key_points),
-        )
-        // 前端契约收口（2026-10-06）：documents 轻量兜底端点（待上游支持）
-        .route(
-            "/documents/{id}/translate",
-            post(crate::modules::document::translate),
-        )
-        .route("/documents/{id}/ocr", post(crate::modules::document::ocr))
-        .route(
-            "/documents/{id}/classify",
-            post(crate::modules::document::classify),
-        )
-        .route(
-            "/documents/{id}/entities",
-            post(crate::modules::document::entities),
-        )
-        .route("/documents/qa", post(crate::modules::document::document_qa))
-        // 代码助手 API - 使用 CodeAssistantApi 模块
-        .route(
-            "/code/generate",
-            post(crate::modules::code_assistant::generate),
-        )
-        .route(
-            "/code/explain",
-            post(crate::modules::code_assistant::explain),
-        )
-        .route("/code/fix", post(crate::modules::code_assistant::fix))
-        .route(
-            "/code/optimize",
-            post(crate::modules::code_assistant::optimize),
-        )
-        .route("/code/review", post(crate::modules::code_assistant::review))
-        // 向量检索 API - 使用 VectorApi 模块
+        // 向量库管理
         .route("/vectors/stats", get(crate::modules::vector::stats))
-        .route("/vectors/search", post(crate::modules::vector::search))
         .route("/vectors/store", post(crate::modules::vector::store))
-        .route("/vectors/{id}", get(crate::modules::vector::get))
         .route("/vectors/{id}", delete(crate::modules::vector::delete))
         .route(
             "/vectors/batch-store",
@@ -348,16 +270,11 @@ pub fn create_routes(
             "/embedding/generate",
             post(crate::modules::embedding::generate),
         )
-        .route(
-            "/vectors/hybrid-search",
-            post(crate::modules::vector::hybrid_search),
-        )
         .route("/vectors/clear", post(crate::modules::vector::clear_all))
-        // 前端契约收口（2026-10-06）：/vector/collections 轻量兜底（待上游支持）
+        // Vector collection 管理
         .route(
             "/vector/collections",
-            get(crate::modules::vector::list_collections)
-                .post(crate::modules::vector::create_collection),
+            post(crate::modules::vector::create_collection),
         )
         .route(
             "/vector/collections/{id}",
@@ -367,32 +284,7 @@ pub fn create_routes(
             "/vector/index/{document_id}",
             post(crate::modules::vector::index_document),
         )
-        // 问答 API - 使用 QaApi 模块
-        .route("/qa/ask", post(crate::modules::qa::ask))
-        .route(
-            "/qa/ask-with-context",
-            post(crate::modules::qa::ask_with_context),
-        )
-        .route(
-            "/qa/ask-structured",
-            post(crate::modules::qa::ask_structured),
-        )
-        .route(
-            "/qa/ask-conversation",
-            post(crate::modules::qa::ask_conversation),
-        )
-        .route("/qa/classify", post(crate::modules::qa::classify))
-        .route("/qa/history", get(crate::modules::qa::history))
-        .route(
-            "/qa/history/{id}",
-            delete(crate::modules::qa::delete_history),
-        )
-        .route(
-            "/qa/history/batch-delete",
-            post(crate::modules::qa::batch_delete_history),
-        )
-        .route("/qa/feedback", post(crate::modules::qa::feedback))
-        // 数据连接器 API
+        // 数据连接器管理
         .route("/connectors", get(connector_handlers::list_connectors))
         .route("/connectors/get", get(connector_handlers::get_connector))
         .route(
@@ -409,9 +301,160 @@ pub fn create_routes(
         )
         .route("/connectors/test", get(connector_handlers::test_connector))
         .route("/connectors/query", post(connector_handlers::query_data))
-        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
-        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
-        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // --- C2 业务数据面：ai:read（员工可用的 AI 业务功能）---
+    let protected_routes = Router::new()
+        .route("/chat", post(ai_handlers::chat))
+        .route("/search", post(ai_handlers::ai_search))
+        .route("/generate", post(ai_handlers::generate))
+        .route("/validate", post(ai_handlers::validate))
+        .route("/complete", post(ai_handlers::complete))
+        .route("/summarize", post(ai_handlers::summarize))
+        .route("/templates", get(ai_handlers::list_templates))
+        // AI 智能助手
+        .route("/assistant/report", post(ai_handlers::report_assistant))
+        .route("/assistant/flow", post(ai_handlers::flow_assistant))
+        .route(
+            "/assistant/anomaly/predict",
+            post(ai_handlers::anomaly_predict),
+        )
+        .route("/assistant/knowledge/ask", post(ai_handlers::knowledge_ask))
+        // 文档业务
+        .route(
+            "/documents",
+            get(crate::modules::document::list).post(crate::modules::document::create),
+        )
+        .route(
+            "/documents/{id}",
+            get(crate::modules::document::get),
+        )
+        .route(
+            "/documents/{id}/download",
+            get(crate::modules::document::download),
+        )
+        .route(
+            "/documents/{id}/extract",
+            post(crate::modules::document::extract),
+        )
+        .route(
+            "/documents/{id}/summarize",
+            post(crate::modules::document::summarize),
+        )
+        .route(
+            "/documents/{id}/key-points",
+            post(crate::modules::document::extract_key_points),
+        )
+        .route(
+            "/documents/{id}/translate",
+            post(crate::modules::document::translate),
+        )
+        .route("/documents/{id}/ocr", post(crate::modules::document::ocr))
+        .route(
+            "/documents/{id}/classify",
+            post(crate::modules::document::classify),
+        )
+        .route(
+            "/documents/{id}/entities",
+            post(crate::modules::document::entities),
+        )
+        .route("/documents/qa", post(crate::modules::document::document_qa))
+        // 代码助手
+        .route(
+            "/code/generate",
+            post(crate::modules::code_assistant::generate),
+        )
+        .route(
+            "/code/explain",
+            post(crate::modules::code_assistant::explain),
+        )
+        .route("/code/fix", post(crate::modules::code_assistant::fix))
+        .route(
+            "/code/optimize",
+            post(crate::modules::code_assistant::optimize),
+        )
+        .route("/code/review", post(crate::modules::code_assistant::review))
+        // 向量检索（RAG 业务查询）
+        .route("/vectors/search", post(crate::modules::vector::search))
+        .route("/vectors/{id}", get(crate::modules::vector::get))
+        .route(
+            "/vectors/hybrid-search",
+            post(crate::modules::vector::hybrid_search),
+        )
+        .route(
+            "/vector/collections",
+            get(crate::modules::vector::list_collections),
+        )
+        // 问答业务
+        .route("/qa/ask", post(crate::modules::qa::ask))
+        .route(
+            "/qa/ask-with-context",
+            post(crate::modules::qa::ask_with_context),
+        )
+        .route(
+            "/qa/ask-structured",
+            post(crate::modules::qa::ask_structured),
+        )
+        .route(
+            "/qa/ask-conversation",
+            post(crate::modules::qa::ask_conversation),
+        )
+        .route("/qa/classify", post(crate::modules::qa::classify))
+        // Prompt 模板读取
+        .route(
+            "/prompts/templates",
+            get(prompt_handlers::list_prompt_templates),
+        )
+        .route(
+            "/prompts/templates/{id}",
+            get(prompt_handlers::get_prompt_template),
+        )
+        .route(
+            "/prompts/categories",
+            get(prompt_handlers::get_prompt_categories),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // --- C3 个人自服务：仅登录（任意已认证用户可访问自己的数据）---
+    let ai_personal_routes = Router::new()
+        // 问答历史（本人数据）
+        .route("/qa/history", get(crate::modules::qa::history))
+        .route(
+            "/qa/history/{id}",
+            delete(crate::modules::qa::delete_history),
+        )
+        .route(
+            "/qa/history/batch-delete",
+            post(crate::modules::qa::batch_delete_history),
+        )
+        .route("/qa/feedback", post(crate::modules::qa::feedback))
+        // Prompt 个人收藏与使用
+        .route(
+            "/prompts/templates/{id}/favorite",
+            post(prompt_handlers::toggle_prompt_favorite),
+        )
+        .route(
+            "/prompts/templates/{id}/use",
+            post(prompt_handlers::use_prompt_template),
+        )
         .layer(axum::middleware::from_fn_with_state(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
@@ -448,6 +491,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -463,6 +507,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -470,20 +515,34 @@ pub fn create_routes(
         .with_state(app_state.clone());
 
     // DSH Agent 编排器 API 路由
-    let dsh_agent_router = Router::new()
+    // C1 运维/管理面：agent 执行/工具列表/活跃会话 → ai:admin
+    let dsh_agent_admin_router = Router::new()
         .route(
             "/dsh/agent/execute",
             post(dsh_agent_handlers::execute_agent),
         )
         .route("/dsh/agent/stream", post(dsh_agent_handlers::stream_agent))
-        .route(
-            "/dsh/agent/session/{session_id}",
-            get(dsh_agent_handlers::get_session).delete(dsh_agent_handlers::clear_session),
-        )
         .route("/dsh/agent/tools", get(dsh_agent_handlers::list_tools))
         .route(
             "/dsh/agent/active-sessions",
             get(dsh_agent_handlers::active_sessions),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // C3 个人自服务：查看/清除自己的 agent 会话 → 仅登录
+    let dsh_agent_personal_router = Router::new()
+        .route(
+            "/dsh/agent/session/{session_id}",
+            get(dsh_agent_handlers::get_session).delete(dsh_agent_handlers::clear_session),
         )
         .layer(axum::middleware::from_fn_with_state(
             pool.clone(),
@@ -517,6 +576,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -582,6 +642,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -591,6 +652,7 @@ pub fn create_routes(
     // 业务 Copilot 路由
     let copilot_state =
         crate::handlers::business_copilot_handlers::CopilotAppState::new(app_state.db.clone());
+    // C2 业务数据面：员工使用的 Copilot 对话/意图/模块 → ai:read
     let business_copilot_router = Router::new()
         .route(
             "/dsh/copilot/sessions",
@@ -606,7 +668,6 @@ pub fn create_routes(
             "/dsh/copilot/sessions/{session_id}/messages",
             post(crate::handlers::business_copilot_handlers::send_message),
         )
-        // 前端契约收口（2026-10-06）：会话选中记录/上下文写入（真实写入内存会话上下文）
         .route(
             "/dsh/copilot/sessions/{session_id}/records",
             put(crate::handlers::business_copilot_handlers::update_selected_records),
@@ -627,12 +688,23 @@ pub fn create_routes(
             "/dsh/copilot/modules/{module}",
             get(crate::handlers::business_copilot_handlers::get_module_config),
         )
-        // 前端契约收口（2026-10-24）：FAQ 搜索（租户级 core.ai_faqs，空回落 curated 静态语料）
         .route(
             "/dsh/copilot/modules/{module}/faq",
             get(crate::handlers::business_copilot_handlers::search_faq),
         )
-        // FAQ 管理端（2026-10-24，迁移 20261024000015）：列表 / 创建 / 软删（ai:admin）
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(copilot_state.clone());
+
+    // C1 运维/管理面：FAQ 管理端 → ai:admin
+    let copilot_admin_router = Router::new()
         .route(
             "/dsh/copilot/admin/faqs",
             get(crate::handlers::business_copilot_handlers::list_admin_faqs)
@@ -643,11 +715,11 @@ pub fn create_routes(
             delete(crate::handlers::business_copilot_handlers::delete_admin_faq)
                 .put(crate::handlers::business_copilot_handlers::update_admin_faq),
         )
-        // BE-P0：补 auth + tenant 中间件（此前裸奔，对齐 dsh_agent_router :469-476 范式）。
         .layer(axum::middleware::from_fn_with_state(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -712,6 +784,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -742,6 +815,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -793,6 +867,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -849,6 +924,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -896,6 +972,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:read")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -917,6 +994,7 @@ pub fn create_routes(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("ai:admin")))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -951,13 +1029,17 @@ pub fn create_routes(
         .with_state(app_state);
 
     let all_protected_routes = Router::new()
+        .merge(ai_admin_routes)
         .merge(protected_routes)
+        .merge(ai_personal_routes)
         .merge(analysis_router)
         .merge(agent_router)
-        .merge(dsh_agent_router)
+        .merge(dsh_agent_admin_router)
+        .merge(dsh_agent_personal_router)
         .merge(dsh_performance_router)
         .merge(dsh_enhanced_router)
         .merge(business_copilot_router)
+        .merge(copilot_admin_router)
         .merge(governance_dashboard_router)
         .merge(smart_forms_router)
         .merge(recommendation_router)

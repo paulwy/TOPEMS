@@ -2084,6 +2084,32 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.161 审计整改第四十批：反向鉴权缺口全站补挂（批 40，2026-11-07）
+
+原则「一步到位、安全优先」。承接批 39 §4.4 附带发现——`security()` 只写文档不产生运行时校验。
+
+① **根因定性**：`#[utoipa::path(security(("BearerAuth" = ["code"])))]` 是 **OpenAPI 文档注解**，宏展开后无运行时逻辑。权限码运行时校验只有三种来源：服务级模块门禁 `require_module_access`/`require_module_write`（`lib/shared-auth/src/middleware/permission.rs:84`）、路由级 `require_permission`（`:29`）、handler 内手动校验。规模悬殊：**3531 处声明 vs 102 处实挂**。
+
+② **全站取证（机器化逐条判定）**：3531 条声明解析 → 定位 handler → 解析 Router 构造链（`.layer(require_permission)` 关联链上所有 route）→ 解析 handler 函数体权限调用，交叉产出清单。分层：**已受保护 2623（模块门禁）/ 172（路由层）/ 9（handler 内）= 2804**，**真实裸奔 702（19.9%）**，无法判定 25。702 全部集中在 6 个无模块门服务：**portal 328 / finance 135 / ai 129 / communication 85 / unified-core 20 / plugin-registry 8**。其余 22 个服务业务路由全被 `require_module_access` 覆盖。
+
+③ **对初始统计的三处修正（实测推翻）**：analytics 有模块门（`require_module_access("bi")` `routes.rs:640`）、integration 有（`:211`）、gis 有（`embedded.rs:421`）——初版按 `main.rs` 统计漏了在 `routes.rs`/`embedded.rs` 挂的门；communication 有**自定义 fn 包装 `admin_only()`**（`main.rs:9-16`，内部即 `require_permission("communication:admin")`，用 22 次），静态扫描未识别包装导致误判；portal 已有 `admin_routes` 挂 `portal:admin`，真缺口是**运维模块被误放进 `personal_routes`**。
+
+④ **finance 110 条（2 迁移）**：`operational.rs` 14 条按资源×动作挂细码；`mod.rs` **拆 6 个资源域子 Router**（account/voucher/report/payment/approval/ar_ap）分别挂 `finance:account:read`/`voucher:read`/`report:read`/`payment:read`/`expense_approval:read`/`receivable:read`；`financial_reports.rs` 24→`report:read`、`sales_invoice.rs` 15→`sales_invoice:read`、`reconcile_orders.rs` 7、`accounting_subjects.rs` 5、`currencies.rs` 4。迁移 **0040** 补 `finance:budget:write`、**0041** 补 7 码（sales_invoice:read|write / currency:write|delete / reconcile_orders:read|write / period:write），均幂等 + ROLLBACK 注释 + 授权 finance_manager/admin/superadmin。**中间纠偏**：初版把 `finance:report:read` 挂成 mod.rs 全局基线层 → `/vouchers` 实际要求"报表"码，口径错配，已拆资源域修正并重测。
+
+⑤ **portal 281（无需迁移）**：17 个运维模块（281 端点）原以连续 `.route()` 串挂主链、仅 `auth_middleware` 兜底 → 抽为 `admin_ops_routes`（`embedded.rs:1407-3023`），按既有 `admin_routes` 同栈（rls → `require_permission("portal:admin")` → tenant → auth）`.merge()` 回主 app，**URL 零变更**；46 条个人自服务（逐文件核实 user 隔离）保持、1 条公开保持，**328 精确闭合**。`portal:admin` 已绑 admin+superadmin、employee 0 行，无需迁移。
+
+⑥ **ai 123 + communication（三分法）**：授权现状是硬约束（`ai:*` employee 仅 1 个；`communication:*` **全库只 superadmin 1 个**），一刀切补码必 403。ai：**62→`ai:admin` / 61→`ai:read` / 6 个人面仅登录**，在 `svc/ai/src/routes.rs` 集中装配处拆三组子路由，未散改 24 个 handler。communication：**零代码改动**——`main.rs` 已有 `admin_only()` 覆盖 22 个管理路由（禁动区且无需改），缺口只在授权 → 迁移 **0042** 补授 `communication:admin` 给 admin + notification_manager。
+
+⑦ **unified-core 21 + plugin-registry 7（无需迁移）**：plugin simple_api 拆 read(`admin:plugin:read`)/write(`admin:plugin:write`)；unified-core doc 14 条分 `doc:read`/`doc:write`/`doc:admin`/`doc:dashboard:read` 四组。全用 DB 已有码。不动：iam 3 条（禁动区登记）、`/health`、`flow delete_template`（死代码，handler 存在但未注册路由）。
+
+⑧ **逐端实测（真实 HTTP，非静态推断；主 Agent 独立复核）**：token 用 HS256 手工签发（`.env` `JWT_SECRET`），**`sub` 必须是合法 UUID**（否则 `user_id()` 解析失败返回 400「无效的用户ID」——实测踩到的坑）。**portal**：`GET /api/portal/deployment-manager/deployments` **E403/A200/S200**；`GET /api/portal/todos` **E200**（个人面未误伤）。**finance**：`/vouchers`、`/payments`、`/reports/balance-sheet`、`/accounts` 四组，employee 403、持对应细码 fm 200、**`fm_admin_only`（持 `finance:admin` 无细码）403**、superadmin 200——证明细码层在网关层 `require_finance_write`（只挡非 GET）之后真正生效、非伞码糊过。**plugin**：`/api/plugin/runtime/list` E403 / 持 `admin:plugin:write` 200（持 `:read` 则 403）/ S200，精确匹配。**ai**：`/api/ai/agent/tools` E403、仅 `ai:read` 也 403、S200，管理面精确。
+
+⑨ **门禁**：`cargo check` 7 个受影响服务 **exit 0 / 0 error**（1m04s）；`cargo build -p topems-server` exit 0（1m32s）；迁移四件套**全 exit 0**；迁移 0040/0041/0042 二次执行均 0 行验幂等；smoke **4501/4501 PASS、0 FAIL、豁免 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（529.11s，基线保持）；本批**无表结构变更**（仅权限行 + 角色授权），RLS 未触碰；8099 PID 77197 health 200。
+
+⑩ **未覆盖（如实登记）**：finance 14 个小文件 ~39 条（reconciliation/voucher_template/event_routes/cqrs/compliance_v51/audit_v52/forecasting/forecast_v53/report_center/decision_v60/treasury_v58/risk_v59/risk_v54/bootstrap）依托网关层 `require_finance_write` + 模块保护，逐条理由见 `b40_finance_rest_report.md`；unified-core iam 3 条禁动区；**doc 侧未逐条运行时验证**（`/api/core/doc/templates` 对无码用户 200，说明未落在补挂路径或属读面）；portal `monitoring.rs` 4 条语义待产品评估；多租户交叉隔离未做真实双租户 A/B；个人面「跨用户越权读他人数据」未做对抗性验证。
+
+⑪ **产物**：`artifacts/batch40/{b40_gap_inventory.tsv（3531 行）, b40_gap_report.md, b40_finance_fix_report.md, b40_finance_rest_report.md, b40_portal_fix_report.md, b40_ai_comm_fix_report.md, b40_core_registry_fix_report.md}`；执行记录 `docs/audit/P3-31_反向鉴权缺口全站补挂_批40_执行记录_2026-11-07.md`。
+
 ## v1.160 审计整改第三十九批：连接池 stale prepared statement 根治 + 对账口径修正（批 39，2026-11-07）
 
 - 记录：[P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md](docs/audit/P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md)。

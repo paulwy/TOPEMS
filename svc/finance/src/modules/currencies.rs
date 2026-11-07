@@ -308,6 +308,11 @@ pub fn create_routes() -> axum::Router<AppState> {
             "/currencies/{id}",
             put(update_currency).delete(delete_currency),
         )
+        // 批 40：币种路由挂 finance:currency:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:currency:read"),
+        ))
 }
 
 // 保持 PgPool 引用以避免未使用告警（后续租户过滤会用到）

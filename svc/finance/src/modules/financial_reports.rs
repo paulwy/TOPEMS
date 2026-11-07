@@ -2632,6 +2632,11 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/financial-overview",
             axum::routing::get(get_financial_overview),
         )
+        // 批 40：报表路由统一挂 finance:report:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:report:read"),
+        ))
 }
 
 #[cfg(test)]

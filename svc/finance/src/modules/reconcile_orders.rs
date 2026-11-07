@@ -45,6 +45,11 @@ pub fn create_routes() -> Router<AppState> {
             "/reconcile/{order_id}/items/{item_id}",
             put(update_reconcile_item),
         )
+        // 批 40：对账单路由挂 finance:reconcile_orders:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:reconcile_orders:read"),
+        ))
 }
 
 #[derive(Debug, Deserialize)]

@@ -1401,7 +1401,20 @@ pub async fn build_router(
             let config = update_security_config(new_config);
             axum::Json(serde_json::json!({ "success": true, "config": config }))
         }),
-    )
+    );
+
+    // ===== batch40 路由分类修正：运维/管理面整组收编为 admin_ops_routes。
+    // V51.0 起新增的 17 个运维模块（schema-versioning / adaptive-execution / intelligent-gateway /
+    // subscription-manager / edge-computing / security-v1 / persisted-query / realtime-processing /
+    // version-control / query-optimizer / orchestration / deep-federation / gateway-security /
+    // gateway-monitoring / streaming-processing / ai-ops / deployment-manager）此前整组
+    // `.route("/api/portal/...")` 直接挂在 app 主链上，仅靠最外层 auth_middleware 兜底——
+    // 任意已登录用户即可执行部署/回滚/查询网关等运维写操作（328 条真实裸奔的主体）。
+    // 现抽为独立子路由，与下方 admin_routes 同栈挂 require_permission("portal:admin")
+    // （DB 核实：admin/superadmin 已在 core_role_permissions 持有该码，employee 不持有）。
+    // 个人自助面（todos/notifications/settings/dashboard/announcements 读/help 读等）保持
+    // personal_routes 不动，避免误伤正常用户。
+    let admin_ops_routes = Router::new()
     // ==================== V51.0 Phase 21: GraphQL Schema 演进 + 破坏性变更检测 + 版本协商 ====================
     // POST /api/portal/schema-versioning/schema/versions — 发布新 Schema 版本
     .route(
@@ -3021,6 +3034,26 @@ pub async fn build_router(
         "/api/portal/deployment-manager/rollback/status",
         get(modules::deployment_manager::get_rollback_status_handler),
     )
+    // 与上方 admin_routes 完全同栈：rls → require_permission(portal:admin) → tenant → auth
+    .layer(axum::middleware::from_fn_with_state(
+        db.clone(),
+        rls_middleware,
+    ))
+    .layer(axum::middleware::from_fn(require_permission(
+        "portal:admin",
+    )))
+    .layer(axum::middleware::from_fn_with_state(
+        db.clone(),
+        topems_shared_auth::tenant_middleware(),
+    ))
+    .layer(axum::middleware::from_fn_with_state(
+        app_state.auth_state.clone(),
+        auth_middleware,
+    ));
+
+    // ===== 运维管理面（portal:admin）收编结束：合并回主 app，再套全局外层中间件 =====
+    let app = app
+    .merge(admin_ops_routes)
     .layer(axum::middleware::from_fn(telemetry_middleware))
     .layer(axum::middleware::from_fn(request_context_middleware))
     // V65: Portal BFF 统一认证——graphql/管理端点此前绕过 auth 链（无 token 可查业务数据），
