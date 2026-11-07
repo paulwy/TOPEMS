@@ -45,6 +45,19 @@ else
 fi
 
 # =================================================
+# 生产库护栏：本脚本会以 .env 的连接串拉起可读写服务，
+# 目标库为生产库时默认拒绝（命名风格对齐 scripts/dev/run-e2e-stack.sh 的 E2E_ALLOW_PROD）
+# =================================================
+if [ -n "${DATABASE_URL:-}" ]; then
+  TARGET_DB_NAME="${DATABASE_URL%%\?*}"
+  TARGET_DB_NAME="${TARGET_DB_NAME##*/}"
+  if [ "$TARGET_DB_NAME" = "topems_prod" ] && [ "${ALLOW_PROD_LOCAL:-0}" != "1" ]; then
+    error "拒绝启动：DATABASE_URL 指向生产库 ${TARGET_DB_NAME}（本脚本会拉起可读写服务）。请改用测试库，或显式设置 ALLOW_PROD_LOCAL=1"
+    exit 1
+  fi
+fi
+
+# =================================================
 # 工具函数
 # =================================================
 check_command() {

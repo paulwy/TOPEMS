@@ -21,6 +21,15 @@ if [[ -z "$DB" ]]; then
   exit 1
 fi
 
+# 生产库护栏：本脚本会写库恢复副本表并改写 .env 的 SEARCH_PATH，目标为生产库时默认拒绝
+# （命名风格对齐 scripts/dev/run-e2e-stack.sh 的 E2E_ALLOW_PROD）
+TARGET_DB_NAME="${DB%%\?*}"
+TARGET_DB_NAME="${TARGET_DB_NAME##*/}"
+if [[ "$TARGET_DB_NAME" == "topems_prod" && "${ALLOW_PROD_ROLLBACK:-0}" != "1" ]]; then
+  echo "ERROR: 拒绝在库 ${TARGET_DB_NAME} 上执行回滚（会写库并改写 .env 的 SEARCH_PATH）。如确需执行，显式设置 ALLOW_PROD_ROLLBACK=1" >&2
+  exit 2
+fi
+
 echo "[1/3] 恢复 mes 副本 ..."
 psql "$DB" -f "$BACKUP_DIR/mes_iam_core.sql"
 

@@ -70,6 +70,16 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# ---------------------------------------------------------------------------
+# 生产库护栏：--clean 会 DROP 遮蔽对象，目标库为生产库时默认拒绝
+# （命名风格对齐 scripts/dev/start-local.sh 的 ALLOW_PROD_LOCAL）
+# ---------------------------------------------------------------------------
+TARGET_DB_NAME="${DB_URL%%\?*}"
+TARGET_DB_NAME="${TARGET_DB_NAME##*/}"
+if [[ "$TARGET_DB_NAME" == "topems_prod" && "${ALLOW_PROD_MES_GUARD:-0}" != "1" ]]; then
+  die "拒绝在库 ${TARGET_DB_NAME} 上执行 mes_guard（--clean 会 DROP TABLE/VIEW）。如确需执行，显式设置 ALLOW_PROD_MES_GUARD=1"
+fi
+
 if [[ "$SYNC_SNAPSHOT" == "1" ]]; then
   say "=== 同步结构快照 → $SNAPSHOT ==="
   mkdir -p "$ROOT/fixtures"
