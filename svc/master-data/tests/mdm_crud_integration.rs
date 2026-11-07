@@ -14,7 +14,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use axum::extract::{Json, Path, Query, State};
+use axum::extract::{Extension, Json, Path, Query, State};
 use sqlx::postgres::PgPoolOptions;
 use topems_master_data::modules::quality_v51;
 use topems_master_data::modules::quality_v51::{
@@ -23,7 +23,7 @@ use topems_master_data::modules::quality_v51::{
     UpdateQualityRuleRequest,
 };
 use topems_master_data::shared::AppState;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::health::SystemMetrics;
 
 /// 构造测试用 AppState（惰性连接 PgPool）。
@@ -45,6 +45,27 @@ fn make_test_state() -> AppState {
         ),
         metrics: Arc::new(SystemMetrics::new()),
         start_time: Instant::now(),
+    }
+}
+
+/// 构造测试用 Claims（超管，不绑定具体租户，保持原有查询语义）。
+fn make_test_claims() -> Claims {
+    Claims {
+        sub: "00000000-0000-0000-0000-000000000000".to_string(),
+        username: "tester".to_string(),
+        role: "admin".to_string(),
+        roles: vec![],
+        permissions: vec![],
+        is_superuser: true,
+        exp: 9999999999,
+        iat: 0,
+        email: None,
+        department: None,
+        tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
+        must_change_password: false,
     }
 }
 
@@ -245,7 +266,12 @@ async fn test_run_quality_check_format_rule() {
         entity_id: "C0001".to_string(),
         rule_ids: None,
     };
-    let resp = quality_v51::run_quality_check(State(state.clone()), Json(req)).await;
+    let resp = quality_v51::run_quality_check(
+        State(state.clone()),
+        Extension(make_test_claims()),
+        Json(req),
+    )
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -267,7 +293,12 @@ async fn test_run_quality_check_range_rule_warns() {
         entity_id: "M0001".to_string(),
         rule_ids: None,
     };
-    let resp = quality_v51::run_quality_check(State(state.clone()), Json(req)).await;
+    let resp = quality_v51::run_quality_check(
+        State(state.clone()),
+        Extension(make_test_claims()),
+        Json(req),
+    )
+    .await;
 
     assert_eq!(resp.code, 200);
     let checks = resp.data.unwrap();
@@ -291,7 +322,12 @@ async fn test_list_quality_checks_with_filter() {
         entity_id: "C9999".to_string(),
         rule_ids: None,
     };
-    let _ = quality_v51::run_quality_check(State(state.clone()), Json(run_req)).await;
+    let _ = quality_v51::run_quality_check(
+        State(state.clone()),
+        Extension(make_test_claims()),
+        Json(run_req),
+    )
+    .await;
 
     // 按实体类型过滤查询检查结果
     let query = QualityCheckQuery {
@@ -324,7 +360,12 @@ async fn test_get_quality_check_results_by_entity() {
         entity_id: "S0001".to_string(),
         rule_ids: None,
     };
-    let _ = quality_v51::run_quality_check(State(state.clone()), Json(run_req)).await;
+    let _ = quality_v51::run_quality_check(
+        State(state.clone()),
+        Extension(make_test_claims()),
+        Json(run_req),
+    )
+    .await;
 
     // 查询指定实体的检查结果
     let resp = quality_v51::get_quality_check_results(
@@ -591,10 +632,14 @@ async fn test_quality_rule_full_lifecycle() {
         entity_id: "LE0001".to_string(),
         rule_ids: None,
     };
-    let checks = quality_v51::run_quality_check(State(state.clone()), Json(run_req))
-        .await
-        .data
-        .unwrap();
+    let checks = quality_v51::run_quality_check(
+        State(state.clone()),
+        Extension(make_test_claims()),
+        Json(run_req),
+    )
+    .await
+    .data
+    .unwrap();
     assert!(
         checks.iter().all(|c| c.rule_id != rule_id),
         "禁用的规则不应被执行"

@@ -760,7 +760,7 @@ pub async fn batch_delete_customers(
                     return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            let rows_affected = tenant_rows.len() as u64;
+            let rows_affected = u64::try_from(tenant_rows.len()).unwrap_or(u64::MAX);
             // 批量删除客户后失效缓存
             invalidate_customer_cache(&state, "customer_batch_deleted").await;
             let entity_ids = serde_json::to_value(&req.ids).ok();

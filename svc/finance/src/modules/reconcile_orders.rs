@@ -244,24 +244,25 @@ pub async fn get_reconcile_order(
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
-    let row =
-        match sqlx::query(only_own_schema_query!("finance",
+    let row = match sqlx::query(only_own_schema_query!(
+        "finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                 total_amount, matched_amount, unmatched_amount, status, created_at, updated_at \
          FROM finance.reconcile_orders WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
-        .bind(order_id)
-        .bind(tenant_id)
-        .fetch_optional(&state.pool)
-        .await
-        {
-            Ok(Some(row)) => row,
-            Ok(None) => return Err(not_found("对账订单不存在")),
-            Err(e) => {
-                tracing::error!("查询对账订单失败: {}", e);
-                return Err(internal_error("查询对账订单失败"));
-            }
-        };
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
+    ))
+    .bind(order_id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return Err(not_found("对账订单不存在")),
+        Err(e) => {
+            tracing::error!("查询对账订单失败: {}", e);
+            return Err(internal_error("查询对账订单失败"));
+        }
+    };
 
     let mut data = match order_to_json(&row) {
         serde_json::Value::Object(map) => map,

@@ -4512,7 +4512,6 @@ fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
         .map(|d| d.and_utc())
 }
 
-
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4836,7 +4835,10 @@ pub async fn update_expense_approval(
             "更新成功",
         ),
         Ok(None) => ApiResponse::not_found("费用审批不存在"),
-        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!("更新费用审批失败: {}", e))),
+        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
+            "更新费用审批失败: {}",
+            e
+        ))),
     }
 }
 
@@ -4870,7 +4872,10 @@ pub async fn delete_expense_approval(
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
         Ok(_) => ApiResponse::not_found("费用审批不存在"),
-        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!("删除费用审批失败: {}", e))),
+        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
+            "删除费用审批失败: {}",
+            e
+        ))),
     }
 }
 

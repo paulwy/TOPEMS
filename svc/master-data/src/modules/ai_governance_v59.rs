@@ -1437,8 +1437,14 @@ pub async fn review_classification(
 ) -> ApiResponse<ClassificationResult> {
     let tenant = tenant_of(&claims);
     match db_exec!(
-        AutoClassifier::review_classification(&state.db, tenant, &id, req.approved, req.corrected_category)
-            .await
+        AutoClassifier::review_classification(
+            &state.db,
+            tenant,
+            &id,
+            req.approved,
+            req.corrected_category
+        )
+        .await
     ) {
         Some(r) => ApiResponse::success(r, "分类审核完成"),
         None => ApiResponse::not_found("未找到分类结果"),

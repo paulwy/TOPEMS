@@ -1056,10 +1056,11 @@ pub async fn create_payable(
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     // 超管/服务身份落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400
-    let tenant_opt: Option<Uuid> = match topems_shared_auth::middleware::resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => return ApiResponse::error(code, &msg),
-    };
+    let tenant_opt: Option<Uuid> =
+        match topems_shared_auth::middleware::resolve_create_tenant(&claims) {
+            Ok(t) => t,
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        };
 
     let id = Uuid::new_v4();
     let now = Utc::now();

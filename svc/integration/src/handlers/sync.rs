@@ -722,8 +722,9 @@ pub async fn trigger_srm_scm(
         Ok(id) => {
             let now = chrono::Utc::now();
             let task_id = Uuid::new_v4();
-            match sqlx::query_as::<_, SyncTaskRow>(
-                only_own_schema_query!("integration", r#"
+            match sqlx::query_as::<_, SyncTaskRow>(only_own_schema_query!(
+                "integration",
+                r#"
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, source_entity,
                      source_id, status, retry_count, max_retries, created_at, updated_at)
@@ -732,8 +733,8 @@ pub async fn trigger_srm_scm(
                                  '00000000-0000-0000-0000-000000000000'::uuid),
                         'supplier_sync', 'srm', 'scm', 'supplier', $2, 'pending', 0, 3, $3, $4)
                 RETURNING *
-                "#),
-            )
+                "#
+            ))
             .bind(task_id)
             .bind(id)
             .bind(now)

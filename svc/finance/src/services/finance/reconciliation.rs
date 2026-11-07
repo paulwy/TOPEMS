@@ -244,7 +244,8 @@ impl ReconciliationService {
 
                 if let Some(mt) = self.classify_match(bank_item, erp_item) {
                     if Self::is_high_confidence_match(&mt) {
-                        self.mark_matched(tenant_id, bank_item.id, erp_item.id).await?;
+                        self.mark_matched(tenant_id, bank_item.id, erp_item.id)
+                            .await?;
                         matched_pairs.push(MatchedPair {
                             bank_item_id: bank_item.id,
                             erp_item_id: erp_item.id,
@@ -268,7 +269,8 @@ impl ReconciliationService {
             // 拆分匹配：一笔银行流水对应多笔 ERP 发票
             let split_matches = self.find_split_matches(bank_item, &erp_items, &matched_erp_ids);
             for erp_item in split_matches {
-                self.mark_matched(tenant_id, bank_item.id, erp_item.id).await?;
+                self.mark_matched(tenant_id, bank_item.id, erp_item.id)
+                    .await?;
                 matched_pairs.push(MatchedPair {
                     bank_item_id: bank_item.id,
                     erp_item_id: erp_item.id,

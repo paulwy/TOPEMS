@@ -1621,7 +1621,14 @@ pub async fn apply_tag(
 ) -> ApiResponse<TaggedEntity> {
     let tenant = tenant_of(&claims);
     let result = db_exec!(
-        SmartTagger::apply_tag(&state.db, tenant, req.entity_type, req.entity_id, req.tag_id).await
+        SmartTagger::apply_tag(
+            &state.db,
+            tenant,
+            req.entity_type,
+            req.entity_id,
+            req.tag_id
+        )
+        .await
     );
 
     ApiResponse::success(result, "标签已应用")
@@ -1645,7 +1652,14 @@ pub async fn auto_tag(
 ) -> ApiResponse<serde_json::Value> {
     let tenant = tenant_of(&claims);
     let applied = db_exec!(
-        SmartTagger::auto_tag(&state.db, tenant, &req.entity_type, &req.entity_id, &req.data).await
+        SmartTagger::auto_tag(
+            &state.db,
+            tenant,
+            &req.entity_type,
+            &req.entity_id,
+            &req.data
+        )
+        .await
     );
 
     ApiResponse::success(

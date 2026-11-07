@@ -641,10 +641,7 @@ async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
     .unwrap_or_default()
 }
 
-async fn refresh_graph(
-    db: &sqlx::PgPool,
-    tenant: Option<uuid::Uuid>,
-) -> Result<(), TopemsError> {
+async fn refresh_graph(db: &sqlx::PgPool, tenant: Option<uuid::Uuid>) -> Result<(), TopemsError> {
     let nodes = fetch_nodes(db).await;
     let edges = fetch_edges(db).await;
     let now = chrono::Utc::now().to_rfc3339();

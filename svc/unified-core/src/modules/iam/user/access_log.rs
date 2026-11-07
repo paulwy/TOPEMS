@@ -395,24 +395,24 @@ pub async fn create_access_log(
     let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match if topems_shared_auth::middleware::tenant::current_request_tenant().is_some()
-    {
-        db.scope().await
-    } else {
-        db.scope_system().await
-    } {
-        Ok(scope) => scope,
-        Err(e) => {
-            tracing::error!("数据库作用域创建失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(
-                    500,
-                    &format!("数据库作用域创建失败: {}", e),
-                )),
-            );
-        }
-    };
+    let mut scope =
+        match if topems_shared_auth::middleware::tenant::current_request_tenant().is_some() {
+            db.scope().await
+        } else {
+            db.scope_system().await
+        } {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("数据库作用域创建失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("数据库作用域创建失败: {}", e),
+                    )),
+                );
+            }
+        };
 
     let result = sqlx::query(
         r#"

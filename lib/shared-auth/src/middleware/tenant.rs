@@ -63,7 +63,6 @@ pub fn rls_request_tenant(claims: &crate::auth::Claims) -> RlsRequestTenant {
     RlsRequestTenant { tenant, system }
 }
 
-
 /// 事务/租户上下文初始化失败统一返回 500（fail-closed）。
 ///
 /// 不允许 `return next.run(req)` 继续处理：那会让 handler 在没有租户 GUC 的

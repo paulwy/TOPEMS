@@ -1206,8 +1206,15 @@ impl AssetCatalogManager {
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据资产失败: {e}")))?;
 
         // 搜索索引同步刷新。
-        upsert_search_index(db, tenant, &asset, &asset.description, &asset.domain, &asset.tags)
-            .await?;
+        upsert_search_index(
+            db,
+            tenant,
+            &asset,
+            &asset.description,
+            &asset.domain,
+            &asset.tags,
+        )
+        .await?;
 
         Ok(asset)
     }

@@ -1296,13 +1296,8 @@ pub async fn assess_maturity(
         .and_then(parse_maturity_level)
         .unwrap_or(MaturityLevel::Optimized);
 
-    let result = db_exec!(GovernanceMaturity::assess_maturity(
-        &state.db,
-        tenant,
-        dimension,
-        target
-    )
-    .await);
+    let result =
+        db_exec!(GovernanceMaturity::assess_maturity(&state.db, tenant, dimension, target).await);
     ApiResponse::success(result, "成熟度评估完成")
 }
 
