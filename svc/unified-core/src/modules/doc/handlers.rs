@@ -16,77 +16,89 @@ use topems_shared_core::{
     TopemsError,
 };
 
-async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+/// 开启请求级 RLS 事务：本事务内 `SET LOCAL app.tenant_id`，事务内所有语句共用同一连接。
+///
+/// 与 `DocumentService::tenant_txn` 同范式：handler 没有 self，故作为模块级本地函数。
+/// 普通用户传真实租户（命中 `tenant_id = current_setting('app.tenant_id')` 分支）；
+/// superadmin / 无租户传 `None`（落到 nil UUID，命中策略里的全零旁路，可跨租户管理）。
+async fn open_rls_txn(
+    pool: &sqlx::PgPool,
+    tenant_id: Option<Uuid>,
+) -> Result<sqlx::Transaction<'static, sqlx::Postgres>, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    let rls_tenant = tenant_id
+        .map(|t| t.to_string())
+        .unwrap_or_else(|| Uuid::nil().to_string());
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant)
+        .execute(&mut *tx)
+        .await?;
+    Ok(tx)
+}
+
+async fn count_table_with_tenant(
+    conn: &mut sqlx::PgConnection,
+    table: &str,
+    tenant_id: Option<Uuid>,
+) -> Result<i64, sqlx::Error> {
+    let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     )))
     .bind(tenant_id)
-    .fetch_one(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(_) => 0,
-    }
+    .fetch_one(conn)
+    .await?;
+    Ok(v)
 }
 
 async fn count_table_with_tenant_and_status(
-    pool: &sqlx::PgPool,
+    conn: &mut sqlx::PgConnection,
     table: &str,
     tenant_id: Option<Uuid>,
     status: &str,
-) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+) -> Result<i64, sqlx::Error> {
+    let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
     )))
     .bind(tenant_id)
     .bind(status)
-    .fetch_one(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(_) => 0,
-    }
+    .fetch_one(conn)
+    .await?;
+    Ok(v)
 }
 
 async fn count_table_with_tenant_and_enabled(
-    pool: &sqlx::PgPool,
+    conn: &mut sqlx::PgConnection,
     table: &str,
     tenant_id: Option<Uuid>,
     is_enabled: bool,
-) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+) -> Result<i64, sqlx::Error> {
+    let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_enabled = $2",
         table
     )))
     .bind(tenant_id)
     .bind(is_enabled)
-    .fetch_one(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(_) => 0,
-    }
+    .fetch_one(conn)
+    .await?;
+    Ok(v)
 }
 
 async fn count_table_with_tenant_and_condition(
-    pool: &sqlx::PgPool,
+    conn: &mut sqlx::PgConnection,
     table: &str,
     tenant_id: Option<Uuid>,
     condition: &str,
-) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+) -> Result<i64, sqlx::Error> {
+    let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND {}",
         table, condition
     )))
     .bind(tenant_id)
-    .fetch_one(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(_) => 0,
-    }
+    .fetch_one(conn)
+    .await?;
+    Ok(v)
 }
 
 #[utoipa::path(
@@ -561,52 +573,91 @@ pub async fn get_dashboard_handler(
         Some(tenant_id)
     };
 
+    // 所有 count 必须在同一请求级 RLS 事务内执行（SET LOCAL app.tenant_id），
+    // 否则从池里借到的连接 GUC 为空 → RLS fail-closed → 恒 0 行。
+    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("get_dashboard_handler 开启 RLS 事务失败: {}", e);
+            return ApiResponse::server_error("仪表盘统计失败");
+        }
+    };
+
     let total_documents =
-        count_table_with_tenant(&state.pool, "core_doc_documents", opt_tenant_id).await;
+        count_table_with_tenant(&mut *tx, "core_doc_documents", opt_tenant_id).await;
     let published_documents = count_table_with_tenant_and_status(
-        &state.pool,
+        &mut *tx,
         "core_doc_documents",
         opt_tenant_id,
         "published",
     )
     .await;
-    let draft_documents = count_table_with_tenant_and_status(
-        &state.pool,
-        "core_doc_documents",
-        opt_tenant_id,
-        "draft",
-    )
-    .await;
+    let draft_documents =
+        count_table_with_tenant_and_status(&mut *tx, "core_doc_documents", opt_tenant_id, "draft")
+            .await;
     let archived_documents = count_table_with_tenant_and_condition(
-        &state.pool,
+        &mut *tx,
         "core_doc_documents",
         opt_tenant_id,
         "archived_at IS NOT NULL",
     )
     .await;
 
-    let total_folders =
-        count_table_with_tenant(&state.pool, "core_doc_folders", opt_tenant_id).await;
+    let total_folders = count_table_with_tenant(&mut *tx, "core_doc_folders", opt_tenant_id).await;
     let total_templates =
-        count_table_with_tenant(&state.pool, "core_doc_templates", opt_tenant_id).await;
+        count_table_with_tenant(&mut *tx, "core_doc_templates", opt_tenant_id).await;
     let active_templates =
-        count_table_with_tenant_and_enabled(&state.pool, "core_doc_templates", opt_tenant_id, true)
+        count_table_with_tenant_and_enabled(&mut *tx, "core_doc_templates", opt_tenant_id, true)
             .await;
 
     let this_month_created = count_table_with_tenant_and_condition(
-        &state.pool,
+        &mut *tx,
         "core_doc_documents",
         opt_tenant_id,
         "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
     let this_month_updated = count_table_with_tenant_and_condition(
-        &state.pool,
+        &mut *tx,
         "core_doc_documents",
         opt_tenant_id,
         "DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
+
+    // 任一 count 失败都向上暴露（不再吞错伪装成 0），整事务回滚后返回 500。
+    let (total_documents, published_documents, draft_documents, archived_documents) = match (
+        total_documents,
+        published_documents,
+        draft_documents,
+        archived_documents,
+    ) {
+        (Ok(a), Ok(b), Ok(c), Ok(d)) => (a, b, c, d),
+        (Err(e), _, _, _) | (_, Err(e), _, _) | (_, _, Err(e), _) | (_, _, _, Err(e)) => {
+            tracing::error!("get_dashboard_handler 统计查询失败: {}", e);
+            return ApiResponse::server_error("仪表盘统计失败");
+        }
+    };
+    let (total_folders, total_templates, active_templates) =
+        match (total_folders, total_templates, active_templates) {
+            (Ok(a), Ok(b), Ok(c)) => (a, b, c),
+            (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
+                tracing::error!("get_dashboard_handler 统计查询失败: {}", e);
+                return ApiResponse::server_error("仪表盘统计失败");
+            }
+        };
+    let (this_month_created, this_month_updated) = match (this_month_created, this_month_updated) {
+        (Ok(a), Ok(b)) => (a, b),
+        (Err(e), _) | (_, Err(e)) => {
+            tracing::error!("get_dashboard_handler 统计查询失败: {}", e);
+            return ApiResponse::server_error("仪表盘统计失败");
+        }
+    };
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("get_dashboard_handler 提交事务失败: {}", e);
+        return ApiResponse::server_error("仪表盘统计失败");
+    }
 
     let stats = DocDashboardStats {
         total_documents,
@@ -1001,8 +1052,24 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
 )]
 pub async fn list_document_versions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentVersion>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
+
+    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启 RLS 事务失败: {}", e);
+            return ApiResponse::server_error("查询文档版本失败");
+        }
+    };
+
     let versions = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
          FROM core_doc_document_versions
@@ -1010,11 +1077,17 @@ pub async fn list_document_versions(
          ORDER BY version DESC",
     )
     .bind(document_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await;
 
     match versions {
-        Ok(v) => ApiResponse::success(v, "查询成功"),
+        Ok(v) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return ApiResponse::server_error("查询文档版本失败");
+            }
+            ApiResponse::success(v, "查询成功")
+        }
         Err(e) => {
             tracing::error!("查询文档版本失败: {}", e);
             ApiResponse::server_error("查询文档版本失败")
@@ -1039,8 +1112,24 @@ pub async fn list_document_versions(
 )]
 pub async fn get_document_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((document_id, version)): Path<(Uuid, i32)>,
 ) -> ApiResponse<DocumentVersion> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
+
+    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启 RLS 事务失败: {}", e);
+            return ApiResponse::server_error("查询文档版本失败");
+        }
+    };
+
     let ver = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
          FROM core_doc_document_versions
@@ -1048,11 +1137,17 @@ pub async fn get_document_version(
     )
     .bind(document_id)
     .bind(version)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match ver {
-        Ok(v) => ApiResponse::success(v, "查询成功"),
+        Ok(v) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return ApiResponse::server_error("查询文档版本失败");
+            }
+            ApiResponse::success(v, "查询成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 return ApiResponse::not_found("文档版本不存在");
@@ -1080,14 +1175,31 @@ pub async fn get_document_version(
 )]
 pub async fn restore_document_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((document_id, version)): Path<(Uuid, i32)>,
 ) -> ApiResponse<Document> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
+
+    // 读版本 + 更新文档必须在同一请求级 RLS 事务内，避免读到的版本与写回的文档跨连接、跨 RLS 上下文。
+    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启 RLS 事务失败: {}", e);
+            return ApiResponse::server_error("恢复文档版本失败");
+        }
+    };
+
     let content = sqlx::query_scalar::<_, String>(
         "SELECT content FROM core_doc_document_versions WHERE document_id = $1 AND version = $2",
     )
     .bind(document_id)
     .bind(version)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     let content = match content {
@@ -1107,11 +1219,17 @@ pub async fn restore_document_version(
     )
     .bind(content)
     .bind(document_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match doc {
-        Ok(d) => ApiResponse::success(d, "恢复成功"),
+        Ok(d) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return ApiResponse::server_error("恢复文档版本失败");
+            }
+            ApiResponse::success(d, "恢复成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 return ApiResponse::not_found("文档不存在");
