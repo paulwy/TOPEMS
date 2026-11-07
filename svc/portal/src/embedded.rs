@@ -3029,11 +3029,8 @@ pub async fn build_router(
             "/api/portal/deployment-manager/rollback/status",
             get(modules::deployment_manager::get_rollback_status_handler),
         )
-        // 与上方 admin_routes 完全同栈：rls → require_permission(portal:admin) → tenant → auth
-        .layer(axum::middleware::from_fn_with_state(
-            db.clone(),
-            rls_middleware,
-        ))
+        // 与上方 admin_routes 完全同栈：require_permission(portal:admin) → tenant → auth
+        // 租户上下文由 tenant_middleware + Db::scope 提供（不重复挂 shared-db rls_middleware）
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
