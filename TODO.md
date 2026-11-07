@@ -2101,6 +2101,7 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 - **vite dev proxy 核实（结论：不改）**：`apps/web/vite.config.ts:151` 指向 `BACKEND_PORTS['master-data']`（`src/config/ports.ts:56` = 8090），配置本身正确；实测 `curl 127.0.0.1:8090` 返回 `connect=000`（连接失败）→ **500 的成因是本地联调时 mdm 服务没起，不是配置缺陷**。
 - **验证（全绿）**：`cargo check -p topems-erp -p topems-mobile -p topems-master-data -p topems-scm -p topems-srm` exit 0（3m02s 零新增 warning）；`cargo build -p topems-server` 14.98s；`cargo fmt --check` 0 Diff；typecheck 0；eslint 0 error 0 warning；**全量 vitest 621 files / 6640 passed / 1 skipped / 0 failed（563.26s，与基线一致）**；迁移四件套 Errors 0 / Checksum 0 / drift 0（645 表）/ RLS 权限校验通过 / schema 边界全 PASS；DB 基线未变 `287/195/92/0`。
 - **执行期副作用（如实登记）**：本批途中磁盘一度 100% 满（`target/debug/incremental` 独占 186G，属 cargo 增量缓存累积、非本批代码导致），清理后恢复至 60%（173Gi 可用）；期间导致两个包的编译中断一次，均已重跑。
+- **提交**：`2837f4bae`（19 files +832/−150），已推送 main `8c67a2b24..2837f4bae`；**pre-commit 19 项全 ✔️（含 `web-contract-smoke` 154.67s 通过 —— 这正是批 34 只能 `--no-verify` 绕过的那道门），pre-push 10 项全 ✔️，本批未使用 `--no-verify`**。
 
 ## v1.155 审计整改第三十四批：供应商双向闭环与资产分类改名（批 34，2026-11-07）
 
