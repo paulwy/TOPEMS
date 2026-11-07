@@ -7,9 +7,73 @@ use axum::{
 use serde_json::{json, Value};
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
+use topems_shared_core::audit::redact_sensitive_json;
 use uuid::Uuid;
 
 use crate::auth::Claims;
+
+/// 请求级审计上下文。
+///
+/// 由外层审计中间件创建（IP / User-Agent），内层认证中间件补充用户与租户；
+/// 同一次请求内的 handler 审计写入（如 IAM `record_audit_log`）通过 task-local
+/// 读取该上下文，无需在调用点重造 IP / User-Agent / 租户。
+#[derive(Debug, Clone, Default)]
+pub struct AuditRequestContext {
+    pub user_id: Option<Uuid>,
+    pub user_name: Option<String>,
+    pub tenant_id: Option<Uuid>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+}
+
+/// 跨中间件共享的审计上下文槽位：外层审计中间件放入请求扩展，
+/// 内层认证中间件填充后再由外层在响应阶段读取。
+pub type AuditContextSlot = Arc<std::sync::Mutex<AuditRequestContext>>;
+
+tokio::task_local! {
+    static AUDIT_REQUEST_CONTEXT: AuditRequestContext;
+}
+
+/// 当前请求的审计上下文；处于审计/认证中间件作用域外时返回 `None`。
+pub fn current_audit_context() -> Option<AuditRequestContext> {
+    AUDIT_REQUEST_CONTEXT.try_with(|ctx| ctx.clone()).ok()
+}
+
+/// 在请求作用域内携带审计上下文执行后续链路。
+pub async fn scope_audit_context<F, T>(ctx: AuditRequestContext, fut: F) -> T
+where
+    F: std::future::Future<Output = T>,
+{
+    AUDIT_REQUEST_CONTEXT.scope(ctx, fut).await
+}
+
+/// 用已验签的 Claims 填充共享槽位（由认证中间件调用）。
+pub fn apply_claims_to_audit_context(slot: &AuditContextSlot, claims: &Claims) {
+    if let Ok(mut ctx) = slot.lock() {
+        ctx.user_id = Uuid::parse_str(&claims.sub).ok();
+        ctx.user_name = Some(claims.username.clone());
+        ctx.tenant_id = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok());
+    }
+}
+
+/// 在已有审计上下文基础上补充 Claims 的用户/租户信息（保留 IP / UA）。
+pub fn audit_context_from_claims(
+    claims: &Claims,
+    base: AuditRequestContext,
+) -> AuditRequestContext {
+    AuditRequestContext {
+        user_id: Uuid::parse_str(&claims.sub).ok(),
+        user_name: Some(claims.username.clone()),
+        tenant_id: claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+        ..base
+    }
+}
 
 /// 审计日志数据（本地结构，不依赖主 crate 的 audit 模块）
 ///
@@ -356,6 +420,21 @@ fn truncate_value(value: &Value, max_size: usize) -> Value {
     }
 }
 
+/// 审计详情统一入口：先脱敏凭据字段，再按大小上限截断，确保密码等明文不落库。
+fn parse_and_redact_details(bytes: &[u8], max_size: usize) -> Option<Value> {
+    if bytes.is_empty() {
+        return None;
+    }
+    let value: Value = serde_json::from_slice(bytes).ok()?;
+    Some(truncate_value(&redact_sensitive_json(&value), max_size))
+}
+
+/// `Claims.sub` 是字符串，而 `public.audit_logs.user_id` 是 uuid 列；
+/// 必须先解析为 Uuid 再绑定，解析失败写 NULL，不阻断其余审计字段。
+fn parse_user_uuid(user_id: Option<&str>) -> Option<Uuid> {
+    user_id.and_then(|s| Uuid::parse_str(s).ok())
+}
+
 async fn save_audit_log(
     db_pool: &Pool<Postgres>,
     request: AuditLogData,
@@ -368,10 +447,10 @@ async fn save_audit_log(
     let tenant_id = request.tenant_id.unwrap_or_else(Uuid::nil);
     // public.audit_logs.user_id 为 uuid；Claims.sub 是字符串，必须解析后再绑定，
     // 否则 PostgreSQL 报 "column user_id is of type uuid but expression is of type text"。
-    let user_id = request
-        .user_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
+    let user_id = parse_user_uuid(request.user_id.as_deref());
+    // 双保险：即使调用方直接构造 AuditLogData，也在此处再脱敏一次。
+    let request_details = request.request_details.as_ref().map(redact_sensitive_json);
+    let response_details = request.response_details.as_ref().map(redact_sensitive_json);
 
     let mut tx = db_pool.begin().await?;
     sqlx::query(
@@ -397,8 +476,8 @@ async fn save_audit_log(
     .bind(request.entity_ids)
     .bind(user_id)
     .bind(request.user_name)
-    .bind(request.request_details)
-    .bind(request.response_details)
+    .bind(request_details)
+    .bind(response_details)
     .bind(&request.status)
     .bind(request.error_message)
     .bind(request.ip_address)
@@ -439,20 +518,40 @@ pub async fn audit_logger_middleware(
     let (entity_type, action) = extract_entity_info(&path, &method);
     let entity_id = extract_entity_id(&path);
 
-    let (parts, body) = req.into_parts();
+    // 外层中间件先记录 IP / UA；内层认证中间件会通过该槽位补充用户与租户，
+    // 从而解决外层读不到内层 Claims 扩展的问题。
+    let audit_context = AuditRequestContext {
+        user_id: parse_user_uuid(user_id.as_deref()),
+        user_name: user_name.clone(),
+        tenant_id,
+        ip_address: ip_address.clone(),
+        user_agent: user_agent.clone(),
+    };
+    let context_slot: AuditContextSlot = Arc::new(std::sync::Mutex::new(audit_context.clone()));
+
+    let (mut parts, body) = req.into_parts();
+    parts.extensions.insert(context_slot.clone());
     let (new_body, request_body) =
         read_body_bytes(body, middleware.config.max_request_body_size).await;
     let req = Request::from_parts(parts, new_body);
 
-    let request_details: Option<Value> = if !request_body.is_empty() {
-        serde_json::from_slice(&request_body)
-            .ok()
-            .map(|v| truncate_value(&v, middleware.config.max_request_body_size))
-    } else {
-        None
-    };
+    // 登录 / 改密 / 注册等入口同样经过此中间件，必须先脱敏再落库。
+    let request_details =
+        parse_and_redact_details(&request_body, middleware.config.max_request_body_size);
 
-    let response = next.run(req).await;
+    // task-local 让 handler 内的审计写入也能拿到本次请求的 IP / UA / 租户。
+    let response = scope_audit_context(audit_context, next.run(req)).await;
+
+    // 认证中间件执行完毕后从共享槽位取回用户与租户（失败时不阻断审计写入）。
+    let enriched = context_slot
+        .lock()
+        .map(|ctx| ctx.clone())
+        .unwrap_or_default();
+    let user_id = enriched.user_id.map(|u| u.to_string()).or(user_id);
+    let user_name = enriched.user_name.or(user_name);
+    let tenant_id = enriched.tenant_id.or(tenant_id);
+    let ip_address = enriched.ip_address.or(ip_address);
+    let user_agent = enriched.user_agent.or(user_agent);
 
     let status = response.status();
     let status_str = if status.is_success() {
@@ -491,21 +590,23 @@ pub async fn audit_logger_middleware(
     };
 
     let (response_body, response_bytes) = response_body;
-    let response_details: Option<Value> = if !response_bytes.is_empty() {
-        serde_json::from_slice(&response_bytes)
-            .ok()
-            .map(|v| truncate_value(&v, middleware.config.max_response_body_size))
-    } else {
-        None
-    };
+    // 响应体同样可能回显凭据，统一脱敏。
+    let response_details =
+        parse_and_redact_details(&response_bytes, middleware.config.max_response_body_size);
 
-    let audit_request = AuditLogData::new(action, entity_type, status_str)
+    let mut audit_request = AuditLogData::new(action, entity_type, status_str)
         .with_entity_id(entity_id.unwrap_or_else(Uuid::new_v4))
-        .with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default())
         .with_request_details(request_details.unwrap_or(json!({})))
         .with_response_details(response_details.unwrap_or(json!({})))
         .with_request_info(ip_address, user_agent)
         .with_tenant_id(tenant_id);
+    // 仅在有真实操作者时写入，避免把空字符串当成用户。
+    if let Some(uid) = user_id {
+        audit_request.user_id = Some(uid);
+    }
+    if let Some(name) = user_name {
+        audit_request.user_name = Some(name);
+    }
 
     let result = if let Some(msg) = error_message {
         save_audit_log(&middleware.db_pool, audit_request.with_error(msg)).await
@@ -523,6 +624,8 @@ pub async fn audit_logger_middleware(
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use sqlx::Row;
+    use topems_shared_core::audit::REDACTED_PLACEHOLDER;
 
     #[test]
     fn test_config_default() {
@@ -577,5 +680,161 @@ mod tests {
         assert!(!config.enabled);
         assert!(config.skip_paths.contains(&"/metrics".to_string()));
         assert!(config.skip_methods.contains(&"HEAD".to_string()));
+    }
+
+    fn test_claims() -> Claims {
+        Claims {
+            sub: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            username: "alice".to_string(),
+            role: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec!["iam:admin".to_string()],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: Some("00000000-0000-0000-0000-000000000001".to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        }
+    }
+
+    #[test]
+    fn test_login_request_details_masks_password() {
+        let body = br#"{"username":"alice","password":"Test@123456","remember_me":true}"#;
+        let details = parse_and_redact_details(body, 1024).expect("应解析成功");
+
+        assert_eq!(details["username"], "alice");
+        assert_eq!(details["remember_me"], true);
+        assert_eq!(details["password"], REDACTED_PLACEHOLDER);
+        assert!(!details.to_string().contains("Test@123456"));
+    }
+
+    #[test]
+    fn test_parse_user_uuid_rejects_text() {
+        assert!(parse_user_uuid(Some("550e8400-e29b-41d4-a716-446655440000")).is_some());
+        assert!(parse_user_uuid(Some("not-a-uuid")).is_none());
+        assert!(parse_user_uuid(Some("")).is_none());
+        assert!(parse_user_uuid(None).is_none());
+    }
+
+    #[test]
+    fn test_audit_context_from_claims_keeps_ip_and_fills_tenant() {
+        let base = AuditRequestContext {
+            ip_address: Some("10.0.0.1".to_string()),
+            user_agent: Some("curl/8".to_string()),
+            ..Default::default()
+        };
+        let ctx = audit_context_from_claims(&test_claims(), base);
+
+        assert_eq!(
+            ctx.user_id.unwrap().to_string(),
+            "550e8400-e29b-41d4-a716-446655440000"
+        );
+        assert_eq!(ctx.user_name.as_deref(), Some("alice"));
+        assert_eq!(
+            ctx.tenant_id.unwrap().to_string(),
+            "00000000-0000-0000-0000-000000000001"
+        );
+        assert_eq!(ctx.ip_address.as_deref(), Some("10.0.0.1"));
+        assert_eq!(ctx.user_agent.as_deref(), Some("curl/8"));
+    }
+
+    #[test]
+    fn test_apply_claims_to_audit_context_slot() {
+        let slot: AuditContextSlot = Arc::new(std::sync::Mutex::new(AuditRequestContext {
+            ip_address: Some("10.0.0.1".to_string()),
+            ..Default::default()
+        }));
+        apply_claims_to_audit_context(&slot, &test_claims());
+
+        let ctx = slot.lock().unwrap().clone();
+        assert_eq!(
+            ctx.user_id.unwrap().to_string(),
+            "550e8400-e29b-41d4-a716-446655440000"
+        );
+        assert_eq!(
+            ctx.tenant_id.unwrap().to_string(),
+            "00000000-0000-0000-0000-000000000001"
+        );
+        assert_eq!(ctx.ip_address.as_deref(), Some("10.0.0.1"));
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn test_save_audit_log_masks_password_and_persists_context(pool: sqlx::PgPool) {
+        sqlx::query(
+            r#"CREATE TABLE public.audit_logs (
+                id UUID PRIMARY KEY,
+                tenant_id UUID,
+                action TEXT,
+                entity_type TEXT,
+                entity_id UUID,
+                entity_ids JSONB,
+                user_id UUID,
+                user_name TEXT,
+                request_details JSONB,
+                response_details JSONB,
+                status TEXT,
+                error_message TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMPTZ
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let mut request = AuditLogData::new(
+            "create".to_string(),
+            "auth".to_string(),
+            "success".to_string(),
+        )
+        .with_tenant_id(Some(
+            Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+        ))
+        .with_request_info(Some("10.0.0.1".to_string()), Some("curl/8".to_string()))
+        .with_request_details(json!({
+            "username": "alice",
+            "password": "Test@123456",
+            "confirmPassword": "Test@123456"
+        }));
+        request.user_id = Some("550e8400-e29b-41d4-a716-446655440000".to_string());
+
+        save_audit_log(&pool, request).await.unwrap();
+
+        let row = sqlx::query(
+            r#"SELECT tenant_id, user_id::text AS user_id, ip_address, user_agent, request_details
+               FROM public.audit_logs"#,
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        let details: Value = row.get("request_details");
+
+        assert_eq!(
+            row.get::<Option<Uuid>, _>("tenant_id")
+                .map(|t| t.to_string())
+                .as_deref(),
+            Some("00000000-0000-0000-0000-000000000001")
+        );
+        assert_eq!(
+            row.get::<Option<String>, _>("user_id").as_deref(),
+            Some("550e8400-e29b-41d4-a716-446655440000")
+        );
+        assert_eq!(
+            row.get::<Option<String>, _>("ip_address").as_deref(),
+            Some("10.0.0.1")
+        );
+        assert_eq!(
+            row.get::<Option<String>, _>("user_agent").as_deref(),
+            Some("curl/8")
+        );
+        assert_eq!(details["password"], REDACTED_PLACEHOLDER);
+        assert_eq!(details["confirmPassword"], REDACTED_PLACEHOLDER);
+        assert!(!details.to_string().contains("Test@123456"));
     }
 }

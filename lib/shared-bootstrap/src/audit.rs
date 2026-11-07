@@ -46,6 +46,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use sqlx::FromRow;
+use topems_shared_core::audit::redact_sensitive_json;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -278,6 +279,9 @@ pub async fn log_audit_event(
         status,
         error_message,
     } = params;
+    // 登录 / 改密 / 注册等入口的明细同样可能携带凭据，统一在写入侧脱敏。
+    let request_details = request_details.map(|v| redact_sensitive_json(&v));
+    let response_details = response_details.map(|v| redact_sensitive_json(&v));
     let ip_address = headers
         .get("x-forwarded-for")
         .and_then(|h| h.to_str().ok())
@@ -341,6 +345,9 @@ pub async fn log_audit_event_with_id(
         status,
         error_message,
     } = params;
+    // 登录 / 改密 / 注册等入口的明细同样可能携带凭据，统一在写入侧脱敏。
+    let request_details = request_details.map(|v| redact_sensitive_json(&v));
+    let response_details = response_details.map(|v| redact_sensitive_json(&v));
     let id = Uuid::new_v4();
     let ip_address = headers
         .get("x-forwarded-for")

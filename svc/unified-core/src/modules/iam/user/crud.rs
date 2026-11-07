@@ -196,7 +196,8 @@ pub async fn create_user(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    tracing::info!("IAM user create_user called with: {:?}", payload);
+    // 请求体包含明文口令，禁止整体打印到应用日志。
+    tracing::info!("IAM user create_user called");
 
     let operator_id = &claims.sub;
 
@@ -529,11 +530,8 @@ pub async fn update_user(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    tracing::info!(
-        "IAM user update_user called with id: {} and payload: {:?}",
-        id,
-        payload
-    );
+    // 请求体可能携带口令字段，只记录用户 id，不打印 payload。
+    tracing::info!("IAM user update_user called with id: {}", id);
 
     let operator_id = &claims.sub;
 

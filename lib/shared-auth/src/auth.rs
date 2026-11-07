@@ -16,6 +16,10 @@ use topems_shared_core::{
 
 use crate::middleware::service_identity::ServiceIdentity;
 use crate::middleware::tenant::{rls_request_tenant, scope_request_tenant};
+use crate::security::audit_logger::{
+    apply_claims_to_audit_context, audit_context_from_claims, current_audit_context,
+    scope_audit_context, AuditContextSlot,
+};
 use crate::service::{is_service_claims, record_service_call};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -747,9 +751,15 @@ pub async fn auth_middleware(
             must_change_password: false,
         };
         let rls_ctx = rls_request_tenant(&claims);
+        // 审计中间件在外层执行，读不到本层注入的 Claims；通过共享槽位回填审计归属。
+        if let Some(slot) = parts.extensions.get::<AuditContextSlot>().cloned() {
+            apply_claims_to_audit_context(&slot, &claims);
+        }
+        let audit_ctx =
+            audit_context_from_claims(&claims, current_audit_context().unwrap_or_default());
         parts.extensions.insert(claims);
         let req = Request::from_parts(parts, body);
-        return scope_request_tenant(rls_ctx, next.run(req)).await;
+        return scope_request_tenant(rls_ctx, scope_audit_context(audit_ctx, next.run(req))).await;
     } else if dev_mode_requested && is_prod_profile {
         tracing::warn!(
             "DEVELOPMENT_MODE 在生产环境（PROFILE/RUST_ENV/ENV=prod|production）被忽略，仍要求真实认证"
@@ -773,6 +783,13 @@ pub async fn auth_middleware(
     } else {
         return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
     };
+
+    // 审计中间件在外层执行，读不到本层注入的 Claims；通过共享槽位回填审计归属。
+    // 放在 must_change_password 拦截之前，确保被拒绝的请求也记录真实操作者。
+    if let Some(slot) = parts.extensions.get::<AuditContextSlot>().cloned() {
+        apply_claims_to_audit_context(&slot, &claims);
+    }
+    let audit_ctx = audit_context_from_claims(&claims, current_audit_context().unwrap_or_default());
 
     // 服务身份识别（service-to-service）：打审计日志并注入 ServiceIdentity，
     // 供下游（require_permission / RLS / 处理器）区分服务调用与真实用户调用。
@@ -810,7 +827,7 @@ pub async fn auth_middleware(
     parts.extensions.insert(claims.clone());
     let req = Request::from_parts(parts, body);
     let rls_ctx = rls_request_tenant(&claims);
-    scope_request_tenant(rls_ctx, next.run(req)).await
+    scope_request_tenant(rls_ctx, scope_audit_context(audit_ctx, next.run(req))).await
 }
 
 /// P1-4 白名单：未改密用户仅放行自服务改密与登出。

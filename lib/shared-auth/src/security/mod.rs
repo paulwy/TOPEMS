@@ -5,7 +5,9 @@ pub mod rate_limiter;
 pub mod security_headers;
 
 pub use audit_logger::{
-    audit_logger_middleware, AuditLogData, AuditLoggerConfig, AuditLoggerMiddleware,
+    apply_claims_to_audit_context, audit_context_from_claims, audit_logger_middleware,
+    current_audit_context, scope_audit_context, AuditContextSlot, AuditLogData, AuditLoggerConfig,
+    AuditLoggerMiddleware, AuditRequestContext,
 };
 pub use body_limit::{body_limit_middleware, BodyLimitConfig, BodyLimitMiddleware};
 pub use encryption::{

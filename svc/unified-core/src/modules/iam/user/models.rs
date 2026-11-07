@@ -2,6 +2,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::security::audit_logger::current_audit_context;
+use topems_shared_core::audit::redact_sensitive_json;
 use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 
@@ -38,16 +40,28 @@ pub(crate) async fn record_audit_log(
             return;
         }
     };
+    // 从请求级审计上下文补全来源信息：IP / User-Agent / 当前 Claims 租户。
+    // 无请求上下文的后台调用回退 nil 租户，配合 scope_system 命中系统通道。
+    let audit_ctx = current_audit_context();
+    let tenant_id = audit_ctx
+        .as_ref()
+        .and_then(|ctx| ctx.tenant_id)
+        .unwrap_or_else(uuid::Uuid::nil);
+    let ip_address = audit_ctx.as_ref().and_then(|ctx| ctx.ip_address.as_deref());
+    let user_agent = audit_ctx.as_ref().and_then(|ctx| ctx.user_agent.as_deref());
+    // 创建 / 改密 / 注册等请求体可能携带明文口令，落库前必须脱敏。
+    let request_body = request_body.as_ref().map(redact_sensitive_json);
+    let response_body = response_body.as_ref().map(redact_sensitive_json);
+
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, request_details, response_details, status, created_at)
-        VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, NOW())
+        INSERT INTO public.audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, request_details, response_details, status, ip_address, user_agent, created_at)
+        VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
         "#,
     )
-    // 审计日志为无 claims 的内部路径：租户位绑 nil UUID，配合 scope_system 显式
-    // 命中系统通道（nil 租户 + app.rls_system='on'）；
-    // 不再硬编码真实租户 ...0001 —— 超管/nil 上下文会被幸存严格策略拒绝。
-    .bind(uuid::Uuid::nil())
+    // user_id 与 entity_id 都是 uuid 列，字符串必须先解析；解析失败写 NULL，
+    // 避免再次出现 "column user_id is of type uuid but expression is of type text"。
+    .bind(tenant_id)
     .bind(uuid::Uuid::parse_str(user_id).ok())
     .bind(action)
     .bind(resource_type)
@@ -55,6 +69,8 @@ pub(crate) async fn record_audit_log(
     .bind(request_body)
     .bind(response_body)
     .bind(if status < 400 { "success" } else { "failed" })
+    .bind(ip_address)
+    .bind(user_agent)
     .execute(&mut scope)
     .await;
 
@@ -236,5 +252,92 @@ mod tests {
         };
         assert_eq!(row.preference_value["theme"], "dark");
         assert_eq!(row.preference_value["lang"], "zh-CN");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn test_record_audit_log_redacts_password_and_fills_context(pool: sqlx::PgPool) {
+        sqlx::query("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE public.audit_logs (
+                id UUID PRIMARY KEY,
+                tenant_id UUID,
+                user_id UUID,
+                action TEXT,
+                entity_type TEXT,
+                entity_id UUID,
+                request_details JSONB,
+                response_details JSONB,
+                status TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let tenant = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let operator = "550e8400-e29b-41d4-a716-446655440000";
+        let resource = "550e8400-e29b-41d4-a716-446655440001";
+        let ctx = topems_shared_auth::security::audit_logger::AuditRequestContext {
+            tenant_id: Some(tenant),
+            ip_address: Some("10.0.0.1".to_string()),
+            user_agent: Some("curl/8".to_string()),
+            ..Default::default()
+        };
+
+        topems_shared_auth::security::audit_logger::scope_audit_context(ctx, async {
+            record_audit_log(
+                &pool,
+                operator,
+                "create",
+                "user",
+                resource,
+                Some(serde_json::json!({
+                    "username": "bob",
+                    "password": "Test@123456",
+                    "confirmPassword": "Test@123456"
+                })),
+                Some(serde_json::json!({"success": true})),
+                201,
+            )
+            .await;
+        })
+        .await;
+
+        let row = sqlx::query(
+            r#"SELECT tenant_id, user_id::text AS user_id, ip_address, user_agent, request_details, status
+               FROM public.audit_logs"#,
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        let details: serde_json::Value = sqlx::Row::get(&row, "request_details");
+
+        assert_eq!(
+            sqlx::Row::get::<Option<uuid::Uuid>, _>(&row, "tenant_id")
+                .map(|t| t.to_string())
+                .as_deref(),
+            Some("00000000-0000-0000-0000-000000000001")
+        );
+        assert_eq!(
+            sqlx::Row::get::<Option<String>, _>(&row, "user_id").as_deref(),
+            Some(operator)
+        );
+        assert_eq!(
+            sqlx::Row::get::<Option<String>, _>(&row, "ip_address").as_deref(),
+            Some("10.0.0.1")
+        );
+        assert_eq!(
+            sqlx::Row::get::<Option<String>, _>(&row, "user_agent").as_deref(),
+            Some("curl/8")
+        );
+        assert_eq!(details["password"], "[REDACTED]");
+        assert_eq!(details["confirmPassword"], "[REDACTED]");
+        assert!(!details.to_string().contains("Test@123456"));
     }
 }

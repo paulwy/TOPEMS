@@ -3,6 +3,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use topems_shared_auth::middleware::tenant::current_request_tenant;
+use topems_shared_auth::security::audit_logger::current_audit_context;
+use topems_shared_core::audit::redact_sensitive_json;
 use uuid::Uuid;
 
 /// 审计日志 status 标准值集合（与 DB `ck_audit_logs_status_standard` 保持同步）。
@@ -220,9 +222,24 @@ impl AuditLogService {
 
         // 请求上下文内未显式指定租户时，落当前请求租户（而非 nil），
         // 否则收口后的 WITH CHECK 会拒绝普通租户的审计写入。
+        // 超管请求的 current_request_tenant() 为 nil，优先使用 Claims 中的真实租户。
+        let audit_ctx = current_audit_context();
         let effective_tenant = request
             .tenant_id
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.tenant_id))
             .or_else(|| current_request_tenant().map(|ctx| ctx.tenant));
+
+        let ip_address = request
+            .ip_address
+            .clone()
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.ip_address.clone()));
+        let user_agent = request
+            .user_agent
+            .clone()
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.user_agent.clone()));
+        // 审计详情不允许保存明文凭据（登录、改密、注册等入口统一在此脱敏）。
+        let request_details = request.request_details.as_ref().map(redact_sensitive_json);
+        let response_details = request.response_details.as_ref().map(redact_sensitive_json);
 
         // status: VARCHAR(20) 直接写字符串（"success"/"failed" 等）
         // ip_address: VARCHAR(45) 直接写 TEXT，不再强制 INET cast
@@ -261,12 +278,12 @@ impl AuditLogService {
         .bind(request.entity_ids.as_ref())
         .bind(user_uuid)
         .bind(request.user_name.as_deref())
-        .bind(request.request_details.as_ref())
-        .bind(request.response_details.as_ref())
+        .bind(request_details)
+        .bind(response_details)
         .bind(&request.status)
         .bind(request.error_message.as_deref())
-        .bind(request.ip_address.as_deref())
-        .bind(request.user_agent.as_deref())
+        .bind(ip_address)
+        .bind(user_agent)
         .fetch_one(&mut scope)
         .await?;
 
@@ -570,9 +587,22 @@ impl SchemaAwareAuditLogService {
             .user_id
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok());
+        let audit_ctx = current_audit_context();
         let effective_tenant = request
             .tenant_id
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.tenant_id))
             .or_else(|| current_request_tenant().map(|ctx| ctx.tenant));
+        let ip_address = request
+            .ip_address
+            .clone()
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.ip_address.clone()));
+        let user_agent = request
+            .user_agent
+            .clone()
+            .or_else(|| audit_ctx.as_ref().and_then(|ctx| ctx.user_agent.clone()));
+        // 审计详情不允许保存明文凭据（登录、改密、注册等入口统一在此脱敏）。
+        let request_details = request.request_details.as_ref().map(redact_sensitive_json);
+        let response_details = request.response_details.as_ref().map(redact_sensitive_json);
 
         let sql = format!(
             r#"
@@ -597,12 +627,12 @@ impl SchemaAwareAuditLogService {
             .bind(request.entity_ids.as_ref())
             .bind(user_uuid)
             .bind(request.user_name.as_deref())
-            .bind(request.request_details.as_ref())
-            .bind(request.response_details.as_ref())
+            .bind(request_details)
+            .bind(response_details)
             .bind(&request.status)
             .bind(request.error_message.as_deref())
-            .bind(request.ip_address.as_deref())
-            .bind(request.user_agent.as_deref())
+            .bind(ip_address)
+            .bind(user_agent)
             .fetch_one(&mut scope)
             .await?;
 

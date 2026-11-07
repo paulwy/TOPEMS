@@ -9,6 +9,7 @@
 
 pub mod api;
 pub mod api_version;
+pub mod audit;
 pub mod cache;
 pub mod common_types;
 pub mod compression;
