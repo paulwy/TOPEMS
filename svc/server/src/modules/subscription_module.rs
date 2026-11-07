@@ -238,8 +238,6 @@ pub struct SubscriptionModule {
 
 impl SubscriptionModule {
     pub async fn build() -> Result<Self> {
-        std::env::set_var("SEARCH_PATH", "public");
-
         let config = ServiceConfig {
             name: "topems-subscription",
             port: 8090,

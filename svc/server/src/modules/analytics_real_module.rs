@@ -12,7 +12,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_analytics::{modules, routes, shared::AppState};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
@@ -27,9 +27,6 @@ pub struct AnalyticsRealModule {
 impl AnalyticsRealModule {
     /// 异步构建真实 Analytics 模块
     pub async fn build() -> Result<Self> {
-        // 与独立部署 main.rs 一致：search_path bi, public
-        std::env::set_var("SEARCH_PATH", "bi, public");
-
         let config = ServiceConfig {
             name: "topems-analytics",
             port: 8060,
@@ -45,7 +42,8 @@ impl AnalyticsRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        //    与独立部署 main.rs 一致：search_path bi, public（显式传入，不依赖进程变量）
+        let ctx = bootstrap_service_with_search_path(&config, "bi, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;

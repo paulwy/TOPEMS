@@ -13,7 +13,7 @@ use std::sync::Arc;
 use topems_master_data::modules;
 use topems_master_data::shared::AppState;
 use topems_shared_auth::middleware::require_module_access;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_event::event::EventPublisher;
 
@@ -27,11 +27,6 @@ pub struct MasterDataRealModule {
 impl MasterDataRealModule {
     /// 异步构建真实 MasterData 模块
     pub async fn build() -> Result<Self> {
-        // 自己 schema 优先（与全仓 pm/erp 等模式对齐：master_data, public, shared）。
-        // 字典/元数据等表已迁移至 master_data schema（i18n name_en 列亦在该 schema），
-        // 裸表名 SQL 据此解析到 master_data，避免命中 public 空壳旧表。
-        std::env::set_var("SEARCH_PATH", "master_data, public, shared");
-
         let config = ServiceConfig {
             name: "topems-master-data",
             port: 8090,
@@ -47,7 +42,11 @@ impl MasterDataRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        //    自己 schema 优先（与全仓 pm/erp 等模式对齐：master_data, public, shared）。
+        //    字典/元数据等表已迁移至 master_data schema（i18n name_en 列亦在该 schema），
+        //    裸表名 SQL 据此解析到 master_data，避免命中 public 空壳旧表。
+        let ctx =
+            bootstrap_service_with_search_path(&config, "master_data, public, shared").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;

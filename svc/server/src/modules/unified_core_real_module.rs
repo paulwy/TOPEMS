@@ -22,8 +22,6 @@ pub struct UnifiedCoreRealModule {
 impl UnifiedCoreRealModule {
     /// 异步构建真实 Unified Core 模块
     pub async fn build() -> Result<Self> {
-        std::env::set_var("SEARCH_PATH", "public"); // unified-core 权威表统一 public（flow 业务表已收敛）
-
         let config = topems_shared_bootstrap::ServiceConfig {
             name: "topems-unified-core",
             port: 8000,
@@ -37,7 +35,9 @@ impl UnifiedCoreRealModule {
             init_telemetry: false,
         };
 
-        let ctx = topems_shared_bootstrap::bootstrap_service(&config).await?;
+        // unified-core 权威表统一 public（flow 业务表已收敛），显式传入不依赖进程变量。
+        let ctx =
+            topems_shared_bootstrap::bootstrap_service_with_search_path(&config, "public").await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // P0 迷你试点（2026-10-29）：/ws/healthz + /ws/{module}/{feature}（对齐 P32-6 websocket-path-mapping）。
