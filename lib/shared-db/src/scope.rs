@@ -15,7 +15,7 @@
 //! `ROLLBACK` 结束时 PostgreSQL 自动恢复到连接上原有的（会话级）`search_path`。因此：
 //!
 //! - 连接归还池时**不会残留**本次作用域的 `search_path`，而是回到池的基线值
-//!   （`create_database_pool` 的 `after_connect` 按 `SEARCH_PATH` 设置的会话级值）；
+//!   （建池时通过 `create_database_pool_with_search_path` 显式传入的会话级值）；
 //! - 无需 `after_release` 清理；
 //! - 若有人在事务内误用会话级 `SET search_path`（`is_local=false`），它会越过事务
 //!   泄漏给池里的其他使用者。本类型不暴露 `PgConnection`，模块无法执行这种语句；

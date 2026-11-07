@@ -13,10 +13,14 @@ use tracing::{debug, error, info};
 // 导出读写分离模块
 pub use read_write::{ReadWriteConfig, ReadWritePool};
 
+/// 未显式指定 schema 作用域时的中性基线。
+///
+/// 模块的真实作用域必须经 [`create_database_pool_with_search_path`] 或
+/// [`crate::scope::Db::new`] 显式传入，不再读取进程级 `SEARCH_PATH`。
+pub const DEFAULT_SEARCH_PATH: &str = "public";
+
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
-    let search_path =
-        std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
-    create_database_pool_with_search_path(config, &search_path).await
+    create_database_pool_with_search_path(config, DEFAULT_SEARCH_PATH).await
 }
 
 /// 与 [`create_database_pool`] 相同，但显式指定**会话基线** `search_path`。
@@ -328,15 +332,32 @@ static MIGRATE_POOL: tokio::sync::OnceCell<std::result::Result<Option<PgPool>, S
 /// 仅用于服务启动时的建表/补列/迁移等 DDL，不得用于运行时业务查询。
 ///
 /// 进程内单例：重复调用返回同一个池的 clone（见 [`MIGRATE_POOL`]）。
+/// 该池为进程共享，使用中性 search_path 基线；DDL 必须显式 schema 限定。
 pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
+    create_migrate_pool_with_search_path(DEFAULT_SEARCH_PATH).await
+}
+
+/// 同 [`create_migrate_pool`]，但允许调用方显式传入迁移池的会话基线 `search_path`。
+///
+/// 仅适用于独立部署（进程内只有一个业务服务）；嵌入模式下多个模块共享同一单例，
+/// 应使用中性基线并依赖 DDL 的显式 schema 限定，避免首个模块的作用域污染其他模块。
+pub async fn create_migrate_pool_with_search_path(search_path: &str) -> Result<Option<PgPool>> {
     let Ok(url) = std::env::var("MIGRATE_URL") else {
         return Ok(None);
     };
     if url.trim().is_empty() {
         return Ok(None);
     }
+    let search_path = search_path.to_string();
     let cached = MIGRATE_POOL
-        .get_or_init(|| async move { build_migrate_pool(&url).await.map_err(|e| e.to_string()) })
+        .get_or_init(|| {
+            let url = url.clone();
+            async move {
+                build_migrate_pool(&url, &search_path)
+                    .await
+                    .map_err(|e| e.to_string())
+            }
+        })
         .await;
     match cached {
         Ok(pool) => Ok(pool.clone()),
@@ -345,14 +366,13 @@ pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
 }
 
 /// 实际构建迁移池（仅执行一次，额度同样受进程级预算约束）。
-async fn build_migrate_pool(url: &str) -> Result<Option<PgPool>> {
+async fn build_migrate_pool(url: &str, search_path: &str) -> Result<Option<PgPool>> {
     // 与业务池一致：迁移池也计入总预算（总额天花板对「所有池」生效）。
     let reservation = budget::reserve_pool("migrate", 3)?;
     let max_connections = reservation.granted();
-    // 与业务池保持一致：按 SEARCH_PATH 解析未限定表名，避免 DDL 落到 public schema
-    // 遗留同名表（如 public.core_tickets，owner 为受限用户）导致 "must be owner" 42501。
-    let search_path =
-        std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+    // 作用域由调用方显式传入（独立部署为本服务 schema，嵌入模式为中性基线），
+    // 不再读取进程级 SEARCH_PATH；DDL 仍应优先显式 schema 限定（如 `"erp"."table"`）。
+    let search_path = search_path.to_string();
     let options = PgPoolOptions::new()
         .max_connections(max_connections)
         .min_connections(0)

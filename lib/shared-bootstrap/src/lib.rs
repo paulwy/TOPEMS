@@ -83,7 +83,8 @@ use topems_shared_core::{
 };
 
 use topems_shared_db::database::{
-    create_database_pool, create_migrate_pool, create_shared_database_pool,
+    create_database_pool_with_search_path, create_migrate_pool,
+    create_migrate_pool_with_search_path, create_shared_database_pool,
 };
 
 /// 已迁移到共享运行时池的模块数（连接治理 B 批次进度）。
@@ -737,8 +738,22 @@ static SHARED_RUNTIME_POOL: tokio::sync::OnceCell<sqlx::PgPool> =
     tokio::sync::OnceCell::const_new();
 
 /// 初始化通用资源：telemetry、数据库连接池、metrics、auth_state、event_publisher
+///
+/// `search_path` 回退到进程级 `SEARCH_PATH`（兼容独立部署服务），嵌入模式模块应改用
+/// [`bootstrap_service_with_search_path`] 显式传入本模块作用域，避免进程级变量互相覆盖。
 pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
-    bootstrap_service_inner(config, false).await
+    bootstrap_service_inner(config, false, None).await
+}
+
+/// 同 [`bootstrap_service`]，但为模块自有池显式指定**会话基线** `search_path`。
+///
+/// 嵌入模式统一走本入口：每个模块固定使用自己的 schema 集合，不写、不读进程级
+/// `SEARCH_PATH`，因此模块构建顺序不再影响任何模块的表解析语义。
+pub async fn bootstrap_service_with_search_path(
+    config: &ServiceConfig,
+    search_path: &str,
+) -> Result<ServiceContext> {
+    bootstrap_service_inner(config, false, Some(search_path)).await
 }
 
 /// 连接治理 B：嵌入模式下复用**进程级共享运行时池**，模块不再单独建池。
@@ -749,7 +764,7 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
 ///
 /// 仅用于已迁移到 `ScopedTxn` 的模块；未迁移模块继续用 [`bootstrap_service`] 独立建池。
 pub async fn bootstrap_service_shared(config: &ServiceConfig) -> Result<ServiceContext> {
-    bootstrap_service_inner(config, true).await
+    bootstrap_service_inner(config, true, None).await
 }
 
 async fn shared_runtime_pool(config: &DatabaseConfig) -> Result<sqlx::PgPool> {
@@ -772,6 +787,7 @@ async fn shared_runtime_pool(config: &DatabaseConfig) -> Result<sqlx::PgPool> {
 async fn bootstrap_service_inner(
     config: &ServiceConfig,
     shared_pool: bool,
+    explicit_search_path: Option<&str>,
 ) -> Result<ServiceContext> {
     dotenv::dotenv().ok();
 
@@ -819,6 +835,12 @@ async fn bootstrap_service_inner(
         ..Default::default()
     };
 
+    // 嵌入模式：显式传入；独立部署：保持 SEARCH_PATH 兼容路径（由各服务 main.rs 设置）。
+    let module_search_path = explicit_search_path
+        .map(str::to_owned)
+        .or_else(|| env::var("SEARCH_PATH").ok())
+        .unwrap_or_else(|| topems_shared_db::database::DEFAULT_SEARCH_PATH.to_string());
+
     let db = if shared_pool {
         // B：模块不再拥有连接池，复用进程级共享池（application_name / 基线 search_path
         // 只在首次创建时设置，模块名不再写入连接标签）。
@@ -830,11 +852,17 @@ async fn bootstrap_service_inner(
                 format!("{}-module", derive_service_tag(config.name).to_lowercase()),
             );
         }
-        create_database_pool(&db_config).await?
+        create_database_pool_with_search_path(&db_config, &module_search_path).await?
     };
 
-    // MIGRATE_URL 双轨：DDL 走 owner 迁移池，运行时查询走受限用户池（未配置回退 None）
-    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
+    // MIGRATE_URL 双轨：DDL 走 owner 迁移池，运行时查询走受限用户池（未配置回退 None）。
+    // 迁移池为进程级单例：嵌入模式固定中性基线（DDL 应显式 schema 限定）；独立部署沿用本服务作用域。
+    let migrate_pool = if is_embedded() {
+        create_migrate_pool().await
+    } else {
+        create_migrate_pool_with_search_path(&module_search_path).await
+    }
+    .unwrap_or_else(|e| {
         tracing::warn!("⚠️ MIGRATE_URL 迁移池创建失败（DDL 回退运行时池）: {}", e);
         None
     });
