@@ -334,10 +334,7 @@ pub fn create_routes(
             "/documents",
             get(crate::modules::document::list).post(crate::modules::document::create),
         )
-        .route(
-            "/documents/{id}",
-            get(crate::modules::document::get),
-        )
+        .route("/documents/{id}", get(crate::modules::document::get))
         .route(
             "/documents/{id}/download",
             get(crate::modules::document::download),

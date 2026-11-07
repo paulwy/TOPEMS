@@ -4871,14 +4871,28 @@ pub fn create_routes() -> Router<AppState> {
     // ===== 科目/总账/对家 域 =====
     let account_routes = Router::new()
         .route("/dashboard", axum::routing::get(get_dashboard_handler))
-        .route("/accounts", axum::routing::post(create_account).get(list_accounts))
-        .route("/accounts/balances", axum::routing::get(get_account_balances))
+        .route(
+            "/accounts",
+            axum::routing::post(create_account).get(list_accounts),
+        )
+        .route(
+            "/accounts/balances",
+            axum::routing::get(get_account_balances),
+        )
         .route(
             "/accounts/{account_id}",
-            axum::routing::get(get_account).put(update_account).delete(delete_account),
+            axum::routing::get(get_account)
+                .put(update_account)
+                .delete(delete_account),
         )
-        .route("/accounts/code/{code}", axum::routing::get(get_account_by_code))
-        .route("/aux-accounts", axum::routing::post(create_aux_account).get(list_aux_accounts))
+        .route(
+            "/accounts/code/{code}",
+            axum::routing::get(get_account_by_code),
+        )
+        .route(
+            "/aux-accounts",
+            axum::routing::post(create_aux_account).get(list_aux_accounts),
+        )
         .route("/accounts/tree", axum::routing::get(get_account_tree))
         .route(
             "/accounts/{account_id}/children-batch",
@@ -4896,46 +4910,108 @@ pub fn create_routes() -> Router<AppState> {
             "/accounts/opening-balances/carry-forward",
             axum::routing::post(carry_forward_opening_balance),
         )
-        .route("/counterparty/customers", axum::routing::get(list_counterparty_customers))
+        .route(
+            "/counterparty/customers",
+            axum::routing::get(list_counterparty_customers),
+        )
         .route(
             "/counterparty/customers/{customer_id}",
             axum::routing::get(get_counterparty_customer).put(update_counterparty_customer),
         )
-        .route("/counterparty/suppliers", axum::routing::get(list_counterparty_suppliers))
+        .route(
+            "/counterparty/suppliers",
+            axum::routing::get(list_counterparty_suppliers),
+        )
         .route(
             "/counterparty/suppliers/{supplier_id}",
             axum::routing::get(get_counterparty_supplier).put(update_counterparty_supplier),
         )
-        .layer(axum::middleware::from_fn(require_permission("finance:account:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:account:read",
+        )));
 
     // ===== 凭证/模板/生成/U8导入 域 =====
     let voucher_routes = Router::new()
-        .route("/vouchers", axum::routing::post(create_voucher).get(list_vouchers))
+        .route(
+            "/vouchers",
+            axum::routing::post(create_voucher).get(list_vouchers),
+        )
         .route(
             "/vouchers/{voucher_id}",
-            axum::routing::get(get_voucher).put(update_voucher).delete(delete_voucher),
+            axum::routing::get(get_voucher)
+                .put(update_voucher)
+                .delete(delete_voucher),
         )
-        .route("/vouchers/{voucher_id}/submit", axum::routing::post(submit_voucher))
-        .route("/vouchers/{voucher_id}/approve", axum::routing::post(approve_voucher))
-        .route("/vouchers/{voucher_id}/post", axum::routing::post(post_voucher))
-        .route("/vouchers/{voucher_id}/unpost", axum::routing::post(unpost_voucher))
-        .route("/vouchers/batch/submit", axum::routing::post(batch_submit_vouchers))
-        .route("/vouchers/batch/approve", axum::routing::post(batch_approve_vouchers))
-        .route("/vouchers/batch/post", axum::routing::post(batch_post_vouchers))
+        .route(
+            "/vouchers/{voucher_id}/submit",
+            axum::routing::post(submit_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/approve",
+            axum::routing::post(approve_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/post",
+            axum::routing::post(post_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/unpost",
+            axum::routing::post(unpost_voucher),
+        )
+        .route(
+            "/vouchers/batch/submit",
+            axum::routing::post(batch_submit_vouchers),
+        )
+        .route(
+            "/vouchers/batch/approve",
+            axum::routing::post(batch_approve_vouchers),
+        )
+        .route(
+            "/vouchers/batch/post",
+            axum::routing::post(batch_post_vouchers),
+        )
         .route("/vouchers/export", axum::routing::post(export_vouchers))
-        .route("/vouchers/{voucher_id}/entries", axum::routing::get(get_voucher_entries))
-        .route("/vouchers/{voucher_id}/items", axum::routing::get(get_voucher_items))
-        .route("/vouchers/batch", axum::routing::post(batch_create_vouchers))
-        .route("/vouchers/batch-delete", axum::routing::post(batch_delete_vouchers))
-        .route("/vouchers/{voucher_id}/unapprove", axum::routing::post(unapprove_voucher))
-        .route("/vouchers/{voucher_id}/reverse", axum::routing::post(reverse_voucher))
+        .route(
+            "/vouchers/{voucher_id}/entries",
+            axum::routing::get(get_voucher_entries),
+        )
+        .route(
+            "/vouchers/{voucher_id}/items",
+            axum::routing::get(get_voucher_items),
+        )
+        .route(
+            "/vouchers/batch",
+            axum::routing::post(batch_create_vouchers),
+        )
+        .route(
+            "/vouchers/batch-delete",
+            axum::routing::post(batch_delete_vouchers),
+        )
+        .route(
+            "/vouchers/{voucher_id}/unapprove",
+            axum::routing::post(unapprove_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/reverse",
+            axum::routing::post(reverse_voucher),
+        )
         .route("/vouchers/next-no", axum::routing::get(get_next_voucher_no))
-        .route("/vouchers/generate", axum::routing::post(generate_voucher_by_template))
-        .route("/vouchers/import", axum::routing::post(import_vouchers_general))
-        .route("/vouchers/import/u8", axum::routing::post(import_vouchers_u8))
+        .route(
+            "/vouchers/generate",
+            axum::routing::post(generate_voucher_by_template),
+        )
+        .route(
+            "/vouchers/import",
+            axum::routing::post(import_vouchers_general),
+        )
+        .route(
+            "/vouchers/import/u8",
+            axum::routing::post(import_vouchers_u8),
+        )
         .route(
             "/voucher-templates",
-            axum::routing::get(list_voucher_templates_handler).post(create_voucher_template_handler),
+            axum::routing::get(list_voucher_templates_handler)
+                .post(create_voucher_template_handler),
         )
         .route(
             "/voucher-templates/{template_id}",
@@ -4947,7 +5023,10 @@ pub fn create_routes() -> Router<AppState> {
             "/voucher-templates/{template_id}/set-default",
             axum::routing::post(set_default_template_handler),
         )
-        .route("/voucher-templates/apply", axum::routing::post(apply_template_handler))
+        .route(
+            "/voucher-templates/apply",
+            axum::routing::post(apply_template_handler),
+        )
         .route(
             "/voucher-templates/match",
             axum::routing::post(match_template_handler),
@@ -4974,7 +5053,8 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/voucher-templates/{template_id}/entries",
-            axum::routing::get(voucher_template_entries::list_entries).post(add_template_entry_handler),
+            axum::routing::get(voucher_template_entries::list_entries)
+                .post(add_template_entry_handler),
         )
         .route(
             "/voucher-templates/{template_id}/entries/reorder",
@@ -5008,7 +5088,10 @@ pub fn create_routes() -> Router<AppState> {
             "/voucher-generation-rules/{rule_id}/toggle",
             axum::routing::put(toggle_generation_rule_handler),
         )
-        .route("/voucher/generate/preview", axum::routing::post(voucher_template::preview_generation))
+        .route(
+            "/voucher/generate/preview",
+            axum::routing::post(voucher_template::preview_generation),
+        )
         .route(
             "/voucher/generate/from-source",
             axum::routing::post(voucher_template::generate_from_source),
@@ -5025,37 +5108,81 @@ pub fn create_routes() -> Router<AppState> {
             "/voucher/generate/regenerate/{original_voucher_id}",
             axum::routing::post(voucher_template::regenerate),
         )
-        .route("/u8-import/import", axum::routing::post(import_vouchers_handler))
-        .route("/u8-import/{import_id}/status", axum::routing::get(get_import_status_handler))
-        .route("/u8-import/records", axum::routing::get(list_import_records_handler))
-        .route("/u8-import/records/{import_id}", axum::routing::get(get_import_record_handler))
+        .route(
+            "/u8-import/import",
+            axum::routing::post(import_vouchers_handler),
+        )
+        .route(
+            "/u8-import/{import_id}/status",
+            axum::routing::get(get_import_status_handler),
+        )
+        .route(
+            "/u8-import/records",
+            axum::routing::get(list_import_records_handler),
+        )
+        .route(
+            "/u8-import/records/{import_id}",
+            axum::routing::get(get_import_record_handler),
+        )
         .route(
             "/u8-import/{import_id}/rollback",
             axum::routing::post(rollback_import_handler),
         )
-        .layer(axum::middleware::from_fn(require_permission("finance:voucher:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:voucher:read",
+        )));
 
     // ===== 报表/总账/期间 域 =====
     let report_routes = Router::new()
         .route("/ledger", axum::routing::get(get_ledger))
         .route("/aux-ledger", axum::routing::get(get_aux_ledger))
         .route("/aux-balance", axum::routing::get(get_aux_balance))
-        .route("/trial-balance/{period}", axum::routing::get(get_trial_balance))
-        .route("/balance-sheet/{period}", axum::routing::get(get_balance_sheet))
-        .route("/income-statement/{period}", axum::routing::get(get_income_statement))
+        .route(
+            "/trial-balance/{period}",
+            axum::routing::get(get_trial_balance),
+        )
+        .route(
+            "/balance-sheet/{period}",
+            axum::routing::get(get_balance_sheet),
+        )
+        .route(
+            "/income-statement/{period}",
+            axum::routing::get(get_income_statement),
+        )
         .route("/cash-flow/{period}", axum::routing::get(get_cash_flow))
         .route("/year-end-close", axum::routing::post(year_end_close))
         .route("/period/current", axum::routing::get(get_current_period))
         .route("/periods", axum::routing::get(list_periods))
         .route("/periods/open", axum::routing::post(open_period_v2))
         .route("/periods/close", axum::routing::post(close_period_v2))
-        .route("/periods/close-income", axum::routing::post(close_income_period))
-        .route("/periods/year-end-close", axum::routing::post(year_end_close_v2))
-        .route("/periods/{year}/{month}/open", axum::routing::post(open_period))
-        .route("/periods/{year}/{month}/close", axum::routing::post(close_period))
-        .route("/reports/account-balance", axum::routing::get(get_account_balance_report))
-        .route("/reports/account-ledger", axum::routing::get(get_account_ledger_report))
-        .route("/reports/dimension-detail", axum::routing::get(get_dimension_detail_report))
+        .route(
+            "/periods/close-income",
+            axum::routing::post(close_income_period),
+        )
+        .route(
+            "/periods/year-end-close",
+            axum::routing::post(year_end_close_v2),
+        )
+        .route(
+            "/periods/{year}/{month}/open",
+            axum::routing::post(open_period),
+        )
+        .route(
+            "/periods/{year}/{month}/close",
+            axum::routing::post(close_period),
+        )
+        .route(
+            "/reports/account-balance",
+            axum::routing::get(get_account_balance_report),
+        )
+        .route(
+            "/reports/account-ledger",
+            axum::routing::get(get_account_ledger_report),
+        )
+        .route(
+            "/reports/dimension-detail",
+            axum::routing::get(get_dimension_detail_report),
+        )
         .route(
             "/reports/balance-sheet/export",
             axum::routing::get(export_balance_sheet_report),
@@ -5068,7 +5195,9 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/cash-flow/export",
             axum::routing::get(export_cash_flow_report),
         )
-        .layer(axum::middleware::from_fn(require_permission("finance:report:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:report:read",
+        )));
 
     // ===== 付款/付款记录 域 =====
     let payment_routes = Router::new()
@@ -5082,12 +5211,30 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_payment_handler)
                 .delete(delete_payment_handler),
         )
-        .route("/payments/{payment_id}/submit", axum::routing::post(submit_payment_handler))
-        .route("/payments/{payment_id}/approve", axum::routing::post(approve_payment_handler))
-        .route("/payments/{payment_id}/reject", axum::routing::post(reject_payment_handler))
-        .route("/payments/{payment_id}/execute", axum::routing::post(execute_payment_handler))
-        .route("/payments/write-off", axum::routing::post(write_off_payment_item_handler))
-        .route("/payments/export", axum::routing::post(export_payments_handler))
+        .route(
+            "/payments/{payment_id}/submit",
+            axum::routing::post(submit_payment_handler),
+        )
+        .route(
+            "/payments/{payment_id}/approve",
+            axum::routing::post(approve_payment_handler),
+        )
+        .route(
+            "/payments/{payment_id}/reject",
+            axum::routing::post(reject_payment_handler),
+        )
+        .route(
+            "/payments/{payment_id}/execute",
+            axum::routing::post(execute_payment_handler),
+        )
+        .route(
+            "/payments/write-off",
+            axum::routing::post(write_off_payment_item_handler),
+        )
+        .route(
+            "/payments/export",
+            axum::routing::post(export_payments_handler),
+        )
         .route(
             "/payment-records",
             axum::routing::get(list_payment_records_handler).post(create_payment_record_handler),
@@ -5118,7 +5265,9 @@ pub fn create_routes() -> Router<AppState> {
             "/payment-records/batch-write-off",
             axum::routing::post(batch_write_off_payments_handler),
         )
-        .layer(axum::middleware::from_fn(require_permission("finance:payment:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:payment:read",
+        )));
 
     // ===== 审批配置/费用审批 域 =====
     let approval_routes = Router::new()
@@ -5158,14 +5307,28 @@ pub fn create_routes() -> Router<AppState> {
             "/expense-approvals/{id}/reject",
             axum::routing::post(reject_expense_approval),
         )
-        .layer(axum::middleware::from_fn(require_permission("finance:expense_approval:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense_approval:read",
+        )));
 
     // ===== 应收/应付/收款/账龄 域 =====
     let ar_ap_routes = Router::new()
-        .route("/receivables/aging", axum::routing::get(get_receivable_aging_handler))
-        .route("/receivables/batch", axum::routing::post(batch_create_receivables_handler))
-        .route("/payables/aging", axum::routing::get(get_payable_aging_handler))
-        .route("/payables/batch", axum::routing::post(batch_create_payables_handler))
+        .route(
+            "/receivables/aging",
+            axum::routing::get(get_receivable_aging_handler),
+        )
+        .route(
+            "/receivables/batch",
+            axum::routing::post(batch_create_receivables_handler),
+        )
+        .route(
+            "/payables/aging",
+            axum::routing::get(get_payable_aging_handler),
+        )
+        .route(
+            "/payables/batch",
+            axum::routing::post(batch_create_payables_handler),
+        )
         .route(
             "/collections",
             axum::routing::get(list_collections_handler).post(create_collection_handler),
@@ -5190,12 +5353,26 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/ar/aging", axum::routing::get(get_ar_aging))
         .route("/ap/aging", axum::routing::get(get_ap_aging))
-        .route("/aging/receivable", axum::routing::get(calculate_receivable_aging_handler))
-        .route("/aging/payable", axum::routing::get(calculate_payable_aging_handler))
-        .route("/aging/summary", axum::routing::get(get_aging_summary_handler))
-        .route("/aging/detail", axum::routing::get(get_aging_detail_handler))
+        .route(
+            "/aging/receivable",
+            axum::routing::get(calculate_receivable_aging_handler),
+        )
+        .route(
+            "/aging/payable",
+            axum::routing::get(calculate_payable_aging_handler),
+        )
+        .route(
+            "/aging/summary",
+            axum::routing::get(get_aging_summary_handler),
+        )
+        .route(
+            "/aging/detail",
+            axum::routing::get(get_aging_detail_handler),
+        )
         .route("/aging/trend", axum::routing::get(get_aging_trend_handler))
-        .layer(axum::middleware::from_fn(require_permission("finance:receivable:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:read",
+        )));
 
     Router::new()
         .merge(submodules)

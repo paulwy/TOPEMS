@@ -1415,1655 +1415,1655 @@ pub async fn build_router(
     // 个人自助面（todos/notifications/settings/dashboard/announcements 读/help 读等）保持
     // personal_routes 不动，避免误伤正常用户。
     let admin_ops_routes = Router::new()
-    // ==================== V51.0 Phase 21: GraphQL Schema 演进 + 破坏性变更检测 + 版本协商 ====================
-    // POST /api/portal/schema-versioning/schema/versions — 发布新 Schema 版本
-    .route(
-        "/api/portal/schema-versioning/schema/versions",
-        post(modules::schema_versioning::handlers::publish_schema_version_handler),
-    )
-    // GET /api/portal/schema-versioning/schema/versions — 列出 Schema 版本
-    .route(
-        "/api/portal/schema-versioning/schema/versions",
-        get(modules::schema_versioning::handlers::list_schema_versions_handler),
-    )
-    // GET /api/portal/schema-versioning/schema/versions/{version} — 获取指定版本
-    .route(
-        "/api/portal/schema-versioning/schema/versions/{version}",
-        get(modules::schema_versioning::handlers::get_schema_version_handler),
-    )
-    // PUT /api/portal/schema-versioning/schema/versions/{version}/rollback — 回滚到指定版本
-    .route(
-        "/api/portal/schema-versioning/schema/versions/{version}/rollback",
-        put(modules::schema_versioning::handlers::rollback_schema_handler),
-    )
-    // GET /api/portal/schema-versioning/schema/current — 获取当前 Schema
-    .route(
-        "/api/portal/schema-versioning/schema/current",
-        get(modules::schema_versioning::handlers::get_current_schema_handler),
-    )
-    // POST /api/portal/schema-versioning/schema/compare — 对比 Schema 兼容性
-    .route(
-        "/api/portal/schema-versioning/schema/compare",
-        post(modules::schema_versioning::handlers::compare_schemas_handler),
-    )
-    // POST /api/portal/schema-versioning/schema/detect-breaking — 检测破坏性变更
-    .route(
-        "/api/portal/schema-versioning/schema/detect-breaking",
-        post(modules::schema_versioning::handlers::detect_breaking_changes_handler),
-    )
-    // POST /api/portal/schema-versioning/negotiate — 版本协商
-    .route(
-        "/api/portal/schema-versioning/negotiate",
-        post(modules::schema_versioning::handlers::negotiate_version_handler),
-    )
-    // GET /api/portal/schema-versioning/versions/supported — 获取支持的版本列表
-    .route(
-        "/api/portal/schema-versioning/versions/supported",
-        get(modules::schema_versioning::handlers::get_supported_versions_handler),
-    )
-    // PUT /api/portal/schema-versioning/versions/{version}/deprecate — 废弃版本
-    .route(
-        "/api/portal/schema-versioning/versions/{version}/deprecate",
-        put(modules::schema_versioning::handlers::deprecate_version_handler),
-    )
-    // ==================== V52.0 Phase 22: 自适应执行引擎 + AI 查询优化 + 流式订阅增强 ====================
-    // --- 自适应执行引擎 ---
-    // POST /api/portal/adaptive-execution/execute — 执行自适应查询
-    .route(
-        "/api/portal/adaptive-execution/execute",
-        post(modules::adaptive_execution::execute_adaptive_query_handler),
-    )
-    // GET /api/portal/adaptive-execution/execution/profile/{hash} — 获取执行配置
-    .route(
-        "/api/portal/adaptive-execution/execution/profile/{hash}",
-        get(modules::adaptive_execution::get_execution_profile_handler),
-    )
-    // GET /api/portal/adaptive-execution/execution/metrics — 获取执行指标
-    .route(
-        "/api/portal/adaptive-execution/execution/metrics",
-        get(modules::adaptive_execution::get_execution_metrics_handler),
-    )
-    // POST /api/portal/adaptive-execution/execution/configure — 配置执行策略
-    .route(
-        "/api/portal/adaptive-execution/execution/configure",
-        post(modules::adaptive_execution::configure_strategy_handler),
-    )
-    // --- AI 查询优化 ---
-    // POST /api/portal/adaptive-execution/optimize — 优化查询
-    .route(
-        "/api/portal/adaptive-execution/optimize",
-        post(modules::adaptive_execution::optimize_query_handler),
-    )
-    // POST /api/portal/adaptive-execution/analyze — 分析查询计划
-    .route(
-        "/api/portal/adaptive-execution/analyze",
-        post(modules::adaptive_execution::analyze_query_handler),
-    )
-    // GET /api/portal/adaptive-execution/optimization/suggestions — 获取优化建议
-    .route(
-        "/api/portal/adaptive-execution/optimization/suggestions",
-        get(modules::adaptive_execution::get_optimization_suggestions_handler),
-    )
-    // POST /api/portal/adaptive-execution/optimization/batch — 批量优化
-    .route(
-        "/api/portal/adaptive-execution/optimization/batch",
-        post(modules::adaptive_execution::batch_optimize_handler),
-    )
-    // --- 流式订阅 ---
-    // POST /api/portal/adaptive-execution/streams — 创建流
-    .route(
-        "/api/portal/adaptive-execution/streams",
-        post(modules::adaptive_execution::create_stream_handler),
-    )
-    // GET /api/portal/adaptive-execution/streams — 流列表
-    .route(
-        "/api/portal/adaptive-execution/streams",
-        get(modules::adaptive_execution::list_streams_handler),
-    )
-    // GET /api/portal/adaptive-execution/streams/{id} — 获取流详情
-    .route(
-        "/api/portal/adaptive-execution/streams/{id}",
-        get(modules::adaptive_execution::get_stream_handler),
-    )
-    // DELETE /api/portal/adaptive-execution/streams/{id} — 关闭流
-    .route(
-        "/api/portal/adaptive-execution/streams/{id}",
-        delete(modules::adaptive_execution::close_stream_handler),
-    )
-    // POST /api/portal/adaptive-execution/streams/{id}/subscribe — 订阅流
-    .route(
-        "/api/portal/adaptive-execution/streams/{id}/subscribe",
-        post(modules::adaptive_execution::subscribe_stream_handler),
-    )
-    // DELETE /api/portal/adaptive-execution/streams/{id}/unsubscribe — 取消订阅
-    .route(
-        "/api/portal/adaptive-execution/streams/{id}/unsubscribe",
-        delete(modules::adaptive_execution::unsubscribe_stream_handler),
-    )
-    // GET /api/portal/adaptive-execution/streams/metrics — 流指标
-    .route(
-        "/api/portal/adaptive-execution/streams/metrics",
-        get(modules::adaptive_execution::stream_metrics_handler),
-    )
-    // ==================== V53.0 Phase 24: GraphQL 智能网关 — AI 驱动查询路由 + 自动 Schema Stitching ====================
-    // --- AI 查询路由 ---
-    // POST /api/portal/intelligent-gateway/route — AI 查询路由
-    .route(
-        "/api/portal/intelligent-gateway/route",
-        post(modules::intelligent_gateway::route_query_handler),
-    )
-    // GET /api/portal/intelligent-gateway/routing/table — 路由表
-    .route(
-        "/api/portal/intelligent-gateway/routing/table",
-        get(modules::intelligent_gateway::get_routing_table_handler),
-    )
-    // GET /api/portal/intelligent-gateway/affinity/{service_id} — 服务亲和度
-    .route(
-        "/api/portal/intelligent-gateway/affinity/{service_id}",
-        get(modules::intelligent_gateway::get_affinity_handler),
-    )
-    // PUT /api/portal/intelligent-gateway/affinity/{service_id} — 更新亲和度
-    .route(
-        "/api/portal/intelligent-gateway/affinity/{service_id}",
-        put(modules::intelligent_gateway::update_affinity_handler),
-    )
-    // POST /api/portal/intelligent-gateway/routing/warmup — 路由预热
-    .route(
-        "/api/portal/intelligent-gateway/routing/warmup",
-        post(modules::intelligent_gateway::warm_up_routing_handler),
-    )
-    // --- 自动 Schema Stitching ---
-    // POST /api/portal/intelligent-gateway/stitch/discover — 子图发现
-    .route(
-        "/api/portal/intelligent-gateway/stitch/discover",
-        post(modules::intelligent_gateway::discover_subgraphs_handler),
-    )
-    // POST /api/portal/intelligent-gateway/stitch/plan — 生成 Stitch 计划
-    .route(
-        "/api/portal/intelligent-gateway/stitch/plan",
-        post(modules::intelligent_gateway::generate_stitch_plan_handler),
-    )
-    // POST /api/portal/intelligent-gateway/stitch/execute — 执行 Stitch
-    .route(
-        "/api/portal/intelligent-gateway/stitch/execute",
-        post(modules::intelligent_gateway::execute_stitch_handler),
-    )
-    // GET /api/portal/intelligent-gateway/stitch/status/{plan_id} — Stitch 状态
-    .route(
-        "/api/portal/intelligent-gateway/stitch/status/{plan_id}",
-        get(modules::intelligent_gateway::get_stitch_status_handler),
-    )
-    // GET /api/portal/intelligent-gateway/stitch/validate/{plan_id} — 验证 Stitch
-    .route(
-        "/api/portal/intelligent-gateway/stitch/validate/{plan_id}",
-        get(modules::intelligent_gateway::validate_stitch_handler),
-    )
-    // POST /api/portal/intelligent-gateway/stitch/rollback — 回滚 Stitch
-    .route(
-        "/api/portal/intelligent-gateway/stitch/rollback",
-        post(modules::intelligent_gateway::rollback_stitch_handler),
-    )
-    // GET /api/portal/intelligent-gateway/stitch/conflicts — 类型冲突列表
-    .route(
-        "/api/portal/intelligent-gateway/stitch/conflicts",
-        get(modules::intelligent_gateway::list_conflicts_handler),
-    )
-    // ==================== V54.0 BFF Phase 24: GraphQL 订阅网关 + 消息队列集成 + 实时推送优化 ====================
-    // --- 订阅网关 ---
-    // POST /subscription-manager/subscribe — 订阅频道
-    .route(
-        "/api/portal/subscription-manager/subscribe",
-        post(modules::subscription_manager::subscribe_handler),
-    )
-    // DELETE /subscription-manager/subscribe/{subscriber_id} — 取消订阅
-    .route(
-        "/api/portal/subscription-manager/subscribe/{subscriber_id}",
-        delete(modules::subscription_manager::unsubscribe_handler),
-    )
-    // GET /subscription-manager/subscribers — 活跃订阅者列表
-    .route(
-        "/api/portal/subscription-manager/subscribers",
-        get(modules::subscription_manager::get_subscribers_handler),
-    )
-    // GET /subscription-manager/channels — 频道统计
-    .route(
-        "/api/portal/subscription-manager/channels",
-        get(modules::subscription_manager::get_channels_handler),
-    )
-    // POST /subscription-manager/publish — 发布消息到频道
-    .route(
-        "/api/portal/subscription-manager/publish",
-        post(modules::subscription_manager::publish_handler),
-    )
-    // --- 消息队列 ---
-    // POST /subscription-manager/queue/publish — 发布消息到队列
-    .route(
-        "/api/portal/subscription-manager/queue/publish",
-        post(modules::subscription_manager::publish_to_queue_handler),
-    )
-    // GET /subscription-manager/queue/stats — 队列统计
-    .route(
-        "/api/portal/subscription-manager/queue/stats",
-        get(modules::subscription_manager::get_queue_stats_handler),
-    )
-    // POST /subscription-manager/queue/create — 创建队列
-    .route(
-        "/api/portal/subscription-manager/queue/create",
-        post(modules::subscription_manager::create_queue_handler),
-    )
-    // POST /subscription-manager/queue/purge — 清空队列
-    .route(
-        "/api/portal/subscription-manager/queue/purge",
-        post(modules::subscription_manager::purge_queue_handler),
-    )
-    // GET /subscription-manager/dlq — 死信队列
-    .route(
-        "/api/portal/subscription-manager/dlq",
-        get(modules::subscription_manager::get_dlq_handler),
-    )
-    // --- 推送优化 ---
-    // GET /subscription-manager/push/stats — 推送统计
-    .route(
-        "/api/portal/subscription-manager/push/stats",
-        get(modules::subscription_manager::get_push_stats_handler),
-    )
-    // PUT /subscription-manager/push/batch-window — 设置批量窗口
-    .route(
-        "/api/portal/subscription-manager/push/batch-window",
-        put(modules::subscription_manager::set_batch_window_handler),
-    )
-    // GET /subscription-manager/push/queue-length — 推送队列长度
-    .route(
-        "/api/portal/subscription-manager/push/queue-length",
-        get(modules::subscription_manager::get_push_queue_length_handler),
-    )
-    // ==================== V54.0 Phase 25: GraphQL 边缘计算 — 边缘渲染 + 全球加速 + 低延迟响应 ====================
-    // --- 边缘渲染 ---
-    // POST /edge-computing/render — 在边缘节点渲染 GraphQL 查询
-    .route(
-        "/api/portal/edge-computing/render",
-        post(modules::edge_computing::render_at_edge_handler),
-    )
-    // GET /edge-computing/status — 边缘节点状态
-    .route(
-        "/api/portal/edge-computing/status",
-        get(modules::edge_computing::get_edge_status_handler),
-    )
-    // POST /edge-computing/cache/invalidate — 失效边缘缓存
-    .route(
-        "/api/portal/edge-computing/cache/invalidate",
-        post(modules::edge_computing::invalidate_cache_handler),
-    )
-    // GET /edge-computing/render-history — 渲染历史
-    .route(
-        "/api/portal/edge-computing/render-history",
-        get(modules::edge_computing::get_render_history_handler),
-    )
-    // POST /edge-computing/functions/deploy — 部署边缘函数
-    .route(
-        "/api/portal/edge-computing/functions/deploy",
-        post(modules::edge_computing::deploy_function_handler),
-    )
-    // --- 全球加速 ---
-    // POST /edge-computing/accelerate — 加速请求
-    .route(
-        "/api/portal/edge-computing/accelerate",
-        post(modules::edge_computing::accelerate_request_handler),
-    )
-    // GET /edge-computing/optimal-location — 获取最优节点位置
-    .route(
-        "/api/portal/edge-computing/optimal-location",
-        get(modules::edge_computing::get_optimal_location_handler),
-    )
-    // POST /edge-computing/config/sync — 同步加速配置
-    .route(
-        "/api/portal/edge-computing/config/sync",
-        post(modules::edge_computing::sync_config_handler),
-    )
-    // GET /edge-computing/accel-stats — 加速统计
-    .route(
-        "/api/portal/edge-computing/accel-stats",
-        get(modules::edge_computing::get_accel_stats_handler),
-    )
-    // --- 低延迟响应 ---
-    // POST /edge-computing/optimize — 优化响应
-    .route(
-        "/api/portal/edge-computing/optimize",
-        post(modules::edge_computing::optimize_response_handler),
-    )
-    // GET /edge-computing/latency-budget — 获取延迟预算
-    .route(
-        "/api/portal/edge-computing/latency-budget",
-        get(modules::edge_computing::get_latency_budget_handler),
-    )
-    // POST /edge-computing/precompute — 预计算响应
-    .route(
-        "/api/portal/edge-computing/precompute",
-        post(modules::edge_computing::precompute_handler),
-    )
-    // POST /edge-computing/coalesce — 合并请求
-    .route(
-        "/api/portal/edge-computing/coalesce",
-        post(modules::edge_computing::coalesce_requests_handler),
-    )
-    // GET /edge-computing/latency-stats — 延迟统计
-    .route(
-        "/api/portal/edge-computing/latency-stats",
-        get(modules::edge_computing::get_latency_stats_handler),
-    )
-    // ==================== V55.0 BFF Phase 25: GraphQL 安全网关 + 零信任架构 + 数据脱敏 ====================
-    // --- Security Gateway ---
-    // POST /security-v1/validate-query — 验证查询深度/复杂度
-    .route(
-        "/api/portal/security-v1/validate-query",
-        post(modules::security_v1::validate_query_handler),
-    )
-    // GET /security-v1/events — 安全事件列表
-    .route(
-        "/api/portal/security-v1/events",
-        get(modules::security_v1::get_security_events_handler),
-    )
-    // POST /security-v1/policies — 创建安全策略
-    .route(
-        "/api/portal/security-v1/policies",
-        post(modules::security_v1::create_policy_handler),
-    )
-    // GET /security-v1/policies — 安全策略列表
-    .route(
-        "/api/portal/security-v1/policies",
-        get(modules::security_v1::list_policies_handler),
-    )
-    // PUT /security-v1/policies/{id} — 更新安全策略
-    .route(
-        "/api/portal/security-v1/policies/{id}",
-        put(modules::security_v1::update_policy_handler),
-    )
-    // --- Zero Trust ---
-    // POST /security-v1/trust/evaluate — 评估信任
-    .route(
-        "/api/portal/security-v1/trust/evaluate",
-        post(modules::security_v1::evaluate_trust_handler),
-    )
-    // GET /security-v1/trust/score/{identity} — 获取信任分数
-    .route(
-        "/api/portal/security-v1/trust/score/{identity}",
-        get(modules::security_v1::get_trust_score_handler),
-    )
-    // POST /security-v1/identity/policies — 创建身份策略
-    .route(
-        "/api/portal/security-v1/identity/policies",
-        post(modules::security_v1::create_identity_policy_handler),
-    )
-    // GET /security-v1/identity/policies — 身份策略列表
-    .route(
-        "/api/portal/security-v1/identity/policies",
-        get(modules::security_v1::list_identity_policies_handler),
-    )
-    // GET /security-v1/session/{id}/trust — 会话信任状态
-    .route(
-        "/api/portal/security-v1/session/{id}/trust",
-        get(modules::security_v1::get_session_trust_handler),
-    )
-    // --- Data Masking ---
-    // POST /security-v1/masking/mask — 执行数据脱敏
-    .route(
-        "/api/portal/security-v1/masking/mask",
-        post(modules::security_v1::mask_response_handler),
-    )
-    // POST /security-v1/masking/rules — 创建脱敏规则
-    .route(
-        "/api/portal/security-v1/masking/rules",
-        post(modules::security_v1::add_masking_rule_handler),
-    )
-    // GET /security-v1/masking/rules — 脱敏规则列表
-    .route(
-        "/api/portal/security-v1/masking/rules",
-        get(modules::security_v1::list_masking_rules_handler),
-    )
-    // DELETE /security-v1/masking/rules/{id} — 删除脱敏规则
-    .route(
-        "/api/portal/security-v1/masking/rules/{id}",
-        delete(modules::security_v1::remove_masking_rule_handler),
-    )
-    // POST /security-v1/masking/preview — 脱敏预览
-    .route(
-        "/api/portal/security-v1/masking/preview",
-        post(modules::security_v1::preview_masking_handler),
-    )
-    // GET /security-v1/masking/field-rules — 字段脱敏规则
-    .route(
-        "/api/portal/security-v1/masking/field-rules",
-        get(modules::security_v1::get_field_rules_handler),
-    )
-    // ==================== V55.0 BFF Phase 26: GraphQL 持久化演进 — 持久化查询 V2 + 版本化缓存 + 边缘持久化 ====================
-    // --- 持久化查询 V2 ---
-    // POST /persisted-query/register — 注册持久化查询
-    .route(
-        "/api/portal/persisted-query/register",
-        post(modules::persisted_query::register_query_handler),
-    )
-    // GET /persisted-query/{hash} — 获取持久化查询
-    .route(
-        "/api/portal/persisted-query/{hash}",
-        get(modules::persisted_query::get_query_handler),
-    )
-    // POST /persisted-query/{hash}/execute — 执行持久化查询
-    .route(
-        "/api/portal/persisted-query/{hash}/execute",
-        post(modules::persisted_query::execute_query_handler),
-    )
-    // GET /persisted-query/list — 列出持久化查询
-    .route(
-        "/api/portal/persisted-query/list",
-        get(modules::persisted_query::list_queries_handler),
-    )
-    // PUT /persisted-query/{hash} — 更新持久化查询
-    .route(
-        "/api/portal/persisted-query/{hash}",
-        put(modules::persisted_query::update_query_handler),
-    )
-    // DELETE /persisted-query/{hash} — 弃用持久化查询
-    .route(
-        "/api/portal/persisted-query/{hash}",
-        delete(modules::persisted_query::deprecate_query_handler),
-    )
-    // GET /persisted-query/{hash}/versions — 获取查询版本历史
-    .route(
-        "/api/portal/persisted-query/{hash}/versions",
-        get(modules::persisted_query::get_query_versions_handler),
-    )
-    // --- 版本化缓存 ---
-    // GET /persisted-query/cache/get/{key} — 获取缓存条目
-    .route(
-        "/api/portal/persisted-query/cache/get/{key}",
-        get(modules::persisted_query::cache_get_handler),
-    )
-    // POST /persisted-query/cache/set — 设置缓存条目
-    .route(
-        "/api/portal/persisted-query/cache/set",
-        post(modules::persisted_query::cache_set_handler),
-    )
-    // POST /persisted-query/cache/invalidate/{version} — 失效缓存版本
-    .route(
-        "/api/portal/persisted-query/cache/invalidate/{version}",
-        post(modules::persisted_query::cache_invalidate_handler),
-    )
-    // POST /persisted-query/cache/version — 创建新版本
-    .route(
-        "/api/portal/persisted-query/cache/version",
-        post(modules::persisted_query::cache_create_version_handler),
-    )
-    // GET /persisted-query/cache/versions — 列出缓存版本
-    .route(
-        "/api/portal/persisted-query/cache/versions",
-        get(modules::persisted_query::cache_list_versions_handler),
-    )
-    // GET /persisted-query/cache/stats — 缓存统计
-    .route(
-        "/api/portal/persisted-query/cache/stats",
-        get(modules::persisted_query::cache_stats_handler),
-    )
-    // POST /persisted-query/cache/purge — 清理过期缓存
-    .route(
-        "/api/portal/persisted-query/cache/purge",
-        post(modules::persisted_query::cache_purge_expired_handler),
-    )
-    // --- 边缘持久化 ---
-    // POST /persisted-query/edge/store — 存储到边缘
-    .route(
-        "/api/portal/persisted-query/edge/store",
-        post(modules::persisted_query::edge_store_handler),
-    )
-    // GET /persisted-query/edge/read/{key} — 从边缘读取
-    .route(
-        "/api/portal/persisted-query/edge/read/{key}",
-        get(modules::persisted_query::edge_read_handler),
-    )
-    // POST /persisted-query/edge/sync — 同步到区域
-    .route(
-        "/api/portal/persisted-query/edge/sync",
-        post(modules::persisted_query::edge_sync_handler),
-    )
-    // GET /persisted-query/edge/status — 边缘状态
-    .route(
-        "/api/portal/persisted-query/edge/status",
-        get(modules::persisted_query::edge_status_handler),
-    )
-    // POST /persisted-query/edge/invalidate — 失效边缘缓存
-    .route(
-        "/api/portal/persisted-query/edge/invalidate",
-        post(modules::persisted_query::edge_invalidate_handler),
-    )
-    // GET /persisted-query/edge/replication-stats — 复制统计
-    .route(
-        "/api/portal/persisted-query/edge/replication-stats",
-        get(modules::persisted_query::edge_replication_stats_handler),
-    )
-    // POST /persisted-query/edge/policy — 设置复制策略
-    .route(
-        "/api/portal/persisted-query/edge/policy",
-        post(modules::persisted_query::edge_set_policy_handler),
-    )
-    // ==================== V56.0 BFF Phase 27: GraphQL 实时演进 — 订阅持久化 + 消息重放 + 实时聚合 ====================
-    // --- 订阅持久化 ---
-    // POST /realtime-processing/subscription — 创建持久化订阅
-    .route(
-        "/api/portal/realtime-processing/subscription",
-        post(modules::realtime_processing::create_subscription_handler),
-    )
-    // GET /realtime-processing/subscriptions — 列出持久化订阅
-    .route(
-        "/api/portal/realtime-processing/subscriptions",
-        get(modules::realtime_processing::list_subscriptions_handler),
-    )
-    // GET /realtime-processing/subscription/{id} — 获取订阅详情
-    .route(
-        "/api/portal/realtime-processing/subscription/{id}",
-        get(modules::realtime_processing::get_subscription_handler),
-    )
-    // PUT /realtime-processing/subscription/{id}/pause — 暂停订阅
-    .route(
-        "/api/portal/realtime-processing/subscription/{id}/pause",
-        put(modules::realtime_processing::pause_subscription_handler),
-    )
-    // PUT /realtime-processing/subscription/{id}/resume — 恢复订阅
-    .route(
-        "/api/portal/realtime-processing/subscription/{id}/resume",
-        put(modules::realtime_processing::resume_subscription_handler),
-    )
-    // DELETE /realtime-processing/subscription/{id} — 取消订阅
-    .route(
-        "/api/portal/realtime-processing/subscription/{id}",
-        delete(modules::realtime_processing::cancel_subscription_handler),
-    )
-    // GET /realtime-processing/subscription/{id}/pending — 获取待投递事件
-    .route(
-        "/api/portal/realtime-processing/subscription/{id}/pending",
-        get(modules::realtime_processing::get_pending_events_handler),
-    )
-    // --- 消息重放 ---
-    // POST /realtime-processing/replay/request — 创建重放请求
-    .route(
-        "/api/portal/realtime-processing/replay/request",
-        post(modules::realtime_processing::request_replay_handler),
-    )
-    // POST /realtime-processing/replay/execute/{id} — 执行重放
-    .route(
-        "/api/portal/realtime-processing/replay/execute/{id}",
-        post(modules::realtime_processing::execute_replay_handler),
-    )
-    // GET /realtime-processing/replay/{id}/status — 获取重放状态
-    .route(
-        "/api/portal/realtime-processing/replay/{id}/status",
-        get(modules::realtime_processing::get_replay_status_handler),
-    )
-    // POST /realtime-processing/replay/{id}/cancel — 取消重放
-    .route(
-        "/api/portal/realtime-processing/replay/{id}/cancel",
-        post(modules::realtime_processing::cancel_replay_handler),
-    )
-    // GET /realtime-processing/replay/history — 重放历史
-    .route(
-        "/api/portal/realtime-processing/replay/history",
-        get(modules::realtime_processing::get_replay_history_handler),
-    )
-    // GET /realtime-processing/events/range — 事件范围查询
-    .route(
-        "/api/portal/realtime-processing/events/range/{id}",
-        get(modules::realtime_processing::get_events_range_handler),
-    )
-    // --- 实时聚合 ---
-    // POST /realtime-processing/aggregation — 创建聚合配置
-    .route(
-        "/api/portal/realtime-processing/aggregation",
-        post(modules::realtime_processing::create_aggregation_handler),
-    )
-    // POST /realtime-processing/aggregation/{id}/start — 启动聚合
-    .route(
-        "/api/portal/realtime-processing/aggregation/{id}/start",
-        post(modules::realtime_processing::start_aggregation_handler),
-    )
-    // POST /realtime-processing/aggregation/{id}/stop — 停止聚合
-    .route(
-        "/api/portal/realtime-processing/aggregation/{id}/stop",
-        post(modules::realtime_processing::stop_aggregation_handler),
-    )
-    // GET /realtime-processing/aggregation/{id}/result — 获取聚合结果
-    .route(
-        "/api/portal/realtime-processing/aggregation/{id}/result",
-        get(modules::realtime_processing::get_aggregation_result_handler),
-    )
-    // GET /realtime-processing/aggregations — 列出聚合配置
-    .route(
-        "/api/portal/realtime-processing/aggregations",
-        get(modules::realtime_processing::list_aggregations_handler),
-    )
-    // GET /realtime-processing/aggregation/{id}/stats — 获取聚合统计
-    .route(
-        "/api/portal/realtime-processing/aggregation/{id}/stats",
-        get(modules::realtime_processing::get_aggregation_stats_handler),
-    )
-    // ==================== V56.0 BFF Phase 26: GraphQL API 版本管理 + 灰度流量切换 + 向后兼容保证 ====================
-    // --- API 版本管理 ---
-    // POST /version-control/versions — 注册新版本
-    .route(
-        "/api/portal/version-control/versions",
-        post(modules::version_control::register_version_handler),
-    )
-    // GET /version-control/versions — 列出所有版本
-    .route(
-        "/api/portal/version-control/versions",
-        get(modules::version_control::list_versions_handler),
-    )
-    // GET /version-control/versions/{version} — 获取指定版本
-    .route(
-        "/api/portal/version-control/versions/{version}",
-        get(modules::version_control::get_version_handler),
-    )
-    // PUT /version-control/versions/{version} — 更新版本
-    .route(
-        "/api/portal/version-control/versions/{version}",
-        put(modules::version_control::update_version_handler),
-    )
-    // POST /version-control/versions/{version}/deprecate — 废弃版本
-    .route(
-        "/api/portal/version-control/versions/{version}/deprecate",
-        post(modules::version_control::deprecate_version_handler),
-    )
-    // POST /version-control/versions/{version}/sunset — Sunset 版本
-    .route(
-        "/api/portal/version-control/versions/{version}/sunset",
-        post(modules::version_control::sunset_version_handler),
-    )
-    // GET /version-control/compatibility — 兼容性检查
-    .route(
-        "/api/portal/version-control/compatibility",
-        get(modules::version_control::check_compatibility_handler),
-    )
-    // --- 灰度流量切换 ---
-    // POST /version-control/canary — 创建灰度配置
-    .route(
-        "/api/portal/version-control/canary",
-        post(modules::version_control::create_canary_handler),
-    )
-    // PUT /version-control/canary/{id} — 更新灰度配置
-    .route(
-        "/api/portal/version-control/canary/{id}",
-        put(modules::version_control::update_canary_handler),
-    )
-    // POST /version-control/canary/{id}/start — 启动灰度
-    .route(
-        "/api/portal/version-control/canary/{id}/start",
-        post(modules::version_control::start_canary_handler),
-    )
-    // POST /version-control/canary/{id}/stop — 停止灰度
-    .route(
-        "/api/portal/version-control/canary/{id}/stop",
-        post(modules::version_control::stop_canary_handler),
-    )
-    // GET /version-control/canary/{id}/status — 获取灰度状态
-    .route(
-        "/api/portal/version-control/canary/{id}/status",
-        get(modules::version_control::get_canary_status_handler),
-    )
-    // GET /version-control/canary/{id}/results — 获取灰度结果
-    .route(
-        "/api/portal/version-control/canary/{id}/results",
-        get(modules::version_control::get_canary_results_handler),
-    )
-    // GET /version-control/canaries — 列出灰度配置
-    .route(
-        "/api/portal/version-control/canaries",
-        get(modules::version_control::list_canaries_handler),
-    )
-    // POST /version-control/canary/{id}/promote — 推广灰度
-    .route(
-        "/api/portal/version-control/canary/{id}/promote",
-        post(modules::version_control::promote_canary_handler),
-    )
-    // POST /version-control/canary/{id}/rollback — 回滚灰度
-    .route(
-        "/api/portal/version-control/canary/{id}/rollback",
-        post(modules::version_control::rollback_canary_handler),
-    )
-    // --- 向后兼容保证 ---
-    // POST /version-control/compatibility/check — 兼容性检查
-    .route(
-        "/api/portal/version-control/compatibility/check",
-        post(modules::version_control::check_compatibility_report_handler),
-    )
-    // GET /version-control/compatibility/report — 获取兼容性报告
-    .route(
-        "/api/portal/version-control/compatibility/report",
-        get(modules::version_control::get_compatibility_report_handler),
-    )
-    // GET /version-control/compatibility/migration-path — 获取迁移路径
-    .route(
-        "/api/portal/version-control/compatibility/migration-path",
-        get(modules::version_control::get_migration_path_handler),
-    )
-    // POST /version-control/compatibility/policy — 创建兼容性策略
-    .route(
-        "/api/portal/version-control/compatibility/policy",
-        post(modules::version_control::create_compatibility_policy_handler),
-    )
-    // GET /version-control/compatibility/status — 获取兼容性状态
-    .route(
-        "/api/portal/version-control/compatibility/status",
-        get(modules::version_control::get_compatibility_status_handler),
-    )
-    // ==================== V57.0 BFF Phase 28: GraphQL 查询优化 — 编译优化 + 查询计划 + 执行加速 ====================
-    // --- 编译优化 ---
-    // POST /query-optimizer/compile — 编译查询
-    .route(
-        "/api/portal/query-optimizer/compile",
-        post(modules::query_optimizer::compile_query_handler),
-    )
-    // GET /query-optimizer/compilation/{id} — 获取编译结果
-    .route(
-        "/api/portal/query-optimizer/compilation/{id}",
-        get(modules::query_optimizer::get_compilation_handler),
-    )
-    // GET /query-optimizer/rules — 列出编译规则
-    .route(
-        "/api/portal/query-optimizer/rules",
-        get(modules::query_optimizer::list_rules_handler),
-    )
-    // PUT /query-optimizer/rules/{id} — 更新编译规则
-    .route(
-        "/api/portal/query-optimizer/rules/{id}",
-        put(modules::query_optimizer::update_rule_handler),
-    )
-    // GET /query-optimizer/compilation/stats — 编译统计
-    .route(
-        "/api/portal/query-optimizer/compilation/stats",
-        get(modules::query_optimizer::get_compilation_stats_handler),
-    )
-    // --- 查询计划 ---
-    // POST /query-optimizer/plan — 创建执行计划
-    .route(
-        "/api/portal/query-optimizer/plan",
-        post(modules::query_optimizer::create_plan_handler),
-    )
-    // GET /query-optimizer/plan/{id} — 获取执行计划
-    .route(
-        "/api/portal/query-optimizer/plan/{id}",
-        get(modules::query_optimizer::get_plan_handler),
-    )
-    // POST /query-optimizer/plan/compare — 对比执行计划
-    .route(
-        "/api/portal/query-optimizer/plan/compare",
-        post(modules::query_optimizer::compare_plans_handler),
-    )
-    // GET /query-optimizer/plan/cost — 获取计划成本
-    .route(
-        "/api/portal/query-optimizer/plan/cost",
-        get(modules::query_optimizer::get_plan_cost_handler),
-    )
-    // POST /query-optimizer/plan/{id}/optimize — 优化执行计划
-    .route(
-        "/api/portal/query-optimizer/plan/{id}/optimize",
-        post(modules::query_optimizer::optimize_plan_handler),
-    )
-    // GET /query-optimizer/planner/stats — 计划统计
-    .route(
-        "/api/portal/query-optimizer/planner/stats",
-        get(modules::query_optimizer::get_planner_stats_handler),
-    )
-    // --- 执行加速 ---
-    // POST /query-optimizer/accelerate — 加速查询执行
-    .route(
-        "/api/portal/query-optimizer/accelerate",
-        post(modules::query_optimizer::accelerate_handler),
-    )
-    // GET /query-optimizer/strategy — 获取加速策略
-    .route(
-        "/api/portal/query-optimizer/strategy",
-        get(modules::query_optimizer::get_strategy_handler),
-    )
-    // GET /query-optimizer/improvement — 获取加速改进详情
-    .route(
-        "/api/portal/query-optimizer/improvement",
-        get(modules::query_optimizer::get_improvement_handler),
-    )
-    // GET /query-optimizer/acceleration/history — 加速历史
-    .route(
-        "/api/portal/query-optimizer/acceleration/history",
-        get(modules::query_optimizer::get_acceleration_history_handler),
-    )
-    // POST /query-optimizer/strategy/configure — 配置加速策略
-    .route(
-        "/api/portal/query-optimizer/strategy/configure/{id}",
-        post(modules::query_optimizer::configure_strategy_handler),
-    )
-    // GET /query-optimizer/performance/profile — 性能画像
-    .route(
-        "/api/portal/query-optimizer/performance/profile",
-        get(modules::query_optimizer::get_performance_profile_handler),
-    )
-    // ==================== V57.0 BFF Phase 27: GraphQL 网关编排 + 服务发现 + 动态路由 ====================
-    // --- 网关编排 ---
-    // POST /orchestration/plan — 创建编排计划
-    .route(
-        "/api/portal/orchestration/plan",
-        post(modules::orchestration::create_plan_handler),
-    )
-    // POST /orchestration/plan/{id}/execute — 执行编排计划
-    .route(
-        "/api/portal/orchestration/plan/{id}/execute",
-        post(modules::orchestration::execute_plan_handler),
-    )
-    // GET /orchestration/plan/{id}/status — 获取计划状态
-    .route(
-        "/api/portal/orchestration/plan/{id}/status",
-        get(modules::orchestration::get_plan_status_handler),
-    )
-    // POST /orchestration/plan/{id}/cancel — 取消编排计划
-    .route(
-        "/api/portal/orchestration/plan/{id}/cancel",
-        post(modules::orchestration::cancel_plan_handler),
-    )
-    // GET /orchestration/history — 执行历史
-    .route(
-        "/api/portal/orchestration/history",
-        get(modules::orchestration::get_execution_history_handler),
-    )
-    // POST /orchestration/plan/{id}/optimize — 优化编排计划
-    .route(
-        "/api/portal/orchestration/plan/{id}/optimize",
-        post(modules::orchestration::optimize_plan_handler),
-    )
-    // --- 服务发现 ---
-    // POST /orchestration/service/register — 注册服务
-    .route(
-        "/api/portal/orchestration/service/register",
-        post(modules::orchestration::register_service_handler),
-    )
-    // DELETE /orchestration/service/{id} — 注销服务
-    .route(
-        "/api/portal/orchestration/service/{id}",
-        delete(modules::orchestration::deregister_service_handler),
-    )
-    // GET /orchestration/services — 服务列表
-    .route(
-        "/api/portal/orchestration/services",
-        get(modules::orchestration::discover_services_handler),
-    )
-    // GET /orchestration/service/{id} — 服务详情
-    .route(
-        "/api/portal/orchestration/service/{id}",
-        get(modules::orchestration::get_service_handler),
-    )
-    // GET /orchestration/services/capability/{cap} — 按能力发现服务
-    .route(
-        "/api/portal/orchestration/services/capability/{cap}",
-        get(modules::orchestration::get_services_by_capability_handler),
-    )
-    // POST /orchestration/health/check/{id} — 健康检查
-    .route(
-        "/api/portal/orchestration/health/check/{id}",
-        post(modules::orchestration::check_health_handler),
-    )
-    // GET /orchestration/registry/stats — 注册表统计
-    .route(
-        "/api/portal/orchestration/registry/stats",
-        get(modules::orchestration::get_registry_stats_handler),
-    )
-    // --- 动态路由 ---
-    // POST /orchestration/route — 路由请求
-    .route(
-        "/api/portal/orchestration/route",
-        post(modules::orchestration::route_request_handler),
-    )
-    // POST /orchestration/rules — 创建路由规则
-    .route(
-        "/api/portal/orchestration/rules",
-        post(modules::orchestration::add_rule_handler),
-    )
-    // GET /orchestration/rules — 路由规则列表
-    .route(
-        "/api/portal/orchestration/rules",
-        get(modules::orchestration::list_rules_handler),
-    )
-    // PUT /orchestration/rules/{id} — 更新路由规则
-    .route(
-        "/api/portal/orchestration/rules/{id}",
-        put(modules::orchestration::update_rule_handler),
-    )
-    // DELETE /orchestration/rules/{id} — 删除路由规则
-    .route(
-        "/api/portal/orchestration/rules/{id}",
-        delete(modules::orchestration::remove_rule_handler),
-    )
-    // GET /orchestration/routing/stats — 路由统计
-    .route(
-        "/api/portal/orchestration/routing/stats",
-        get(modules::orchestration::get_routing_stats_handler),
-    )
-    // ==================== V58.0 GraphQL 联邦深化: 跨服务一致性 + 分布式查询 + 联邦认证 ====================
-    // --- 跨服务一致性 ---
-    // POST /deep-federation/consistency/check — 一致性检查
-    .route(
-        "/api/portal/deep-federation/consistency/check",
-        post(modules::deep_federation::check_consistency_handler),
-    )
-    // GET /deep-federation/consistency/model — 获取一致性模型
-    .route(
-        "/api/portal/deep-federation/consistency/model",
-        get(modules::deep_federation::get_consistency_model_handler),
-    )
-    // PUT /deep-federation/consistency/model — 设置一致性模型
-    .route(
-        "/api/portal/deep-federation/consistency/model",
-        put(modules::deep_federation::set_consistency_model_handler),
-    )
-    // POST /deep-federation/consistency/detect — 冲突检测
-    .route(
-        "/api/portal/deep-federation/consistency/detect",
-        post(modules::deep_federation::detect_conflicts_handler),
-    )
-    // POST /deep-federation/consistency/resolve/{id} — 冲突解决
-    .route(
-        "/api/portal/deep-federation/consistency/resolve/{id}",
-        post(modules::deep_federation::resolve_conflict_handler),
-    )
-    // GET /deep-federation/consistency/vector/{id} — 获取版本向量
-    .route(
-        "/api/portal/deep-federation/consistency/vector/{id}",
-        get(modules::deep_federation::get_version_vector_handler),
-    )
-    // GET /deep-federation/consistency/report — 一致性报告
-    .route(
-        "/api/portal/deep-federation/consistency/report",
-        get(modules::deep_federation::get_consistency_report_handler),
-    )
-    // --- 分布式查询 ---
-    // POST /deep-federation/distributed/query — 创建分布式查询
-    .route(
-        "/api/portal/deep-federation/distributed/query",
-        post(modules::deep_federation::create_distributed_query_handler),
-    )
-    // POST /deep-federation/distributed/query/{id}/execute — 执行分布式查询
-    .route(
-        "/api/portal/deep-federation/distributed/query/{id}/execute",
-        post(modules::deep_federation::execute_distributed_query_handler),
-    )
-    // GET /deep-federation/distributed/query/{id}/status — 查询状态
-    .route(
-        "/api/portal/deep-federation/distributed/query/{id}/status",
-        get(modules::deep_federation::get_query_status_handler),
-    )
-    // POST /deep-federation/distributed/query/{id}/cancel — 取消查询
-    .route(
-        "/api/portal/deep-federation/distributed/query/{id}/cancel",
-        post(modules::deep_federation::cancel_query_handler),
-    )
-    // GET /deep-federation/distributed/query/history — 查询历史
-    .route(
-        "/api/portal/deep-federation/distributed/query/history",
-        get(modules::deep_federation::get_query_history_handler),
-    )
-    // POST /deep-federation/distributed/query/validate — 验证查询计划
-    .route(
-        "/api/portal/deep-federation/distributed/query/validate",
-        post(modules::deep_federation::validate_query_plan_handler),
-    )
-    // --- 联邦认证 ---
-    // POST /deep-federation/auth/authenticate — 联邦认证
-    .route(
-        "/api/portal/deep-federation/auth/authenticate",
-        post(modules::deep_federation::authenticate_federated_handler),
-    )
-    // POST /deep-federation/auth/propagate/{id} — 身份传播
-    .route(
-        "/api/portal/deep-federation/auth/propagate/{id}",
-        post(modules::deep_federation::propagate_identity_handler),
-    )
-    // POST /deep-federation/auth/verify — 令牌链验证
-    .route(
-        "/api/portal/deep-federation/auth/verify",
-        post(modules::deep_federation::verify_token_chain_handler),
-    )
-    // GET /deep-federation/auth/identity/{id} — 获取身份
-    .route(
-        "/api/portal/deep-federation/auth/identity/{id}",
-        get(modules::deep_federation::get_identity_handler),
-    )
-    // POST /deep-federation/auth/policy — 创建认证策略
-    .route(
-        "/api/portal/deep-federation/auth/policy",
-        post(modules::deep_federation::create_auth_policy_handler),
-    )
-    // PUT /deep-federation/auth/policy/{id} — 更新认证策略
-    .route(
-        "/api/portal/deep-federation/auth/policy/{id}",
-        put(modules::deep_federation::update_auth_policy_handler),
-    )
-    // GET /deep-federation/auth/status — 认证状态
-    .route(
-        "/api/portal/deep-federation/auth/status",
-        get(modules::deep_federation::get_auth_status_handler),
-    )
-    // ==================== V58.0 BFF Phase 28: GraphQL 网关安全 V2 + 审计追踪 + 访问控制 ====================
-    // --- 网关安全 V2 ---
-    // POST /gateway-security/validate-token — 验证 Token
-    .route(
-        "/api/portal/gateway-security/validate-token",
-        post(modules::gateway_security::validate_token_handler),
-    )
-    // POST /gateway-security/authenticate — 认证检查
-    .route(
-        "/api/portal/gateway-security/authenticate",
-        post(modules::gateway_security::authenticate_handler),
-    )
-    // GET /gateway-security/incidents — 安全事件列表
-    .route(
-        "/api/portal/gateway-security/incidents",
-        get(modules::gateway_security::get_incidents_handler),
-    )
-    // POST /gateway-security/policies — 创建安全策略
-    .route(
-        "/api/portal/gateway-security/policies",
-        post(modules::gateway_security::create_security_policy_handler),
-    )
-    // GET /gateway-security/policies — 安全策略列表
-    .route(
-        "/api/portal/gateway-security/policies",
-        get(modules::gateway_security::list_security_policies_handler),
-    )
-    // PUT /gateway-security/policies/{id} — 更新安全策略
-    .route(
-        "/api/portal/gateway-security/policies/{id}",
-        put(modules::gateway_security::update_security_policy_handler),
-    )
-    // --- 审计追踪 ---
-    // POST /gateway-security/audit/write — 写入审计条目
-    .route(
-        "/api/portal/gateway-security/audit/write",
-        post(modules::gateway_security::write_audit_handler),
-    )
-    // GET /gateway-security/audit/query — 查询审计条目
-    .route(
-        "/api/portal/gateway-security/audit/query",
-        get(modules::gateway_security::query_audit_handler),
-    )
-    // GET /gateway-security/audit/actor/{id} — 按演员查询审计
-    .route(
-        "/api/portal/gateway-security/audit/actor/{id}",
-        get(modules::gateway_security::get_audit_by_actor_handler),
-    )
-    // GET /gateway-security/audit/resource/{type}/{id} — 按资源查询审计
-    .route(
-        "/api/portal/gateway-security/audit/resource/{type}/{id}",
-        get(modules::gateway_security::get_audit_by_resource_handler),
-    )
-    // GET /gateway-security/audit/summary — 审计汇总
-    .route(
-        "/api/portal/gateway-security/audit/summary",
-        get(modules::gateway_security::get_audit_summary_handler),
-    )
-    // POST /gateway-security/audit/export — 导出审计数据
-    .route(
-        "/api/portal/gateway-security/audit/export",
-        post(modules::gateway_security::export_audit_handler),
-    )
-    // --- 访问控制 ---
-    // POST /gateway-security/access/evaluate — 评估访问
-    .route(
-        "/api/portal/gateway-security/access/evaluate",
-        post(modules::gateway_security::evaluate_access_handler),
-    )
-    // POST /gateway-security/access/grant — 授权
-    .route(
-        "/api/portal/gateway-security/access/grant",
-        post(modules::gateway_security::grant_access_handler),
-    )
-    // DELETE /gateway-security/access/{id} — 撤销权限
-    .route(
-        "/api/portal/gateway-security/access/{id}",
-        delete(modules::gateway_security::revoke_access_handler),
-    )
-    // GET /gateway-security/access/policies — 访问策略列表
-    .route(
-        "/api/portal/gateway-security/access/policies",
-        get(modules::gateway_security::list_access_policies_handler),
-    )
-    // POST /gateway-security/access/policy — 创建访问策略
-    .route(
-        "/api/portal/gateway-security/access/policy",
-        post(modules::gateway_security::create_access_policy_handler),
-    )
-    // GET /gateway-security/permissions/user/{id} — 用户权限
-    .route(
-        "/api/portal/gateway-security/permissions/user/{id}",
-        get(modules::gateway_security::get_user_permissions_handler),
-    )
-    // POST /gateway-security/access/simulate — 模拟访问
-    .route(
-        "/api/portal/gateway-security/access/simulate",
-        post(modules::gateway_security::simulate_access_handler),
-    )
-    // ==================== V59.0 BFF Phase 29: GraphQL 网关监控 + 性能追踪 + 异常检测 ====================
-    // --- 网关监控 ---
-    // POST /gateway-monitoring/metric — 记录指标
-    .route(
-        "/api/portal/gateway-monitoring/metric",
-        post(modules::gateway_monitoring::record_metric_handler),
-    )
-    // GET /gateway-monitoring/metrics — 获取指标列表
-    .route(
-        "/api/portal/gateway-monitoring/metrics",
-        get(modules::gateway_monitoring::get_metrics_handler),
-    )
-    // GET /gateway-monitoring/health — 网关健康检查
-    .route(
-        "/api/portal/gateway-monitoring/health",
-        get(modules::gateway_monitoring::get_health_handler),
-    )
-    // GET /gateway-monitoring/dashboard — 仪表盘数据
-    .route(
-        "/api/portal/gateway-monitoring/dashboard",
-        get(modules::gateway_monitoring::get_dashboard_handler),
-    )
-    // GET /gateway-monitoring/metric/history — 指标历史
-    .route(
-        "/api/portal/gateway-monitoring/metric/{metric_name}/history",
-        get(modules::gateway_monitoring::get_metric_history_handler),
-    )
-    // POST /gateway-monitoring/threshold — 设置告警阈值
-    .route(
-        "/api/portal/gateway-monitoring/threshold",
-        post(modules::gateway_monitoring::set_threshold_handler),
-    )
-    // GET /gateway-monitoring/thresholds — 获取告警阈值
-    .route(
-        "/api/portal/gateway-monitoring/thresholds",
-        get(modules::gateway_monitoring::get_thresholds_handler),
-    )
-    // --- 性能追踪 ---
-    // POST /gateway-monitoring/trace/start — 启动追踪
-    .route(
-        "/api/portal/gateway-monitoring/trace/start",
-        post(modules::gateway_monitoring::start_trace_handler),
-    )
-    // POST /gateway-monitoring/trace/end — 结束追踪
-    .route(
-        "/api/portal/gateway-monitoring/trace/end",
-        post(modules::gateway_monitoring::end_trace_handler),
-    )
-    // POST /gateway-monitoring/trace/resolver — 添加 Resolver 计时
-    .route(
-        "/api/portal/gateway-monitoring/trace/resolver",
-        post(modules::gateway_monitoring::add_resolver_timing_handler),
-    )
-    // GET /gateway-monitoring/trace/{id} — 获取追踪详情
-    .route(
-        "/api/portal/gateway-monitoring/trace/{id}",
-        get(modules::gateway_monitoring::get_trace_handler),
-    )
-    // GET /gateway-monitoring/traces — 追踪列表
-    .route(
-        "/api/portal/gateway-monitoring/traces",
-        get(modules::gateway_monitoring::list_traces_handler),
-    )
-    // GET /gateway-monitoring/slow-queries — 慢查询列表
-    .route(
-        "/api/portal/gateway-monitoring/slow-queries",
-        get(modules::gateway_monitoring::get_slow_queries_handler),
-    )
-    // GET /gateway-monitoring/performance — 性能汇总
-    .route(
-        "/api/portal/gateway-monitoring/performance",
-        get(modules::gateway_monitoring::get_performance_handler),
-    )
-    // POST /gateway-monitoring/traces/export — 导出追踪数据
-    .route(
-        "/api/portal/gateway-monitoring/traces/export",
-        post(modules::gateway_monitoring::export_traces_handler),
-    )
-    // --- 异常检测 ---
-    // POST /gateway-monitoring/anomaly/detect — 异常检测
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/detect",
-        post(modules::gateway_monitoring::detect_anomalies_handler),
-    )
-    // GET /gateway-monitoring/anomalies — 异常事件列表
-    .route(
-        "/api/portal/gateway-monitoring/anomalies",
-        get(modules::gateway_monitoring::get_anomalies_handler),
-    )
-    // POST /gateway-monitoring/anomaly/model — 创建检测模型
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/model",
-        post(modules::gateway_monitoring::create_model_handler),
-    )
-    // PUT /gateway-monitoring/anomaly/model/{id} — 更新检测模型
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/model/{id}",
-        put(modules::gateway_monitoring::update_model_handler),
-    )
-    // GET /gateway-monitoring/anomaly/models — 检测模型列表
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/models",
-        get(modules::gateway_monitoring::get_models_handler),
-    )
-    // GET /gateway-monitoring/anomaly/summary — 异常检测汇总
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/summary",
-        get(modules::gateway_monitoring::get_anomaly_summary_handler),
-    )
-    // POST /gateway-monitoring/anomaly/model/{id}/train — 训练模型
-    .route(
-        "/api/portal/gateway-monitoring/anomaly/model/{id}/train",
-        post(modules::gateway_monitoring::train_model_handler),
-    )
-    // ==================== V59.0 GraphQL 实时深化: 流式订阅 V2 + 消息去重 + 背压控制 ====================
-    // --- 流式订阅 V2 ---
-    // POST /streaming-processing/stream — 创建流
-    .route(
-        "/api/portal/streaming-processing/stream",
-        post(modules::streaming_processing::create_stream_handler),
-    )
-    // GET /streaming-processing/streams — 流列表
-    .route(
-        "/api/portal/streaming-processing/streams",
-        get(modules::streaming_processing::list_streams_handler),
-    )
-    // GET /streaming-processing/stream/{id} — 流详情
-    .route(
-        "/api/portal/streaming-processing/stream/{id}",
-        get(modules::streaming_processing::get_stream_handler),
-    )
-    // POST /streaming-processing/stream/{id}/publish — 发布事件
-    .route(
-        "/api/portal/streaming-processing/stream/{id}/publish",
-        post(modules::streaming_processing::publish_event_handler),
-    )
-    // POST /streaming-processing/stream/{id}/subscribe — 订阅流
-    .route(
-        "/api/portal/streaming-processing/stream/{id}/subscribe",
-        post(modules::streaming_processing::subscribe_stream_handler),
-    )
-    // DELETE /streaming-processing/stream/{id} — 删除流
-    .route(
-        "/api/portal/streaming-processing/stream/{id}",
-        delete(modules::streaming_processing::delete_stream_handler),
-    )
-    // GET /streaming-processing/stream/{id}/events — 获取流事件
-    .route(
-        "/api/portal/streaming-processing/stream/{id}/events",
-        get(modules::streaming_processing::get_stream_events_handler),
-    )
-    // POST /streaming-processing/stream/{id}/unsubscribe — 取消订阅
-    .route(
-        "/api/portal/streaming-processing/stream/{id}/unsubscribe",
-        post(modules::streaming_processing::unsubscribe_stream_handler),
-    )
-    // --- 消息去重 ---
-    // POST /streaming-processing/dedup/rule — 创建去重规则
-    .route(
-        "/api/portal/streaming-processing/dedup/rule",
-        post(modules::streaming_processing::create_dedup_rule_handler),
-    )
-    // GET /streaming-processing/dedup/rules — 去重规则列表
-    .route(
-        "/api/portal/streaming-processing/dedup/rules",
-        get(modules::streaming_processing::get_dedup_rules_handler),
-    )
-    // POST /streaming-processing/dedup/check — 去重检查
-    .route(
-        "/api/portal/streaming-processing/dedup/check",
-        post(modules::streaming_processing::check_duplicate_handler),
-    )
-    // GET /streaming-processing/dedup/stats — 去重统计
-    .route(
-        "/api/portal/streaming-processing/dedup/stats",
-        get(modules::streaming_processing::get_dedup_stats_handler),
-    )
-    // GET /streaming-processing/dedup/history — 去重历史
-    .route(
-        "/api/portal/streaming-processing/dedup/history",
-        get(modules::streaming_processing::get_dedup_history_handler),
-    )
-    // POST /streaming-processing/dedup/rule/{id}/enable — 启用规则
-    .route(
-        "/api/portal/streaming-processing/dedup/rule/{id}/enable",
-        post(modules::streaming_processing::enable_rule_handler),
-    )
-    // POST /streaming-processing/dedup/rule/{id}/disable — 禁用规则
-    .route(
-        "/api/portal/streaming-processing/dedup/rule/{id}/disable",
-        post(modules::streaming_processing::disable_rule_handler),
-    )
-    // --- 背压控制 ---
-    // POST /streaming-processing/backpressure/config/{stream_id} — 设置背压配置
-    .route(
-        "/api/portal/streaming-processing/backpressure/config/{id}",
-        post(modules::streaming_processing::set_backpressure_config_handler),
-    )
-    // GET /streaming-processing/backpressure/config/{stream_id} — 获取背压配置
-    .route(
-        "/api/portal/streaming-processing/backpressure/config/{id}",
-        get(modules::streaming_processing::get_backpressure_config_handler),
-    )
-    // GET /streaming-processing/backpressure/state/{stream_id} — 获取背压状态
-    .route(
-        "/api/portal/streaming-processing/backpressure/state/{id}",
-        get(modules::streaming_processing::get_backpressure_state_handler),
-    )
-    // POST /streaming-processing/backpressure/apply/{stream_id} — 应用背压
-    .route(
-        "/api/portal/streaming-processing/backpressure/apply/{id}",
-        post(modules::streaming_processing::apply_backpressure_handler),
-    )
-    // POST /streaming-processing/backpressure/drain/{stream_id} — 排空队列
-    .route(
-        "/api/portal/streaming-processing/backpressure/drain/{id}",
-        post(modules::streaming_processing::drain_queue_handler),
-    )
-    // GET /streaming-processing/backpressure/dropped — 丢弃事件列表
-    .route(
-        "/api/portal/streaming-processing/backpressure/dropped",
-        get(modules::streaming_processing::get_dropped_events_handler),
-    )
-    // GET /streaming-processing/backpressure/stats — 背压统计
-    .route(
-        "/api/portal/streaming-processing/backpressure/stats",
-        get(modules::streaming_processing::get_backpressure_stats_handler),
-    )
-    // POST /streaming-processing/backpressure/reset/{stream_id} — 重置计数器
-    .route(
-        "/api/portal/streaming-processing/backpressure/reset/{id}",
-        post(modules::streaming_processing::reset_counter_handler),
-    )
-    // ==================== V60.0 GraphQL AI 运维: 智能查询路由 + 自动缓存 + 自愈机制 ====================
-    // --- 智能查询路由 ---
-    // POST /ai-ops/routing/rule — 创建路由规则
-    .route(
-        "/api/portal/ai-ops/routing/rule",
-        post(modules::ai_ops::create_routing_rule_handler),
-    )
-    // GET /ai-ops/routing/rules — 获取路由规则列表
-    .route(
-        "/api/portal/ai-ops/routing/rules",
-        get(modules::ai_ops::get_routing_rules_handler),
-    )
-    // POST /ai-ops/routing/route — 执行查询路由
-    .route(
-        "/api/portal/ai-ops/routing/route",
-        post(modules::ai_ops::route_query_handler),
-    )
-    // GET /ai-ops/routing/loads — 获取服务负载
-    .route(
-        "/api/portal/ai-ops/routing/loads",
-        get(modules::ai_ops::get_service_loads_handler),
-    )
-    // POST /ai-ops/routing/load/{id} — 更新服务负载
-    .route(
-        "/api/portal/ai-ops/routing/load/{id}",
-        post(modules::ai_ops::update_service_load_handler),
-    )
-    // GET /ai-ops/routing/history — 路由决策历史
-    .route(
-        "/api/portal/ai-ops/routing/history",
-        get(modules::ai_ops::get_routing_history_handler),
-    )
-    // POST /ai-ops/routing/simulate — 模拟路由
-    .route(
-        "/api/portal/ai-ops/routing/simulate",
-        post(modules::ai_ops::simulate_routing_handler),
-    )
-    // GET /ai-ops/routing/stats — 路由统计
-    .route(
-        "/api/portal/ai-ops/routing/stats",
-        get(modules::ai_ops::get_route_stats_handler),
-    )
-    // --- 自动缓存 ---
-    // POST /ai-ops/cache/policy — 创建缓存策略
-    .route(
-        "/api/portal/ai-ops/cache/policy",
-        post(modules::ai_ops::create_cache_policy_handler),
-    )
-    // GET /ai-ops/cache/policies — 获取缓存策略列表
-    .route(
-        "/api/portal/ai-ops/cache/policies",
-        get(modules::ai_ops::get_cache_policies_handler),
-    )
-    // GET /ai-ops/cache/entry/{key} — 获取缓存条目
-    .route(
-        "/api/portal/ai-ops/cache/entry/{key}",
-        get(modules::ai_ops::get_cache_entry_handler),
-    )
-    // POST /ai-ops/cache/invalidate — 失效缓存
-    .route(
-        "/api/portal/ai-ops/cache/invalidate",
-        post(modules::ai_ops::invalidate_cache_handler),
-    )
-    // GET /ai-ops/cache/stats — 缓存统计
-    .route(
-        "/api/portal/ai-ops/cache/stats",
-        get(modules::ai_ops::get_cache_stats_handler),
-    )
-    // POST /ai-ops/cache/cleanup — 清理过期缓存
-    .route(
-        "/api/portal/ai-ops/cache/cleanup",
-        post(modules::ai_ops::cleanup_cache_handler),
-    )
-    // GET /ai-ops/cache/hit-rate — 缓存命中率
-    .route(
-        "/api/portal/ai-ops/cache/hit-rate",
-        get(modules::ai_ops::get_cache_hit_rate_handler),
-    )
-    // POST /ai-ops/cache/evict — 缓存淘汰
-    .route(
-        "/api/portal/ai-ops/cache/evict",
-        post(modules::ai_ops::evict_cache_handler),
-    )
-    // --- 自愈机制 ---
-    // POST /ai-ops/health/check — 创建健康检查
-    .route(
-        "/api/portal/ai-ops/health/check",
-        post(modules::ai_ops::create_health_check_handler),
-    )
-    // GET /ai-ops/health/checks — 获取健康检查列表
-    .route(
-        "/api/portal/ai-ops/health/checks",
-        get(modules::ai_ops::get_health_checks_handler),
-    )
-    // POST /ai-ops/health/run — 执行健康检查
-    .route(
-        "/api/portal/ai-ops/health/run",
-        post(modules::ai_ops::run_health_check_handler),
-    )
-    // POST /ai-ops/healing/execute — 执行自愈
-    .route(
-        "/api/portal/ai-ops/healing/execute",
-        post(modules::ai_ops::execute_healing_handler),
-    )
-    // GET /ai-ops/healing/history — 自愈历史
-    .route(
-        "/api/portal/ai-ops/healing/history",
-        get(modules::ai_ops::get_healing_history_handler),
-    )
-    // POST /ai-ops/recovery/plan — 创建恢复计划
-    .route(
-        "/api/portal/ai-ops/recovery/plan",
-        post(modules::ai_ops::create_recovery_plan_handler),
-    )
-    // GET /ai-ops/recovery/status — 恢复计划状态
-    .route(
-        "/api/portal/ai-ops/recovery/status/{id}",
-        get(modules::ai_ops::get_recovery_status_handler),
-    )
-    // GET /ai-ops/health/summary — 健康汇总
-    .route(
-        "/api/portal/ai-ops/health/summary",
-        get(modules::ai_ops::get_health_summary_handler),
-    )
-    // ==================== V60.0 BFF Phase 30: GraphQL 网关部署 + 配置管理 + 回滚策略 ====================
-    // --- 网关部署 ---
-    // POST /deployment-manager/deployment — 创建部署
-    .route(
-        "/api/portal/deployment-manager/deployment",
-        post(modules::deployment_manager::create_deployment_handler),
-    )
-    // GET /deployment-manager/deployments — 部署列表
-    .route(
-        "/api/portal/deployment-manager/deployments",
-        get(modules::deployment_manager::list_deployments_handler),
-    )
-    // GET /deployment-manager/deployment/{id} — 部署详情
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}",
-        get(modules::deployment_manager::get_deployment_handler),
-    )
-    // POST /deployment-manager/deployment/{id}/start — 启动部署
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}/start",
-        post(modules::deployment_manager::start_deployment_handler),
-    )
-    // POST /deployment-manager/deployment/{id}/cancel — 取消部署
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}/cancel",
-        post(modules::deployment_manager::cancel_deployment_handler),
-    )
-    // GET /deployment-manager/deployment/{id}/status — 部署状态
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}/status",
-        get(modules::deployment_manager::get_deployment_status_handler),
-    )
-    // POST /deployment-manager/deployment/{id}/promote — 灰度推广
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}/promote",
-        post(modules::deployment_manager::promote_canary_handler),
-    )
-    // POST /deployment-manager/deployment/{id}/rollback — 回滚部署
-    .route(
-        "/api/portal/deployment-manager/deployment/{id}/rollback",
-        post(modules::deployment_manager::rollback_deployment_handler),
-    )
-    // GET /deployment-manager/deployment/history — 部署历史
-    .route(
-        "/api/portal/deployment-manager/deployment/history",
-        get(modules::deployment_manager::get_deployment_history_handler),
-    )
-    // --- 配置管理 ---
-    // POST /deployment-manager/config — 创建配置
-    .route(
-        "/api/portal/deployment-manager/config",
-        post(modules::deployment_manager::create_config_handler),
-    )
-    // GET /deployment-manager/configs — 配置列表
-    .route(
-        "/api/portal/deployment-manager/configs",
-        get(modules::deployment_manager::list_configs_handler),
-    )
-    // GET /deployment-manager/config/{id} — 配置详情
-    .route(
-        "/api/portal/deployment-manager/config/{id}",
-        get(modules::deployment_manager::get_config_handler),
-    )
-    // PUT /deployment-manager/config/{id} — 更新配置
-    .route(
-        "/api/portal/deployment-manager/config/{id}",
-        put(modules::deployment_manager::update_config_handler),
-    )
-    // POST /deployment-manager/config/{id}/activate — 激活配置
-    .route(
-        "/api/portal/deployment-manager/config/{id}/activate",
-        post(modules::deployment_manager::activate_config_handler),
-    )
-    // GET /deployment-manager/config/{id}/diff — 配置差异
-    .route(
-        "/api/portal/deployment-manager/config/{id}/diff",
-        get(modules::deployment_manager::get_config_diff_handler),
-    )
-    // GET /deployment-manager/config/{id}/history — 配置历史
-    .route(
-        "/api/portal/deployment-manager/config/{id}/history",
-        get(modules::deployment_manager::get_config_history_handler),
-    )
-    // POST /deployment-manager/config/{id}/rollback — 回滚配置
-    .route(
-        "/api/portal/deployment-manager/config/{id}/rollback",
-        post(modules::deployment_manager::rollback_config_handler),
-    )
-    // POST /deployment-manager/environment — 创建环境
-    .route(
-        "/api/portal/deployment-manager/environment",
-        post(modules::deployment_manager::create_environment_handler),
-    )
-    // --- 回滚策略 ---
-    // POST /deployment-manager/rollback/policy — 创建回滚策略
-    .route(
-        "/api/portal/deployment-manager/rollback/policy",
-        post(modules::deployment_manager::create_rollback_policy_handler),
-    )
-    // GET /deployment-manager/rollback/policies — 回滚策略列表
-    .route(
-        "/api/portal/deployment-manager/rollback/policies",
-        get(modules::deployment_manager::get_rollback_policies_handler),
-    )
-    // POST /deployment-manager/rollback/execute — 执行回滚
-    .route(
-        "/api/portal/deployment-manager/rollback/execute",
-        post(modules::deployment_manager::execute_rollback_handler),
-    )
-    // GET /deployment-manager/rollback/history — 回滚历史
-    .route(
-        "/api/portal/deployment-manager/rollback/history",
-        get(modules::deployment_manager::get_rollback_history_handler),
-    )
-    // POST /deployment-manager/rollback/{id}/test — 测试回滚
-    .route(
-        "/api/portal/deployment-manager/rollback/{id}/test",
-        post(modules::deployment_manager::test_rollback_handler),
-    )
-    // POST /deployment-manager/rollback/{id}/auto — 配置自动回滚
-    .route(
-        "/api/portal/deployment-manager/rollback/{id}/auto",
-        post(modules::deployment_manager::configure_auto_rollback_handler),
-    )
-    // POST /deployment-manager/rollback/{id}/disable — 禁用回滚策略
-    .route(
-        "/api/portal/deployment-manager/rollback/{id}/disable",
-        post(modules::deployment_manager::disable_rollback_handler),
-    )
-    // GET /deployment-manager/rollback/status — 回滚状态
-    .route(
-        "/api/portal/deployment-manager/rollback/status",
-        get(modules::deployment_manager::get_rollback_status_handler),
-    )
-    // 与上方 admin_routes 完全同栈：rls → require_permission(portal:admin) → tenant → auth
-    .layer(axum::middleware::from_fn_with_state(
-        db.clone(),
-        rls_middleware,
-    ))
-    .layer(axum::middleware::from_fn(require_permission(
-        "portal:admin",
-    )))
-    .layer(axum::middleware::from_fn_with_state(
-        db.clone(),
-        topems_shared_auth::tenant_middleware(),
-    ))
-    .layer(axum::middleware::from_fn_with_state(
-        app_state.auth_state.clone(),
-        auth_middleware,
-    ));
+        // ==================== V51.0 Phase 21: GraphQL Schema 演进 + 破坏性变更检测 + 版本协商 ====================
+        // POST /api/portal/schema-versioning/schema/versions — 发布新 Schema 版本
+        .route(
+            "/api/portal/schema-versioning/schema/versions",
+            post(modules::schema_versioning::handlers::publish_schema_version_handler),
+        )
+        // GET /api/portal/schema-versioning/schema/versions — 列出 Schema 版本
+        .route(
+            "/api/portal/schema-versioning/schema/versions",
+            get(modules::schema_versioning::handlers::list_schema_versions_handler),
+        )
+        // GET /api/portal/schema-versioning/schema/versions/{version} — 获取指定版本
+        .route(
+            "/api/portal/schema-versioning/schema/versions/{version}",
+            get(modules::schema_versioning::handlers::get_schema_version_handler),
+        )
+        // PUT /api/portal/schema-versioning/schema/versions/{version}/rollback — 回滚到指定版本
+        .route(
+            "/api/portal/schema-versioning/schema/versions/{version}/rollback",
+            put(modules::schema_versioning::handlers::rollback_schema_handler),
+        )
+        // GET /api/portal/schema-versioning/schema/current — 获取当前 Schema
+        .route(
+            "/api/portal/schema-versioning/schema/current",
+            get(modules::schema_versioning::handlers::get_current_schema_handler),
+        )
+        // POST /api/portal/schema-versioning/schema/compare — 对比 Schema 兼容性
+        .route(
+            "/api/portal/schema-versioning/schema/compare",
+            post(modules::schema_versioning::handlers::compare_schemas_handler),
+        )
+        // POST /api/portal/schema-versioning/schema/detect-breaking — 检测破坏性变更
+        .route(
+            "/api/portal/schema-versioning/schema/detect-breaking",
+            post(modules::schema_versioning::handlers::detect_breaking_changes_handler),
+        )
+        // POST /api/portal/schema-versioning/negotiate — 版本协商
+        .route(
+            "/api/portal/schema-versioning/negotiate",
+            post(modules::schema_versioning::handlers::negotiate_version_handler),
+        )
+        // GET /api/portal/schema-versioning/versions/supported — 获取支持的版本列表
+        .route(
+            "/api/portal/schema-versioning/versions/supported",
+            get(modules::schema_versioning::handlers::get_supported_versions_handler),
+        )
+        // PUT /api/portal/schema-versioning/versions/{version}/deprecate — 废弃版本
+        .route(
+            "/api/portal/schema-versioning/versions/{version}/deprecate",
+            put(modules::schema_versioning::handlers::deprecate_version_handler),
+        )
+        // ==================== V52.0 Phase 22: 自适应执行引擎 + AI 查询优化 + 流式订阅增强 ====================
+        // --- 自适应执行引擎 ---
+        // POST /api/portal/adaptive-execution/execute — 执行自适应查询
+        .route(
+            "/api/portal/adaptive-execution/execute",
+            post(modules::adaptive_execution::execute_adaptive_query_handler),
+        )
+        // GET /api/portal/adaptive-execution/execution/profile/{hash} — 获取执行配置
+        .route(
+            "/api/portal/adaptive-execution/execution/profile/{hash}",
+            get(modules::adaptive_execution::get_execution_profile_handler),
+        )
+        // GET /api/portal/adaptive-execution/execution/metrics — 获取执行指标
+        .route(
+            "/api/portal/adaptive-execution/execution/metrics",
+            get(modules::adaptive_execution::get_execution_metrics_handler),
+        )
+        // POST /api/portal/adaptive-execution/execution/configure — 配置执行策略
+        .route(
+            "/api/portal/adaptive-execution/execution/configure",
+            post(modules::adaptive_execution::configure_strategy_handler),
+        )
+        // --- AI 查询优化 ---
+        // POST /api/portal/adaptive-execution/optimize — 优化查询
+        .route(
+            "/api/portal/adaptive-execution/optimize",
+            post(modules::adaptive_execution::optimize_query_handler),
+        )
+        // POST /api/portal/adaptive-execution/analyze — 分析查询计划
+        .route(
+            "/api/portal/adaptive-execution/analyze",
+            post(modules::adaptive_execution::analyze_query_handler),
+        )
+        // GET /api/portal/adaptive-execution/optimization/suggestions — 获取优化建议
+        .route(
+            "/api/portal/adaptive-execution/optimization/suggestions",
+            get(modules::adaptive_execution::get_optimization_suggestions_handler),
+        )
+        // POST /api/portal/adaptive-execution/optimization/batch — 批量优化
+        .route(
+            "/api/portal/adaptive-execution/optimization/batch",
+            post(modules::adaptive_execution::batch_optimize_handler),
+        )
+        // --- 流式订阅 ---
+        // POST /api/portal/adaptive-execution/streams — 创建流
+        .route(
+            "/api/portal/adaptive-execution/streams",
+            post(modules::adaptive_execution::create_stream_handler),
+        )
+        // GET /api/portal/adaptive-execution/streams — 流列表
+        .route(
+            "/api/portal/adaptive-execution/streams",
+            get(modules::adaptive_execution::list_streams_handler),
+        )
+        // GET /api/portal/adaptive-execution/streams/{id} — 获取流详情
+        .route(
+            "/api/portal/adaptive-execution/streams/{id}",
+            get(modules::adaptive_execution::get_stream_handler),
+        )
+        // DELETE /api/portal/adaptive-execution/streams/{id} — 关闭流
+        .route(
+            "/api/portal/adaptive-execution/streams/{id}",
+            delete(modules::adaptive_execution::close_stream_handler),
+        )
+        // POST /api/portal/adaptive-execution/streams/{id}/subscribe — 订阅流
+        .route(
+            "/api/portal/adaptive-execution/streams/{id}/subscribe",
+            post(modules::adaptive_execution::subscribe_stream_handler),
+        )
+        // DELETE /api/portal/adaptive-execution/streams/{id}/unsubscribe — 取消订阅
+        .route(
+            "/api/portal/adaptive-execution/streams/{id}/unsubscribe",
+            delete(modules::adaptive_execution::unsubscribe_stream_handler),
+        )
+        // GET /api/portal/adaptive-execution/streams/metrics — 流指标
+        .route(
+            "/api/portal/adaptive-execution/streams/metrics",
+            get(modules::adaptive_execution::stream_metrics_handler),
+        )
+        // ==================== V53.0 Phase 24: GraphQL 智能网关 — AI 驱动查询路由 + 自动 Schema Stitching ====================
+        // --- AI 查询路由 ---
+        // POST /api/portal/intelligent-gateway/route — AI 查询路由
+        .route(
+            "/api/portal/intelligent-gateway/route",
+            post(modules::intelligent_gateway::route_query_handler),
+        )
+        // GET /api/portal/intelligent-gateway/routing/table — 路由表
+        .route(
+            "/api/portal/intelligent-gateway/routing/table",
+            get(modules::intelligent_gateway::get_routing_table_handler),
+        )
+        // GET /api/portal/intelligent-gateway/affinity/{service_id} — 服务亲和度
+        .route(
+            "/api/portal/intelligent-gateway/affinity/{service_id}",
+            get(modules::intelligent_gateway::get_affinity_handler),
+        )
+        // PUT /api/portal/intelligent-gateway/affinity/{service_id} — 更新亲和度
+        .route(
+            "/api/portal/intelligent-gateway/affinity/{service_id}",
+            put(modules::intelligent_gateway::update_affinity_handler),
+        )
+        // POST /api/portal/intelligent-gateway/routing/warmup — 路由预热
+        .route(
+            "/api/portal/intelligent-gateway/routing/warmup",
+            post(modules::intelligent_gateway::warm_up_routing_handler),
+        )
+        // --- 自动 Schema Stitching ---
+        // POST /api/portal/intelligent-gateway/stitch/discover — 子图发现
+        .route(
+            "/api/portal/intelligent-gateway/stitch/discover",
+            post(modules::intelligent_gateway::discover_subgraphs_handler),
+        )
+        // POST /api/portal/intelligent-gateway/stitch/plan — 生成 Stitch 计划
+        .route(
+            "/api/portal/intelligent-gateway/stitch/plan",
+            post(modules::intelligent_gateway::generate_stitch_plan_handler),
+        )
+        // POST /api/portal/intelligent-gateway/stitch/execute — 执行 Stitch
+        .route(
+            "/api/portal/intelligent-gateway/stitch/execute",
+            post(modules::intelligent_gateway::execute_stitch_handler),
+        )
+        // GET /api/portal/intelligent-gateway/stitch/status/{plan_id} — Stitch 状态
+        .route(
+            "/api/portal/intelligent-gateway/stitch/status/{plan_id}",
+            get(modules::intelligent_gateway::get_stitch_status_handler),
+        )
+        // GET /api/portal/intelligent-gateway/stitch/validate/{plan_id} — 验证 Stitch
+        .route(
+            "/api/portal/intelligent-gateway/stitch/validate/{plan_id}",
+            get(modules::intelligent_gateway::validate_stitch_handler),
+        )
+        // POST /api/portal/intelligent-gateway/stitch/rollback — 回滚 Stitch
+        .route(
+            "/api/portal/intelligent-gateway/stitch/rollback",
+            post(modules::intelligent_gateway::rollback_stitch_handler),
+        )
+        // GET /api/portal/intelligent-gateway/stitch/conflicts — 类型冲突列表
+        .route(
+            "/api/portal/intelligent-gateway/stitch/conflicts",
+            get(modules::intelligent_gateway::list_conflicts_handler),
+        )
+        // ==================== V54.0 BFF Phase 24: GraphQL 订阅网关 + 消息队列集成 + 实时推送优化 ====================
+        // --- 订阅网关 ---
+        // POST /subscription-manager/subscribe — 订阅频道
+        .route(
+            "/api/portal/subscription-manager/subscribe",
+            post(modules::subscription_manager::subscribe_handler),
+        )
+        // DELETE /subscription-manager/subscribe/{subscriber_id} — 取消订阅
+        .route(
+            "/api/portal/subscription-manager/subscribe/{subscriber_id}",
+            delete(modules::subscription_manager::unsubscribe_handler),
+        )
+        // GET /subscription-manager/subscribers — 活跃订阅者列表
+        .route(
+            "/api/portal/subscription-manager/subscribers",
+            get(modules::subscription_manager::get_subscribers_handler),
+        )
+        // GET /subscription-manager/channels — 频道统计
+        .route(
+            "/api/portal/subscription-manager/channels",
+            get(modules::subscription_manager::get_channels_handler),
+        )
+        // POST /subscription-manager/publish — 发布消息到频道
+        .route(
+            "/api/portal/subscription-manager/publish",
+            post(modules::subscription_manager::publish_handler),
+        )
+        // --- 消息队列 ---
+        // POST /subscription-manager/queue/publish — 发布消息到队列
+        .route(
+            "/api/portal/subscription-manager/queue/publish",
+            post(modules::subscription_manager::publish_to_queue_handler),
+        )
+        // GET /subscription-manager/queue/stats — 队列统计
+        .route(
+            "/api/portal/subscription-manager/queue/stats",
+            get(modules::subscription_manager::get_queue_stats_handler),
+        )
+        // POST /subscription-manager/queue/create — 创建队列
+        .route(
+            "/api/portal/subscription-manager/queue/create",
+            post(modules::subscription_manager::create_queue_handler),
+        )
+        // POST /subscription-manager/queue/purge — 清空队列
+        .route(
+            "/api/portal/subscription-manager/queue/purge",
+            post(modules::subscription_manager::purge_queue_handler),
+        )
+        // GET /subscription-manager/dlq — 死信队列
+        .route(
+            "/api/portal/subscription-manager/dlq",
+            get(modules::subscription_manager::get_dlq_handler),
+        )
+        // --- 推送优化 ---
+        // GET /subscription-manager/push/stats — 推送统计
+        .route(
+            "/api/portal/subscription-manager/push/stats",
+            get(modules::subscription_manager::get_push_stats_handler),
+        )
+        // PUT /subscription-manager/push/batch-window — 设置批量窗口
+        .route(
+            "/api/portal/subscription-manager/push/batch-window",
+            put(modules::subscription_manager::set_batch_window_handler),
+        )
+        // GET /subscription-manager/push/queue-length — 推送队列长度
+        .route(
+            "/api/portal/subscription-manager/push/queue-length",
+            get(modules::subscription_manager::get_push_queue_length_handler),
+        )
+        // ==================== V54.0 Phase 25: GraphQL 边缘计算 — 边缘渲染 + 全球加速 + 低延迟响应 ====================
+        // --- 边缘渲染 ---
+        // POST /edge-computing/render — 在边缘节点渲染 GraphQL 查询
+        .route(
+            "/api/portal/edge-computing/render",
+            post(modules::edge_computing::render_at_edge_handler),
+        )
+        // GET /edge-computing/status — 边缘节点状态
+        .route(
+            "/api/portal/edge-computing/status",
+            get(modules::edge_computing::get_edge_status_handler),
+        )
+        // POST /edge-computing/cache/invalidate — 失效边缘缓存
+        .route(
+            "/api/portal/edge-computing/cache/invalidate",
+            post(modules::edge_computing::invalidate_cache_handler),
+        )
+        // GET /edge-computing/render-history — 渲染历史
+        .route(
+            "/api/portal/edge-computing/render-history",
+            get(modules::edge_computing::get_render_history_handler),
+        )
+        // POST /edge-computing/functions/deploy — 部署边缘函数
+        .route(
+            "/api/portal/edge-computing/functions/deploy",
+            post(modules::edge_computing::deploy_function_handler),
+        )
+        // --- 全球加速 ---
+        // POST /edge-computing/accelerate — 加速请求
+        .route(
+            "/api/portal/edge-computing/accelerate",
+            post(modules::edge_computing::accelerate_request_handler),
+        )
+        // GET /edge-computing/optimal-location — 获取最优节点位置
+        .route(
+            "/api/portal/edge-computing/optimal-location",
+            get(modules::edge_computing::get_optimal_location_handler),
+        )
+        // POST /edge-computing/config/sync — 同步加速配置
+        .route(
+            "/api/portal/edge-computing/config/sync",
+            post(modules::edge_computing::sync_config_handler),
+        )
+        // GET /edge-computing/accel-stats — 加速统计
+        .route(
+            "/api/portal/edge-computing/accel-stats",
+            get(modules::edge_computing::get_accel_stats_handler),
+        )
+        // --- 低延迟响应 ---
+        // POST /edge-computing/optimize — 优化响应
+        .route(
+            "/api/portal/edge-computing/optimize",
+            post(modules::edge_computing::optimize_response_handler),
+        )
+        // GET /edge-computing/latency-budget — 获取延迟预算
+        .route(
+            "/api/portal/edge-computing/latency-budget",
+            get(modules::edge_computing::get_latency_budget_handler),
+        )
+        // POST /edge-computing/precompute — 预计算响应
+        .route(
+            "/api/portal/edge-computing/precompute",
+            post(modules::edge_computing::precompute_handler),
+        )
+        // POST /edge-computing/coalesce — 合并请求
+        .route(
+            "/api/portal/edge-computing/coalesce",
+            post(modules::edge_computing::coalesce_requests_handler),
+        )
+        // GET /edge-computing/latency-stats — 延迟统计
+        .route(
+            "/api/portal/edge-computing/latency-stats",
+            get(modules::edge_computing::get_latency_stats_handler),
+        )
+        // ==================== V55.0 BFF Phase 25: GraphQL 安全网关 + 零信任架构 + 数据脱敏 ====================
+        // --- Security Gateway ---
+        // POST /security-v1/validate-query — 验证查询深度/复杂度
+        .route(
+            "/api/portal/security-v1/validate-query",
+            post(modules::security_v1::validate_query_handler),
+        )
+        // GET /security-v1/events — 安全事件列表
+        .route(
+            "/api/portal/security-v1/events",
+            get(modules::security_v1::get_security_events_handler),
+        )
+        // POST /security-v1/policies — 创建安全策略
+        .route(
+            "/api/portal/security-v1/policies",
+            post(modules::security_v1::create_policy_handler),
+        )
+        // GET /security-v1/policies — 安全策略列表
+        .route(
+            "/api/portal/security-v1/policies",
+            get(modules::security_v1::list_policies_handler),
+        )
+        // PUT /security-v1/policies/{id} — 更新安全策略
+        .route(
+            "/api/portal/security-v1/policies/{id}",
+            put(modules::security_v1::update_policy_handler),
+        )
+        // --- Zero Trust ---
+        // POST /security-v1/trust/evaluate — 评估信任
+        .route(
+            "/api/portal/security-v1/trust/evaluate",
+            post(modules::security_v1::evaluate_trust_handler),
+        )
+        // GET /security-v1/trust/score/{identity} — 获取信任分数
+        .route(
+            "/api/portal/security-v1/trust/score/{identity}",
+            get(modules::security_v1::get_trust_score_handler),
+        )
+        // POST /security-v1/identity/policies — 创建身份策略
+        .route(
+            "/api/portal/security-v1/identity/policies",
+            post(modules::security_v1::create_identity_policy_handler),
+        )
+        // GET /security-v1/identity/policies — 身份策略列表
+        .route(
+            "/api/portal/security-v1/identity/policies",
+            get(modules::security_v1::list_identity_policies_handler),
+        )
+        // GET /security-v1/session/{id}/trust — 会话信任状态
+        .route(
+            "/api/portal/security-v1/session/{id}/trust",
+            get(modules::security_v1::get_session_trust_handler),
+        )
+        // --- Data Masking ---
+        // POST /security-v1/masking/mask — 执行数据脱敏
+        .route(
+            "/api/portal/security-v1/masking/mask",
+            post(modules::security_v1::mask_response_handler),
+        )
+        // POST /security-v1/masking/rules — 创建脱敏规则
+        .route(
+            "/api/portal/security-v1/masking/rules",
+            post(modules::security_v1::add_masking_rule_handler),
+        )
+        // GET /security-v1/masking/rules — 脱敏规则列表
+        .route(
+            "/api/portal/security-v1/masking/rules",
+            get(modules::security_v1::list_masking_rules_handler),
+        )
+        // DELETE /security-v1/masking/rules/{id} — 删除脱敏规则
+        .route(
+            "/api/portal/security-v1/masking/rules/{id}",
+            delete(modules::security_v1::remove_masking_rule_handler),
+        )
+        // POST /security-v1/masking/preview — 脱敏预览
+        .route(
+            "/api/portal/security-v1/masking/preview",
+            post(modules::security_v1::preview_masking_handler),
+        )
+        // GET /security-v1/masking/field-rules — 字段脱敏规则
+        .route(
+            "/api/portal/security-v1/masking/field-rules",
+            get(modules::security_v1::get_field_rules_handler),
+        )
+        // ==================== V55.0 BFF Phase 26: GraphQL 持久化演进 — 持久化查询 V2 + 版本化缓存 + 边缘持久化 ====================
+        // --- 持久化查询 V2 ---
+        // POST /persisted-query/register — 注册持久化查询
+        .route(
+            "/api/portal/persisted-query/register",
+            post(modules::persisted_query::register_query_handler),
+        )
+        // GET /persisted-query/{hash} — 获取持久化查询
+        .route(
+            "/api/portal/persisted-query/{hash}",
+            get(modules::persisted_query::get_query_handler),
+        )
+        // POST /persisted-query/{hash}/execute — 执行持久化查询
+        .route(
+            "/api/portal/persisted-query/{hash}/execute",
+            post(modules::persisted_query::execute_query_handler),
+        )
+        // GET /persisted-query/list — 列出持久化查询
+        .route(
+            "/api/portal/persisted-query/list",
+            get(modules::persisted_query::list_queries_handler),
+        )
+        // PUT /persisted-query/{hash} — 更新持久化查询
+        .route(
+            "/api/portal/persisted-query/{hash}",
+            put(modules::persisted_query::update_query_handler),
+        )
+        // DELETE /persisted-query/{hash} — 弃用持久化查询
+        .route(
+            "/api/portal/persisted-query/{hash}",
+            delete(modules::persisted_query::deprecate_query_handler),
+        )
+        // GET /persisted-query/{hash}/versions — 获取查询版本历史
+        .route(
+            "/api/portal/persisted-query/{hash}/versions",
+            get(modules::persisted_query::get_query_versions_handler),
+        )
+        // --- 版本化缓存 ---
+        // GET /persisted-query/cache/get/{key} — 获取缓存条目
+        .route(
+            "/api/portal/persisted-query/cache/get/{key}",
+            get(modules::persisted_query::cache_get_handler),
+        )
+        // POST /persisted-query/cache/set — 设置缓存条目
+        .route(
+            "/api/portal/persisted-query/cache/set",
+            post(modules::persisted_query::cache_set_handler),
+        )
+        // POST /persisted-query/cache/invalidate/{version} — 失效缓存版本
+        .route(
+            "/api/portal/persisted-query/cache/invalidate/{version}",
+            post(modules::persisted_query::cache_invalidate_handler),
+        )
+        // POST /persisted-query/cache/version — 创建新版本
+        .route(
+            "/api/portal/persisted-query/cache/version",
+            post(modules::persisted_query::cache_create_version_handler),
+        )
+        // GET /persisted-query/cache/versions — 列出缓存版本
+        .route(
+            "/api/portal/persisted-query/cache/versions",
+            get(modules::persisted_query::cache_list_versions_handler),
+        )
+        // GET /persisted-query/cache/stats — 缓存统计
+        .route(
+            "/api/portal/persisted-query/cache/stats",
+            get(modules::persisted_query::cache_stats_handler),
+        )
+        // POST /persisted-query/cache/purge — 清理过期缓存
+        .route(
+            "/api/portal/persisted-query/cache/purge",
+            post(modules::persisted_query::cache_purge_expired_handler),
+        )
+        // --- 边缘持久化 ---
+        // POST /persisted-query/edge/store — 存储到边缘
+        .route(
+            "/api/portal/persisted-query/edge/store",
+            post(modules::persisted_query::edge_store_handler),
+        )
+        // GET /persisted-query/edge/read/{key} — 从边缘读取
+        .route(
+            "/api/portal/persisted-query/edge/read/{key}",
+            get(modules::persisted_query::edge_read_handler),
+        )
+        // POST /persisted-query/edge/sync — 同步到区域
+        .route(
+            "/api/portal/persisted-query/edge/sync",
+            post(modules::persisted_query::edge_sync_handler),
+        )
+        // GET /persisted-query/edge/status — 边缘状态
+        .route(
+            "/api/portal/persisted-query/edge/status",
+            get(modules::persisted_query::edge_status_handler),
+        )
+        // POST /persisted-query/edge/invalidate — 失效边缘缓存
+        .route(
+            "/api/portal/persisted-query/edge/invalidate",
+            post(modules::persisted_query::edge_invalidate_handler),
+        )
+        // GET /persisted-query/edge/replication-stats — 复制统计
+        .route(
+            "/api/portal/persisted-query/edge/replication-stats",
+            get(modules::persisted_query::edge_replication_stats_handler),
+        )
+        // POST /persisted-query/edge/policy — 设置复制策略
+        .route(
+            "/api/portal/persisted-query/edge/policy",
+            post(modules::persisted_query::edge_set_policy_handler),
+        )
+        // ==================== V56.0 BFF Phase 27: GraphQL 实时演进 — 订阅持久化 + 消息重放 + 实时聚合 ====================
+        // --- 订阅持久化 ---
+        // POST /realtime-processing/subscription — 创建持久化订阅
+        .route(
+            "/api/portal/realtime-processing/subscription",
+            post(modules::realtime_processing::create_subscription_handler),
+        )
+        // GET /realtime-processing/subscriptions — 列出持久化订阅
+        .route(
+            "/api/portal/realtime-processing/subscriptions",
+            get(modules::realtime_processing::list_subscriptions_handler),
+        )
+        // GET /realtime-processing/subscription/{id} — 获取订阅详情
+        .route(
+            "/api/portal/realtime-processing/subscription/{id}",
+            get(modules::realtime_processing::get_subscription_handler),
+        )
+        // PUT /realtime-processing/subscription/{id}/pause — 暂停订阅
+        .route(
+            "/api/portal/realtime-processing/subscription/{id}/pause",
+            put(modules::realtime_processing::pause_subscription_handler),
+        )
+        // PUT /realtime-processing/subscription/{id}/resume — 恢复订阅
+        .route(
+            "/api/portal/realtime-processing/subscription/{id}/resume",
+            put(modules::realtime_processing::resume_subscription_handler),
+        )
+        // DELETE /realtime-processing/subscription/{id} — 取消订阅
+        .route(
+            "/api/portal/realtime-processing/subscription/{id}",
+            delete(modules::realtime_processing::cancel_subscription_handler),
+        )
+        // GET /realtime-processing/subscription/{id}/pending — 获取待投递事件
+        .route(
+            "/api/portal/realtime-processing/subscription/{id}/pending",
+            get(modules::realtime_processing::get_pending_events_handler),
+        )
+        // --- 消息重放 ---
+        // POST /realtime-processing/replay/request — 创建重放请求
+        .route(
+            "/api/portal/realtime-processing/replay/request",
+            post(modules::realtime_processing::request_replay_handler),
+        )
+        // POST /realtime-processing/replay/execute/{id} — 执行重放
+        .route(
+            "/api/portal/realtime-processing/replay/execute/{id}",
+            post(modules::realtime_processing::execute_replay_handler),
+        )
+        // GET /realtime-processing/replay/{id}/status — 获取重放状态
+        .route(
+            "/api/portal/realtime-processing/replay/{id}/status",
+            get(modules::realtime_processing::get_replay_status_handler),
+        )
+        // POST /realtime-processing/replay/{id}/cancel — 取消重放
+        .route(
+            "/api/portal/realtime-processing/replay/{id}/cancel",
+            post(modules::realtime_processing::cancel_replay_handler),
+        )
+        // GET /realtime-processing/replay/history — 重放历史
+        .route(
+            "/api/portal/realtime-processing/replay/history",
+            get(modules::realtime_processing::get_replay_history_handler),
+        )
+        // GET /realtime-processing/events/range — 事件范围查询
+        .route(
+            "/api/portal/realtime-processing/events/range/{id}",
+            get(modules::realtime_processing::get_events_range_handler),
+        )
+        // --- 实时聚合 ---
+        // POST /realtime-processing/aggregation — 创建聚合配置
+        .route(
+            "/api/portal/realtime-processing/aggregation",
+            post(modules::realtime_processing::create_aggregation_handler),
+        )
+        // POST /realtime-processing/aggregation/{id}/start — 启动聚合
+        .route(
+            "/api/portal/realtime-processing/aggregation/{id}/start",
+            post(modules::realtime_processing::start_aggregation_handler),
+        )
+        // POST /realtime-processing/aggregation/{id}/stop — 停止聚合
+        .route(
+            "/api/portal/realtime-processing/aggregation/{id}/stop",
+            post(modules::realtime_processing::stop_aggregation_handler),
+        )
+        // GET /realtime-processing/aggregation/{id}/result — 获取聚合结果
+        .route(
+            "/api/portal/realtime-processing/aggregation/{id}/result",
+            get(modules::realtime_processing::get_aggregation_result_handler),
+        )
+        // GET /realtime-processing/aggregations — 列出聚合配置
+        .route(
+            "/api/portal/realtime-processing/aggregations",
+            get(modules::realtime_processing::list_aggregations_handler),
+        )
+        // GET /realtime-processing/aggregation/{id}/stats — 获取聚合统计
+        .route(
+            "/api/portal/realtime-processing/aggregation/{id}/stats",
+            get(modules::realtime_processing::get_aggregation_stats_handler),
+        )
+        // ==================== V56.0 BFF Phase 26: GraphQL API 版本管理 + 灰度流量切换 + 向后兼容保证 ====================
+        // --- API 版本管理 ---
+        // POST /version-control/versions — 注册新版本
+        .route(
+            "/api/portal/version-control/versions",
+            post(modules::version_control::register_version_handler),
+        )
+        // GET /version-control/versions — 列出所有版本
+        .route(
+            "/api/portal/version-control/versions",
+            get(modules::version_control::list_versions_handler),
+        )
+        // GET /version-control/versions/{version} — 获取指定版本
+        .route(
+            "/api/portal/version-control/versions/{version}",
+            get(modules::version_control::get_version_handler),
+        )
+        // PUT /version-control/versions/{version} — 更新版本
+        .route(
+            "/api/portal/version-control/versions/{version}",
+            put(modules::version_control::update_version_handler),
+        )
+        // POST /version-control/versions/{version}/deprecate — 废弃版本
+        .route(
+            "/api/portal/version-control/versions/{version}/deprecate",
+            post(modules::version_control::deprecate_version_handler),
+        )
+        // POST /version-control/versions/{version}/sunset — Sunset 版本
+        .route(
+            "/api/portal/version-control/versions/{version}/sunset",
+            post(modules::version_control::sunset_version_handler),
+        )
+        // GET /version-control/compatibility — 兼容性检查
+        .route(
+            "/api/portal/version-control/compatibility",
+            get(modules::version_control::check_compatibility_handler),
+        )
+        // --- 灰度流量切换 ---
+        // POST /version-control/canary — 创建灰度配置
+        .route(
+            "/api/portal/version-control/canary",
+            post(modules::version_control::create_canary_handler),
+        )
+        // PUT /version-control/canary/{id} — 更新灰度配置
+        .route(
+            "/api/portal/version-control/canary/{id}",
+            put(modules::version_control::update_canary_handler),
+        )
+        // POST /version-control/canary/{id}/start — 启动灰度
+        .route(
+            "/api/portal/version-control/canary/{id}/start",
+            post(modules::version_control::start_canary_handler),
+        )
+        // POST /version-control/canary/{id}/stop — 停止灰度
+        .route(
+            "/api/portal/version-control/canary/{id}/stop",
+            post(modules::version_control::stop_canary_handler),
+        )
+        // GET /version-control/canary/{id}/status — 获取灰度状态
+        .route(
+            "/api/portal/version-control/canary/{id}/status",
+            get(modules::version_control::get_canary_status_handler),
+        )
+        // GET /version-control/canary/{id}/results — 获取灰度结果
+        .route(
+            "/api/portal/version-control/canary/{id}/results",
+            get(modules::version_control::get_canary_results_handler),
+        )
+        // GET /version-control/canaries — 列出灰度配置
+        .route(
+            "/api/portal/version-control/canaries",
+            get(modules::version_control::list_canaries_handler),
+        )
+        // POST /version-control/canary/{id}/promote — 推广灰度
+        .route(
+            "/api/portal/version-control/canary/{id}/promote",
+            post(modules::version_control::promote_canary_handler),
+        )
+        // POST /version-control/canary/{id}/rollback — 回滚灰度
+        .route(
+            "/api/portal/version-control/canary/{id}/rollback",
+            post(modules::version_control::rollback_canary_handler),
+        )
+        // --- 向后兼容保证 ---
+        // POST /version-control/compatibility/check — 兼容性检查
+        .route(
+            "/api/portal/version-control/compatibility/check",
+            post(modules::version_control::check_compatibility_report_handler),
+        )
+        // GET /version-control/compatibility/report — 获取兼容性报告
+        .route(
+            "/api/portal/version-control/compatibility/report",
+            get(modules::version_control::get_compatibility_report_handler),
+        )
+        // GET /version-control/compatibility/migration-path — 获取迁移路径
+        .route(
+            "/api/portal/version-control/compatibility/migration-path",
+            get(modules::version_control::get_migration_path_handler),
+        )
+        // POST /version-control/compatibility/policy — 创建兼容性策略
+        .route(
+            "/api/portal/version-control/compatibility/policy",
+            post(modules::version_control::create_compatibility_policy_handler),
+        )
+        // GET /version-control/compatibility/status — 获取兼容性状态
+        .route(
+            "/api/portal/version-control/compatibility/status",
+            get(modules::version_control::get_compatibility_status_handler),
+        )
+        // ==================== V57.0 BFF Phase 28: GraphQL 查询优化 — 编译优化 + 查询计划 + 执行加速 ====================
+        // --- 编译优化 ---
+        // POST /query-optimizer/compile — 编译查询
+        .route(
+            "/api/portal/query-optimizer/compile",
+            post(modules::query_optimizer::compile_query_handler),
+        )
+        // GET /query-optimizer/compilation/{id} — 获取编译结果
+        .route(
+            "/api/portal/query-optimizer/compilation/{id}",
+            get(modules::query_optimizer::get_compilation_handler),
+        )
+        // GET /query-optimizer/rules — 列出编译规则
+        .route(
+            "/api/portal/query-optimizer/rules",
+            get(modules::query_optimizer::list_rules_handler),
+        )
+        // PUT /query-optimizer/rules/{id} — 更新编译规则
+        .route(
+            "/api/portal/query-optimizer/rules/{id}",
+            put(modules::query_optimizer::update_rule_handler),
+        )
+        // GET /query-optimizer/compilation/stats — 编译统计
+        .route(
+            "/api/portal/query-optimizer/compilation/stats",
+            get(modules::query_optimizer::get_compilation_stats_handler),
+        )
+        // --- 查询计划 ---
+        // POST /query-optimizer/plan — 创建执行计划
+        .route(
+            "/api/portal/query-optimizer/plan",
+            post(modules::query_optimizer::create_plan_handler),
+        )
+        // GET /query-optimizer/plan/{id} — 获取执行计划
+        .route(
+            "/api/portal/query-optimizer/plan/{id}",
+            get(modules::query_optimizer::get_plan_handler),
+        )
+        // POST /query-optimizer/plan/compare — 对比执行计划
+        .route(
+            "/api/portal/query-optimizer/plan/compare",
+            post(modules::query_optimizer::compare_plans_handler),
+        )
+        // GET /query-optimizer/plan/cost — 获取计划成本
+        .route(
+            "/api/portal/query-optimizer/plan/cost",
+            get(modules::query_optimizer::get_plan_cost_handler),
+        )
+        // POST /query-optimizer/plan/{id}/optimize — 优化执行计划
+        .route(
+            "/api/portal/query-optimizer/plan/{id}/optimize",
+            post(modules::query_optimizer::optimize_plan_handler),
+        )
+        // GET /query-optimizer/planner/stats — 计划统计
+        .route(
+            "/api/portal/query-optimizer/planner/stats",
+            get(modules::query_optimizer::get_planner_stats_handler),
+        )
+        // --- 执行加速 ---
+        // POST /query-optimizer/accelerate — 加速查询执行
+        .route(
+            "/api/portal/query-optimizer/accelerate",
+            post(modules::query_optimizer::accelerate_handler),
+        )
+        // GET /query-optimizer/strategy — 获取加速策略
+        .route(
+            "/api/portal/query-optimizer/strategy",
+            get(modules::query_optimizer::get_strategy_handler),
+        )
+        // GET /query-optimizer/improvement — 获取加速改进详情
+        .route(
+            "/api/portal/query-optimizer/improvement",
+            get(modules::query_optimizer::get_improvement_handler),
+        )
+        // GET /query-optimizer/acceleration/history — 加速历史
+        .route(
+            "/api/portal/query-optimizer/acceleration/history",
+            get(modules::query_optimizer::get_acceleration_history_handler),
+        )
+        // POST /query-optimizer/strategy/configure — 配置加速策略
+        .route(
+            "/api/portal/query-optimizer/strategy/configure/{id}",
+            post(modules::query_optimizer::configure_strategy_handler),
+        )
+        // GET /query-optimizer/performance/profile — 性能画像
+        .route(
+            "/api/portal/query-optimizer/performance/profile",
+            get(modules::query_optimizer::get_performance_profile_handler),
+        )
+        // ==================== V57.0 BFF Phase 27: GraphQL 网关编排 + 服务发现 + 动态路由 ====================
+        // --- 网关编排 ---
+        // POST /orchestration/plan — 创建编排计划
+        .route(
+            "/api/portal/orchestration/plan",
+            post(modules::orchestration::create_plan_handler),
+        )
+        // POST /orchestration/plan/{id}/execute — 执行编排计划
+        .route(
+            "/api/portal/orchestration/plan/{id}/execute",
+            post(modules::orchestration::execute_plan_handler),
+        )
+        // GET /orchestration/plan/{id}/status — 获取计划状态
+        .route(
+            "/api/portal/orchestration/plan/{id}/status",
+            get(modules::orchestration::get_plan_status_handler),
+        )
+        // POST /orchestration/plan/{id}/cancel — 取消编排计划
+        .route(
+            "/api/portal/orchestration/plan/{id}/cancel",
+            post(modules::orchestration::cancel_plan_handler),
+        )
+        // GET /orchestration/history — 执行历史
+        .route(
+            "/api/portal/orchestration/history",
+            get(modules::orchestration::get_execution_history_handler),
+        )
+        // POST /orchestration/plan/{id}/optimize — 优化编排计划
+        .route(
+            "/api/portal/orchestration/plan/{id}/optimize",
+            post(modules::orchestration::optimize_plan_handler),
+        )
+        // --- 服务发现 ---
+        // POST /orchestration/service/register — 注册服务
+        .route(
+            "/api/portal/orchestration/service/register",
+            post(modules::orchestration::register_service_handler),
+        )
+        // DELETE /orchestration/service/{id} — 注销服务
+        .route(
+            "/api/portal/orchestration/service/{id}",
+            delete(modules::orchestration::deregister_service_handler),
+        )
+        // GET /orchestration/services — 服务列表
+        .route(
+            "/api/portal/orchestration/services",
+            get(modules::orchestration::discover_services_handler),
+        )
+        // GET /orchestration/service/{id} — 服务详情
+        .route(
+            "/api/portal/orchestration/service/{id}",
+            get(modules::orchestration::get_service_handler),
+        )
+        // GET /orchestration/services/capability/{cap} — 按能力发现服务
+        .route(
+            "/api/portal/orchestration/services/capability/{cap}",
+            get(modules::orchestration::get_services_by_capability_handler),
+        )
+        // POST /orchestration/health/check/{id} — 健康检查
+        .route(
+            "/api/portal/orchestration/health/check/{id}",
+            post(modules::orchestration::check_health_handler),
+        )
+        // GET /orchestration/registry/stats — 注册表统计
+        .route(
+            "/api/portal/orchestration/registry/stats",
+            get(modules::orchestration::get_registry_stats_handler),
+        )
+        // --- 动态路由 ---
+        // POST /orchestration/route — 路由请求
+        .route(
+            "/api/portal/orchestration/route",
+            post(modules::orchestration::route_request_handler),
+        )
+        // POST /orchestration/rules — 创建路由规则
+        .route(
+            "/api/portal/orchestration/rules",
+            post(modules::orchestration::add_rule_handler),
+        )
+        // GET /orchestration/rules — 路由规则列表
+        .route(
+            "/api/portal/orchestration/rules",
+            get(modules::orchestration::list_rules_handler),
+        )
+        // PUT /orchestration/rules/{id} — 更新路由规则
+        .route(
+            "/api/portal/orchestration/rules/{id}",
+            put(modules::orchestration::update_rule_handler),
+        )
+        // DELETE /orchestration/rules/{id} — 删除路由规则
+        .route(
+            "/api/portal/orchestration/rules/{id}",
+            delete(modules::orchestration::remove_rule_handler),
+        )
+        // GET /orchestration/routing/stats — 路由统计
+        .route(
+            "/api/portal/orchestration/routing/stats",
+            get(modules::orchestration::get_routing_stats_handler),
+        )
+        // ==================== V58.0 GraphQL 联邦深化: 跨服务一致性 + 分布式查询 + 联邦认证 ====================
+        // --- 跨服务一致性 ---
+        // POST /deep-federation/consistency/check — 一致性检查
+        .route(
+            "/api/portal/deep-federation/consistency/check",
+            post(modules::deep_federation::check_consistency_handler),
+        )
+        // GET /deep-federation/consistency/model — 获取一致性模型
+        .route(
+            "/api/portal/deep-federation/consistency/model",
+            get(modules::deep_federation::get_consistency_model_handler),
+        )
+        // PUT /deep-federation/consistency/model — 设置一致性模型
+        .route(
+            "/api/portal/deep-federation/consistency/model",
+            put(modules::deep_federation::set_consistency_model_handler),
+        )
+        // POST /deep-federation/consistency/detect — 冲突检测
+        .route(
+            "/api/portal/deep-federation/consistency/detect",
+            post(modules::deep_federation::detect_conflicts_handler),
+        )
+        // POST /deep-federation/consistency/resolve/{id} — 冲突解决
+        .route(
+            "/api/portal/deep-federation/consistency/resolve/{id}",
+            post(modules::deep_federation::resolve_conflict_handler),
+        )
+        // GET /deep-federation/consistency/vector/{id} — 获取版本向量
+        .route(
+            "/api/portal/deep-federation/consistency/vector/{id}",
+            get(modules::deep_federation::get_version_vector_handler),
+        )
+        // GET /deep-federation/consistency/report — 一致性报告
+        .route(
+            "/api/portal/deep-federation/consistency/report",
+            get(modules::deep_federation::get_consistency_report_handler),
+        )
+        // --- 分布式查询 ---
+        // POST /deep-federation/distributed/query — 创建分布式查询
+        .route(
+            "/api/portal/deep-federation/distributed/query",
+            post(modules::deep_federation::create_distributed_query_handler),
+        )
+        // POST /deep-federation/distributed/query/{id}/execute — 执行分布式查询
+        .route(
+            "/api/portal/deep-federation/distributed/query/{id}/execute",
+            post(modules::deep_federation::execute_distributed_query_handler),
+        )
+        // GET /deep-federation/distributed/query/{id}/status — 查询状态
+        .route(
+            "/api/portal/deep-federation/distributed/query/{id}/status",
+            get(modules::deep_federation::get_query_status_handler),
+        )
+        // POST /deep-federation/distributed/query/{id}/cancel — 取消查询
+        .route(
+            "/api/portal/deep-federation/distributed/query/{id}/cancel",
+            post(modules::deep_federation::cancel_query_handler),
+        )
+        // GET /deep-federation/distributed/query/history — 查询历史
+        .route(
+            "/api/portal/deep-federation/distributed/query/history",
+            get(modules::deep_federation::get_query_history_handler),
+        )
+        // POST /deep-federation/distributed/query/validate — 验证查询计划
+        .route(
+            "/api/portal/deep-federation/distributed/query/validate",
+            post(modules::deep_federation::validate_query_plan_handler),
+        )
+        // --- 联邦认证 ---
+        // POST /deep-federation/auth/authenticate — 联邦认证
+        .route(
+            "/api/portal/deep-federation/auth/authenticate",
+            post(modules::deep_federation::authenticate_federated_handler),
+        )
+        // POST /deep-federation/auth/propagate/{id} — 身份传播
+        .route(
+            "/api/portal/deep-federation/auth/propagate/{id}",
+            post(modules::deep_federation::propagate_identity_handler),
+        )
+        // POST /deep-federation/auth/verify — 令牌链验证
+        .route(
+            "/api/portal/deep-federation/auth/verify",
+            post(modules::deep_federation::verify_token_chain_handler),
+        )
+        // GET /deep-federation/auth/identity/{id} — 获取身份
+        .route(
+            "/api/portal/deep-federation/auth/identity/{id}",
+            get(modules::deep_federation::get_identity_handler),
+        )
+        // POST /deep-federation/auth/policy — 创建认证策略
+        .route(
+            "/api/portal/deep-federation/auth/policy",
+            post(modules::deep_federation::create_auth_policy_handler),
+        )
+        // PUT /deep-federation/auth/policy/{id} — 更新认证策略
+        .route(
+            "/api/portal/deep-federation/auth/policy/{id}",
+            put(modules::deep_federation::update_auth_policy_handler),
+        )
+        // GET /deep-federation/auth/status — 认证状态
+        .route(
+            "/api/portal/deep-federation/auth/status",
+            get(modules::deep_federation::get_auth_status_handler),
+        )
+        // ==================== V58.0 BFF Phase 28: GraphQL 网关安全 V2 + 审计追踪 + 访问控制 ====================
+        // --- 网关安全 V2 ---
+        // POST /gateway-security/validate-token — 验证 Token
+        .route(
+            "/api/portal/gateway-security/validate-token",
+            post(modules::gateway_security::validate_token_handler),
+        )
+        // POST /gateway-security/authenticate — 认证检查
+        .route(
+            "/api/portal/gateway-security/authenticate",
+            post(modules::gateway_security::authenticate_handler),
+        )
+        // GET /gateway-security/incidents — 安全事件列表
+        .route(
+            "/api/portal/gateway-security/incidents",
+            get(modules::gateway_security::get_incidents_handler),
+        )
+        // POST /gateway-security/policies — 创建安全策略
+        .route(
+            "/api/portal/gateway-security/policies",
+            post(modules::gateway_security::create_security_policy_handler),
+        )
+        // GET /gateway-security/policies — 安全策略列表
+        .route(
+            "/api/portal/gateway-security/policies",
+            get(modules::gateway_security::list_security_policies_handler),
+        )
+        // PUT /gateway-security/policies/{id} — 更新安全策略
+        .route(
+            "/api/portal/gateway-security/policies/{id}",
+            put(modules::gateway_security::update_security_policy_handler),
+        )
+        // --- 审计追踪 ---
+        // POST /gateway-security/audit/write — 写入审计条目
+        .route(
+            "/api/portal/gateway-security/audit/write",
+            post(modules::gateway_security::write_audit_handler),
+        )
+        // GET /gateway-security/audit/query — 查询审计条目
+        .route(
+            "/api/portal/gateway-security/audit/query",
+            get(modules::gateway_security::query_audit_handler),
+        )
+        // GET /gateway-security/audit/actor/{id} — 按演员查询审计
+        .route(
+            "/api/portal/gateway-security/audit/actor/{id}",
+            get(modules::gateway_security::get_audit_by_actor_handler),
+        )
+        // GET /gateway-security/audit/resource/{type}/{id} — 按资源查询审计
+        .route(
+            "/api/portal/gateway-security/audit/resource/{type}/{id}",
+            get(modules::gateway_security::get_audit_by_resource_handler),
+        )
+        // GET /gateway-security/audit/summary — 审计汇总
+        .route(
+            "/api/portal/gateway-security/audit/summary",
+            get(modules::gateway_security::get_audit_summary_handler),
+        )
+        // POST /gateway-security/audit/export — 导出审计数据
+        .route(
+            "/api/portal/gateway-security/audit/export",
+            post(modules::gateway_security::export_audit_handler),
+        )
+        // --- 访问控制 ---
+        // POST /gateway-security/access/evaluate — 评估访问
+        .route(
+            "/api/portal/gateway-security/access/evaluate",
+            post(modules::gateway_security::evaluate_access_handler),
+        )
+        // POST /gateway-security/access/grant — 授权
+        .route(
+            "/api/portal/gateway-security/access/grant",
+            post(modules::gateway_security::grant_access_handler),
+        )
+        // DELETE /gateway-security/access/{id} — 撤销权限
+        .route(
+            "/api/portal/gateway-security/access/{id}",
+            delete(modules::gateway_security::revoke_access_handler),
+        )
+        // GET /gateway-security/access/policies — 访问策略列表
+        .route(
+            "/api/portal/gateway-security/access/policies",
+            get(modules::gateway_security::list_access_policies_handler),
+        )
+        // POST /gateway-security/access/policy — 创建访问策略
+        .route(
+            "/api/portal/gateway-security/access/policy",
+            post(modules::gateway_security::create_access_policy_handler),
+        )
+        // GET /gateway-security/permissions/user/{id} — 用户权限
+        .route(
+            "/api/portal/gateway-security/permissions/user/{id}",
+            get(modules::gateway_security::get_user_permissions_handler),
+        )
+        // POST /gateway-security/access/simulate — 模拟访问
+        .route(
+            "/api/portal/gateway-security/access/simulate",
+            post(modules::gateway_security::simulate_access_handler),
+        )
+        // ==================== V59.0 BFF Phase 29: GraphQL 网关监控 + 性能追踪 + 异常检测 ====================
+        // --- 网关监控 ---
+        // POST /gateway-monitoring/metric — 记录指标
+        .route(
+            "/api/portal/gateway-monitoring/metric",
+            post(modules::gateway_monitoring::record_metric_handler),
+        )
+        // GET /gateway-monitoring/metrics — 获取指标列表
+        .route(
+            "/api/portal/gateway-monitoring/metrics",
+            get(modules::gateway_monitoring::get_metrics_handler),
+        )
+        // GET /gateway-monitoring/health — 网关健康检查
+        .route(
+            "/api/portal/gateway-monitoring/health",
+            get(modules::gateway_monitoring::get_health_handler),
+        )
+        // GET /gateway-monitoring/dashboard — 仪表盘数据
+        .route(
+            "/api/portal/gateway-monitoring/dashboard",
+            get(modules::gateway_monitoring::get_dashboard_handler),
+        )
+        // GET /gateway-monitoring/metric/history — 指标历史
+        .route(
+            "/api/portal/gateway-monitoring/metric/{metric_name}/history",
+            get(modules::gateway_monitoring::get_metric_history_handler),
+        )
+        // POST /gateway-monitoring/threshold — 设置告警阈值
+        .route(
+            "/api/portal/gateway-monitoring/threshold",
+            post(modules::gateway_monitoring::set_threshold_handler),
+        )
+        // GET /gateway-monitoring/thresholds — 获取告警阈值
+        .route(
+            "/api/portal/gateway-monitoring/thresholds",
+            get(modules::gateway_monitoring::get_thresholds_handler),
+        )
+        // --- 性能追踪 ---
+        // POST /gateway-monitoring/trace/start — 启动追踪
+        .route(
+            "/api/portal/gateway-monitoring/trace/start",
+            post(modules::gateway_monitoring::start_trace_handler),
+        )
+        // POST /gateway-monitoring/trace/end — 结束追踪
+        .route(
+            "/api/portal/gateway-monitoring/trace/end",
+            post(modules::gateway_monitoring::end_trace_handler),
+        )
+        // POST /gateway-monitoring/trace/resolver — 添加 Resolver 计时
+        .route(
+            "/api/portal/gateway-monitoring/trace/resolver",
+            post(modules::gateway_monitoring::add_resolver_timing_handler),
+        )
+        // GET /gateway-monitoring/trace/{id} — 获取追踪详情
+        .route(
+            "/api/portal/gateway-monitoring/trace/{id}",
+            get(modules::gateway_monitoring::get_trace_handler),
+        )
+        // GET /gateway-monitoring/traces — 追踪列表
+        .route(
+            "/api/portal/gateway-monitoring/traces",
+            get(modules::gateway_monitoring::list_traces_handler),
+        )
+        // GET /gateway-monitoring/slow-queries — 慢查询列表
+        .route(
+            "/api/portal/gateway-monitoring/slow-queries",
+            get(modules::gateway_monitoring::get_slow_queries_handler),
+        )
+        // GET /gateway-monitoring/performance — 性能汇总
+        .route(
+            "/api/portal/gateway-monitoring/performance",
+            get(modules::gateway_monitoring::get_performance_handler),
+        )
+        // POST /gateway-monitoring/traces/export — 导出追踪数据
+        .route(
+            "/api/portal/gateway-monitoring/traces/export",
+            post(modules::gateway_monitoring::export_traces_handler),
+        )
+        // --- 异常检测 ---
+        // POST /gateway-monitoring/anomaly/detect — 异常检测
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/detect",
+            post(modules::gateway_monitoring::detect_anomalies_handler),
+        )
+        // GET /gateway-monitoring/anomalies — 异常事件列表
+        .route(
+            "/api/portal/gateway-monitoring/anomalies",
+            get(modules::gateway_monitoring::get_anomalies_handler),
+        )
+        // POST /gateway-monitoring/anomaly/model — 创建检测模型
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/model",
+            post(modules::gateway_monitoring::create_model_handler),
+        )
+        // PUT /gateway-monitoring/anomaly/model/{id} — 更新检测模型
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/model/{id}",
+            put(modules::gateway_monitoring::update_model_handler),
+        )
+        // GET /gateway-monitoring/anomaly/models — 检测模型列表
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/models",
+            get(modules::gateway_monitoring::get_models_handler),
+        )
+        // GET /gateway-monitoring/anomaly/summary — 异常检测汇总
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/summary",
+            get(modules::gateway_monitoring::get_anomaly_summary_handler),
+        )
+        // POST /gateway-monitoring/anomaly/model/{id}/train — 训练模型
+        .route(
+            "/api/portal/gateway-monitoring/anomaly/model/{id}/train",
+            post(modules::gateway_monitoring::train_model_handler),
+        )
+        // ==================== V59.0 GraphQL 实时深化: 流式订阅 V2 + 消息去重 + 背压控制 ====================
+        // --- 流式订阅 V2 ---
+        // POST /streaming-processing/stream — 创建流
+        .route(
+            "/api/portal/streaming-processing/stream",
+            post(modules::streaming_processing::create_stream_handler),
+        )
+        // GET /streaming-processing/streams — 流列表
+        .route(
+            "/api/portal/streaming-processing/streams",
+            get(modules::streaming_processing::list_streams_handler),
+        )
+        // GET /streaming-processing/stream/{id} — 流详情
+        .route(
+            "/api/portal/streaming-processing/stream/{id}",
+            get(modules::streaming_processing::get_stream_handler),
+        )
+        // POST /streaming-processing/stream/{id}/publish — 发布事件
+        .route(
+            "/api/portal/streaming-processing/stream/{id}/publish",
+            post(modules::streaming_processing::publish_event_handler),
+        )
+        // POST /streaming-processing/stream/{id}/subscribe — 订阅流
+        .route(
+            "/api/portal/streaming-processing/stream/{id}/subscribe",
+            post(modules::streaming_processing::subscribe_stream_handler),
+        )
+        // DELETE /streaming-processing/stream/{id} — 删除流
+        .route(
+            "/api/portal/streaming-processing/stream/{id}",
+            delete(modules::streaming_processing::delete_stream_handler),
+        )
+        // GET /streaming-processing/stream/{id}/events — 获取流事件
+        .route(
+            "/api/portal/streaming-processing/stream/{id}/events",
+            get(modules::streaming_processing::get_stream_events_handler),
+        )
+        // POST /streaming-processing/stream/{id}/unsubscribe — 取消订阅
+        .route(
+            "/api/portal/streaming-processing/stream/{id}/unsubscribe",
+            post(modules::streaming_processing::unsubscribe_stream_handler),
+        )
+        // --- 消息去重 ---
+        // POST /streaming-processing/dedup/rule — 创建去重规则
+        .route(
+            "/api/portal/streaming-processing/dedup/rule",
+            post(modules::streaming_processing::create_dedup_rule_handler),
+        )
+        // GET /streaming-processing/dedup/rules — 去重规则列表
+        .route(
+            "/api/portal/streaming-processing/dedup/rules",
+            get(modules::streaming_processing::get_dedup_rules_handler),
+        )
+        // POST /streaming-processing/dedup/check — 去重检查
+        .route(
+            "/api/portal/streaming-processing/dedup/check",
+            post(modules::streaming_processing::check_duplicate_handler),
+        )
+        // GET /streaming-processing/dedup/stats — 去重统计
+        .route(
+            "/api/portal/streaming-processing/dedup/stats",
+            get(modules::streaming_processing::get_dedup_stats_handler),
+        )
+        // GET /streaming-processing/dedup/history — 去重历史
+        .route(
+            "/api/portal/streaming-processing/dedup/history",
+            get(modules::streaming_processing::get_dedup_history_handler),
+        )
+        // POST /streaming-processing/dedup/rule/{id}/enable — 启用规则
+        .route(
+            "/api/portal/streaming-processing/dedup/rule/{id}/enable",
+            post(modules::streaming_processing::enable_rule_handler),
+        )
+        // POST /streaming-processing/dedup/rule/{id}/disable — 禁用规则
+        .route(
+            "/api/portal/streaming-processing/dedup/rule/{id}/disable",
+            post(modules::streaming_processing::disable_rule_handler),
+        )
+        // --- 背压控制 ---
+        // POST /streaming-processing/backpressure/config/{stream_id} — 设置背压配置
+        .route(
+            "/api/portal/streaming-processing/backpressure/config/{id}",
+            post(modules::streaming_processing::set_backpressure_config_handler),
+        )
+        // GET /streaming-processing/backpressure/config/{stream_id} — 获取背压配置
+        .route(
+            "/api/portal/streaming-processing/backpressure/config/{id}",
+            get(modules::streaming_processing::get_backpressure_config_handler),
+        )
+        // GET /streaming-processing/backpressure/state/{stream_id} — 获取背压状态
+        .route(
+            "/api/portal/streaming-processing/backpressure/state/{id}",
+            get(modules::streaming_processing::get_backpressure_state_handler),
+        )
+        // POST /streaming-processing/backpressure/apply/{stream_id} — 应用背压
+        .route(
+            "/api/portal/streaming-processing/backpressure/apply/{id}",
+            post(modules::streaming_processing::apply_backpressure_handler),
+        )
+        // POST /streaming-processing/backpressure/drain/{stream_id} — 排空队列
+        .route(
+            "/api/portal/streaming-processing/backpressure/drain/{id}",
+            post(modules::streaming_processing::drain_queue_handler),
+        )
+        // GET /streaming-processing/backpressure/dropped — 丢弃事件列表
+        .route(
+            "/api/portal/streaming-processing/backpressure/dropped",
+            get(modules::streaming_processing::get_dropped_events_handler),
+        )
+        // GET /streaming-processing/backpressure/stats — 背压统计
+        .route(
+            "/api/portal/streaming-processing/backpressure/stats",
+            get(modules::streaming_processing::get_backpressure_stats_handler),
+        )
+        // POST /streaming-processing/backpressure/reset/{stream_id} — 重置计数器
+        .route(
+            "/api/portal/streaming-processing/backpressure/reset/{id}",
+            post(modules::streaming_processing::reset_counter_handler),
+        )
+        // ==================== V60.0 GraphQL AI 运维: 智能查询路由 + 自动缓存 + 自愈机制 ====================
+        // --- 智能查询路由 ---
+        // POST /ai-ops/routing/rule — 创建路由规则
+        .route(
+            "/api/portal/ai-ops/routing/rule",
+            post(modules::ai_ops::create_routing_rule_handler),
+        )
+        // GET /ai-ops/routing/rules — 获取路由规则列表
+        .route(
+            "/api/portal/ai-ops/routing/rules",
+            get(modules::ai_ops::get_routing_rules_handler),
+        )
+        // POST /ai-ops/routing/route — 执行查询路由
+        .route(
+            "/api/portal/ai-ops/routing/route",
+            post(modules::ai_ops::route_query_handler),
+        )
+        // GET /ai-ops/routing/loads — 获取服务负载
+        .route(
+            "/api/portal/ai-ops/routing/loads",
+            get(modules::ai_ops::get_service_loads_handler),
+        )
+        // POST /ai-ops/routing/load/{id} — 更新服务负载
+        .route(
+            "/api/portal/ai-ops/routing/load/{id}",
+            post(modules::ai_ops::update_service_load_handler),
+        )
+        // GET /ai-ops/routing/history — 路由决策历史
+        .route(
+            "/api/portal/ai-ops/routing/history",
+            get(modules::ai_ops::get_routing_history_handler),
+        )
+        // POST /ai-ops/routing/simulate — 模拟路由
+        .route(
+            "/api/portal/ai-ops/routing/simulate",
+            post(modules::ai_ops::simulate_routing_handler),
+        )
+        // GET /ai-ops/routing/stats — 路由统计
+        .route(
+            "/api/portal/ai-ops/routing/stats",
+            get(modules::ai_ops::get_route_stats_handler),
+        )
+        // --- 自动缓存 ---
+        // POST /ai-ops/cache/policy — 创建缓存策略
+        .route(
+            "/api/portal/ai-ops/cache/policy",
+            post(modules::ai_ops::create_cache_policy_handler),
+        )
+        // GET /ai-ops/cache/policies — 获取缓存策略列表
+        .route(
+            "/api/portal/ai-ops/cache/policies",
+            get(modules::ai_ops::get_cache_policies_handler),
+        )
+        // GET /ai-ops/cache/entry/{key} — 获取缓存条目
+        .route(
+            "/api/portal/ai-ops/cache/entry/{key}",
+            get(modules::ai_ops::get_cache_entry_handler),
+        )
+        // POST /ai-ops/cache/invalidate — 失效缓存
+        .route(
+            "/api/portal/ai-ops/cache/invalidate",
+            post(modules::ai_ops::invalidate_cache_handler),
+        )
+        // GET /ai-ops/cache/stats — 缓存统计
+        .route(
+            "/api/portal/ai-ops/cache/stats",
+            get(modules::ai_ops::get_cache_stats_handler),
+        )
+        // POST /ai-ops/cache/cleanup — 清理过期缓存
+        .route(
+            "/api/portal/ai-ops/cache/cleanup",
+            post(modules::ai_ops::cleanup_cache_handler),
+        )
+        // GET /ai-ops/cache/hit-rate — 缓存命中率
+        .route(
+            "/api/portal/ai-ops/cache/hit-rate",
+            get(modules::ai_ops::get_cache_hit_rate_handler),
+        )
+        // POST /ai-ops/cache/evict — 缓存淘汰
+        .route(
+            "/api/portal/ai-ops/cache/evict",
+            post(modules::ai_ops::evict_cache_handler),
+        )
+        // --- 自愈机制 ---
+        // POST /ai-ops/health/check — 创建健康检查
+        .route(
+            "/api/portal/ai-ops/health/check",
+            post(modules::ai_ops::create_health_check_handler),
+        )
+        // GET /ai-ops/health/checks — 获取健康检查列表
+        .route(
+            "/api/portal/ai-ops/health/checks",
+            get(modules::ai_ops::get_health_checks_handler),
+        )
+        // POST /ai-ops/health/run — 执行健康检查
+        .route(
+            "/api/portal/ai-ops/health/run",
+            post(modules::ai_ops::run_health_check_handler),
+        )
+        // POST /ai-ops/healing/execute — 执行自愈
+        .route(
+            "/api/portal/ai-ops/healing/execute",
+            post(modules::ai_ops::execute_healing_handler),
+        )
+        // GET /ai-ops/healing/history — 自愈历史
+        .route(
+            "/api/portal/ai-ops/healing/history",
+            get(modules::ai_ops::get_healing_history_handler),
+        )
+        // POST /ai-ops/recovery/plan — 创建恢复计划
+        .route(
+            "/api/portal/ai-ops/recovery/plan",
+            post(modules::ai_ops::create_recovery_plan_handler),
+        )
+        // GET /ai-ops/recovery/status — 恢复计划状态
+        .route(
+            "/api/portal/ai-ops/recovery/status/{id}",
+            get(modules::ai_ops::get_recovery_status_handler),
+        )
+        // GET /ai-ops/health/summary — 健康汇总
+        .route(
+            "/api/portal/ai-ops/health/summary",
+            get(modules::ai_ops::get_health_summary_handler),
+        )
+        // ==================== V60.0 BFF Phase 30: GraphQL 网关部署 + 配置管理 + 回滚策略 ====================
+        // --- 网关部署 ---
+        // POST /deployment-manager/deployment — 创建部署
+        .route(
+            "/api/portal/deployment-manager/deployment",
+            post(modules::deployment_manager::create_deployment_handler),
+        )
+        // GET /deployment-manager/deployments — 部署列表
+        .route(
+            "/api/portal/deployment-manager/deployments",
+            get(modules::deployment_manager::list_deployments_handler),
+        )
+        // GET /deployment-manager/deployment/{id} — 部署详情
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}",
+            get(modules::deployment_manager::get_deployment_handler),
+        )
+        // POST /deployment-manager/deployment/{id}/start — 启动部署
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}/start",
+            post(modules::deployment_manager::start_deployment_handler),
+        )
+        // POST /deployment-manager/deployment/{id}/cancel — 取消部署
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}/cancel",
+            post(modules::deployment_manager::cancel_deployment_handler),
+        )
+        // GET /deployment-manager/deployment/{id}/status — 部署状态
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}/status",
+            get(modules::deployment_manager::get_deployment_status_handler),
+        )
+        // POST /deployment-manager/deployment/{id}/promote — 灰度推广
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}/promote",
+            post(modules::deployment_manager::promote_canary_handler),
+        )
+        // POST /deployment-manager/deployment/{id}/rollback — 回滚部署
+        .route(
+            "/api/portal/deployment-manager/deployment/{id}/rollback",
+            post(modules::deployment_manager::rollback_deployment_handler),
+        )
+        // GET /deployment-manager/deployment/history — 部署历史
+        .route(
+            "/api/portal/deployment-manager/deployment/history",
+            get(modules::deployment_manager::get_deployment_history_handler),
+        )
+        // --- 配置管理 ---
+        // POST /deployment-manager/config — 创建配置
+        .route(
+            "/api/portal/deployment-manager/config",
+            post(modules::deployment_manager::create_config_handler),
+        )
+        // GET /deployment-manager/configs — 配置列表
+        .route(
+            "/api/portal/deployment-manager/configs",
+            get(modules::deployment_manager::list_configs_handler),
+        )
+        // GET /deployment-manager/config/{id} — 配置详情
+        .route(
+            "/api/portal/deployment-manager/config/{id}",
+            get(modules::deployment_manager::get_config_handler),
+        )
+        // PUT /deployment-manager/config/{id} — 更新配置
+        .route(
+            "/api/portal/deployment-manager/config/{id}",
+            put(modules::deployment_manager::update_config_handler),
+        )
+        // POST /deployment-manager/config/{id}/activate — 激活配置
+        .route(
+            "/api/portal/deployment-manager/config/{id}/activate",
+            post(modules::deployment_manager::activate_config_handler),
+        )
+        // GET /deployment-manager/config/{id}/diff — 配置差异
+        .route(
+            "/api/portal/deployment-manager/config/{id}/diff",
+            get(modules::deployment_manager::get_config_diff_handler),
+        )
+        // GET /deployment-manager/config/{id}/history — 配置历史
+        .route(
+            "/api/portal/deployment-manager/config/{id}/history",
+            get(modules::deployment_manager::get_config_history_handler),
+        )
+        // POST /deployment-manager/config/{id}/rollback — 回滚配置
+        .route(
+            "/api/portal/deployment-manager/config/{id}/rollback",
+            post(modules::deployment_manager::rollback_config_handler),
+        )
+        // POST /deployment-manager/environment — 创建环境
+        .route(
+            "/api/portal/deployment-manager/environment",
+            post(modules::deployment_manager::create_environment_handler),
+        )
+        // --- 回滚策略 ---
+        // POST /deployment-manager/rollback/policy — 创建回滚策略
+        .route(
+            "/api/portal/deployment-manager/rollback/policy",
+            post(modules::deployment_manager::create_rollback_policy_handler),
+        )
+        // GET /deployment-manager/rollback/policies — 回滚策略列表
+        .route(
+            "/api/portal/deployment-manager/rollback/policies",
+            get(modules::deployment_manager::get_rollback_policies_handler),
+        )
+        // POST /deployment-manager/rollback/execute — 执行回滚
+        .route(
+            "/api/portal/deployment-manager/rollback/execute",
+            post(modules::deployment_manager::execute_rollback_handler),
+        )
+        // GET /deployment-manager/rollback/history — 回滚历史
+        .route(
+            "/api/portal/deployment-manager/rollback/history",
+            get(modules::deployment_manager::get_rollback_history_handler),
+        )
+        // POST /deployment-manager/rollback/{id}/test — 测试回滚
+        .route(
+            "/api/portal/deployment-manager/rollback/{id}/test",
+            post(modules::deployment_manager::test_rollback_handler),
+        )
+        // POST /deployment-manager/rollback/{id}/auto — 配置自动回滚
+        .route(
+            "/api/portal/deployment-manager/rollback/{id}/auto",
+            post(modules::deployment_manager::configure_auto_rollback_handler),
+        )
+        // POST /deployment-manager/rollback/{id}/disable — 禁用回滚策略
+        .route(
+            "/api/portal/deployment-manager/rollback/{id}/disable",
+            post(modules::deployment_manager::disable_rollback_handler),
+        )
+        // GET /deployment-manager/rollback/status — 回滚状态
+        .route(
+            "/api/portal/deployment-manager/rollback/status",
+            get(modules::deployment_manager::get_rollback_status_handler),
+        )
+        // 与上方 admin_routes 完全同栈：rls → require_permission(portal:admin) → tenant → auth
+        .layer(axum::middleware::from_fn_with_state(
+            db.clone(),
+            rls_middleware,
+        ))
+        .layer(axum::middleware::from_fn(require_permission(
+            "portal:admin",
+        )))
+        .layer(axum::middleware::from_fn_with_state(
+            db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
 
     // ===== 运维管理面（portal:admin）收编结束：合并回主 app，再套全局外层中间件 =====
     let app = app
-    .merge(admin_ops_routes)
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(axum::middleware::from_fn(request_context_middleware))
-    // V65: Portal BFF 统一认证——graphql/管理端点此前绕过 auth 链（无 token 可查业务数据），
-    // 在最外层补 auth_middleware（is_public_path 豁免 /health、login 等；cors 在其外保证预检放行）
-    .layer(axum::middleware::from_fn_with_state(
-        app_state.auth_state.clone(),
-        auth_middleware,
-    ))
-    .layer(cors)
-    .layer(tower_cookies::CookieManagerLayer::new());
+        .merge(admin_ops_routes)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
+        .layer(axum::middleware::from_fn(request_context_middleware))
+        // V65: Portal BFF 统一认证——graphql/管理端点此前绕过 auth 链（无 token 可查业务数据），
+        // 在最外层补 auth_middleware（is_public_path 豁免 /health、login 等；cors 在其外保证预检放行）
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .layer(cors)
+        .layer(tower_cookies::CookieManagerLayer::new());
 
     let app = app.with_state(app_state.clone());
     Ok(app)

@@ -668,10 +668,7 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
             axum::routing::put(update_document),
         )
         .route("/folders", axum::routing::post(create_folder))
-        .route(
-            "/folders/{folder_id}",
-            axum::routing::put(update_folder),
-        )
+        .route("/folders/{folder_id}", axum::routing::put(update_folder))
         .route(
             "/documents/{document_id}/versions/{version}/restore",
             axum::routing::post(restore_document_version),
@@ -687,10 +684,7 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
             "/documents/{document_id}",
             axum::routing::delete(delete_document),
         )
-        .route(
-            "/folders/{folder_id}",
-            axum::routing::delete(delete_folder),
-        )
+        .route("/folders/{folder_id}", axum::routing::delete(delete_folder))
         .route(
             "/templates/{template_id}",
             axum::routing::delete(delete_template),
