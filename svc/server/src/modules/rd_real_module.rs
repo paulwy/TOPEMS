@@ -12,7 +12,7 @@ use axum::Router;
 use std::sync::Arc;
 use topems_rd::modules::{create_routes, ApiState};
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_event::event::EventPublisher;
 
@@ -26,9 +26,6 @@ pub struct RdRealModule {
 impl RdRealModule {
     /// 异步构建真实 RD 模块
     pub async fn build() -> Result<Self> {
-        // rd 业务表位于 rs schema
-        std::env::set_var("SEARCH_PATH", "rs, public");
-
         let config = ServiceConfig {
             name: "topems-rd",
             port: 8053,
@@ -44,7 +41,8 @@ impl RdRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        //    rd 业务表位于 rs schema（显式传入，不依赖进程变量）
+        let ctx = bootstrap_service_with_search_path(&config, "rs, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;

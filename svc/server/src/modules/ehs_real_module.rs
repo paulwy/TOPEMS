@@ -15,7 +15,7 @@ use std::time::Duration;
 use topems_ehs::modules;
 use topems_ehs::shared::AppState;
 use topems_shared_auth::middleware::require_module_access;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -33,9 +33,6 @@ pub struct EhsRealModule {
 impl EhsRealModule {
     /// 异步构建真实 EHS 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 ehs schema
-        std::env::set_var("SEARCH_PATH", "ehs, public");
-
         let config = ServiceConfig {
             name: "topems-ehs",
             port: 8052,
@@ -51,7 +48,8 @@ impl EhsRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        //    search_path 优先 ehs schema（显式传入，不依赖进程变量）
+        let ctx = bootstrap_service_with_search_path(&config, "ehs, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;

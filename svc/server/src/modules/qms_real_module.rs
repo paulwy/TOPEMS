@@ -18,7 +18,7 @@ use std::time::Duration;
 use topems_qms::shared::AppState;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -35,9 +35,6 @@ pub struct QmsRealModule {
 impl QmsRealModule {
     /// 异步构建真实 QMS 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 qms schema（.env 默认 iam,shared,public 会解析到错误 schema）
-        std::env::set_var("SEARCH_PATH", "qms, public");
-
         let config = ServiceConfig {
             name: "topems-qms",
             port: 8050,
@@ -53,7 +50,8 @@ impl QmsRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器
-        let ctx = bootstrap_service(&config).await?;
+        //    search_path 优先 qms schema（显式传入，不依赖进程变量；.env 默认值会解析到错误 schema）
+        let ctx = bootstrap_service_with_search_path(&config, "qms, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
