@@ -14,7 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_scm::modules::{create_routes, ApiState};
 use topems_shared_auth::middleware::require_module_access;
-use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 
@@ -27,9 +27,6 @@ pub struct ScmRealModule {
 impl ScmRealModule {
     /// 异步构建真实 SCM 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 scm schema
-        std::env::set_var("SEARCH_PATH", "scm, public, shared");
-
         let config = ServiceConfig {
             name: "topems-scm",
             port: 8040,
@@ -45,7 +42,8 @@ impl ScmRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        //    search_path 优先 scm schema（显式传入，不依赖进程变量）
+        let ctx = bootstrap_service_with_search_path(&config, "scm, public, shared").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;

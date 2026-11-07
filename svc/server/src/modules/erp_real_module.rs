@@ -17,7 +17,7 @@ use std::time::Duration;
 use topems_erp::modules::ApiState;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
-use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
@@ -34,9 +34,6 @@ pub struct ErpRealModule {
 impl ErpRealModule {
     /// 异步构建真实 ERP 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 erp schema（.env 默认 iam,shared,public 会解析到错误 schema）
-        std::env::set_var("SEARCH_PATH", "erp, public");
-
         let config = ServiceConfig {
             name: "topems-erp",
             port: 8010,
@@ -51,7 +48,8 @@ impl ErpRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器
-        let ctx = bootstrap_service(&config).await?;
+        //    search_path 优先 erp schema（显式传入，不依赖进程变量；.env 默认值会解析到错误 schema）
+        let ctx = bootstrap_service_with_search_path(&config, "erp, public").await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
