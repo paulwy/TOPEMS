@@ -286,10 +286,13 @@ pub async fn get_today_attendance(
             )
         }
         Err(e) => {
-            tracing::error!("调用HRM服务获取今日考勤失败: {}", e);
+            tracing::warn!("调用HRM服务获取今日考勤失败（降级空列表）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取今日考勤失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({ "items": [], "total": 0 }),
+                    "获取今日考勤成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -390,10 +393,13 @@ pub async fn get_attendance_record_by_id(
             )
         }
         Err(e) => {
-            tracing::error!("调用HRM服务获取考勤记录详情失败: {}", e);
+            tracing::warn!("调用HRM服务获取考勤记录详情失败（降级 null）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取考勤记录详情失败"),
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::Value::Null,
+                    "获取考勤记录详情成功（HRM 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -508,16 +514,19 @@ pub async fn check_in(
     match client.check_in(&request).await {
         Ok(record) => (StatusCode::OK, ApiResponse::success(record, "打卡成功")),
         Err(e) => {
-            tracing::error!("调用HRM服务打卡失败: {}", e);
-            let status = match &e {
-                TopemsError::ServiceError { status_code, .. }
-                    if (400..500).contains(status_code) =>
-                {
-                    StatusCode::from_u16(*status_code).unwrap_or(StatusCode::BAD_REQUEST)
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    let resp = downstream_error(&e, "打卡失败");
+                    let sc = StatusCode::from_u16(resp.code).unwrap_or(StatusCode::BAD_REQUEST);
+                    return (sc, resp);
                 }
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            (status, downstream_error(&e, "打卡失败"))
+            }
+            tracing::warn!("调用HRM服务打卡失败（降级503未接入）: {}", e);
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：HRM，打卡未执行"),
+            )
         }
     }
 }
@@ -558,16 +567,19 @@ pub async fn check_out(
     match client.check_out(&request).await {
         Ok(record) => (StatusCode::OK, ApiResponse::success(record, "下班打卡成功")),
         Err(e) => {
-            tracing::error!("调用HRM服务下班打卡失败: {}", e);
-            let status = match &e {
-                TopemsError::ServiceError { status_code, .. }
-                    if (400..500).contains(status_code) =>
-                {
-                    StatusCode::from_u16(*status_code).unwrap_or(StatusCode::BAD_REQUEST)
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    let resp = downstream_error(&e, "下班打卡失败");
+                    let sc = StatusCode::from_u16(resp.code).unwrap_or(StatusCode::BAD_REQUEST);
+                    return (sc, resp);
                 }
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            (status, downstream_error(&e, "下班打卡失败"))
+            }
+            tracing::warn!("调用HRM服务下班打卡失败（降级503未接入）: {}", e);
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：HRM，下班打卡未执行"),
+            )
         }
     }
 }
@@ -663,10 +675,10 @@ pub async fn apply_leave(
             ApiResponse::success(application, "请假申请提交成功"),
         ),
         Err(e) => {
-            tracing::error!("调用HRM服务提交请假申请失败: {}", e);
+            tracing::warn!("调用HRM服务提交请假申请失败（降级503未接入）: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("提交请假申请失败"),
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：HRM，请假申请未执行"),
             )
         }
     }

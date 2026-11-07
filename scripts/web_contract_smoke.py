@@ -268,6 +268,17 @@ POST_BODIES = {
     "/hrm/employees": {"name": "冒烟员工", "employee_no": "SMOKE001", "department_id": TEST_UUID},
     "/mes/work-orders": {"order_no": "SMOKE-WO-001", "product_id": TEST_UUID, "quantity": 1},
     "/tickets": {"title": "冒烟工单", "priority": "medium", "status": "open"},
+    # ===== 批 36：mobile 写端点补合法载荷，使请求通过反序列化进入 handler，
+    # 从而真正打到“上游服务未接入”的降级分支（此前空体 {} 在提取层即 422，
+    # 用 WARN 掩盖了未覆盖的 Err 路径）。
+    "/attendance/check-in": {"lat": 38.0423, "lng": 114.5147, "address": "smoke"},
+    "/attendance/check-out": {"lat": 38.0423, "lng": 114.5147, "address": "smoke"},
+    "/attendance/leaves": {"leave_type": "annual", "start_date": "2026-11-08",
+                           "end_date": "2026-11-08", "reason": "smoke"},
+    "/production/work-reports": {"order_id": "SMOKE-ORDER", "workstation": "smoke-ws",
+                                 "operator": "smoke", "quantity": 1, "good_quantity": 1,
+                                 "bad_quantity": 0, "start_time": "2026-11-07T09:00:00Z",
+                                 "end_time": "2026-11-07T10:00:00Z"},
 }
 
 
@@ -718,6 +729,16 @@ def main():
             # S25 语义：501 Not Implemented 是明确的“模块未实现”业务降级语义
             # （如 mes/energy 的告警/报表端点），非错误响应，计 PASS。
             reason = None
+        elif status == 503 and body_code == 503:
+            # 批 36 语义：503 是“上游服务未接入”的显式降级契约（写操作不假成功），
+            # 仅当 body.code==503 且 message 含“未接入”标识时计 PASS。
+            # 无 envelope 的真实网关 503、或 message 不含该标识的 503 仍判 FAIL，
+            # 避免用降级语义掩盖真实故障。
+            msg503 = body.get("message") if body else None
+            if msg503 and "未接入" in msg503:
+                reason = None
+            else:
+                reason = "handler_error"
         elif status >= 500 or body_code == 500:
             reason = "handler_error"
         verdict = "FAIL" if reason else "PASS"
@@ -745,6 +766,15 @@ def main():
                     reason2 = "route_missing"
             elif status2 == 501 or body_code2 == 501:
                 pass    # 501 降级语义（Not Implemented），正常
+            elif status2 == 503 and body_code2 == 503:
+                try:
+                    m2 = json.loads(raw2.decode()).get("message")
+                except Exception:
+                    m2 = None
+                if m2 and "未接入" in m2:
+                    pass    # 批 36：503 上游未接入降级契约，正常
+                else:
+                    reason2 = "handler_error"
             elif status2 >= 500 or body_code2 == 500:
                 reason2 = "handler_error"
             if not reason2:

@@ -754,13 +754,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/dashboard/activities",
             axum::routing::get(get_recent_activities),
         )
-        // customer（前端 /customer → CRM 服务完整 CRUD）
+        // customer（批 36：前端实际调 /customers（复数），此前真实 handler 挂在 /customer（单数）
+        // 导致前端全部流量命中 contract_fallback 的候选路由（读恒空、写 mutate_ok 假成功）。
+        // 现对齐前端路径，并由本处真实 handler 接管；contract_fallback 中对应的 /customers 系已移除。
         .route(
-            "/customer",
+            "/customers",
             axum::routing::get(list_customers).post(create_customer),
         )
         .route(
-            "/customer/{id}",
+            "/customers/{id}",
             axum::routing::get(get_customer)
                 .put(update_customer)
                 .delete(delete_customer),

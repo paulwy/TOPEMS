@@ -44,6 +44,7 @@ import {
   type StocktakeTask,
   type InboundOrder,
   type OutboundOrder,
+  inventoryApi,
 } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
@@ -64,85 +65,25 @@ const MobileInventoryPage: React.FC = () => {
     i18n.t('mobile.mobile_inventory_page.k1'),
     i18n.t('mobile.mobile_inventory_page.k0'),
   ];
+  const [itemsNotConnected, setItemsNotConnected] = useState(false);
+  const [stocktakeNotConnected, setStocktakeNotConnected] = useState(false);
+  const [inboundNotConnected, setInboundNotConnected] = useState(false);
+  const [outboundNotConnected, setOutboundNotConnected] = useState(false);
+  // 后端在「上游服务未接入」时返回 200 + degrade 标记（data.degraded === true）+ items=[]。
+  // 用结构化标记而非 message 文案判定，避免依赖中文串（响应文案可变，标记是契约）。
+  const detectNotConnected = (data: unknown, set: (v: boolean) => void) => {
+    const degraded =
+      typeof data === 'object' &&
+      data !== null &&
+      (data as { degraded?: unknown }).degraded === true;
+    set(degraded);
+  };
   const itemsQuery = useQuery<InventoryItem[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_ITEMS_BASE,
     queryFn: async () => {
-      const mockItems: InventoryItem[] = [
-        {
-          id: '1',
-          sku: 'MAT-001',
-          name: i18n.t('pages.mobile_inventory_page.10k_0'),
-          category: i18n.t('mobile.mobile_inventory_page.k4'),
-          quantity: 15000,
-          unit: i18n.t('mobile.mobile_inventory_page.k5'),
-          location: 'A1-03-05',
-          batch_no: 'B20240601',
-          status: 'normal',
-          last_updated: '2024-06-28 10:30',
-        },
-        {
-          id: '2',
-          sku: 'MAT-002',
-          name: i18n.t('pages.mobile_inventory_page.100f_1'),
-          category: i18n.t('mobile.mobile_inventory_page.k6'),
-          quantity: 8500,
-          unit: i18n.t('mobile.mobile_inventory_page.k7'),
-          location: 'A1-03-06',
-          batch_no: 'B20240602',
-          status: 'normal',
-          last_updated: '2024-06-28 09:15',
-        },
-        {
-          id: '3',
-          sku: 'MAT-003',
-          name: i18n.t('pages.mobile_inventory_page.pcb_2'),
-          category: i18n.t('mobile.mobile_inventory_page.k8'),
-          quantity: 500,
-          unit: i18n.t('mobile.mobile_inventory_page.k9'),
-          location: 'A2-01-02',
-          batch_no: 'B20240528',
-          status: 'low_stock',
-          last_updated: '2024-06-27 16:45',
-        },
-        {
-          id: '4',
-          sku: 'MAT-004',
-          name: i18n.t('mobile.mobile_inventory_page.k10'),
-          category: i18n.t('mobile.mobile_inventory_page.k11'),
-          quantity: 0,
-          unit: i18n.t('mobile.mobile_inventory_page.k12'),
-          location: 'B1-02-03',
-          batch_no: 'B20240520',
-          status: 'out_of_stock',
-          last_updated: '2024-06-26 14:20',
-        },
-        {
-          id: '5',
-          sku: 'FG-001',
-          name: i18n.t('mobile.mobile_inventory_page.k13'),
-          category: i18n.t('mobile.mobile_inventory_page.k14'),
-          quantity: 320,
-          unit: i18n.t('mobile.mobile_inventory_page.k15'),
-          location: 'C1-01-01',
-          batch_no: 'FG20240625',
-          expiry_date: '2025-06-25',
-          status: 'normal',
-          last_updated: '2024-06-28 08:00',
-        },
-        {
-          id: '6',
-          sku: 'FG-002',
-          name: i18n.t('mobile.mobile_inventory_page.k16'),
-          category: i18n.t('mobile.mobile_inventory_page.k17'),
-          quantity: 150,
-          unit: i18n.t('mobile.mobile_inventory_page.k18'),
-          location: 'C1-02-01',
-          batch_no: 'FG20240620',
-          status: 'normal',
-          last_updated: '2024-06-27 17:30',
-        },
-      ];
-      return mockItems;
+      const res = await inventoryApi.listItems();
+      detectNotConnected(res?.data, setItemsNotConnected);
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -150,42 +91,9 @@ const MobileInventoryPage: React.FC = () => {
   const stocktakeQuery = useQuery<StocktakeTask[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_STOCKTAKE_BASE,
     queryFn: async () => {
-      const mockStocktakeTasks: StocktakeTask[] = [
-        {
-          id: '1',
-          title: i18n.t('pages.mobile_inventory_page.a_3'),
-          warehouse: i18n.t('pages.mobile_inventory_page.a_4'),
-          status: 'in_progress',
-          total_items: 120,
-          counted_items: 85,
-          assignee: i18n.t('mobile.mobile_inventory_page.k19'),
-          due_date: '2024-06-30',
-          created_at: '2024-06-25T09:00:00Z',
-        },
-        {
-          id: '2',
-          title: i18n.t('mobile.mobile_inventory_page.k20'),
-          warehouse: i18n.t('pages.mobile_inventory_page.c_5'),
-          status: 'pending',
-          total_items: 45,
-          counted_items: 0,
-          assignee: i18n.t('mobile.mobile_inventory_page.k21'),
-          due_date: '2024-07-05',
-          created_at: '2024-06-28T08:00:00Z',
-        },
-        {
-          id: '3',
-          title: i18n.t('pages.mobile_inventory_page.b_6'),
-          warehouse: i18n.t('pages.mobile_inventory_page.b_7'),
-          status: 'completed',
-          total_items: 80,
-          counted_items: 80,
-          assignee: i18n.t('mobile.mobile_inventory_page.k22'),
-          due_date: '2024-06-20',
-          created_at: '2024-06-15T09:00:00Z',
-        },
-      ];
-      return mockStocktakeTasks;
+      const res = await inventoryApi.listStocktakeTasks();
+      detectNotConnected(res?.data, setStocktakeNotConnected);
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -193,42 +101,9 @@ const MobileInventoryPage: React.FC = () => {
   const inboundQuery = useQuery<InboundOrder[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_INBOUND_BASE,
     queryFn: async () => {
-      const mockInboundOrders: InboundOrder[] = [
-        {
-          id: '1',
-          orderNo: 'IN-2024-06-0891',
-          supplier: i18n.t('mobile.mobile_inventory_page.k23'),
-          type: 'purchase',
-          status: 'in_progress',
-          total_items: 5,
-          total_quantity: 5000,
-          expected_date: '2024-06-28',
-          created_at: '2024-06-26T10:00:00Z',
-        },
-        {
-          id: '2',
-          orderNo: 'IN-2024-06-0892',
-          supplier: i18n.t('mobile.mobile_inventory_page.k24'),
-          type: 'purchase',
-          status: 'pending',
-          total_items: 3,
-          total_quantity: 2000,
-          expected_date: '2024-06-30',
-          created_at: '2024-06-27T14:00:00Z',
-        },
-        {
-          id: '3',
-          orderNo: 'IN-2024-06-0890',
-          supplier: i18n.t('mobile.mobile_inventory_page.k25'),
-          type: 'purchase',
-          status: 'completed',
-          total_items: 2,
-          total_quantity: 10000,
-          expected_date: '2024-06-25',
-          created_at: '2024-06-20T09:00:00Z',
-        },
-      ];
-      return mockInboundOrders;
+      const res = await inventoryApi.listInboundOrders();
+      detectNotConnected(res?.data, setInboundNotConnected);
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -236,42 +111,9 @@ const MobileInventoryPage: React.FC = () => {
   const outboundQuery = useQuery<OutboundOrder[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_OUTBOUND_BASE,
     queryFn: async () => {
-      const mockOutboundOrders: OutboundOrder[] = [
-        {
-          id: '1',
-          orderNo: 'OUT-2024-06-0567',
-          customer: i18n.t('mobile.mobile_inventory_page.k26'),
-          type: 'sales',
-          status: 'in_progress',
-          total_items: 3,
-          total_quantity: 500,
-          expected_date: '2024-06-28',
-          created_at: '2024-06-27T16:00:00Z',
-        },
-        {
-          id: '2',
-          orderNo: 'OUT-2024-06-0566',
-          customer: i18n.t('mobile.mobile_inventory_page.k27'),
-          type: 'sales',
-          status: 'pending',
-          total_items: 5,
-          total_quantity: 1200,
-          expected_date: '2024-06-30',
-          created_at: '2024-06-28T08:30:00Z',
-        },
-        {
-          id: '3',
-          orderNo: 'OUT-2024-06-0565',
-          customer: i18n.t('mobile.mobile_inventory_page.k28'),
-          type: 'sales',
-          status: 'completed',
-          total_items: 2,
-          total_quantity: 300,
-          expected_date: '2024-06-26',
-          created_at: '2024-06-25T10:00:00Z',
-        },
-      ];
-      return mockOutboundOrders;
+      const res = await inventoryApi.listOutboundOrders();
+      detectNotConnected(res?.data, setOutboundNotConnected);
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -487,8 +329,16 @@ const MobileInventoryPage: React.FC = () => {
                   <EmptyState
                     compact
                     icon={<Package size={28} />}
-                    title={i18n.t('mobile.mobile_inventory_page.empty_material_title')}
-                    description={i18n.t('mobile.mobile_inventory_page.empty_material_desc')}
+                    title={
+                      itemsNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_material_not_connected_title')
+                        : i18n.t('mobile.mobile_inventory_page.empty_material_title')
+                    }
+                    description={
+                      itemsNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_material_not_connected_desc')
+                        : i18n.t('mobile.mobile_inventory_page.empty_material_desc')
+                    }
                   />
                 )}
                 {filteredItems.map((item, index) => (
@@ -574,8 +424,16 @@ const MobileInventoryPage: React.FC = () => {
                   <EmptyState
                     compact
                     icon={<ClipboardList size={28} />}
-                    title={i18n.t('mobile.mobile_inventory_page.empty_stocktake_title')}
-                    description={i18n.t('mobile.mobile_inventory_page.empty_stocktake_desc')}
+                    title={
+                      stocktakeNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_stocktake_not_connected_title')
+                        : i18n.t('mobile.mobile_inventory_page.empty_stocktake_title')
+                    }
+                    description={
+                      stocktakeNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_stocktake_not_connected_desc')
+                        : i18n.t('mobile.mobile_inventory_page.empty_stocktake_desc')
+                    }
                   />
                 )}
                 {stocktakeTasks.map((task, index) => (
@@ -727,8 +585,16 @@ const MobileInventoryPage: React.FC = () => {
                   <EmptyState
                     compact
                     icon={<Warehouse size={28} />}
-                    title={i18n.t('mobile.mobile_inventory_page.empty_inbound_title')}
-                    description={i18n.t('mobile.mobile_inventory_page.empty_inbound_desc')}
+                    title={
+                      inboundNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_inbound_not_connected_title')
+                        : i18n.t('mobile.mobile_inventory_page.empty_inbound_title')
+                    }
+                    description={
+                      inboundNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_inbound_not_connected_desc')
+                        : i18n.t('mobile.mobile_inventory_page.empty_inbound_desc')
+                    }
                   />
                 )}
                 {inboundOrders.map((order, index) => (
@@ -817,8 +683,16 @@ const MobileInventoryPage: React.FC = () => {
                   <EmptyState
                     compact
                     icon={<Truck size={28} />}
-                    title={i18n.t('mobile.mobile_inventory_page.empty_outbound_title')}
-                    description={i18n.t('mobile.mobile_inventory_page.empty_outbound_desc')}
+                    title={
+                      outboundNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_outbound_not_connected_title')
+                        : i18n.t('mobile.mobile_inventory_page.empty_outbound_title')
+                    }
+                    description={
+                      outboundNotConnected
+                        ? i18n.t('mobile.mobile_inventory_page.empty_outbound_not_connected_desc')
+                        : i18n.t('mobile.mobile_inventory_page.empty_outbound_desc')
+                    }
                   />
                 )}
                 {outboundOrders.map((order, index) => (

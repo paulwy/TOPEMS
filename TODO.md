@@ -2084,6 +2084,73 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.157 审计整改第三十六批：mobile 全量同源降级与移动端假数据清理（批 36，2026-11-07）
+
+**本批收掉批 35 遗留的第 2、3 项**（「smoke 的 payload 走 WARN 分支没打到 Err、端点真实仍会 500」+「前端两处本地假数据」）。原则「一步到位 + 写操作绝不假成功 + smoke 断言对齐真实语义」。
+
+### 一、确立 mobile 降级语义契约
+
+- **读操作**上游未接入 → `HTTP 200` + 空态（列表 `{items:[],total:0}` / 概览统计零值 / 详情 `null`）+ message「上游服务未接入，返回空态」。
+- **写操作**上游未接入 → **`HTTP 503` + `body.code=503` + message「上游服务未接入：<服务名>，<操作名>未执行」**，**绝不假成功**。用已有的 `ApiResponse::unavailable`（`lib/shared-core/src/response.rs:101`）。
+- **关键细节：4xx 业务校验失败必须透传**，不能被 503 吞掉——「我填错了」和「服务挂了」是两类语义，混同会让前端无法区分。`check_in`/`check_out`/`create_customer` 等均保留原 4xx 映射。
+- **结构化降级标记 `data.degraded === true`（由 pre-commit 门禁倒逼出的关键改进）**：初版前端靠 `msg.includes('未接入')` 判定读降级态，被 `hardcoded-precise` 拦下 2 处中文（`❌ Strict mode FAILED: 2 hardcoded CJK UI strings detected`），提交被阻断。**没有用挪位置绕检测，而是换成正解**——用文案做协议判定本质是脆弱的（文案一改即静默失效）。改为：后端 `inventory.rs`/`production.rs` 的 **10 处读降级返回**统一加 `"degraded": true`，前端判 `data.degraded === true`、**彻底删除中文匹配**。实测 4 个读端点均 `degraded=True, items=0`。写操作判定此前已用 `body.code === 503`，不受影响。
+
+### 二、smoke 的 503 语义豁免（本批最关键机制）
+
+smoke 原判定 `http>=500` 即 FAIL，与"写操作返回 503"直接冲突。解法**不是为过关改口径**，而是沿用仓内**已有的 501 豁免先例**（`scripts/web_contract_smoke.py:717-720` 注释明写「501 Not Implemented 是明确的业务降级语义，非错误响应，计 PASS」，来自 S25 语义治理）。503 按同一逻辑处理，但**豁免条件收紧为三项同时满足**：`HTTP==503` 且 `body.code==503` 且 `message` 含「未接入」。因此**真实网关 503（无我们的 envelope）、真实 500 故障仍判 FAIL** —— 降级语义不会被用来掩盖真实故障。重试段 `:746-752` 同步改。
+
+### 三、smoke 补覆盖 Err 路径（此前是「没测到」不是「测过且通过」）
+
+**根因**：`web_contract_smoke.py:644` `POST_BODIES.get(tmpl, {})`，取不到载荷就给空体；而 `POST_BODIES` 原先**没有任何 mobile 条目** → mobile 所有 POST 端点发空体 → `MobileCheckInRequest` 缺 `lat/lng`、`MobileCreateLeaveRequest` 缺 3 字段、`CreateWorkReportRequest` 缺 8 字段 → **422 在提取层就失败，请求根本没进 handler**，自然碰不到 Err 分支。这就是批 35「0 FAIL 但真实会 500」的成因。
+
+**处置**：按 `Json<T>` 结构补 4 条最小合法载荷（`/attendance/check-in`、`/attendance/check-out`、`/attendance/leaves`、`/production/work-reports`）。
+
+**覆盖有效性实测**（这是「断言对齐真实语义」的证明，不是"改完就绿"）：4 个端点 curl 全部 **HTTP 503 + code=503 + 「上游服务未接入：HRM/MES，XX未执行」** —— 载荷确实进了 handler、降级分支确实生效。
+
+### 四、后端降级清单（8 模块，约 166 调用点，逐 handler 判定读/写）
+
+- `attendance.rs`（HRM）：批 35 已改 6 个不动；新增 `get_today_attendance`/`get_attendance_record_by_id` 读→200；`check_in`/`check_out`/`apply_leave` 写→**4xx 透传 + 503**。
+- `inventory.rs`（WMS）：`create/update/delete_inventory_item` 写→503；`list_low_stock_items`/`scan_inventory` 读→200；`create_stocktake_record` 写→503；`stocktake`/`inbound`/`outbound` **补「返回空态」标识**。
+- `production.rs`（MES）：`create/update/delete_production_order` 写→503；`get_today_production_orders`/`get_workstation_orders` 读→200；`submit_work_report` 写→503；`work-reports`/`equipment` 补文案；`get_equipment`（**未挂路由的死代码**）顺手消除 500 路径。
+- `approval.rs`（Workflow）：5 读→200/200 null（**业务 404 映射保留**）+ 3 写→503。
+- `notifications.rs`：3 读→200 + 3 写→503；`delete_read_notifications` 无上游调用，不动。
+- `customer.rs`（CRM）：2 读→200 + 3 写→4xx 透传+503。
+- `quality.rs`（QMS）：2 读补文案 + `get_quality_task`→200 null（原为 200+内层 404）+ 2 写→503。
+- `workbench.rs`：**零改动，原本已全部达标**（5 个调用全是 `warn!` + 零值降级），本批范式即参照它。
+
+**修正批 35 一个判断盲区**：批 35 判「`stocktake`/`inbound`/`outbound`/`work-reports`/`equipment` 已有兜底、不影响 smoke」属实（不会 500），但这些 message 写的是「待上游支持」，**不含降级标识**，前端无法区分「没数据」与「没接入」。本批补文案，功能不变、语义变清晰。
+
+### 五、额外发现并修复：`/customers` 写操作假成功（超出原范围但违反底线）
+
+A 组取证发现：`customer.rs` 真实 handler 挂在 **`/customer`（单数）**，而前端 `apps/web/src/api/mobile/customer.ts:124-143` 调的是 **`/customers`（复数）**。复数被 `contract_fallback.rs:87-90` 占位路由接管，其 `mutate_ok` 返回「操作成功（轻量兜底，待上游支持）」——**用户新建/更新/删除客户界面提示成功，数据一条都没落库**。这比报错危害更大（用户不会重试）。
+
+**处置**（精准，不扩大为 165 端点全量改造）：`shared/mod.rs` 把 `/customer` → `/customers` 对齐前端；`contract_fallback.rs` 删掉 `/customers` 两条（避免 axum 重复路由 panic）；新增 `mutate_unavailable`（503 + 「上游服务未接入，该操作未执行」）供 `assign`/`contacts`/`follow-ups` 三条无真实实现的子端点使用。前端调用契约未变、无需改。
+
+**实测**：`GET /api/mobile/customers` → 200 空态「CRM 服务未接入，返回空态」；`POST` → **503「上游服务未接入：CRM，创建客户未执行」**（修复前是「操作成功」）。
+
+### 六、前端假数据清理（延续批 33「宁缺勿假」）
+
+- `MobileInventoryPage.tsx` 删 **4 组伪造数据集**（`mockItems` `:70-145` 带 `sku:'MAT-001'`/`quantity:15000`/`batch_no:'B20240601'`、`mockStocktakeTasks`、`mockInboundOrders`、`mockOutboundOrders`）→ 改接 `inventoryApi.listItems/listStocktakeTasks/listInboundOrders/listOutboundOrders`。
+- `useMobileProduction.ts` 整体重写：删 **3 组伪造数据集**（`mockOrders` `orderNo:'PO-2024-06-001'`、`mockReports`、`mockEquipment` `equipment_no:'EQ-001'`）→ 改接真实 API；**2 个假成功 mutation**（`submitReportMutation` 用 `setTimeout`、`updateOrderStatusMutation` 直接 `return params`）→ 改接 `submitWorkReport`/`startOrder`/`pauseOrder`。
+- **503 友好提示**：`isServiceUnavailableError`（`status===503 || body.code===503`）→ 「生产/考勤服务未接入，操作未执行。请稍后再试或联系管理员。」，走 warning 通知，**不进 onSuccess、不更新缓存、不弹通用错误**。i18n 新增 18 key（zh/en 一致）。
+- **清理验证**：7 个伪造常量名全量 grep **命中 0**；单测 3/3 + 关联 20/20 全过。
+
+### 七、验证（全绿）
+
+`cargo check -p topems-mobile -p topems-server` exit 0 零新增 warning；`cargo build -p topems-server` 18.18s；`cargo fmt --check` **0 Diff**；typecheck **0 错误**；eslint **0 error**；**全量 vitest 621 files / 6640 passed / 1 skipped / 0 failed（548.56s，与基线一致）**；迁移四件套 Errors 0 / drift 0（645 表）/ RLS PASS / 命名 PASS(strict)；i18n glossary PASS + quality 7-in-1 PASS；**smoke 4661/4661 PASS 0 FAIL（豁免 0，8099 主实例新二进制，未用 `--no-verify`）**，端点总数 4661 未变（本批改行为不增删调用点）。
+
+### 八、遗留
+
+1. **`contract_fallback.rs` 其余约 160 个占位端点写操作仍走 `mutate_ok` 假成功** —— 本批只修已确认前端真实在用的 `/customers` 系，全量改造影响面不可控，建议后续按前端实际调用量排序逐个收口。
+2. **`/leads` 系仍为 fallback**（POST + `/leads/{id}/convert` PUT 均 `mutate_ok`），前端有封装但未取证是否有页面在用。
+3. **`create/update/delete_production_order` 前端无封装**（后端有、前端从未调用，smoke 覆盖不到），已降级但**是否删除死端点留待后续取证**。
+4. **`get_equipment`（`production.rs`）未挂路由**，死代码，已消除 500 路径但端点本身仍未注册。
+5. **`mdm_suppliers.category` 暂不 DROP**（本批拍板），保留观察项。
+
+### 九、提交
+
+见下方提交记录（`docs/audit/P3-27_mobile全量降级与移动端假数据清理_批36_执行记录_2026-11-07.md` 含完整十一节记录与分项取证）。
+
 ## v1.156 审计整改第三十五批：smoke 500 清零与 category 收敛（批 35，2026-11-07）
 
 原则：**一步到位** + **门禁不得依赖运行环境**。本批消灭批 34 登记的 15 项 smoke 既有 500——这批 FAIL 让 `web-contract-smoke` 长期红，批 34 只能靠 `--no-verify` 绕过。

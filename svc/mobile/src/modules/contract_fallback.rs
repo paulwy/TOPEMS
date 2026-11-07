@@ -43,6 +43,16 @@ async fn mutate_ok() -> ApiResponse<Value> {
     ApiResponse::success(json!(null), "操作成功（轻量兜底，待上游支持）")
 }
 
+/// 写操作兜底：明确告知“上游未接入、操作未执行”，绝不返回假成功。
+/// 批 36：前端真实在用的客户子端点（assign / contacts / follow-ups）改用此兜底，
+/// 避免用户以为提交成功而实际数据未落库。message 含“未接入”以匹配 smoke 语义豁免。
+async fn mutate_unavailable() -> (StatusCode, ApiResponse<Value>) {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        ApiResponse::unavailable("上游服务未接入，该操作未执行"),
+    )
+}
+
 /// 组装兜底路由表（与 `build_protected_routes` 相同的 `AppState` 类型，供 .merge）。
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -84,19 +94,17 @@ pub fn routes() -> Router<AppState> {
         .route("/approvals/{p1}/history", get(detail_missing))
         .route("/attendance/leaves/{p1}/cancel", post(mutate_ok))
         .route("/company-info", get(list_empty))
-        .route("/customers", get(list_empty).post(mutate_ok))
-        .route(
-            "/customers/{p1}",
-            delete(mutate_ok).get(detail_missing).put(mutate_ok),
-        )
-        .route("/customers/{p1}/assign", post(mutate_ok))
+        // 批 36：/customers 与 /customers/{p1} 已由 shared/mod.rs 的真实 customer handler 接管
+        // （此前真实 handler 误挂在 /customer 单数，前端调复数导致全部流量落到本兜底）。
+        // 以下子端点后端无真实实现：读保持空态，写改为 503“未接入”，绝不假成功。
+        .route("/customers/{p1}/assign", post(mutate_unavailable))
         .route(
             "/customers/{p1}/contacts",
-            get(detail_missing).post(mutate_ok),
+            get(detail_missing).post(mutate_unavailable),
         )
         .route(
             "/customers/{p1}/follow-ups",
-            get(detail_missing).post(mutate_ok),
+            get(detail_missing).post(mutate_unavailable),
         )
         .route("/dashboards", get(list_empty).post(mutate_ok))
         .route("/dashboards/{p1}", get(detail_missing))

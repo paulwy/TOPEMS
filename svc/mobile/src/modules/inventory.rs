@@ -5,6 +5,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::modules::contract_util::{downstream_error, unwrap_data};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::wms_api::WmsApi, TypedServiceClient};
 
@@ -38,7 +39,7 @@ pub async fn list_inventory_items(
             // WMS 上游未启动时优雅降级：返回空列表，与同文件 stocktake/inbound/outbound 兜底口径一致。
             tracing::warn!("调用WMS服务获取库存列表失败（降级空列表）: {}", e);
             ApiResponse::success(
-                serde_json::json!({ "items": [], "total": 0 }),
+                serde_json::json!({ "items": [], "total": 0, "degraded": true }),
                 "获取库存列表成功（WMS 服务未接入，返回空态）",
             )
         }
@@ -63,8 +64,14 @@ pub async fn create_inventory_item(
     match client.create_inventory(&payload).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "创建库存成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务创建库存失败: {}", e);
-            downstream_error(&e, "创建库存失败")
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    return downstream_error(&e, "创建库存失败");
+                }
+            }
+            tracing::warn!("调用WMS服务创建库存失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：WMS，创建库存未执行")
         }
     }
 }
@@ -108,8 +115,14 @@ pub async fn update_inventory_item(
     match client.update_inventory(&id, &payload).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "更新库存成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务更新库存失败: {}", e);
-            downstream_error(&e, "更新库存失败")
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    return downstream_error(&e, "更新库存失败");
+                }
+            }
+            tracing::warn!("调用WMS服务更新库存失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：WMS，更新库存未执行")
         }
     }
 }
@@ -122,8 +135,14 @@ pub async fn delete_inventory_item(
     match client.delete_inventory(&id).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "删除库存成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务删除库存失败: {}", e);
-            downstream_error(&e, "删除库存失败")
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    return downstream_error(&e, "删除库存失败");
+                }
+            }
+            tracing::warn!("调用WMS服务删除库存失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：WMS，删除库存未执行")
         }
     }
 }
@@ -135,8 +154,11 @@ pub async fn list_low_stock_items(
     match client.list_low_stock_inventory().await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取低库存列表成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
-            ApiResponse::server_error("获取低库存列表失败")
+            tracing::warn!("调用WMS服务获取低库存列表失败（降级空列表）: {}", e);
+            ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0, "degraded": true }),
+                "获取低库存列表成功（WMS 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -175,8 +197,11 @@ pub async fn scan_inventory(
             }
         }
         Err(e) => {
-            tracing::error!("调用WMS服务扫码查询失败: {}", e);
-            ApiResponse::server_error("扫码查询失败")
+            tracing::warn!("调用WMS服务扫码查询失败（降级 null）: {}", e);
+            ApiResponse::success(
+                serde_json::Value::Null,
+                "扫码查询成功（WMS 服务未接入，返回空态）",
+            )
         }
     }
 }
@@ -203,8 +228,8 @@ pub async fn list_stocktake_tasks(
             // WMS 上游暂未实现盘点任务端点（探测 404），轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取盘点任务失败（兜底空列表）: {}", e);
             ApiResponse::success(
-                serde_json::json!({ "items": [], "total": 0 }),
-                "获取盘点任务列表成功（待上游支持）",
+                serde_json::json!({ "items": [], "total": 0, "degraded": true }),
+                "获取盘点任务列表成功（WMS 服务未接入，返回空态）",
             )
         }
     }
@@ -236,8 +261,8 @@ pub async fn create_stocktake_record(
     match client.create_stocktake_record(&task_id, &data).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "创建盘点记录成功"),
         Err(e) => {
-            tracing::error!("调用WMS服务创建盘点记录失败: {}", e);
-            ApiResponse::server_error("创建盘点记录失败")
+            tracing::warn!("调用WMS服务创建盘点记录失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：WMS，创建盘点记录未执行")
         }
     }
 }
@@ -264,8 +289,8 @@ pub async fn list_inbound_orders(
             // WMS 上游入库单响应暂无法解码，轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取入库单列表失败（兜底空列表）: {}", e);
             ApiResponse::success(
-                serde_json::json!({ "items": [], "total": 0 }),
-                "获取入库单列表成功（待上游支持）",
+                serde_json::json!({ "items": [], "total": 0, "degraded": true }),
+                "获取入库单列表成功（WMS 服务未接入，返回空态）",
             )
         }
     }
@@ -293,8 +318,8 @@ pub async fn list_outbound_orders(
             // WMS 上游出库单响应暂无法解码，轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取出库单列表失败（兜底空列表）: {}", e);
             ApiResponse::success(
-                serde_json::json!({ "items": [], "total": 0 }),
-                "获取出库单列表成功（待上游支持）",
+                serde_json::json!({ "items": [], "total": 0, "degraded": true }),
+                "获取出库单列表成功（WMS 服务未接入，返回空态）",
             )
         }
     }
