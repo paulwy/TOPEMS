@@ -2084,6 +2084,32 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.162 审计整改第四十一批：反向鉴权收口 + 对抗性验证（批 41，2026-11-07）
+
+原则「一步到位、安全不留死角」。承接批 40 §6「未覆盖（如实登记）」的六项遗留，逐项收口并做**真实对抗性验证**。
+
+① **doc 侧 74 条（分组漏归）**：`modules/doc/handlers.rs:626` 的 `create_routes()` 除 read/write/admin/dashboard 四组外，残余 `rest` 组仍是 auth-only，`GET /templates`（`list_templates`）就在其中——批 40 实测对无码用户 **200** 即此因。本批按 handler 职能与资源语义逐条并入已有组：**33→`doc:read` / 31→`doc:write` / 10→`doc:admin`**，`rest` 组只留 `GET /health`（健康探针，auth-only 保留）。全用 DB 已有码，未新建。逐条表见 `b41_doc_portal_report.md`。
+
+② **portal monitoring 5 条（语义错位）**：`monitoring.rs` 的 `get_monitoring_services:43` / `get_monitoring_metrics:98` / `get_monitoring_alerts:168` / `acknowledge_alert:221` / `get_monitoring_logs:236` **全部没有 Claims 参数**，纯转发 monitor 服务、失败时降级返回空列表，语义是**系统运维面**，却被挂在 `personal_routes`（个人自服务面，仅 auth 兜底）。用户表述"4 条"，实际代码 **5 条**（含 `POST /monitoring/alerts/{id}` 确认告警），按 5 条全部迁入 `admin_ops_routes`（与批 40 的 281 条同栈 rls→`portal:admin`→tenant→auth）。**迁移中修正的坑**：`personal_routes` 挂 `/api/portal` 前缀、子路由写相对路径，而 `admin_ops_routes` 用全路径——直接搬运会变成 `/api/monitoring/services`，已补全前缀，**URL 零变更**。
+
+③ **finance 95 条（网关兜底的假成立）**：14 个小文件原判为"依托网关层 `require_finance_write` 兜底"，但**该门只挡非 GET**——对 GET 而言兜底恒不成立，是真裸奔。单行 `grep get(` 会把 handler 内 DB `.get()` 误计入，改用跨行 route 声明括号平衡解析，确认 14 个文件 `require_permission` 出现次数原为 **0**。补挂 12 个文件：`reconciliation`→`finance:reconciliation:read`（新）、`event_routes`+`cqrs_routes`→`finance:event:read`（新）、`compliance_v51`→`finance:compliance:read`（新）、`audit_v52`→`finance:audit:read`（新）、`forecasting`+`forecast_v53`→`finance:budget:read`（复用）、`report_center`→`finance:report:read`（复用）、`decision_v60`→`finance:dashboard:read`（复用）、`treasury_v58`→`finance:treasury:read`（新）、`risk_v59`+`risk_v54`→`finance:risk:read`（新）。**无需补挂 2 个**：`voucher_template.rs`（无自有路由，全在 `mod.rs` voucher 域子 Router 内，批 40 已挂）、`bootstrap.rs`（仅 POST）。迁移 **0043** 补 6 码 + 授权 fm/admin/superadmin，幂等（首次 6+18 行、二次全 0 行）。
+
+④ **合计 174 条**（doc 74 + portal 5 + finance 95），新建码 6 个，**未重命名任何历史码**。
+
+⑤ **对抗性验证（真构造双租户，非单租户推断）**：建租户 B `…b0041` + B 用户 `…b0042` + 关联行 `…b0043`，A/B 对照数据各一份。**A 组 doc 14/14**：`GET /templates` employee **403** / 持 `doc:read` **200**，批 40 裸奔点闭合。**B 组 monitoring 5/5**：employee 全 403 / 持 `portal:admin` 全 200，且 46 条个人自服务未误伤。**C 组 finance 8/8**：6 个新码**逐个**签发实测（非抽样推断）均 403→200。**D 组跨租户双向**：A token+`x-tenant-id:…0001` 只见 `B41 A-user todo`、B token+`…b0041` 只见 `B41 B-user todo`，**互不可见**。**E 组跨用户写入**：A token 对 B 用户待办 `POST`/`DELETE` 均 **404**，DB 回查 `completed=false`/`deleted_at=NULL` **未被改写**；对照 A 完成自己的待办 **200 成功** + DB 变更，证明 404 是真实隔离而非端点失效，对照数据已回滚。**F 组 employee 横向 20 条**（ai/communication/plugin/portal/finance 跨域 manager 端点）**20/20 全 403**。**结论：无一条越权成功**。
+
+⑥ **载体选择的纠偏**：doc 模块 `DocumentService` 持裸 `PgPool`（`services/document.rs:7,11`）不走 `Db::scope` 请求级事务 → `app.tenant_id` GUC 恒空 → RLS 三分支全不成立 → **任何身份（含 superadmin）`GET /documents*` 恒 `data:null`/`[]`**。DB 直连证明 RLS 本身正常（`SET app.tenant_id='…b0041'` 能查到 d0042，`…0001` 查 d0042 为 0 行）——**是 fail-closed 功能缺陷，不是越权漏洞**，故 doc 上的"A 拿不到 B 文档"**不能**作为隔离证据，改用 `portal.portal_todos` 作可信载体。根因链：`lib/shared-db/src/database/mod.rs:96-137` 的 `after_connect` 仅在 `default_tenant` 为 `Some` 且非多租户时才设 GUC，当前 `.env` 是 `MULTI_TENANT_ENABLED=true` + `DEFAULT_TENANT_ID=…0001` → `default_tenant=None`。**已定性、本批未修**（改动面跨 shared-db 与 unified-core，需单独评估）。
+
+⑦ **顺带修掉一个既有功能缺陷（此前该功能整体不可用）**：`portal.portal_todos.user_id` 是 **`varchar`**，而 `svc/portal/src/modules/todos.rs` 写 `user_id = $1::uuid`（:48）、`user_id = $2::uuid`（:199、:245）→ PG 报 `operator does not exist: character varying = uuid` → 查询 `Err` → 走 `default_todos()` 硬编码兜底，**真实待办一条都查不出来**（任何用户都只看到「欢迎使用 TOPEMS 门户」「完善个人资料」两张假卡片）。改为 `user_id = $1`/`$2`（varchar 直接比较，避免 `::uuid` 在脏数据上抛错），`:147` 的 `VALUES ($1::uuid,…)` 保留（INSERT 的 id 列本就是 uuid）。复测 A/B 各自只见自己的待办、隔离成立。
+
+⑧ **测试数据清理（用完即清，已复核）**：`portal.portal_todos` f0041/f0042、`public.todos` e0041/e0042（插错的副本）、`public.core_doc_documents` d0041/d0042、`iam.tenant_users` b0043、`iam.users` b0042、`public.tenants` b0041 —— **六张表 remaining 全 0**。踩坑：把 `DELETE` 与一条对 uuid 列误用 `LIKE` 的验证 `SELECT` 放进同一 `psql -c` 多语句，后者报错 → **整个隐式事务回滚、删除被撤销**（首轮报 `DELETE 2` 但数据仍在），改逐表独立 `-tAc` 后复核通过。迁移 0043 补建的 6 码及其授权保留（正式迁移内容）。
+
+⑨ **门禁**：`cargo check` unified-core / portal / finance 均 **0 error**；`cargo build -p topems-server` exit 0（18.05s）；迁移四件套**全 exit 0**；0043 二次执行全 0 行；smoke **4501/4501 PASS、0 FAIL、豁免 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（500.23s，基线保持）；RLS 与表结构**未触碰**（仅权限行 + 角色授权 + 3 处 SQL 参数类型修正）；8099 PID **25940** health 200。
+
+⑩ **未覆盖（如实登记）**：unified-core iam 3 条禁动区（`/iam/roles`、`/iam/roles/{id}`、`/iam/permissions`）按"无把握不动"只登记未改；doc fail-closed 缺陷已定性未修；`public.core_doc_documents` 是否权威载体未确认（`flow`/`doc_service` schema 下同名表均 0 行）；finance 6 个新码的命名口径未经用户最终确认。
+
+⑪ **产物**：`artifacts/batch41/{b41_doc_portal_report.md, b41_finance_smallfiles_report.md, b41_adversarial_report.md}`；执行记录 `docs/audit/P3-32_反向鉴权收口与对抗性验证_批41_执行记录_2026-11-07.md`。
+
 ## v1.161 审计整改第四十批：反向鉴权缺口全站补挂（批 40，2026-11-07）
 
 原则「一步到位、安全优先」。承接批 39 §4.4 附带发现——`security()` 只写文档不产生运行时校验。

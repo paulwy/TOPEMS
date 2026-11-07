@@ -128,26 +128,6 @@ pub async fn build_router(
         .route("/todos/{id}", delete(modules::todos::delete_todo))
         .route("/user", get(modules::user::get_user_info))
         .route(
-            "/monitoring/services",
-            get(modules::monitoring::get_monitoring_services),
-        )
-        .route(
-            "/monitoring/metrics",
-            get(modules::monitoring::get_monitoring_metrics),
-        )
-        .route(
-            "/monitoring/alerts",
-            get(modules::monitoring::get_monitoring_alerts),
-        )
-        .route(
-            "/monitoring/alerts/{id}",
-            post(modules::monitoring::acknowledge_alert),
-        )
-        .route(
-            "/monitoring/logs",
-            get(modules::monitoring::get_monitoring_logs),
-        )
-        .route(
             "/notifications",
             get(modules::notifications::get_notifications),
         )
@@ -1415,6 +1395,30 @@ pub async fn build_router(
     // 个人自助面（todos/notifications/settings/dashboard/announcements 读/help 读等）保持
     // personal_routes 不动，避免误伤正常用户。
     let admin_ops_routes = Router::new()
+        // ==================== batch41: monitoring 5 条从 personal_routes 迁入运维面 ====================
+        // 语义：系统运维面（查服务/指标/告警/日志、确认告警），非个人自服务；
+        // handler 无 Claims 参数，纯转发 monitor 服务，须挂 portal:admin。
+        // URL 零变更：原 personal_routes 挂 /api/portal 前缀，此处写全路径保持一致。
+        .route(
+            "/api/portal/monitoring/services",
+            get(modules::monitoring::get_monitoring_services),
+        )
+        .route(
+            "/api/portal/monitoring/metrics",
+            get(modules::monitoring::get_monitoring_metrics),
+        )
+        .route(
+            "/api/portal/monitoring/alerts",
+            get(modules::monitoring::get_monitoring_alerts),
+        )
+        .route(
+            "/api/portal/monitoring/alerts/{id}",
+            post(modules::monitoring::acknowledge_alert),
+        )
+        .route(
+            "/api/portal/monitoring/logs",
+            get(modules::monitoring::get_monitoring_logs),
+        )
         // ==================== V51.0 Phase 21: GraphQL Schema 演进 + 破坏性变更检测 + 版本协商 ====================
         // POST /api/portal/schema-versioning/schema/versions — 发布新 Schema 版本
         .route(

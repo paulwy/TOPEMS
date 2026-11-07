@@ -1350,6 +1350,11 @@ pub fn create_routes() -> Router<AppState> {
             "/compliance-v51/reports/{id}/export",
             axum::routing::get(export_compliance_report_handler),
         )
+        // 批 41：内控合规路由统一挂 finance:compliance:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:compliance:read"),
+        ))
 }
 
 #[cfg(test)]

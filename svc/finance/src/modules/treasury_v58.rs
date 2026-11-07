@@ -1705,6 +1705,11 @@ pub fn create_routes() -> Router<AppState> {
             "/finance-v58/liquidity/history",
             axum::routing::get(get_optimization_history_handler),
         )
+        // 批 41：资金池/流动性/资金预测路由统一挂 finance:treasury:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:treasury:read"),
+        ))
 }
 
 #[cfg(test)]

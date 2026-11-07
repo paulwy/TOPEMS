@@ -647,6 +647,130 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
             "/documents/{document_id}/versions/{version}",
             axum::routing::get(get_document_version),
         )
+        // batch41: rest 组读类路由补挂 doc:read
+        .route("/templates", axum::routing::get(list_templates))
+        .route(
+            "/templates/approvals/pending",
+            axum::routing::get(list_pending_approvals_stub),
+        )
+        .route(
+            "/templates/approvals/my-pending",
+            axum::routing::get(list_my_pending_stub),
+        )
+        .route(
+            "/templates/approvals/my-submitted",
+            axum::routing::get(list_my_submitted_stub),
+        )
+        .route(
+            "/templates/approvals/my-history",
+            axum::routing::get(list_my_history_stub),
+        )
+        .route(
+            "/templates/approvals/{approval_id}",
+            axum::routing::get(get_approval_stub),
+        )
+        .route(
+            "/templates/usage/stats",
+            axum::routing::get(get_usage_stats_stub),
+        )
+        .route(
+            "/templates/usage/top",
+            axum::routing::get(get_top_templates_stub),
+        )
+        .route("/templates/{template_id}", axum::routing::get(get_template))
+        .route(
+            "/templates/{template_id}/render",
+            axum::routing::post(render_template_stub),
+        )
+        .route(
+            "/templates/{template_id}/approvals",
+            axum::routing::get(list_template_approvals_stub),
+        )
+        .route(
+            "/templates/{template_id}/assignments",
+            axum::routing::get(list_assignments_stub),
+        )
+        .route(
+            "/templates/{template_id}/usage",
+            axum::routing::get(get_template_usage_stub),
+        )
+        .route(
+            "/templates/{template_id}/export",
+            axum::routing::post(export_template_stub),
+        )
+        .route(
+            "/templates/{template_id}/dependencies",
+            axum::routing::get(list_dependencies_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/history",
+            axum::routing::get(get_version_history_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/changelog",
+            axum::routing::get(get_changelog_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/compare",
+            axum::routing::post(compare_versions_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions",
+            axum::routing::get(list_template_versions_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}",
+            axum::routing::get(get_template_version_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}/diff",
+            axum::routing::get(get_version_diff_stub),
+        )
+        .route(
+            "/documents/{document_id}/diff/{version_a}/{version_b}",
+            axum::routing::get(diff_versions_stub),
+        )
+        .route(
+            "/documents/{document_id}/lock",
+            axum::routing::get(get_lock_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators",
+            axum::routing::get(list_collaborators_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments",
+            axum::routing::get(list_comments_stub),
+        )
+        .route(
+            "/documents/{document_id}/activities",
+            axum::routing::get(list_activities_stub),
+        )
+        .route(
+            "/documents/{document_id}/share",
+            axum::routing::get(list_shares_stub),
+        )
+        .route("/workspaces", axum::routing::get(list_workspaces_stub))
+        .route(
+            "/workspaces/{workspace_id}",
+            axum::routing::get(get_workspace_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/tree",
+            axum::routing::get(get_workspace_tree_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/trash",
+            axum::routing::get(list_trash_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/search",
+            axum::routing::get(search_workspace_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/stats",
+            axum::routing::get(get_workspace_stats_stub),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("doc:read"),
@@ -673,6 +797,125 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
             "/documents/{document_id}/versions/{version}/restore",
             axum::routing::post(restore_document_version),
         )
+        // batch41: rest 组写类路由补挂 doc:write
+        .route("/templates", axum::routing::post(create_template))
+        .route(
+            "/templates/{template_id}",
+            axum::routing::put(update_template),
+        )
+        .route(
+            "/templates/{template_id}/duplicate",
+            axum::routing::post(duplicate_template_stub),
+        )
+        .route(
+            "/templates/{template_id}/toggle-status",
+            axum::routing::put(toggle_template_status_stub),
+        )
+        .route(
+            "/templates/{template_id}/approvals",
+            axum::routing::post(create_approval_stub),
+        )
+        .route(
+            "/templates/{template_id}/submit",
+            axum::routing::post(submit_template_stub),
+        )
+        .route(
+            "/templates/{template_id}/assignments",
+            axum::routing::post(create_assignment_stub),
+        )
+        .route(
+            "/templates/{template_id}/clone",
+            axum::routing::post(clone_template_stub),
+        )
+        .route(
+            "/templates/{template_id}/dependencies",
+            axum::routing::post(add_dependency_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions",
+            axum::routing::post(create_template_version_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}",
+            axum::routing::put(update_template_version_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}/activate",
+            axum::routing::post(activate_template_version_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}/rollback",
+            axum::routing::post(rollback_template_version_stub),
+        )
+        .route(
+            "/templates/{template_id}/versions/{version}/fork",
+            axum::routing::post(fork_template_version_stub),
+        )
+        .route(
+            "/templates/approvals/{approval_id}/approve",
+            axum::routing::post(approve_stub),
+        )
+        .route(
+            "/templates/approvals/{approval_id}/reject",
+            axum::routing::post(reject_stub),
+        )
+        .route(
+            "/templates/approvals/{approval_id}/cancel",
+            axum::routing::post(cancel_approval_stub),
+        )
+        .route(
+            "/documents/{document_id}/versions/{version}/publish",
+            axum::routing::post(publish_version_stub),
+        )
+        .route(
+            "/documents/{document_id}/versions/{version}/unpublish",
+            axum::routing::post(unpublish_version_stub),
+        )
+        .route(
+            "/documents/{document_id}/lock",
+            axum::routing::post(acquire_lock_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators",
+            axum::routing::post(add_collaborators_stub),
+        )
+        .route(
+            "/documents/{document_id}/collaborators/{user_id}",
+            axum::routing::put(update_collaborator_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments",
+            axum::routing::post(create_comment_stub),
+        )
+        .route(
+            "/documents/{document_id}/comments/{comment_id}",
+            axum::routing::put(update_comment_stub),
+        )
+        .route(
+            "/documents/{document_id}/share",
+            axum::routing::post(create_share_stub),
+        )
+        .route("/workspaces", axum::routing::post(create_workspace_stub))
+        .route(
+            "/workspaces/{workspace_id}",
+            axum::routing::put(update_workspace_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/move",
+            axum::routing::post(move_items_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/copy",
+            axum::routing::post(copy_items_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/sort",
+            axum::routing::post(sort_items_stub),
+        )
+        .route(
+            "/workspaces/{workspace_id}/restore/{item_id}",
+            axum::routing::post(restore_from_trash_stub),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("doc:write"),
@@ -689,295 +932,56 @@ pub fn create_routes(state: &AppState) -> Router<AppState> {
             "/templates/{template_id}",
             axum::routing::delete(delete_template),
         )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("doc:admin"),
-        ));
-
-    // Remaining routes (health, stubs, unflagged template CRUD, workspaces) — auth-only
-    let rest = Router::new()
-        .route("/health", axum::routing::get(doc_health))
-        .route("/templates", axum::routing::get(list_templates))
-        .route("/templates", axum::routing::post(create_template))
-        .route(
-            "/templates/approvals/pending",
-            axum::routing::get(list_pending_approvals_stub),
-        )
-        .route(
-            "/templates/approvals/my-pending",
-            axum::routing::get(list_my_pending_stub),
-        )
-        .route(
-            "/templates/approvals/my-submitted",
-            axum::routing::get(list_my_submitted_stub),
-        )
-        .route(
-            "/templates/approvals/my-history",
-            axum::routing::get(list_my_history_stub),
-        )
-        .route(
-            "/templates/approvals/{approval_id}",
-            axum::routing::get(get_approval_stub),
-        )
-        .route(
-            "/templates/approvals/{approval_id}/approve",
-            axum::routing::post(approve_stub),
-        )
-        .route(
-            "/templates/approvals/{approval_id}/reject",
-            axum::routing::post(reject_stub),
-        )
-        .route(
-            "/templates/approvals/{approval_id}/cancel",
-            axum::routing::post(cancel_approval_stub),
-        )
-        .route(
-            "/templates/usage/stats",
-            axum::routing::get(get_usage_stats_stub),
-        )
-        .route(
-            "/templates/usage/top",
-            axum::routing::get(get_top_templates_stub),
-        )
-        .route("/templates/{template_id}", axum::routing::get(get_template))
-        .route(
-            "/templates/{template_id}",
-            axum::routing::put(update_template),
-        )
-        .route(
-            "/templates/{template_id}/render",
-            axum::routing::post(render_template_stub),
-        )
-        .route(
-            "/templates/{template_id}/duplicate",
-            axum::routing::post(duplicate_template_stub),
-        )
-        .route(
-            "/templates/{template_id}/toggle-status",
-            axum::routing::put(toggle_template_status_stub),
-        )
-        .route(
-            "/templates/{template_id}/approvals",
-            axum::routing::get(list_template_approvals_stub),
-        )
-        .route(
-            "/templates/{template_id}/approvals",
-            axum::routing::post(create_approval_stub),
-        )
-        .route(
-            "/templates/{template_id}/submit",
-            axum::routing::post(submit_template_stub),
-        )
-        .route(
-            "/templates/{template_id}/assignments",
-            axum::routing::get(list_assignments_stub),
-        )
-        .route(
-            "/templates/{template_id}/assignments",
-            axum::routing::post(create_assignment_stub),
-        )
+        // batch41: rest 组删除/管理类路由补挂 doc:admin
         .route(
             "/templates/{template_id}/assignments/{assignment_id}",
             axum::routing::delete(delete_assignment_stub),
-        )
-        .route(
-            "/templates/{template_id}/usage",
-            axum::routing::get(get_template_usage_stub),
-        )
-        .route(
-            "/templates/{template_id}/clone",
-            axum::routing::post(clone_template_stub),
-        )
-        .route(
-            "/templates/{template_id}/export",
-            axum::routing::post(export_template_stub),
-        )
-        .route(
-            "/templates/{template_id}/dependencies",
-            axum::routing::get(list_dependencies_stub),
-        )
-        .route(
-            "/templates/{template_id}/dependencies",
-            axum::routing::post(add_dependency_stub),
         )
         .route(
             "/templates/{template_id}/dependencies/{dep_id}",
             axum::routing::delete(remove_dependency_stub),
         )
         .route(
-            "/templates/{template_id}/versions/history",
-            axum::routing::get(get_version_history_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/changelog",
-            axum::routing::get(get_changelog_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/compare",
-            axum::routing::post(compare_versions_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions",
-            axum::routing::get(list_template_versions_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions",
-            axum::routing::post(create_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}",
-            axum::routing::get(get_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}",
-            axum::routing::put(update_template_version_stub),
-        )
-        .route(
             "/templates/{template_id}/versions/{version}",
             axum::routing::delete(delete_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}/activate",
-            axum::routing::post(activate_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}/rollback",
-            axum::routing::post(rollback_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}/fork",
-            axum::routing::post(fork_template_version_stub),
-        )
-        .route(
-            "/templates/{template_id}/versions/{version}/diff",
-            axum::routing::get(get_version_diff_stub),
-        )
-        .route(
-            "/documents/{document_id}/versions/{version}/publish",
-            axum::routing::post(publish_version_stub),
-        )
-        .route(
-            "/documents/{document_id}/versions/{version}/unpublish",
-            axum::routing::post(unpublish_version_stub),
-        )
-        .route(
-            "/documents/{document_id}/diff/{version_a}/{version_b}",
-            axum::routing::get(diff_versions_stub),
-        )
-        .route(
-            "/documents/{document_id}/lock",
-            axum::routing::get(get_lock_stub),
-        )
-        .route(
-            "/documents/{document_id}/lock",
-            axum::routing::post(acquire_lock_stub),
         )
         .route(
             "/documents/{document_id}/lock",
             axum::routing::delete(release_lock_stub),
         )
         .route(
-            "/documents/{document_id}/collaborators",
-            axum::routing::get(list_collaborators_stub),
-        )
-        .route(
-            "/documents/{document_id}/collaborators",
-            axum::routing::post(add_collaborators_stub),
-        )
-        .route(
-            "/documents/{document_id}/collaborators/{user_id}",
-            axum::routing::put(update_collaborator_stub),
-        )
-        .route(
             "/documents/{document_id}/collaborators/{user_id}",
             axum::routing::delete(remove_collaborator_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments",
-            axum::routing::get(list_comments_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments",
-            axum::routing::post(create_comment_stub),
-        )
-        .route(
-            "/documents/{document_id}/comments/{comment_id}",
-            axum::routing::put(update_comment_stub),
         )
         .route(
             "/documents/{document_id}/comments/{comment_id}",
             axum::routing::delete(delete_comment_stub),
         )
         .route(
-            "/documents/{document_id}/activities",
-            axum::routing::get(list_activities_stub),
-        )
-        .route(
-            "/documents/{document_id}/share",
-            axum::routing::get(list_shares_stub),
-        )
-        .route(
-            "/documents/{document_id}/share",
-            axum::routing::post(create_share_stub),
-        )
-        .route(
             "/documents/{document_id}/share/{share_id}",
             axum::routing::delete(delete_share_stub),
-        )
-        .route("/workspaces", axum::routing::get(list_workspaces_stub))
-        .route("/workspaces", axum::routing::post(create_workspace_stub))
-        .route(
-            "/workspaces/{workspace_id}",
-            axum::routing::get(get_workspace_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}",
-            axum::routing::put(update_workspace_stub),
         )
         .route(
             "/workspaces/{workspace_id}",
             axum::routing::delete(delete_workspace_stub),
         )
         .route(
-            "/workspaces/{workspace_id}/tree",
-            axum::routing::get(get_workspace_tree_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/move",
-            axum::routing::post(move_items_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/copy",
-            axum::routing::post(copy_items_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/sort",
-            axum::routing::post(sort_items_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/trash",
-            axum::routing::get(list_trash_stub),
-        )
-        .route(
             "/workspaces/{workspace_id}/trash/{item_id}",
             axum::routing::delete(delete_from_trash_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/restore/{item_id}",
-            axum::routing::post(restore_from_trash_stub),
         )
         .route(
             "/workspaces/{workspace_id}/empty-trash",
             axum::routing::post(empty_trash_stub),
         )
-        .route(
-            "/workspaces/{workspace_id}/search",
-            axum::routing::get(search_workspace_stub),
-        )
-        .route(
-            "/workspaces/{workspace_id}/stats",
-            axum::routing::get(get_workspace_stats_stub),
-        );
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("doc:admin"),
+        ));
+
+    // batch41: rest 组业务路由已全部分类并入 read/write/admin 组，仅剩健康检查探针。
+    // /health 保持 auth-only（不挂任何 doc:* 权限）：它是负载均衡/容器编排的存活探针，
+    // 不应依赖业务权限码——探针失败会导致实例被摘除，与用户授权状态无关。
+    let rest = Router::new().route("/health", axum::routing::get(doc_health));
 
     read.merge(dashboard).merge(write).merge(admin).merge(rest)
 }
