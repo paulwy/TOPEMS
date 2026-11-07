@@ -859,11 +859,46 @@ jobs:
       - name: Run API coverage check (lowcode + automation)
         run: node scripts/ci/check-api-coverage.cjs --strict
 
-      - name: Run a11y coverage check (V65)
-        run: node scripts/ci/check-a11y.cjs --strict
+      # W6-D：47 条存量已冻结在基线，仅对新引入的 aria-label 缺失阻断（避免长期红灯）
+      - name: Run a11y coverage check (V65, baseline)
+        run: node scripts/ci/check-a11y.cjs --strict --baseline scripts/ci/a11y-baseline.json
+
+      # W6-D：42 条存量（fixed-px-spacing 37 / hardcoded-color 5）冻结在基线，仅阻断新增偏差
+      - name: Run design token check (baseline)
+        run: node scripts/ci/check-design-tokens.cjs --strict --baseline scripts/ci/design-tokens-baseline.json
 
       - name: Run i18n check (V65)
         run: node scripts/ci/check-i18n.cjs --strict
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # OpenAPI 契约 ↔ 文档同步门禁（W6-C，2026-11-07 接线）
+  #
+  # 目的：后端路由（svc/lib 的 .route 挂载、utoipa 注解）变更时，必须同步更新
+  #       docs/api/openapi.json 与 docs/api/openapi-aggregated.json，防止再次漂移。
+  # 做法：静态抽取 live 路由（scripts/dev/extract-live-routes.py，纯正则、无编译），
+  #       与两份产物求差集，并对照基线「只降不升」：
+  #         - docs/api/openapi-baseline-gaps.json（权威产物基线，1861 missing / 1075 extra）
+  #         - scripts/ci/openapi-aggregated-baseline.json（聚合产物棘轮，3788 / 735）
+  # 重生成入口：./scripts/openapi/generate.sh --extract
+  # ──────────────────────────────────────────────────────────────────────────
+  openapi-gate:
+    name: OpenAPI Contract Gate（W6-C）
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run OpenAPI coverage gate (authoritative openapi.json)
+        run: node scripts/ci/check-openapi-coverage.cjs
+
+      - name: Run aggregated OpenAPI ratchet gate
+        run: node scripts/ci/check-openapi-aggregated.cjs
 
   # ──────────────────────────────────────────────────────────────────────────
   # i18n 质量门禁（R11 Z-P1 固化）

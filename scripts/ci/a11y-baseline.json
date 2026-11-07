@@ -1,0 +1,24 @@
+{
+  "_comment": "a11y aria-label 违规基线（按文件计数，2026-11-07 实测）。仅允许下降；修复后请下调对应计数。",
+  "updated_at": "2026-11-07",
+  "total": 47,
+  "files": {
+    "apps/web/src/pages/crm/TagPage.tsx": 2,
+    "apps/web/src/pages/finance/FinanceCurrencyPage.tsx": 2,
+    "apps/web/src/pages/gis/DevicePage.tsx": 2,
+    "apps/web/src/pages/lims/AnalytePage.tsx": 2,
+    "apps/web/src/pages/lims/MethodCategoryPage.tsx": 2,
+    "apps/web/src/pages/master/AiGovernancePage.tsx": 9,
+    "apps/web/src/pages/master/CommercialConsolePage.tsx": 3,
+    "apps/web/src/pages/master/LineageAnalyticsPage.tsx": 1,
+    "apps/web/src/pages/master/PublicMasterDataPage.tsx": 2,
+    "apps/web/src/pages/master/SchemaRegistryPage.tsx": 5,
+    "apps/web/src/pages/mes/CapacityPage.tsx": 2,
+    "apps/web/src/pages/mes/MesMasterDataPage.tsx": 2,
+    "apps/web/src/pages/pdm/PdmDrawingPage.tsx": 2,
+    "apps/web/src/pages/pm/PmProjectTypeConfigPage.tsx": 2,
+    "apps/web/src/pages/qms/InspectionStandardPage.tsx": 2,
+    "apps/web/src/pages/shared/ForceChangePasswordPage.tsx": 3,
+    "apps/web/src/pages/system/MenuManagementPage/index.tsx": 4
+  }
+}

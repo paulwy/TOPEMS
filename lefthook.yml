@@ -71,6 +71,40 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         python3 scripts/dev/contract-gate.py
 
+    # [Gate OA] OpenAPI 契约 ↔ 文档同步（W6-C，2026-11-07 接线）
+    # 双门禁：
+    #   ① 权威 docs/api/openapi.json 的 live 覆盖（基线 docs/api/openapi-baseline-gaps.json）
+    #   ② 聚合 docs/api/openapi-aggregated.json 的计数棘轮（scripts/ci/openapi-aggregated-baseline.json）
+    # 存量缺口已冻结进基线（coverage 1861 missing/1075 extra；aggregated 3788/735），
+    # 仅当新增路由未同步进文档时阻断；重生成入口: ./scripts/openapi/generate.sh --extract
+    openapi-gate:
+      tags: contract api openapi
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$|^docs/api/openapi|^scripts/openapi/|^scripts/ci/check-openapi|^scripts/dev/extract-live-routes\.py$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-openapi-coverage.cjs
+        node scripts/ci/check-openapi-aggregated.cjs
+
+    # [Gate A11Y] aria-label 覆盖率（W6-D，2026-11-07 接线）
+    # 存量 47 条 / 17 文件已冻结在 scripts/ci/a11y-baseline.json，
+    # 仅阻断「改动文件超出基线」的新增违规（未改动文件的存量不误伤）。
+    a11y-changed:
+      tags: frontend a11y
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/(pages|components)/.*\.tsx$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-a11y.cjs --changed-only --strict --baseline scripts/ci/a11y-baseline.json
+
+    # [Gate DT] Design Token 合规（W6-D，2026-11-07 接线）
+    # 存量 42 条 / 18 文件（fixed-px-spacing 37、hardcoded-color 5）已冻结在
+    # scripts/ci/design-tokens-baseline.json；仅阻断暂存文件超出基线的新增偏差。
+    design-tokens-changed:
+      tags: frontend design-tokens
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/web|packages/shared-components)/src/.*\.(ts|tsx|css|scss)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-design-tokens.cjs --staged --strict --baseline scripts/ci/design-tokens-baseline.json
+
     # [Gate G] Permission matrix 3-way gate (blocking: R1/R4/R5/R6)
     perm-matrix:
       tags: permission security
@@ -533,3 +567,15 @@ pre-push:
           exit 0
         fi
         bash scripts/dev/domain-probe.sh
+
+    # [Gate DC] decode 契约扫描（W6-D）：交叉比对 prod 列目录与 Rust 动态解码类型
+    # 依赖 /tmp/prod_cols.psv（prod 列目录只读导出）；本仓库工作流约束禁止访问生产库，
+    # 缺失时 SKIP 不阻断（脚本本身仅报告、不改退出码）。生成命令见脚本文件头。
+    decode-contract:
+      tags: database rust contract
+      run: |
+        if [ ! -f /tmp/prod_cols.psv ]; then
+          printf '\033[33m[Gate DC] SKIP\033[0m 缺少 /tmp/prod_cols.psv（需只读导出 prod 列目录；本约束禁止访问生产库）\n'
+          exit 0
+        fi
+        node scripts/ci/check-decode-contract.mjs /tmp/prod_cols.psv

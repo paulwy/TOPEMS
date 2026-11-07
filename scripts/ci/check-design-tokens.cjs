@@ -98,12 +98,18 @@ const PATTERNS = [
 const args = process.argv.slice(2);
 const strict = args.includes('--strict');
 const changedOnly = args.includes('--changed-only');
+const staged = args.includes('--staged');
 const jsonMode = args.includes('--json');
+const baselineIdx = args.indexOf('--baseline');
+const baselinePath = baselineIdx !== -1 && args[baselineIdx + 1] ? path.resolve(args[baselineIdx + 1]) : null;
 const maxFindings = Number(args.find((a) => a.startsWith('--max-findings='))?.split('=')[1] ?? 80);
 
 function getGitChangedFiles() {
   try {
-    const output = execSync('git diff --name-only --diff-filter=ACM origin/main...HEAD', {
+    const cmd = staged
+      ? 'git diff --cached --name-only --diff-filter=ACM'
+      : 'git diff --name-only --diff-filter=ACM origin/main...HEAD';
+    const output = execSync(cmd, {
       cwd: ROOT,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'ignore'],
@@ -189,7 +195,7 @@ function collectFindings(filePath) {
 function main() {
   let files = [];
 
-  if (changedOnly) {
+  if (changedOnly || staged) {
     const changedFiles = getGitChangedFiles();
     files = changedFiles
       .filter((f) => SCAN_ROOTS.some((root) => f.startsWith(root)))
@@ -207,10 +213,39 @@ function main() {
     return acc;
   }, {});
 
+  // 基线模式：按文件计数比较，只把「超出基线的新增偏差」计为阻断项
+  let excessFindings = findings;
+  let baselineInfo = null;
+  if (baselinePath) {
+    let baseline = { files: {} };
+    if (fs.existsSync(baselinePath)) {
+      baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+    }
+    const perFile = new Map();
+    for (const f of findings) perFile.set(f.file, (perFile.get(f.file) || 0) + 1);
+    excessFindings = [];
+    for (const [file, count] of perFile) {
+      const allowed = (baseline.files && baseline.files[file]) || 0;
+      if (count > allowed) {
+        excessFindings.push(...findings.filter((f) => f.file === file).slice(allowed));
+      }
+    }
+    baselineInfo = {
+      path: path.relative(ROOT, baselinePath),
+      allowedTotal: Object.values(baseline.files || {}).reduce((a, b) => a + b, 0),
+      excess: excessFindings.length,
+    };
+  }
+
+  const passed = baselineInfo ? excessFindings.length === 0 : findings.length === 0;
+
   const result = {
     scannedFiles: files.length,
-    scanScope: changedOnly ? 'changed-only' : 'full',
+    scanScope: staged ? 'staged' : changedOnly ? 'changed-only' : 'full',
     totalFindings: findings.length,
+    baseline: baselineInfo,
+    excessFindings: excessFindings.length,
+    passed,
     byRule: grouped,
     findings: findings.slice(0, maxFindings),
     hasMore: findings.length > maxFindings,
@@ -225,6 +260,10 @@ function main() {
     console.log(`扫描范围: ${result.scanScope}`);
     console.log(`扫描文件数: ${files.length}`);
     console.log(`发现偏差数: ${findings.length}`);
+    if (baselineInfo) {
+      console.log(`基线: ${baselineInfo.path}（允许 ${baselineInfo.allowedTotal} 条）`);
+      console.log(`超出基线: ${baselineInfo.excess}`);
+    }
     Object.entries(grouped).forEach(([rule, count]) => {
       console.log(`- ${rule}: ${count}`);
     });
@@ -240,9 +279,9 @@ function main() {
     }
   }
 
-  if (strict && findings.length > 0) {
+  if (strict && !passed) {
     if (!jsonMode) {
-      console.error('\n❌ strict 模式失败：存在 Design Token 偏差。');
+      console.error('\n❌ strict 模式失败：存在超出基线的 Design Token 偏差。');
     }
     process.exit(1);
   }

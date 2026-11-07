@@ -15,6 +15,7 @@
 #   ./scripts/openapi/generate.sh --timeout 5       # 设置单个服务抓取超时时间（秒）
 #   ./scripts/openapi/generate.sh --extract         # 通过 cargo test 提取各服务 spec（无需启动服务）
 #   ./scripts/openapi/generate.sh --extract --with-types   # 提取 + 聚合 + 生成 TS 类型
+#   ./scripts/openapi/generate.sh --extract --output-dir /tmp/openapi-out   # 输出到指定目录（不覆盖仓库产物）
 #
 # 依赖：curl, python3 (PyYAML 可选, 用于 YAML 输出)
 #       --extract 额外依赖：cargo（在 monorepo 根执行 cargo test 提取 spec）
@@ -46,7 +47,6 @@ log_error()   { echo -e "${RED}[ERROR]${NC} $*"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUTPUT_DIR="${ROOT_DIR}/docs/api"
-mkdir -p "${OUTPUT_DIR}"
 
 # ==============================================
 # 服务清单
@@ -127,6 +127,7 @@ print_help() {
   --extract-services <a,b,c>  覆盖 --extract 默认服务列表（默认: finance,hrm,mes,master-data,qms,unified-core,wms,feedback）
   --timeout <seconds>    单个服务抓取超时时间（默认: 10秒）
   --connect-timeout <s>  连接超时时间（默认: 3秒）
+  --output-dir <dir>     输出目录（默认: docs/api；相对路径按仓库根解析）
   -h, --help             显示帮助信息
 
 示例:
@@ -155,10 +156,17 @@ while [[ $# -gt 0 ]]; do
       ;;
     --timeout) MAX_TIMEOUT="$2"; shift 2 ;;
     --connect-timeout) CONNECT_TIMEOUT="$2"; shift 2 ;;
+    --output-dir) OUTPUT_DIR="$2"; shift 2 ;;
     -h|--help) print_help; exit 0 ;;
     *) log_error "Unknown option: $1"; echo ""; print_help; exit 1 ;;
   esac
 done
+
+# --output-dir 相对路径按仓库根解析，便于在任意 cwd 下重复执行
+if [[ "${OUTPUT_DIR}" != /* ]]; then
+  OUTPUT_DIR="${ROOT_DIR}/${OUTPUT_DIR}"
+fi
+mkdir -p "${OUTPUT_DIR}"
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "${TMP_DIR}"' EXIT
@@ -355,14 +363,16 @@ STATUS_REPORT="${TMP_DIR}/status.md"
 FAILED_SERVICES=()
 SUCCESSFUL_SERVICES=()
 
-echo "# TOPEMS 服务 OpenAPI 状态报告" > "${STATUS_REPORT}"
-echo "" >> "${STATUS_REPORT}"
-echo "_生成时间: $(date -u +"%Y-%m-%dT%H:%M:%SZ")_" >> "${STATUS_REPORT}"
-echo "" >> "${STATUS_REPORT}"
-echo "## 概览" >> "${STATUS_REPORT}"
-echo "" >> "${STATUS_REPORT}"
-echo "| 指标 | 数量 |" >> "${STATUS_REPORT}"
-echo "|------|------|" >> "${STATUS_REPORT}"
+{
+  echo "# TOPEMS 服务 OpenAPI 状态报告"
+  echo ""
+  echo "_生成时间: $(date -u +"%Y-%m-%dT%H:%M:%SZ")_"
+  echo ""
+  echo "## 概览"
+  echo ""
+  echo "| 指标 | 数量 |"
+  echo "|------|------|"
+} > "${STATUS_REPORT}"
 
 echo ""
 log_info ">>> 抓取服务 OpenAPI 文档..."

@@ -11,6 +11,9 @@
 //   node scripts/ci/check-a11y.cjs --json           # 输出 JSON 格式
 //   node scripts/ci/check-a11y.cjs --strict         # 严格模式：超过阈值则 exit 1
 //   node scripts/ci/check-a11y.cjs --threshold 10   # 自定义阈值（默认 10）
+//   node scripts/ci/check-a11y.cjs --changed-only   # 仅扫描 git 暂存区的 .tsx（配合 pre-commit）
+//   node scripts/ci/check-a11y.cjs --changed-only --strict \
+//     --baseline scripts/ci/a11y-baseline.json      # 只阻断「超过每文件基线」的新增违规
 //
 // 退出码：
 //   0 = 通过（未覆盖数 ≤ 阈值）
@@ -18,7 +21,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
+const ROOT_DIR = path.resolve(__dirname, '../..');
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
 const PAGES_DIR = path.join(WEB_ROOT, 'pages');
 const COMPONENTS_DIR = path.join(WEB_ROOT, 'components');
@@ -29,6 +34,9 @@ const jsonMode = args.includes('--json');
 const strictMode = args.includes('--strict');
 const thresholdIdx = args.indexOf('--threshold');
 const threshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 10;
+const changedOnly = args.includes('--changed-only');
+const baselineIdx = args.indexOf('--baseline');
+const baselinePath = baselineIdx !== -1 && args[baselineIdx + 1] ? path.resolve(args[baselineIdx + 1]) : null;
 
 // 递归收集所有 .tsx 文件
 function collectTsxFiles(dir) {
@@ -157,9 +165,38 @@ function findIconOnlyButtonWithoutAriaLabel(content, filePath) {
   return violations;
 }
 
+// 收集 git 暂存区中的 .tsx（仅 pages/components，排除 test/stories）
+function collectStagedTsxFiles() {
+  try {
+    const out = execSync('git diff --cached --name-only --diff-filter=ACM', {
+      cwd: ROOT_DIR,
+      encoding: 'utf8',
+    });
+    return out
+      .split('\n')
+      .map((f) => f.trim())
+      .filter(
+        (f) =>
+          /^apps\/web\/src\/(pages|components)\/.+\.tsx$/.test(f) &&
+          !/\.(test|stories)\.tsx$/.test(f)
+      )
+      .map((f) => path.join(ROOT_DIR, f))
+      .filter((p) => fs.existsSync(p));
+  } catch {
+    return [];
+  }
+}
+
 // 主流程
 function main() {
-  const files = [...collectTsxFiles(PAGES_DIR), ...collectTsxFiles(COMPONENTS_DIR)];
+  const files = changedOnly
+    ? collectStagedTsxFiles()
+    : [...collectTsxFiles(PAGES_DIR), ...collectTsxFiles(COMPONENTS_DIR)];
+
+  if (changedOnly && files.length === 0) {
+    console.log('[a11y] 暂存区无 pages/components 下的 .tsx 变更，跳过。');
+    return;
+  }
 
   const allViolations = [];
   const fileSet = new Set();
@@ -177,7 +214,33 @@ function main() {
   }
 
   const totalViolations = allViolations.length;
+
+  // 基线模式：按文件计数比较，只把「超出基线的新增违规」计为阻断项
+  let excessViolations = allViolations;
+  let baselineInfo = null;
+  if (baselinePath) {
+    let baseline = { files: {} };
+    if (fs.existsSync(baselinePath)) {
+      baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+    }
+    const perFile = new Map();
+    for (const v of allViolations) perFile.set(v.file, (perFile.get(v.file) || 0) + 1);
+    excessViolations = [];
+    for (const [file, count] of perFile) {
+      const allowed = (baseline.files && baseline.files[file]) || 0;
+      if (count > allowed) {
+        excessViolations.push(...allViolations.filter((v) => v.file === file).slice(allowed));
+      }
+    }
+    baselineInfo = {
+      path: path.relative(ROOT_DIR, baselinePath),
+      allowedTotal: Object.values(baseline.files || {}).reduce((a, b) => a + b, 0),
+      excess: excessViolations.length,
+    };
+  }
+
   const fileCount = fileSet.size;
+  const passed = baselineInfo ? excessViolations.length === 0 : totalViolations <= threshold;
 
   if (jsonMode) {
     console.log(
@@ -186,7 +249,9 @@ function main() {
           totalViolations,
           fileCount,
           threshold,
-          passed: totalViolations <= threshold,
+          baseline: baselineInfo,
+          excessViolations: excessViolations.length,
+          passed,
           violations: allViolations,
         },
         null,
@@ -201,22 +266,28 @@ function main() {
     console.log(`  扫描文件数: ${files.length}`);
     console.log(`  未覆盖文件数: ${fileCount}`);
     console.log(`  未覆盖组件数: ${totalViolations}`);
-    console.log(`  阈值: ${threshold}`);
-    console.log(`  状态: ${totalViolations <= threshold ? '✅ 通过' : '❌ 未通过'}`);
+    if (baselineInfo) {
+      console.log(`  基线: ${baselineInfo.path}（允许 ${baselineInfo.allowedTotal} 条）`);
+      console.log(`  超出基线: ${baselineInfo.excess}`);
+    } else {
+      console.log(`  阈值: ${threshold}`);
+    }
+    console.log(`  状态: ${passed ? '✅ 通过' : '❌ 未通过'}`);
     console.log('═══════════════════════════════════════════════════════════');
 
-    if (allViolations.length > 0) {
+    const shown = baselineInfo ? excessViolations : allViolations;
+    if (shown.length > 0) {
       console.log('\n未覆盖清单 (top 30):');
-      allViolations.slice(0, 30).forEach((v, idx) => {
+      shown.slice(0, 30).forEach((v, idx) => {
         console.log(`  ${idx + 1}. [${v.component}] ${v.file}:${v.line}`);
       });
-      if (allViolations.length > 30) {
-        console.log(`  ... 还有 ${allViolations.length - 30} 条`);
+      if (shown.length > 30) {
+        console.log(`  ... 还有 ${shown.length - 30} 条`);
       }
     }
   }
 
-  if (strictMode && totalViolations > threshold) {
+  if (strictMode && !passed) {
     process.exit(1);
   }
 }
