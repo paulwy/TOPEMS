@@ -56,18 +56,8 @@ export const deviceApi = {
   updatePushToken: async (data: UpdatePushTokenRequest): Promise<ApiResponse<void>> => {
     return apiClient.mobile.put('/devices/token', data);
   },
-
-  listDevices: async (): Promise<ApiResponse<DeviceInfo[]>> => {
-    return apiClient.mobile.get('/devices');
-  },
-
-  getDevice: async (id: string): Promise<ApiResponse<DeviceInfo>> => {
-    return apiClient.mobile.get(`/devices/${id}`);
-  },
-
-  deactivateDevice: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.mobile.delete(`/devices/${id}`);
-  },
+  // 批 37 (g3)：listDevices / getDevice / deactivateDevice 对应 contract_fallback
+  // 的 GET /devices、GET/DELETE /devices/{id} 占位，前端零引用，死封装已删除。
 };
 
 export default deviceApi;

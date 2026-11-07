@@ -179,10 +179,9 @@ export const attendanceApi = {
   applyLeave: async (data: CreateLeaveRequest): Promise<ApiResponse<LeaveApplication>> => {
     return apiClient.mobile.post('attendance/leaves', data);
   },
-
-  cancelLeave: async (id: string): Promise<ApiResponse<LeaveApplication>> => {
-    return apiClient.mobile.post(`attendance/leaves/${id}/cancel`);
-  },
+  // 批 37 (g3)：cancelLeave（POST /attendance/leaves/{id}/cancel）为 contract_fallback
+  // 假成功占位；后端 shared/mod.rs 仅注册 GET/POST /attendance/leaves，无 cancel 真实实现。
+  // 前端零引用，死封装已删除。
 };
 
 export default attendanceApi;

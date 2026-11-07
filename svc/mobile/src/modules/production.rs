@@ -76,48 +76,11 @@ pub async fn get_production_order(
     }
 }
 
-/// 创建生产订单（前端 POST /production/orders → MES POST /orders）
-pub async fn create_production_order(
-    State(client): State<TypedServiceClient<MesApi>>,
-    axum::extract::Json(payload): axum::extract::Json<serde_json::Value>,
-) -> ApiResponse<serde_json::Value> {
-    match client.create_production_order(&payload).await {
-        Ok(data) => ApiResponse::success(unwrap_data(data), "创建生产订单成功"),
-        Err(e) => {
-            tracing::warn!("调用MES服务创建生产订单失败（降级503未接入）: {}", e);
-            ApiResponse::unavailable("上游服务未接入：MES，创建生产订单未执行")
-        }
-    }
-}
-
-/// 更新生产订单（前端 PUT /production/orders/{id} → MES PUT /orders/{id}）
-pub async fn update_production_order(
-    State(client): State<TypedServiceClient<MesApi>>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    axum::extract::Json(payload): axum::extract::Json<serde_json::Value>,
-) -> ApiResponse<serde_json::Value> {
-    match client.update_production_order(&id, &payload).await {
-        Ok(data) => ApiResponse::success(unwrap_data(data), "更新生产订单成功"),
-        Err(e) => {
-            tracing::warn!("调用MES服务更新生产订单失败（降级503未接入）: {}", e);
-            ApiResponse::unavailable("上游服务未接入：MES，更新生产订单未执行")
-        }
-    }
-}
-
-/// 删除生产订单（前端 DELETE /production/orders/{id} → MES DELETE /orders/{id}）
-pub async fn delete_production_order(
-    State(client): State<TypedServiceClient<MesApi>>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> ApiResponse<serde_json::Value> {
-    match client.delete_production_order(&id).await {
-        Ok(data) => ApiResponse::success(unwrap_data(data), "删除生产订单成功"),
-        Err(e) => {
-            tracing::warn!("调用MES服务删除生产订单失败（降级503未接入）: {}", e);
-            ApiResponse::unavailable("上游服务未接入：MES，删除生产订单未执行")
-        }
-    }
-}
+// 批 37：create/update/delete_production_order 三 handler 已删除。
+// 四路取证：前端 `api/mobile/production.ts` 的 12 个方法里没有这三个，barrel `index.ts`
+// 也没有转发，属 C 类（后端有、前端完全无声明）真死代码。此前降级为 503 已不假成功，
+// 但保留无消费端点是长期噪音，故删除 handler + shared/mod.rs 路由注册。
+// 保留 start/complete：`pauseOrder` 同族页面真实在用。
 
 /// 开始生产订单（前端 POST /production/orders/{id}/start → MES PUT /orders/{id}/start）
 pub async fn start_production_order(

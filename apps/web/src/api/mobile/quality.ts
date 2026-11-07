@@ -97,10 +97,6 @@ export const qualityApi = {
     return apiClient.mobile.get(`quality/tasks/${id}`);
   },
 
-  startTask: async (id: string): Promise<ApiResponse<QualityTask>> => {
-    return apiClient.mobile.post(`quality/tasks/${id}/start`);
-  },
-
   updateTaskStatus: async (
     id: string,
     data: UpdateTaskStatusRequest
@@ -120,31 +116,8 @@ export const qualityApi = {
     return apiClient.mobile.get('quality/defects', { params });
   },
 
-  getDefect: async (id: string): Promise<ApiResponse<DefectRecord>> => {
-    return apiClient.mobile.get(`quality/defects/${id}`);
-  },
-
   reportDefect: async (data: CreateDefectRequest): Promise<ApiResponse<DefectRecord>> => {
     return apiClient.mobile.post('quality/defects', data);
-  },
-
-  updateDefectStatus: async (
-    id: string,
-    status: DefectStatus,
-    remark?: string
-  ): Promise<ApiResponse<DefectRecord>> => {
-    return apiClient.mobile.put(`quality/defects/${id}/status`, {
-      status,
-      remark,
-    });
-  },
-
-  // ==================== 质量统计 ====================
-
-  getQualityStats: async (params?: {
-    period?: 'today' | 'week' | 'month';
-  }): Promise<ApiResponse<QualityStats>> => {
-    return apiClient.mobile.get('quality/stats', { params });
   },
 };
 

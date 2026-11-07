@@ -8,7 +8,6 @@ import { pushApi } from './push';
 import { offlineApi } from './offline';
 import { mediaApi } from './media';
 import { userApi } from './user';
-import { workflowApi } from './workflow';
 import { inspectionApi } from './inspection';
 import { attendanceApi } from './attendance';
 import { analyticsApi } from './analytics';
@@ -21,10 +20,7 @@ import { employeeApi } from './employee';
 import { supplierApi } from './supplier';
 import { documentApi } from './document';
 import { gisApi } from './gis';
-import { bpmApi } from './bpm';
 import { oaApi } from './oa';
-import { aiAssistantApi } from './aiAssistant';
-import { reportApi } from './report';
 import { approvalEnhancedApi } from './approvalEnhanced';
 
 interface PatrolRecord {
@@ -314,9 +310,7 @@ export const mobileApi = {
   createScanRecord: async (data: CreateScanRecordRequest): Promise<ApiResponse<ScanRecord>> => {
     return apiClient.mobile.post<ScanRecord>('scan-records', data);
   },
-  scanCode: async (code: string): Promise<ApiResponse<ScanResult>> => {
-    return apiClient.mobile.post<ScanResult>('scan', { code });
-  },
+  // 批 37 (g3)：scanCode（POST /scan）为 contract_fallback 假成功占位，前端零引用，死封装已删除。
 
   listPhotoEvidences: async (): Promise<ApiResponse<ListResponse<PhotoEvidence>>> => {
     return apiClient.mobile.get<ListResponse<PhotoEvidence>>('/photo-evidences');
@@ -428,16 +422,12 @@ export const mobileApi = {
   // Device
   registerDevice: deviceApi.registerDevice,
   updatePushToken: deviceApi.updatePushToken,
-  listDevices: deviceApi.listDevices,
-  getDevice: deviceApi.getDevice,
-  deactivateDevice: deviceApi.deactivateDevice,
+  // 批 37 (g3)：listDevices / getDevice / deactivateDevice 死封装已删除。
 
   // Shortcut
   listShortcuts: shortcutApi.listShortcuts,
   createShortcut: shortcutApi.createShortcut,
-  updateShortcut: shortcutApi.updateShortcut,
-  deleteShortcut: shortcutApi.deleteShortcut,
-  reorderShortcuts: shortcutApi.reorderShortcuts,
+  // 批 37 (g1)：updateShortcut / deleteShortcut / reorderShortcuts 死封装已删除。
 
   // Approval
   listApprovalTasks: approvalApi.listTasks,
@@ -498,18 +488,13 @@ export const mobileApi = {
   inventory: inventoryApi,
   listInventoryItems: inventoryApi.listItems,
   getInventoryItem: inventoryApi.getItem,
-  adjustInventoryItem: inventoryApi.adjustItem,
   listStocktakeTasks: inventoryApi.listStocktakeTasks,
   createStocktakeTask: inventoryApi.createStocktakeTask,
-  getStocktakeTask: inventoryApi.getStocktakeTask,
   submitStocktakeRecord: inventoryApi.submitStocktakeRecord,
-  completeStocktakeTask: inventoryApi.completeStocktakeTask,
   listInboundOrders: inventoryApi.listInboundOrders,
-  confirmInboundOrder: inventoryApi.confirmInboundOrder,
   listOutboundOrders: inventoryApi.listOutboundOrders,
-  confirmOutboundOrder: inventoryApi.confirmOutboundOrder,
-  listTransferOrders: inventoryApi.listTransferOrders,
-  confirmTransferOrder: inventoryApi.confirmTransferOrder,
+  // 批 37 (g2)：adjustInventoryItem / getStocktakeTask / completeStocktakeTask /
+  // confirmInboundOrder / confirmOutboundOrder / listTransferOrders / confirmTransferOrder 死封装已删除。
 
   // ==================== 生产管理子域 ====================
 
@@ -522,23 +507,17 @@ export const mobileApi = {
   listWorkReports: productionApi.listWorkReports,
   submitWorkReport: productionApi.submitWorkReport,
   listEquipment: productionApi.listEquipment,
-  getEquipment: productionApi.getEquipment,
-  updateEquipmentStatus: productionApi.updateEquipmentStatus,
-  listWorkstations: productionApi.listWorkstations,
-  getProductionStats: productionApi.getProductionStats,
+  // 批 37 (g2)：getEquipment / updateEquipmentStatus / listWorkstations / getProductionStats 死封装已删除。
 
   // ==================== 质量管理子域 ====================
 
   quality: qualityApi,
   listQualityTasks: qualityApi.listTasks,
   getQualityTask: qualityApi.getTask,
-  startQualityTask: qualityApi.startTask,
   updateQualityTaskStatus: qualityApi.updateTaskStatus,
   listDefectRecords: qualityApi.listDefects,
-  getDefectRecord: qualityApi.getDefect,
   reportDefect: qualityApi.reportDefect,
-  updateDefectStatus: qualityApi.updateDefectStatus,
-  getQualityStats: qualityApi.getQualityStats,
+  // 批 37 (g2)：startQualityTask / getDefectRecord / updateDefectStatus / getQualityStats 死封装已删除。
 
   // ==================== 客户管理子域 ====================
 
@@ -548,57 +527,33 @@ export const mobileApi = {
   createCustomer: customerApi.createCustomer,
   updateCustomer: customerApi.updateCustomer,
   deleteCustomer: customerApi.deleteCustomer,
-  assignCustomer: customerApi.assignCustomer,
-  listCustomerContacts: customerApi.listContacts,
-  createCustomerContact: customerApi.createContact,
-  listCustomerFollowUps: customerApi.listFollowUps,
-  createCustomerFollowUp: customerApi.createFollowUp,
-  listLeads: customerApi.listLeads,
-  createLead: customerApi.createLead,
-  convertLead: customerApi.convertLead,
+  // 批 37：assignCustomer / listContacts / createContact / listFollowUps / createFollowUp
+  // 五条（复用了 contract_fallback 占位的 customers 子端点）经四路取证确认前端零调用，
+  // 已随后端占位路由一并删除（B 类双向删）。
+  // 批 37 (g3)：listLeads / createLead / convertLead（/leads）死封装已删除。
 
   // ==================== 项目管理子域 ====================
 
   project: projectApi,
-  listProjects: projectApi.listProjects,
-  getProject: projectApi.getProject,
-  listProjectTasks: projectApi.listProjectTasks,
-  createProjectTask: projectApi.createTask,
+  // 批 37 (g3)：listProjects / getProject / listProjectTasks / createProjectTask /
+  // listProjectMilestones / createProjectMilestone / listMyTasks / getProjectStats 死封装已删除。
+  // 批 37 (g1)：updateProjectTaskStatus 死封装已删除。
   getProjectTask: projectApi.getTask,
-  updateProjectTaskStatus: projectApi.updateTaskStatus,
-  listProjectMilestones: projectApi.listMilestones,
-  createProjectMilestone: projectApi.createMilestone,
-  listMyTasks: projectApi.listMyTasks,
-  getProjectStats: projectApi.getProjectStats,
 
   // ==================== 员工组织子域 ====================
 
   employee: employeeApi,
-  listEmployees: employeeApi.listEmployees,
-  getEmployee: employeeApi.getEmployee,
-  searchEmployees: employeeApi.searchEmployees,
-  listDepartments: employeeApi.listDepartments,
-  getDepartment: employeeApi.getDepartment,
-  listDepartmentMembers: employeeApi.listDepartmentMembers,
+  // 批 37 (g3)：listEmployees / getEmployee / searchEmployees / listDepartments /
+  // getDepartment / listDepartmentMembers / getMyInfo / getCompanyInfo 死封装已删除。
   listAnnouncements: employeeApi.listAnnouncements,
   getAnnouncement: employeeApi.getAnnouncement,
-  getMyInfo: employeeApi.getMyInfo,
-  getCompanyInfo: employeeApi.getCompanyInfo,
 
   // ==================== 供应商管理子域 ====================
 
   supplier: supplierApi,
-  listSuppliers: supplierApi.listSuppliers,
-  getSupplier: supplierApi.getSupplier,
-  createSupplier: supplierApi.createSupplier,
-  updateSupplier: supplierApi.updateSupplier,
-  deleteSupplier: supplierApi.deleteSupplier,
-  listSupplierEvaluations: supplierApi.listEvaluations,
-  createSupplierEvaluation: supplierApi.createEvaluation,
-  listSupplierContracts: supplierApi.listContracts,
-  listSupplierProducts: supplierApi.listProducts,
-  listSupplierCategories: supplierApi.listCategories,
-  getSupplierStats: supplierApi.getSupplierStats,
+  // 批 37 (g2)：listSuppliers / getSupplier / createSupplier / updateSupplier / deleteSupplier /
+  // listSupplierEvaluations / createSupplierEvaluation / listSupplierContracts / listSupplierProducts /
+  // listSupplierCategories / getSupplierStats 死封装已删除。
 
   // ==================== 文档管理子域 ====================
 
@@ -608,56 +563,21 @@ export const mobileApi = {
   createDocument: documentApi.createDocument,
   updateDocument: documentApi.updateDocument,
   deleteDocument: documentApi.deleteDocument,
-  listDocumentVersions: documentApi.listVersions,
-  createDocumentVersion: documentApi.createVersion,
-  listDocumentApprovals: documentApi.listApprovals,
-  createDocumentApproval: documentApi.createApproval,
-  updateDocumentApproval: documentApi.updateApproval,
-  listDocumentCategories: documentApi.listCategories,
+  // 批 37 (g3)：listDocumentVersions / createDocumentVersion / listDocumentApprovals /
+  // createDocumentApproval / updateDocumentApproval / listDocumentCategories /
+  // listRecentDocuments 死封装已删除。
   getDocumentStats: documentApi.getDocumentStats,
-  listRecentDocuments: documentApi.listRecentDocuments,
 
   // ==================== GIS 地理信息子域 ====================
 
+  // 批 37 (g3)：listRoutes/getRoute/createRoute/updateRoute/deleteRoute/listRouteStops/
+  // createRouteStop/listZones/createZone/listGeofences/createGeofence/updateGeofence/
+  // deleteGeofence/checkGeofence/getCurrentLocation/trackLocation/getLocationHistory/
+  // listMapLayers/listMapMarkers 共 19 个死封装已删除。
   gis: gisApi,
-  listRoutes: gisApi.listRoutes,
-  getRoute: gisApi.getRoute,
-  createRoute: gisApi.createRoute,
-  updateRoute: gisApi.updateRoute,
-  deleteRoute: gisApi.deleteRoute,
-  listRouteStops: gisApi.listRouteStops,
-  createRouteStop: gisApi.createRouteStop,
-  listZones: gisApi.listZones,
-  createZone: gisApi.createZone,
-  listGeofences: gisApi.listGeofences,
-  createGeofence: gisApi.createGeofence,
-  updateGeofence: gisApi.updateGeofence,
-  deleteGeofence: gisApi.deleteGeofence,
-  checkGeofence: gisApi.checkGeofence,
-  getCurrentLocation: gisApi.getCurrentLocation,
-  trackLocation: gisApi.trackLocation,
-  getLocationHistory: gisApi.getLocationHistory,
-  listMapLayers: gisApi.listMapLayers,
-  listMapMarkers: gisApi.listMapMarkers,
 
-  // ==================== BPM 流程引擎子域 ====================
-
-  bpm: bpmApi,
-  listWorkflowDefinitions: bpmApi.listDefinitions,
-  getWorkflowDefinition: bpmApi.getDefinition,
-  startWorkflowInstance: bpmApi.startInstance,
-  listWorkflowInstances: bpmApi.listInstances,
-  getWorkflowInstance: bpmApi.getInstance,
-  cancelWorkflowInstance: bpmApi.cancelInstance,
-  suspendWorkflowInstance: bpmApi.suspendInstance,
-  resumeWorkflowInstance: bpmApi.resumeInstance,
-  listPendingTasks: bpmApi.listPendingTasks,
-  getWorkflowTask: bpmApi.getTask,
-  claimWorkflowTask: bpmApi.claimTask,
-  completeWorkflowTask: bpmApi.completeTask,
-  delegateWorkflowTask: bpmApi.delegateTask,
-  getWorkflowHistory: bpmApi.getInstanceHistory,
-  getWorkflowStats: bpmApi.getWorkflowStats,
+  // 批 37 (g1)：BPM 流程引擎子域（bpm.ts 全部 15 个方法，对应 /workflow/** 占位端点）
+  // 前端零引用，死封装已删除。
 
   // ==================== OA 办公协同子域 ====================
 
@@ -684,69 +604,26 @@ export const mobileApi = {
   markAnnouncementRead: oaApi.markAnnouncementRead,
   getOaStats: oaApi.getOaStats,
 
-  // ==================== AI 智能助手子域 ====================
-
-  ai: aiAssistantApi,
-  sendAiMessage: aiAssistantApi.sendMessage,
-  listAiConversations: aiAssistantApi.listConversations,
-  getAiConversation: aiAssistantApi.getConversation,
-  deleteAiConversation: aiAssistantApi.deleteConversation,
-  streamAiConversation: aiAssistantApi.streamConversation,
-  transcribeAudio: aiAssistantApi.transcribeAudio,
-  synthesizeSpeech: aiAssistantApi.synthesizeSpeech,
-  getAiRecommendations: aiAssistantApi.getRecommendations,
-  submitAiFeedback: aiAssistantApi.submitRecommendationFeedback,
-  listAiCommands: aiAssistantApi.listCommands,
-  executeAiCommand: aiAssistantApi.executeCommand,
-  listAiQuickActions: aiAssistantApi.listQuickActions,
-  generateAiImage: aiAssistantApi.generateImage,
-  listAiModels: aiAssistantApi.listModels,
-  getAiStats: aiAssistantApi.getAiStats,
-
-  // ==================== 数据报表子域 ====================
-
-  report: reportApi,
-  listReports: reportApi.listReports,
-  getReport: reportApi.getReport,
-  createReport: reportApi.createReport,
-  generateReport: reportApi.generateReport,
-  exportReport: reportApi.exportReport,
-  listReportCategories: reportApi.listReportCategories,
-  listDashboards: reportApi.listDashboards,
-  getDashboard: reportApi.getDashboard,
-  createDashboard: reportApi.createDashboard,
-  listDashboardWidgets: reportApi.listDashboardWidgets,
-  addDashboardWidget: reportApi.addDashboardWidget,
-  removeDashboardWidget: reportApi.removeDashboardWidget,
-  queryData: reportApi.queryData,
-  exportData: reportApi.exportData,
-  createSchedule: reportApi.createSchedule,
-  listSchedules: reportApi.listSchedules,
-  deleteSchedule: reportApi.deleteSchedule,
+  // 批 37 (g1)：AI 智能助手子域（aiAssistant.ts 全部 15 个方法，对应 /ai/** 占位端点）
+  // 前端页面走 @/api/ai/chat 等独立通道，不经过 mobile，死封装已删除。
+  // 批 37 (g1)：数据报表子域（report.ts 全部 17 个方法，对应 /reports/**、/dashboards/**、/data/** 占位端点）
+  // 前端报表页面走 @/api/report 独立通道，死封装已删除。
 
   // ==================== 审批增强子域 ====================
 
   approvalEnhanced: approvalEnhancedApi,
   listApprovalTemplates: approvalEnhancedApi.listTemplates,
-  getApprovalTemplate: approvalEnhancedApi.getTemplate,
   createApprovalTemplate: approvalEnhancedApi.createTemplate,
-  updateApprovalTemplate: approvalEnhancedApi.updateTemplate,
-  deleteApprovalTemplate: approvalEnhancedApi.deleteTemplate,
-  applyApprovalTemplate: approvalEnhancedApi.applyTemplate,
-  getApprovalHistory: approvalEnhancedApi.getApprovalHistory,
-  listApprovers: approvalEnhancedApi.listApprovers,
-  addCcUser: approvalEnhancedApi.addCcUser,
-  removeCcUser: approvalEnhancedApi.removeCcUser,
   batchApprove: approvalEnhancedApi.batchApprove,
   batchReject: approvalEnhancedApi.batchReject,
-  escalateApproval: approvalEnhancedApi.escalateApproval,
   listDelegations: approvalEnhancedApi.listDelegations,
   createDelegation: approvalEnhancedApi.createDelegation,
-  updateDelegation: approvalEnhancedApi.updateDelegation,
-  deleteDelegation: approvalEnhancedApi.deleteDelegation,
   listMyApprovals: approvalEnhancedApi.listMyApprovals,
   listMyRequests: approvalEnhancedApi.listMyRequests,
   getApprovalStats: approvalEnhancedApi.getApprovalStats,
+  // 批 37 (g1)：getTemplate/updateTemplate/deleteTemplate/applyTemplate、
+  // getApprovalHistory/listApprovers/addCcUser/removeCcUser/escalateApproval、
+  // updateDelegation/deleteDelegation 共 11 个死封装已删除。
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.mobile.get<string>('/health');
@@ -761,7 +638,6 @@ export {
   offlineApi,
   mediaApi,
   userApi,
-  workflowApi,
   inspectionApi,
   attendanceApi,
   analyticsApi,
@@ -774,10 +650,7 @@ export {
   supplierApi,
   documentApi,
   gisApi,
-  bpmApi,
   oaApi,
-  aiAssistantApi,
-  reportApi,
   approvalEnhancedApi,
 };
 
@@ -829,14 +702,7 @@ export type {
 
 export type { UserProfile } from './user';
 
-export type {
-  WorkflowInstance,
-  WorkflowTask,
-  WorkflowDefinition,
-  PendingTaskCount,
-  WorkflowStatus,
-  WorkflowAction,
-} from './workflow';
+// 批 37 (g1)：workflow.ts 已删除，其类型 re-export 一并移除。
 
 export type {
   InspectionPlan,
@@ -990,20 +856,7 @@ export type {
   GeofenceAction,
 } from './gis';
 
-export type {
-  BpmDefinition,
-  BpmInstance,
-  BpmTask,
-  BpmHistory,
-  BpmStats,
-  StartBpmInstanceRequest,
-  CompleteBpmTaskRequest,
-  DelegateBpmTaskRequest,
-  BpmDefinitionStatus,
-  BpmInstanceStatus,
-  BpmTaskStatus,
-  BpmTaskAction,
-} from './bpm';
+// 批 37 (g1)：bpm.ts 已删除，其类型 re-export 一并移除。
 
 export type {
   Meeting,
@@ -1023,45 +876,7 @@ export type {
   OaAnnouncementPriority,
 } from './oa';
 
-export type {
-  AiMessage,
-  AiAttachment,
-  AiConversation,
-  AiRecommendation,
-  AiCommand,
-  AiModel,
-  AiStats,
-  SendMessageRequest,
-  TranscribeRequest,
-  SynthesizeRequest,
-  ExecuteCommandRequest,
-  GenerateImageRequest,
-  AiMessageRole,
-  AiConversationStatus,
-  AiCommandStatus,
-  AiFeedbackType,
-} from './aiAssistant';
-
-export type {
-  Report,
-  ReportCategory,
-  Dashboard,
-  DashboardWidget,
-  QueryResult,
-  ExportResult,
-  Schedule,
-  CreateReportRequest,
-  GenerateReportRequest,
-  ExportReportRequest,
-  CreateDashboardRequest,
-  CreateWidgetRequest,
-  QueryRequest,
-  CreateScheduleRequest,
-  ReportStatus,
-  ReportType,
-  ExportFormat,
-  ScheduleFrequency,
-} from './report';
+// 批 37 (g1)：aiAssistant.ts / report.ts 已删除，其类型 re-export 一并移除。
 
 export type {
   ApprovalTemplate,

@@ -2084,7 +2084,91 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
-## v1.157 审计整改第三十六批：mobile 全量同源降级与移动端假数据清理（批 36，2026-11-07）
+## v1.158 审计整改第三十七批：contract_fallback 全量清理（批 37，2026-11-07）
+
+> 原则：**一步到位，清理一步到位**。关闭批 36 登记的「contract_fallback 其余约 160 个占位端点仍 mutate_ok 假成功」遗留项。
+
+### 一、机器化盘点：先量清楚再动手
+
+对 `svc/mobile/src/modules/contract_fallback.rs` 做配对括号解析，把 161 个方法端点全部枚举：
+
+- `mutate_ok`（假成功写）**75**
+- `list_empty`（读空列表）51
+- `detail_missing`（读内层 404）32
+- `mutate_unavailable`（批 36 已修）3
+
+**75 个假成功写端点是核心目标**：用户点「审批通过」「发起工作流」「保存看板」看到"操作成功"，数据一条没落库，而且**不会重试**——比报错危害更大。
+
+### 二、四路取证（避开 barrel 陷阱）
+
+批 35 踩过"只 grep 端点路径"的坑。取证必须三步：
+
+1. 在 `apps/web/src/api/mobile/*.ts` 找端点路径字符串 → 定位**所属 API 函数名**；
+2. 用 **API 函数名**在 `apps/web/src/`（排除 `src/api/` 自身与 `__tests__/`）全量 grep；
+3. 核查 barrel `index.ts` 的平铺别名是否被别处 import。
+
+**关键事实**：mobile 页面**根本不走 `@/api/mobile/*`**。AI 走 `@/api/ai/*`、审批走 `@/api/workflow/approval`、报表走 `@/api/report`、GIS 走 `@/api/gis`、文档走 `@/api/pdm`、供应链走 `@/api/srm`、质检巡检走 `@/api/qms/inspection`、MES 走 `@/api/mes`。所以 `@/api/mobile` 下这些封装**自诞生起就零消费方**——"声明了但从不调用"。
+
+### 三、分类结果（三组并行取证）
+
+| 组 | 端点 | A 类 | B 类 | C 类 |
+|---|---|---|---|---|
+| g1 AI/工作流/审批/报表/看板/数据/快捷方式 | 71 | 0 | 71 | 0 |
+| g2 供应链/库存/生产/质量/巡检 | 35 | **1** | 34 | 0 |
+| g3 空间/组织/文档/项目/员工/客户子端点/线索 | 55 | 0 | 55 | 0 |
+| **合计** | **161** | **1** | **160** | **0** |
+
+- **A 类 1 个**：`POST /production/orders/{id}/pause`（`useMobileProduction.ts:196` 真实调用）。
+- **B 类 160 个**：前端有封装、全仓零引用。
+- **C 类 0 个**：每个端点都有对应封装（C 类定义要求"连封装都没有"，本批不成立）。
+
+### 四、三类处置：A 改 503 / B 双向删 / C 删后端
+
+**A 类**：`contract_fallback.rs` 只留 pause，改 `mutate_unavailable`。实测 `HTTP 503 + code=503 + "上游服务未接入：MES，暂停生产订单未执行"`。
+
+**B 类 160 个双向删**：
+- 前端**整文件删 4 个**：`aiAssistant.ts`(15方法)、`workflow.ts`(7)、`bpm.ts`(15)、`report.ts`(17)
+- 前端方法级删 16 个文件：`analytics.ts`(5，保留被 `MobileHomePage.tsx:122` 真调的 `getUsageStats`)、`approvalEnhanced.ts`(11)、`shortcut.ts`(3，保留打真实 handler 的 list/create)、`project.ts`(9)、`inspection.ts`(8)、`inventory.ts`(7)、`production.ts`(4，保留 A 类 `pauseOrder`)、`quality.ts`(4)、`supplier.ts`(11 全删)、`gis.ts`(19 全删)、`device.ts`(3，保留 `registerDevice`/`updatePushToken`)、`document.ts`(7)、`employee.ts`(8)、`attendance.ts`(1)、`customer.ts`(8)、barrel `index.ts` 同步清 import/别名/导出
+- 后端：`contract_fallback.rs` **245 行/161 端点 → 约 70 行/1 端点**
+
+**C 类 0 个**，但用户点名的**死端点**单独处置：
+| 端点 | 前端声明 | 处置 |
+|---|---|---|
+| `POST/PUT/DELETE /production/orders[/{id}]` | **无**（`production.ts` 12 方法里没有、barrel 也无） | **C 类真死代码**：删 3 个 handler + `shared/mod.rs` 3 条写路由 + import |
+| `GET /production/equipment/{id}` | 有封装但零调用 | **不是重复占位**：`production.rs:get_equipment` 早已实现但 `shared/mod.rs` 没 import 也没路由（此前由 fallback `detail_missing` 顶着）。**已挂真实路由**，实测 `200 + data=null` |
+
+### 五、中途暴露的一个漏项（smoke 首轮 5 FAIL）
+
+首轮 smoke 出现 5 个 `route_missing` 404，全是 customers 子端点（`assign` / `contacts` GET+POST / `follow-ups` GET+POST）：
+- **原因**：g3 组把这 5 个标注为"批 36 已改 503，本批仅标注未动"，**没删前端封装**；而我把后端占位路由删了 → 前端有声明、后端无路由 → 404。
+- **处置**：取证确认这 5 个同样零真实调用（`listContacts` 唯一命中是 `@/api/communication/readOps2.ts` 的同名方法，非 mobile 通道），按 B 类一并双向删，复跑全绿。
+
+### 六、smoke 端点总数精确对账
+
+smoke 端点由 `scripts/web_contract_smoke.py:477 extract_endpoints()` **扫前端源码**提取（不是从后端路由来），所以删前端封装 → 端点数下降：
+
+| | 端点总数 | FAIL | [mobile] | 豁免 |
+|---|---|---|---|---|
+| 批 36 末（基线） | 4661 | 0 | 295/295 | 0 |
+| 批 37 首轮（含漏删） | 4506 | **5** | 135/140 | 0 |
+| **批 37 终态** | **4501** | **0** | **135/135** | **0** |
+
+**4661 → 4501 = 刚好降 160**，与删除的 160 个 B 类端点**精确对上**，未新增任何豁免。
+
+### 七、验证
+
+`cargo check`（mobile/server）均 exit 0 零新增 warning；`cargo build` 28.96s；`cargo fmt --check` **0 Diff**；`typecheck` **0 errors**（多轮独立复核）；`eslint src/api/mobile/` **0 problems**（顺带清掉删方法后残留的 4 个未使用 import：`gis.ts` 的 apiClient/ApiResponse/PaginatedResponse、`project.ts` 的 PaginatedResponse）；**smoke 4501/4501 PASS 0 FAIL**；本批**无新迁移**（630 个 sql，`git status database/` 无变化）。
+
+### 八、留存与边界
+
+- `gis.ts` / `supplier.ts` 保留为 `{}` 空对象而非整文件删——它们同时导出**类型定义**（`RouteStatus` 等仍被其它模块引用），API 对象清空是合理局部收敛；若将来类型也无消费方，再整文件删。
+- `list_empty` / `detail_missing` / `mutate_ok` 三个 handler 已随端点删除，避免 `dead_code` 警告；仅 `mutate_unavailable` 保留给 pause。
+- `/data/export` 这类"导出接口返回空列表"的语义错误端点已随 B 类删除；将来真实实现导出应返回文件流/URL，不是列表。
+- 详细取证表见 `/tmp/b37_g1_report.md`、`b37_g2_report.md`、`b37_g3_report.md`；综合记录见 `docs/audit/P3-28_contract_fallback全量清理_批37_执行记录_2026-11-07.md`。
+
+---
+
+
 
 **本批收掉批 35 遗留的第 2、3 项**（「smoke 的 payload 走 WARN 分支没打到 Err、端点真实仍会 500」+「前端两处本地假数据」）。原则「一步到位 + 写操作绝不假成功 + smoke 断言对齐真实语义」。
 

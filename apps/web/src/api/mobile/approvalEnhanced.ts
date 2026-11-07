@@ -161,47 +161,8 @@ export const approvalEnhancedApi = {
     return apiClient.mobile.get('/approvals/templates', { params });
   },
 
-  getTemplate: async (id: string): Promise<ApiResponse<ApprovalTemplate>> => {
-    return apiClient.mobile.get(`/approvals/templates/${id}`);
-  },
-
   createTemplate: async (data: CreateTemplateRequest): Promise<ApiResponse<ApprovalTemplate>> => {
     return apiClient.mobile.post('/approvals/templates', data);
-  },
-
-  updateTemplate: async (
-    id: string,
-    data: Partial<CreateTemplateRequest>
-  ): Promise<ApiResponse<ApprovalTemplate>> => {
-    return apiClient.mobile.put(`/approvals/templates/${id}`, data);
-  },
-
-  deleteTemplate: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/approvals/templates/${id}`);
-  },
-
-  applyTemplate: async (
-    data: ApplyTemplateRequest
-  ): Promise<ApiResponse<{ approval_id: string }>> => {
-    return apiClient.mobile.post(`/approvals/templates/${data.template_id}/apply`, data);
-  },
-
-  // ==================== 审批历史与抄送人 ====================
-
-  getApprovalHistory: async (approvalId: string): Promise<ApiResponse<ApprovalHistory[]>> => {
-    return apiClient.mobile.get(`/approvals/${approvalId}/history`);
-  },
-
-  listApprovers: async (approvalId: string): Promise<ApiResponse<ApproverInfo[]>> => {
-    return apiClient.mobile.get(`/approvals/${approvalId}/approvers`);
-  },
-
-  addCcUser: async (approvalId: string, data: { user_id: string }): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.post(`/approvals/${approvalId}/cc`, data);
-  },
-
-  removeCcUser: async (approvalId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/approvals/${approvalId}/cc/${userId}`);
   },
 
   // ==================== 批量审批 ====================
@@ -214,13 +175,6 @@ export const approvalEnhancedApi = {
     return apiClient.mobile.post('/approvals/batch/reject', data);
   },
 
-  escalateApproval: async (
-    approvalId: string,
-    data?: { reason?: string }
-  ): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.post(`/approvals/${approvalId}/escalate`, data || {});
-  },
-
   // ==================== 委托管理 ====================
 
   listDelegations: async (params?: {
@@ -231,17 +185,6 @@ export const approvalEnhancedApi = {
 
   createDelegation: async (data: CreateDelegationRequest): Promise<ApiResponse<Delegation>> => {
     return apiClient.mobile.post('/approvals/delegations', data);
-  },
-
-  updateDelegation: async (
-    id: string,
-    data: Partial<CreateDelegationRequest>
-  ): Promise<ApiResponse<Delegation>> => {
-    return apiClient.mobile.put(`/approvals/delegations/${id}`, data);
-  },
-
-  deleteDelegation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/approvals/delegations/${id}`);
   },
 
   // ==================== 我的审批与统计 ====================

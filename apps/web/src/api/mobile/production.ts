@@ -158,38 +158,6 @@ export const productionApi = {
   }): Promise<ApiResponse<PaginatedResponse<Equipment>>> => {
     return apiClient.mobile.get('production/equipment', { params });
   },
-
-  getEquipment: async (id: string): Promise<ApiResponse<Equipment>> => {
-    return apiClient.mobile.get(`production/equipment/${id}`);
-  },
-
-  updateEquipmentStatus: async (
-    id: string,
-    status: EquipmentStatus,
-    note?: string
-  ): Promise<ApiResponse<Equipment>> => {
-    return apiClient.mobile.put(`production/equipment/${id}/status`, {
-      status,
-      note,
-    });
-  },
-
-  // ==================== 工位管理 ====================
-
-  listWorkstations: async (params?: {
-    area?: string;
-    status?: 'online' | 'offline' | 'maintenance';
-  }): Promise<ApiResponse<Workstation[]>> => {
-    return apiClient.mobile.get('production/workstations', { params });
-  },
-
-  // ==================== 生产统计 ====================
-
-  getProductionStats: async (params?: {
-    period?: 'today' | 'week' | 'month';
-  }): Promise<ApiResponse<ProductionStats>> => {
-    return apiClient.mobile.get('production/stats', { params });
-  },
 };
 
 export default productionApi;

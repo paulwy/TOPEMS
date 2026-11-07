@@ -16,9 +16,6 @@
  *   GET    /mobile/suppliers/stats
  */
 
-import apiClient from '../client';
-import type { ApiResponse, PaginatedResponse } from '../client';
-
 export type SupplierStatus = 'active' | 'inactive' | 'pending_approval' | 'blocked';
 export type EvaluationScore = 'excellent' | 'good' | 'average' | 'poor';
 export type ContractStatus = 'draft' | 'active' | 'expired' | 'terminated';
@@ -123,79 +120,6 @@ export interface CreateEvaluationRequest {
   remarks?: string;
 }
 
-export const supplierApi = {
-  // ==================== 供应商管理 ====================
-
-  listSuppliers: async (params?: {
-    keyword?: string;
-    category?: string;
-    status?: SupplierStatus;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.mobile.get('suppliers', { params });
-  },
-
-  getSupplier: async (id: string): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.get(`suppliers/${id}`);
-  },
-
-  createSupplier: async (data: CreateSupplierRequest): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.post('suppliers', data);
-  },
-
-  updateSupplier: async (
-    id: string,
-    data: Partial<CreateSupplierRequest>
-  ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.put(`suppliers/${id}`, data);
-  },
-
-  deleteSupplier: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`suppliers/${id}`);
-  },
-
-  // ==================== 供应商评估 ====================
-
-  listEvaluations: async (supplierId: string): Promise<ApiResponse<SupplierEvaluation[]>> => {
-    return apiClient.mobile.get(`suppliers/${supplierId}/evaluations`);
-  },
-
-  createEvaluation: async (
-    supplierId: string,
-    data: CreateEvaluationRequest
-  ): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.mobile.post(`suppliers/${supplierId}/evaluations`, data);
-  },
-
-  // ==================== 供应商合同 ====================
-
-  listContracts: async (
-    supplierId: string,
-    params?: {
-      status?: ContractStatus;
-    }
-  ): Promise<ApiResponse<SupplierContract[]>> => {
-    return apiClient.mobile.get(`suppliers/${supplierId}/contracts`, { params });
-  },
-
-  // ==================== 供应商产品 ====================
-
-  listProducts: async (supplierId: string): Promise<ApiResponse<SupplierProduct[]>> => {
-    return apiClient.mobile.get(`suppliers/${supplierId}/products`);
-  },
-
-  // ==================== 供应商分类 ====================
-
-  listCategories: async (): Promise<ApiResponse<SupplierCategory[]>> => {
-    return apiClient.mobile.get('suppliers/categories');
-  },
-
-  // ==================== 供应商统计 ====================
-
-  getSupplierStats: async (): Promise<ApiResponse<SupplierStats>> => {
-    return apiClient.mobile.get('suppliers/stats');
-  },
-};
+export const supplierApi = {};
 
 export default supplierApi;
