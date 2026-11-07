@@ -23,9 +23,21 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
 use topems_communication::{im, im_location, mail, notification};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
+
+/// 管理类路由动作门：仅 `communication:admin` 可访问；个人类路由不加此门（auth 即放行）。
+/// 与独立部署 `svc/communication/src/main.rs` 的 `admin_only` 同口径、同归类。
+fn admin_only<S>(route: axum::routing::MethodRouter<S>) -> axum::routing::MethodRouter<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    route.layer(axum::middleware::from_fn(require_permission(
+        "communication:admin",
+    )))
+}
 
 /// 轻量兜底：crate 尚未实现的通信子域端点（待上游支持）。
 /// 返回 200 + 空数据，避免前端契约裸 404；非业务实现。
@@ -181,8 +193,6 @@ const IM_STUB_DELETE: &[&str] = &[
 
 // ===== 邮件子域兜底路径 =====
 const MAIL_STUB_GET: &[&str] = &["/health"];
-const MAIL_STUB_POST: &[&str] = &["/templates/render"];
-const MAIL_STUB_PUT: &[&str] = &["/templates/{id}/status"];
 
 /// 真实 Communication 模块：持有完整业务路由
 pub struct CommunicationRealModule {
@@ -216,7 +226,10 @@ impl CommunicationRealModule {
             let mut r = Router::new()
                 // --- 通知列表 / 详情 / 归档（前端相对路径 /notifications/*） ---
                 .route("/notifications", get(notification::get_notifications))
-                .route("/notifications", post(notification::create_notification))
+                .route(
+                    "/notifications",
+                    admin_only(post(notification::create_notification)),
+                )
                 .route(
                     "/notifications",
                     delete(notification::delete_all_notifications),
@@ -281,7 +294,7 @@ impl CommunicationRealModule {
                 )
                 .route(
                     "/notification-templates/batch-status",
-                    put(notification::batch_update_template_status),
+                    admin_only(put(notification::batch_update_template_status)),
                 )
                 .route("/preferences", get(notification::get_preferences))
                 .route("/preferences", put(notification::update_preferences))
@@ -354,7 +367,7 @@ impl CommunicationRealModule {
                 )
                 .route(
                     "/deliveries/by-user/{userId}",
-                    get(notification::list_user_deliveries),
+                    admin_only(get(notification::list_user_deliveries)),
                 )
                 .route("/deliveries/stats", get(notification::delivery_stats))
                 .route(
@@ -381,71 +394,87 @@ impl CommunicationRealModule {
                     "/notifications/archived",
                     get(notification::list_archived_notifications),
                 )
+                // 归档策略/归档任务属租户级配置 → 管理类
                 .route(
                     "/notifications/archive/config",
-                    get(notification::get_archive_config),
+                    admin_only(get(notification::get_archive_config)),
                 )
                 .route(
                     "/notifications/archive/config",
-                    put(notification::update_archive_config),
+                    admin_only(put(notification::update_archive_config)),
                 )
                 .route(
                     "/notifications/archive/run",
-                    post(notification::run_auto_archive),
+                    admin_only(post(notification::run_auto_archive)),
                 )
                 // --- 主动通知动作（前端相对路径 /notify/*） ---
                 .route("/notify/list", get(notification::list_notifications))
-                .route("/notify/send", post(notification::send_notification))
+                // 主动推送 / 群发 → 管理类
+                .route(
+                    "/notify/send",
+                    admin_only(post(notification::send_notification)),
+                )
                 .route(
                     "/notify/broadcast",
-                    post(notification::broadcast_notification),
+                    admin_only(post(notification::broadcast_notification)),
                 )
                 .route("/notify/read-all", post(notification::mark_all_as_read))
                 .route("/notify/{id}/read", post(notification::mark_as_read))
                 // --- 通知模板（前端相对路径 /notification-templates/*） ---
-                .route("/notification-templates", get(notification::list_templates))
+                // 模板属配置类 → 管理类
                 .route(
                     "/notification-templates",
-                    post(notification::create_template),
+                    admin_only(get(notification::list_templates)),
+                )
+                .route(
+                    "/notification-templates",
+                    admin_only(post(notification::create_template)),
                 )
                 .route(
                     "/notification-templates/{id}",
-                    get(notification::get_template),
+                    admin_only(get(notification::get_template)),
                 )
                 .route(
                     "/notification-templates/{id}",
-                    put(notification::update_template),
+                    admin_only(put(notification::update_template)),
                 )
                 .route(
                     "/notification-templates/{id}",
-                    delete(notification::delete_template),
+                    admin_only(delete(notification::delete_template)),
                 )
                 .route(
                     "/notification-templates/{id}/render",
-                    post(notification::render_template),
+                    admin_only(post(notification::render_template)),
                 )
                 // --- 通知渠道（前端相对路径 /notification/channels/*，crate 已实现） ---
-                .route("/notification/channels", get(notification::list_channels))
-                .route("/notification/channels", post(notification::create_channel))
+                // 渠道属配置类 → 管理类
                 .route(
-                    "/notification/channels/{id}",
-                    get(notification::get_channel),
+                    "/notification/channels",
+                    admin_only(get(notification::list_channels)),
+                )
+                .route(
+                    "/notification/channels",
+                    admin_only(post(notification::create_channel)),
                 )
                 .route(
                     "/notification/channels/{id}",
-                    put(notification::update_channel),
+                    admin_only(get(notification::get_channel)),
                 )
                 .route(
                     "/notification/channels/{id}",
-                    delete(notification::delete_channel),
+                    admin_only(put(notification::update_channel)),
+                )
+                .route(
+                    "/notification/channels/{id}",
+                    admin_only(delete(notification::delete_channel)),
                 )
                 .route(
                     "/notification/channels/{id}/test",
-                    post(notification::test_channel),
+                    admin_only(post(notification::test_channel)),
                 )
                 .route(
                     "/notification/channels/{id}/metrics",
-                    get(notification::get_channel_metrics),
+                    admin_only(get(notification::get_channel_metrics)),
                 );
             for p in NOTIF_STUB_GET {
                 r = r.route(p, get(comm_stub));
@@ -516,21 +545,9 @@ impl CommunicationRealModule {
                 .route("/emails", post(mail::send_email))
                 .route("/emails/{id}", get(mail::get_email))
                 .route("/emails/{id}/read", post(mail::mark_as_read))
-                .route("/emails/stats", get(mail::get_stats))
-                .route("/templates", get(mail::list_templates))
-                .route("/templates", post(mail::create_template))
-                .route("/templates/{id}", get(mail::get_template))
-                .route("/templates/{id}", put(mail::update_template))
-                .route("/templates/{id}", delete(mail::delete_template))
-                .route("/templates/{id}/send", post(mail::send_with_template));
+                .route("/emails/stats", get(mail::get_stats));
             for p in MAIL_STUB_GET {
                 r = r.route(p, get(comm_stub));
-            }
-            for p in MAIL_STUB_POST {
-                r = r.route(p, post(comm_stub));
-            }
-            for p in MAIL_STUB_PUT {
-                r = r.route(p, put(comm_stub));
             }
             r.with_state(db.clone())
         };

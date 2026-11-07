@@ -206,6 +206,8 @@ const connectionFields: SchemaField[] = [
 
 export const integrationConnectionSchema: EntitySchema = {
   entity: 'integration_connection',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'integration:connection',
   title: i18n.t('shared.connection.k15'),
   description: i18n.t('shared.connection.k16'),
 

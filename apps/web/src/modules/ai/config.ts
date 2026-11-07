@@ -177,7 +177,7 @@ const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
   titleKey: 'ai.nav.ai-settings',
   template: 'settings',
   group: 'setting',
-  requiredPermissions: ['ai:dashboard:admin', 'ai:dashboard:write'],
+  requiredPermissions: ['ai:dashboard:admin'],
   action: 'admin',
 };
 
@@ -380,6 +380,7 @@ export const aiNavConfig: ModuleNavConfig = {
       permission: 'ai:prompt:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-prompts_desc'),
     },
     {
@@ -391,6 +392,7 @@ export const aiNavConfig: ModuleNavConfig = {
       permission: 'ai:dashboard:admin',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-settings_desc'),
     },
     {
@@ -415,6 +417,7 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-dify-chat_desc'),
     },
     {
@@ -427,6 +430,7 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-businessCopilot_desc'),
     },
     {
@@ -439,6 +443,7 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'overview',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-governanceDashboard_desc'),
     },
     {
@@ -451,6 +456,7 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-dshKnowledge_desc'),
     },
     {
@@ -463,6 +469,7 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('ai.nav.ai-dshRag_desc'),
     },
   ],

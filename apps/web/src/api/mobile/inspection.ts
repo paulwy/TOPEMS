@@ -123,23 +123,6 @@ export interface CreateInspectionPlanRequest {
 }
 
 export const inspectionApi = {
-  listPlans: async (params?: {
-    inspection_type?: InspectionType;
-    is_active?: boolean;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<{ items: InspectionPlan[]; total: number }>> => {
-    return apiClient.mobile.get('inspection/plans', { params });
-  },
-
-  getPlan: async (id: string): Promise<ApiResponse<InspectionPlan>> => {
-    return apiClient.mobile.get(`inspection/plans/${id}`);
-  },
-
-  createPlan: async (data: CreateInspectionPlanRequest): Promise<ApiResponse<InspectionPlan>> => {
-    return apiClient.mobile.post('inspection/plans', data);
-  },
-
   listTasks: async (params?: {
     status?: InspectionStatus;
     inspection_type?: InspectionType;
@@ -148,44 +131,6 @@ export const inspectionApi = {
     page_size?: number;
   }): Promise<ApiResponse<{ items: InspectionTask[]; total: number }>> => {
     return apiClient.mobile.get('inspection/tasks', { params });
-  },
-
-  startTask: async (id: string): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`inspection/tasks/${id}/start`);
-  },
-
-  completeTask: async (
-    id: string,
-    data: {
-      checklist_items: Array<{ id: string; value: string | number | boolean }>;
-      result: 'pass' | 'fail' | 'partial';
-      remarks?: string;
-      photos?: string[];
-    }
-  ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`inspection/tasks/${id}/complete`, data);
-  },
-
-  failTask: async (
-    id: string,
-    data: { reason: string; photos?: string[] }
-  ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`inspection/tasks/${id}/fail`, data);
-  },
-
-  listTemplates: async (
-    inspectionType?: InspectionType
-  ): Promise<ApiResponse<InspectionTemplate[]>> => {
-    return apiClient.mobile.get('inspection/templates', {
-      params: { inspection_type: inspectionType },
-    });
-  },
-
-  getStats: async (params?: {
-    period?: 'day' | 'week' | 'month';
-    inspection_type?: InspectionType;
-  }): Promise<ApiResponse<InspectionStats>> => {
-    return apiClient.mobile.get('inspection/stats', { params });
   },
 };
 

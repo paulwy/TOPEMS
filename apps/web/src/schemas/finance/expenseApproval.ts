@@ -152,6 +152,9 @@ export const expenseApprovalSchema: EntitySchema & {
     resource: 'expenseApprovals',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'finance:expense_approval',
+
   fields: [
     {
       name: 'expense_no',

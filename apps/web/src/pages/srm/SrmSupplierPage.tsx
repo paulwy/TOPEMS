@@ -2,39 +2,34 @@ import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { supplierSchema } from '@/schemas/srm';
-import { srmApi } from '@/api/srm';
+import { masterDataApi } from '@/api/master-data';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-// normalizeListResponse 默认只认 items/materials/data 字段，SRM 后端信封键为
-// suppliers，需显式 itemsField='suppliers'，否则 total=92 有数但列表恒渲染「暂无数据」
-const apiAdapter = createCrudPageAdapter(
-  {
-    list: srmApi.listSuppliers,
-    create: srmApi.createSupplier,
-    update: srmApi.updateSupplier,
-    delete: srmApi.deleteSupplier,
-  },
-  { itemsField: 'suppliers' }
-);
+// 切 MDM 权威源（2026-11-07）：4 个显式方法全部改走 /api/master-data/suppliers。
+// mdm list 信封为 { items, total, page, page_size }，默认 itemsField='items' 即可。
+// 注意：mdm update 是 PATCH 不是 PUT（masterDataApi.suppliers.update 已按 PATCH 注册）。
+const apiAdapter = createCrudPageAdapter({
+  list: masterDataApi.suppliers.list,
+  create: masterDataApi.suppliers.create,
+  update: masterDataApi.suppliers.update,
+  delete: masterDataApi.suppliers.delete,
+});
 
 const SupplierStats: React.FC = () => {
   const theme = useTheme();
   const { data: suppliers = [] } = useQuery({
     queryKey: QUERY_KEYS.SRM.SUPPLIERS,
     queryFn: async () => {
-      const response = await srmApi.listSuppliers();
+      const response = await masterDataApi.suppliers.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
-        const data = response.data as unknown as Record<string, unknown>;
-        return (Array.isArray(data)
-          ? data
-          : (data.suppliers as unknown as Record<string, unknown>[]) || []) as unknown as Array<{
-          status: string;
-          risklevel: string;
-        }>;
+        const data = response.data as unknown as {
+          items?: Array<{ status: string; risk_level: string }>;
+        };
+        return data.items || [];
       }
       return [];
     },
@@ -47,8 +42,8 @@ const SupplierStats: React.FC = () => {
       active: suppliers.filter(
         (s) => s.status === i18n.t('pages.srm_supplier_page.k0') || s.status === 'active'
       ).length,
-      lowRisk: suppliers.filter((s) => s.risklevel === 'low').length,
-      highRisk: suppliers.filter((s) => s.risklevel === 'high').length,
+      lowRisk: suppliers.filter((s) => s.risk_level === 'low').length,
+      highRisk: suppliers.filter((s) => s.risk_level === 'high').length,
     }),
     [suppliers]
   );

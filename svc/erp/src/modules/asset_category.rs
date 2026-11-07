@@ -117,7 +117,8 @@ pub async fn list_asset_categories(
     let total: i64 = match sqlx::query(only_own_schema_query!(
         "erp",
         "SELECT COUNT(*) FROM erp.asset_categories \
-         WHERE ($1::text IS NULL OR status = $1) \
+         WHERE deleted_at IS NULL \
+           AND ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' \
              OR code ILIKE '%' || $2 || '%')"
     ))
@@ -138,7 +139,8 @@ pub async fn list_asset_categories(
         "SELECT id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
                 code, parent_id, description, status, created_at, updated_at \
          FROM erp.asset_categories \
-         WHERE ($1::text IS NULL OR status = $1) \
+         WHERE deleted_at IS NULL \
+           AND ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' \
              OR code ILIKE '%' || $2 || '%') \
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
@@ -195,7 +197,7 @@ pub async fn get_asset_category(
         "erp",
         "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
                 code, parent_id, description, status, created_at, updated_at \
-         FROM erp.asset_categories WHERE id = $1"
+         FROM erp.asset_categories WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -232,8 +234,8 @@ pub async fn create_asset_category(
 
     let row = match sqlx::query(only_own_schema_query!(
         "erp",
-        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status, name_en, tenant_id) \
-         VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
+        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status, name_en) \
+         VALUES ($1, $2, $3, $4, $5, $6) \
          RETURNING id, CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
                   code, parent_id, description, status, created_at, updated_at"
     ))
@@ -287,7 +289,7 @@ pub async fn update_asset_category(
          status = COALESCE($6, status), \
          name_en = COALESCE($7, name_en), \
          updated_at = NOW() \
-         WHERE id = $1 \
+         WHERE id = $1 AND deleted_at IS NULL \
          RETURNING id, CASE WHEN $8 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
                   code, parent_id, description, status, created_at, updated_at"
     ))
@@ -335,7 +337,7 @@ pub async fn delete_asset_category(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "DELETE FROM erp.asset_categories WHERE id = $1"
+        "UPDATE erp.asset_categories SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
     .execute(&mut **txn)

@@ -628,6 +628,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:location:read',
       order: 2,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-warehouses_desc'),
     },
     {
@@ -639,6 +640,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:batch:read',
       order: 3,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-locations_desc'),
     },
     {
@@ -650,6 +652,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:serial_number:read',
       order: 4,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-batches_desc'),
     },
     {
@@ -688,6 +691,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:inbound:read',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-inbound_desc'),
     },
     {
@@ -710,6 +714,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:outbound:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-outbound_desc'),
     },
     {
@@ -765,6 +770,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:report:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       showInTabs: true,
       description: i18n.t('wms.nav.wms-items_desc'),
     },
@@ -777,6 +783,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:turnover:read',
       order: 10,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-inventory-report_desc'),
     },
     {
@@ -788,6 +795,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:pareto:read',
       order: 11,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-turnover_desc'),
     },
     {
@@ -799,6 +807,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:flow:read',
       order: 12,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-pareto_desc'),
     },
     {
@@ -810,6 +819,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:abc:read',
       order: 13,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-flow_desc'),
     },
     {
@@ -821,6 +831,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:locutil:read',
       order: 14,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-abc_desc'),
     },
     {
@@ -832,6 +843,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:fulfillment:read',
       order: 15,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-locutil_desc'),
     },
     {
@@ -843,6 +855,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:area:read',
       order: 6,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-analytics-fulfillment_desc'),
     },
     {
@@ -854,6 +867,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:location_rule:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-area_desc'),
     },
     {
@@ -865,6 +879,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:fifo_policy:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-location-rule_desc'),
     },
     {
@@ -876,6 +891,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:inventory_cycle:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-fifo-policy_desc'),
     },
     {
@@ -887,6 +903,7 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:inventory_threshold:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-inventory-cycle_desc'),
     },
   ],

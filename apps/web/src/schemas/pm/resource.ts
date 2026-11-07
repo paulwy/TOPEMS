@@ -41,6 +41,9 @@ export const resourceSchema: EntitySchema = {
     resource: 'resources',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'pm:resource',
+
   fields: [
     {
       name: 'resource_id',

@@ -17,22 +17,6 @@ export interface Email {
   priority: string;
   sent_at?: string;
   error_message?: string;
-  template_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EmailTemplate {
-  id: string;
-  code: string;
-  name: string;
-  description?: string;
-  subject_template: string;
-  body_template: string;
-  body_html_template?: string;
-  category: string;
-  tags?: string[];
-  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -45,23 +29,11 @@ export interface SendEmailRequest {
   body: string;
   body_html?: string;
   priority?: string;
-  template_id?: string;
-  template_data?: Record<string, unknown>;
-}
-
-interface SendEmailWithTemplateRequest {
-  template_code: string;
-  to_addresses: string[];
-  cc_addresses?: string[];
-  bcc_addresses?: string[];
-  template_data: Record<string, unknown>;
-  priority?: string;
 }
 
 export interface PaginationParams extends BasePaginationParams {
   status?: string;
   priority?: string;
-  category?: string;
 }
 export type { PaginatedResult };
 
@@ -102,10 +74,6 @@ export const emailApi = {
     return apiClient.mail.post('/emails', data);
   },
 
-  async sendWithTemplate(data: SendEmailWithTemplateRequest): Promise<ApiResponse<Email>> {
-    return apiClient.mail.post('/emails/send-with-template', data);
-  },
-
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.mail.delete(`/emails/${id}`);
   },
@@ -121,65 +89,11 @@ export const emailApi = {
   },
 };
 
-export const templateApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<EmailTemplate>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.category) searchParams.set('category', params.category);
-    if (params?.status) searchParams.set('status', params.status);
-
-    const queryString = searchParams.toString();
-    return apiClient.mail.get(`/templates${queryString ? `?${queryString}` : ''}`);
-  },
-
-  async get(id: string): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.get(`/templates/${id}`);
-  },
-
-  async create(data: Partial<EmailTemplate>): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.post('/templates', data);
-  },
-
-  async update(id: string, data: Partial<EmailTemplate>): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.put(`/templates/${id}`, data);
-  },
-
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mail.delete(`/templates/${id}`);
-  },
-
-  async updateStatus(id: string, status: string): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.put(`/templates/${id}/status`, {
-      status,
-    });
-  },
-
-  async render(
-    templateCode: string,
-    data: Record<string, unknown>
-  ): Promise<ApiResponse<{ subject: string; body: string; body_html?: string }>> {
-    return apiClient.mail.post('/templates/render', {
-      template_code: templateCode,
-      data,
-    });
-  },
-};
-
 export const mailApi = {
   async health(): Promise<ApiResponse<string>> {
     return apiClient.mail.get<string>('/health');
   },
 };
-
-export const TEMPLATE_CATEGORIES = [
-  { value: 'general', label: i18n.t('shared.index.k0') },
-  { value: 'workflow', label: i18n.t('shared.index.k1') },
-  { value: 'system', label: i18n.t('shared.index.k2') },
-  { value: 'contract', label: i18n.t('shared.index.k3') },
-  { value: 'user', label: i18n.t('shared.index.k4') },
-];
 
 export const PRIORITY_OPTIONS = [
   { value: 'low', label: i18n.t('shared.index.k5') },

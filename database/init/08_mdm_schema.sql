@@ -104,19 +104,19 @@ ALTER TABLE ONLY master_data.mdm_api_products FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: mdm_asset_categories; Type: TABLE; Schema: master_data; Owner: -
+-- Name: mdm_data_asset_categories; Type: TABLE; Schema: master_data; Owner: -
 --
 
-CREATE TABLE IF NOT EXISTS master_data.mdm_asset_categories (
+CREATE TABLE IF NOT EXISTS master_data.mdm_data_asset_categories (
     id text NOT NULL,
     name text DEFAULT ''::text NOT NULL,
     parent_id text,
     asset_count bigint DEFAULT 0 NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT mdm_asset_categories_pkey PRIMARY KEY (id)
+    CONSTRAINT mdm_data_asset_categories_pkey PRIMARY KEY (id)
 );
 
-ALTER TABLE ONLY master_data.mdm_asset_categories FORCE ROW LEVEL SECURITY;
+ALTER TABLE ONLY master_data.mdm_data_asset_categories FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -1557,11 +1557,11 @@ ALTER TABLE ONLY master_data.mdm_api_products
 
 
 --
--- Name: mdm_asset_categories mdm_asset_categories_pkey; Type: CONSTRAINT; Schema: master_data; Owner: -
+-- Name: mdm_data_asset_categories mdm_data_asset_categories_pkey; Type: CONSTRAINT; Schema: master_data; Owner: -
 --
 
-ALTER TABLE ONLY master_data.mdm_asset_categories
-    ADD CONSTRAINT mdm_asset_categories_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY master_data.mdm_data_asset_categories
+    ADD CONSTRAINT mdm_data_asset_categories_pkey PRIMARY KEY (id);
 
 
 --
@@ -2721,16 +2721,16 @@ CREATE POLICY mdm_api_products_tenant_policy ON master_data.mdm_api_products USI
 
 
 --
--- Name: mdm_asset_categories; Type: ROW SECURITY; Schema: master_data; Owner: -
+-- Name: mdm_data_asset_categories; Type: ROW SECURITY; Schema: master_data; Owner: -
 --
 
-ALTER TABLE master_data.mdm_asset_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE master_data.mdm_data_asset_categories ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mdm_asset_categories mdm_asset_categories_tenant_policy; Type: POLICY; Schema: master_data; Owner: -
+-- Name: mdm_data_asset_categories mdm_data_asset_categories_tenant_policy; Type: POLICY; Schema: master_data; Owner: -
 --
 
-CREATE POLICY mdm_asset_categories_tenant_policy ON master_data.mdm_asset_categories USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+CREATE POLICY mdm_data_asset_categories_tenant_policy ON master_data.mdm_data_asset_categories USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --

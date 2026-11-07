@@ -160,6 +160,8 @@ def parse_navitems(cfg_path):
                 'group': grab_field(elem, 'group'),
                 'labelKey': grab_field(elem, 'labelKey') or grab_field(elem, 'label'),
                 'icon': grab_field(elem, 'icon'),
+                'permission': grab_field(elem, 'permission'),
+                'showInSidebar': grab_field(elem, 'showInSidebar'),
             })
     return items
 
@@ -194,15 +196,20 @@ def parse_seed(seed_path):
 
 
 def parse_backfill(sql_path):
-    """补种迁移 VALUES 行: ('name', 'code', 'icon', sort, 'path', 'permission', 'group_code')"""
+    """补种迁移 VALUES 行: ('name', 'code', 'icon', sort, 'path', 'permission', 'group_code')
+    批 29 起生成器会在行首带 tenant_id 前缀，故前缀部分做可选匹配。"""
     items = []
     text = open(sql_path, encoding='utf-8').read()
-    pat = re.compile(r"\('([^']*)',\s*'([^']+)',\s*'([^']+)',\s*\d+,\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'\)")
+    pat = re.compile(
+        r"\("
+        r"(?:'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',\s*)?"
+        r"'([^']*)',\s*'([^']+)',\s*'([^']+)',\s*\d+,\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'\)"
+    )
     for m in pat.finditer(text):
         items.append({'code': m.group(2), 'name': m.group(1), 'path': m.group(4),
                       'permission': m.group(5), 'group': m.group(6)})
     # UPDATE core_menus SET path='...' ... AND code = '...' 形式的路径同步迁移
-    upd = re.compile(r"UPDATE core_menus\s+SET\s+path\s*=\s*'([^']+)'[\s\S]*?code\s*=\s*'([^']+)'", re.I)
+    upd = re.compile(r"UPDATE\s+(?:mes\.)?core_menus\s+SET\s+path\s*=\s*'([^']+)'[\s\S]*?code\s*=\s*'([^']+)'", re.I)
     for m in upd.finditer(text):
         matched = [it for it in items if it['code'] == m.group(2)]
         if matched:
@@ -210,6 +217,14 @@ def parse_backfill(sql_path):
         else:
             items.append({'code': m.group(2), 'name': m.group(2), 'path': m.group(1),
                           'permission': '', 'group': ''})
+    # 软删迁移：UPDATE ... SET status='inactive', deleted_at=now() WHERE ... code='...'
+    # 标记 deleted，audit 时从种子集合剔除（对应 orphan_DB 的清理）
+    delpat = re.compile(
+        r"UPDATE\s+(?:mes\.)?core_menus\s+SET\s+status\s*=\s*'inactive'[\s\S]{0,200}?code\s*=\s*'([^']+)'",
+        re.I)
+    for m in delpat.finditer(text):
+        items.append({'code': m.group(1), 'name': m.group(1), 'path': '', 'permission': '',
+                      'group': '', 'deleted': True})
     return items
 
 
@@ -238,6 +253,9 @@ def audit(skip_mods=None, backfill_files=None):
     backfill_count = 0
     for bf in backfill_files or []:
         for it in parse_backfill(bf):
+            if it.get('deleted'):
+                seed_by_code.pop(it['code'], None)
+                continue
             if it['code'] in seed_by_code:
                 seed_by_code[it['code']]['path'] = it['path']
             else:
@@ -260,7 +278,9 @@ def audit(skip_mods=None, backfill_files=None):
             if it['code'] not in seed_by_code:
                 orphan_fe.append({'module': mod, 'code': it['code'], 'path': it['path'],
                                   'rawPath': it['rawPath'], 'group': it['group'],
-                                  'name': it.get('name'), 'icon': it.get('icon')})
+                                  'name': it.get('name'), 'icon': it.get('icon'),
+                                  'permission': it.get('permission'),
+                                  'showInSidebar': it.get('showInSidebar')})
             else:
                 s = seed_by_code[it['code']]
                 if it['path'] and s['path'] and it['path'] != s['path']:
@@ -329,7 +349,10 @@ def emit_sql(a, backfill_mods=None):
                 continue
             name = (it.get('name') or it['code']).replace("'", "''")
             icon = it.get('icon') or 'CircleDot'
-            perm = f"{mod}:read"
+            # 批 29：permission 取前端 navItems 的真实值，缺失才回退 <module>:read 占位。
+            # 注意 core_menus 无 visible 列——侧栏可见性由 navItems.showInSidebar 决定，
+            # 且 getSidebarNavItems 已在注册表层过滤，DB 补种不会让已下沉项重新出现。
+            perm = (it.get('permission') or '').strip() or f"{mod}:read"
             path = it['path'] or f"/{mod}/#TBD#"
             rows.append(f"    ('{name}', '{it['code']}', '{icon}', {100 + i}, '{path}', '{perm}', '{gcode}')")
         if not rows:

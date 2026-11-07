@@ -28,6 +28,8 @@ export const getDepartmentSchema = (): EntitySchema => {
 
   return {
     entity: 'hrm_department',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'hrm:department',
     title: i18n.t('hrm.department.k4'),
     description: i18n.t('hrm.department.k5'),
 

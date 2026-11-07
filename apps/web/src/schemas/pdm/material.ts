@@ -11,6 +11,9 @@ export const materialSchema: EntitySchema = {
     resource: 'materials',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'pdm:material',
+
   fields: [
     {
       name: 'code',

@@ -536,8 +536,8 @@ pub async fn update_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    // leader_id 列为 uuid：必须按 Uuid 绑定，直接绑 String 会推断为 text 导致 COALESCE 类型不匹配
-    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    // leader_id 列当前库结构为 character varying：按字符串绑定（与 create_team 一致）。
+    // 若按 Uuid 绑定，COALESCE($5::uuid, leader_id) 会与该列类型冲突。
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, TeamRow>(
@@ -546,7 +546,7 @@ pub async fn update_team(
             team_name = COALESCE($2, team_name),
             team_type = COALESCE($3, team_type),
             work_station_id = COALESCE($4, work_station_id),
-            leader_id = COALESCE($5::varchar, leader_id),
+            leader_id = COALESCE($5, leader_id),
             leader_name = COALESCE($6, leader_name),
             status = COALESCE($7, status),
             description = COALESCE($8, description),
@@ -563,7 +563,7 @@ pub async fn update_team(
     .bind(req.team_name)
     .bind(req.team_type)
     .bind(work_station_id)
-    .bind(leader_id)
+    .bind(req.leader_id.as_deref())
     .bind(req.leader_name)
     .bind(req.status)
     .bind(req.description)

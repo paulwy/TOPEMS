@@ -54,6 +54,9 @@ export const notificationTemplateSchema: EntitySchema = {
     resource: 'notification-templates',
   },
 
+  // 批24：新建 4 码后接入（表 public.notification_templates）
+  permissionResource: 'notification:template',
+
   fields: [
     {
       name: 'name',

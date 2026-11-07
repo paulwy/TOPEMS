@@ -1,0 +1,12 @@
+{
+  "domain-group.nav.manufacturing": "Manufacturing",
+  "domain-group.nav.supplychain": "Supply Chain",
+  "domain-group.nav.finance": "Finance",
+  "domain-group.nav.hr": "Human Resources",
+  "domain-group.nav.rd": "Research & Development",
+  "domain-group.nav.quality": "Quality",
+  "domain-group.nav.asset": "Assets & EHS",
+  "domain-group.nav.platform": "Platform",
+  "domain-group.nav.analytics": "Analytics",
+  "domain-group.nav.collab": "Collaboration"
+}

@@ -411,6 +411,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:plan:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-plan_desc'),
     },
     {
@@ -422,6 +423,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:compliance:read',
       order: 5,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-compliance_desc'),
     },
     {
@@ -433,6 +435,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:environment:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-environment_desc'),
     },
     {
@@ -455,6 +458,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:occupational_disease:read',
       order: 7,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-occupational-disease_desc'),
     },
     {
@@ -466,6 +470,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:health:read',
       order: 8,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-health-management_desc'),
     },
     {
@@ -477,6 +482,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:hazardous_material:read',
       order: 9,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-hazardous-material_desc'),
     },
     {
@@ -499,6 +505,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:drill:read',
       order: 11,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-drill_desc'),
     },
     {
@@ -510,6 +517,7 @@ export const ehsNavConfig: ModuleNavConfig = {
       permission: 'ehs:incident:read',
       order: 12,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('ehs.nav.ehs-incident-report_desc'),
     },
   ],

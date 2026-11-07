@@ -312,6 +312,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       permission: 'integration:lims:read',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('integration.nav.integration-lims-qms_desc'),
     },
     {
@@ -323,6 +324,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       permission: 'integration:mes:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('integration.nav.integration-mes-erp_desc'),
     },
     {
@@ -334,6 +336,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       permission: 'integration:wms:read',
       order: 4,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('integration.nav.integration-wms-scm_desc'),
     },
     {
@@ -345,6 +348,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       permission: 'integration:dashboard:admin',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('integration.nav.integration-settings_desc'),
     },
   ],

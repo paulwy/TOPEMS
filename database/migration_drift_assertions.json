@@ -1,0 +1,110 @@
+{
+  "_comment": "ledger-vs-DDL 漂移断言清单：source 指向声明该结构的迁移版本；仅当目标库 _sqlx_migrations 中该版本 success=true 时才对实际结构做断言。新增断言请同步填写 source_tokens（迁移文件必须包含的字面量），防止清单与迁移脱节。",
+  "version": 1,
+  "assertions": [
+    {
+      "id": "mes.production_orders.quantity",
+      "kind": "column_type",
+      "table": "mes.production_orders",
+      "column": "quantity",
+      "expected": "bigint",
+      "source": "20261107000017",
+      "source_tokens": ["mes.production_orders", "ALTER COLUMN %I TYPE bigint", "quantity"]
+    },
+    {
+      "id": "mes.production_orders.completed_quantity",
+      "kind": "column_type",
+      "table": "mes.production_orders",
+      "column": "completed_quantity",
+      "expected": "bigint",
+      "source": "20261107000017",
+      "source_tokens": ["mes.production_orders", "ALTER COLUMN %I TYPE bigint", "completed_quantity"]
+    },
+    {
+      "id": "mes.batch_records.ck_batch_records_status_standard",
+      "kind": "constraint_absent",
+      "table": "mes.batch_records",
+      "constraint": "ck_batch_records_status_standard",
+      "source": "20261107000018",
+      "source_tokens": ["DROP CONSTRAINT", "ck_batch_records_status_standard"]
+    },
+    {
+      "id": "mes.production_records.completed_quantity",
+      "kind": "column_type",
+      "table": "mes.production_records",
+      "column": "completed_quantity",
+      "expected": "numeric(12,2)",
+      "source": "20260926120000",
+      "source_tokens": ["completed_quantity numeric(12,2)"]
+    },
+    {
+      "id": "mobile.documents.file_size",
+      "kind": "column_type",
+      "table": "mobile.documents",
+      "column": "file_size",
+      "expected": "bigint",
+      "source": "20261007140000",
+      "source_tokens": ["file_size BIGINT"]
+    },
+    {
+      "id": "finance.core_finance_currencies.created_at",
+      "kind": "column_type",
+      "table": "finance.core_finance_currencies",
+      "column": "created_at",
+      "expected": "timestamp with time zone",
+      "source": "20261106000000",
+      "source_tokens": ["timestamp without time zone", "timestamptz"]
+    },
+    {
+      "id": "mes.batch_records.batch_records_batch_no_key",
+      "kind": "index_exists",
+      "schema": "mes",
+      "index": "batch_records_batch_no_key",
+      "source": "20261007000005",
+      "source_tokens": ["batch_records_batch_no_key"]
+    },
+    {
+      "id": "mes.production_orders.production_orders_pkey",
+      "kind": "index_exists",
+      "schema": "mes",
+      "index": "production_orders_pkey",
+      "source": "20260918000014",
+      "source_tokens": ["production_orders", "PRIMARY KEY"]
+    },
+    {
+      "id": "perm.batch16.hrm_training_plan_rows",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["hrm:training_plan:create", "hrm:training_plan:delete", "[batch16]"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE code IN ('hrm:training_plan:create','hrm:training_plan:update','hrm:training_plan:delete')",
+      "expected": 3
+    },
+    {
+      "id": "perm.batch16.hrm_training_plan_grants",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["hrm_manager", "hrm:training_plan"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_role_permissions rp JOIN public.core_permissions p ON p.id = rp.permission_id JOIN public.core_roles r ON r.id = rp.role_id WHERE p.code LIKE 'hrm:training_plan:%' AND p.description LIKE '%batch16%' AND r.name IN ('admin','superadmin','hrm_manager')",
+      "expected": 9
+    },
+    {
+      "id": "perm.batch16.total_rows",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["[batch16]", "共 135 条"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE description LIKE '%batch16%'",
+      "expected": 135
+    },
+    {
+      "id": "perm.batch17.total_rows",
+      "kind": "data_rows",
+      "source": "20261107000006",
+      "source_tokens": ["[batch17]", "batch17"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE description LIKE '%batch17%'",
+      "expected": 30
+    }
+  ]
+}

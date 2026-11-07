@@ -255,7 +255,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       title: i18n.t('lims.nav.lims-sample-receive'),
       titleKey: 'lims.nav.lims-sample-receive',
       code: 'lims-sample-receive',
-      requiredPermissions: ['lims:sample:write', 'lims:dashboard:write'],
+      requiredPermissions: ['lims:sample:write'],
       action: 'write',
       template: 'form',
       group: 'process',
@@ -360,7 +360,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       title: i18n.t('lims.nav.lims-instrument-maintenance'),
       titleKey: 'lims.nav.lims-instrument-maintenance',
       code: 'lims-instrument-maintenance',
-      requiredPermissions: ['lims:instrument:write', 'lims:dashboard:write'],
+      requiredPermissions: ['lims:instrument:write'],
       action: 'write',
       template: 'form',
       group: 'master',
@@ -520,6 +520,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:sample:write',
       order: 2,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-sample-receive_desc'),
     },
     {
@@ -554,6 +555,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:process:read',
       order: 5,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-process_desc'),
     },
     {
@@ -577,6 +579,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:instrument:write',
       order: 7,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-instrument-maintenance_desc'),
     },
     {
@@ -599,6 +602,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:instrument:read',
       order: 9,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-instrument-data_desc'),
     },
     {
@@ -621,6 +625,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:barcode:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-barcode_desc'),
     },
     {
@@ -632,6 +637,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:uncertainty:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-uncertainty_desc'),
     },
     {
@@ -643,6 +649,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:result:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-inspection-result_desc'),
     },
     {
@@ -654,6 +661,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:proficiency:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-proficiency-testing_desc'),
     },
     {
@@ -665,6 +673,7 @@ export const limsNavConfig: ModuleNavConfig = {
       permission: 'lims:test-method:read',
       order: 6,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('lims.nav.lims-method-categories_desc'),
     },
   ],

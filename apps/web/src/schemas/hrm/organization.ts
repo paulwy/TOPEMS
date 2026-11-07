@@ -12,6 +12,9 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
     resource: 'organizations',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'hrm:organization',
+
   fields: [
     {
       name: 'name',

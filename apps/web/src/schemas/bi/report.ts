@@ -149,6 +149,8 @@ const reportFields: SchemaField[] = [
 
 export const reportSchema: EntitySchema = {
   entity: 'bi_report',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'bi:report',
   title: i18n.t('shared.report.bi_0'),
   description: i18n.t('shared.report.bi_17'),
 

@@ -11,6 +11,9 @@ export const scoringDimensionSchema: EntitySchema = {
     resource: 'scoring-dimensions',
   },
 
+  // 批24：新建 4 码后接入（表 srm.scoring_dimensions）
+  permissionResource: 'srm:scoring_dimension',
+
   fields: [
     {
       name: 'dimension_code',

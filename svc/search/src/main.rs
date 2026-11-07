@@ -3,7 +3,7 @@
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
 use axum::{routing::get, Router};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_db::scope::Db;
 
@@ -69,9 +69,9 @@ async fn main() -> anyhow::Result<()> {
             "/recent",
             get(handlers::list_recent).delete(handlers::clear_recent),
         )
-        .layer(axum::middleware::from_fn(require_permission(
-            "search:admin",
-        )))
+        // 模块门只负责「能进 search + 读」；DELETE /recent 等写动作仍要求 search:admin。
+        .layer(axum::middleware::from_fn(require_module_write("search")))
+        .layer(axum::middleware::from_fn(require_module_access("search")))
         .with_state(db.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
@@ -89,9 +89,9 @@ async fn main() -> anyhow::Result<()> {
     let root_search_routes = Router::new()
         .route("/api/search", get(handlers::search_handler))
         .route("/api/search/", get(handlers::search_handler))
-        .layer(axum::middleware::from_fn(require_permission(
-            "search:admin",
-        )))
+        // 模块门只负责「能进 search + 读」；DELETE /recent 等写动作仍要求 search:admin。
+        .layer(axum::middleware::from_fn(require_module_write("search")))
+        .layer(axum::middleware::from_fn(require_module_access("search")))
         .with_state(db.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),

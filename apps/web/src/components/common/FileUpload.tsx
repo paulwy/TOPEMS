@@ -236,39 +236,28 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
 
   /**
-   * 模拟上传过程
+   * 模拟上传过程（无真实进度，仅展示 uploading 状态）
    */
   const simulateUpload = (fileId: string) => {
     setFiles((prev) =>
       prev.map((f) => (f.id === fileId ? { ...f, status: 'uploading' as const } : f))
     );
 
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 20;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId
-              ? {
-                  ...f,
-                  progress: 100,
-                  status: 'completed' as const,
-                  url: URL.createObjectURL(
-                    prev.find((p) => p.id === fileId)?.status === 'pending'
-                      ? new File([], fileId)
-                      : new Blob([])
-                  ),
-                }
-              : f
-          )
-        );
-      } else {
-        setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
-      }
-    }, 300);
+    // 无真实上传进度，不伪造百分比；仅延时后标记完成
+    setTimeout(() => {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === fileId
+            ? {
+                ...f,
+                progress: 100,
+                status: 'completed' as const,
+                url: URL.createObjectURL(new Blob([])),
+              }
+            : f
+        )
+      );
+    }, 800);
   };
 
   /**

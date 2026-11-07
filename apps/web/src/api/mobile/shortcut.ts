@@ -60,21 +60,6 @@ export const shortcutApi = {
   createShortcut: async (data: CreateShortcutRequest): Promise<ApiResponse<Shortcut>> => {
     return apiClient.mobile.post('/shortcuts', data);
   },
-
-  updateShortcut: async (
-    id: string,
-    data: UpdateShortcutRequest
-  ): Promise<ApiResponse<Shortcut>> => {
-    return apiClient.mobile.put(`/shortcuts/${id}`, data);
-  },
-
-  deleteShortcut: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.mobile.delete(`/shortcuts/${id}`);
-  },
-
-  reorderShortcuts: async (items: ReorderShortcutItem[]): Promise<ApiResponse<boolean>> => {
-    return apiClient.mobile.post('/shortcuts/reorder', { items });
-  },
 };
 
 export default shortcutApi;

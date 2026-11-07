@@ -24,8 +24,9 @@
  *   GET    /mobile/map/markers
  */
 
-import apiClient from '../client';
-import type { ApiResponse, PaginatedResponse } from '../client';
+// 批 37 (g3)：gisApi 全部 19 个方法已删（前端零消费，均为 contract_fallback 占位端点），
+// 故 apiClient / ApiResponse / PaginatedResponse 均不再需要，import 一并移除。
+// 类型定义保留：RouteStatus 等仍被其它模块引用。
 
 export type RouteStatus = 'draft' | 'active' | 'paused' | 'completed';
 export type ZoneType = 'work_area' | 'delivery_area' | 'service_area' | 'restricted_area';
@@ -161,128 +162,9 @@ export interface CreateGeofenceRequest {
   action?: GeofenceAction;
 }
 
-export const gisApi = {
-  // ==================== 巡检路线管理 ====================
-
-  listRoutes: async (params?: {
-    status?: RouteStatus;
-    keyword?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Route>>> => {
-    return apiClient.mobile.get('routes', { params });
-  },
-
-  getRoute: async (id: string): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.get(`routes/${id}`);
-  },
-
-  createRoute: async (data: CreateRouteRequest): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.post('routes', data);
-  },
-
-  updateRoute: async (
-    id: string,
-    data: Partial<CreateRouteRequest>
-  ): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.put(`routes/${id}`, data);
-  },
-
-  deleteRoute: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`routes/${id}`);
-  },
-
-  // ==================== 路线停靠点 ====================
-
-  listRouteStops: async (routeId: string): Promise<ApiResponse<RouteStop[]>> => {
-    return apiClient.mobile.get(`routes/${routeId}/stops`);
-  },
-
-  createRouteStop: async (
-    routeId: string,
-    data: CreateStopRequest
-  ): Promise<ApiResponse<RouteStop>> => {
-    return apiClient.mobile.post(`routes/${routeId}/stops`, data);
-  },
-
-  // ==================== 区域管理 ====================
-
-  listZones: async (params?: {
-    type?: ZoneType;
-    is_active?: boolean;
-  }): Promise<ApiResponse<Zone[]>> => {
-    return apiClient.mobile.get('zones', { params });
-  },
-
-  createZone: async (data: CreateZoneRequest): Promise<ApiResponse<Zone>> => {
-    return apiClient.mobile.post('zones', data);
-  },
-
-  // ==================== 地理围栏 ====================
-
-  listGeofences: async (params?: {
-    shape?: GeofenceShape;
-    is_active?: boolean;
-  }): Promise<ApiResponse<Geofence[]>> => {
-    return apiClient.mobile.get('geofences', { params });
-  },
-
-  createGeofence: async (data: CreateGeofenceRequest): Promise<ApiResponse<Geofence>> => {
-    return apiClient.mobile.post('geofences', data);
-  },
-
-  updateGeofence: async (
-    id: string,
-    data: Partial<CreateGeofenceRequest>
-  ): Promise<ApiResponse<Geofence>> => {
-    return apiClient.mobile.put(`geofences/${id}`, data);
-  },
-
-  deleteGeofence: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`geofences/${id}`);
-  },
-
-  checkGeofence: async (
-    id: string,
-    location: GeoPoint
-  ): Promise<ApiResponse<GeofenceCheckResult>> => {
-    return apiClient.mobile.post(`geofences/${id}/check`, location);
-  },
-
-  // ==================== 位置服务 ====================
-
-  getCurrentLocation: async (): Promise<ApiResponse<LocationRecord>> => {
-    return apiClient.mobile.get('locations/current');
-  },
-
-  trackLocation: async (data: {
-    location: GeoPoint;
-    speed_kmh?: number;
-    bearing?: number;
-  }): Promise<ApiResponse<LocationRecord>> => {
-    return apiClient.mobile.post('locations/track', data);
-  },
-
-  getLocationHistory: async (params?: {
-    start_time?: string;
-    end_time?: string;
-    limit?: number;
-  }): Promise<ApiResponse<LocationRecord[]>> => {
-    return apiClient.mobile.get('locations/history', { params });
-  },
-
-  // ==================== 地图图层与标记 ====================
-
-  listMapLayers: async (): Promise<ApiResponse<MapLayer[]>> => {
-    return apiClient.mobile.get('map/layers');
-  },
-
-  listMapMarkers: async (params?: {
-    entity_type?: MapMarker['entity_type'];
-    bounds?: string;
-  }): Promise<ApiResponse<MapMarker[]>> => {
-    return apiClient.mobile.get('map/markers', { params });
-  },
-};
+// 批 37 (g3)：routes / zones / geofences / locations / map 等 19 个端点均为
+// contract_fallback.rs 轻量占位，前端无任何页面/组件/hook 调用，死封装已删除。
+// 仅保留类型定义，待上游真实实现后再恢复 API 方法。
+export const gisApi = {};
 
 export default gisApi;

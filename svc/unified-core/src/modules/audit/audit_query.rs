@@ -323,7 +323,8 @@ pub async fn query_audit_logs(
             let total: i64 = sqlx::query_scalar(
                 r#"
                 SELECT COUNT(*) FROM public.audit_logs
-                WHERE ($1::text IS NULL OR user_id::text = $1)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR user_id::text = $1)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::text IS NULL OR entity_type = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -373,7 +374,8 @@ pub async fn query_audit_logs(
                     ) AS details,
                     created_at
                 FROM public.audit_logs
-                WHERE ($1::text IS NULL OR user_id::text = $1)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR user_id::text = $1)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::text IS NULL OR entity_type = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -501,7 +503,7 @@ pub async fn get_audit_log_stats(
             };
 
             stats.total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM public.audit_logs WHERE ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
@@ -510,14 +512,14 @@ pub async fn get_audit_log_stats(
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= CURRENT_DATE",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE",
             )
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.success_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM public.audit_logs WHERE status = 'success'",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND status = 'success'",
             )
             .fetch_one(&mut scope)
             .await
@@ -559,12 +561,19 @@ async fn load_top_by_column(
     } else {
         "created_at"
     };
+    // audit_logs 有软删列；permission_audit_logs / login_logs 无 deleted_at，保持原样
+    let deleted_filter = if table == "public.audit_logs" {
+        "AND deleted_at IS NULL"
+    } else {
+        ""
+    };
     let sql = format!(
         r#"
         SELECT COALESCE({column}, 'unknown') AS key, COUNT(*) AS count
         FROM {table}
         WHERE ($1::timestamptz IS NULL OR {date_col} >= $1)
           AND ($2::timestamptz IS NULL OR {date_col} <= $2)
+          {deleted_filter}
         GROUP BY {column}
         ORDER BY count DESC
         LIMIT 10
@@ -572,6 +581,7 @@ async fn load_top_by_column(
         column = column,
         table = table,
         date_col = date_col,
+        deleted_filter = deleted_filter,
     );
     let rows = if table == "public.audit_logs" {
         let db = Db::new(state.pool.clone(), "public, shared");
@@ -619,7 +629,8 @@ async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
         r#"
         SELECT COALESCE(user_name, user_id::text, 'unknown') AS key, COUNT(*) AS count
         FROM public.audit_logs
-        WHERE created_at >= NOW() - INTERVAL '30 days'
+        WHERE deleted_at IS NULL
+          AND created_at >= NOW() - INTERVAL '30 days'
         GROUP BY user_name, user_id
         ORDER BY count DESC
         LIMIT 10
@@ -670,6 +681,12 @@ async fn load_trend(
         "login_logs" => ("core_login_logs", "login_time"),
         _ => ("public.audit_logs", "created_at"),
     };
+    // audit_logs 有软删列；permission_audit_logs / login_logs 无 deleted_at，保持原样
+    let deleted_filter = if table == "public.audit_logs" {
+        "AND deleted_at IS NULL"
+    } else {
+        ""
+    };
     let sql = format!(
         r#"
         SELECT TO_CHAR(DATE_TRUNC('day', {date_col}), 'YYYY-MM-DD') AS date,
@@ -677,11 +694,13 @@ async fn load_trend(
         FROM {table}
         WHERE ($1::timestamptz IS NULL OR {date_col} >= $1)
           AND ($2::timestamptz IS NULL OR {date_col} <= $2)
+          {deleted_filter}
         GROUP BY DATE_TRUNC('day', {date_col})
         ORDER BY date
         "#,
         table = table,
         date_col = date_col,
+        deleted_filter = deleted_filter,
     );
     let rows = if table == "public.audit_logs" {
         let db = Db::new(state.pool.clone(), "public, shared");
@@ -870,7 +889,8 @@ async fn fetch_export_rows(
                 SELECT id, user_id::text, user_name, action, entity_type, entity_id,
                        status, error_message, ip_address, user_agent, created_at
                 FROM public.audit_logs
-                WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+                WHERE deleted_at IS NULL
+                  AND ($1::timestamptz IS NULL OR created_at >= $1)
                   AND ($2::timestamptz IS NULL OR created_at <= $2)
                   AND ($3::text IS NULL OR action = $3)
                   AND ($4::text IS NULL OR status = $4)

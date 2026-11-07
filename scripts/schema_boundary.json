@@ -38,7 +38,8 @@
       "search_path": "erp, public",
       "allow": [
         "finance",
-        "crm"
+        "crm",
+        "master_data"
       ]
     },
     "finance": {
@@ -73,7 +74,10 @@
     "master-data": {
       "schema": "master_data",
       "search_path": "master_data, public",
-      "allow": []
+      "allow": [
+        "scm",
+        "srm"
+      ]
     },
     "mes": {
       "schema": "mes",
@@ -123,7 +127,9 @@
     "scm": {
       "schema": "scm",
       "search_path": "scm, public, shared",
-      "allow": []
+      "allow": [
+        "master_data"
+      ]
     },
     "search": {
       "schema": "public",
@@ -132,7 +138,9 @@
     "srm": {
       "schema": "srm",
       "search_path": "srm, public, shared",
-      "allow": []
+      "allow": [
+        "master_data"
+      ]
     },
     "ticket": {
       "schema": "ticket",

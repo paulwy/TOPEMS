@@ -97,8 +97,8 @@ const generateTimeLabels = (range: TimeRange): string[] => {
   }
   return labels;
 };
-const generateRandomData = (length: number, min: number, max: number): number[] => {
-  return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+const generateRandomData = (_length: number, _min: number, _max: number): number[] => {
+  return [];
 };
 const getServiceNames = () => [
   i18n.t('monitor.monitor_metrics_page.k20'),
@@ -108,16 +108,8 @@ const getServiceNames = () => [
   i18n.t('monitor.monitor_metrics_page.k16'),
   i18n.t('monitor.monitor_metrics_page.k15'),
 ];
-const generateMultiServiceTrendData = (labels: string[], services: string[]) => {
-  return labels.map((label, _index) => {
-    const item: Record<string, string | number> = { name: label };
-    services.forEach((service, i) => {
-      const baseValues = [45, 62, 38, 55, 70, 48];
-      const base = baseValues[i] || 50;
-      item[service] = base + Math.floor(Math.random() * 30) - 15;
-    });
-    return item;
-  });
+const generateMultiServiceTrendData = (_labels: string[], _services: string[]) => {
+  return [] as Record<string, string | number>[];
 };
 export const MonitorMetricsPage: React.FC = () => {
   const theme = useTheme();
@@ -284,42 +276,10 @@ export const MonitorMetricsPage: React.FC = () => {
     () => generateMultiServiceTrendData(timeLabels, getServiceNames().slice(0, 4)),
     [timeLabels]
   );
-  const diskIOData = useMemo(
-    () =>
-      timeLabels.map((label) => ({
-        name: label,
-        [i18n.t('pages.monitor_metrics_page.k0')]: Math.floor(Math.random() * 100) + 50,
-        [i18n.t('pages.monitor_metrics_page.k1')]: Math.floor(Math.random() * 80) + 30,
-      })),
-    [timeLabels]
-  );
-  const networkData = useMemo(
-    () =>
-      timeLabels.map((label) => ({
-        name: label,
-        [i18n.t('pages.monitor_metrics_page.k2')]: Math.floor(Math.random() * 150) + 80,
-        [i18n.t('pages.monitor_metrics_page.k3')]: Math.floor(Math.random() * 120) + 60,
-      })),
-    [timeLabels]
-  );
-  const apiRequestData = useMemo(
-    () =>
-      getServiceNames().map((service) => ({
-        name: service,
-        [i18n.t('pages.monitor_metrics_page.k4')]: Math.floor(Math.random() * 5000) + 2000,
-      })),
-    []
-  );
-  const responseTimeData = useMemo(
-    () =>
-      Array.from({ length: 10 }, (_, i) => ({
-        name: `${i * 50}-${(i + 1) * 50}ms`,
-        P50: Math.floor(Math.random() * 100) + 50,
-        P90: Math.floor(Math.random() * 80) + 30,
-        P99: Math.floor(Math.random() * 50) + 20,
-      })),
-    []
-  );
+  const diskIOData = useMemo(() => [] as Record<string, string | number>[], []);
+  const networkData = useMemo(() => [] as Record<string, string | number>[], []);
+  const apiRequestData = useMemo(() => [] as Record<string, string | number>[], []);
+  const responseTimeData = useMemo(() => [] as Record<string, string | number>[], []);
   const charts: ChartCard[] = useMemo(
     () => [
       {

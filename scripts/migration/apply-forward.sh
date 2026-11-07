@@ -9,20 +9,35 @@
 # 每个文件在单事务内执行 SQL + 写入 _sqlx_migrations（checksum=SHA-384 文件字节），
 # 幂等：账本已存在的版本不会被重复执行。
 #
-# prod 唯一入口：`--prod` 时对全部 pending（version > anchor 且账本缺失）做双重校验：
+# 窗口白名单（fail-closed）：
+#   --only  <csv>  本轮允许应用的白名单版本（严格集合；不在集合内一律不应用）
+#   --defer <csv>  已评审但本窗口明确不应用的 pending 版本（必须显式声明）
+#   任何 pending 既不在 --only 也不在 --defer → 在产生任何 DDL 之前硬失败（exit 1）。
+#   未给 --only 时保持旧行为（全部 pending），供历史路径使用。
+#
+# prod 唯一入口：`--prod` 时对白名单内每条 pending 做双重校验：
 #   1) 定向迁移命名（dbNN_test / dbNN_5433 / test_* / 5433_*，与 CI 检查同口径）→ 拒绝；
 #   2) 无守卫高危语句（ALTER COLUMN TYPE / DROP COLUMN / DROP CONSTRAINT / DROP TABLE CASCADE，
 #      调用 scripts/ci/check-destructive-sql.mjs 同口径判定）→ 拒绝。
-# 命中任一条即硬失败并列出清单，提示必须走「基线 + 前向迁移」路径。
+#   命中任一条即硬失败并列出清单，提示必须走「基线 + 前向迁移」路径。
+#   环境变量 WINDOW_TARGET=prod 时若未带 --prod，直接拒绝（exit 1）。
+#
+# SSH 模式（prod 主机不在本地暴露 DSN）：
+#   --ssh-host <user@host>   --remote-db <db>   --remote-mig-dir <已投递校验的远端目录>
+#   远端 psql 走主机本地 socket（PGHOST 默认 /tmp）；迁移文件必须已投递且 sha256 一致。
+#   WINDOW_SSH_LOCAL_SIM=1 用于本地演练（ssh/scp 替换为本地执行/复制，不连 prod）。
 #
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
-#     --anchor 20261105235700
+#     --anchor 20261105235700 --only 20261107000008,20261107000013 \
+#     --defer 20261105235800,20261106000000,...
 #   bash scripts/migration/apply-forward.sh --dsn "$DSN" --anchor 20261105235700
-#   bash scripts/migration/apply-forward.sh --prod ... --allow-pending 20261106120000
-#     （--allow-pending 可重复；仅用于人工复核后的临时放行，须记录理由）
+#   WINDOW_SSH_LOCAL_SIM=1 bash scripts/migration/apply-forward.sh \
+#     --ssh-host sim --remote-db topems_window_drill \
+#     --remote-mig-dir /tmp/window/migrations --anchor "$ANCHOR" \
+#     --only 20261107000008,20261107000013 --defer "$DEFER"
 #
-# 退出码：0 成功（含 0 待应用）；1 存在失败/被守卫拒绝；2 参数错误
+# 退出码：0 成功（含 0 待应用）；1 存在失败/被守卫拒绝/白名单外 pending；2 参数错误
 # =============================================================================
 set -euo pipefail
 
@@ -33,6 +48,15 @@ DB=""
 ANCHOR=""
 PROD=0
 ALLOW_PENDING=()
+ONLY_RAW=""
+DEFER_RAW=""
+SSH_HOST="${WINDOW_SSH_HOST:-}"
+REMOTE_DB="${WINDOW_REMOTE_DB:-}"
+REMOTE_MIG_DIR="${WINDOW_REMOTE_MIG_DIR:-}"
+REMOTE_PGHOST="${WINDOW_REMOTE_PGHOST:-/tmp}"
+LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
+SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
+REMOTE_PSQL_BIN="${WINDOW_REMOTE_PSQL_BIN:-/opt/homebrew/bin/psql}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -41,10 +65,74 @@ while [[ $# -gt 0 ]]; do
     --anchor) ANCHOR="$2"; shift 2 ;;
     --prod) PROD=1; shift ;;
     --allow-pending) ALLOW_PENDING+=("$2"); shift 2 ;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    --only) ONLY_RAW="$2"; shift 2 ;;
+    --defer) DEFER_RAW="$2"; shift 2 ;;
+    --ssh-host) SSH_HOST="$2"; shift 2 ;;
+    --remote-db) REMOTE_DB="$2"; shift 2 ;;
+    --remote-mig-dir) REMOTE_MIG_DIR="$2"; shift 2 ;;
+    -h|--help) sed -n '2,46p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ "${WINDOW_TARGET:-}" == "prod" && $PROD -eq 0 ]]; then
+  echo "拒绝：WINDOW_TARGET=prod 时 apply-forward 必须带 --prod" >&2
+  exit 1
+fi
+
+sq() { printf '%q' "$1"; }
+remote_run() {
+  local cmd="$1"
+  if [[ "$LOCAL_SIM" == "1" ]]; then bash -c "$cmd"; else "$SSH_BIN" "$SSH_HOST" "$cmd"; fi
+}
+remote_psql() {
+  local cmd
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  local a
+  for a in "$@"; do cmd+=" $(sq "$a")"; done
+  remote_run "$cmd"
+}
+
+SSH_MODE=0
+if [[ -n "$SSH_HOST" ]]; then
+  SSH_MODE=1
+  [[ -n "$REMOTE_DB" ]] || { echo "SSH 模式需要 --remote-db" >&2; exit 2; }
+  [[ -n "$REMOTE_MIG_DIR" ]] || { echo "SSH 模式需要 --remote-mig-dir（已投递并校验的迁移目录）" >&2; exit 2; }
+  psql_exec() { remote_psql "$@"; }
+elif [[ -n "$DSN" ]]; then
+  PSQL=(psql "$DSN")
+  psql_exec() { "${PSQL[@]}" "$@"; }
+elif [[ -n "$DB" ]]; then
+  PSQL=(psql -h "${PGHOST:-/tmp}" -U "${PGUSER:-air}" -d "$DB")
+  psql_exec() { "${PSQL[@]}" "$@"; }
+else
+  echo "需要 --dsn / --db，或 --ssh-host + --remote-db + --remote-mig-dir" >&2
+  exit 2
+fi
+
+if [[ -z "$ANCHOR" ]]; then
+  ANCHOR="$(psql_exec -tA -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
+  [[ -n "$ANCHOR" && "$ANCHOR" != "NULL" ]] || { echo "无法读取锚点（账本为空？）" >&2; exit 2; }
+fi
+
+ONLY=()
+if [[ -n "$ONLY_RAW" ]]; then
+  IFS=',' read -r -a ONLY <<< "$ONLY_RAW"
+fi
+DEFER=()
+if [[ -n "$DEFER_RAW" ]]; then
+  IFS=',' read -r -a DEFER <<< "$DEFER_RAW"
+fi
+for v in ${ONLY[@]+"${ONLY[@]}"} ${DEFER[@]+"${DEFER[@]}"}; do
+  [[ "$v" =~ ^[0-9]{14}$ ]] || { echo "白名单/defer 版本号非法: $v" >&2; exit 2; }
+done
+
+contains() {
+  local needle="$1"; shift
+  local x
+  for x in "$@"; do [[ "$x" == "$needle" ]] && return 0; done
+  return 1
+}
 
 is_allowed_pending() {
   local v="$1" x
@@ -54,18 +142,13 @@ is_allowed_pending() {
   return 1
 }
 
-if [[ -n "$DSN" ]]; then
-  PSQL=(psql "$DSN")
-elif [[ -n "$DB" ]]; then
-  PSQL=(psql -h "${PGHOST:-/tmp}" -U "${PGUSER:-air}" -d "$DB")
-else
-  echo "需要 --dsn 或 --db" >&2; exit 2
-fi
-
-if [[ -z "$ANCHOR" ]]; then
-  ANCHOR="$("${PSQL[@]}" -tA -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
-  [[ -n "$ANCHOR" && "$ANCHOR" != "NULL" ]] || { echo "无法读取锚点（账本为空？）" >&2; exit 2; }
-fi
+# 白名单内每个版本必须存在对应迁移文件（防止版本号写错后“静默 0 条”）
+for v in ${ONLY[@]+"${ONLY[@]}"}; do
+  if ! ls "$MIG_DIR"/"$v"_*.sql >/dev/null 2>&1; then
+    echo "拒绝：--only 中的版本 $v 在 $MIG_DIR 无对应迁移文件" >&2
+    exit 2
+  fi
+done
 
 # 定向迁移命名特征：dbNN_test / dbNN_5433 / *_5433_* / *_test_*
 # 与 scripts/ci/check-directed-migrations.mjs 的 DENY_RE 保持同口径。
@@ -73,15 +156,29 @@ DENY_RE='(^|_)(db[0-9]+_(test|5433)|5433_|test_)'
 
 PENDING=()
 DENIED=()
+OUT_OF_MANIFEST=()
+DEFERRED=()
+APPLIED_ONLY=()
 while IFS= read -r f; do
   b="$(basename "$f")"
   [[ "$b" =~ ^[0-9]{14}_ ]] || continue
   v="${b%%_*}"
   (( 10#$v > 10#$ANCHOR )) || continue
-  if "${PSQL[@]}" -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" | grep -q 1; then
+  # </dev/null：SSH 模式下 psql 会继承并吞掉 while 的 stdin（进程替换），
+  # 导致扫描在第 1 条后就结束、后续 pending 被静默跳过（fail-open）。
+  if psql_exec -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" </dev/null | grep -q 1; then
+    if contains "$v" ${ONLY[@]+"${ONLY[@]}"}; then APPLIED_ONLY+=("$v"); fi
     continue
   fi
-  if [[ $PROD -eq 1 ]] && ! is_allowed_pending "$v"; then
+  if [[ ${#ONLY[@]} -gt 0 ]] && ! contains "$v" ${ONLY[@]+"${ONLY[@]}"}; then
+    if contains "$v" ${DEFER[@]+"${DEFER[@]}"}; then
+      DEFERRED+=("$b")
+      continue
+    fi
+    OUT_OF_MANIFEST+=("$b")
+    continue
+  fi
+  if [[ $PROD -eq 1 ]] && { [[ ${#ONLY[@]} -gt 0 ]] || ! is_allowed_pending "$v"; }; then
     # 防线 1：定向迁移命名（prod 不允许）
     if [[ "$b" =~ $DENY_RE ]]; then
       DENIED+=("$b [定向迁移命名]")
@@ -103,6 +200,29 @@ while IFS= read -r f; do
   PENDING+=("$f")
 done < <(ls "$MIG_DIR"/*.sql | LC_ALL=C sort)
 
+# fail-closed：--only 的每个版本都必须被扫描到（已应用或进入待应用队列）。
+# 防止扫描环节被中断/截断后，把“一条都没看到”误判成“无待应用迁移”。
+if [[ ${#ONLY[@]} -gt 0 ]]; then
+  PENDING_VERSIONS=()
+  for f in ${PENDING[@]+"${PENDING[@]}"}; do PENDING_VERSIONS+=("$(basename "$f" | cut -d_ -f1)"); done
+  for v in "${ONLY[@]}"; do
+    if ! contains "$v" ${APPLIED_ONLY[@]+"${APPLIED_ONLY[@]}"} && ! contains "$v" ${PENDING_VERSIONS[@]+"${PENDING_VERSIONS[@]}"}; then
+      echo "== 拒绝：白名单版本 $v 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL" >&2
+      exit 1
+    fi
+  done
+fi
+
+# 白名单外 pending：必须先于任何 DDL 硬失败
+if [[ ${#OUT_OF_MANIFEST[@]} -gt 0 ]]; then
+  echo "== 拒绝：检测到 ${#OUT_OF_MANIFEST[@]} 条清单外 pending 迁移（未产生任何 DDL）" >&2
+  printf '  %s\n' "${OUT_OF_MANIFEST[@]}" >&2
+  echo "  本轮 --only: ${ONLY_RAW:-<未设置>}" >&2
+  echo "  已评审 defer: ${DEFER_RAW:-<未设置>}" >&2
+  echo "清单外迁移必须先评审并显式加入 --only 或 --defer；不允许提示后继续。" >&2
+  exit 1
+fi
+
 if [[ ${#DENIED[@]} -gt 0 ]]; then
   echo "== 拒绝：prod 检测到 ${#DENIED[@]} 条禁止直接应用的 pending 迁移" >&2
   printf '  %s\n' "${DENIED[@]}" >&2
@@ -119,10 +239,13 @@ fi
 
 if [[ ${#PENDING[@]} -eq 0 ]]; then
   echo "== 无待应用迁移（anchor=${ANCHOR}）"
+  [[ ${#DEFERRED[@]} -gt 0 ]] && echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）：" && printf '  %s\n' "${DEFERRED[@]}"
+  [[ ${#APPLIED_ONLY[@]} -gt 0 ]] && echo "== --only 中已应用: ${APPLIED_ONLY[*]}"
   exit 0
 fi
 
-echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}）"
+echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}${ONLY_RAW:+，only=$ONLY_RAW}）"
+[[ ${#DEFERRED[@]} -gt 0 ]] && { echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）："; printf '  %s\n' "${DEFERRED[@]}"; }
 FAILED=()
 for f in "${PENDING[@]}"; do
   b="$(basename "$f")"
@@ -130,15 +253,37 @@ for f in "${PENDING[@]}"; do
   desc="${b%.sql}"; desc="${desc#*_}"; desc="${desc//_/ }"
   hex="$(shasum -a 384 "$f" | awk '{print $1}')"
   tmp="$(mktemp /tmp/topems_forward.XXXXXX.sql)"
-  {
-    printf '\\i %s\n' "$f"
-    printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
-  } > "$tmp"
-  echo "-- $b"
-  if ! "${PSQL[@]}" --single-transaction -v ON_ERROR_STOP=1 -f "$tmp" > /tmp/topems_forward_last.log 2>&1; then
-    echo "   FAILED" >&2
-    tail -5 /tmp/topems_forward_last.log >&2
-    FAILED+=("$b")
+  if [[ $SSH_MODE -eq 1 ]]; then
+    remote_path="$REMOTE_MIG_DIR/$b"
+    local_sha="$(shasum -a 256 "$f" | awk '{print $1}')"
+    remote_sha="$(remote_run "shasum -a 256 $(sq "$remote_path")" | awk '{print $1}')"
+    if [[ "$local_sha" != "$remote_sha" ]]; then
+      echo "   FAILED：远端迁移文件 sha256 不一致 ${b}（local=$local_sha remote=${remote_sha:-<missing>}）" >&2
+      FAILED+=("$b")
+      rm -f "$tmp"
+      continue
+    fi
+    {
+      printf '\\i %s\n' "$remote_path"
+      printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
+    } > "$tmp"
+    echo "-- $b"
+    if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f - < "$tmp" > /tmp/topems_forward_last.log 2>&1; then
+      echo "   FAILED" >&2
+      tail -5 /tmp/topems_forward_last.log >&2
+      FAILED+=("$b")
+    fi
+  else
+    {
+      printf '\\i %s\n' "$f"
+      printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
+    } > "$tmp"
+    echo "-- $b"
+    if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f "$tmp" > /tmp/topems_forward_last.log 2>&1; then
+      echo "   FAILED" >&2
+      tail -5 /tmp/topems_forward_last.log >&2
+      FAILED+=("$b")
+    fi
   fi
   rm -f "$tmp"
 done

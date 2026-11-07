@@ -458,11 +458,26 @@ fn json_amount_to_decimal(v: &Value) -> Option<rust_decimal::Decimal> {
 pub async fn create_budget(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let id = Uuid::new_v4();
@@ -519,7 +534,7 @@ pub async fn create_budget(
     .bind(usage_rate)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {

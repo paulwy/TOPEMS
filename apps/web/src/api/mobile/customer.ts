@@ -143,60 +143,14 @@ export const customerApi = {
     return apiClient.mobile.delete(`customers/${id}`);
   },
 
-  assignCustomer: async (id: string, assigneeId: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.post(`customers/${id}/assign`, {
-      assigned_to: assigneeId,
-    });
-  },
+  // ==================== 批 37 删除说明 ====================
+  // assign / contacts / follow-ups 五条（assignCustomer、listContacts、createContact、
+  // listFollowUps、createFollowUp）原为 contract_fallback 占位端点：批 36 曾把后端
+  // 改为 503「未接入」，但批 37 四路取证确认前端**零真实调用**（页面走真实 CRM 通道，
+  // 或用 `@/api/communication` 的同名方法），属 B 类"仅声明从不调用"。
+  // 故按双向删原则一并移除前端封装与后端占位路由，避免长期假成功与死封装并存。
 
-  // ==================== 联系人管理 ====================
-
-  listContacts: async (customerId: string): Promise<ApiResponse<CustomerContact[]>> => {
-    return apiClient.mobile.get(`customers/${customerId}/contacts`);
-  },
-
-  createContact: async (
-    customerId: string,
-    data: CreateContactRequest
-  ): Promise<ApiResponse<CustomerContact>> => {
-    return apiClient.mobile.post(`customers/${customerId}/contacts`, data);
-  },
-
-  // ==================== 跟进记录 ====================
-
-  listFollowUps: async (customerId: string): Promise<ApiResponse<FollowUpRecord[]>> => {
-    return apiClient.mobile.get(`customers/${customerId}/follow-ups`);
-  },
-
-  createFollowUp: async (
-    customerId: string,
-    data: CreateFollowUpRequest
-  ): Promise<ApiResponse<FollowUpRecord>> => {
-    return apiClient.mobile.post(`customers/${customerId}/follow-ups`, data);
-  },
-
-  // ==================== 线索管理 ====================
-
-  listLeads: async (params?: {
-    status?: LeadStatus;
-    source?: string;
-    assigned_to?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Lead>>> => {
-    return apiClient.mobile.get('leads', { params });
-  },
-
-  createLead: async (data: CreateLeadRequest): Promise<ApiResponse<Lead>> => {
-    return apiClient.mobile.post('leads', data);
-  },
-
-  convertLead: async (
-    id: string,
-    customerData?: Partial<CreateCustomerRequest>
-  ): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.put(`leads/${id}/convert`, customerData);
-  },
+  // ==================== 线索管理（批 37 g3：/leads、/leads/{id}/convert 为占位，前端零引用，死封装已删除）====================
 };
 
 export default customerApi;

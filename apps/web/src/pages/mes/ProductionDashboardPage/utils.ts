@@ -58,9 +58,7 @@ export const buildHourlyTrend = (records: ProductionRecord[], hours: number): Tr
   });
 
   if (buckets.every((b) => b.value === 0)) {
-    buckets.forEach((b, i) => {
-      b.value = Math.floor(40 + Math.sin(i / 2) * 15 + Math.random() * 10);
-    });
+    return [];
   }
   return buckets;
 };

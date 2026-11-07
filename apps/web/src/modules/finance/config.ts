@@ -285,7 +285,9 @@ export const financeModuleConfig: RouteModuleConfig = {
       titleKey: 'finance.nav.finance-voucher-create',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['finance:voucher:create', 'finance:dashboard:write'],
+      // 批26：移除与凭证创建无语义关系的 finance:dashboard:write（dashboard:write 按 hasPermission
+      // 聚合规则只覆盖 dashboard 资源的 create/update/delete，不是域级写总闸）。
+      requiredPermissions: ['finance:voucher:create'],
       action: 'write',
     } satisfies RouteConfigV2<VoucherCreatePageProps>,
     {
@@ -662,6 +664,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:dashboard:admin',
       order: 6,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-approval-config_desc'),
     },
     {
@@ -673,6 +676,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:invoice:read',
       order: 6,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-invoices_desc'),
     },
     {
@@ -684,6 +688,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:expense:read',
       order: 7,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-expense_desc'),
     },
     {
@@ -695,6 +700,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:expense_approval:read',
       order: 8,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-expense-approval_desc'),
     },
     {
@@ -706,6 +712,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:budget:read',
       order: 6,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-budget_desc'),
     },
     {
@@ -717,6 +724,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:asset:read',
       order: 7,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-assets_desc'),
     },
     {
@@ -728,6 +736,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:tax:read',
       order: 8,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-tax_desc'),
     },
     {
@@ -739,6 +748,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:cost:read',
       order: 9,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-cost_desc'),
     },
     {
@@ -762,6 +772,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:opening_balance:read',
       order: 10,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-opening-balance_desc'),
     },
     {
@@ -773,6 +784,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:consolidation:read',
       order: 3,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-consolidation_desc'),
     },
     {
@@ -784,6 +796,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:consolidation:read',
       order: 4,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-consolidation-reports_desc'),
     },
     {
@@ -795,6 +808,7 @@ export const financeNavConfig: ModuleNavConfig = {
       permission: 'finance:budget:read',
       order: 11,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('finance.nav.finance-budget-detail_desc'),
     },
   ],

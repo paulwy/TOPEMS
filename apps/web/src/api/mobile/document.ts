@@ -144,57 +144,18 @@ export const documentApi = {
     return apiClient.mobile.delete(`documents/${id}`);
   },
 
-  // ==================== 版本管理 ====================
+  // ==================== 版本管理（批 37 g3：/documents/{id}/versions 为占位，死封装已删除）====================
 
-  listVersions: async (documentId: string): Promise<ApiResponse<DocumentVersion[]>> => {
-    return apiClient.mobile.get(`documents/${documentId}/versions`);
-  },
+  // ==================== 审批管理（批 37 g3：/documents/{id}/approvals* 为占位，死封装已删除）====================
 
-  createVersion: async (
-    documentId: string,
-    data: CreateVersionRequest
-  ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.mobile.post(`documents/${documentId}/versions`, data);
-  },
-
-  // ==================== 审批管理 ====================
-
-  listApprovals: async (documentId: string): Promise<ApiResponse<DocumentApproval[]>> => {
-    return apiClient.mobile.get(`documents/${documentId}/approvals`);
-  },
-
-  createApproval: async (
-    documentId: string,
-    data: CreateApprovalRequest
-  ): Promise<ApiResponse<DocumentApproval>> => {
-    return apiClient.mobile.post(`documents/${documentId}/approvals`, data);
-  },
-
-  updateApproval: async (
-    documentId: string,
-    approvalId: string,
-    data: { status: ApprovalStatus; comments?: string }
-  ): Promise<ApiResponse<DocumentApproval>> => {
-    return apiClient.mobile.put(`documents/${documentId}/approvals/${approvalId}`, data);
-  },
-
-  // ==================== 分类管理 ====================
-
-  listCategories: async (params?: {
-    parent_id?: string;
-  }): Promise<ApiResponse<DocumentCategory[]>> => {
-    return apiClient.mobile.get('document-categories', { params });
-  },
+  // ==================== 分类管理（批 37 g3：/document-categories 为占位，死封装已删除）====================
 
   // ==================== 统计与最近文档 ====================
 
   getDocumentStats: async (): Promise<ApiResponse<DocumentStats>> => {
     return apiClient.mobile.get('documents/stats');
   },
-
-  listRecentDocuments: async (params?: { limit?: number }): Promise<ApiResponse<Document[]>> => {
-    return apiClient.mobile.get('my-documents/recent', { params });
-  },
+  // 批 37 (g3)：listRecentDocuments（GET /my-documents/recent）为占位，前端零引用，已删除。
 };
 
 export default documentApi;

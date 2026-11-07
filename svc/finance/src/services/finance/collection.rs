@@ -138,6 +138,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: Value,
         created_by: &str,
+        executor: &mut topems_shared_db::scope::ScopedTxn<'_>,
     ) -> Result<Value, TopemsError> {
         let customer_name = req
             .get("customer_name")
@@ -159,7 +160,7 @@ impl FinanceService {
         .bind(customer_name)
         .bind(amount)
         .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
-        .fetch_one(&self.db_pool)
+        .fetch_one(executor)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");

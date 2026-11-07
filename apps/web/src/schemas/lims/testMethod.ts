@@ -15,6 +15,9 @@ export const testMethodSchema: EntitySchema = {
     resource: 'testMethods',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'lims:test_method',
+
   fields: [
     {
       name: 'method_code',

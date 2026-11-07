@@ -169,22 +169,13 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
     });
 
     const loadPromise = (async () => {
-      let lastProgress = 0;
-      const progressInterval = setInterval(() => {
-        if (lastProgress < 90) {
-          lastProgress += Math.random() * 10;
-          setProgress(moduleId, Math.min(90, lastProgress));
-        }
-      }, 200);
-
+      // 无真实加载进度，不伪造百分比；loading 状态由 setLoading 展示
       try {
         await loader();
-        clearInterval(progressInterval);
         setProgress(moduleId, 100);
         setLoaded(moduleId);
         return true;
       } catch (error) {
-        clearInterval(progressInterval);
         throw error;
       }
     })();

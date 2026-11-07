@@ -12,7 +12,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
@@ -108,7 +108,10 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("hrm:admin")))
+        // 模块门只负责「能进 hrm + 读」（hrm: 前缀任一码）；写仍要求 hrm:admin，
+        // 保持改前「无 hrm:admin 不能写」的实际效果，避免 hrm:read 角色提权。
+        .layer(axum::middleware::from_fn(require_module_write("hrm")))
+        .layer(axum::middleware::from_fn(require_module_access("hrm")))
         .with_state(api_state);
 
     // OpenAPI 文档

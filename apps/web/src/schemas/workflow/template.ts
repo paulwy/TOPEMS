@@ -42,6 +42,9 @@ export const workflowTemplateSchema: EntitySchema = {
     resource: 'workflows',
   },
 
+  // 批24：补齐三码后接入（表 master_data.mdm_workflow_templates）
+  permissionResource: 'workflow:template',
+
   fields: [
     {
       name: 'name',

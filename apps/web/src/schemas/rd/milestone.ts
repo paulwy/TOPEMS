@@ -20,6 +20,8 @@ export const getMilestoneSchema = (): EntitySchema => {
 
   return {
     entity: 'rd_milestone',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'rd:milestone',
     title: i18n.t('rd.milestone.k3'),
     description: i18n.t('rd.milestone.k4'),
 

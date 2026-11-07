@@ -12,6 +12,9 @@ export const supplierProductSchema: EntitySchema = {
     resource: 'supplier-products',
   },
 
+  // 批24：新建 4 码后接入（表 srm.supplier_products）
+  permissionResource: 'srm:supplier_product',
+
   fields: [
     {
       name: 'product_code',

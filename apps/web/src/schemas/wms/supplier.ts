@@ -7,9 +7,12 @@ export const supplierSchema: EntitySchema = {
   description: i18n.t('wms.supplier.k1'),
 
   api: {
-    module: 'scm',
+    module: 'mdm',
     resource: 'suppliers',
   },
+
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'scm:supplier',
 
   fields: [
     {
@@ -22,20 +25,13 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 200 }],
     },
     {
-      name: 'short_name',
-      label: i18n.t('wms.supplier.k3'),
-      type: 'text',
-      listWidth: 100,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'contact_name',
+      name: 'contact_person',
       label: i18n.t('wms.supplier.k4'),
       type: 'text',
       listWidth: 120,
     },
     {
-      name: 'contact_phone',
+      name: 'phone',
       label: i18n.t('wms.supplier.k5'),
       type: 'text',
       listWidth: 130,
@@ -79,7 +75,7 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
-      name: 'tax_number',
+      name: 'tax_id',
       label: i18n.t('wms.supplier.k13'),
       type: 'text',
       showInList: false,
@@ -105,8 +101,8 @@ export const supplierSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['name', 'short_name', 'contact_name', 'contact_phone', 'email', 'status'],
-    searchFields: ['name', 'contact_name'],
+    columns: ['name', 'contact_person', 'phone', 'email', 'status'],
+    searchFields: ['name', 'contact_person'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -141,15 +137,15 @@ export const supplierSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('wms.supplier.k24'),
-      fields: ['name', 'short_name', 'status'],
+      fields: ['name', 'status'],
     },
     {
       title: i18n.t('wms.supplier.k25'),
-      fields: ['contact_name', 'contact_phone', 'email', 'address'],
+      fields: ['contact_person', 'phone', 'email', 'address'],
     },
     {
       title: i18n.t('wms.supplier.k26'),
-      fields: ['bank_account', 'tax_number'],
+      fields: ['bank_account', 'tax_id'],
     },
   ],
 

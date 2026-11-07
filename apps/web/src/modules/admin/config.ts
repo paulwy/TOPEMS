@@ -170,7 +170,7 @@ const adminRoutes: RouteConfigV2[] = [
     title: i18n.t('admin.nav.admin-tenant-settings'),
     titleKey: 'admin.nav.admin-tenant-settings',
     code: 'admin-tenant-settings',
-    requiredPermissions: ['admin:tenant:write', 'admin:dashboard:write'],
+    requiredPermissions: ['admin:tenant:write'],
     action: 'write',
     template: 'form',
     group: 'setting',
@@ -244,7 +244,7 @@ const adminRoutes: RouteConfigV2[] = [
     title: i18n.t('admin.nav.admin-system-settings'),
     titleKey: 'admin.nav.admin-system-settings',
     code: 'admin-system-settings',
-    requiredPermissions: ['admin:system:write', 'admin:dashboard:write'],
+    requiredPermissions: ['admin:system:write'],
     action: 'write',
     template: 'settings',
     group: 'setting',
@@ -323,7 +323,7 @@ const adminRoutes: RouteConfigV2[] = [
     title: i18n.t('admin.nav.admin-rate-limit'),
     titleKey: 'admin.nav.admin-rate-limit',
     code: 'admin-rate-limit',
-    requiredPermissions: ['admin:system:write', 'admin:dashboard:write'],
+    requiredPermissions: ['admin:system:write'],
     action: 'write',
     template: 'settings',
     group: 'setting',
@@ -449,6 +449,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:tenant:read',
       order: 2,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-tenant-billing_desc'),
     },
     {
@@ -482,6 +483,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:dictionary:read',
       order: 20,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-dictionary_desc'),
     },
     {
@@ -505,6 +507,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:system:write',
       order: 22,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-system-settings_desc'),
     },
     {
@@ -575,6 +578,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:system:write',
       order: 27,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-rate-limit_desc'),
     },
     {
@@ -586,6 +590,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'system:read',
       order: 24,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-feature-flag_desc'),
     },
     {
@@ -597,6 +602,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'system:read',
       order: 25,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-menu_desc'),
     },
     {
@@ -619,6 +625,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:monitor:read',
       order: 32,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-performance_desc'),
     },
     {
@@ -630,6 +637,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:audit:read',
       order: 33,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-permission-audit_desc'),
     },
     {
@@ -641,6 +649,7 @@ export const adminNavConfig: ModuleNavConfig = {
       permission: 'admin:monitor:read',
       order: 34,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('admin.nav.admin-monitoring-alert_desc'),
     },
   ],

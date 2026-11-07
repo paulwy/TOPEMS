@@ -22,6 +22,8 @@ export const getVersionSchema = (): EntitySchema => {
   const VERSION_TYPE_LABEL_MAP = getVersionTypeLabelMap();
   return {
     entity: 'pdm_version',
+    // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+    permissionResource: 'pdm:version',
     title: i18n.t('pdm.version.k8'),
     description: i18n.t('pdm.version.k9'),
 

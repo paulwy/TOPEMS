@@ -38,6 +38,9 @@ export const releaseSchema: EntitySchema = {
     resource: 'deploys',
   },
 
+  // 批24：按真实数据源接入（/api/rd/deploys → rd.deploys），不造 rd:release 码
+  permissionResource: 'rd:deploy',
+
   fields: [
     {
       name: 'version',

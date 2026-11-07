@@ -58,37 +58,9 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: 'year', label: i18n.t('pages.workflow_statistics_page.k4') },
 ];
 
-const generateTrendData = (range: TimeRange) => {
-  const counts: Record<TimeRange, number> = {
-    today: 24,
-    week: 7,
-    month: 30,
-    quarter: 12,
-    year: 12,
-  };
-  const labels: Record<TimeRange, (i: number) => string> = {
-    today: (i) => `${i}:00`,
-    week: (i) =>
-      [
-        i18n.t('pages.workflow_statistics_page.k11'),
-        i18n.t('pages.workflow_statistics_page.k10'),
-        i18n.t('pages.workflow_statistics_page.k9'),
-        i18n.t('pages.workflow_statistics_page.k8'),
-        i18n.t('pages.workflow_statistics_page.k7'),
-        i18n.t('pages.workflow_statistics_page.k6'),
-        i18n.t('pages.workflow_statistics_page.k5'),
-      ][i] || '',
-    month: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k0')}`,
-    quarter: (i) =>
-      `${i18n.t('pages.workflow_statistics_page.k1')}${i + 1}${i18n.t('pages.workflow_statistics_page.k2')}`,
-    year: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k3')}`,
-  };
-  const count = counts[range];
-  return Array.from({ length: count }, (_, i) => ({
-    name: labels[range](i),
-    [i18n.t('pages.workflow_statistics_page.k4')]: Math.floor(Math.random() * 50) + 20,
-    [i18n.t('pages.workflow_statistics_page.k5')]: Math.floor(Math.random() * 40) + 15,
-  }));
+const generateTrendData = (_range: TimeRange) => {
+  // 无真实趋势数据源，返回空数组展示空图表（不画 0 值假线）
+  return [] as { name: string; [k: string]: string | number }[];
 };
 
 const distributionData = [

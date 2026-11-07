@@ -372,6 +372,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:category:read',
       order: 2,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-category_desc'),
     },
     {
@@ -383,6 +384,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:product:read',
       order: 3,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-product_desc'),
     },
     {
@@ -437,6 +439,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:performance:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-performance_desc'),
     },
     {
@@ -448,6 +451,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:evaluation:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-scoring-dimension_desc'),
     },
     {
@@ -481,6 +485,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:quotation:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-quotation_desc'),
     },
     {
@@ -492,6 +497,7 @@ export const srmNavConfig: ModuleNavConfig = {
       permission: 'srm:finance:read',
       order: 6,
       group: 'business',
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-finance_desc'),
     },
     {

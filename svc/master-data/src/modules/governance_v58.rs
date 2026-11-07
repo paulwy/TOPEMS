@@ -2259,7 +2259,8 @@ async fn fetch_maturity_history(
     db: &sqlx::PgPool,
 ) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
     let rows = sqlx::query(
-        "SELECT id, dimension, score, level, recorded_at FROM master_data.mdm_maturity_history",
+        // recorded_at 在 prod/test 均为 text（ISO-8601），按时间戳语义显式转换后解码。
+        "SELECT id, dimension, score, level, recorded_at::timestamptz AS recorded_at FROM master_data.mdm_maturity_history",
     )
     .fetch_all(db)
     .await

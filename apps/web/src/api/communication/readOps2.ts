@@ -11,8 +11,6 @@ export const communicationReadOps2 = {
     apiClient.notification.get('/notification-templates'),
   listEmails: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.mail.get('/emails'),
-  listTemplates2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.mail.get('/templates'),
   listRooms: async (): Promise<ApiResponse<Record<string, unknown>>> => apiClient.im.get('/rooms'),
   listContacts: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.im.get('/contacts'),

@@ -12,10 +12,12 @@
 #![cfg(feature = "module-finance")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
+use axum::response::IntoResponse;
 use axum::Router;
 use topems_finance::shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
+use topems_shared_auth::Claims;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
@@ -89,9 +91,13 @@ impl FinanceRealModule {
                 state.pool.clone(),
                 tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission(
-                "finance:admin",
-            )))
+            // 模块门只回答「能否进入财务模块」：持有任一 `finance:` 前缀码即可；
+            // 审批/执行/配置等敏感动作仍由内层 `finance:admin` / `finance:settlement:*`
+            // 独立校验（见 svc/finance/src/modules/mod.rs 的 5 个 has_permission 点）。
+            .layer(axum::middleware::from_fn(require_module_access("finance")))
+            // 写操作独立权限点：模块门放宽到「只读码」后，非只读方法仍需 finance:admin，
+            // 避免 finance:read 角色经模块门直达财务写端点（改门前所有写操作本就要求 admin）。
+            .layer(axum::middleware::from_fn(require_finance_write))
             .with_state(state.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
@@ -116,6 +122,36 @@ impl FinanceRealModule {
 // ================================================
 // 开发验证模式的模拟认证中间件（已提取到 dev_claims.rs 共用）
 // ================================================
+
+/// 财务写操作的独立权限点：模块门（`require_module_access("finance")`）只负责
+/// 「能进财务模块」，读接口持有任一 `finance:` 前缀码即可；非只读方法（POST/PUT/
+/// PATCH/DELETE）仍要求 `finance:admin`。这保持了改门前「无 finance:admin 不能写」
+/// 的实际效果，避免 `finance:read` 角色经放宽后的模块门直达写端点。
+/// 内层已声明 admin-only 的审批配置 5 个 handler 会再做一次校验（纵深防御）。
+async fn require_finance_write(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::Method;
+    if matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS) {
+        return next.run(req).await;
+    }
+    let allowed = req
+        .extensions()
+        .get::<Claims>()
+        .map(|c| c.has_permission("finance:admin"))
+        .unwrap_or(false);
+    if allowed {
+        return next.run(req).await;
+    }
+    (
+        axum::http::StatusCode::FORBIDDEN,
+        [(axum::http::header::CONTENT_TYPE, "application/json")],
+        r#"{"success":false,"message":"权限不足：需要财务管理员权限（finance:admin）","code":403}"#,
+    )
+        .into_response()
+}
+
 #[async_trait::async_trait]
 impl Module for FinanceRealModule {
     fn name(&self) -> &'static str {

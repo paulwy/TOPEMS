@@ -45,6 +45,18 @@ describe('ERP 凭证入口收敛契约', () => {
     expect(block).not.toContain("'erp:general_ledger:read'");
   });
 
+  it('菜单 permission 与路由 requiredPermissions 一致（防"可见但进不去"）', () => {
+    const src = readFileSync(resolve(webRoot, 'src/modules/erp/config.ts'), 'utf8');
+    // 取 path: ERP_PATHS.voucherManagement 之后的 navItem permission 声明
+    const navMatches = [
+      ...src.matchAll(/path: ERP_PATHS\.voucherManagement,[\s\S]{0,400}?permission: '([^']+)'/g),
+    ];
+    expect(navMatches.length).toBeGreaterThan(0);
+    for (const m of navMatches) {
+      expect(m[1]).toBe('finance:voucher:read');
+    }
+  });
+
   it('已删除的 erp 重复实现不再存在（防回潮）', () => {
     expect(existsSync(resolve(webRoot, 'src/pages/erp/VoucherPage.tsx'))).toBe(false);
     expect(existsSync(resolve(webRoot, 'src/schemas/erp/voucher.ts'))).toBe(false);

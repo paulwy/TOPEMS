@@ -1,6 +1,8 @@
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
+import { masterDataSupplierCategoriesApi } from '@/api/master-data/supplierCategories';
+import { getNameZhSync } from '@/hooks/useDictionary';
 
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
@@ -8,14 +10,26 @@ export const supplierSchema: EntitySchema = {
   description: i18n.t('srm.supplier.k1'),
 
   api: {
-    module: 'srm',
+    module: 'mdm',
     resource: 'suppliers',
-    listMethod: 'listSuppliers',
-    getMethod: 'getSupplier',
-    createMethod: 'createSupplier',
-    updateMethod: 'updateSupplier',
-    deleteMethod: 'deleteSupplier',
   },
+
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'srm:supplier',
+
+  // 字典下拉：category_code 从 /api/master-data/supplier-categories 拉取
+  // CrudPage 自动调 useDynamicOptions 拉字典并 merge 到表单字段 options
+  dynamicOptions: [
+    {
+      field: 'category_code',
+      queryKey: ['dictionary', 'supplierCategory'],
+      loader: async () => {
+        const res = await masterDataSupplierCategoriesApi.list();
+        if (!res.success || !Array.isArray(res.data)) return [];
+        return res.data.map((c) => ({ value: c.code, label: c.name_zh }));
+      },
+    },
+  ],
 
   fields: [
     {
@@ -48,24 +62,21 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 200 }],
     },
     {
-      name: 'category',
+      name: 'category_code',
       label: i18n.t('srm.supplier.k5'),
       type: 'select',
-      required: true,
-      options: {
-        type: 'static',
-        options: [
-          { value: 'raw_material', label: i18n.t('srm.supplier.k6') },
-          { value: 'packaging', label: i18n.t('srm.supplier.k7') },
-          { value: 'machinery', label: i18n.t('srm.supplier.k8') },
-          { value: 'electronics', label: i18n.t('srm.supplier.k9') },
-          { value: 'chemicals', label: i18n.t('srm.supplier.k10') },
-          { value: 'services', label: i18n.t('srm.supplier.k11') },
-          { value: 'other', label: i18n.t('srm.supplier.k12') },
-        ],
-      },
+      // 切 MDM 后：不选分类合法（category_code 留空），不再强制 required
+      // options 由 dynamicOptions 从 /api/master-data/supplier-categories 注入
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
+      renderCell: (row: Record<string, unknown>) => {
+        // 批 35：列表展示优先 getNameZh(category_code)；无 code 或未命中时回退原 category 自由文本。
+        // 自由文本 fallback 仅用于展示历史值，不做业务判断；当前数据全部有 category_code，fallback 永不触发。
+        const code = row.category_code;
+        const fallback = (row.category as string) || '';
+        if (!code) return fallback || '-';
+        return getNameZhSync('supplierCategory', code, fallback) || fallback || '-';
+      },
     },
     {
       name: 'status',
@@ -148,7 +159,7 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
-      name: 'risklevel',
+      name: 'risk_level',
       label: i18n.t('srm.supplier.k23'),
       type: 'select',
       required: true,
@@ -187,10 +198,10 @@ export const supplierSchema: EntitySchema = {
     columns: [
       'supplier_no',
       'name',
-      'category',
+      'category_code',
       'contact_person',
       'phone',
-      'risklevel',
+      'risk_level',
       'status',
       'created_at',
     ],
@@ -219,6 +230,8 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       {
+        // 批 35：filter id 仍叫 'category'（query param 兼容），但后端已按 category_code 过滤。
+        // value 是 category_code（raw_material / packaging 等），不是自由文本。
         id: 'category',
         label: i18n.t('srm.supplier.k35'),
         type: 'select',
@@ -234,7 +247,7 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       {
-        id: 'risklevel',
+        id: 'risk_level',
         label: i18n.t('srm.supplier.k44'),
         type: 'select',
         options: [
@@ -252,7 +265,7 @@ export const supplierSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('srm.supplier.k49'),
-      fields: ['supplier_no', 'name', 'legal_name', 'category', 'status'],
+      fields: ['supplier_no', 'name', 'legal_name', 'category_code', 'status'],
     },
     {
       title: i18n.t('srm.supplier.k50'),
@@ -264,7 +277,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       title: i18n.t('srm.supplier.k52'),
-      fields: ['risklevel', 'created_at', 'updated_at'],
+      fields: ['risk_level', 'created_at', 'updated_at'],
     },
   ],
 

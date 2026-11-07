@@ -108,8 +108,15 @@ pub async fn list_approval_tasks(
             )
         }
         Err(e) => {
-            tracing::error!("调用Workflow服务获取审批任务列表失败: {}", e);
-            internal_error("获取审批任务列表失败")
+            // Workflow 上游未接入时优雅降级：返回空列表（与 inventory/production 列表兜底口径一致）。
+            tracing::warn!("调用Workflow服务获取审批任务列表失败（降级空列表）: {}", e);
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    json!({ "items": [], "total": 0 }),
+                    "获取审批任务列表成功（Workflow 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }
@@ -149,8 +156,14 @@ pub async fn get_pending_approval_tasks(
             )
         }
         Err(e) => {
-            tracing::error!("调用Workflow服务获取待审批任务失败: {}", e);
-            internal_error("获取待审批任务失败")
+            tracing::warn!("调用Workflow服务获取待审批任务失败（降级空列表）: {}", e);
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    json!({ "items": [], "total": 0 }),
+                    "获取待审批任务成功（Workflow 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }
@@ -191,14 +204,20 @@ pub async fn get_approval_task(
             ApiResponse::success(map_task(&task), "获取审批任务详情成功"),
         ),
         Err(e) => {
-            tracing::error!("调用Workflow服务获取审批任务详情失败: {}", e);
+            tracing::warn!("调用Workflow服务获取审批任务详情失败（降级空态）: {}", e);
             let msg = e.to_string();
             if msg.contains("404") || msg.contains("missing") {
                 // 契约约定：业务层未找到一律 HTTP200 + 内层 code=404（对齐 announcements），
                 // 避免前端/契约探测把业务 404 误判为路由缺失
                 return (StatusCode::OK, ApiResponse::not_found("审批任务不存在"));
             }
-            internal_error("获取审批任务详情失败")
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::Value::Null,
+                    "获取审批任务详情成功（Workflow 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }
@@ -251,12 +270,16 @@ pub async fn approve_approval_task(
         Ok(resp) if resp.code == 404 => (StatusCode::OK, ApiResponse::not_found("审批任务不存在")),
         Ok(_) => internal_error("审批通过操作未成功"),
         Err(e) => {
-            tracing::error!("调用Workflow服务审批通过失败: {}", e);
+            // 写操作上游未接入时降级为 503（操作未执行），绝不伪装 200 成功。
+            tracing::warn!("调用Workflow服务审批通过失败（降级503未接入）: {}", e);
             let msg = e.to_string();
             if msg.contains("404") {
                 return (StatusCode::OK, ApiResponse::not_found("审批任务不存在"));
             }
-            internal_error("审批通过失败")
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Workflow，审批通过未执行"),
+            )
         }
     }
 }
@@ -309,12 +332,15 @@ pub async fn reject_approval_task(
         Ok(resp) if resp.code == 404 => (StatusCode::OK, ApiResponse::not_found("审批任务不存在")),
         Ok(_) => internal_error("审批驳回操作未成功"),
         Err(e) => {
-            tracing::error!("调用Workflow服务审批驳回失败: {}", e);
+            tracing::warn!("调用Workflow服务审批驳回失败（降级503未接入）: {}", e);
             let msg = e.to_string();
             if msg.contains("404") {
                 return (StatusCode::OK, ApiResponse::not_found("审批任务不存在"));
             }
-            internal_error("审批驳回失败")
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Workflow，审批驳回未执行"),
+            )
         }
     }
 }
@@ -383,7 +409,7 @@ pub async fn delegate_approval_task(
         ),
         Ok(_) => internal_error("审批委派操作未成功"),
         Err(e) => {
-            tracing::error!("调用Workflow服务审批委派失败: {}", e);
+            tracing::warn!("调用Workflow服务审批委派失败（降级503未接入）: {}", e);
             let msg = e.to_string();
             if msg.contains("404") {
                 return (
@@ -391,7 +417,10 @@ pub async fn delegate_approval_task(
                     ApiResponse::not_found("审批任务不存在"),
                 );
             }
-            internal_error("审批委派失败")
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Workflow，审批委派未执行"),
+            )
         }
     }
 }
@@ -436,8 +465,14 @@ pub async fn get_approval_history(
             )
         }
         Err(e) => {
-            tracing::error!("调用Workflow服务获取审批历史失败: {}", e);
-            internal_error("获取审批历史失败")
+            tracing::warn!("调用Workflow服务获取审批历史失败（降级空列表）: {}", e);
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    json!({ "items": [], "total": 0 }),
+                    "获取审批历史成功（Workflow 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }

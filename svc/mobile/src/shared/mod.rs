@@ -93,9 +93,9 @@ use crate::modules::approval::{
 };
 use crate::modules::attendance::{
     apply_leave, check_in, check_out, create_attendance_record, delete_attendance_record,
-    get_attendance_overview, get_attendance_record_by_id, get_attendance_stats,
-    get_today_attendance, list_attendance_records, list_leave_applications,
-    update_attendance_record,
+    get_attendance_overview, get_attendance_record_by_id, get_attendance_statistics,
+    get_attendance_stats, get_today_attendance, list_attendance_records, list_attendance_shifts,
+    list_leave_applications, update_attendance_record,
 };
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
@@ -151,11 +151,12 @@ use crate::modules::photo_upload::{
     batch_upload_photos, delete_photo, get_photo_by_id, get_photo_list, get_upload_progress,
     upload_photo,
 };
+// 批 37：create/update/delete_production_order 三端点前端零声明（C 类），handler 已删除。
+// get_equipment 此前写好但未挂路由（前端封装备斗期零调用），现挂 /production/equipment/{id}。
 use crate::modules::production::{
-    complete_production_order, create_production_order, delete_production_order,
-    get_production_order, get_today_production_orders, get_workstation_orders, list_equipment,
-    list_production_orders, list_work_reports, start_production_order, submit_work_report,
-    update_production_order,
+    complete_production_order, get_equipment, get_production_order, get_today_production_orders,
+    get_workstation_orders, list_equipment, list_production_orders, list_work_reports,
+    start_production_order, submit_work_report,
 };
 use crate::modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
@@ -467,6 +468,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/attendance/leaves",
             axum::routing::get(list_leave_applications).post(apply_leave),
         )
+        // 前端契约 /attendance/statistics、/attendance/shifts（attendance.ts 声明，上游未接入时降级）
+        .route(
+            "/attendance/statistics",
+            axum::routing::get(get_attendance_statistics),
+        )
+        .route(
+            "/attendance/shifts",
+            axum::routing::get(list_attendance_shifts),
+        )
         // Media Routes
         .route("/media/photos", axum::routing::get(get_photos))
         .route("/media/audio", axum::routing::get(get_audio))
@@ -617,22 +627,26 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/quality/defects",
             axum::routing::get(list_defect_records).post(report_defect),
         )
-        // Production Routes
+        // Production Routes（批 37：create/update/delete 为 C 类死端点已删，只保留读）
         .route(
             "/production/orders",
-            axum::routing::get(list_production_orders).post(create_production_order),
+            axum::routing::get(list_production_orders),
         )
         .route(
             "/production/orders/{id}",
-            axum::routing::get(get_production_order)
-                .put(update_production_order)
-                .delete(delete_production_order),
+            axum::routing::get(get_production_order),
         )
         .route(
             "/production/work-reports",
             axum::routing::get(list_work_reports).post(submit_work_report),
         )
         .route("/production/equipment", axum::routing::get(list_equipment))
+        // 批 37：get_equipment 此前写好但未挂路由（只被 contract_fallback 的 detail_missing 顶着）。
+        // 现由真实 handler 接管，MES 未接入时降级 200 + null。
+        .route(
+            "/production/equipment/{id}",
+            axum::routing::get(get_equipment),
+        )
         // ===== OA 办公协同（缺口#14） =====
         .route(
             "/meetings",
@@ -745,13 +759,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/dashboard/activities",
             axum::routing::get(get_recent_activities),
         )
-        // customer（前端 /customer → CRM 服务完整 CRUD）
+        // customer（批 36：前端实际调 /customers（复数），此前真实 handler 挂在 /customer（单数）
+        // 导致前端全部流量命中 contract_fallback 的候选路由（读恒空、写 mutate_ok 假成功）。
+        // 现对齐前端路径，并由本处真实 handler 接管；contract_fallback 中对应的 /customers 系已移除。
         .route(
-            "/customer",
+            "/customers",
             axum::routing::get(list_customers).post(create_customer),
         )
         .route(
-            "/customer/{id}",
+            "/customers/{id}",
             axum::routing::get(get_customer)
                 .put(update_customer)
                 .delete(delete_customer),

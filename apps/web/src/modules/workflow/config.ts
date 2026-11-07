@@ -100,7 +100,7 @@ const workflowDesignerRoute: RouteConfigV2<WorkflowDesignerPageProps> = {
   titleKey: 'workflow.nav.workflow-designer',
   template: 'form',
   group: 'process',
-  requiredPermissions: ['workflow:definition:write', 'workflow:dashboard:write'],
+  requiredPermissions: ['workflow:definition:write'],
   action: 'write',
 };
 
@@ -352,6 +352,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       permission: 'workflow:definition:read',
       order: 3,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('workflow.nav.workflow-version-history_desc'),
     },
     {
@@ -387,6 +388,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       permission: 'workflow:notification:read',
       order: 6,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('workflow.nav.workflow-notification-center_desc'),
     },
     {
@@ -409,6 +411,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       permission: 'workflow:statistics:read',
       order: 2,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('workflow.nav.workflow-statistics_desc'),
     },
     {
@@ -420,6 +423,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       permission: 'workflow:template:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('workflow.nav.workflow-templates_desc'),
     },
     {
@@ -431,6 +435,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       permission: 'workflow:dashboard:admin',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('workflow.nav.workflow-settings_desc'),
     },
   ],

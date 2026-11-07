@@ -11,6 +11,9 @@ export const reagentSchema: EntitySchema = {
     resource: 'reagents',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'lims:reagent',
+
   fields: [
     {
       name: 'code',

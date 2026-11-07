@@ -82,8 +82,15 @@ pub async fn list_notifications(
             )
         }
         Err(e) => {
-            tracing::error!("调用Notification服务获取通知列表失败: {}", e);
-            internal_error("获取通知列表失败")
+            // Notification 上游未接入时优雅降级：返回空列表（与 inventory/production 列表兜底口径一致）。
+            tracing::warn!("调用Notification服务获取通知列表失败（降级空列表）: {}", e);
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    json!({ "items": [], "total": 0 }),
+                    "获取通知列表成功（Notification 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }
@@ -125,8 +132,18 @@ pub async fn get_unread_count(
                     )
                 }
                 Err(e2) => {
-                    tracing::error!("调用Notification服务获取未读通知数失败: {}", e2);
-                    internal_error("获取未读通知数失败")
+                    // 两次调用均失败 → 上游未接入，降级为零值概览（保留 {count} 字段结构）。
+                    tracing::warn!(
+                        "调用Notification服务获取未读通知数失败（降级空概览）: {}",
+                        e2
+                    );
+                    (
+                        StatusCode::OK,
+                        ApiResponse::success(
+                            json!({ "count": 0 }),
+                            "获取未读通知数成功（Notification 服务未接入，返回空态）",
+                        ),
+                    )
                 }
             }
         }
@@ -160,8 +177,14 @@ pub async fn get_notification(
             )
         }
         Err(e) => {
-            tracing::error!("调用Notification服务获取通知详情失败: {}", e);
-            internal_error("获取通知详情失败")
+            tracing::warn!("调用Notification服务获取通知详情失败（降级空态）: {}", e);
+            (
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::Value::Null,
+                    "获取通知详情成功（Notification 服务未接入，返回空态）",
+                ),
+            )
         }
     }
 }
@@ -192,8 +215,12 @@ pub async fn mark_notification_read(
             )
         }
         Err(e) => {
-            tracing::error!("调用Notification服务标记已读失败: {}", e);
-            internal_error("标记已读失败")
+            // 写操作上游未接入时降级为 503（操作未执行），绝不伪装 200 成功。
+            tracing::warn!("调用Notification服务标记已读失败（降级503未接入）: {}", e);
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Notification，标记已读未执行"),
+            )
         }
     }
 }
@@ -220,8 +247,14 @@ pub async fn mark_all_notifications_read(
             ApiResponse::success(serde_json::Value::Null, "全部标记已读成功"),
         ),
         Err(e) => {
-            tracing::error!("调用Notification服务全部标记已读失败: {}", e);
-            internal_error("全部标记已读失败")
+            tracing::warn!(
+                "调用Notification服务全部标记已读失败（降级503未接入）: {}",
+                e
+            );
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Notification，全部标记已读未执行"),
+            )
         }
     }
 }
@@ -249,8 +282,11 @@ pub async fn delete_notification(
             ApiResponse::success(serde_json::Value::Null, "删除通知成功"),
         ),
         Err(e) => {
-            tracing::error!("调用Notification服务删除通知失败: {}", e);
-            internal_error("删除通知失败")
+            tracing::warn!("调用Notification服务删除通知失败（降级503未接入）: {}", e);
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                ApiResponse::unavailable("上游服务未接入：Notification，删除通知未执行"),
+            )
         }
     }
 }

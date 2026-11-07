@@ -8,11 +8,11 @@ export const customerApi = {
     search?: string;
     status?: string;
   }): Promise<ApiResponse<{ items: Customer[]; total: number }>> => {
-    return apiClient.get('/customer', { params });
+    return apiClient.get('/customers', { params });
   },
 
   getCustomerById: async (id: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.get(`/customer/${id}`);
+    return apiClient.get(`/customers/${id}`);
   },
 
   createCustomer: async (data: {
@@ -27,7 +27,7 @@ export const customerApi = {
     postalCode?: string;
     industry?: string;
   }): Promise<ApiResponse<Customer>> => {
-    return apiClient.post('/customer', data);
+    return apiClient.post('/customers', data);
   },
 
   updateCustomer: async (
@@ -45,10 +45,10 @@ export const customerApi = {
       status?: 'active' | 'inactive';
     },
   ): Promise<ApiResponse<Customer>> => {
-    return apiClient.put(`/customer/${id}`, data);
+    return apiClient.put(`/customers/${id}`, data);
   },
 
   deleteCustomer: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/customer/${id}`);
+    return apiClient.delete(`/customers/${id}`);
   },
 };

@@ -163,7 +163,8 @@ export function useGlobalSearch(
       try {
         const response = await searchApi.globalSearch(q, maxResults, controller.signal);
         if (response.success && response.data) {
-          setRawResults(response.data.results);
+          // 后端信封为 data.items（svc/search SearchResponse）；旧字段 results 已不下发
+          setRawResults(response.data.items ?? []);
         } else {
           setRawResults([]);
         }
@@ -233,7 +234,8 @@ export function useGlobalSearch(
   const handleResultClick = useCallback(
     (result: SearchResult) => {
       addToHistory(query);
-      navigate(result.url);
+      // 现行后端字段为 path（旧字段 url 已不下发）；双字段兜底防止空跳转
+      navigate(result.path || result.url || '/');
       setOpen(false);
       setQuery('');
     },

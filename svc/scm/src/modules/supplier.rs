@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde_json;
+use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -115,6 +116,194 @@ fn publish_supplier_sync_event(
         {
             tracing::warn!(
                 "[scm] SupplierDataSyncRequested(scm_to_srm) 事件发布失败（graceful fallback）: {}",
+                e
+            );
+        }
+    });
+}
+
+/// scm → mdm 反向同步：把 scm.suppliers 行 upsert 到 master_data.mdm_suppliers。
+/// 后台异步调用；失败只落死信，不影响主请求。
+/// 防环：直接写库（不调用 mdm HTTP），不会触发 mdm 写端点再回写 scm。
+/// 溯源：source_system='scm'，source_id=scm.suppliers.id；
+///       若 mdm 已有同 supplier_no+tenant_id 且 source_system='mdm'，保留 mdm 不覆盖。
+#[derive(sqlx::FromRow)]
+struct ScmSupplierRow {
+    supplier_no: String,
+    name: String,
+    legal_name: Option<String>,
+    category: Option<String>,
+    status: String,
+    tax_id: Option<String>,
+    address: Option<String>,
+    contact_person: Option<String>,
+    phone: Option<String>,
+    email: Option<String>,
+    website: Option<String>,
+    credit_rating: Option<String>,
+    risk_level: String,
+    bank_name: Option<String>,
+    bank_account: Option<String>,
+    name_en: Option<String>,
+    tenant_id: Option<Uuid>,
+}
+
+fn spawn_scm_supplier_to_mdm(db: PgPool, scm_supplier_id: Uuid) {
+    tokio::spawn(async move {
+        let row = sqlx::query_as::<_, ScmSupplierRow>(only_own_schema_query!(
+            "scm",
+            r#"
+                SELECT supplier_no, name, legal_name, category, status, tax_id,
+                       address, contact_person, phone, email, website, credit_rating,
+                       risk_level, bank_name, bank_account, name_en, tenant_id
+                FROM scm.suppliers WHERE id = $1
+            "#,
+            "master_data"
+        ))
+        .bind(scm_supplier_id)
+        .fetch_optional(&db)
+        .await;
+
+        let row = match row {
+            Ok(Some(r)) => r,
+            Ok(None) => {
+                tracing::warn!("[scm→mdm] scm.suppliers 行不存在: id={}", scm_supplier_id);
+                return;
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "[scm→mdm] 读 scm.suppliers 失败: id={}, err={}",
+                    scm_supplier_id,
+                    e
+                );
+                return;
+            }
+        };
+
+        // 2) 反向查类别字典：scm.category = source_values->>'scm'，反推 code
+        let reverse_code: Option<String> = if let Some(ref scm_cat) = row.category {
+            if scm_cat.is_empty() {
+                None
+            } else {
+                sqlx::query_scalar::<_, String>(only_own_schema_query!(
+                    "scm",
+                    r#"
+                        SELECT code FROM master_data.mdm_supplier_categories
+                        WHERE status = 'active' AND deleted_at IS NULL
+                          AND source_values->>'scm' = $1
+                        LIMIT 1
+                    "#,
+                    "master_data"
+                ))
+                .bind(scm_cat)
+                .fetch_optional(&db)
+                .await
+                .ok()
+                .flatten()
+            }
+        } else {
+            None
+        };
+
+        // 3) upsert 到 mdm_suppliers（ON CONFLICT (supplier_no, tenant_id)）
+        let res = sqlx::query(
+            only_own_schema_query!("scm", r#"
+                INSERT INTO master_data.mdm_suppliers
+                  (supplier_no, name, legal_name, category, category_code, status, tax_id, address,
+                   contact_person, phone, email, website, credit_rating, risk_level,
+                   bank_name, bank_account, name_en, tenant_id, source_system, source_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'scm',$19)
+                ON CONFLICT (supplier_no, tenant_id) DO UPDATE SET
+                  name = EXCLUDED.name,
+                  legal_name = EXCLUDED.legal_name,
+                  category = EXCLUDED.category,
+                  category_code = CASE WHEN master_data.mdm_suppliers.source_system = 'mdm' THEN master_data.mdm_suppliers.category_code ELSE EXCLUDED.category_code END,
+                  status = EXCLUDED.status,
+                  tax_id = EXCLUDED.tax_id,
+                  address = EXCLUDED.address,
+                  contact_person = EXCLUDED.contact_person,
+                  phone = EXCLUDED.phone,
+                  email = EXCLUDED.email,
+                  website = EXCLUDED.website,
+                  credit_rating = EXCLUDED.credit_rating,
+                  risk_level = EXCLUDED.risk_level,
+                  bank_name = EXCLUDED.bank_name,
+                  bank_account = EXCLUDED.bank_account,
+                  name_en = EXCLUDED.name_en,
+                  source_system = CASE WHEN master_data.mdm_suppliers.source_system = 'mdm' THEN 'mdm' ELSE 'scm' END,
+                  source_id = CASE WHEN master_data.mdm_suppliers.source_system = 'mdm' THEN master_data.mdm_suppliers.source_id ELSE EXCLUDED.source_id END,
+                  updated_at = now(),
+                  deleted_at = NULL
+            "#, "master_data"),
+        )
+        .bind(&row.supplier_no)
+        .bind(&row.name)
+        .bind(&row.legal_name)
+        .bind(&row.category)
+        .bind(&reverse_code)
+        .bind(&row.status)
+        .bind(&row.tax_id)
+        .bind(&row.address)
+        .bind(&row.contact_person)
+        .bind(&row.phone)
+        .bind(&row.email)
+        .bind(&row.website)
+        .bind(&row.credit_rating)
+        .bind(&row.risk_level)
+        .bind(&row.bank_name)
+        .bind(&row.bank_account)
+        .bind(&row.name_en)
+        .bind(row.tenant_id)
+        .bind(scm_supplier_id)
+        .execute(&db)
+        .await;
+
+        if let Err(e) = res {
+            tracing::warn!(
+                "[scm→mdm] upsert mdm_suppliers 失败: supplier_no={}, err={}",
+                row.supplier_no,
+                e
+            );
+            let _ = sqlx::query(only_own_schema_query!(
+                "scm",
+                r#"
+                    INSERT INTO master_data.mdm_sync_dead_letter
+                      (entity_type, entity_key, direction, operation, error_message, tenant_id)
+                    VALUES ('supplier', $1, 'scm_to_mdm', 'upsert', $2, $3)
+                "#,
+                "master_data"
+            ))
+            .bind(&row.supplier_no)
+            .bind(e.to_string())
+            .bind(row.tenant_id)
+            .execute(&db)
+            .await;
+        }
+    });
+}
+
+/// scm 软删 → mdm 软删（但 mdm 自建行 source_system='mdm' 不被下游软删）。
+fn spawn_scm_supplier_delete_to_mdm(db: PgPool, supplier_no: String, tenant_id: Option<Uuid>) {
+    tokio::spawn(async move {
+        let res = sqlx::query(only_own_schema_query!(
+            "scm",
+            r#"
+                UPDATE master_data.mdm_suppliers
+                SET deleted_at = now(), updated_at = now()
+                WHERE supplier_no = $1
+                  AND ($2::uuid IS NULL OR tenant_id = $2)
+                  AND source_system IS DISTINCT FROM 'mdm'
+            "#,
+            "master_data"
+        ))
+        .bind(&supplier_no)
+        .bind(tenant_id)
+        .execute(&db)
+        .await;
+        if let Err(e) = res {
+            tracing::warn!(
+                "[scm→mdm] 软删 mdm_suppliers 失败: supplier_no={}, err={}",
+                supplier_no,
                 e
             );
         }
@@ -363,6 +552,9 @@ pub async fn create_supplier(
         }
         state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
+
+        // scm → mdm 反向同步（后台异步，失败落死信，不阻塞主请求）
+        spawn_scm_supplier_to_mdm(state.db.clone(), id);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
@@ -681,6 +873,9 @@ pub async fn update_supplier(
         state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
+        // scm → mdm 反向同步（后台异步，失败落死信）
+        spawn_scm_supplier_to_mdm(state.db.clone(), id);
+
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
             let publisher = publisher.clone();
@@ -802,25 +997,28 @@ pub async fn delete_supplier(
         Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
-    let result = sqlx::query(only_own_schema_query!(
+    // RETURNING 拿到 supplier_no + tenant_id，用于后台软删 mdm
+    let result = sqlx::query_as::<_, (String, Option<Uuid>)>(only_own_schema_query!(
         "scm",
-        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) RETURNING supplier_no, tenant_id"
     ))
     .bind(id)
     .bind(tenant_bind)
-    .execute(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
+    let (response, status_str, error_msg, deleted_info) = match &result {
+        Ok(Some((supplier_no, tenant_id))) => (
             ApiResponse::success("".to_string(), "供应商删除成功"),
             "success",
             None,
+            Some((supplier_no.clone(), *tenant_id)),
         ),
-        Ok(_) => (
+        Ok(None) => (
             ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
             "error",
             Some("供应商不存在".to_string()),
+            None,
         ),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
@@ -828,12 +1026,13 @@ pub async fn delete_supplier(
                 ApiResponse::from(TopemsError::Internal("供应商删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
+                None,
             )
         }
     };
 
     let response_data = if let Ok(r) = &result {
-        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+        Some(serde_json::json!({ "rows_affected": if r.is_some() { 1 } else { 0 } }))
     } else {
         None
     };
@@ -854,6 +1053,11 @@ pub async fn delete_supplier(
         state.supplier_cache.remove(&cache_key).await;
         state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
+
+        // scm 软删 → mdm 软删（后台异步；mdm 自建行不被软删）
+        if let Some((sno, tid)) = deleted_info {
+            spawn_scm_supplier_delete_to_mdm(state.db.clone(), sno, tid);
+        }
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {

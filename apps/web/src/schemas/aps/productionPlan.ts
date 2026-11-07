@@ -16,6 +16,9 @@ export const productionPlanSchema: EntitySchema = {
     deleteMethod: 'delete',
   },
 
+  // 批24：补齐三码后接入（表 mes.production_plans）
+  permissionResource: 'aps:production_plan',
+
   fields: [
     {
       name: 'plan_no',

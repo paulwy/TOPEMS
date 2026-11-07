@@ -1,3 +1,36 @@
+//! SCM ↔ SRM 数据同步模块（旧路径）
+//!
+//! ── 批 35 · 状态评估（2026-11-07）────────────────────────────────────────
+//! 本模块提供 scm↔srm 直连同步能力（`sync_supplier_from_srm` /
+//! `sync_all_suppliers_from_srm` / `get_sync_logs` / `retry_failed_syncs` /
+//! `get_sync_statistics`），并由 `event_handlers/mod.rs` 订阅
+//! `SupplierDataSyncRequested` 事件触发写入。
+//!
+//! 与批 34 新建的 `svc/master-data/src/modules/supplier_sync.rs` 对比：
+//!   * 数据源不同：本模块从 `scm.srm_supplier_snapshots` 读（快照表），
+//!     mdm 同步从 `master_data.mdm_suppliers` 读（权威主表）。
+//!   * 字段覆盖：本模块只写 name/legal_name/contact/phone/email/address/tax_id/status，
+//!     不写 supplier_no/category/credit_rating/risk_level/bank 等；mdm 同步字段全。
+//!   * 标记列冲突：本模块写 `scm.suppliers.sync_from_srm = TRUE`，
+//!     mdm 同步写 `sync_from_srm = FALSE`——同一行可能被两路径写，值不一致。
+//!   * 触发方式：本模块为 HTTP API + 事件驱动；mdm 同步为 mdm 主写入后 tokio::spawn。
+//!   * 幂等键：本模块按 `scm.suppliers.id` 匹配；mdm 同步按 `supplier_no` 唯一键。
+//!
+//! 实测（2026-11-07）：
+//!   * `scm.suppliers WHERE sync_from_srm = true` → 0 行
+//!   * `srm.suppliers WHERE sync_from_scm = true` → 0 行
+//!   * 前端 `scm/writeOps.ts` 的 `syncSupplierFromSrm` 封装无 UI 组件调用（死代码）。
+//!
+//! 结论：mdm 同步已完全覆盖本模块的单行同步能力（且字段更全）。
+//! 本模块保留但停用——保留 `sync_all_suppliers_from_srm` 全量批量能力
+//! （mdm 侧暂无对应全量入口），但 HTTP 路由与事件订阅不主动启用。
+//!
+//! 启用前必须重新评估：
+//!   1. 环：本模块写 scm.suppliers 会触发 scm→mdm 反向同步（`svc/scm/src/modules/supplier.rs`），
+//!      mdm 同步再写 scm.suppliers——需确认防环机制。
+//!   2. 幂等键冲突：本模块按 id 匹配，mdm 同步按 supplier_no 匹配，混用会导致重复行。
+//!   3. 标记列：sync_from_srm / sync_from_scm 的语义需统一（本模块写 TRUE，mdm 写 FALSE）。
+
 use axum::{
     extract::{Extension, Path, State},
     routing::post,

@@ -18,6 +18,9 @@ export const customerSegmentationSchema: EntitySchema = {
     resource: 'customerSegmentation',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'crm:customer_segmentation',
+
   fields: [
     {
       name: 'name',

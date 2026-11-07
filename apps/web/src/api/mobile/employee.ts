@@ -98,52 +98,7 @@ export interface CompanyInfo {
 }
 
 export const employeeApi = {
-  // ==================== 员工管理 ====================
-
-  listEmployees: async (params?: {
-    keyword?: string;
-    department_id?: string;
-    status?: EmployeeStatus;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Employee>>> => {
-    return apiClient.mobile.get('employees', { params });
-  },
-
-  getEmployee: async (id: string): Promise<ApiResponse<Employee>> => {
-    return apiClient.mobile.get(`employees/${id}`);
-  },
-
-  searchEmployees: async (params: {
-    keyword: string;
-    department_id?: string;
-    limit?: number;
-  }): Promise<ApiResponse<Employee[]>> => {
-    return apiClient.mobile.get('employees/search', { params });
-  },
-
-  // ==================== 部门管理 ====================
-
-  listDepartments: async (params?: {
-    parent_id?: string;
-    keyword?: string;
-  }): Promise<ApiResponse<Department[]>> => {
-    return apiClient.mobile.get('departments', { params });
-  },
-
-  getDepartment: async (id: string): Promise<ApiResponse<Department>> => {
-    return apiClient.mobile.get(`departments/${id}`);
-  },
-
-  listDepartmentMembers: async (
-    departmentId: string,
-    params?: {
-      page?: number;
-      page_size?: number;
-    }
-  ): Promise<ApiResponse<PaginatedResponse<Employee>>> => {
-    return apiClient.mobile.get(`departments/${departmentId}/members`, { params });
-  },
+  // ==================== 员工/部门（批 37 g3：/employees*、/departments*、/my-info、/company-info 为占位，死封装已删除）====================
 
   // ==================== 公告通知 ====================
 
@@ -157,18 +112,6 @@ export const employeeApi = {
 
   getAnnouncement: async (id: string): Promise<ApiResponse<Announcement>> => {
     return apiClient.mobile.get(`announcements/${id}`);
-  },
-
-  // ==================== 个人信息 ====================
-
-  getMyInfo: async (): Promise<ApiResponse<EmployeeInfo>> => {
-    return apiClient.mobile.get('my-info');
-  },
-
-  // ==================== 公司信息 ====================
-
-  getCompanyInfo: async (): Promise<ApiResponse<CompanyInfo>> => {
-    return apiClient.mobile.get('company-info');
   },
 };
 

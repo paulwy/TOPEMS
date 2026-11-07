@@ -16,6 +16,9 @@ export const materialPlanSchema: EntitySchema = {
     deleteMethod: 'delete',
   },
 
+  // 批24：补齐 create/update/delete 后接入（表 mes.material_plans）
+  permissionResource: 'aps:material_plan',
+
   fields: [
     {
       name: 'plan_no',

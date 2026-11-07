@@ -16,6 +16,9 @@ export const routeSchema: EntitySchema = {
     deleteMethod: 'delete',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'tms:route',
+
   fields: [
     {
       name: 'route_no',

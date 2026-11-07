@@ -11,6 +11,9 @@ export const productSchema: EntitySchema = {
     resource: 'products',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'pdm:product',
+
   fields: [
     {
       // 后端真键 product_no（非 code）——对齐契约，否则编号列空渲

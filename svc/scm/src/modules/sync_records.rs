@@ -238,11 +238,26 @@ pub async fn get_sync_record(
 pub async fn create_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> ApiResponse<SyncRecord> {
     let tenant_id = tenant_bind_value(&claims);
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
 
     let result = sqlx::query_as::<_, SyncRecord>(
         r#"
@@ -262,16 +277,21 @@ pub async fn create_sync_record(
     .bind(req.sync_direction.unwrap_or_else(|| "push".to_string()))
     .bind(started)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(record) => {
-            // 异步模拟完成：标记 completed
+            // 异步模拟完成：标记 completed。
+            // 后台任务没有请求上下文，用系统写作用域（显式 nil 租户），否则严格 RLS 下会被拒写。
             let rid = record.id;
-            let db = state.db.clone();
+            let pool = state.db.clone();
             let tenant = tenant_id;
             tokio::spawn(async move {
+                let db = topems_shared_db::scope::Db::new(pool, "scm, public, shared");
+                let Ok(mut scope) = db.scope_system().await else {
+                    return;
+                };
                 let _ = sqlx::query(
                     r#"
                     UPDATE scm.sync_records
@@ -283,8 +303,9 @@ pub async fn create_sync_record(
                 )
                 .bind(rid)
                 .bind(tenant)
-                .execute(&db)
+                .execute(&mut scope)
                 .await;
+                let _ = scope.commit().await;
             });
             ApiResponse::success(record, "同步任务已创建")
         }
@@ -427,6 +448,7 @@ pub async fn list_sync_details(
 async fn trigger_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(sync_type): Path<String>,
     source: &str,
     target: &str,
@@ -434,6 +456,20 @@ async fn trigger_sync(
     let tenant_id = tenant_bind_value(&claims);
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
 
     let result = sqlx::query_as::<_, (uuid::Uuid,)>(
         r#"
@@ -450,7 +486,7 @@ async fn trigger_sync(
     .bind(&sync_type)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -489,11 +525,13 @@ async fn trigger_sync(
 pub async fn trigger_wms_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(sync_type): Path<String>,
 ) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),
+        Extension(txn_arc),
         Path(sync_type),
         "scm",
         "wms",
@@ -517,11 +555,13 @@ pub async fn trigger_wms_sync(
 pub async fn trigger_srm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(sync_type): Path<String>,
 ) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),
+        Extension(txn_arc),
         Path(sync_type),
         "scm",
         "srm",

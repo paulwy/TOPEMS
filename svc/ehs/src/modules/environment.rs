@@ -170,10 +170,27 @@ pub async fn list_records(
 pub async fn create_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<EnvironmentMonitor> {
     let tenant_id = resolve_tenant_id(&claims);
+
+    // 连接级租户上下文：复用请求级 RLS 事务（tenant_middleware 已写入 app.tenant_id），
+    // 裸池写入在严格 RLS 策略下会被拒绝。
+    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create environment monitor scope: {}", e);
+            return ApiResponse::server_error("环境监测点创建失败");
+        }
+    };
     let id = uuid::Uuid::new_v4();
     let monitor_no = req
         .get("monitor_no")
@@ -242,7 +259,7 @@ pub async fn create_record(
     .bind(alarm_threshold)
     .bind(&unit)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     if let Err(e) = res {
         tracing::error!("Failed to insert environment monitor: {}", e);

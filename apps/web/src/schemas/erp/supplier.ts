@@ -1,11 +1,15 @@
 /**
  * 供应商管理 Schema — 驱动 SupplierManagementPage 的完整 CRUD
  *
- * 包含表单分组、状态徽章、筛选等高级功能。
+ * 切 MDM 权威源（2026-11-07）：字段名对齐 mdm_suppliers 原生 snake_case，
+ * 只保留 mdm 实际返回且有意义的列；mdm 不支持且页面无法填出真实值的字段
+ * （short_name/country/province/city/zip_code）已删除，避免列表空列。
  */
 
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { masterDataSupplierCategoriesApi } from '@/api/master-data/supplierCategories';
+import { getNameZhSync } from '@/hooks/useDictionary';
 
 /**
  * 供应商管理 Schema
@@ -16,16 +20,29 @@ export const supplierSchema: EntitySchema = {
   description: i18n.t('schema:erp.supplier.meta.description'),
 
   api: {
-    module: 'erp',
+    module: 'mdm',
     resource: 'suppliers',
   },
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'erp:supplier',
 
+  // 字典下拉：category_code 从 /api/master-data/supplier-categories 拉取
+  dynamicOptions: [
+    {
+      field: 'category_code',
+      queryKey: ['dictionary', 'supplierCategory'],
+      loader: async () => {
+        const res = await masterDataSupplierCategoriesApi.list();
+        if (!res.success || !Array.isArray(res.data)) return [];
+        return res.data.map((c) => ({ value: c.code, label: c.name_zh }));
+      },
+    },
+  ],
+
   fields: [
     {
-      name: 'supplier_code',
+      name: 'supplier_no',
       label: i18n.t('schema:erp.supplier.supplier_code.label'),
       type: 'text',
       required: true,
@@ -34,7 +51,7 @@ export const supplierSchema: EntitySchema = {
       listWidth: 140,
     },
     {
-      name: 'supplier_name',
+      name: 'name',
       label: i18n.t('schema:erp.supplier.supplier_name.label'),
       type: 'text',
       required: true,
@@ -42,39 +59,18 @@ export const supplierSchema: EntitySchema = {
       listWidth: 160,
     },
     {
-      name: 'short_name',
-      label: i18n.t('schema:erp.supplier.short_name.label'),
-      type: 'text',
-      listWidth: 100,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'category',
+      name: 'category_code',
       label: i18n.t('schema:erp.supplier.category.label'),
       type: 'select',
-      options: {
-        type: 'static',
-        options: [
-          {
-            value: i18n.t('shared.supplier.k0'),
-            label: i18n.t('schema:erp.supplier.category.option.原材料供应商'),
-          },
-          {
-            value: i18n.t('shared.supplier.k0'),
-            label: i18n.t('schema:erp.supplier.category.option.配件供应商'),
-          },
-          {
-            value: i18n.t('shared.supplier.k1'),
-            label: i18n.t('schema:erp.supplier.category.option.设备供应商'),
-          },
-          {
-            value: i18n.t('shared.supplier.k2'),
-            label: i18n.t('schema:erp.supplier.category.option.服务供应商'),
-          },
-        ],
-      },
+      // options 由 dynamicOptions 从 mdm 字典注入；不选合法（category_code 留空）
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
+      renderCell: (row: Record<string, unknown>) => {
+        const code = row.category_code;
+        const fallback = (row.category as string) || '';
+        if (!code) return fallback || '-';
+        return getNameZhSync('supplierCategory', code, fallback) || fallback || '-';
+      },
     },
     {
       name: 'credit_rating',
@@ -117,14 +113,14 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
-      name: 'contact_phone',
+      name: 'phone',
       label: i18n.t('schema:erp.supplier.contact_phone.label'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
-      name: 'contact_email',
+      name: 'email',
       label: i18n.t('schema:erp.supplier.contact_email.label'),
       type: 'text',
       showInList: false,
@@ -137,34 +133,7 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 500 }],
     },
     {
-      name: 'country',
-      label: i18n.t('schema:erp.supplier.country.label'),
-      type: 'text',
-      defaultValue: i18n.t('shared.supplier.k1'),
-      showInList: false,
-    },
-    {
-      name: 'province',
-      label: i18n.t('schema:erp.supplier.province.label'),
-      type: 'text',
-      showInList: false,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'city',
-      label: i18n.t('schema:erp.supplier.city.label'),
-      type: 'text',
-      showInList: false,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'zip_code',
-      label: i18n.t('schema:erp.supplier.zip_code.label'),
-      type: 'text',
-      showInList: false,
-    },
-    {
-      name: 'tax_number',
+      name: 'tax_id',
       label: i18n.t('schema:erp.supplier.tax_number.label'),
       type: 'text',
       showInList: false,
@@ -184,7 +153,7 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
-      name: 'remark',
+      name: 'remarks',
       label: i18n.t('schema:erp.supplier.remark.label'),
       type: 'textarea',
       showInList: false,
@@ -193,15 +162,15 @@ export const supplierSchema: EntitySchema = {
 
   list: {
     columns: [
-      'supplier_code',
-      'supplier_name',
+      'supplier_no',
+      'name',
       'contact_person',
-      'contact_phone',
-      'category',
+      'phone',
+      'category_code',
       'credit_rating',
       'status',
     ],
-    searchFields: ['supplier_code', 'supplier_name', 'contact_person'],
+    searchFields: ['supplier_no', 'name', 'contact_person'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -263,35 +232,19 @@ export const supplierSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('schema:erp.supplier.section.0.title'),
-      fields: [
-        'supplier_code',
-        'supplier_name',
-        'short_name',
-        'category',
-        'status',
-        'credit_rating',
-      ],
+      fields: ['supplier_no', 'name', 'category_code', 'status', 'credit_rating'],
     },
     {
       title: i18n.t('schema:erp.supplier.section.1.title'),
-      fields: [
-        'contact_person',
-        'contact_phone',
-        'contact_email',
-        'address',
-        'country',
-        'province',
-        'city',
-        'zip_code',
-      ],
+      fields: ['contact_person', 'phone', 'email', 'address'],
     },
     {
       title: i18n.t('schema:erp.supplier.section.2.title'),
-      fields: ['tax_number', 'bank_name', 'bank_account'],
+      fields: ['tax_id', 'bank_name', 'bank_account'],
     },
     {
       title: i18n.t('schema:erp.supplier.section.3.title'),
-      fields: ['remark'],
+      fields: ['remarks'],
     },
   ],
 

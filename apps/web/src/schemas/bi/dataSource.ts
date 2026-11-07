@@ -215,6 +215,8 @@ const dataSourceFields: SchemaField[] = [
 
 export const dataSourceSchema: EntitySchema = {
   entity: 'bi_data_source',
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'bi:data_source',
   title: i18n.t('shared.data_source.bi_0'),
   description: i18n.t('shared.data_source.bi_19'),
 

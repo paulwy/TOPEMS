@@ -1068,10 +1068,11 @@ pub async fn execute_payment_handler(
 ) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let executed_by = claims.username.clone();
+    // executed_by 列为 uuid，按 JWT sub 绑定；用户名仅供日志/文本列使用。
+    let executed_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     match service
-        .execute_payment(tenant_id, payment_id, req, &executed_by)
+        .execute_payment(tenant_id, payment_id, req, executed_by)
         .await
     {
         Ok(p) => ApiResponse::success(p, "执行成功"),
@@ -2994,12 +2995,30 @@ pub async fn get_collection_handler(
 pub async fn create_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match service.create_collection(tenant_id, req, &created_by).await {
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    match service
+        .create_collection(tenant_id, req, &created_by, &mut scope)
+        .await
+    {
         Ok(data) => {
             // 收款创建 → PaymentReceived 事件（激活 erp 应收核销 / crm 账单核销 / finance 收款记录）
             // 此前 PaymentReceived 仅有订阅方、无发布方，整条核销链空转；此处补齐发布（2026-09-08）

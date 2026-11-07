@@ -457,6 +457,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:bom:read',
       order: 4,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-pdm-bom_desc'),
     },
     {
@@ -492,6 +493,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:version:read',
       order: 1,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-version_desc'),
     },
     {
@@ -526,6 +528,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:product:read',
       order: 7,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-product-config_desc'),
     },
     {
@@ -537,6 +540,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:formula:read',
       order: 8,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-formula_desc'),
     },
     {
@@ -548,6 +552,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:process:read',
       order: 9,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-process_desc'),
     },
     {
@@ -559,6 +564,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:batch:read',
       order: 10,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-batch_desc'),
     },
     {
@@ -570,6 +576,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:step:read',
       order: 11,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-step_desc'),
     },
     {
@@ -581,6 +588,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:stats:read',
       order: 1,
       group: 'analytics',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-stats_desc'),
     },
     {
@@ -592,6 +600,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:product_category:read',
       order: 12,
       group: 'master',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-product-category_desc'),
     },
     {
@@ -603,6 +612,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:bom_template:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-bom-template_desc'),
     },
     {
@@ -614,6 +624,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:category_rule:read',
       order: 2,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-category-rule_desc'),
     },
     {
@@ -625,6 +636,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:doc_approval_flow:read',
       order: 3,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-doc-approval-flow_desc'),
     },
     {
@@ -636,6 +648,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       permission: 'pdm:change_template:read',
       order: 4,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('pdm.nav.pdm-change-template_desc'),
     },
   ],

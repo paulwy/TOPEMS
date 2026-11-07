@@ -672,6 +672,49 @@ async fn refresh_graph(
     Ok(())
 }
 
+/// 作用域版全量重算：复用请求级 RLS 事务读写，避免裸池在严格 RLS 下被拒。
+async fn refresh_graph_scoped(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    tenant: Option<uuid::Uuid>,
+) -> Result<(), TopemsError> {
+    let nodes: Vec<LineageNode> = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"
+    )))
+    .fetch_all(&mut *scope)
+    .await
+    .map(|rows| rows.iter().map(node_from_row).collect())
+    .unwrap_or_default();
+    let edges: Vec<LineageEdge> = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"
+    )))
+    .fetch_all(&mut *scope)
+    .await
+    .map(|rows| rows.iter().map(edge_from_row).collect())
+    .unwrap_or_default();
+    let graph = LineageGraph {
+        nodes,
+        edges,
+        version: 0,
+        last_updated: chrono::Utc::now().to_rfc3339(),
+    };
+    sqlx::query(
+        r#"INSERT INTO master_data.mdm_lineage_graphs (id, nodes, edges, version, last_updated, tenant_id)
+           VALUES ('default', $1, $2, 1, $3, $4)
+           ON CONFLICT (id) DO UPDATE
+           SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
+               version = master_data.mdm_lineage_graphs.version + 1,
+               last_updated = EXCLUDED.last_updated"#,
+    )
+    .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
+    .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
+    .bind(&graph.last_updated)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .execute(&mut *scope)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
+    Ok(())
+}
+
 fn edge_type_to_str(e: &EdgeType) -> &'static str {
     match e {
         EdgeType::DerivesFrom => "derives_from",
@@ -1458,10 +1501,24 @@ pub async fn export_lineage_post(
 pub async fn refresh_lineage(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = tenant_of(&claims);
-    if let Err(e) = refresh_graph(&state.db, tenant).await {
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    if let Err(e) = refresh_graph_scoped(&mut scope, tenant).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(
@@ -1474,22 +1531,36 @@ pub async fn refresh_lineage(
 pub async fn refresh_lineage_by_id(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = tenant_of(&claims);
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let exists = sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
     )
     .bind(&id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
     if !exists {
         return ApiResponse::not_found("未找到血缘节点");
     }
 
-    if let Err(e) = refresh_graph(&state.db, tenant).await {
+    if let Err(e) = refresh_graph_scoped(&mut scope, tenant).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(

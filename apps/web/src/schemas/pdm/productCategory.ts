@@ -12,6 +12,9 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
     resource: 'productCategories',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'pdm:product_category',
+
   fields: [
     {
       name: 'name',

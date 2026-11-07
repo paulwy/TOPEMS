@@ -3,7 +3,7 @@
 //! V2 shared-bootstrap 模板：bootstrap_service_shared + build_application + run
 
 use axum::{routing::get, Router};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service_shared, build_application, run, ServiceConfig};
 use topems_shared_db::scope::Db;
 use utoipa::OpenApi;
@@ -63,9 +63,9 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission(
-            "ticket:admin",
-        )))
+        // 模块门只负责「能进 ticket + 读」；写仍要求 ticket:admin（避免只读提权）。
+        .layer(axum::middleware::from_fn(require_module_write("ticket")))
+        .layer(axum::middleware::from_fn(require_module_access("ticket")))
         .with_state(db);
 
     // ── 组装 Application ─────────────────────────────────────────────

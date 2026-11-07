@@ -37,8 +37,6 @@ export interface Project {
   tags?: string[];
   parentId?: string;
   workspace_id?: string;
-  repo_url?: string;
-  tech_stack?: string;
 }
 
 export interface CreateProjectRequest {
@@ -76,8 +74,6 @@ export interface UpdateProjectRequest {
   tags?: string[];
   parentId?: string;
   workspace_id?: string;
-  repo_url?: string;
-  tech_stack?: string;
 }
 
 export interface ExperimentResult {

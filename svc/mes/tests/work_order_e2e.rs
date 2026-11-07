@@ -56,6 +56,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             operator VARCHAR(64),
             status VARCHAR(32),
             priority VARCHAR(16),
+            tenant_id UUID,
             remark TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW(),

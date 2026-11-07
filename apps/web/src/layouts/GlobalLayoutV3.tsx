@@ -12,6 +12,7 @@ import {
 import { getUnreadCount } from '@/api/notification';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import { lucideIcons } from '@/lib/iconMapping';
+import { DOMAIN_GROUPS } from '@/config/moduleTiers';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import type { DbMenuItem } from '@/api/core/menus';
 import { useMenuAuthority } from '@/hooks/useMenuAuthority';
@@ -127,6 +128,9 @@ function buildSidebarItems(
     },
   ];
 
+  // 批 29：模块级入口先收集到 moduleItems，再按 DOMAIN_GROUPS 聚合成一级域组
+  const moduleItems: NavItem[] = [];
+
   for (const moduleItem of registryItems) {
     const moduleConfig = navigationRegistryV2.getModule(moduleItem.code);
     // P2-2 dashboard 下沉模块首页：dashboard 入口不占侧边栏菜单（路由与
@@ -169,7 +173,7 @@ function buildSidebarItems(
       continue;
     }
 
-    items.push({
+    moduleItems.push({
       id: moduleItem.code,
       label: moduleItem.labelKey ? i18n.t(moduleItem.labelKey) : moduleItem.label,
       icon: resolveIcon(moduleItem.icon),
@@ -178,6 +182,33 @@ function buildSidebarItems(
       children: children.length > 0 ? children : undefined,
     });
   }
+
+  // 批 29：一级菜单由 35 个业务域收敛为 10 个业务域组。
+  // 只做呈现分组——不改 route path、不改权限码、不改模块内部结构：
+  // 一级 = 域组，二级 = 组内模块，三级 = 模块 navItems（SidebarNavGroup 递归渲染）。
+  const groupedCodes = new Set(DOMAIN_GROUPS.flatMap((group) => group.domains));
+  const moduleByCode = new Map(moduleItems.map((entry) => [entry.id, entry]));
+
+  const groupedItems: NavItem[] = [];
+  for (const group of DOMAIN_GROUPS) {
+    const groupChildren = group.domains
+      .map((domain) => moduleByCode.get(domain))
+      .filter((entry): entry is NavItem => Boolean(entry));
+    if (groupChildren.length === 0) continue;
+    groupedItems.push({
+      id: `group:${group.code}`,
+      label: i18n.t(group.labelKey),
+      icon: resolveIcon(group.icon),
+      // 组头默认指向组内首个模块入口；有 children 时点击为展开/折叠（SidebarNavGroup）
+      path: groupChildren[0].path,
+      children: groupChildren,
+    });
+  }
+
+  // 未在 DOMAIN_GROUPS 登记的域兜底：保持原样平铺为一级入口，不隐藏
+  const ungroupedItems = moduleItems.filter((entry) => !groupedCodes.has(entry.id));
+
+  items.push(...groupedItems, ...ungroupedItems);
 
   return items;
 }
@@ -204,6 +235,8 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   // 的菜单名显示成原始 i18n key（如 mes.nav.module_name）
   useEffect(() => {
     const namespaces = new Set<string>();
+    // 批 29：一级域组名走独立 domain-group 命名空间，与模块命名空间一并预加载
+    namespaces.add('domain-group');
     navigationRegistryV2.getAllModules().forEach((module) => {
       const keys = [module.nameKey, ...module.navItems.map((item) => item.labelKey)];
       keys.forEach((key) => {

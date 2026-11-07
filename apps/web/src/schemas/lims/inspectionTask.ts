@@ -44,6 +44,9 @@ export const inspectionTaskSchema: EntitySchema = {
     resource: 'inspection-tasks',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'lims:task',
+
   fields: [
     {
       name: 'task_no',

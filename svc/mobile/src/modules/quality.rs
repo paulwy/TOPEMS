@@ -1,7 +1,8 @@
 use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
-use crate::modules::contract_util::unwrap_data;
+use crate::modules::contract_util::{downstream_error, unwrap_data};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::qms_api::QmsApi, TypedServiceClient};
 
@@ -40,11 +41,11 @@ pub async fn list_quality_tasks(
             "获取质检任务列表成功",
         ),
         Err(e) => {
-            // QMS 上游暂未实现质检任务端点（探测 404），轻量兜底返回空列表，待上游支持。
-            tracing::error!("调用QMS服务获取质检任务列表失败（兜底空列表）: {}", e);
+            // QMS 上游未接入时优雅降级：返回空列表（与 inventory/production 列表兜底口径一致）。
+            tracing::warn!("调用QMS服务获取质检任务列表失败（降级空列表）: {}", e);
             ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
-                "获取质检任务列表成功（待上游支持）",
+                "获取质检任务列表成功（QMS 服务未接入，返回空态）",
             )
         }
     }
@@ -73,11 +74,14 @@ pub async fn get_quality_task(
             ApiResponse::success(unwrap_data(data), "获取质检任务详情成功"),
         ),
         Err(e) => {
-            // QMS 上游暂未实现任务详情端点（探测 404），HTTP 200 + 内层 404，待上游支持。
-            tracing::error!("调用QMS服务获取质检任务详情失败（兜底404）: {}", e);
+            // QMS 上游未接入时优雅降级：详情返回 null（与 inventory 详情兜底口径一致）。
+            tracing::warn!("调用QMS服务获取质检任务详情失败（降级空态）: {}", e);
             (
                 StatusCode::OK,
-                ApiResponse::not_found("质检任务不存在（待上游支持）"),
+                ApiResponse::success(
+                    serde_json::Value::Null,
+                    "获取质检任务详情成功（QMS 服务未接入，返回空态）",
+                ),
             )
         }
     }
@@ -102,11 +106,10 @@ pub async fn list_defect_records(
             "获取缺陷记录列表成功",
         ),
         Err(e) => {
-            // QMS 上游暂未实现缺陷记录端点（探测 404），轻量兜底返回空列表，待上游支持。
-            tracing::error!("调用QMS服务获取缺陷记录列表失败（兜底空列表）: {}", e);
+            tracing::warn!("调用QMS服务获取缺陷记录列表失败（降级空列表）: {}", e);
             ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
-                "获取缺陷记录列表成功（待上游支持）",
+                "获取缺陷记录列表成功（QMS 服务未接入，返回空态）",
             )
         }
     }
@@ -128,8 +131,14 @@ pub async fn report_defect(
     match client.report_defect(&data).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "上报缺陷成功"),
         Err(e) => {
-            tracing::error!("调用QMS服务上报缺陷失败: {}", e);
-            ApiResponse::server_error("上报缺陷失败")
+            // 4xx 业务错误透传；连接失败/5xx 降级为 503 未接入（操作未执行）。
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    return downstream_error(&e, "上报缺陷失败");
+                }
+            }
+            tracing::warn!("调用QMS服务上报缺陷失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：QMS，上报缺陷未执行")
         }
     }
 }
@@ -160,8 +169,13 @@ pub async fn update_quality_task_status(
     match client.update_quality_task_status(&id, &data).await {
         Ok(data) => ApiResponse::success(unwrap_data(data), "更新质检任务状态成功"),
         Err(e) => {
-            tracing::error!("调用QMS服务更新质检任务状态失败: {}", e);
-            ApiResponse::server_error("更新质检任务状态失败")
+            if let TopemsError::ServiceError { status_code, .. } = &e {
+                if (400..500).contains(status_code) {
+                    return downstream_error(&e, "更新质检任务状态失败");
+                }
+            }
+            tracing::warn!("调用QMS服务更新质检任务状态失败（降级503未接入）: {}", e);
+            ApiResponse::unavailable("上游服务未接入：QMS，更新质检任务状态未执行")
         }
     }
 }

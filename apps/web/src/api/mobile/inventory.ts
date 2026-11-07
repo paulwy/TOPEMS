@@ -143,13 +143,6 @@ export const inventoryApi = {
     return apiClient.mobile.get(`inventory/items/${id}`);
   },
 
-  adjustItem: async (
-    id: string,
-    data: InventoryAdjustRequest
-  ): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.mobile.post(`inventory/items/${id}/adjust`, data);
-  },
-
   // ==================== 盘点管理 ====================
 
   listStocktakeTasks: async (params?: {
@@ -167,22 +160,11 @@ export const inventoryApi = {
     return apiClient.mobile.post('inventory/stocktake', data);
   },
 
-  getStocktakeTask: async (id: string): Promise<ApiResponse<StocktakeTask>> => {
-    return apiClient.mobile.get(`inventory/stocktake/${id}`);
-  },
-
   submitStocktakeRecord: async (
     taskId: string,
     data: StocktakeRecordInput
   ): Promise<ApiResponse<StocktakeRecord>> => {
     return apiClient.mobile.post(`inventory/stocktake/${taskId}/records`, data);
-  },
-
-  completeStocktakeTask: async (
-    id: string,
-    data?: { remarks?: string }
-  ): Promise<ApiResponse<StocktakeTask>> => {
-    return apiClient.mobile.put(`inventory/stocktake/${id}/complete`, data);
   },
 
   // ==================== 入库管理 ====================
@@ -195,13 +177,6 @@ export const inventoryApi = {
     return apiClient.mobile.get('inventory/inbound', { params });
   },
 
-  confirmInboundOrder: async (
-    id: string,
-    data?: { received_quantity?: number; remarks?: string }
-  ): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.mobile.post(`inventory/inbound/${id}/confirm`, data);
-  },
-
   // ==================== 出库管理 ====================
 
   listOutboundOrders: async (params?: {
@@ -210,30 +185,6 @@ export const inventoryApi = {
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> => {
     return apiClient.mobile.get('inventory/outbound', { params });
-  },
-
-  confirmOutboundOrder: async (
-    id: string,
-    data?: { shipped_quantity?: number; remarks?: string }
-  ): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.mobile.post(`inventory/outbound/${id}/confirm`, data);
-  },
-
-  // ==================== 调拨管理 ====================
-
-  listTransferOrders: async (params?: {
-    status?: InventoryMovementStatus;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<TransferOrder>>> => {
-    return apiClient.mobile.get('inventory/transfer', { params });
-  },
-
-  confirmTransferOrder: async (
-    id: string,
-    data?: { remarks?: string }
-  ): Promise<ApiResponse<TransferOrder>> => {
-    return apiClient.mobile.post(`inventory/transfer/${id}/confirm`, data);
   },
 };
 

@@ -248,7 +248,7 @@ const DatabaseManagementPage: React.FC = () => {
       id: Date.now().toString(),
       backup_name: `backup_manual_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
       backup_type: 'full',
-      filesize: `${(Math.random() * 50 + 100).toFixed(1)} MB`,
+      filesize: '',
       status: 'success',
       created_at: new Date().toISOString().replace('T', ' ').slice(0, 19),
       created_by: i18n.t('pages.database_management_page.k10'),

@@ -283,17 +283,14 @@ pub async fn create_task(
         }
     };
 
-    // 租户归属：与 complete_task/batch_update_status 一致
-    // （super → NULL，普通用户 → claims.tenant_id；修复原 Uuid::nil() 导致
-    //  创建后按租户过滤查询/更新不可见的 404 问题）
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
+    // 写入归属：mobile.mobile_tasks.tenant_id 为 NOT NULL，必须绑定具体租户。
+    // 超管优先取 claims.tenant_id，缺失时落系统租户（nil）；行级读取过滤仍保留
+    // 「super → 不加租户条件」的语义（见 tenant_filter）。
+    let insert_tenant_id: Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let task_id = Uuid::new_v4();
     let priority = payload.priority.unwrap_or_else(|| "normal".to_string());
@@ -316,7 +313,7 @@ pub async fn create_task(
     .bind(&payload.due_date)
     .bind(Utc::now())
     .bind(Utc::now())
-    .bind(tenant_filter)
+    .bind(insert_tenant_id)
     .execute(&mut scope)
     .await
     {

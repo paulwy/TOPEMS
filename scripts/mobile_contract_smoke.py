@@ -4,7 +4,15 @@
 - 自动重签 JWT（JWT_SECRET + test_admin）
 - 逐端点实跑断言：路由缺失(http404空body)或处理异常(http>=500 或 body.code==500) 记 FAIL
 - 按模块分组输出报告
-用法: python3 scripts/mobile_contract_smoke.py
+
+安全边界（2026-11-06，与 scripts/web_contract_smoke.py 同一口径）：
+  默认 WEB_SMOKE_ENV=local，目标 http://127.0.0.1:8070/api/mobile（本机 mobile 服务）；
+  prod 仓库位（TOPEMS_INSTANCE=prod / DSN *_prod）与 prod 目标进程（lsof+ps 库名）默认拒绝，
+  授权需 ALLOW_PROD_SMOKE=1 + PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON + 显式 MOBILE_BASE_URL/JWT_SECRET。
+  prod 目标一律只读：跳过 prepare_data / pre_create，只跑 GET 端点，不写库、不写数据。
+  所有拒绝均发生在建立连接之前。
+
+用法: python3 scripts/mobile_contract_smoke.py [--dry-run]
 """
 import base64
 import glob
@@ -13,56 +21,234 @@ import hmac
 import json
 import os
 import re
+import shutil
+import socket
 import subprocess
 import bcrypt
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from urllib.parse import urlparse
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API_DIR = os.path.join(BASE, "apps", "mobile", "src", "api")
-# base 探测：8099（生产 monolith 入口）优先，本机 dev 态 8098（unified-core BFF）fallback
-def _probe_base() -> str:
-    # v1.85：允许 MOBILE_BASE_URL 显式指定目标（如本机 dev 态 8098），生产探测仍优先。
-    override = os.environ.get("MOBILE_BASE_URL")
-    if override:
-        return override.rstrip("/")
-    for port in (8099, 8098):
-        try:
-            with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=2) as r:
-                if r.status == 200:
-                    return f"http://localhost:{port}/api/mobile"
-        except Exception:
-            continue
-    return "http://localhost:8099/api/mobile"
-
-MOBILE_URL = _probe_base()
+LOCAL_DEFAULT_URL = "http://127.0.0.1:8070/api/mobile"
+MOBILE_URL = LOCAL_DEFAULT_URL   # 由 resolve_target() 覆盖
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
+
+EXIT_CONFIG = 2      # 配置非法
+EXIT_ENV = 3         # 运行环境/密钥/连通性不满足
+EXIT_PROD_GUARD = 4  # prod 拒绝层
+
+READ_ONLY = False    # prod 目标时由 main() 置 True，禁止任何写库/写数据路径
+
 # 预创建捕获的真实 id（customer/documents/device），供 get/put/delete 消除假 id 业务 404
 REAL_IDS = {}
 # WMS inventory.warehouse_id NOT NULL：由 prepare_data 从真实库取一个仓库 id 注入载荷
 TEST_WAREHOUSE_ID = None
 
 
-def load_jwt_secret() -> str:
-    """JWT_SECRET 优先取环境变量，其次读项目 .env，避免敏感信息入库。"""
+def _fail(code: int, title: str, lines=()):
+    """fail-closed：打印可操作提示后退出，绝不静默跳过/降级。"""
+    print(f"[mobile-smoke] BLOCKED: {title}", file=sys.stderr)
+    for line in lines:
+        print(f"  - {line}", file=sys.stderr)
+    sys.exit(code)
+
+
+def project_env_value(key: str):
+    """只读项目根 .env 的单个键（不打印值，避免泄露凭据）。"""
+    path = os.path.join(BASE, ".env")
+    if not os.path.exists(path):
+        return None
+    try:
+        for line in open(path, encoding="utf-8"):
+            line = line.strip()
+            if line.startswith(key + "="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        return None
+    return None
+
+
+def _db_name_from_url(value: str) -> str:
+    """从 postgres DSN 取库名；非 PG 或空值返回空串（不打印 DSN 原文）。"""
+    if not value.startswith(("postgres://", "postgresql://")):
+        return ""
+    return (urlparse(value).path or "").lstrip("/").split("?")[0]
+
+
+def _is_prod_db(db_name: str) -> bool:
+    return bool(db_name) and (db_name == "topems_prod" or db_name.endswith("_prod"))
+
+
+def detect_instance() -> str:
+    """识别当前仓库位 prod/dev（与 web 契约冒烟同一判据，只读配置、零网络）。"""
+    value = (os.environ.get("TOPEMS_INSTANCE") or "").strip().lower()
+    if value in ("prod", "production"):
+        return "prod"
+    if value in ("dev", "development", "local", "test", "staging"):
+        return "dev"
+    if value:
+        _fail(EXIT_CONFIG, f"TOPEMS_INSTANCE 取值非法: {value!r}", ["允许值: prod | dev（留空则自动识别）"])
+    db_url = (os.environ.get("DATABASE_URL") or project_env_value("DATABASE_URL") or "").strip()
+    if _is_prod_db(_db_name_from_url(db_url)):
+        return "prod"
+    return "dev"
+
+
+def detect_target_instance(host: str, port: int) -> str:
+    """只读探测 loopback 监听进程实际连接的库名，返回 prod / dev / unknown。
+
+    与 web 侧同实现：prod 仓库 `.env` 可能指向 topems_test，但服务进程由 launchd 以
+    `DATABASE_URL=…/topems_prod` 启动；只读 lsof + ps eww，不建连、不发 HTTP、不打印 DSN。
+    """
+    if not _is_loopback(host):
+        return "unknown"
+    lsof = shutil.which("lsof") or ("/usr/sbin/lsof" if os.path.exists("/usr/sbin/lsof") else None)
+    if not lsof:
+        return "unknown"
+    try:
+        out = subprocess.run(
+            [lsof, "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
+            capture_output=True, text=True, timeout=3,
+        ).stdout
+        pids = [p for p in out.split() if p.isdigit()]
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    saw_db = False
+    for pid in pids:
+        try:
+            env = subprocess.run(
+                ["ps", "eww", "-p", pid], capture_output=True, text=True, timeout=3,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        for token in env.split():
+            if not token.startswith(("DATABASE_URL=", "MIGRATE_URL=")):
+                continue
+            db_name = _db_name_from_url(token.split("=", 1)[1])
+            if not db_name:
+                continue
+            saw_db = True
+            if _is_prod_db(db_name):
+                return "prod"
+    return "dev" if saw_db else "unknown"
+
+
+def _is_loopback(host: str) -> bool:
+    return host in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1")
+
+
+def resolve_target(dry_run: bool = False):
+    """解析 (目标环境, 仓库位, mobile 地址)；所有拒绝均发生在任何网络请求之前。
+
+    环境开关与 web 侧共用 WEB_SMOKE_ENV；mobile 目标 URL 用 MOBILE_BASE_URL，
+    prod 授权开关与确认串也与 web 共用（ALLOW_PROD_SMOKE / PROD_SMOKE_CONFIRM / PROD_SMOKE_REASON）。
+    """
+    env = (os.environ.get("WEB_SMOKE_ENV") or "").strip().lower() or "local"
+    if env not in ("local", "test", "prod"):
+        _fail(EXIT_CONFIG, f"WEB_SMOKE_ENV 取值非法: {env!r}", ["允许值: local | test | prod"])
+    instance = detect_instance()
+
+    if instance == "prod":
+        confirm_expected = f"smoke-prod:{socket.gethostname()}:{os.path.basename(BASE)}"
+        if env != "prod" and dry_run:
+            return env, instance, LOCAL_DEFAULT_URL
+        if env != "prod":
+            _fail(EXIT_PROD_GUARD, "检测到 prod 仓库位，默认拒绝对它跑 mobile 契约冒烟",
+                  [f"当前 WEB_SMOKE_ENV={env}，但 instance=prod（TOPEMS_INSTANCE 或 DATABASE_URL 指向 *_prod）",
+                   "不会静默降级为 prod，也不会静默跳过。",
+                   "如确需对 prod 跑只读契约检查，必须同时设置：",
+                   "  WEB_SMOKE_ENV=prod  ALLOW_PROD_SMOKE=1",
+                   f"  PROD_SMOKE_CONFIRM={confirm_expected}",
+                   "  PROD_SMOKE_REASON=<变更单号/原因>  MOBILE_BASE_URL=<显式地址>  JWT_SECRET=<显式值>"])
+        if os.environ.get("ALLOW_PROD_SMOKE") != "1":
+            _fail(EXIT_PROD_GUARD, "prod 冒烟需要显式开关 ALLOW_PROD_SMOKE=1",
+                  ["未设置或值不是 1 → fail-closed（不跳过、不降级）。",
+                   "确认已获授权后再导出该变量并重跑。"])
+        confirm = (os.environ.get("PROD_SMOKE_CONFIRM") or "").strip()
+        if confirm != confirm_expected:
+            _fail(EXIT_PROD_GUARD, "prod 冒烟需要第二道确认 PROD_SMOKE_CONFIRM",
+                  [f"期望值: {confirm_expected}", f"当前值: {confirm or '<未设置>'}",
+                   "该值绑定 主机名 + 仓库目录，换机/换目录即失效。"])
+        if not (os.environ.get("PROD_SMOKE_REASON") or "").strip():
+            _fail(EXIT_PROD_GUARD, "prod 冒烟需要 PROD_SMOKE_REASON（变更单号/原因）",
+                  ["该值会打印在日志首部，便于审计追溯。"])
+        url = (os.environ.get("MOBILE_BASE_URL") or "").strip()
+        if not url:
+            _fail(EXIT_PROD_GUARD, "prod 冒烟必须显式 MOBILE_BASE_URL（不提供 prod 默认地址）",
+                  ["例如 MOBILE_BASE_URL=http://localhost:8070/api/mobile"])
+    elif env == "prod":
+        _fail(EXIT_PROD_GUARD, "WEB_SMOKE_ENV=prod，但当前仓库位不是 prod",
+              ["为避免误伤本地/CI，拒绝运行；本地请用 WEB_SMOKE_ENV=local|test。",
+               "仅 prod 主机可设置 TOPEMS_INSTANCE=prod。"])
+    else:
+        url = (os.environ.get("MOBILE_BASE_URL") or "").strip() or LOCAL_DEFAULT_URL
+
+    host = (urlparse(url).hostname or "").lower()
+    if not host:
+        _fail(EXIT_CONFIG, f"MOBILE_BASE_URL 无法解析: {url!r}", ["期望形如 http://127.0.0.1:8070/api/mobile"])
+    if dry_run:
+        return env, instance, url
+    if instance != "prod":
+        port = urlparse(url).port or (443 if urlparse(url).scheme == "https" else 80)
+        if detect_target_instance(host, port) == "prod":
+            _fail(EXIT_PROD_GUARD, "目标 mobile 进程实际连接 *_prod 数据库，默认拒绝",
+                  [f"目标: {url}（只读探测监听进程的 DATABASE_URL 库名，未建立任何连接）",
+                   "当前仓库位不是 prod，但目标服务连的是 prod 库：不发送任何契约请求。",
+                   "请把 MOBILE_BASE_URL 指向测试服务，或在 prod 仓库位按三重授权执行。"])
+    if not _is_loopback(host) and os.environ.get("WEB_SMOKE_ALLOW_REMOTE") != "1":
+        _fail(EXIT_CONFIG, "非 loopback 目标需要显式 WEB_SMOKE_ALLOW_REMOTE=1",
+              [f"当前目标: {url}", "默认只允许本机/测试服务，防止误打远端 prod。"])
+    return env, instance, url
+
+
+def check_reachable(url: str) -> None:
+    """短超时连通性预检：不可达立刻失败，不挂死、不发业务请求。"""
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        with socket.create_connection((host, port), timeout=2):
+            pass
+    except OSError as exc:
+        _fail(EXIT_ENV, "目标 mobile 服务不可达，未发起任何契约请求",
+              [f"目标: {url} ({host}:{port})", f"原因: {exc}",
+               "本地开发: 先启动 mobile 服务（默认 8070），或设置 MOBILE_BASE_URL。",
+               "CI/无服务环境: 用 --dry-run 做静态契约检查（不联网）。"])
+
+
+def load_jwt_secret(target_env: str) -> str:
+    """JWT_SECRET 只从环境变量或本地 .env 读取；prod 必须显式环境变量（禁止隐式取密）。"""
     if os.environ.get("JWT_SECRET"):
         return os.environ["JWT_SECRET"]
+    if target_env == "prod":
+        _fail(EXIT_ENV, "prod 冒烟必须显式 JWT_SECRET（禁止回落 .env）",
+              ["导出 JWT_SECRET=<值> 后重跑；不要依赖 prod .env 隐式取密。"])
+    if os.environ.get("WEB_SMOKE_NO_DOTENV") == "1":
+        _fail(EXIT_ENV, "WEB_SMOKE_NO_DOTENV=1 且未提供 JWT_SECRET",
+              ["CI 请显式导出 JWT_SECRET，或用 --dry-run（不联网）。"])
     env_path = os.path.join(BASE, ".env")
     if os.path.exists(env_path):
         for line in open(env_path, encoding="utf-8"):
             line = line.strip()
             if line.startswith("JWT_SECRET="):
                 return line.split("=", 1)[1].strip().strip('"').strip("'")
-    raise SystemExit("缺少 JWT_SECRET：请设置环境变量或提供项目 .env")
+    _fail(EXIT_ENV, "缺少 JWT_SECRET：无法签发冒烟 token",
+          ["设置 JWT_SECRET=<值>，或提供项目 .env。",
+           "CI 无密钥环境: 使用 --dry-run 做静态契约检查（不联网、不读密钥）。"])
 
 
 def load_database_url() -> str:
-    """DATABASE_URL 优先取环境变量，其次读项目 .env。"""
+    """DATABASE_URL 优先取环境变量，其次读项目 .env；NO_DOTENV=1 时不读 .env。"""
     if os.environ.get("DATABASE_URL"):
         return os.environ["DATABASE_URL"]
+    if os.environ.get("WEB_SMOKE_NO_DOTENV") == "1":
+        return ""
     env_path = os.path.join(BASE, ".env")
     if os.path.exists(env_path):
         for line in open(env_path, encoding="utf-8"):
@@ -72,10 +258,16 @@ def load_database_url() -> str:
     return ""
 
 
+
 def prepare_data() -> None:
     """准备冒烟测试数据：确保 mobile.mobile_users 存在测试用户。
     mobile.devices.user_id 外键指向 mobile.mobile_users，缺记录时
-    POST /device/register 会报外键约束错误（环境数据问题而非代码缺陷）。"""
+    POST /device/register 会报外键约束错误（环境数据问题而非代码缺陷）。
+
+    prod 目标（READ_ONLY=True）一律跳过：直写库能力只在测试环境可用。"""
+    if READ_ONLY:
+        print("[prepare] 跳过：prod 只读模式禁止直写数据库")
+        return
     db = load_database_url()
     if not db:
         print("[prepare] 跳过：缺少 DATABASE_URL")
@@ -148,7 +340,7 @@ VAR_DEFAULTS = {
 
 # POST/PUT/PATCH 写操作的最小合法 body（按路径模板精确匹配，否则空 {}）
 POST_BODIES = {
-    "/customer": {"name": "冒烟测试客户", "customer_type": "enterprise", "owner_id": "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21", "phone": "13800000000", "email": "smoke@test.local"},
+    "/customers": {"name": "冒烟测试客户", "customer_type": "enterprise", "owner_id": "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21", "phone": "13800000000", "email": "smoke@test.local"},
     "/inventory": {"sku": "SMOKE-SKU-001", "name": "冒烟测试库存", "quantity": 10, "unit": "件", "warehouse_id": "REPLACE_WAREHOUSE"},
     "/attendance/check-in": {"lat": 38.04, "lng": 114.51},
     "/attendance/check-out": {"lat": 38.04, "lng": 114.51},
@@ -181,7 +373,7 @@ def b64(d: bytes) -> str:
     return base64.urlsafe_b64encode(d).rstrip(b"=").decode()
 
 
-def issue_token() -> str:
+def issue_token(target_env: str) -> str:
     now = int(time.time())
     claims = {
         "sub": TEST_UID, "username": "test_admin",
@@ -193,7 +385,7 @@ def issue_token() -> str:
     }
     header = b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode())
     payload = b64(json.dumps(claims, separators=(",", ":")).encode())
-    sig = b64(hmac.new(load_jwt_secret().encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest())
+    sig = b64(hmac.new(load_jwt_secret(target_env).encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest())
     return f"{header}.{payload}.{sig}"
 
 
@@ -236,10 +428,14 @@ def pre_create(token: str) -> None:
 
     device/register 为 upsert 语义（响应 data:null），预创建后从 mobile.devices 回查 id。
     approval/tasks 依赖流程实例状态机，不预创建（保留假 id 404 语义，已登记）。
-    """
+
+    prod 目标（READ_ONLY=True）一律跳过：本函数会 POST 写数据并直查数据库。"""
+    if READ_ONLY:
+        print("[prepare] 跳过预创建：prod 只读模式禁止写数据/写库")
+        return
     db = load_database_url()
     creates = [
-        ("customer", "/customer"), ("documents", "/documents"),
+        ("customer", "/customers"), ("documents", "/documents"),
         ("inventory", "/inventory"), ("production/orders", "/production/orders"),
         ("push/notifications", "/push/notifications"), ("schedule/events", "/schedule/events"),
         ("task", "/task"),
@@ -330,10 +526,26 @@ def call(method: str, path: str, tmpl: str, token: str):
 
 
 def main():
-    prepare_data()
+    global MOBILE_URL, READ_ONLY
+    dry_run = "--dry-run" in sys.argv[1:]
+    env, instance, target_url = resolve_target(dry_run)
+    MOBILE_URL = target_url.rstrip("/")
+    print(f"[mobile-smoke] 目标环境={env} · 仓库位={instance} · mobile={MOBILE_URL}")
+    if env == "prod":
+        READ_ONLY = True
+        print(f"[mobile-smoke] prod 授权原因: {(os.environ.get('PROD_SMOKE_REASON') or '').strip()}")
+        print("[mobile-smoke] prod 只读模式：跳过 prepare_data/pre_create，仅执行 GET 端点")
     eps = extract_endpoints()
     print(f"前端契约端点(去重后): {len(eps)}")
-    token = issue_token()
+    if dry_run:
+        print("[mobile-smoke] dry-run: 仅静态提取，未读取密钥、未发起任何网络请求")
+        sys.exit(0)
+    if READ_ONLY:
+        eps = [e for e in eps if e[0] == "GET"]
+        print(f"[mobile-smoke] prod 只读过滤: GET {len(eps)} 个（写方法已排除）")
+    prepare_data()
+    token = issue_token(env)
+    check_reachable(MOBILE_URL)
     pre_create(token)
     groups = {}
     for method, tmpl, fname in eps:

@@ -21,6 +21,10 @@ interface MobileProductionCardProps {
   equipmentList: Equipment[];
   onOrderAction: (order: ProductionOrder, action: 'start' | 'pause' | 'resume') => void;
   onStartReport: (order: ProductionOrder) => void;
+  /** 上游服务未接入信号：为 true 时空态文案切换为「服务未接入」变体 */
+  ordersNotConnected?: boolean;
+  reportsNotConnected?: boolean;
+  equipmentNotConnected?: boolean;
 }
 export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
   activeTab,
@@ -29,6 +33,9 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
   equipmentList,
   onOrderAction,
   onStartReport,
+  ordersNotConnected = false,
+  reportsNotConnected = false,
+  equipmentNotConnected = false,
 }) => {
   const theme = useTheme();
   const getStatusLabel = (status: string) => {
@@ -65,8 +72,16 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
             <EmptyState
               compact
               icon={<ClipboardList size={28} />}
-              title={i18n.t('mobile.production.empty_orders_title')}
-              description={i18n.t('mobile.production.empty_orders_desc')}
+              title={
+                ordersNotConnected
+                  ? i18n.t('mobile.production.empty_orders_not_connected_title')
+                  : i18n.t('mobile.production.empty_orders_title')
+              }
+              description={
+                ordersNotConnected
+                  ? i18n.t('mobile.production.empty_orders_not_connected_desc')
+                  : i18n.t('mobile.production.empty_orders_desc')
+              }
             />
           )}
           {filteredOrders.map((order, index) => {
@@ -204,8 +219,16 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
             <EmptyState
               compact
               icon={<Clock size={28} />}
-              title={i18n.t('mobile.production.empty_reports_title')}
-              description={i18n.t('mobile.production.empty_reports_desc')}
+              title={
+                reportsNotConnected
+                  ? i18n.t('mobile.production.empty_reports_not_connected_title')
+                  : i18n.t('mobile.production.empty_reports_title')
+              }
+              description={
+                reportsNotConnected
+                  ? i18n.t('mobile.production.empty_reports_not_connected_desc')
+                  : i18n.t('mobile.production.empty_reports_desc')
+              }
             />
           )}
           {workReports.map((report, index) => (
@@ -298,8 +321,16 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
             <EmptyState
               compact
               icon={<Monitor size={28} />}
-              title={i18n.t('mobile.production.empty_equipment_title')}
-              description={i18n.t('mobile.production.empty_equipment_desc')}
+              title={
+                equipmentNotConnected
+                  ? i18n.t('mobile.production.empty_equipment_not_connected_title')
+                  : i18n.t('mobile.production.empty_equipment_title')
+              }
+              description={
+                equipmentNotConnected
+                  ? i18n.t('mobile.production.empty_equipment_not_connected_desc')
+                  : i18n.t('mobile.production.empty_equipment_desc')
+              }
             />
           )}
           {equipmentList.map((equipment, index) => (

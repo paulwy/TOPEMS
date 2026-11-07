@@ -11,7 +11,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_rd::modules::{create_routes, ApiState};
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_event::event::EventPublisher;
@@ -73,6 +73,7 @@ impl RdRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
+            .layer(axum::middleware::from_fn(require_module_write("rd")))
             .layer(axum::middleware::from_fn(require_module_access("rd")))
             .with_state(api_state);
         let routes = axum::Router::new()

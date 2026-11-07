@@ -367,43 +367,50 @@ pre-commit:
 
     # [Gate MCS] Mobile 契约全量实跑回归（方向1固化，117 端点）
     # 触发：mobile 前端契约 / mobile BFF / shared-service-client 变更。
-    # mobile 服务(8070)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
-    # 有 FAIL 阻断提交，日志落 /tmp/mobile_smoke_precommit.log。
+    # 安全边界（2026-11-06，与 Gate WCS 同一口径）：默认只打本机/测试（WEB_SMOKE_ENV=local，8070）；
+    #   prod 仓库位/目标进程连 *_prod 默认拒绝；确需 prod 必须 ALLOW_PROD_SMOKE=1 +
+    #   PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON + 显式 MOBILE_BASE_URL/JWT_SECRET，且 prod 只跑 GET（不写库）。
+    #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
     mobile-contract-smoke:
       tags: mobile contract smoke
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/mobile/src/api/|svc/mobile/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
-        if ! lsof -iTCP:8070 -sTCP:LISTEN >/dev/null 2>&1; then
-          printf '\033[33m[Gate MCS] SKIP\033[0m mobile 服务(8070)未运行，契约回归可手动执行 python3 scripts/mobile_contract_smoke.py\n'
-          exit 0
-        fi
+        export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
         if python3 scripts/mobile_contract_smoke.py > /tmp/mobile_smoke_precommit.log 2>&1; then
-          printf '\033[32m[Gate MCS] PASS\033[0m 117 端点契约实跑回归全绿\n'
+          printf '\033[32m[Gate MCS] PASS\033[0m 目标=%s（日志 /tmp/mobile_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
+          grep -E '^\[mobile-smoke\]|^总计:' /tmp/mobile_smoke_precommit.log | tail -3
         else
-          printf '\033[31m[Gate MCS] FAIL\033[0m 见 /tmp/mobile_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 mobile 后重提\n'
-          exit 1
+          rc=$?
+          printf '\033[31m[Gate MCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
+          head -8 /tmp/mobile_smoke_precommit.log
+          echo "  ..."
+          tail -6 /tmp/mobile_smoke_precommit.log
+          exit "$rc"
         fi
 
-    # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面，4152 端点）。
+    # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面）。
     # 触发：web 前端契约 / web BFF(svc/server) / shared-service-client 变更。
-    # BFF 服务(8099)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
-    # 已知 39 项前端双前缀缺口已在脚本内豁免（docs/web_contract_gap_list.md 单一事实源），
-    # 新增 FAIL 照常阻断；日志落 /tmp/web_smoke_precommit.log。
+    # 安全边界（2026-11-06）：默认只打本机/测试（WEB_SMOKE_ENV=local，loopback）。
+    #   prod 仓库位（TOPEMS_INSTANCE=prod 或 .env DATABASE_URL 指向 *_prod）默认拒绝；
+    #   确需 prod 必须 ALLOW_PROD_SMOKE=1 + PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON。
+    #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
     web-contract-smoke:
       tags: web contract smoke
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/web/src/api/|apps/web/src/utils/apiPath.ts|svc/server/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
-        if ! lsof -iTCP:8099 -sTCP:LISTEN >/dev/null 2>&1; then
-          printf '\033[33m[Gate WCS] SKIP\033[0m BFF 服务(8099)未运行，契约回归可手动执行 python3 scripts/web_contract_smoke.py\n'
-          exit 0
-        fi
+        export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
         if python3 scripts/web_contract_smoke.py > /tmp/web_smoke_precommit.log 2>&1; then
-          printf '\033[32m[Gate WCS] PASS\033[0m web 契约实跑回归全绿（4152 端点，已知双前缀 39 项豁免）\n'
+          printf '\033[32m[Gate WCS] PASS\033[0m 目标=%s（日志 /tmp/web_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
+          grep -E '^\[web-smoke\]|^总计:' /tmp/web_smoke_precommit.log | tail -3
         else
-          printf '\033[31m[Gate WCS] FAIL\033[0m 见 /tmp/web_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 BFF 后重提\n'
-          exit 1
+          rc=$?
+          printf '\033[31m[Gate WCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
+          head -8 /tmp/web_smoke_precommit.log
+          echo "  ..."
+          tail -6 /tmp/web_smoke_precommit.log
+          exit "$rc"
         fi
 
 pre-push:
@@ -433,6 +440,37 @@ pre-push:
     schema-defense-check:
       tags: database migrations
       run: node scripts/migration/check-schema-defense.mjs
+
+    # [2026-11-06 NEW Gate DRIFT] 账本 success=t 但 DDL 未落地的漂移防线：
+    # 历史事故：本地/test 的 _sqlx_migrations 声称已执行 20261105140000/160000，
+    #           production_orders 实际仍为 integer/numeric，导致 sqlx i64 解码失败；
+    #           batch_records 还残留模板误加约束。静态校验看不见这类「记账≠结构」。
+    # 判定：database/migration_drift_assertions.json 声明 source 版本 + 期望结构；
+    #       仅当目标库该版本 success=t 时才比对实际列/约束/索引，失败列具体漂移项。
+    # 触发：仅推送涉及 database/(migrations|baseline|postgres|init)、checksums、
+    #       断言清单、scripts/migration 时运行；无关改动秒级 SKIP。
+    # 成本：触发时约 0.2-0.5s（3 次 psql 查询，断言清单批量查询）；跳过 <0.1s。
+    # 失败：非零退出 + [Gate DRIFT] FAILED + 修复建议；无库/无 psql fail-closed
+    #       （可用 MIGRATION_DRIFT_DB_URL 指向 test 库，禁止静默 --no-verify 绕过）。
+    ledger-ddl-drift:
+      tags: database migrations
+      run: bash scripts/ci/check-ledger-ddl-drift.sh
+
+    # [2026-11-06 NEW Gate INSERT] 迁移 INSERT 列序/列数静态防线：
+    # 历史事故：20261107000011 的 VALUES 行实际为 (code, resource, action, name, level)，
+    #           但派生表别名声明为 (code, name, resource, action, level)，写入后
+    #           name/resource/action 三列整体错位（纯语法合法，validate.sh 看不见）。
+    # 检查：scripts/migration/check-insert-column-shape.mjs
+    #   - INSERT 列清单 vs VALUES 每条元组值数、派生 VALUES 别名数 vs 值数、
+    #     INSERT 列清单 vs SELECT 表达式数（确定性结构）；
+    #   - core_permissions 列→值组合映射后断言 action/resource 与 code 一致（语义）。
+    # 触发：仅推送涉及 database/migrations|baseline、svc/*/migrations、migrations、
+    #       本检查脚本时运行；无关改动秒级 SKIP。
+    # 成本：触发时静态扫描 613 文件 / 230 条 INSERT 约 0.1s；跳过 <0.1s。
+    # 失败：非零退出 + [Gate INSERT] FAILED + 逐条 path:line；无 node fail-closed。
+    migration-insert-shape:
+      tags: database migrations
+      run: bash scripts/ci/check-migration-insert-shape.sh
 
     # [NEW] cargo check — 增量模式（2026-11-05 修订）：只编译本次 push 变更的 crate。
     # 背景：全量 check 被 utoipa-swagger-ui build.rs 网络下载失败恒阻断 + RUSTFLAGS=-D warnings

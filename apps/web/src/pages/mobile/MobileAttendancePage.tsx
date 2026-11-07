@@ -50,6 +50,20 @@ import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+/**
+ * 识别 503（上游考勤服务未接入）。
+ * 后端契约：HTTP 503 + body.code=503 + message 含「未接入」。
+ * 用于 onError 分支给出「操作未执行」的友好提示，不落到通用「请求失败」。
+ */
+const isAttendanceServiceUnavailableError = (err: unknown): boolean => {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as {
+    response?: { status?: number; data?: { code?: number } };
+    code?: number | string;
+  };
+  return e.response?.status === 503 || e.response?.data?.code === 503 || e.code === 503;
+};
+
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -136,6 +150,15 @@ const MobileAttendancePage: React.FC = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
+      if (isAttendanceServiceUnavailableError(err)) {
+        apiLogger.warn('[mobile-attendance] checkIn 503 service unavailable', err);
+        addNotification({
+          title: i18n.t('mobile.mobile_attendance_page.service_unavailable_title'),
+          message: i18n.t('mobile.mobile_attendance_page.service_unavailable_desc'),
+          type: 'warning',
+        });
+        return;
+      }
       apiLogger.error(i18n.t('pages.mobile_attendance_page.k0'), err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k5'),
@@ -193,6 +216,15 @@ const MobileAttendancePage: React.FC = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
+      if (isAttendanceServiceUnavailableError(err)) {
+        apiLogger.warn('[mobile-attendance] checkOut 503 service unavailable', err);
+        addNotification({
+          title: i18n.t('mobile.mobile_attendance_page.service_unavailable_title'),
+          message: i18n.t('mobile.mobile_attendance_page.service_unavailable_desc'),
+          type: 'warning',
+        });
+        return;
+      }
       apiLogger.error(i18n.t('pages.mobile_attendance_page.k1'), err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k9'),
@@ -246,6 +278,15 @@ const MobileAttendancePage: React.FC = () => {
       });
     },
     onError: (err) => {
+      if (isAttendanceServiceUnavailableError(err)) {
+        apiLogger.warn('[mobile-attendance] applyLeave 503 service unavailable', err);
+        addNotification({
+          title: i18n.t('mobile.mobile_attendance_page.service_unavailable_title'),
+          message: i18n.t('mobile.mobile_attendance_page.service_unavailable_desc'),
+          type: 'warning',
+        });
+        return;
+      }
       apiLogger.error(i18n.t('pages.mobile_attendance_page.k2'), err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k14'),

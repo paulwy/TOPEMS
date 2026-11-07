@@ -1,11 +1,18 @@
 /**
  * MobileProduction state management and API calls hook
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
+ *
+ * 批 33「宁缺勿假」：删除硬编码 mock 数据集，全部改接 productionApi 真实端点。
+ * - 读：上游未接入时后端返回 200 + message 含「未接入」+ data.items=[]，
+ *   前端据此在空态文案上区分「服务未接入」与「查无数据」。
+ * - 写：上游未接入时后端返回 503 + body.code=503 + message 含「未接入」，
+ *   前端 onError 必须识别 503 并给出「操作未执行」的友好中文提示，
+ *   不得落到通用「请求失败」错误弹窗，也不得被当作成功。
  */
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore, useNotificationStore } from '@/store';
-import { type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
+import { type ProductionOrder, type WorkReport, type Equipment, productionApi } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
@@ -15,6 +22,28 @@ export interface ReportForm {
   good_quantity: number;
   bad_quantity: number;
 }
+
+/**
+ * 识别 axios 抛出的 503（service unavailable）。
+ * 后端契约：HTTP 503 + body.code=503 + message 含「未接入」。
+ * 兼容直接 throw new Error(...) 等非 axios 路径。
+ */
+const isServiceUnavailableError = (err: unknown): boolean => {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as {
+    response?: { status?: number; data?: { code?: number } };
+    code?: number | string;
+  };
+  return e.response?.status === 503 || e.response?.data?.code === 503 || e.code === 503;
+};
+
+/**
+ * 读接口：后端在「上游未接入」时返回 200 + data.degraded === true + 空 items。
+ * 用结构化标记判定（不读 message 文案），驱动空态文案切换。
+ */
+const detectNotConnected = (data: unknown): boolean =>
+  typeof data === 'object' && data !== null && (data as { degraded?: unknown }).degraded === true;
+
 export const useMobileProduction = () => {
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
@@ -28,187 +57,35 @@ export const useMobileProduction = () => {
     good_quantity: 0,
     bad_quantity: 0,
   });
+  // 空态「服务未接入」信号（仅驱动空态文案，不影响数据加载）
+  const [ordersNotConnected, setOrdersNotConnected] = useState(false);
+  const [reportsNotConnected, setReportsNotConnected] = useState(false);
+  const [equipmentNotConnected, setEquipmentNotConnected] = useState(false);
   // Queries
   const ordersQuery = useQuery<ProductionOrder[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_ORDERS_BASE, user?.fullName],
     queryFn: async () => {
-      const mockOrders: ProductionOrder[] = [
-        {
-          id: '1',
-          orderNo: 'PO-2024-06-001',
-          product_name: i18n.t('mobile.production.product.smart_sensor_module'),
-          quantity: 500,
-          completed_quantity: 320,
-          status: 'in_progress',
-          workstation: i18n.t('mobile.production.workstation.a_line_station_1'),
-          start_time: '2024-06-28T08:00:00Z',
-          due_date: '2024-06-30',
-          created_at: '2024-06-25T09:00:00Z',
-        },
-        {
-          id: '2',
-          orderNo: 'PO-2024-06-002',
-          product_name: i18n.t('mobile.production.product.data_collector'),
-          quantity: 200,
-          completed_quantity: 0,
-          status: 'pending',
-          workstation: i18n.t('mobile.production.workstation.b_line_station_3'),
-          due_date: '2024-07-02',
-          created_at: '2024-06-27T10:00:00Z',
-        },
-        {
-          id: '3',
-          orderNo: 'PO-2024-05-098',
-          product_name: i18n.t('mobile.production.product.pcb_assembly'),
-          quantity: 1000,
-          completed_quantity: 1000,
-          status: 'completed',
-          workstation: i18n.t('mobile.production.workstation.a_line_station_2'),
-          start_time: '2024-06-20T08:00:00Z',
-          end_time: '2024-06-26T17:00:00Z',
-          due_date: '2024-06-27',
-          created_at: '2024-06-18T09:00:00Z',
-        },
-        {
-          id: '4',
-          orderNo: 'PO-2024-06-003',
-          product_name: i18n.t('mobile.production.product.power_module'),
-          quantity: 300,
-          completed_quantity: 150,
-          status: 'paused',
-          workstation: i18n.t('mobile.production.workstation.c_line_station_1'),
-          start_time: '2024-06-27T08:00:00Z',
-          due_date: '2024-07-01',
-          created_at: '2024-06-26T14:00:00Z',
-        },
-        {
-          id: '5',
-          orderNo: 'PO-2024-06-004',
-          product_name: i18n.t('mobile.production.product.communication_module'),
-          quantity: 400,
-          completed_quantity: 0,
-          status: 'pending',
-          workstation: i18n.t('mobile.production.workstation.b_line_station_2'),
-          due_date: '2024-07-03',
-          created_at: '2024-06-28T08:30:00Z',
-        },
-      ];
-      return mockOrders;
+      const res = await productionApi.listOrders();
+      setOrdersNotConnected(detectNotConnected(res?.data));
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
   const reportsQuery = useQuery<WorkReport[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_REPORTS_BASE, user?.fullName],
     queryFn: async () => {
-      const mockReports: WorkReport[] = [
-        {
-          id: '1',
-          order_id: '1',
-          orderNo: 'PO-2024-06-001',
-          workstation: i18n.t('mobile.production.workstation.a_line_station_1'),
-          operator: user?.fullName || '',
-          quantity: 100,
-          good_quantity: 98,
-          bad_quantity: 2,
-          start_time: '2024-06-28T08:00:00Z',
-          end_time: '2024-06-28T10:30:00Z',
-          duration: 150,
-          created_at: '2024-06-28T10:30:00Z',
-        },
-        {
-          id: '2',
-          order_id: '1',
-          orderNo: 'PO-2024-06-001',
-          workstation: i18n.t('mobile.production.workstation.a_line_station_1'),
-          operator: user?.fullName || '',
-          quantity: 120,
-          good_quantity: 118,
-          bad_quantity: 2,
-          start_time: '2024-06-28T10:45:00Z',
-          end_time: '2024-06-28T13:15:00Z',
-          duration: 150,
-          created_at: '2024-06-28T13:15:00Z',
-        },
-        {
-          id: '3',
-          order_id: '3',
-          orderNo: 'PO-2024-05-098',
-          workstation: i18n.t('mobile.production.workstation.a_line_station_2'),
-          operator: i18n.t('mobile.production.operator.li_hua'),
-          quantity: 500,
-          good_quantity: 495,
-          bad_quantity: 5,
-          start_time: '2024-06-25T08:00:00Z',
-          end_time: '2024-06-25T17:00:00Z',
-          duration: 540,
-          created_at: '2024-06-25T17:00:00Z',
-        },
-      ];
-      return mockReports;
+      const res = await productionApi.listWorkReports();
+      setReportsNotConnected(detectNotConnected(res?.data));
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
   const equipmentQuery = useQuery<Equipment[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_EQUIPMENT_BASE,
     queryFn: async () => {
-      const mockEquipment: Equipment[] = [
-        {
-          id: '1',
-          equipment_no: 'EQ-001',
-          name: i18n.t('mobile.production.equipment.smt_1'),
-          type: i18n.t('mobile.production.equipment_type.production'),
-          status: 'running',
-          location: i18n.t('mobile.production.location.a_line'),
-          last_maintenance: '2024-06-20',
-          next_maintenance: '2024-07-20',
-          running_hours: 12580,
-        },
-        {
-          id: '2',
-          equipment_no: 'EQ-002',
-          name: i18n.t('mobile.production.equipment.reflow_oven'),
-          type: i18n.t('mobile.production.equipment_type.production'),
-          status: 'running',
-          location: i18n.t('mobile.production.location.a_line'),
-          last_maintenance: '2024-06-15',
-          next_maintenance: '2024-07-15',
-          running_hours: 9876,
-        },
-        {
-          id: '3',
-          equipment_no: 'EQ-003',
-          name: i18n.t('mobile.production.equipment.cnc_3'),
-          type: i18n.t('mobile.production.equipment_type.processing'),
-          status: 'maintenance',
-          location: i18n.t('mobile.production.location.machining_workshop'),
-          last_maintenance: '2024-06-28',
-          next_maintenance: '2024-07-28',
-          running_hours: 15600,
-        },
-        {
-          id: '4',
-          equipment_no: 'EQ-004',
-          name: i18n.t('mobile.production.equipment.injection_2'),
-          type: i18n.t('mobile.production.equipment_type.molding'),
-          status: 'idle',
-          location: i18n.t('mobile.production.location.b_line'),
-          last_maintenance: '2024-06-10',
-          next_maintenance: '2024-07-10',
-          running_hours: 8500,
-        },
-        {
-          id: '5',
-          equipment_no: 'EQ-005',
-          name: i18n.t('mobile.production.equipment.aging_test_bench'),
-          type: i18n.t('mobile.production.equipment_type.testing'),
-          status: 'fault',
-          location: i18n.t('mobile.production.location.quality_dept'),
-          last_maintenance: '2024-05-28',
-          next_maintenance: '2024-06-28',
-          running_hours: 6780,
-        },
-      ];
-      return mockEquipment;
+      const res = await productionApi.listEquipment();
+      setEquipmentNotConnected(detectNotConnected(res?.data));
+      return res?.data?.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -237,32 +114,35 @@ export const useMobileProduction = () => {
   // Mutations
   const submitReportMutation = useMutation({
     mutationFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!selectedOrder) {
+        throw new Error('no selected order');
+      }
       const now = new Date();
-      const newReport: WorkReport = {
-        id: Date.now().toString(),
-        order_id: selectedOrder?.id || '',
-        orderNo: selectedOrder?.orderNo || '',
-        workstation: selectedOrder?.workstation || '',
-        operator: user?.fullName || '',
+      const start = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+      const res = await productionApi.submitWorkReport({
+        order_id: selectedOrder.id,
         quantity: reportForm.quantity,
         good_quantity: reportForm.good_quantity,
         bad_quantity: reportForm.bad_quantity,
-        start_time: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+        start_time: start.toISOString(),
         end_time: now.toISOString(),
-        duration: 120,
-        created_at: now.toISOString(),
-      };
-      return newReport;
+        workstation: selectedOrder.workstation,
+      });
+      if (!res?.success) {
+        throw new Error(res?.message || 'submit work report failed');
+      }
+      return res.data;
     },
     onSuccess: (newReport) => {
-      queryClient.setQueryData<WorkReport[]>(
-        ['mobile-production-reports', user?.fullName],
-        (prev) => [newReport, ...(prev ?? [])]
-      );
+      if (newReport) {
+        queryClient.setQueryData<WorkReport[]>(
+          [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_REPORTS_BASE, user?.fullName],
+          (prev) => [newReport, ...(prev ?? [])]
+        );
+      }
       if (selectedOrder) {
         queryClient.setQueryData<ProductionOrder[]>(
-          ['mobile-production-orders', user?.fullName],
+          [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_ORDERS_BASE, user?.fullName],
           (prev) =>
             (prev ?? []).map((o) => {
               if (o.id === selectedOrder.id) {
@@ -280,11 +160,23 @@ export const useMobileProduction = () => {
       setReportDialogOpen(false);
       addNotification({
         title: i18n.t('mobile.production.message.report_success'),
-        message: i18n.t('mobile.production.message.reported_count', { count: reportForm.quantity }),
+        message: i18n.t('mobile.production.message.reported_count', {
+          count: reportForm.quantity,
+        }),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
+      // 503：上游生产服务未接入，操作未执行。给出明确中文提示，不落到通用「请求失败」。
+      if (isServiceUnavailableError(err)) {
+        apiLogger.warn('[mobile-production] submitWorkReport 503 service unavailable', err);
+        addNotification({
+          title: i18n.t('mobile.production.message.service_unavailable_title'),
+          message: i18n.t('mobile.production.message.service_unavailable_desc'),
+          type: 'warning',
+        });
+        return;
+      }
       apiLogger.error(i18n.t('mobile.production.message.report_failed'), err);
       addNotification({
         title: i18n.t('mobile.production.message.report_failed'),
@@ -298,29 +190,56 @@ export const useMobileProduction = () => {
       order: ProductionOrder;
       action: 'start' | 'pause' | 'resume';
     }) => {
-      return params;
+      const { order, action } = params;
+      // resume 等价于再次 start（后端 start 端点幂等恢复 in_progress）
+      if (action === 'pause') {
+        const res = await productionApi.pauseOrder(order.id);
+        if (!res?.success) {
+          throw new Error(res?.message || 'pause order failed');
+        }
+        return { order, action, data: res.data };
+      }
+      const res = await productionApi.startOrder(order.id);
+      if (!res?.success) {
+        throw new Error(res?.message || 'start order failed');
+      }
+      return { order, action, data: res.data };
     },
-    onSuccess: ({ order, action }) => {
+    onSuccess: ({ order, action, data }) => {
+      // 用后端返回的最新 order 状态覆盖本地缓存，避免与服务端漂移
       queryClient.setQueryData<ProductionOrder[]>(
-        ['mobile-production-orders', user?.fullName],
+        [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_ORDERS_BASE, user?.fullName],
         (prev) =>
           (prev ?? []).map((o) => {
-            if (o.id === order.id) {
-              if (action === 'start') {
-                return { ...o, status: 'in_progress', start_time: new Date().toISOString() };
-              } else if (action === 'pause') {
-                return { ...o, status: 'paused' };
-              } else {
-                return { ...o, status: 'in_progress' };
-              }
+            if (o.id !== order.id) return o;
+            if (data) return { ...o, ...data };
+            if (action === 'start' || action === 'resume') {
+              return { ...o, status: 'in_progress', start_time: new Date().toISOString() };
             }
-            return o;
+            return { ...o, status: 'paused' };
           })
       );
       addNotification({
         title: i18n.t('mobile.production.message.operation_success'),
         message: i18n.t('mobile.production.message.order_status_updated'),
         type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
+      if (isServiceUnavailableError(err)) {
+        apiLogger.warn('[mobile-production] updateOrderStatus 503 service unavailable', err);
+        addNotification({
+          title: i18n.t('mobile.production.message.service_unavailable_title'),
+          message: i18n.t('mobile.production.message.service_unavailable_desc'),
+          type: 'warning',
+        });
+        return;
+      }
+      apiLogger.error(i18n.t('mobile.production.message.report_failed'), err);
+      addNotification({
+        title: i18n.t('mobile.production.message.report_failed'),
+        message: i18n.t('mobile.production.message.report_failed_retry'),
+        type: 'error',
       });
     },
   });
@@ -374,8 +293,13 @@ export const useMobileProduction = () => {
     workReports: reportsQuery.data ?? [],
     equipmentList: equipmentQuery.data ?? [],
     loading: ordersQuery.isLoading || reportsQuery.isLoading || equipmentQuery.isLoading,
+    // 空态「服务未接入」信号
+    ordersNotConnected,
+    reportsNotConnected,
+    equipmentNotConnected,
     // Mutations
     submitReportMutation,
+    updateOrderStatusMutation,
     // Handlers
     handleRefresh,
     handleStartReport,

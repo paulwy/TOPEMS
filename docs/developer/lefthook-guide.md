@@ -3,7 +3,7 @@
 > **版本**: lefthook 2.1.10
 > **配置文件**: [lefthook.yml](../../lefthook.yml)
 > **激活方式**: `package.json` 的 `prepare` 脚本自动执行 `lefthook install`
-> **Gate 总数**: 25（20 pre-commit + 5 pre-push）
+> **Gate 总数**: 以 [lefthook.yml](../../lefthook.yml) 为准（本文件只详列重点；2026-11-06 时 pre-push 为 9 个命令）
 
 ## 架构概览
 
@@ -13,13 +13,17 @@ git commit ──→ pre-commit (parallel: true, 并行执行 20 Gate)
                    ├── Gate A-S (lint/typecheck/i18n/security/rust 等 20 项)
                    └── 失败时阻止提交
 
-git push ────→ pre-push (parallel: false, 串行执行 5 Gate)
+git push ────→ pre-push (parallel: false, 串行执行，当前 9 个命令)
                    │
                    ├── Gate SC (shellcheck 全量)
-                   ├── Gate R (cargo check --workspace, 离线模式)
+                   ├── Gate B12 (config-consistency)
+                   ├── Gate schema-defense (DDL 静态对齐)
+                   ├── Gate DRIFT (ledger-vs-DDL 漂移，仅迁移相关改动触发)
+                   ├── Gate R (cargo check，离线、增量)
                    ├── Gate J (cargo fmt --all --check)
-                   ├── Gate K (cargo clippy --workspace -D correctness)
-                   ├── Gate T (cargo test --workspace --lib, timeout 900s)
+                   ├── Gate K (cargo clippy，增量)
+                   ├── Gate T (cargo test --workspace --lib，默认 SKIP)
+                   ├── Gate DP (domain-probe，默认 SKIP)
                    └── 失败时阻止推送
 ```
 
@@ -28,7 +32,7 @@ git push ────→ pre-push (parallel: false, 串行执行 5 Gate)
 | 阶段 | 并行模式 | Gate 数 | 说明 |
 |---|---|---|---|
 | `pre-commit` | `parallel: true` | 20 | 并行执行，秒级门禁为主（lint/typecheck/i18n/shellcheck 变更模式） |
-| `pre-push` | `parallel: false` | 5 | 串行执行，避免 cargo 共享 target/包缓存锁竞争（曾实测并行随机失败） |
+| `pre-push` | `parallel: false` | 9 | 串行执行，避免 cargo 共享 target/包缓存锁竞争（曾实测并行随机失败） |
 
 ### 跳过 Hook（逃生门，需明确纪律）
 
@@ -329,6 +333,56 @@ npx lefthook run pre-commit --command <gate-name> --force
 **作用**: 对整个 Rust 工作区运行 clippy 静态分析，`-D warnings` 将所有警告视为错误。
 
 **失败行为**: clippy 发现任何警告时 exit 1。
+
+---
+
+### Gate DRIFT · ledger-ddl-drift（2026-11-06 新增）
+
+| 属性 | 值 |
+|---|---|
+| **触发文件** | `database/{migrations,baseline,postgres,init}/**`、`database/checksums.txt`、`database/migration_drift_assertions.json`、`scripts/migration/**`、`scripts/ci/check-ledger-ddl-drift*` |
+| **执行命令** | `bash scripts/ci/check-ledger-ddl-drift.sh` → `node scripts/migration/check-ledger-ddl-drift.mjs` |
+| **tags** | `database migrations` |
+| **耗时（实测）** | 触发路径 0.12-0.13s（3 次 psql 查询 + 8 条断言批量比对）；无关改动跳过 <0.1s（仅 `git diff` + `grep`，不连库） |
+
+**作用**: 拦截「账本 `_sqlx_migrations` 已记账 `success=t`，但目标列/约束/索引实际结构未落地」的漂移。
+静态的 `schema-defense-check` 只比对迁移文件，`validate.sh` 只比对「本地文件是否记账」，两者都看不见这类问题
+（2026-11-06 mes 集成测试失败即由此产生：本地/test `production_orders` 停在 `integer/numeric`，prod 已是 `bigint`）。
+
+**判定逻辑**:
+
+1. 断言清单 [database/migration_drift_assertions.json](../../database/migration_drift_assertions.json) 每条声明
+   `source`（迁移版本）与期望结构（`column_type` / `constraint_absent` / `index_exists`）；
+2. `source_tokens` 必须能在对应迁移文件中找到——清单与迁移脱节即直接失败（防止断言被悄悄架空）；
+3. **仅当目标库 `_sqlx_migrations` 中 source 版本 `success=t` 时**才比对实际结构；
+   记账 `success=false` → 失败；未记账（test/快照库）→ 打印 `NOTE` 跳过该条（不静默）；
+4. 断言不覆盖全部 schema，新增断言时请同步 `source_tokens` 并跑
+   `MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh` 自检。
+
+**失败行为**: exit 1，打印 `[Gate DRIFT] FAILED` + 每条漂移的「表/列、期望 vs 实际、修复命令」。
+示例：
+
+```
+[Gate DRIFT] FAILED 1 项漂移（记账 success=t 与实际结构不符）
+  - mes.production_orders.quantity
+      期望 mes.production_orders.quantity = bigint（源 20261107000017 已记账 success=t）
+      实际 integer
+      修复：psql "$MIGRATION_DRIFT_DB_URL" -f database/migrations/20261107000017_*.sql（幂等）
+```
+
+**环境缺失（fail-closed）**: 无 `psql` / 无连接串 / 数据库不可达 → exit 1 并打印「缺什么、怎么起库」；
+不会静默跳过。目标库解析顺序 `MIGRATION_DRIFT_DB_URL` → `DATABASE_URL` → `.env` 的 `MIGRATE_URL`。
+
+**没有本地库时的可用路径**: 指向 test 库（检查仍执行，不跳过）：
+
+```bash
+export MIGRATION_DRIFT_DB_URL=<test 库连接串>
+# 连接串格式同 .env 的 MIGRATE_URL，指向 topems_prepare；用户名/口令按 test 环境实际填写
+# test/快照库若无 _sqlx_migrations 记账，会打印 NOTE + WARN（明确降级，不是静默）
+```
+
+**手动验证**: `MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh`
+（绕过「本次推送是否涉及迁移」的触发判断，只跑漂移检查）。
 
 ---
 

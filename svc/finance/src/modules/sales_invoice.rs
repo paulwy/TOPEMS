@@ -720,11 +720,14 @@ pub async fn red_flush_sales_invoice(
 
 // ========== 回款 ==========
 
-async fn fetch_collection(
-    pool: &sqlx::PgPool,
+async fn fetch_collection<'e, E>(
+    executor: E,
     tenant_id: Option<Uuid>,
     id: Uuid,
-) -> Result<Option<CollectionOut>, sqlx::Error> {
+) -> Result<Option<CollectionOut>, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
     let row = sqlx::query(
         "SELECT id,
                 COALESCE(collection_no, '') AS collection_number,
@@ -739,7 +742,7 @@ async fn fetch_collection(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     Ok(row.map(|r| CollectionOut {
         id: r.get("id"),
@@ -909,9 +912,25 @@ pub async fn get_collection(
 pub async fn create_collection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(payload): Json<CollectionCreatePayload>,
 ) -> ApiResponse<CollectionOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    // 写入后必须在本事务内读回，否则中间件提交前用池读不到新行。
+    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let number = if payload.collection_number.is_empty() {
         format!(
             "CL-{}-{}",
@@ -933,7 +952,7 @@ pub async fn create_collection(
         )
         .bind(inv_id)
         .bind(tenant_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None),
         None => None,
@@ -955,12 +974,12 @@ pub async fn create_collection(
     .bind(payload.amount)
     .bind(&payload.payment_method)
     .bind(&payload.remark)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(row) => {
             let id: Uuid = row.get("id");
-            match fetch_collection(&state.pool, Some(tenant_id), id).await {
+            match fetch_collection(&mut scope, Some(tenant_id), id).await {
                 Ok(Some(c)) => ApiResponse::success(c, "Created"),
                 _ => ApiResponse::<CollectionOut>::server_error("创建后读取失败"),
             }

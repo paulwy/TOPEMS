@@ -130,6 +130,64 @@ pub fn require_module_access(
     }
 }
 
+/// 模块写动作门：`GET/HEAD/OPTIONS` 直接放行，其余方法要求 `<module>:admin`。
+///
+/// 与 `require_module_access` 配对使用：模块门只负责「能进入模块 + 读」，
+/// 写操作（创建/更新/删除/审批/设备控制/同步触发等）仍保持改前的
+/// `<module>:admin` 实际门槛，避免 `<module>:read` 角色因模块门放宽而获得
+/// 改前不具备的写能力（提权）。与 `require_permission("<module>:admin")`
+/// 的差别仅是「按方法分流」，码本身不变，因此不新增权限字典条目。
+pub fn require_module_write(
+    module: &'static str,
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
+    move |req: Request<Body>, next: Next| {
+        let module = module;
+        Box::pin(async move {
+            use axum::http::Method;
+            if matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS) {
+                return next.run(req).await;
+            }
+            let claims = match extract_claims(&req) {
+                Some(c) => c,
+                None => {
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
+                }
+            };
+
+            let code = format!("{module}:admin");
+            if !claims.has_permission(&code) {
+                tracing::warn!(
+                    "Module write denied: user={}, module={}",
+                    claims.username,
+                    module
+                );
+                return (
+                    StatusCode::FORBIDDEN,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    format!(
+                        r#"{{"success":false,"message":"权限不足：需要 {} 模块管理员权限（{}）","code":403}}"#,
+                        module, code
+                    ),
+                )
+                    .into_response();
+            }
+
+            next.run(req).await
+        })
+    }
+}
+
 pub fn require_role(
     role: &'static str,
 ) -> impl Fn(

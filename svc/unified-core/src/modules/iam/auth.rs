@@ -63,52 +63,47 @@ fn build_refresh_token_cookie(value: &str, max_age_secs: Option<i64>) -> String 
     cookie
 }
 
-fn send_email_async(
-    from: String,
-    to: String,
-    subject: String,
-    body: String,
-    html_body: Option<String>,
-    cc: Option<Vec<String>>,
-    bcc: Option<Vec<String>>,
-) {
-    tokio::spawn(async move {
-        let client = topems_shared_core::shared_http_client();
-        let endpoint = std::env::var("COMMUNICATION_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8084".to_string());
-        let params = serde_json::json!({
-            "from": from,
-            "to": to,
-            "subject": subject,
-            "body": body,
-            "html_body": html_body,
-            "cc": cc,
-            "bcc": bcc,
-        });
-        match client
-            .post(format!("{}/api/communication/mail/send", endpoint))
-            .json(&params)
-            .send()
-            .await
-        {
-            Ok(res) if res.status().is_success() => {
-                tracing::info!("Async email sent successfully to: {}", to)
-            }
-            Ok(res) => tracing::error!(
-                "Async email sending failed with status {}: {}",
-                res.status(),
-                to
-            ),
-            Err(e) => tracing::error!("Async email sending failed: {}", e),
-        }
-    });
-}
+/// 密码重置统一应答：存在/不存在账号、处理成功均返回同一文案，避免账号枚举。
+const PASSWORD_RESET_ACK: &str = "如果该邮箱已注册，重置申请已提交给系统管理员";
 
 fn hash_token(token: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
     let result = hasher.finalize();
     hex::encode(result)
+}
+
+/// 失败登录审计：best-effort 写入，不阻断 400/401 响应。
+///
+/// 失败口径（为什么记、怎么记）：
+/// - 参数缺失 / 用户不存在 / 账号禁用 / 密码错误 / 查询异常 五类都记 `status='failed'`，
+///   用于撞库与暴力破解回溯；失败尝试不产生 session，写入成本低；
+/// - 写失败已在 `record_login_event` 内输出 ERROR + 指标，这里显式消费 Result，
+///   不再用 `let _ =` 静默丢弃，但不把审计故障升级成 500（避免审计库抖动导致全站无法登录）。
+async fn record_failed_login(
+    pool: &sqlx::PgPool,
+    user_id: Option<Uuid>,
+    username: &str,
+    ip_address: Option<&str>,
+    user_agent: Option<&str>,
+    reason: &str,
+) {
+    if record_login_event(
+        pool,
+        Uuid::nil(),
+        user_id,
+        username,
+        ip_address,
+        user_agent,
+        "failed",
+        Some(reason),
+    )
+    .await
+    .is_err()
+    {
+        // record_login_event 内部已 ERROR + 计数；此处保留显式分支，避免静默丢弃。
+        tracing::debug!("失败登录审计写入失败（已由 record_login_event 上报）");
+    }
 }
 
 #[allow(dead_code)]
@@ -211,15 +206,13 @@ pub async fn login(
     tracing::info!("IAM auth login called with username: {}", username);
 
     if username.is_empty() || password.is_empty() {
-        let _ = record_login_event(
+        record_failed_login(
             &state.pool,
-            Uuid::nil(),
             None,
             username,
             ip_addr_opt,
             user_agent.as_deref(),
-            "failed",
-            Some("用户名和密码不能为空"),
+            "用户名和密码不能为空",
         )
         .await;
         return (
@@ -253,30 +246,26 @@ pub async fn login(
         Ok(Some(u)) => u,
         Ok(None) => {
             tracing::warn!("Login failed: user not found - {}", username);
-            let _ = record_login_event(
+            record_failed_login(
                 &state.pool,
-                Uuid::nil(),
                 None,
                 username,
                 ip_addr_opt,
                 user_agent.as_deref(),
-                "failed",
-                Some("用户不存在"),
+                "用户不存在",
             )
             .await;
             return (axum::http::StatusCode::UNAUTHORIZED, Json(topems_shared_core::response::error_value(401, "用户名或密码错误"))).into_response();
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
-            let _ = record_login_event(
+            record_failed_login(
                 &state.pool,
-                Uuid::nil(),
                 None,
                 username,
                 ip_addr_opt,
                 user_agent.as_deref(),
-                "failed",
-                Some("内部服务器错误"),
+                "内部服务器错误",
             )
             .await;
             return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, Json(topems_shared_core::response::error_value(500, "内部服务器错误"))).into_response();
@@ -285,15 +274,13 @@ pub async fn login(
 
     if !user.is_active {
         tracing::warn!("Login failed: user is not active - {}", username);
-        let _ = record_login_event(
+        record_failed_login(
             &state.pool,
-            Uuid::nil(),
             Some(user.id),
             &user.username,
             ip_addr_opt,
             user_agent.as_deref(),
-            "failed",
-            Some("用户账号已被禁用"),
+            "用户账号已被禁用",
         )
         .await;
         return (
@@ -308,15 +295,13 @@ pub async fn login(
 
     if !verify_password(password, &user.password_hash) {
         tracing::warn!("Login failed: invalid password for user - {}", username);
-        let _ = record_login_event(
+        record_failed_login(
             &state.pool,
-            Uuid::nil(),
             Some(user.id),
             &user.username,
             ip_addr_opt,
             user_agent.as_deref(),
-            "failed",
-            Some("密码错误"),
+            "密码错误",
         )
         .await;
         return (
@@ -409,65 +394,104 @@ pub async fn login(
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
     // RLS FORCE：凭证 INSERT 必须带租户上下文（login 无 JWT，中间件不设置连接上下文）。
-    // 两处 INSERT 纳入同一事务，事务内 set_config(app.tenant_id) 建立租户上下文；
-    // 落库失败保持既有语义（仅 warn，不阻断登录）。
-    match state.pool.begin().await {
-        Ok(mut tx) => {
-            if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                .bind(&tenant_ctx)
-                .execute(&mut *tx)
-                .await
-            {
-                tracing::warn!("设置会话租户上下文失败: {}", e);
-                let _ = tx.rollback().await;
-            } else {
-                let session_r = sqlx::query(
-                    "INSERT INTO public.core_sessions (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
-                     VALUES ($1, $2, $3, $4::inet, $5, $6)",
-                )
-                .bind(user.id)
-                .bind(tenant_uuid)
-                .bind(&access_token_hash)
-                .bind(ip_addr_opt)
-                .bind(user_agent.as_deref())
-                .bind(access_expires_at)
-                .execute(&mut *tx)
-                .await;
+    //
+    // 登录成功闭环 = 会话 + refresh token + 登录审计 + `iam.users.last_login_at` 回写，
+    // 四件事放在同一事务：任一失败即整体回滚并返回 500。这样不会出现
+    // "session 已建但审计缺失" 或 "审计已记但会话缺失" 的同源断裂
+    // （此前 `let _ =` 吞错，导致 11-06 审计断档无法从响应/日志察觉）。
+    let credentials_result: Result<(), sqlx::Error> = async {
+        let mut tx = state.pool.begin().await?;
 
-                let refresh_r = sqlx::query(
-                    "INSERT INTO public.core_refresh_tokens (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
-                     VALUES ($1, $2, $3, $4::inet, $5, $6)",
-                )
-                .bind(user.id)
-                .bind(tenant_uuid)
-                .bind(&refresh_token_hash)
-                .bind(ip_addr_opt)
-                .bind(user_agent.as_deref())
-                .bind(refresh_expires_at)
-                .execute(&mut *tx)
-                .await;
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(&tenant_ctx)
+            .execute(&mut *tx)
+            .await?;
 
-                match (session_r, refresh_r) {
-                    (Ok(_), Ok(_)) => match tx.commit().await {
-                        Ok(_) => tracing::debug!("会话凭证写入成功"),
-                        Err(e) => tracing::warn!("会话凭证提交失败: {}", e),
-                    },
-                    (s, r) => {
-                        let _ = tx.rollback().await;
-                        if let Err(e) = s {
-                            tracing::warn!("会话保存失败: {}", e);
-                        }
-                        if let Err(e) = r {
-                            tracing::warn!("Refresh token 保存失败: {}", e);
-                        }
-                    }
-                }
-            }
-        }
-        Err(e) => tracing::warn!("会话事务开启失败: {}", e),
+        sqlx::query(
+            "INSERT INTO public.core_sessions (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
+             VALUES ($1, $2, $3, $4::inet, $5, $6)",
+        )
+        .bind(user.id)
+        .bind(tenant_uuid)
+        .bind(&access_token_hash)
+        .bind(ip_addr_opt)
+        .bind(user_agent.as_deref())
+        .bind(access_expires_at)
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO public.core_refresh_tokens (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
+             VALUES ($1, $2, $3, $4::inet, $5, $6)",
+        )
+        .bind(user.id)
+        .bind(tenant_uuid)
+        .bind(&refresh_token_hash)
+        .bind(ip_addr_opt)
+        .bind(user_agent.as_deref())
+        .bind(refresh_expires_at)
+        .execute(&mut *tx)
+        .await?;
+
+        // 登录审计与 session 同事务（成功只记一条，不重复写）。
+        //
+        // tenant_id 沿用历史契约 nil：core_login_logs 的列表/详情/删除与 RLS 均按
+        // nil 过滤，若此处改写真实租户会与既有读路径失配（租户列对齐列为已知债）。
+        // 但 RLS 的 WITH CHECK 只允许「nil 且会话上下文为 nil」或「真实租户且上下文一致」，
+        // 因此写审计前把事务上下文临时切回 nil，写完即提交（session/refresh 已先行落库）。
+        sqlx::query("SELECT set_config('app.tenant_id', '00000000-0000-0000-0000-000000000000', true)")
+            .execute(&mut *tx)
+            .await?;
+
+        crate::modules::audit::insert_login_log(
+            &mut *tx,
+            Uuid::nil(),
+            Some(user.id),
+            &user.username,
+            ip_addr_opt,
+            user_agent.as_deref(),
+            "success",
+            None,
+        )
+        .await?;
+
+        // 成功登录回写最后登录时间/IP（失败登录不更新，避免污染"最近活跃"口径）
+        sqlx::query(
+            "UPDATE iam.users SET last_login_at = NOW(), last_login_ip = $2::inet WHERE id = $1",
+        )
+        .bind(user.id)
+        .bind(ip_addr_opt)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+    .await;
+
+    if let Err(e) = credentials_result {
+        topems_shared_core::metrics::AUDIT_WRITE_FAILURES_TOTAL
+            .with_label_values(&["login_credentials"])
+            .inc();
+        tracing::error!(
+            audit_write_failed = true,
+            audit_kind = "login_credentials",
+            username = %user.username,
+            user_id = %user.id,
+            error = %e,
+            "登录凭据/审计写入失败，本次登录已整体回滚（未签发 token）"
+        );
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "登录失败，请稍后重试",
+            )),
+        )
+            .into_response();
     }
 
-    let username_clone = user.username.clone();
+    tracing::debug!("会话凭证与登录审计写入成功");
 
     // #18：签发 refresh_token 的同时写 HttpOnly Cookie（前端不再依赖 localStorage 持久化）
     let refresh_cookie = build_refresh_token_cookie(&refresh_token, None);
@@ -492,18 +516,6 @@ pub async fn login(
     };
 
     tracing::info!("Login successful for user: {}", username);
-
-    let _ = record_login_event(
-        &state.pool,
-        Uuid::nil(),
-        Some(user.id),
-        &username_clone,
-        ip_addr_opt,
-        user_agent.as_deref(),
-        "success",
-        None,
-    )
-    .await;
 
     let login_body = serde_json::json!({
         "success": true,
@@ -744,14 +756,64 @@ pub async fn refresh_token(
 
     let refresh_token_hash = hash_token(&refresh_token);
 
-    // RLS：refresh 请求无 JWT/租户上下文，应用角色（topems_app）看不到
-    // public.core_refresh_tokens 的任何行（策略没有「全 0 = 管理分支」）。
-    // 改用表 owner（topems）的 SECURITY DEFINER 函数读取：函数内固定 search_path，
-    // 以 owner 权限绕过 RLS，不依赖请求侧租户 GUC。
-    let row = sqlx::query("SELECT * FROM public.iam_refresh_token_lookup($1)")
+    // RLS FORCE：refresh 请求无 JWT，中间件不设置连接上下文；此处以系统级上下文
+    // （全 0 = RLS 策略管理分支）校验 token 归属，后续写路径再落真实租户上下文。
+    let row = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "内部服务器错误",
+                    )),
+                )
+                    .into_response();
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind("00000000-0000-0000-0000-000000000000")
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
+        }
+        let r = sqlx::query(
+            "SELECT rt.user_id, u.username, u.is_superuser, u.email,
+               (u.status = 'active') AS is_active,
+               COALESCE(u.must_change_password, false) AS must_change_password,
+               COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                         JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+               COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                         JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                         JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+               rt.id as refresh_token_id
+             FROM public.core_refresh_tokens rt
+             JOIN iam.users u ON rt.user_id = u.id
+             WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
+        )
         .bind(&refresh_token_hash)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut *ctx_tx)
         .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
 
     let row = match row {
         Ok(Some(r)) => r,
@@ -872,7 +934,7 @@ pub async fn refresh_token(
     let refresh_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
-    let old_refresh_token_id: Uuid = row.get("id");
+    let old_refresh_token_id: Uuid = row.get("refresh_token_id");
 
     let tx_result = state.pool.begin().await;
     let mut tx = match tx_result {
@@ -1054,14 +1116,47 @@ pub async fn logout(
     hasher.update(refresh_token.as_bytes());
     let token_hash = hex::encode(hasher.finalize());
 
-    // RLS：logout 请求无 JWT/租户上下文，应用角色（topems_app）看不到
-    // public.core_refresh_tokens 的任何行。改用表 owner（topems）的
-    // SECURITY DEFINER 函数查询 token 归属，不依赖请求侧租户 GUC。
-    let user_id: Result<Option<Uuid>, sqlx::Error> =
-        sqlx::query_scalar("SELECT user_id FROM public.iam_refresh_token_lookup($1)")
-            .bind(&token_hash)
-            .fetch_optional(&state.pool)
-            .await;
+    // RLS FORCE：logout 请求无 JWT，中间件不设置连接上下文；以系统级上下文
+    // （全 0 = RLS 策略管理分支）校验 token 归属，后续删除/吊销落真实租户上下文。
+    let user_id: Result<Option<Uuid>, sqlx::Error> = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(500, "登出失败")),
+                )
+                    .into_response();
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind("00000000-0000-0000-0000-000000000000")
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
+                .into_response();
+        }
+        let r = sqlx::query_scalar(
+            "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
+        )
+        .bind(&token_hash)
+        .fetch_optional(&mut *ctx_tx)
+        .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
 
     let user_id = match user_id {
         Ok(uid) => uid,
@@ -1100,25 +1195,6 @@ pub async fn logout(
     };
 
     tracing::info!("IAM auth logout called for user_id: {}", user_id);
-
-    // 真正吊销当前 refresh token：特权函数写 revoked_at/revoked_reason，
-    // 不受 RLS 租户上下文影响。返回 false 表示已被并发吊销或参数非法（幂等放行）。
-    match sqlx::query_scalar::<_, bool>("SELECT public.iam_refresh_token_revoke($1)")
-        .bind(&token_hash)
-        .fetch_one(&state.pool)
-        .await
-    {
-        Ok(true) => {}
-        Ok(false) => tracing::warn!("refresh token 吊销未命中（可能已被并发吊销）"),
-        Err(e) => {
-            tracing::error!("吊销 refresh token 失败: {}", e);
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(500, "登出失败")),
-            )
-                .into_response();
-        }
-    }
 
     // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
     // 未关联时 fallback 到默认租户，与 login/refresh 同口径）
@@ -1232,6 +1308,36 @@ pub async fn forgot_password(
         ));
     }
 
+    // 邮件通道在 prod 不可用（SMTP 出站连接超时），改为站内通知管理员人工处置。
+    // 先确认存在可受理的管理员；该检查与邮箱是否注册无关，不会泄露账号是否存在。
+    let admin_count = match sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM iam.users
+        WHERE status = 'active' AND deleted_at IS NULL
+          AND (is_superuser OR 'admin' = ANY(roles))
+        "#,
+    )
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("查询密码重置受理人失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    };
+
+    if admin_count == 0 {
+        tracing::error!("密码重置请求无法受理：系统未配置管理员");
+        return Json(topems_shared_core::response::error_value(
+            503,
+            "系统未配置密码重置受理人，请联系系统管理员",
+        ));
+    }
+
     // 查找用户
     let user = match sqlx::query_as::<_, UserRow>(
         r#"
@@ -1255,7 +1361,7 @@ pub async fn forgot_password(
             tracing::warn!("Password reset requested for non-existent email: {}", email);
             return Json(serde_json::json!({
                 "success": true,
-                "message": "如果该邮箱已注册，您将收到密码重置邮件",
+                "message": PASSWORD_RESET_ACK,
                 "data": null,
                 "code": 0
             }));
@@ -1290,49 +1396,46 @@ pub async fn forgot_password(
         }
     }
 
-    // 发送密码重置邮件
-    let subject = "TOPEMS 密码重置".to_string();
-    let body = format!(
-        "尊敬的用户：\n\n您请求重置 TOPEMS 账户密码。\n\n重置令牌：{}\n\n请在1小时内使用此令牌重置密码。\n如果您没有发起此请求，请忽略此邮件。\n\n此致\nTOPEMS 团队",
-        reset_token
+    // 通知所有管理员人工处置（含重置令牌，便于在忘记密码页直接完成重置）。
+    let notification_content = format!(
+        "用户 {}（{}）请求重置密码。\n重置令牌：{}\n有效期 1 小时。可在忘记密码页使用该令牌完成重置，或在用户管理中直接重置。",
+        user.username, email, reset_token
     );
-    let html_body = format!(
+    match sqlx::query(
         r#"
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">密码重置</h2>
-            <p>尊敬的用户：</p>
-            <p>您请求重置 TOPEMS 账户密码。</p>
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <strong>重置令牌：</strong>
-                <code style="font-size: 16px; color: #2563eb;">{}</code>
-            </div>
-            <p>请在1小时内使用此令牌重置密码。</p>
-            <p>如果您没有发起此请求，请忽略此邮件。</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px;">此致<br>TOPEMS 团队</p>
-        </div>
+        INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
+        SELECT gen_random_uuid(), u.id, $1, $2, 'system', 2,
+               jsonb_build_object('source', 'password_reset', 'requested_email', $3, 'requested_user_id', $4),
+               NOW()
+        FROM iam.users u
+        WHERE u.status = 'active' AND u.deleted_at IS NULL
+          AND (u.is_superuser OR 'admin' = ANY(u.roles))
         "#,
-        reset_token
-    );
-
-    let from_email = std::env::var("SMTP_FROM")
-        .or_else(|_| std::env::var("SMTP_FROM_ADDRESS"))
-        .unwrap_or_else(|_| "noreply@topems.local".to_string());
-    send_email_async(
-        from_email,
-        email.to_string(),
-        subject,
-        body,
-        Some(html_body),
-        None,
-        None,
-    );
-
-    tracing::info!("Password reset email sent to: {}", email);
+    )
+    .bind("密码重置申请")
+    .bind(&notification_content)
+    .bind(email)
+    .bind(user.id.to_string())
+    .execute(&state.pool)
+    .await
+    {
+        Ok(result) => tracing::info!(
+            "Password reset request for {} notified {} admin(s)",
+            email,
+            result.rows_affected()
+        ),
+        Err(e) => {
+            tracing::error!("Failed to notify admins for password reset: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    }
 
     Json(serde_json::json!({
         "success": true,
-        "message": "如果该邮箱已注册，您将收到密码重置邮件",
+        "message": PASSWORD_RESET_ACK,
         "data": null,
         "code": 0
     }))

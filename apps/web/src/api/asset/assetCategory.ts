@@ -3,8 +3,10 @@ import type { ApiResponse } from '../client';
 import type { PaginationParams, PaginatedResult } from '@/api/erp/types';
 
 /**
- * V19.0 Stub: 资产分类管理
- * 后端尚未实现，前端先建立接口契约；后端就绪后此区块无需改动。
+ * 资产分类管理（表 erp.asset_categories）
+ * 后端已实现完整 CRUD（svc/erp/src/modules/asset_category.rs，挂载路由 /erp/asset-categories），
+ * 下方 5 个方法契约 list/get/create/update/delete 与后端一一对应；
+ * 响应层将 parent_id 映射为驼峰 parentId。
  */
 export interface AssetCategory {
   id: string;

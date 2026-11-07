@@ -11,6 +11,9 @@
 #   3. <SVC>_SERVICE_URL 全量注入 :8099：TypedServiceClient 服务间调用默认
 #      打独立服务端口（8000/8020/8041…），嵌入模式下这些端口无服务；
 #      统一指向 :8099 后服务间调用走 server 内嵌路由（service token 认证）
+#   4. mobile 的审批/工作台仍有一组客户端默认直连 unified-core :8000，
+#      本地跑 WCS 全量前必须另起 unified-core（否则 mobile approvals 5 项、
+#      workbench 1 项会因连接失败/超时记 FAIL）
 #
 # 用法：
 #   ./scripts/run_monolith.sh            # 前台运行（Ctrl+C 停止）
@@ -30,6 +33,12 @@ SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
 
 build_env() {
   echo "DB_MAX_CONNECTIONS=8"
+  # 嵌入模式下每个模块池按“公平份额”默认只有 2 条连接。HRM 的员工列表请求
+  # 在 RLS 中间件持有 1 条事务连接的同时还要用模块池再取连接，叠加启动期
+  # 后台任务后会 pool timed out → /api/hrm/employees 500，并连带 erp hr 代理
+  # 与 mobile workbench 超时。把总预算提到 31 池 × 4、单池上限 4 后恢复。
+  echo "DB_TOTAL_CONNECTION_BUDGET=124"
+  echo "DB_MODULE_MAX_CONNECTIONS=4"
   echo "SEARCH_PATH=flow, mobile, rs, erp, public, iam, shared"
   # .env 中 MIGRATE_URL 指向 owner 数据库连接（DDL 专用）。嵌入模式下若缺失，
   # migrate_pool=None → 模块 DDL 回退受限业务用户池，表 owner 不是 topems_app 时
@@ -61,7 +70,7 @@ if [ ! -x "$BIN" ]; then
 fi
 
 echo "启动 topems-server（模块化单体 :8099）…"
-echo "  连接池: DB_MAX_CONNECTIONS=5  SEARCH_PATH 含 flow/mobile/rs/erp/public/iam/shared"
+echo "  连接池: DB_MAX_CONNECTIONS=8 / 总预算 124 / 单模块 4  SEARCH_PATH 含 flow/mobile/rs/erp/public/iam/shared"
 echo "  服务间调用: ${#SERVICES[@]} 个 SERVICE_URL 统一指向 :8099"
 
 if [ "$MODE" = "--daemon" ]; then

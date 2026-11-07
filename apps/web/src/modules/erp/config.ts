@@ -177,7 +177,9 @@ const voucherRoute: RouteConfigV2<VoucherPageProps> = {
   group: 'business',
   // 批 21：落点已切至 finance 权威页，后端 /finance/vouchers 实际鉴权码为 finance:voucher:read，
   // 故可见性改为 finance 码（避免"菜单可见但接口 403"）。菜单路径 /erp/voucher-management 保持不变。
-  requiredPermissions: ['finance:voucher:read', 'finance:dashboard:read'],
+  // 批 22：移除 finance:dashboard:read —— 本页仅一处 navigate(FINANCE_PATHS.dashboard) 跳转，
+  // 不消费 dashboard 数据，多余要求会挡住仅有 voucher:read 的角色（如 erp_manager）。
+  requiredPermissions: ['finance:voucher:read'],
   action: 'read',
   tier: 'basic',
 };
@@ -594,7 +596,9 @@ export const erpNavConfig: ModuleNavConfig = {
       labelKey: 'erp.nav.erp-general-ledger',
       icon: 'Wallet',
       path: ERP_PATHS.voucherManagement,
-      permission: 'erp:general_ledger:read',
+      // 批 22：与 voucherRoute 的 requiredPermissions 对齐（凭证归 finance 域权威），
+      // 否则菜单按 erp 码可见、路由按 finance 码鉴权 → 出现"可见但进不去"。
+      permission: 'finance:voucher:read',
       order: 1,
       group: 'business',
       showInTabs: true,

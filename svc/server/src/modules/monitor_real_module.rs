@@ -11,6 +11,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
 use topems_monitor::shared::AppState as MonitorAppState;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
@@ -58,6 +59,10 @@ impl MonitorRealModule {
                 config.api_prefix,
                 topems_monitor::modules::create_routes().with_state(app_state),
             )
+            // 与独立部署 :8095 同口径：模块门（monitor: 前缀任一码）+ 写动作门
+            // （告警确认、规则增删等非只读方法仍要求 monitor:admin）。
+            .layer(axum::middleware::from_fn(require_module_write("monitor")))
+            .layer(axum::middleware::from_fn(require_module_access("monitor")))
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,

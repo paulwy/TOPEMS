@@ -45,6 +45,9 @@ export const bugSchema: EntitySchema = {
     resource: 'bugs',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'rd:bug',
+
   fields: [
     {
       name: 'bug_no',

@@ -191,7 +191,7 @@ const rsProjectCreateRoute: RouteConfigV2<RsProjectCreatePageProps> = {
   title: i18n.t('rd.nav.rd-project-create'),
   titleKey: 'rd.nav.rd-project-create',
   code: 'rd-project-create',
-  requiredPermissions: ['rd:project:write', 'rd:dashboard:write'],
+  requiredPermissions: ['rd:project:write'],
   action: 'write',
   template: 'form',
   group: 'business',
@@ -233,7 +233,7 @@ const rsExperimentCreateRoute: RouteConfigV2<RsExperimentCreatePageProps> = {
   title: i18n.t('rd.nav.rd-experiment-create'),
   titleKey: 'rd.nav.rd-experiment-create',
   code: 'rd-experiment-create',
-  requiredPermissions: ['rd:experiment:write', 'rd:dashboard:write'],
+  requiredPermissions: ['rd:experiment:write'],
   action: 'write',
   template: 'form',
   group: 'business',
@@ -275,7 +275,7 @@ const rsFormulaCreateRoute: RouteConfigV2<RsFormulaCreatePageProps> = {
   title: i18n.t('rd.nav.rd-formula-create'),
   titleKey: 'rd.nav.rd-formula-create',
   code: 'rd-formula-create',
-  requiredPermissions: ['rd:formula:write', 'rd:dashboard:write'],
+  requiredPermissions: ['rd:formula:write'],
   action: 'write',
   template: 'form',
   group: 'business',
@@ -525,6 +525,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:overview:read',
       order: 2,
       group: 'overview',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-overview_desc'),
     },
     {
@@ -590,6 +591,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 11,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-code_desc'),
     },
     {
@@ -638,6 +640,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-review_desc'),
     },
     {
@@ -650,6 +653,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-deploy_desc'),
     },
     {
@@ -662,6 +666,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 6,
       group: 'process',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-release_desc'),
     },
     {
@@ -673,6 +678,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:milestone:read',
       order: 7,
       group: 'process',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-milestone_desc'),
     },
     {
@@ -685,6 +691,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 12,
       group: 'business',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-doc_desc'),
     },
     {
@@ -697,6 +704,7 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'analytics',
       showInTabs: true,
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-report_desc'),
     },
     {
@@ -708,6 +716,7 @@ export const rdNavConfig: ModuleNavConfig = {
       permission: 'rd:settings:read',
       order: 1,
       group: 'setting',
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-settings_desc'),
     },
   ],

@@ -103,15 +103,18 @@ export const getModuleColor = (module: string, theme: Theme) => {
 const groupResultsByService = (results: SearchResult[]): GroupedResults[] => {
   const groups = new Map<string, SearchResult[]>();
   results.forEach((result) => {
-    if (!groups.has(result.service)) {
-      groups.set(result.service, []);
+    // 现行后端按 module 分组（customer/supplier/material...）；旧字段 service 兜底
+    const key = result.module || result.service || 'unknown';
+    if (!groups.has(key)) {
+      groups.set(key, []);
     }
-    groups.get(result.service)!.push(result);
+    groups.get(key)!.push(result);
   });
-  return Array.from(groups.entries()).map(([service, results]) => ({
-    service,
-    module: service,
-    label: getServiceLabel(service),
+  return Array.from(groups.entries()).map(([module, results]) => ({
+    service: module,
+    module,
+    // 无预置中文名时用结果自带 type_name（如「客户」「供应商」）兜底
+    label: serviceLabels[module] || results[0]?.type_name || module,
     results,
   }));
 };
@@ -164,15 +167,17 @@ export const fuzzySearch = (results: SearchResult[], query: string): SearchResul
   if (!query.trim()) return results;
 
   return results.filter((result) => {
-    const searchText = `${result.title} ${result.summary || ''} ${result.result_type || ''}`;
+    const searchText = `${result.title} ${result.description || result.summary || ''} ${result.type_name || result.result_type || ''}`;
     return fuzzyMatch(searchText, query);
   });
 };
 
 export const filterResults = (results: SearchResult[], filter: SearchFilter): SearchResult[] => {
   return results.filter((result) => {
-    if (filter.service && result.service !== filter.service) return false;
-    if (filter.type && result.result_type !== filter.type) return false;
+    const moduleKey = result.module || result.service || '';
+    if (filter.service && moduleKey !== filter.service) return false;
+    const typeKey = result.type_name || result.result_type || moduleKey;
+    if (filter.type && typeKey !== filter.type) return false;
     return true;
   });
 };
@@ -180,7 +185,9 @@ export const filterResults = (results: SearchResult[], filter: SearchFilter): Se
 export const getAvailableServices = (results: SearchResult[]): SearchFilterOption[] => {
   const serviceCounts = new Map<string, number>();
   results.forEach((result) => {
-    serviceCounts.set(result.service, (serviceCounts.get(result.service) || 0) + 1);
+    // 现行后端按 module 取值（customer/supplier/material...）；旧字段 service 兜底
+    const key = result.module || result.service || 'unknown';
+    serviceCounts.set(key, (serviceCounts.get(key) || 0) + 1);
   });
   return Array.from(serviceCounts.entries()).map(([value, count]) => ({
     value,
@@ -192,7 +199,7 @@ export const getAvailableServices = (results: SearchResult[]): SearchFilterOptio
 export const getAvailableTypes = (results: SearchResult[]): SearchFilterOption[] => {
   const typeCounts = new Map<string, number>();
   results.forEach((result) => {
-    const type = result.result_type || result.service;
+    const type = result.type_name || result.result_type || result.module || result.service || '';
     typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
   });
   return Array.from(typeCounts.entries()).map(([value, count]) => ({

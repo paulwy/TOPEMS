@@ -580,7 +580,7 @@ impl AutoClassifier {
     }
 
     async fn classify_entity(
-        db: &PgPool,
+        db: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         entity_type: &str,
         entity_id: &str,
@@ -592,7 +592,7 @@ impl AutoClassifier {
              WHERE entity_type = $1 AND status = 'active' LIMIT 1",
         )
         .bind(entity_type)
-        .fetch_optional(db)
+        .fetch_optional(&mut *db)
         .await?;
         let model = model_row.map(|r| classification_model_from_row(&r));
 
@@ -640,7 +640,7 @@ impl AutoClassifier {
         .bind(&alternatives)
         .bind(result.classified_at.to_rfc3339())
         .bind(tenant_id)
-        .execute(db)
+        .execute(&mut *db)
         .await?;
 
         Ok(result)
@@ -1348,10 +1348,24 @@ pub async fn get_classifiers(
 pub async fn classify_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((entity_type, id)): Path<(String, String)>,
 ) -> ApiResponse<ClassificationResult> {
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let result = db_exec!(
-        AutoClassifier::classify_entity(&state.db, req_tenant_uuid(&claims), &entity_type, &id)
+        AutoClassifier::classify_entity(&mut scope, req_tenant_uuid(&claims), &entity_type, &id)
             .await
     );
     ApiResponse::success(result, "分类完成")

@@ -15,7 +15,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_hrm::modules::{hrm_plugin, ApiState};
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_auth::security::init_encryption_from_env;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::config::CacheConfig;
@@ -112,6 +112,7 @@ impl HrmRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
+            .layer(axum::middleware::from_fn(require_module_write("hrm")))
             .layer(axum::middleware::from_fn(require_module_access("hrm")))
             .with_state(state.clone());
 

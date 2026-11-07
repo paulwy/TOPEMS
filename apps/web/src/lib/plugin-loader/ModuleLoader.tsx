@@ -115,22 +115,13 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
       });
 
       const loadPromise = (async () => {
-        let lastProgress = 0;
-        const progressInterval = setInterval(() => {
-          if (lastProgress < 95) {
-            lastProgress += Math.random() * 15;
-            setProgress(effectiveModuleId, Math.min(95, lastProgress));
-          }
-        }, 150);
-
+        // 无真实加载进度，不伪造百分比；loading 状态由 setLoading 展示
         try {
           const module = await component();
-          clearInterval(progressInterval);
           setProgress(effectiveModuleId, 100);
           setLoaded(effectiveModuleId);
           return module;
         } catch (err) {
-          clearInterval(progressInterval);
           throw err;
         }
       })();

@@ -16,7 +16,7 @@
  */
 
 import apiClient from '../client';
-import type { ApiResponse, PaginatedResponse } from '../client';
+import type { ApiResponse } from '../client';
 
 export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
@@ -100,79 +100,18 @@ export interface CreateMilestoneRequest {
 }
 
 export const projectApi = {
-  // ==================== 项目管理 ====================
-
-  listProjects: async (params?: {
-    status?: ProjectStatus;
-    manager?: string;
-    keyword?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Project>>> => {
-    return apiClient.mobile.get('projects', { params });
-  },
-
-  getProject: async (id: string): Promise<ApiResponse<Project>> => {
-    return apiClient.mobile.get(`projects/${id}`);
-  },
+  // ==================== 项目管理（批 37 g3：/projects、/projects/{id}、/projects/stats 为占位，死封装已删除）====================
 
   // ==================== 任务管理 ====================
-
-  listProjectTasks: async (
-    projectId: string,
-    params?: {
-      status?: TaskStatus;
-      priority?: TaskPriority;
-      assignee?: string;
-    }
-  ): Promise<ApiResponse<ProjectTask[]>> => {
-    return apiClient.mobile.get(`projects/${projectId}/tasks`, { params });
-  },
-
-  createTask: async (
-    projectId: string,
-    data: CreateTaskRequest
-  ): Promise<ApiResponse<ProjectTask>> => {
-    return apiClient.mobile.post(`projects/${projectId}/tasks`, data);
-  },
 
   getTask: async (id: string): Promise<ApiResponse<ProjectTask>> => {
     return apiClient.mobile.get(`tasks/${id}`);
   },
 
-  updateTaskStatus: async (id: string, status: TaskStatus): Promise<ApiResponse<ProjectTask>> => {
-    return apiClient.mobile.put(`tasks/${id}/status`, { status });
-  },
-
-  // ==================== 里程碑管理 ====================
-
-  listMilestones: async (projectId: string): Promise<ApiResponse<Milestone[]>> => {
-    return apiClient.mobile.get(`projects/${projectId}/milestones`);
-  },
-
-  createMilestone: async (
-    projectId: string,
-    data: CreateMilestoneRequest
-  ): Promise<ApiResponse<Milestone>> => {
-    return apiClient.mobile.post(`projects/${projectId}/milestones`, data);
-  },
-
-  // ==================== 我的任务 ====================
-
-  listMyTasks: async (params?: {
-    status?: TaskStatus;
-    project_id?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<PaginatedResponse<ProjectTask>>> => {
-    return apiClient.mobile.get('my-tasks', { params });
-  },
-
-  // ==================== 项目统计 ====================
-
-  getProjectStats: async (): Promise<ApiResponse<ProjectStats>> => {
-    return apiClient.mobile.get('projects/stats');
-  },
+  // 批 37 (g1)：updateTaskStatus（PUT /tasks/{id}/status）为占位，前端零引用，死封装已删除。
+  // 批 37 (g3)：listProjectTasks / createTask（/projects/{id}/tasks）、
+  // listMilestones / createMilestone（/projects/{id}/milestones）、
+  // listMyTasks（/my-tasks）均为占位，前端零引用，死封装已删除。
 };
 
 export default projectApi;

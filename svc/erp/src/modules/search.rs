@@ -129,10 +129,17 @@ async fn global_search(
     let customer_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'customer' as module,
+        SELECT id, name as title,
+               COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
+               'customer' as module,
                '/crm/customers' as path, '客户' as type_name
-        FROM crm.core_crm_customers
-        WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
+        FROM crm.customers
+        WHERE (
+            LOWER(name) LIKE $1
+            OR LOWER(COALESCE(email, '')) LIKE $1
+            OR LOWER(COALESCE(phone, '')) LIKE $1
+        )
+        AND deleted_at IS NULL
         LIMIT $2
         "#,
         "crm"
@@ -152,15 +159,26 @@ async fn global_search(
     .unwrap_or_default();
     results.extend(customer_results);
 
+    // 供应商：直读主数据权威表 master_data.mdm_suppliers（scm/srm 已汇入，表内已去重，
+    // 含 supplier_no+tenant_id 唯一约束）。RLS 按 app.tenant_id 自动隔离。
     let supplier_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'supplier' as module,
+        SELECT id, name as title,
+               COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
+               'supplier' as module,
                '/srm/suppliers' as path, '供应商' as type_name
-        FROM core_erp_suppliers
-        WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
+        FROM master_data.mdm_suppliers
+        WHERE deleted_at IS NULL
+          AND (
+              LOWER(name) LIKE $1
+              OR LOWER(COALESCE(email, '')) LIKE $1
+              OR LOWER(COALESCE(phone, '')) LIKE $1
+              OR LOWER(supplier_no) LIKE $1
+          )
         LIMIT $2
-        "#
+        "#,
+        "master_data"
     ))
     .bind(search_pattern)
     .bind(limit / 3)

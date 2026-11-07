@@ -23,6 +23,9 @@ export const voucherSchema: EntitySchema = {
     resource: 'vouchers',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'finance:voucher',
+
   fields: [
     {
       // 后端凭证真键为 voucher_no（GET /api/finance/vouchers 返回）

@@ -192,10 +192,6 @@
     },
     {
       "file": "svc/communication/src/mail.rs",
-      "table": "core_email_templates"
-    },
-    {
-      "file": "svc/communication/src/mail.rs",
       "table": "core_users"
     },
     {

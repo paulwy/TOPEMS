@@ -1329,6 +1329,7 @@ pub async fn get_entity_history(
 pub async fn export_audit_log(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<ExportAuditLogRequest>,
 ) -> ApiResponse<serde_json::Value> {
     // 请求租户：缺失/非法 → nil，与 v59 语义一致（对齐 RLS current_setting 空值兜底）
@@ -1338,13 +1339,27 @@ pub async fn export_audit_log(
         .and_then(|s| s.parse().ok())
         .unwrap_or_else(uuid::Uuid::nil);
 
+    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = COALESCE($1, entity_type)
          ORDER BY timestamp DESC"
     )))
     .bind(req.entity_type.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
     let filtered: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
@@ -1364,7 +1379,7 @@ pub async fn export_audit_log(
     .bind(now.to_rfc3339())
     .bind("127.0.0.1")
     .bind(tenant_uuid)
-    .execute(&state.db)
+    .execute(&mut scope)
     .await
     {
         return ApiResponse::server_error(&format!("写入导出日志失败: {e}"));

@@ -17,10 +17,6 @@ interface ConfirmDialogsProps {
   batchResendDialogOpen: boolean;
   setBatchResendDialogOpen: (open: boolean) => void;
   handleBatchResendEmails: () => void;
-  deleteTemplateDialogOpen: boolean;
-  setDeleteTemplateDialogOpen: (open: boolean) => void;
-  setDeletingTemplateId: (id: string | null) => void;
-  handleDeleteTemplate: () => void;
   selectedEmails: string[];
 }
 
@@ -39,10 +35,6 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
   batchResendDialogOpen,
   setBatchResendDialogOpen,
   handleBatchResendEmails,
-  deleteTemplateDialogOpen,
-  setDeleteTemplateDialogOpen,
-  setDeletingTemplateId,
-  handleDeleteTemplate,
   selectedEmails,
 }) => {
   const { t } = useTranslation('im');
@@ -92,18 +84,6 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         type='warning'
         confirmLabel={t('im.confirm_dialogs.k8')}
         cancelLabel={t('im.confirm_dialogs.k9')}
-      />
-
-      <ConfirmDialog
-        isOpen={deleteTemplateDialogOpen}
-        onClose={() => {
-          setDeleteTemplateDialogOpen(false);
-          setDeletingTemplateId(null);
-        }}
-        onConfirm={handleDeleteTemplate}
-        title={t('im.confirm_dialogs.k10')}
-        message={t('im.confirm_dialogs.k11')}
-        danger
       />
     </>
   );

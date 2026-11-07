@@ -27,6 +27,9 @@ const MobileProductionPage: React.FC = () => {
     workReports,
     equipmentList,
     loading,
+    ordersNotConnected,
+    reportsNotConnected,
+    equipmentNotConnected,
     handleRefresh,
     handleStartReport,
     handleSubmitReport,
@@ -135,6 +138,9 @@ const MobileProductionPage: React.FC = () => {
             equipmentList={equipmentList}
             onOrderAction={handleOrderAction}
             onStartReport={handleStartReport}
+            ordersNotConnected={ordersNotConnected}
+            reportsNotConnected={reportsNotConnected}
+            equipmentNotConnected={equipmentNotConnected}
           />
         )}
       </PullToRefresh>

@@ -140,6 +140,9 @@ export const hazardousMaterialSchema: EntitySchema = {
     resource: 'hazardousMaterials',
   },
 
+  // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
+  permissionResource: 'ehs:hazardous_material',
+
   fields: [
     {
       name: 'material_code',

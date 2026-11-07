@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -13,11 +12,9 @@ import {
   TextField,
 } from '@mui/material';
 import { Send as SendIcon } from 'lucide-react';
-import type { EmailTemplate } from '@/api/mail';
 import { PRIORITY_OPTIONS } from '@/api/mail';
 import type { SendForm } from '../types';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
 
 interface SendEmailDialogProps {
   open: boolean;
@@ -25,8 +22,6 @@ interface SendEmailDialogProps {
   sendForm: SendForm;
   setSendForm: React.Dispatch<React.SetStateAction<SendForm>>;
   formErrors: Record<string, string>;
-  templates: EmailTemplate[];
-  handleTemplateChange: (code: string) => void;
   handleSendEmail: (e: React.FormEvent) => void;
   resetSendForm: () => void;
 }
@@ -37,8 +32,6 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
   sendForm,
   setSendForm,
   formErrors,
-  templates,
-  handleTemplateChange,
   handleSendEmail,
   resetSendForm,
 }) => {
@@ -55,96 +48,6 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
         </DialogTitle>
         <form onSubmit={handleSendEmail}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <InputLabel
-                sx={{ fontSize: designTokens.typography.fontSize.scale['1rem'], fontWeight: 500 }}
-              >
-                {i18n.t('im.send_email_dialog.k0')}
-              </InputLabel>
-              <Button
-                variant='text'
-                size='small'
-                onClick={() =>
-                  setSendForm((prev) => ({
-                    ...prev,
-                    useTemplate: !prev.useTemplate,
-                  }))
-                }
-                sx={sendForm.useTemplate ? { color: 'primary.main' } : {}}
-              >
-                {sendForm.useTemplate
-                  ? i18n.t('im.send_email_dialog.k2')
-                  : i18n.t('im.send_email_dialog.k1')}
-              </Button>
-            </Box>
-
-            {sendForm.useTemplate && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <InputLabel htmlFor='template-select'>{t('im.send_email_dialog.k3')}</InputLabel>
-                <FormControl
-                  size='small'
-                  sx={{ width: '100%' }}
-                >
-                  <Select
-                    value={sendForm.template_code}
-                    onChange={(e) => {
-                      setSendForm((prev) => ({
-                        ...prev,
-                        template_code: e.target.value,
-                      }));
-                      handleTemplateChange(e.target.value);
-                    }}
-                    displayEmpty
-                  >
-                    <MenuItem
-                      value=''
-                      disabled
-                    >
-                      {t('im.mail_page_components_send_email_dialog.e2')}
-                    </MenuItem>
-                    {templates.map((t) => (
-                      <MenuItem
-                        key={t.code}
-                        value={t.code}
-                      >
-                        {t.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <InputLabel htmlFor='template-data'>
-                    {t('im.send_email_dialog.json_4')}
-                  </InputLabel>
-                  <TextField
-                    id='template-data'
-                    placeholder={`{"user_name": t('im.send_email_dialog.k6'), "process_name": t('im.send_email_dialog.k5')}`}
-                    value={sendForm.templateData}
-                    onChange={(e) =>
-                      setSendForm((prev) => ({
-                        ...prev,
-                        templateData: e.target.value,
-                      }))
-                    }
-                    multiline
-                    minRows={3}
-                    error={!!formErrors.templateData}
-                    helperText={formErrors.templateData}
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    }}
-                  />
-                </Box>
-              </Box>
-            )}
-
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <InputLabel htmlFor='send-subject'>
                 {t('im.mail_page_components_send_email_dialog.r1')}
