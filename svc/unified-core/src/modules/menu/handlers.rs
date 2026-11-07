@@ -22,6 +22,8 @@ use super::models::{
     UpdateMenuGroupRequest, UpdateMenuRequest,
 };
 
+// 菜单权威表固定在 public schema。嵌入部署的连接池 search_path 为 `flow, public`，
+// 裸表名会优先命中 flow 下的同名空副本（历史生产「菜单读不到」根因），故此处必须显式限定。
 const MENU_GROUP_COLUMNS: &str =
     "id, tenant_id, name, code, icon, sort_order, status, created_at, updated_at";
 
@@ -46,7 +48,7 @@ pub async fn list_groups(
     };
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_menu_groups
+        r#"SELECT COUNT(*) FROM public.core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
              AND ($3::uuid IS NULL OR tenant_id = $3)"#,
@@ -65,7 +67,7 @@ pub async fn list_groups(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_menu_groups
+        r#"SELECT {} FROM public.core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
              AND ($3::uuid IS NULL OR tenant_id = $3)
@@ -103,7 +105,7 @@ pub async fn get_group(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MenuGroup> {
     let sql = format!(
-        r#"SELECT {} FROM core_menu_groups WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_menu_groups WHERE deleted_at IS NULL AND id = $1"#,
         MENU_GROUP_COLUMNS
     );
 
@@ -143,7 +145,7 @@ pub async fn create_group(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_menu_groups (tenant_id, name, code, icon, sort_order, status)
+        r#"INSERT INTO public.core_menu_groups (tenant_id, name, code, icon, sort_order, status)
            VALUES ($1, $2, $3, $4, $5, 'active')
            RETURNING {}"#,
         MENU_GROUP_COLUMNS
@@ -183,7 +185,7 @@ pub async fn update_group(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let sql = format!(
-        r#"UPDATE core_menu_groups
+        r#"UPDATE public.core_menu_groups
            SET name = COALESCE($1, name),
                code = COALESCE($2, code),
                icon = COALESCE($3, icon),
@@ -233,7 +235,7 @@ pub async fn delete_group(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let result = sqlx::query(r#"UPDATE core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
+    let result = sqlx::query(r#"UPDATE public.core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
         .bind(tenant_opt)
         .execute(&state.pool)
@@ -269,7 +271,7 @@ pub async fn list_menus(
     };
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_menus
+        r#"SELECT COUNT(*) FROM public.core_menus
            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
@@ -292,7 +294,7 @@ pub async fn list_menus(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_menus
+        r#"SELECT {} FROM public.core_menus
            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
@@ -331,7 +333,7 @@ pub async fn list_menus(
 
 pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Menu> {
     let sql = format!(
-        r#"SELECT {} FROM core_menus WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_menus WHERE deleted_at IS NULL AND id = $1"#,
         MENU_COLUMNS
     );
 
@@ -371,7 +373,7 @@ pub async fn create_menu(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_menus (tenant_id, group_id, parent_id, name, code, path, icon, sort_order, permissions, status)
+        r#"INSERT INTO public.core_menus (tenant_id, group_id, parent_id, name, code, path, icon, sort_order, permissions, status)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')
            RETURNING {}"#,
         MENU_COLUMNS
@@ -415,7 +417,7 @@ pub async fn update_menu(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let sql = format!(
-        r#"UPDATE core_menus
+        r#"UPDATE public.core_menus
            SET group_id = COALESCE($1, group_id),
                parent_id = COALESCE($2, parent_id),
                name = COALESCE($3, name),
@@ -473,7 +475,7 @@ pub async fn delete_menu(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let result = sqlx::query(r#"UPDATE core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
+    let result = sqlx::query(r#"UPDATE public.core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
         .bind(tenant_opt)
         .execute(&state.pool)
@@ -641,7 +643,7 @@ pub async fn my_menu_tree(
                     .and_then(|t| Uuid::parse_str(t).ok())
             };
             let sql = format!(
-                r#"SELECT {} FROM core_menus
+                r#"SELECT {} FROM public.core_menus
                    WHERE deleted_at IS NULL
                      AND ($1::uuid IS NULL OR tenant_id = $1)
                    ORDER BY sort_order ASC, code ASC"#,

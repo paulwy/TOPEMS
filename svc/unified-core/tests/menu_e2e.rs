@@ -9,6 +9,7 @@ use app_state::{super_claims, test_app_state};
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde_json::Value;
+use sqlx::postgres::PgPoolOptions;
 use topems_unified_core::modules::menu::handlers::{
     create_group, create_menu, delete_group, get_menu, list_groups, list_menus,
 };
@@ -18,7 +19,7 @@ use topems_unified_core::modules::menu::models::{
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
-        r#"CREATE TABLE IF NOT EXISTS core_menu_groups (
+        r#"CREATE TABLE IF NOT EXISTS public.core_menu_groups (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             name VARCHAR(200) NOT NULL,
@@ -35,7 +36,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .await
     .unwrap();
     sqlx::query(
-        r#"CREATE TABLE IF NOT EXISTS core_menus (
+        r#"CREATE TABLE IF NOT EXISTS public.core_menus (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             group_id UUID,
@@ -253,4 +254,71 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         .unwrap_or_else(|| panic!("get_menu error: {:?}", resp.message));
     let menu: Value = serde_json::to_value(data).unwrap();
     assert_eq!(menu["name"], "报表");
+}
+
+/// 构造与生产同款的连接池基线：`flow, public`。
+async fn pool_with_prod_search_path(pool: &sqlx::PgPool) -> sqlx::PgPool {
+    PgPoolOptions::new()
+        .max_connections(1)
+        .min_connections(1)
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                sqlx::query("SELECT set_config('search_path', 'flow, public', false)")
+                    .execute(&mut *conn)
+                    .await?;
+                Ok(())
+            })
+        })
+        .connect_with((*pool.connect_options()).clone())
+        .await
+        .expect("建立 flow,public 测试连接池失败")
+}
+
+/// 回归：生产 search_path 为 `flow, public` 且 flow 下存在同名空副本时，
+/// 菜单读写仍必须命中 public 权威表（显式 schema 前缀，不依赖 search_path）。
+#[sqlx::test(migrations = false)]
+async fn menu_hits_public_when_flow_shadow_exists(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS flow")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS flow.core_menu_groups (LIKE public.core_menu_groups INCLUDING ALL)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS flow.core_menus (LIKE public.core_menus INCLUDING ALL)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let prod_pool = pool_with_prod_search_path(&pool).await;
+    let group_id = create_group_via_handler(&prod_pool, "grp-prod-sp", "生产路径分组").await;
+
+    let flow_groups: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM flow.core_menu_groups")
+        .fetch_one(&prod_pool)
+        .await
+        .unwrap();
+    let public_groups: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_menu_groups")
+        .fetch_one(&prod_pool)
+        .await
+        .unwrap();
+    assert_eq!(flow_groups, 0, "flow 影子副本不应被写入");
+    assert_eq!(public_groups, 1, "菜单必须写入 public 权威表");
+
+    let resp = list_groups(
+        State(test_app_state(prod_pool)),
+        Extension(super_claims()),
+        Query(empty_group_query()),
+    )
+    .await;
+    let data = resp
+        .data
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
+    assert_eq!(data.total, 1);
+    assert_eq!(data.items[0].id, group_id);
 }

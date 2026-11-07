@@ -72,6 +72,12 @@
 - DB 有 **122 个菜单分组**（51 个单条分组），前端已收敛为 10 个域组但未消费 DB 分组；**25 组精确同名菜单**。
 - 遗留 schema 无入口：`analytics` 18 表、`report` 1、`rs` 24、`core` 15、`unified_core` 3、`mail` 2、`notification` 1、`shared` 1、`storage` 1。
 
+### W1-0 生产菜单读取 schema 修复（已完成，2026-11-08）
+
+- 根因：嵌入部署连接池 `SEARCH_PATH=flow, public`，menu handlers 用裸表名 `core_menus` / `core_menu_groups`，优先解析到 `flow` 下同名空副本，忽略 `public` 权威数据。
+- 修复：[svc/unified-core/src/modules/menu/handlers.rs](svc/unified-core/src/modules/menu/handlers.rs) 全部菜单读写 SQL 显式限定 `public.`；新增回归测试 `menu_hits_public_when_flow_shadow_exists`（`flow, public` + flow 空副本）。
+- 结论：BFF/前端无 DB 菜单读取路径，仅 unified-core 一处；`schema_defense` DDL 已按 `public` 限定，不受影响。
+
 ### W1-1 补齐 26 条缺失菜单（数据迁移，先做，不碰前端文件）
 
 | 批次 | 内容 | 验收 |
