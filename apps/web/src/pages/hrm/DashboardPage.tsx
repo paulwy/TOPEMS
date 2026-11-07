@@ -160,18 +160,7 @@ export const DashboardPage: React.FC = () => {
       value,
     }));
 
-    const months = [
-      t('hrm.dashboard_page.january'),
-      t('hrm.dashboard_page.february'),
-      t('hrm.dashboard_page.march'),
-      t('hrm.dashboard_page.april'),
-      t('hrm.dashboard_page.may'),
-      t('hrm.dashboard_page.june'),
-    ];
-    const monthlyTrend = months.map((name, i) => ({
-      name,
-      value: Math.floor(Math.random() * 10) + 2 + i,
-    }));
+    const monthlyTrend: { name: string; value: number }[] = [];
 
     return {
       departmentDistribution:

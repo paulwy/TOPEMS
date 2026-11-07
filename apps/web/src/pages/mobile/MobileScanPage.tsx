@@ -148,36 +148,17 @@ const MobileScanPage: React.FC = () => {
   }, []);
   const simulateScan = useCallback(() => {
     if (!scanning) return;
-    const mockResults = [
-      { content: 'PROD-2024-009999', format: 'Code 128', type: 'barcode' as const },
-      { content: 'https://topems.com/item/12345', format: 'QR Code', type: 'qrcode' as const },
-      { content: 'INV-B2-001234', format: 'QR Code', type: 'qrcode' as const },
-    ];
-    const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
+    // 扫码硬件未接入，不生成随机 mock 结果
     setTimeout(() => {
       if (scanning) {
-        setScanResult(randomResult.content);
         setScanning(false);
-        const newHistoryItem: ScanHistoryItem = {
-          id: Date.now().toString(),
-          content: randomResult.content,
-          type: randomResult.type,
-          format: randomResult.format,
-          time: i18n.t('mobile.mobile_scan_page.k11'),
-          relatedData: {
-            type: i18n.t('mobile.mobile_scan_page.k12'),
-            name: i18n.t('pages.mobile_scan_page.10k_4'),
-            code: randomResult.content,
-          },
-        };
-        setScanHistory((prev) => [newHistoryItem, ...prev]);
         addNotification({
           title: i18n.t('mobile.mobile_scan_page.k13'),
-          message: randomResult.content,
-          type: 'success',
+          message: i18n.t('mobile.mobile_scan_page.scan_not_connected'),
+          type: 'warning',
         });
       }
-    }, 2000);
+    }, 1500);
   }, [scanning, addNotification]);
   useEffect(() => {
     if (activeTab === 0 && scanning && !scanResult) {

@@ -15,8 +15,12 @@ vi.mock('@/api/rd', () => ({
           {
             id: 'P001',
             project_name: '研发平台前端',
-            repo_url: 'https://git.example.com/rd/frontend.git',
-            tech_stack: 'TypeScript',
+            name: '研发平台前端',
+            code: 'RS-2026-001',
+            leader: '张三',
+            status: 'in_progress',
+            progress: 60,
+            start_date: '2026-01-01',
             created_at: '2026-01-01T00:00:00Z',
           },
         ],
@@ -37,11 +41,19 @@ describe('RsCodePage', () => {
     expect(await screen.findByRole('heading', { name: '代码库' })).toBeInTheDocument();
   });
 
-  it('renders repo rows derived from projects', async () => {
+  it('renders project rows with real fields, no fake repo metrics', async () => {
     renderWithProviders(<RsCodePage />);
     await waitFor(() => {
-      expect(screen.getByTestId('cell-repo_name-0')).toHaveTextContent('研发平台前端');
-      expect(screen.getByTestId('cell-language-0')).toHaveTextContent('TypeScript');
+      expect(screen.getByTestId('cell-project_name-0')).toHaveTextContent('研发平台前端');
+      expect(screen.getByTestId('cell-code-0')).toHaveTextContent('RS-2026-001');
+      expect(screen.getByTestId('cell-leader-0')).toHaveTextContent('张三');
+    });
+  });
+
+  it('shows empty-state notice about no code repo integration', async () => {
+    renderWithProviders(<RsCodePage />);
+    await waitFor(() => {
+      expect(screen.getByText(/暂无代码仓数据接入/)).toBeInTheDocument();
     });
   });
 });

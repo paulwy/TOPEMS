@@ -1,7 +1,6 @@
 import React from 'react';
-import { Users } from 'lucide-react';
+import { Alert } from '@mui/material';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
-import type { RowAction } from '@/components/templates/list/types';
 import { codeSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Project } from '@/api/rd';
@@ -10,20 +9,19 @@ import i18n from '@/i18n';
 
 interface CodeRepo {
   id: string;
-  repo_name: string;
   project_name: string;
-  repo_url: string;
-  branch_count: number;
-  commit_count: number;
-  last_commit: string;
-  language: string;
+  code: string;
+  leader: string;
+  status: string;
+  progress: number;
+  start_date: string;
+  risklevel?: string;
+  created_at: string;
 }
-interface CreateRepoForm {
-  project_id: string;
-  repo_name: string;
-  repo_url: string;
-  language: string;
-}
+
+// 批33：本页复用 rs.projects 展示，无真实 Git 集成。
+// 移除 branch_count/commit_count/repo_url/tech_stack 等假指标，
+// create/update/delete 一律拒绝（后端无对应字段）。
 const codeApiAdapter: CrudApiAdapter<CodeRepo> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -31,7 +29,6 @@ const codeApiAdapter: CrudApiAdapter<CodeRepo> = {
       page_size: params?.pageSize,
     };
     if (params?.search) queryParams.search = params.search;
-    if (params?.language) queryParams.language = params.language;
     const response = await rdApi.listProjects(queryParams);
     if (!response.success || !response.data) {
       throw new Error(response.message || i18n.t('rd.rs_code_page.k0'));
@@ -39,29 +36,22 @@ const codeApiAdapter: CrudApiAdapter<CodeRepo> = {
     const projectList = response.data.projects || [];
     const repos: CodeRepo[] = projectList.map((p: Project) => ({
       id: p.id,
-      repo_name: p.project_name,
-      project_name: p.project_name,
-      repo_url: p.repo_url || '',
-      branch_count: Math.floor(Math.random() * 10) + 1,
-      commit_count: Math.floor(Math.random() * 100) + 10,
-      last_commit: p.created_at || '',
-      language: p.tech_stack || 'JavaScript',
+      project_name: p.project_name || p.name || '',
+      code: p.code || '',
+      leader: p.leader || '',
+      status: p.status || '',
+      progress: p.progress,
+      start_date: p.start_date || '',
+      risklevel: p.risklevel,
+      created_at: p.created_at || '',
     }));
     return {
       data: repos,
       total: response.data.total || 0,
     };
   },
-  create: async (data) => {
-    const formData = data as unknown as CreateRepoForm;
-    const response = await rdApi.updateProject(formData.project_id, {
-      repo_url: formData.repo_url,
-      tech_stack: formData.language,
-    });
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_code_page.k1'));
-    }
-    return response.data as unknown as CodeRepo;
+  create: async () => {
+    throw new Error(i18n.t('rd.rs_code_page.k1'));
   },
   update: async () => {
     throw new Error(i18n.t('rd.rs_code_page.k2'));
@@ -70,25 +60,26 @@ const codeApiAdapter: CrudApiAdapter<CodeRepo> = {
     throw new Error(i18n.t('rd.rs_code_page.k3'));
   },
 };
+
 const RsCodePage: React.FC = () => {
-  const customRowActions: RowAction[] = [
-    {
-      key: 'members',
-      label: i18n.t('rd.rs_code_page.k4'),
-      icon: <Users size={16} />,
-      onClick: () => {},
-    },
-  ];
   return (
     <CrudPage
       schema={codeSchema}
       apiAdapter={codeApiAdapter}
-      customRowActions={customRowActions}
       breadcrumbs={[
         { label: i18n.t('rd.rs_code_page.k6'), href: RD_PATHS.root },
         { label: i18n.t('rd.rs_code_page.k5') },
       ]}
+      headerContent={
+        <Alert
+          severity='info'
+          sx={{ mb: 2 }}
+        >
+          {i18n.t('rd.rs_code_page.k7')}
+        </Alert>
+      }
     />
   );
 };
+
 export default RsCodePage;

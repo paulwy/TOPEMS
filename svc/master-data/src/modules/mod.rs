@@ -27,8 +27,10 @@ pub mod versioning_v54;
 pub mod dict;
 // P2-11: 公共主数据域（物料目录 / UOM / 样品）
 pub mod master_data;
-// 供应商权威只读查询（master_data.mdm_suppliers，scm/srm 汇入去重后的权威表）
+// 供应商权威主数据（master_data.mdm_suppliers，scm/srm 汇入去重后的权威表，本批起完整 CRUD）
 pub mod supplier_master;
+// 供应商类别字典只读列表（master_data.mdm_supplier_categories，前端下拉/级联用）
+pub mod supplier_category_dict;
 
 /// B10：把 10 个 MDM 模块的内存集合快照全部回写库（幂等 upsert）。
 /// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
@@ -792,9 +794,22 @@ pub fn create_routes() -> Router<AppState> {
         .route("/score", get(quality_v51::get_quality_score))
         .route("/trending", get(knowledge_v53::get_trending_items))
         .route("/uoms", get(master_data::list_uoms))
-        // 供应商权威只读列表/详情（GET /api/master-data/suppliers[/{id}]）
-        .route("/suppliers", get(supplier_master::list_suppliers))
-        .route("/suppliers/{id}", get(supplier_master::get_supplier))
+        // 供应商权威主数据：list/get + create/patch/soft-delete（CRUD 闭环，写入 source_system='mdm'）
+        .route(
+            "/suppliers",
+            get(supplier_master::list_suppliers).post(supplier_master::create_supplier),
+        )
+        .route(
+            "/suppliers/{id}",
+            get(supplier_master::get_supplier)
+                .patch(supplier_master::update_supplier)
+                .delete(supplier_master::delete_supplier),
+        )
+        // 供应商类别字典（只读 list，前端下拉/级联用）
+        .route(
+            "/supplier-categories",
+            get(supplier_category_dict::list_supplier_categories),
+        )
         .route("/version/diff", get(versioning_v54::diff_versions_compat))
         .route(
             "/ai/predict",

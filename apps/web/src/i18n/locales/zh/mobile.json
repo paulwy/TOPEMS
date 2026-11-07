@@ -622,6 +622,7 @@
   "mobile.mobile_scan_page.k11": "刚刚",
   "mobile.mobile_scan_page.k12": "物料",
   "mobile.mobile_scan_page.k13": "扫描成功",
+  "mobile.mobile_scan_page.scan_not_connected": "扫码硬件未接入，请连接扫描设备后重试",
   "mobile.mobile_scan_page.k14": "手动输入",
   "mobile.mobile_scan_page.k15": "刚刚",
   "mobile.mobile_scan_page.k16": "输入成功",

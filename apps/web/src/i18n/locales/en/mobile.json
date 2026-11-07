@@ -413,6 +413,7 @@
   "mobile.mobile_scan_page.k11": "Just now",
   "mobile.mobile_scan_page.k12": "Material",
   "mobile.mobile_scan_page.k13": "Scan succeeded",
+  "mobile.mobile_scan_page.scan_not_connected": "Scan hardware not connected. Please connect a scanner and retry.",
   "mobile.mobile_scan_page.k14": "Manual Input",
   "mobile.mobile_scan_page.k15": "Just now",
   "mobile.mobile_scan_page.k16": "Input succeeded",
