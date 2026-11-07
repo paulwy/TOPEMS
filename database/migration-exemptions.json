@@ -37,6 +37,17 @@
       ],
       "evidence": "三环境账本核验：local topems 554 行/max 20261107000018、topems_prepare 0、topems_sqlx_scratch 60/max 20260831190800、topems_dict_rehearsal 552/max 20261107000009、prod 581/max 20261107000018，均无 version=20261107000011；scratch 克隆库修复脏行后重放逐行 21/21 一致、幂等复跑 INSERT 0 0；本地 topems 同样 21/21；validate.sh Errors 0；新增 pre-push 静态门禁（scripts/migration/check-insert-column-shape.mjs）全仓 613 文件/230 INSERT 仅本文件命中（修复前）；文档 docs/quality/migration-000011-column-order-fix-2026-11-06.md",
       "approved": true
+    },
+    {
+      "id": "B20261108-000025-menus-public-authority",
+      "date": "2026-11-08",
+      "committer": "paulwy",
+      "reason": "20261107000025 的写入目标 mes.core_menus / mes.core_menu_groups 已被 20261027200000 迁移 DROP，按序迁移会在 025 因目标表不存在中断整条链。该迁移在 local topems（max 20261107000020）/ test topems_test（max 20261105235700）/ prod topems_prod（max 20261107000046）的 _sqlx_migrations 均无 version=20261107000025 记录（从未应用成功），属『未应用迁移』例外。修正内容：① mes.* → public.* 权威表（unified-core 菜单接口显式读取 public.core_menus）；② 平台租户由全零 UUID 对齐为默认租户 00000000-0000-0000-0000-000000000001（prod/test public.core_menus 实际租户，全零租户在 core_tenants 无记录）；③ 菜单 upsert 由 DO UPDATE 改为 DO NOTHING，避免覆盖 20261102140000-20261102200000 等前序迁移已写入的 sort_order/path/icon/permissions。checksums.txt 仅更新该行。",
+      "files": [
+        "20261107000025_seed_menus_batch29.sql"
+      ],
+      "evidence": "三环境账本只读核验（2026-11-08）：local topems 556 行/max 20261107000020、topems_test 576 行/max 20261105235700、topems_prod 595 行/max 20261107000046，均无 20261107000025；prod mes.core_menus 不存在（information_schema 仅 public/iam/flow 有 core_menus），prod public.core_menus 449 行全部 tenant=...0001 且 267 个 code 全部已存在（test public 423 行中已含 241 个）。基线重建库 topems_m025_baseline_verify（anchor 20261105235700，prod 基线）：修复前 apply-forward 在 025 报 relation \"mes.core_menus\" does not exist，其余 001-024/026-046 全部成功；修复后 apply-forward 0 失败，public.core_menus=267 行（tenant ...0001，267/267 code 命中）、public.core_menu_groups=94，无全零租户行；删除账本行重放第二遍幂等（267/94 不变），终态 0 待应用。",
+      "approved": true
     }
   ]
 }
