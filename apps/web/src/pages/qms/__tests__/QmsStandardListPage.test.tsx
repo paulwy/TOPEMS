@@ -34,7 +34,7 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('@/modules/qms/config', () => ({
+vi.mock('@/module-configs/qms/config', () => ({
   QMS_PATHS: { standardDetail: '/qms/standards' },
 }));
 

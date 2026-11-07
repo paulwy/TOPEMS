@@ -1,5 +1,5 @@
 import { designTokens } from '@topems/tokens';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import {
   Card,
   CardContent,

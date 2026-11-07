@@ -39,7 +39,7 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';

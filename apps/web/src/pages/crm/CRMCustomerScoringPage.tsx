@@ -12,7 +12,7 @@ import { crmApi, crmAnalyticsApi } from '@/api/crm';
 import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 
 // ============ 辅助函数 ============
 

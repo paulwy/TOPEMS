@@ -36,7 +36,7 @@ import i18n from '@/i18n';
 import { fmeaApi } from '@/api/qms/fmea';
 import type { FmeaAnalysis, FmeaItem } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 
 function riskLevel(rpn: number): 'high' | 'medium' | 'low' {

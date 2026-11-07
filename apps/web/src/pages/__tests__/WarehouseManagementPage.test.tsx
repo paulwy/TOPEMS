@@ -57,7 +57,7 @@ vi.mock('@/schemas/wms/warehouse', () => ({
   warehouseSchema: { name: 'warehouseSchema' },
 }));
 
-vi.mock('@/modules/wms/config', () => ({
+vi.mock('@/module-configs/wms/config', () => ({
   WMS_PATHS: { root: '/wms' },
 }));
 

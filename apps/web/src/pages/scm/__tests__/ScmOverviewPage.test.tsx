@@ -27,7 +27,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
-vi.mock('@/modules/scm/config', () => ({ SCM_PATHS: { root: '/scm' } }));
+vi.mock('@/module-configs/scm/config', () => ({ SCM_PATHS: { root: '/scm' } }));
 vi.mock('@/i18n', () => ({ default: { t: (k: string) => k, exists: () => true } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 

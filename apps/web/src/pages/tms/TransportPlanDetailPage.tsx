@@ -25,7 +25,7 @@ import { StatusBadge } from '@/components/tms/StatusBadge';
 import { FSMActionButtons } from '@/components/tms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
 import type { SectionConfig, TabConfig } from '@/components/templates/DetailPageTemplate';
-import { TMS_PATHS } from '@/modules/tms/config';
+import { TMS_PATHS } from '@/module-configs/tms/config';
 import { useTranslation } from 'react-i18next';
 
 interface TransportPlanItem {

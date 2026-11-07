@@ -10,7 +10,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { DOC_PATHS } from '@/modules/doc/config';
+import { DOC_PATHS } from '@/module-configs/doc/config';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';

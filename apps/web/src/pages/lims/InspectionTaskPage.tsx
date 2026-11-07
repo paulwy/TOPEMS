@@ -27,7 +27,7 @@ import {
   type CreateInspectionRecordRequest,
 } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';

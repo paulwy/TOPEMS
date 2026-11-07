@@ -27,7 +27,7 @@ import {
 import { scmApi } from '@/api/scm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { SCM_PATHS } from '@/modules/scm/config';
+import { SCM_PATHS } from '@/module-configs/scm/config';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';

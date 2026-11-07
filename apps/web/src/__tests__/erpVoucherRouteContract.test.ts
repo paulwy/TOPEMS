@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const webRoot = resolve(here, '../..');
-const erpConfig = readFileSync(resolve(webRoot, 'src/modules/erp/config.ts'), 'utf-8');
+const erpConfig = readFileSync(resolve(webRoot, 'src/module-configs/erp/config.ts'), 'utf-8');
 
 /** 取出 `const voucherRoute: RouteConfigV2<...> = { ... };` 这一段 */
 function voucherRouteBlock(): string {
@@ -46,7 +46,7 @@ describe('ERP 凭证入口收敛契约', () => {
   });
 
   it('菜单 permission 与路由 requiredPermissions 一致（防"可见但进不去"）', () => {
-    const src = readFileSync(resolve(webRoot, 'src/modules/erp/config.ts'), 'utf8');
+    const src = readFileSync(resolve(webRoot, 'src/module-configs/erp/config.ts'), 'utf8');
     // 取 path: ERP_PATHS.voucherManagement 之后的 navItem permission 声明
     const navMatches = [
       ...src.matchAll(/path: ERP_PATHS\.voucherManagement,[\s\S]{0,400}?permission: '([^']+)'/g),

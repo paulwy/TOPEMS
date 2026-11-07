@@ -6,8 +6,8 @@ import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { IAM_PATHS } from '@/modules/iam/config';
-import { ADMIN_PATHS } from '@/modules/admin/config';
+import { IAM_PATHS } from '@/module-configs/iam/config';
+import { ADMIN_PATHS } from '@/module-configs/admin/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';

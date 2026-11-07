@@ -72,7 +72,7 @@ vi.mock('@/utils/logger', () => ({
   },
 }));
 
-vi.mock('@/modules/notification/config', () => ({
+vi.mock('@/module-configs/notification/config', () => ({
   NOTIFICATION_PATHS: {
     root: '/notification',
     list: '/notification/list',

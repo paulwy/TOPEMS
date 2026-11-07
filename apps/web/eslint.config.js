@@ -32,7 +32,7 @@ export default [
       'src/components/ai/rag/**',
       'src/design-system/**',
       'src/hooks/bff/**',
-      'src/modules/_archive/**',
+      'src/module-configs/_archive/**',
       'src/_archive-microfrontend/**',
       'src/api/erp/index.ts',
     ],

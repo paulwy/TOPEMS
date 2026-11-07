@@ -6,7 +6,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { buildSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';

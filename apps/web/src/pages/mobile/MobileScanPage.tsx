@@ -39,7 +39,7 @@ import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, MobileCard, MobileButton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { alpha } from '@mui/material/styles';
 

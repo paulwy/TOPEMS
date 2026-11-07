@@ -27,7 +27,7 @@ import { useNotificationStore } from '@/store';
 import { stockTakeSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
 import type { StockTake, StockTakeItem, CountItemRequest, CreateStockTakeRequest } from '@/api/wms';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

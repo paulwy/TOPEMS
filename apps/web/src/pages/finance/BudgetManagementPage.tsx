@@ -29,7 +29,7 @@ import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';
 import { BackButton, PageContainer } from '@/components/common';
 import { StatCardGroup } from '@/components';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';

@@ -15,7 +15,7 @@ import type {
   CreateReplenishmentOrderRequest,
 } from '@/api/wms';
 import i18n from '@/i18n';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import { replenishmentSchema } from '@/schemas/wms/replenishment';
 import { suggestionSchema } from '@/schemas/wms/suggestion';
 

@@ -39,7 +39,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const MODULES_DIR = path.join(ROOT, 'apps/web/src/modules');
+const MODULES_DIR = path.join(ROOT, 'apps/web/src/module-configs');
 const TYPES_FILE = path.join(ROOT, 'apps/web/src/lib/navigation/types.ts');
 const PERMISSIONS_FILE = path.join(ROOT, 'apps/web/src/config/permissions.ts');
 
@@ -916,7 +916,7 @@ function analyze() {
   p('║                     TOPEMS 菜单全面统计与问题分析报告                        ║');
   p('╚══════════════════════════════════════════════════════════════════════════════╝');
   p(` 生成时间: ${new Date().toLocaleString('zh-CN')}`);
-  p(` 扫描模块目录: apps/web/src/modules/*/config.ts`);
+  p(` 扫描模块目录: apps/web/src/module-configs/*/config.ts`);
   p(` 已注册权限码数量 (permissions.ts): ${registeredPermissions.size}`);
   hr();
 

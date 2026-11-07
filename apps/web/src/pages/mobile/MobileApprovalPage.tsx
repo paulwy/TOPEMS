@@ -46,7 +46,7 @@ import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ListParams } from '@/api/workflow/types';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface ApprovalItem {

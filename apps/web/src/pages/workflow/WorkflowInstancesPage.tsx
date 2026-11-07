@@ -20,7 +20,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { useConfirmDialog } from '@/hooks';
 import { extractErrorMessage } from '@/utils/errors';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { instanceApi } from '@/api/workflow';
 import type { WorkflowInstance } from '@/api/workflow';
 import { workflowInstanceSchema } from '@/schemas/workflow';

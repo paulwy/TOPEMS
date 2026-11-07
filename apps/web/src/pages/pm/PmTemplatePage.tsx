@@ -12,7 +12,7 @@ import { pmApi } from '@/api/pm';
 import type { CreateProjectRequest } from '@/api/pm';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';

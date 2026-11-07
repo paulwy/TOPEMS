@@ -195,7 +195,7 @@ vi.mock('@/i18n', () => {
   };
 });
 
-vi.mock('@/modules/pm/config', () => ({
+vi.mock('@/module-configs/pm/config', () => ({
   PM_PATHS: {
     reports: '/pm/reports',
   },

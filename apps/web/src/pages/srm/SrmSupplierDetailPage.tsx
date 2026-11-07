@@ -3,7 +3,7 @@ import { Box, Typography, Chip, Avatar, InputLabel, useTheme } from '@mui/materi
 import { Building2, Phone, Mail, MapPin, CreditCard, AlertTriangle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { masterDataApi, type MasterDataSupplier } from '@/api/master-data';
-import { SRM_PATHS } from '@/modules/srm/config';
+import { SRM_PATHS } from '@/module-configs/srm/config';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';

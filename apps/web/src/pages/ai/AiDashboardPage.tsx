@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { AICopilotRecommendations } from '@/components/ai/copilot';
-import { AI_PATHS } from '@/modules/ai/config';
+import { AI_PATHS } from '@/module-configs/ai/config';
 import { useNotificationStore } from '@/store';
 import { useAIContext } from '@/hooks';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';

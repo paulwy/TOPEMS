@@ -6,7 +6,7 @@
  * 按前缀做菜单过滤会把除 erp/pm 以外的模块全部隐藏。
  *
  * 统一口径（本次拍板）：
- *  - 一级权威 = 业务域 code（= `apps/web/src/modules/<domain>/config.ts` 顶层 code，
+ *  - 一级权威 = 业务域 code（= `apps/web/src/module-configs/<domain>/config.ts` 顶层 code，
  *    也等于 `core_tenant_modules.module_code` 中 `:` 之前的前缀）；
  *  - module_code 统一为 `<domain>:<feature>` 两级；
  *  - tier 固定三级：basic / standard / enterprise（平台级统一映射，不做租户级自定义）。
@@ -84,7 +84,7 @@ export function domainOfModuleCode(moduleCode: string): string {
 // 域分组（批 29）：一级菜单由 35 个业务域收敛为 10 个业务域组
 // ============================================================================
 //
-// 背景：侧边栏此前把 35 个 `apps/web/src/modules/<domain>` 全部平铺为一级入口，
+// 背景：侧边栏此前把 35 个 `apps/web/src/module-configs/<domain>` 全部平铺为一级入口，
 // 域多时首屏扫读成本高。本层只做【呈现分组】，不改任何 route path、权限码或模块
 // 内部结构：一级 = 10 个域组，二级 = 组内模块，三级 = 模块内 navItems。
 //

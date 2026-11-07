@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import PmReportStatusPieChart from './PmReportStatusPieChart';
 import PmReportRiskPieChart from './PmReportRiskPieChart';
 import PmReportTrendChart from './PmReportTrendChart';

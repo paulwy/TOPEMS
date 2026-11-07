@@ -26,7 +26,7 @@ const __dirname = dirname(__filename);
 
 const PROJECT_ROOT = join(__dirname, '..');
 const WEB_ROOT = join(PROJECT_ROOT, 'apps/web/src');
-const MODULES_ROOT = join(WEB_ROOT, 'modules');
+const MODULES_ROOT = join(WEB_ROOT, 'module-configs');
 const PAGES_ROOT = join(WEB_ROOT, 'pages');
 const ROUTES_V2_INDEX = join(WEB_ROOT, 'routes/v2/index.ts');
 const PERMISSIONS_CONFIG = join(WEB_ROOT, 'config/permissions.ts');

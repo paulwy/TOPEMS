@@ -39,7 +39,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import { useNavigate } from 'react-router-dom';
-import { ERP_PATHS } from '@/modules/erp/config';
+import { ERP_PATHS } from '@/module-configs/erp/config';
 import { auditApi, type AuditLog } from '@/api/erp/audit';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

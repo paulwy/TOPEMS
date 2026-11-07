@@ -9,7 +9,7 @@ import { StatCardComponent } from '@/components/templates/dashboard/StatCardComp
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { useConfirmDialog } from '@/hooks';
 import { extractErrorMessage } from '@/utils/errors';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { monitorApi } from '@/api/workflow/monitor';
 import { workflowMonitorSchema } from '@/schemas/workflow';
 import { QUERY_KEYS } from '@/lib/reactQuery';

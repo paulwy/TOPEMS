@@ -14,7 +14,7 @@ import {
 } from '@/api/lims';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
 

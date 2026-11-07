@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, Star, Download, Shield, ArrowLeft } from 'lucide-react';
 import { Box, Typography, Button, Chip } from '@mui/material';
 import { PluginRating } from '@/components/plugin';
-import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { PLUGIN_PATHS } from '@/module-configs/plugin/config';
 import type { Plugin } from '@/api/plugin';
 
 interface PluginDetailHeaderProps {

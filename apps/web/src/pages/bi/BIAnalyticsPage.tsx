@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
-import { BI_PATHS } from '@/modules/bi/config';
+import { BI_PATHS } from '@/module-configs/bi/config';
 import {
   BarChart3,
   TrendingUp,

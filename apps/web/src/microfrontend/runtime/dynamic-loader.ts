@@ -12,7 +12,7 @@ import i18n from '@/i18n';
  *
  * @example
  * // 注册模块加载器
- * dynamicLoader.registerModule('crm', () => import('@/modules/crm'));
+ * dynamicLoader.registerModule('crm', () => import('@/module-configs/crm'));
  * // 加载模块
  * const mod = await dynamicLoader.loadModule('crm');
  * // 预加载

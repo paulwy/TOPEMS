@@ -3,7 +3,7 @@ import styles from './GlobalActions.module.css';
 import { Stack, Tooltip, IconButton } from '@mui/material';
 import { Search, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AI_PATHS } from '@/modules/ai/config';
+import { AI_PATHS } from '@/module-configs/ai/config';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import i18n from '@/i18n';
 

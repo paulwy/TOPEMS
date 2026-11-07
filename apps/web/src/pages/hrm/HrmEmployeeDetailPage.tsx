@@ -6,7 +6,7 @@ import { Box, Typography, InputLabel, Avatar, useTheme } from '@mui/material';
 import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
-import { HRM_PATHS } from '@/modules/hrm/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';

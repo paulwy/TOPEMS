@@ -11,7 +11,7 @@ import {
 } from '@/components/templates';
 import i18n from '@/i18n';
 import { LazyChart } from '@/components/charts';
-import { APS_PATHS } from '@/modules/aps/config';
+import { APS_PATHS } from '@/module-configs/aps/config';
 import { productionPlanApi, scheduleApi } from '@/api/aps';
 
 const ApsDashboardPage: React.FC = () => {

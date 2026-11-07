@@ -20,7 +20,7 @@ import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { erpApi } from '@/api/erp';
 import type { ErpDashboardStats } from '@/api/erp';
-import { ERP_PATHS } from '@/modules/erp/config';
+import { ERP_PATHS } from '@/module-configs/erp/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

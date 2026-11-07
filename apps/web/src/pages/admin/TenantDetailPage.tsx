@@ -56,7 +56,7 @@ import type {
   TenantRole,
   TenantInvoice,
 } from '@/api/tenant/types';
-import { ADMIN_PATHS } from '@/modules/admin/config';
+import { ADMIN_PATHS } from '@/module-configs/admin/config';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 

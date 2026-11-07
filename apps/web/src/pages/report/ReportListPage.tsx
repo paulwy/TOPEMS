@@ -20,7 +20,7 @@ import { apiLogger } from '@/utils/logger';
 import { reportApi } from '@/api/report';
 import type { ReportData } from '@/api/report';
 import { reportSchema } from '@/schemas/report';
-import { REPORT_PATHS } from '@/modules/report/config';
+import { REPORT_PATHS } from '@/module-configs/report/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 

@@ -6,7 +6,7 @@ import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';

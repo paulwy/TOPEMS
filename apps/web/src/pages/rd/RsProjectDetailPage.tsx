@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import {
   Box,
   Typography,

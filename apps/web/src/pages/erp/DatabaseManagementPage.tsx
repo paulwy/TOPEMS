@@ -21,7 +21,7 @@ import { StatusBadge, ConfirmDialog } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
-import { ERP_PATHS } from '@/modules/erp/config';
+import { ERP_PATHS } from '@/module-configs/erp/config';
 import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 import { formatDateTime } from '@/utils/date';

@@ -27,7 +27,7 @@ import { apqpApi } from '@/api/qms/apqp';
 import type { ApqpProject, ApqpPhase, ApqpTask, ApqpRisk, ApqpApproval } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import i18n from '@/i18n';
 

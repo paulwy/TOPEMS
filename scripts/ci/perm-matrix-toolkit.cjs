@@ -569,7 +569,7 @@ function scanFrontendPerms() {
   let ts;
   try { ts = require('typescript'); } catch { return { codes: new Set(), fileCount: 0, available: false }; }
 
-  const webModulesDir = path.join(ROOT, 'apps/web/src/modules');
+  const webModulesDir = path.join(ROOT, 'apps/web/src/module-configs');
   const codes = new Set();
   let fileCount = 0;
 

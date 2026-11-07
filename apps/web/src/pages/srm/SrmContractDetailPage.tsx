@@ -3,7 +3,7 @@ import { Box, Typography, Chip, Avatar, InputLabel, useTheme } from '@mui/materi
 import { FileText, Building2, Calendar, DollarSign } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { srmApi, type SupplierContract } from '@/api/srm';
-import { SRM_PATHS } from '@/modules/srm/config';
+import { SRM_PATHS } from '@/module-configs/srm/config';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';

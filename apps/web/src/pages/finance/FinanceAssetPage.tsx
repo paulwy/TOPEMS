@@ -35,7 +35,7 @@ import { financeApi } from '@/api/finance';
 import type { Account } from '@/types/finance';
 import { BackButton, PageContainer } from '@/components/common';
 import { StatCardGroup } from '@/components';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import { apiLogger } from '@/utils/logger';

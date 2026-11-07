@@ -23,7 +23,7 @@ import type { ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from 
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

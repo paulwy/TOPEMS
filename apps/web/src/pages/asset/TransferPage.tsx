@@ -7,7 +7,7 @@ import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
-import { ASSET_PATHS } from '@/modules/asset/config';
+import { ASSET_PATHS } from '@/module-configs/asset/config';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';

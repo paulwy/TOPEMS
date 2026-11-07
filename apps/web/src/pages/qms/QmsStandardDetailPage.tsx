@@ -26,7 +26,7 @@ import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } 
 import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 
 const QmsStandardDetailPage: React.FC = () => {
   const theme = useTheme();

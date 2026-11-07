@@ -28,8 +28,8 @@ import { useAuthStore } from '@/store';
 import { type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface StatCard {

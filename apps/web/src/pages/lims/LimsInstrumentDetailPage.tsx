@@ -27,7 +27,7 @@ import { limsApi } from '@/api/lims';
 import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask } from '@/api/lims';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 
 interface LimsListResponse<T> {
   items?: T[];

@@ -57,8 +57,8 @@ vi.mock('@/api/iam', () => ({
   },
 }));
 
-vi.mock('@/modules/iam/config', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/modules/iam/config')>();
+vi.mock('@/module-configs/iam/config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/module-configs/iam/config')>();
   return {
     ...actual,
     IAM_PATHS: { root: '/admin/iam', users: '/admin/iam/users' },

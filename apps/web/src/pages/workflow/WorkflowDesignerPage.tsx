@@ -21,7 +21,7 @@ import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { Save } from 'lucide-react';
 import { DesignerTemplate } from '@/components/templates';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

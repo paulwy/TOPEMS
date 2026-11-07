@@ -13,7 +13,7 @@ vi.mock('react-i18next', () => ({
 
 // 使用真实 designTokens（theme.ts 模块加载时需要完整 tokens）
 
-vi.mock('@/modules/im/config', () => ({
+vi.mock('@/module-configs/im/config', () => ({
   IM_PATHS: {
     root: '/im',
   },

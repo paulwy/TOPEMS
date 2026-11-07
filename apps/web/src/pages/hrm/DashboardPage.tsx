@@ -20,7 +20,7 @@ import {
   type Department,
   type AttendanceRecord,
 } from '@/api/hrm';
-import { HRM_PATHS } from '@/modules/hrm/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
 
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';

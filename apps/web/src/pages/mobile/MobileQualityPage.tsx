@@ -39,7 +39,7 @@ import { useNotificationStore, useAuthStore } from '@/store';
 import { type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';

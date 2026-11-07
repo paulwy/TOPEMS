@@ -36,7 +36,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
-import { MONITOR_PATHS } from '@/modules/monitor/config';
+import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { getAlertSchema, getSeverityLabels, getStatusLabels } from '@/schemas/monitor';
 import { QUERY_KEYS } from '@/lib/reactQuery';

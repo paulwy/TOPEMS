@@ -31,7 +31,7 @@ import type {
   InventoryTurnoverDaysStat,
   PriceComparison,
 } from '@/api/scm';
-import { SCM_PATHS } from '@/modules/scm/config';
+import { SCM_PATHS } from '@/module-configs/scm/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';

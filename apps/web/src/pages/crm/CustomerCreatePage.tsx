@@ -9,7 +9,7 @@ import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

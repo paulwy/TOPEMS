@@ -20,7 +20,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { authApi } from '@/api/iam';
 import type { User } from '@/api/iam';
-import { IAM_PATHS } from '@/modules/iam/config';
+import { IAM_PATHS } from '@/module-configs/iam/config';
 import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';

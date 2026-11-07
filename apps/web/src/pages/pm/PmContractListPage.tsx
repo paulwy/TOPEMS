@@ -7,7 +7,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { contractSchema } from '@/schemas/pm';
 import { pmApi } from '@/api/pm';
 import type { Contract } from '@/api/pm';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 

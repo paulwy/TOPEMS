@@ -5,73 +5,106 @@ import { apiLogger } from '../../utils/logger';
 import { ensureNamespacesLoaded } from '@/i18n';
 
 const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleConfig }>> = {
-  iam: () => import('@/modules/iam/config').then((m) => ({ iamModuleConfig: m.iamModuleConfig })),
+  iam: () =>
+    import('@/module-configs/iam/config').then((m) => ({ iamModuleConfig: m.iamModuleConfig })),
   admin: () =>
-    import('@/modules/admin/config').then((m) => ({ adminModuleConfig: m.adminModuleConfig })),
+    import('@/module-configs/admin/config').then((m) => ({
+      adminModuleConfig: m.adminModuleConfig,
+    })),
   // 自动化模块（V64 新增，第 33 个模块，order 70）
   automation: () =>
-    import('@/modules/automation/config').then((m) => ({
+    import('@/module-configs/automation/config').then((m) => ({
       automationModuleConfig: m.automationModuleConfig,
     })),
   workflow: () =>
-    import('@/modules/workflow/config').then((m) => ({
+    import('@/module-configs/workflow/config').then((m) => ({
       workflowModuleConfig: m.workflowModuleConfig,
     })),
   notification: () =>
-    import('@/modules/notification/config').then((m) => ({
+    import('@/module-configs/notification/config').then((m) => ({
       notificationModuleConfig: m.notificationModuleConfig,
     })),
-  doc: () => import('@/modules/doc/config').then((m) => ({ docModuleConfig: m.docModuleConfig })),
+  doc: () =>
+    import('@/module-configs/doc/config').then((m) => ({ docModuleConfig: m.docModuleConfig })),
   // report 与 bi 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
   report: () =>
-    import('@/modules/report/config').then((m) => ({ reportModuleConfig: m.reportModuleConfig })),
+    import('@/module-configs/report/config').then((m) => ({
+      reportModuleConfig: m.reportModuleConfig,
+    })),
   monitor: () =>
-    import('@/modules/monitor/config').then((m) => ({
+    import('@/module-configs/monitor/config').then((m) => ({
       monitorModuleConfig: m.monitorModuleConfig,
     })),
   integration: () =>
-    import('@/modules/integration/config').then((m) => ({
+    import('@/module-configs/integration/config').then((m) => ({
       integrationModuleConfig: m.integrationModuleConfig,
     })),
-  ai: () => import('@/modules/ai/config').then((m) => ({ aiModuleConfig: m.aiModuleConfig })),
+  ai: () =>
+    import('@/module-configs/ai/config').then((m) => ({ aiModuleConfig: m.aiModuleConfig })),
   mobile: () =>
-    import('@/modules/mobile/config').then((m) => ({ mobileModuleConfig: m.mobileModuleConfig })),
-  hrm: () => import('@/modules/hrm/config').then((m) => ({ hrmModuleConfig: m.hrmModuleConfig })),
+    import('@/module-configs/mobile/config').then((m) => ({
+      mobileModuleConfig: m.mobileModuleConfig,
+    })),
+  hrm: () =>
+    import('@/module-configs/hrm/config').then((m) => ({ hrmModuleConfig: m.hrmModuleConfig })),
   finance: () =>
-    import('@/modules/finance/config').then((m) => ({
+    import('@/module-configs/finance/config').then((m) => ({
       financeModuleConfig: m.financeModuleConfig,
     })),
-  crm: () => import('@/modules/crm/config').then((m) => ({ crmModuleConfig: m.crmModuleConfig })),
-  mes: () => import('@/modules/mes/config').then((m) => ({ mesModuleConfig: m.mesModuleConfig })),
-  qms: () => import('@/modules/qms/config').then((m) => ({ qmsModuleConfig: m.qmsModuleConfig })),
+  crm: () =>
+    import('@/module-configs/crm/config').then((m) => ({ crmModuleConfig: m.crmModuleConfig })),
+  mes: () =>
+    import('@/module-configs/mes/config').then((m) => ({ mesModuleConfig: m.mesModuleConfig })),
+  qms: () =>
+    import('@/module-configs/qms/config').then((m) => ({ qmsModuleConfig: m.qmsModuleConfig })),
   lims: () =>
-    import('@/modules/lims/config').then((m) => ({ limsModuleConfig: m.limsModuleConfig })),
-  ehs: () => import('@/modules/ehs/config').then((m) => ({ ehsModuleConfig: m.ehsModuleConfig })),
-  scm: () => import('@/modules/scm/config').then((m) => ({ scmModuleConfig: m.scmModuleConfig })),
-  erp: () => import('@/modules/erp/config').then((m) => ({ erpModuleConfig: m.erpModuleConfig })),
-  wms: () => import('@/modules/wms/config').then((m) => ({ wmsModuleConfig: m.wmsModuleConfig })),
-  pm: () => import('@/modules/pm/config').then((m) => ({ pmModuleConfig: m.pmModuleConfig })),
-  pdm: () => import('@/modules/pdm/config').then((m) => ({ pdmModuleConfig: m.pdmModuleConfig })),
-  srm: () => import('@/modules/srm/config').then((m) => ({ srmModuleConfig: m.srmModuleConfig })),
-  rd: () => import('@/modules/rd/config').then((m) => ({ rdModuleConfig: m.rdModuleConfig })),
+    import('@/module-configs/lims/config').then((m) => ({ limsModuleConfig: m.limsModuleConfig })),
+  ehs: () =>
+    import('@/module-configs/ehs/config').then((m) => ({ ehsModuleConfig: m.ehsModuleConfig })),
+  scm: () =>
+    import('@/module-configs/scm/config').then((m) => ({ scmModuleConfig: m.scmModuleConfig })),
+  erp: () =>
+    import('@/module-configs/erp/config').then((m) => ({ erpModuleConfig: m.erpModuleConfig })),
+  wms: () =>
+    import('@/module-configs/wms/config').then((m) => ({ wmsModuleConfig: m.wmsModuleConfig })),
+  pm: () =>
+    import('@/module-configs/pm/config').then((m) => ({ pmModuleConfig: m.pmModuleConfig })),
+  pdm: () =>
+    import('@/module-configs/pdm/config').then((m) => ({ pdmModuleConfig: m.pdmModuleConfig })),
+  srm: () =>
+    import('@/module-configs/srm/config').then((m) => ({ srmModuleConfig: m.srmModuleConfig })),
+  rd: () =>
+    import('@/module-configs/rd/config').then((m) => ({ rdModuleConfig: m.rdModuleConfig })),
   plugin: () =>
-    import('@/modules/plugin/config').then((m) => ({ pluginModuleConfig: m.pluginModuleConfig })),
-  im: () => import('@/modules/im/config').then((m) => ({ imModuleConfig: m.imModuleConfig })),
+    import('@/module-configs/plugin/config').then((m) => ({
+      pluginModuleConfig: m.pluginModuleConfig,
+    })),
+  im: () =>
+    import('@/module-configs/im/config').then((m) => ({ imModuleConfig: m.imModuleConfig })),
   // bi 与 report 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
-  bi: () => import('@/modules/bi/config').then((m) => ({ biModuleConfig: m.biModuleConfig })),
-  tms: () => import('@/modules/tms/config').then((m) => ({ tmsModuleConfig: m.tmsModuleConfig })),
-  aps: () => import('@/modules/aps/config').then((m) => ({ apsModuleConfig: m.apsModuleConfig })),
-  gis: () => import('@/modules/gis/config').then((m) => ({ gisModuleConfig: m.gisModuleConfig })),
+  bi: () =>
+    import('@/module-configs/bi/config').then((m) => ({ biModuleConfig: m.biModuleConfig })),
+  tms: () =>
+    import('@/module-configs/tms/config').then((m) => ({ tmsModuleConfig: m.tmsModuleConfig })),
+  aps: () =>
+    import('@/module-configs/aps/config').then((m) => ({ apsModuleConfig: m.apsModuleConfig })),
+  gis: () =>
+    import('@/module-configs/gis/config').then((m) => ({ gisModuleConfig: m.gisModuleConfig })),
   asset: () =>
-    import('@/modules/asset/config').then((m) => ({ assetModuleConfig: m.assetModuleConfig })),
-  oa: () => import('@/modules/oa/config').then((m) => ({ oaModuleConfig: m.oaModuleConfig })),
+    import('@/module-configs/asset/config').then((m) => ({
+      assetModuleConfig: m.assetModuleConfig,
+    })),
+  oa: () =>
+    import('@/module-configs/oa/config').then((m) => ({ oaModuleConfig: m.oaModuleConfig })),
   ticket: () =>
-    import('@/modules/ticket/config').then((m) => ({
+    import('@/module-configs/ticket/config').then((m) => ({
       ticketModuleConfig: m.ticketModuleConfig,
     })),
   // 主数据治理模块（V66 数据资产目录试点，2026-09-10）
   master: () =>
-    import('@/modules/master/config').then((m) => ({ masterModuleConfig: m.masterModuleConfig })),
+    import('@/module-configs/master/config').then((m) => ({
+      masterModuleConfig: m.masterModuleConfig,
+    })),
 };
 
 const loadedModules = new Map<string, RouteModuleConfig>();

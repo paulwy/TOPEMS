@@ -6,7 +6,7 @@ import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import type { RsStatistics } from '@/api/rd';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';

@@ -3,7 +3,7 @@ import styles from './DynamicRouter.module.css';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { PluginManifest } from './PluginLoader';
 import { ModuleLoadingFallback, PluginLoader } from './PluginLoader';
-import { moduleRegistry } from '@/modules/registry';
+import { moduleRegistry } from '@/module-configs/registry';
 import { eventBus, ModuleEvents } from './eventBus';
 import { logger } from '@/utils/logger';
 

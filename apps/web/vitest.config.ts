@@ -319,7 +319,7 @@ export default defineConfig({
           include: [
             'src/api/crm/**/*.{ts,tsx}',
             'src/schemas/crm/**/*.{ts,tsx}',
-            'src/modules/crm/**/*.{ts,tsx}',
+            'src/module-configs/crm/**/*.{ts,tsx}',
           ],
           exclude: [
             'src/**/types.ts',

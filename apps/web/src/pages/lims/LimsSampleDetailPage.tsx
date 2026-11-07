@@ -41,7 +41,7 @@ import {
 } from 'recharts';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 
 interface SampleTestRecord {
   id: string;

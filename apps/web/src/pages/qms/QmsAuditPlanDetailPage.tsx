@@ -26,7 +26,7 @@ import { auditApi } from '@/api/qms/audit';
 import type { AuditPlan, AuditTask, AuditFinding } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 import {
   DetailPageTemplate,
   type TabConfig,

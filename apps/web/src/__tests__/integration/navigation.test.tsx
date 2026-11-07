@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { useAuthStore } from '@/store';
-import { ERP_PATHS } from '@/modules/erp/config';
+import { ERP_PATHS } from '@/module-configs/erp/config';
 
 vi.mock('@/store', () => ({
   useAuthStore: vi.fn(),

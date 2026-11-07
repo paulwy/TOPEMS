@@ -44,11 +44,12 @@ function extractModuleCodes(content) {
 
 function extractNavModuleCodes(content) {
   // 从 lib/navigation/modules/index.ts 的导航配置注册中提取模块 code：
-  //   import { aiNavConfig } from '@/modules/ai/config';
+  //   import { aiNavConfig } from '@/module-configs/ai/config';
   // 历史上导航模块在 lazy.ts 以 `code: () => import(...)` 注册；V6x 重构后改为
   // coreModuleNavConfigs 静态数组 + 具名 navConfig import，注册点迁到 modules/index.ts。
   const codes = new Set();
-  const regex = /from\s+'@\/modules\/([a-zA-Z0-9_-]+)\/config'/g;
+  // W3-A 完成：模块配置目录已收敛为 module-configs/。
+  const regex = /from\s+'@\/module-configs\/([a-zA-Z0-9_-]+)\/config'/g;
   let match;
   while ((match = regex.exec(content)) !== null) {
     codes.add(match[1]);

@@ -24,8 +24,8 @@ import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { lucideIcons } from '../../lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { AI_PATHS } from '@/modules/ai/config';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { AI_PATHS } from '@/module-configs/ai/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 
 function getNavigablePath(path: string): string | null {

@@ -32,7 +32,7 @@ import {
   ToastContainer,
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import { stockTakeApi } from '@/api/wms/stocktake';
 import type { StockTake as ApiStockTake, CreateStockTakeRequest } from '@/api/wms/types';
 

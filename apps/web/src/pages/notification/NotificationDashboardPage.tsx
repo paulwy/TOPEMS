@@ -20,7 +20,7 @@ import {
 import i18n from '@/i18n';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,

@@ -26,7 +26,7 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { LazyChart } from '@/components/charts';
 import { useNotificationStore } from '@/store';
 import { getErrorMessage } from '@/utils/errors';
-import { MONITOR_PATHS } from '@/modules/monitor/config';
+import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
 

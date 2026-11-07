@@ -10,7 +10,7 @@ import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { employeeApi, departmentApi, positionApi, type Department, type Position } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
-import { HRM_PATHS } from '@/modules/hrm/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
 import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';

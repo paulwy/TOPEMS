@@ -18,7 +18,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
-import { INTEGRATION_PATHS } from '@/modules/integration/config';
+import { INTEGRATION_PATHS } from '@/module-configs/integration/config';
 import {
   integrationMappingSchema,
   MAPPING_TYPE_LABELS,

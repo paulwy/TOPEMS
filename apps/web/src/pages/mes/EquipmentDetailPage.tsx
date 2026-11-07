@@ -13,7 +13,7 @@ import { designTokens } from '@/theme/tokens';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
-import { MES_PATHS } from '@/modules/mes/config';
+import { MES_PATHS } from '@/module-configs/mes/config';
 import i18n from '@/i18n';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
 

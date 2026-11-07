@@ -10,7 +10,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import { LazyChart } from '@/components/charts';
 import { wmsAnalyticsApi } from '@/api/wms/analytics';
 

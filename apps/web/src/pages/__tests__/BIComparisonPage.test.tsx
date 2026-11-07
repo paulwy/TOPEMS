@@ -51,7 +51,7 @@ vi.mock('@/components/charts/chartTheme', () => ({
     neutral: {},
   },
 }));
-vi.mock('@/modules/bi/config', () => ({
+vi.mock('@/module-configs/bi/config', () => ({
   BI_PATHS: { comparison: '/bi/comparison' },
 }));
 vi.mock('@topems/shared-components', () => ({

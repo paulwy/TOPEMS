@@ -26,7 +26,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
-import { INTEGRATION_PATHS } from '@/modules/integration/config';
+import { INTEGRATION_PATHS } from '@/module-configs/integration/config';
 import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

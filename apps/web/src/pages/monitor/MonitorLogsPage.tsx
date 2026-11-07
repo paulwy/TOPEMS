@@ -38,7 +38,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '../../store';
 import { extractErrorMessage } from '@/utils/errors';
-import { MONITOR_PATHS } from '@/modules/monitor/config';
+import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { getLogSchema } from '@/schemas/monitor/logs';
 import { useTranslation } from 'react-i18next';
 import { monitorApi } from '@/api/monitor';

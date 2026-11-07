@@ -38,7 +38,7 @@ import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { mobileApi } from '@/api/mobile';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

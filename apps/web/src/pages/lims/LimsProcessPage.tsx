@@ -24,7 +24,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { processSchema } from '@/schemas/lims';
 import { MetricCard } from '@/components/bi/MetricCard';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

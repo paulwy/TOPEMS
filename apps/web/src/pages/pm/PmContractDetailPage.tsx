@@ -20,7 +20,7 @@ import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

@@ -15,7 +15,7 @@ import type {
   SegmentCriteria,
   SegmentationQuadrantRow,
 } from '@/api/crm';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 import i18n from '@/i18n';
 import { useQuery } from '@tanstack/react-query';
 

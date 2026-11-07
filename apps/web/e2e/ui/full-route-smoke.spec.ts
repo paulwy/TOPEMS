@@ -3,7 +3,7 @@
  *
  * 背景（架构事实，权威）：
  * - 静态路由：`src/routes/dashboard.ts` / `common.ts` / `auth.ts`。
- * - 业务模块路由：各 `src/modules/<name>/config.ts` 的 routes 数组（path 引用
+ * - 业务模块路由：各 `src/module-configs/<name>/config.ts` 的 routes 数组（path 引用
  *   `<MODULE>_PATHS.x` 常量表），由 `src/routes/v2/index.ts#getAllRoutes` 聚合、
  *   `components/DynamicRoutes.tsx`（挂在 `path='*'`）按首段模块码加载渲染。
  * - 布局：受保护主路由恒用 GlobalLayoutV3（SideRail `<nav aria-label='Main navigation'>`
@@ -64,7 +64,7 @@ function buildInventory(webSrc: string): RouteEntry[] {
     if (fs.existsSync(abs)) push(`routes/${f}`, extractPaths(abs));
   }
 
-  const modDir = path.join(webSrc, 'modules');
+  const modDir = path.join(webSrc, 'module-configs');
   for (const name of fs.readdirSync(modDir).sort()) {
     const cfg = path.join(modDir, name, 'config.ts');
     if (fs.existsSync(cfg)) push(`module:${name}`, extractPaths(cfg));

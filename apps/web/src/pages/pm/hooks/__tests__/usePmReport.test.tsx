@@ -36,7 +36,7 @@ vi.mock('@/api/pm', () => ({
   },
 }));
 
-vi.mock('@/modules/pm/config', () => ({
+vi.mock('@/module-configs/pm/config', () => ({
   PM_PATHS: { root: '/pm', reports: '/pm/reports' },
 }));
 

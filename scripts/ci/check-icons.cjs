@@ -19,10 +19,10 @@ const fs = require('fs');
 const path = require('path');
 
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
-const MODULES_DIR = path.join(WEB_ROOT, 'modules');
+const MODULES_DIR = path.join(WEB_ROOT, 'module-configs');
 const ICON_MAPPING_FILE = path.join(WEB_ROOT, 'lib', 'iconMapping.tsx');
 
-// 收集 modules/*/config.ts 中所有 icon: '...' 引用
+// 收集 module-configs/*/config.ts 中所有 icon: '...' 引用
 function collectIconRefs() {
   const refs = []; // { file, module, icon, line }
   if (!fs.existsSync(MODULES_DIR)) return refs;

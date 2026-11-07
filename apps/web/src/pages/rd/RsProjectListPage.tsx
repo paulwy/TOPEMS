@@ -7,7 +7,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { projectSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { CreateProjectRequest } from '@/api/rd';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import i18n from '@/i18n';
 
 const projectApiAdapter = createCrudPageAdapter(

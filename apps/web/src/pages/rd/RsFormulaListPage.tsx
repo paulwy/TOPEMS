@@ -9,7 +9,7 @@ import { formulaSchema } from '@/schemas/rd';
 import { formulaApi } from '@/api/rd';
 import type { Formula, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rd';
 import { PageContainer } from '@/components/common';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import i18n from '@/i18n';
 
 const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest, UpdateFormulaRequest>({

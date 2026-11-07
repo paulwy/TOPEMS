@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { iamModuleConfig } from '@/modules/iam/config';
-import { adminModuleConfig } from '@/modules/admin/config';
+import { iamModuleConfig } from '@/module-configs/iam/config';
+import { adminModuleConfig } from '@/module-configs/admin/config';
 import { coreModuleRoutes } from '@/routes/v2';
 
 describe('IAM Module Route Configuration', () => {

@@ -53,7 +53,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/utils/logger', () => ({ logger: h.logger }));
 
-vi.mock('@/modules/registry', () => ({
+vi.mock('@/module-configs/registry', () => ({
   moduleRegistry: {
     getAllRoutes: (...args: unknown[]) => h.getAllRoutes(...args),
     getModuleByRoutePath: (...args: unknown[]) => h.getModuleByRoutePath(...args),

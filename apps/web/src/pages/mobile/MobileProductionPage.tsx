@@ -4,7 +4,7 @@ import { IconButton } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User, Barcode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, PullToRefresh, MobileSkeleton } from '@/components/mobile';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { useMobileProduction } from './hooks/useMobileProduction';
 import { MobileProductionFilters } from './components/MobileProductionFilters';

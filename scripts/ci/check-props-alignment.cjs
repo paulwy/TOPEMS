@@ -4,7 +4,7 @@
 /* =======================================================================
  *  check-props-alignment.cjs — Props Field Realness AST Scanner (V258)
  *
- *  Scans apps/web/src/modules/{module}/config.ts for RouteConfigV2<PropsType>
+ *  Scans apps/web/src/module-configs/{module}/config.ts for RouteConfigV2<PropsType>
  *  declarations, extracts the Props interface fields, then parses the
  *  corresponding @/pages/<module>/<Page>.tsx to detect which props fields
  *  are actually destructured in the component body.
@@ -30,7 +30,7 @@ try { ts = require('typescript'); } catch {
 
 const ROOT = path.resolve(__dirname, '../..');
 const WEB_SRC = path.join(ROOT, 'apps/web/src');
-const MODULES_DIR = path.join(WEB_SRC, 'modules');
+const MODULES_DIR = path.join(WEB_SRC, 'module-configs');
 
 // Built-in TS utility types — not user-defined Props interfaces
 const BUILTIN_TYPES = new Set(['Record', 'Partial', 'Pick', 'Omit', 'Readonly', 'Required', 'string', 'unknown', 'any', 'never', 'void']);

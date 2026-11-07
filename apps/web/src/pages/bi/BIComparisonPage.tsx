@@ -48,7 +48,7 @@ import {
 } from '@/api/bi';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
-import { BI_PATHS } from '@/modules/bi/config';
+import { BI_PATHS } from '@/module-configs/bi/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;

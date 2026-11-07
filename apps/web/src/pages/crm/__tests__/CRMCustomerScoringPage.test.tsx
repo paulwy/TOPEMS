@@ -39,7 +39,7 @@ vi.mock('@/utils/logger', () => ({
   apiLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
-vi.mock('@/modules/crm/config', () => ({
+vi.mock('@/module-configs/crm/config', () => ({
   CRM_PATHS: { root: '/crm' },
 }));
 

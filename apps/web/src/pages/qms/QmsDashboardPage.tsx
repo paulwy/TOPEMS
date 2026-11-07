@@ -27,7 +27,7 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi, useQmsMock, type QualityOverview, type QmsMockShape } from '@/api/qms';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 
 const QmsDashboardPage: React.FC = () => {
   const theme = useTheme();

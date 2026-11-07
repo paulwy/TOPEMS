@@ -9,7 +9,7 @@ import styles from './ProfileShortcuts.module.css';
 import { Activity, FileText, GitBranch, Bell, Bot, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography, Chip, useTheme } from '@mui/material';
-import { IM_PATHS } from '@/modules/im/config';
+import { IM_PATHS } from '@/module-configs/im/config';
 import type { UseProfileReturn } from '../hooks/useProfile';
 
 interface ShortcutOption {

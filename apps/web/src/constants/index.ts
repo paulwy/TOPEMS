@@ -12,7 +12,7 @@
  *    - retry.ts   — lazy-load retry parameters
  * 3. Route-module-specific path sets (AUTH_PATHS / DASHBOARD_PATHS / *_PATHS)
  *    are still maintained by src/routes/{auth,dashboard,common}.ts and
- *    src/modules/<name>/config. This directory only carries global
+ *    src/module-configs/<name>/config. This directory only carries global
  *    strategic route constants.
  */
 

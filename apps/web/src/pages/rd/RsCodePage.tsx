@@ -4,7 +4,7 @@ import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { codeSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Project } from '@/api/rd';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import i18n from '@/i18n';
 
 interface CodeRepo {

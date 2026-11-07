@@ -10,7 +10,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 

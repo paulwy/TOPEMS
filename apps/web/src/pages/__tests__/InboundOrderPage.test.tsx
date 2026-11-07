@@ -57,7 +57,7 @@ vi.mock('@/schemas/wms/inboundOrder', () => ({
   inboundOrderSchema: { name: 'inboundOrderSchema' },
 }));
 
-vi.mock('@/modules/wms/config', () => ({
+vi.mock('@/module-configs/wms/config', () => ({
   WMS_PATHS: { root: '/wms' },
 }));
 

@@ -10,7 +10,7 @@ import {
   type QuickAction,
 } from '@/components/templates';
 import i18n from '@/i18n';
-import { TMS_PATHS } from '@/modules/tms/config';
+import { TMS_PATHS } from '@/module-configs/tms/config';
 import { tmsApi, tmsAnalyticsApi } from '@/api/tms';
 
 const TmsDashboardPage: React.FC = () => {

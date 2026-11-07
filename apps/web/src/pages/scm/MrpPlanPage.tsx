@@ -28,7 +28,7 @@ import type {
 } from '@/api/scm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { SCM_PATHS } from '@/modules/scm/config';
+import { SCM_PATHS } from '@/module-configs/scm/config';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

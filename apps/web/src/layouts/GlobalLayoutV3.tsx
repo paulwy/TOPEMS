@@ -13,7 +13,7 @@ import { getUnreadCount } from '@/api/notification';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import { lucideIcons } from '@/lib/iconMapping';
 import { DOMAIN_GROUPS } from '@/config/moduleTiers';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import type { DbMenuItem } from '@/api/core/menus';
 import { useMenuAuthority } from '@/hooks/useMenuAuthority';
 import { useTenantModules } from '@/hooks/useTenantModules';

@@ -32,7 +32,7 @@ import {
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { ConfirmDialog } from '@topems/shared-components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

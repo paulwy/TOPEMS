@@ -40,7 +40,7 @@ vi.mock('@/utils/logger', () => ({
   apiLogger: { error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@/modules/crm/config', () => ({ CRM_PATHS: { customers: '/crm/customers' } }));
+vi.mock('@/module-configs/crm/config', () => ({ CRM_PATHS: { customers: '/crm/customers' } }));
 
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ id: 'test-id' }),

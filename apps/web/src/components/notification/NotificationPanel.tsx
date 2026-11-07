@@ -7,7 +7,7 @@ import NotificationSettings from './NotificationSettings';
 import type { Notification } from '@/api/notification';
 import { getNotifications, getUnreadCount, markAllAsRead } from '@/api/notification';
 import { logger } from '@/utils/logger';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';

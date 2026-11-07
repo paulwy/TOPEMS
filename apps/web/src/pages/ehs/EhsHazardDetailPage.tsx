@@ -31,7 +31,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
-import { EHS_PATHS } from '@/modules/ehs/config';
+import { EHS_PATHS } from '@/module-configs/ehs/config';
 
 import { useTranslation } from 'react-i18next';
 

@@ -7,7 +7,7 @@ import { formulaApi, rdApi } from '@/api/rd';
 import type { FormulaIngredient, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rd';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import {

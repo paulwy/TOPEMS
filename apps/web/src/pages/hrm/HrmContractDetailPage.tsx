@@ -17,7 +17,7 @@ import {
 import { FileText, Calendar, User, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Contract } from '@/api/hrm';
-import { HRM_PATHS } from '@/modules/hrm/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';

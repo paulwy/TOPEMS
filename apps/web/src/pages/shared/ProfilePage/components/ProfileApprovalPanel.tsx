@@ -14,7 +14,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { IM_PATHS } from '@/modules/im/config';
+import { IM_PATHS } from '@/module-configs/im/config';
 
 interface ActivityItem {
   id: string;

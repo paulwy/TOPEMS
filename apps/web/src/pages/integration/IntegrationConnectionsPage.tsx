@@ -17,7 +17,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { INTEGRATION_PATHS } from '@/modules/integration/config';
+import { INTEGRATION_PATHS } from '@/module-configs/integration/config';
 import { integrationConnectionSchema } from '@/schemas/integration';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';

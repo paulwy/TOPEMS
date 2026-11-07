@@ -4,7 +4,7 @@
  *
  * Scans the codebase to produce a complete module inventory:
  *   - Backend: svc/<service>/Cargo.toml (service name, port, dependencies)
- *   - Frontend: apps/web/src/modules/<module>/config.ts (module name, routes, navItems)
+ *   - Frontend: apps/web/src/module-configs/<module>/config.ts (module name, routes, navItems)
  *   - Database: svc/<service>/migrations/*.sql (table count per service)
  *
  * Output: docs/architecture/inventory.md (overwrites)
@@ -16,7 +16,7 @@ import { join, resolve, basename, dirname } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const SVC_DIR = join(ROOT, 'svc');
-const MODULES_DIR = join(ROOT, 'apps', 'web', 'src', 'modules');
+const MODULES_DIR = join(ROOT, 'apps', 'web', 'src', 'module-configs');
 const OUT_FILE = join(ROOT, 'docs', 'architecture', 'inventory.md');
 
 // --- Scan backend services ---
@@ -166,7 +166,7 @@ node scripts/generate-inventory.mjs
 
 This file should be re-generated whenever:
 - A new backend service is added under \`svc/\`
-- A new frontend module is added under \`apps/web/src/modules/\`
+- A new frontend module is added under \`apps/web/src/module-configs/\`
 - Migration files are added or removed
 `;
 

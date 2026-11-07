@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardWebSocket } from '@/hooks/useDashboardWebSocket';
-import { MES_PATHS } from '@/modules/mes/config';
+import { MES_PATHS } from '@/module-configs/mes/config';
 import { Box, Divider, FormControlLabel, Switch, Stack, Typography, Paper } from '@mui/material';
 import i18n from '@/i18n';
 import {

@@ -17,7 +17,7 @@ import {
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { DashboardTemplate, type StatCard, type QuickAction } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';

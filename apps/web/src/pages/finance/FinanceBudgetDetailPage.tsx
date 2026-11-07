@@ -3,7 +3,7 @@ import styles from './FinanceBudgetDetailPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import {
   Box,
   Typography,

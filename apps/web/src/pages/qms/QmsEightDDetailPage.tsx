@@ -14,7 +14,7 @@ import type { EightDReport } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 import i18n from '@/i18n';
 
 function getSteps() {

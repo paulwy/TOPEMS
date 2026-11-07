@@ -38,7 +38,7 @@ import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 const DEFAULT_STATS: PmStatistics = {

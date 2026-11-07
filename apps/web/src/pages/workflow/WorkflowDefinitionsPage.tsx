@@ -15,7 +15,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { workflowDefinitionApi } from '@/api/workflow';
 import { workflowDefinitionSchema } from '@/schemas/workflow';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
 import { formatDate } from '@/utils/date';

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MODULES_DIR = join(__dirname, '..', 'apps/web/src/modules');
+const MODULES_DIR = join(__dirname, '..', 'apps/web/src/module-configs');
 
 // 字段正则（支持单双引号）
 const FIELD = (name) => new RegExp(`${name}:\\s*['"]([^'"]+)['"]`, 'm');

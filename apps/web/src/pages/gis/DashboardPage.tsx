@@ -5,7 +5,7 @@ import { FileText, ArrowRight, Activity, Layers, MapPin, Globe } from 'lucide-re
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { GIS_PATHS } from '@/modules/gis/config';
+import { GIS_PATHS } from '@/module-configs/gis/config';
 import { gisApi } from '@/api/gis';
 import type { GisStatistics } from '@/api/gis';
 import { LazyChart } from '@/components/charts';

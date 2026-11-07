@@ -131,7 +131,7 @@ vi.mock('@/components/redesign', () => {
   };
 });
 
-vi.mock('@/modules/wms/config', () => ({
+vi.mock('@/module-configs/wms/config', () => ({
   WMS_PATHS: { root: '/wms' },
 }));
 

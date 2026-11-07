@@ -5,7 +5,7 @@ import { Users, ShoppingCart, Clock, Calculator, Award, Truck, Star } from 'luci
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { SCM_PATHS } from '@/modules/scm/config';
+import { SCM_PATHS } from '@/module-configs/scm/config';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

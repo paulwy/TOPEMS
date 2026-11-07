@@ -9,7 +9,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { wmsApi } from '@/api/wms';
 import i18n from '@/i18n';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 // P3 批7：新建操作权限约束（BE-only 码补前端落点，见 docs/audit/P3-3_*.md）
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';

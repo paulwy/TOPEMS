@@ -14,7 +14,7 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { HRM_PATHS } from '@/modules/hrm/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
 
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';

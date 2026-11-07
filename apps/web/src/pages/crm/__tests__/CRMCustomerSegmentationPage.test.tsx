@@ -32,7 +32,7 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('@/modules/crm/config', () => ({
+vi.mock('@/module-configs/crm/config', () => ({
   CRM_PATHS: { root: '/crm' },
 }));
 

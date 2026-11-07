@@ -2,7 +2,7 @@ import { Grid } from '@/components';
 import styles from './RsExperimentDetailPage.module.css';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RD_PATHS } from '@/modules/rd/config';
+import { RD_PATHS } from '@/module-configs/rd/config';
 import {
   Container,
   Typography,

@@ -18,7 +18,7 @@ import { PageContainer } from '@/components/common';
 import { sampleSchema } from '@/schemas/lims';
 import { limsApi, type Sample } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
-import { LIMS_PATHS } from '@/modules/lims/config';
+import { LIMS_PATHS } from '@/module-configs/lims/config';
 import { getStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
 

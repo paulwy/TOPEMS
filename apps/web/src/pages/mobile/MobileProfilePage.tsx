@@ -25,7 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, MobileCard } from '@/components/mobile';
 import { MobilePageTemplate } from '@/components/templates';
 import { useAuthStore } from '@/store';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 
 interface SettingGroup {
   title: string;

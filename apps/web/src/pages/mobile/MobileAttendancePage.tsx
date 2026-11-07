@@ -45,7 +45,7 @@ import {
 import { useNotificationStore } from '@/store';
 import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';

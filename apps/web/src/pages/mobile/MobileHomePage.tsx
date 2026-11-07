@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { MobilePageTemplate } from '@/components/templates';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 
 const ct = designTokens.colors;
 const quickActions = [

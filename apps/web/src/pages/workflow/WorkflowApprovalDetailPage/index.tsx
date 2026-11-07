@@ -9,7 +9,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ApprovalHeader, { getStatusText } from './components/ApprovalHeader';
 import {

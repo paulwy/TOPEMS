@@ -11,7 +11,7 @@ import { qualityStandardSchema } from '@/schemas/qms';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { QMS_PATHS } from '@/modules/qms/config';
+import { QMS_PATHS } from '@/module-configs/qms/config';
 import i18n from '@/i18n';
 
 const standardAdapter = {

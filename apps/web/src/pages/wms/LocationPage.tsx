@@ -5,7 +5,7 @@
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { wmsApi } from '@/api/wms';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';

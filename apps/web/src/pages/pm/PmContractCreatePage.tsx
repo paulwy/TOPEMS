@@ -10,7 +10,7 @@ import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 

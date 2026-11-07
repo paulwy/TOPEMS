@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { AUTH_PATHS } from '@/routes/auth';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { ADMIN_PATHS } from '@/modules/admin/config';
-import { IAM_PATHS } from '@/modules/iam/config';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-import { SRM_PATHS } from '@/modules/srm/config';
-import { BI_PATHS } from '@/modules/bi/config';
-import { DOC_PATHS } from '@/modules/doc/config';
-import { EHS_PATHS } from '@/modules/ehs/config';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { HRM_PATHS } from '@/modules/hrm/config';
-import { crmModuleConfig } from '@/modules/crm/config';
+import { ADMIN_PATHS } from '@/module-configs/admin/config';
+import { IAM_PATHS } from '@/module-configs/iam/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
+import { SRM_PATHS } from '@/module-configs/srm/config';
+import { BI_PATHS } from '@/module-configs/bi/config';
+import { DOC_PATHS } from '@/module-configs/doc/config';
+import { EHS_PATHS } from '@/module-configs/ehs/config';
+import { MOBILE_PATHS } from '@/module-configs/mobile/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
+import { crmModuleConfig } from '@/module-configs/crm/config';
 import { coreModuleRoutes } from '@/routes/v2';
 
 describe('Path Constants Validation', () => {

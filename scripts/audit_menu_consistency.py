@@ -4,7 +4,7 @@
 audit_menu_consistency.py — TOPEMS 前端 navItems ↔ DB core_menus 菜单对账脚本（只读）
 
 用途（审计整改 P1 对账机制）：
-  1. 解析 apps/web/src/modules/<mod>/config.ts 的 navItems（code / path，path 变量引用解析）；
+  1. 解析 apps/web/src/module-configs/<mod>/config.ts 的 navItems（code / path，path 变量引用解析）；
   2. 解析 database/migrations/20260724000005_seed_module_menus.sql 的 core_menus 种子（code / path）；
   3. 输出四类不一致：
      - orphan_FE：前端 navItem 在 DB 无对应 code（MENU_ORPHAN_FE）
@@ -25,7 +25,7 @@ audit_menu_consistency.py — TOPEMS 前端 navItems ↔ DB core_menus 菜单对
 import re, os, sys, json, glob
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODS_DIR = os.path.join(ROOT, "apps", "web", "src", "modules")
+MODS_DIR = os.path.join(ROOT, "apps", "web", "src", "module-configs")
 SEED_FILE = os.path.join(ROOT, "database", "migrations", "20260724000005_seed_module_menus.sql")
 
 

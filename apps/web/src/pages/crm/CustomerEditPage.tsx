@@ -10,7 +10,7 @@ import { PageContainer } from '@/components/common';
 import { customerApi, type UpdateCustomerRequest } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';

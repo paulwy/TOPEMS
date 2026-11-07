@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import StatCard from './StatCard';
 import FileCard from './FileCard';
 import type { FileItem, DisplayItem, ViewMode } from '../types';
-import { DOC_PATHS } from '@/modules/doc/config';
+import { DOC_PATHS } from '@/module-configs/doc/config';
 import { designTokens } from '@topems/tokens';
 
 interface DocumentListProps {

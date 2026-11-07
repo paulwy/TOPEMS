@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { FileText, CheckCircle, Clock, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { SRM_PATHS } from '@/modules/srm/config';
+import { SRM_PATHS } from '@/module-configs/srm/config';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

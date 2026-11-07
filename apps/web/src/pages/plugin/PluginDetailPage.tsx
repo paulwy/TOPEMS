@@ -38,7 +38,7 @@ import { getPlugin, getPluginVersions, getPluginReviews, submitPluginReview } fr
 import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { PLUGIN_PATHS } from '@/module-configs/plugin/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

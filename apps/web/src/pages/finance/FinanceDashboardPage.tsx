@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { FINANCE_PATHS } from '@/modules/finance/paths';
+import { FINANCE_PATHS } from '@/module-configs/finance/paths';
 import { financeApi } from '@/api/finance';
 import type { FinanceDashboardStats } from '@/api/finance';
 import {

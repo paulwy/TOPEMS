@@ -9,7 +9,7 @@ import { DataExport, PageContainer } from '@/components/common';
 import { projectSchema } from '@/schemas/pm';
 import { pmApi } from '@/api/pm';
 import type { Project } from '@/api/pm';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 

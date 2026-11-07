@@ -15,7 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Bell, CheckCheck, Trash2, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import {
   getNotifications,
   markAllAsRead,

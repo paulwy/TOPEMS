@@ -13,7 +13,7 @@ import {
 } from '@/api/notification';
 import { batchApi } from '@/api/notification/batch';
 import i18n from '@/i18n';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';

@@ -8,7 +8,7 @@ import { crmApi } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

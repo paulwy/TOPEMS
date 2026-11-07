@@ -28,7 +28,7 @@ import type { FinancialVoucher, VoucherItemRequest } from '@/api/finance';
 import type { VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import { voucherSchema, accountingSubjectSchema } from '@/schemas/finance';
 import type { EntitySchema, BatchActionConfig } from '@/schema';
 import type { RowAction } from '@/components/templates';

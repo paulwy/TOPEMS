@@ -11,7 +11,7 @@ import { createListPageCrudApi } from '@/schema/listPageCrudAdapter';
 import { getColumns } from '@/schema';
 import { warehouseSchema } from '@/schemas/wms/warehouse';
 import { wmsApi } from '@/api/wms';
-import { WMS_PATHS } from '@/modules/wms/config';
+import { WMS_PATHS } from '@/module-configs/wms/config';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 

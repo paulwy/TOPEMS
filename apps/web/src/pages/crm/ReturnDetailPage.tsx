@@ -9,7 +9,7 @@ import type { ReturnRecord, ReturnStatus, ReturnType, ReturnItem } from '@/api/c
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
-import { CRM_PATHS } from '@/modules/crm/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';

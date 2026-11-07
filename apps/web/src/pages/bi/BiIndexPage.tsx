@@ -39,7 +39,7 @@ import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { fetchDashboards, listDatasets, type Dashboard, type Report, type Dataset } from '@/api/bi';
 import { fetchReports } from '@/api/report';
 import { logger } from '@/utils/logger';
-import { BI_PATHS } from '@/modules/bi/config';
+import { BI_PATHS } from '@/module-configs/bi/config';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';

@@ -32,7 +32,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { ChatPageTemplate } from '@/components/templates';
-import { AI_PATHS } from '@/modules/ai/config';
+import { AI_PATHS } from '@/module-configs/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
 import { difyApi } from '@/api/ai';

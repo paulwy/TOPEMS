@@ -32,7 +32,7 @@ vi.mock('@/components/charts', () => ({
   LazyChart: () => <div data-testid='lazy-chart' />,
 }));
 
-vi.mock('@/modules/erp/config', () => ({
+vi.mock('@/module-configs/erp/config', () => ({
   ERP_PATHS: {
     voucherManagement: '/erp/voucher',
     budgetManagement: '/erp/budget',

@@ -1,10 +1,10 @@
-import { AI_PATHS } from '@/modules/ai/config';
-import { BI_PATHS } from '@/modules/bi/config';
-import { CRM_PATHS } from '@/modules/crm/config';
-import { FINANCE_PATHS } from '@/modules/finance/config';
-import { HRM_PATHS } from '@/modules/hrm/config';
-import { PM_PATHS } from '@/modules/pm/config';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { AI_PATHS } from '@/module-configs/ai/config';
+import { BI_PATHS } from '@/module-configs/bi/config';
+import { CRM_PATHS } from '@/module-configs/crm/config';
+import { FINANCE_PATHS } from '@/module-configs/finance/config';
+import { HRM_PATHS } from '@/module-configs/hrm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
+import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { AICopilotContext } from './copilotContext';
 import i18n from '@/i18n';

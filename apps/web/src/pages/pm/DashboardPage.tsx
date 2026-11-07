@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pmApi, pmAnalyticsApi, type Project } from '@/api/pm';
-import { PM_PATHS } from '@/modules/pm/config';
+import { PM_PATHS } from '@/module-configs/pm/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
