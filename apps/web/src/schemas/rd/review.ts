@@ -1,22 +1,34 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
-import { GitPullRequest, User } from 'lucide-react';
+import { FileText, User, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
-const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
+/**
+ * 批 38：评审页数据源从 rd.builds 切换为 rs.formulas。
+ * - api.resource: formulas（复用既有 /api/rd/formulas 端点）
+ * - 字段对齐 rs.formulas：name/code/version/approval_status/approved_by/approved_at
+ * - 删除 rd.builds 才有的死字段：reviewer/comment_count/branch/commit_hash/build_type/logs
+ */
+
+const APPROVAL_STATUS_COLOR_MAP: Record<
+  string,
+  'default' | 'primary' | 'success' | 'error' | 'warning'
+> = {
   pending: 'warning',
   approved: 'success',
   rejected: 'error',
-  in_progress: 'primary',
+  none: 'default',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: i18n.t('rd.review.k0'),
-  approved: i18n.t('rd.review.k1'),
-  rejected: i18n.t('rd.review.k2'),
-  in_progress: i18n.t('rd.review.k3'),
-};
+function getApprovalStatusLabelMap(): Record<string, string> {
+  return {
+    pending: i18n.t('rd.review.k0'),
+    approved: i18n.t('rd.review.k1'),
+    rejected: i18n.t('rd.review.k2'),
+    none: i18n.t('rd.review.k17'),
+  };
+}
 
 export const reviewSchema: EntitySchema = {
   entity: 'rd_review',
@@ -25,39 +37,70 @@ export const reviewSchema: EntitySchema = {
 
   api: {
     module: 'rd',
-    resource: 'builds',
+    resource: 'formulas',
   },
 
-  // 批24：按真实数据源接入（/api/rd/builds → rd.builds），不为其造 rd:review 码
-  permissionResource: 'rd:build',
+  // 批 38：评审页读 rs.formulas，权限落在 rd:formula
+  permissionResource: 'rd:formula',
 
   fields: [
     {
-      name: 'title',
+      name: 'name',
       label: i18n.t('rd.review.k6'),
       type: 'text',
       required: true,
-      listWidth: 250,
+      listWidth: 220,
       renderCell: (row: Record<string, unknown>) => {
-        const title =
-          row.build_no && row.project_name
-            ? `${row.build_no} - ${row.project_name}`
-            : String(row.title ?? row.build_no ?? '');
+        const name = String(row.name ?? '');
+        const version = row.version ? ` · v${String(row.version)}` : '';
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
-          React.createElement(GitPullRequest, { size: 16, color: 'primary.main' }),
-          React.createElement(Typography, { variant: 'body2' }, title)
+          React.createElement(FileText, { size: 16, color: 'primary.main' }),
+          React.createElement(
+            Typography,
+            { variant: 'body2', sx: { fontWeight: 500 } },
+            `${name}${version}`
+          )
         );
       },
     },
     {
-      name: 'reviewer',
+      name: 'code',
+      label: i18n.t('rd.review.k35'),
+      type: 'text',
+      listWidth: 140,
+      renderCell: (row: Record<string, unknown>) => String(row.code ?? '-'),
+    },
+    {
+      name: 'approval_status',
+      label: i18n.t('rd.review.k10'),
+      type: 'select',
+      defaultValue: 'pending',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'pending', label: i18n.t('rd.review.k11') },
+          { value: 'approved', label: i18n.t('rd.review.k13') },
+          { value: 'rejected', label: i18n.t('rd.review.k14') },
+        ],
+      },
+      listWidth: 110,
+      renderCell: (row: Record<string, unknown>) => {
+        const raw = String(row.approval_status ?? '').toLowerCase();
+        const key = raw || 'none';
+        const label = getApprovalStatusLabelMap()[key] || raw || '-';
+        const color = APPROVAL_STATUS_COLOR_MAP[key] || 'default';
+        return React.createElement(Chip, { label, size: 'small', color });
+      },
+    },
+    {
+      name: 'approved_by',
       label: i18n.t('rd.review.k7'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
-        const val = String(row.reviewer ?? i18n.t('rd.review.k8'));
+        const val = row.approved_by ? String(row.approved_by) : i18n.t('rd.review.k8');
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -67,57 +110,19 @@ export const reviewSchema: EntitySchema = {
       },
     },
     {
-      name: 'author',
-      label: i18n.t('rd.review.k9'),
-      type: 'text',
-      listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
-        return String(row.project_name ?? row.author ?? '-');
-      },
-    },
-    {
-      name: 'status',
-      label: i18n.t('rd.review.k10'),
-      type: 'select',
-      defaultValue: 'pending',
-      options: {
-        type: 'static',
-        options: [
-          { value: 'pending', label: i18n.t('rd.review.k11') },
-          { value: 'in_progress', label: i18n.t('rd.review.k12') },
-          { value: 'approved', label: i18n.t('rd.review.k13') },
-          { value: 'rejected', label: i18n.t('rd.review.k14') },
-        ],
-      },
-      listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
-        let status = String(row.status ?? '');
-        if (status === 'success') status = 'approved';
-        else if (status === 'failed') status = 'rejected';
-        else if (status === 'running') status = 'in_progress';
-        const label = STATUS_LABEL_MAP[status] || status;
-        const color = STATUS_COLOR_MAP[status] || 'default';
-        return React.createElement(Chip, { label, size: 'small', color });
-      },
-    },
-    {
-      name: 'create_time',
+      name: 'approved_at',
       label: i18n.t('rd.review.k15'),
       type: 'datetime',
       listWidth: 160,
       renderCell: (row: Record<string, unknown>) => {
-        const val = row.created_at || row.create_time;
-        return val ? String(val) : '-';
-      },
-    },
-    {
-      name: 'comment_count',
-      label: i18n.t('rd.review.k16'),
-      type: 'number',
-      listWidth: 80,
-      renderCell: (row: Record<string, unknown>) => {
-        const val = row.comment_count ?? 0;
-        return String(val);
+        const val = row.approved_at ?? row.created_at;
+        if (!val) return '-';
+        return React.createElement(
+          Box,
+          { sx: { display: 'flex', alignItems: 'center', gap: 0.5 } },
+          React.createElement(Clock, { size: 14 }),
+          String(val)
+        );
       },
     },
     {
@@ -128,34 +133,7 @@ export const reviewSchema: EntitySchema = {
       showInList: false,
     },
     {
-      name: 'branch',
-      label: i18n.t('rd.review.k18'),
-      type: 'text',
-      showInList: false,
-    },
-    {
-      name: 'commit_hash',
-      label: i18n.t('rd.review.k19'),
-      type: 'text',
-      showInList: false,
-    },
-    {
-      name: 'build_type',
-      label: i18n.t('rd.review.k20'),
-      type: 'select',
-      defaultValue: 'manual',
-      options: {
-        type: 'static',
-        options: [
-          { value: 'manual', label: i18n.t('rd.review.k21') },
-          { value: 'auto', label: i18n.t('rd.review.k22') },
-          { value: 'scheduled', label: i18n.t('rd.review.k23') },
-        ],
-      },
-      showInList: false,
-    },
-    {
-      name: 'logs',
+      name: 'description',
       label: i18n.t('rd.review.k24'),
       type: 'textarea',
       showInList: false,
@@ -164,35 +142,34 @@ export const reviewSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['title', 'reviewer', 'author', 'status', 'create_time', 'comment_count'],
-    searchFields: ['title', 'author', 'reviewer'],
+    columns: ['name', 'code', 'approval_status', 'approved_by', 'approved_at'],
+    searchFields: ['name', 'code'],
     pageSize: 10,
     filters: [
       {
-        id: 'status',
+        id: 'approval_status',
         label: i18n.t('rd.review.k25'),
         type: 'select',
         options: [
           { label: i18n.t('rd.review.k26'), value: 'all' },
           { label: i18n.t('rd.review.k27'), value: 'pending' },
-          { label: i18n.t('rd.review.k28'), value: 'in_progress' },
           { label: i18n.t('rd.review.k29'), value: 'approved' },
           { label: i18n.t('rd.review.k30'), value: 'rejected' },
         ],
-        defaultValue: 'all',
+        defaultValue: 'pending',
       },
     ],
     statusBadge: {
-      field: 'status',
-      colorMap: STATUS_COLOR_MAP,
-      labelMap: STATUS_LABEL_MAP,
+      field: 'approval_status',
+      colorMap: APPROVAL_STATUS_COLOR_MAP,
+      labelMap: getApprovalStatusLabelMap(),
     },
   },
 
   formSections: [
     {
       title: i18n.t('rd.review.k31'),
-      fields: ['project_id', 'branch', 'commit_hash', 'build_type'],
+      fields: ['project_id', 'code', 'name'],
     },
   ],
 

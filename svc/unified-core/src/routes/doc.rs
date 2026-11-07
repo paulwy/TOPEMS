@@ -5,8 +5,8 @@ use crate::AppState;
 
 /// Doc routes registered under `/api/core/doc/*`.
 /// Merges the doc module's create_routes() under the `/doc` prefix.
-pub fn doc_routes(_state: &AppState) -> Router<AppState> {
-    Router::new().nest("/doc", modules::doc::create_routes())
+pub fn doc_routes(state: &AppState) -> Router<AppState> {
+    Router::new().nest("/doc", modules::doc::create_routes(state))
 }
 
 // V289: 已删除 R4/R6 stub_router（原挂载 /internal/stubs/doc + require_permission

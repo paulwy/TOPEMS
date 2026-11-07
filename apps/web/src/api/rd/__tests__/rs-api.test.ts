@@ -289,11 +289,23 @@ describe('RS Module API Tests', () => {
       expect(apiClient.rd.post).toHaveBeenCalledWith('/formulas/formula-001/versions', data);
     });
 
-    it('approveFormula should call POST /formulas/:id/approve', async () => {
+    it('reviewFormula should call POST /formulas/:id/review with action=approve', async () => {
       const { formulaApi } = await import('../formula');
-      await formulaApi.approveFormula('formula-001');
+      await formulaApi.reviewFormula('formula-001', 'approve', 'reviewer-1');
       const { apiClient } = await import('../../client');
-      expect(apiClient.rd.post).toHaveBeenCalledWith('/formulas/formula-001/approve', {});
+      expect(apiClient.rd.post).toHaveBeenCalledWith('/formulas/formula-001/review', {
+        action: 'approve',
+        reviewer: 'reviewer-1',
+      });
+    });
+
+    it('reviewFormula should omit reviewer/comment when not provided', async () => {
+      const { formulaApi } = await import('../formula');
+      await formulaApi.reviewFormula('formula-001', 'reject');
+      const { apiClient } = await import('../../client');
+      expect(apiClient.rd.post).toHaveBeenCalledWith('/formulas/formula-001/review', {
+        action: 'reject',
+      });
     });
   });
 

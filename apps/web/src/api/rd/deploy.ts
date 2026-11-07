@@ -2,17 +2,23 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { Deploy, CreateDeployRequest } from './types';
 
+export interface ListDeploysParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  environment?: string;
+  app_name?: string;
+  status?: string;
+  /** 批 38：按配方过滤（可选，后端支持） */
+  formula_id?: string;
+}
+
 export const deployApi = {
-  listDeploys: async (params?: {
-    page?: number;
-    page_size?: number;
-    search?: string;
-    environment?: string;
-    app_name?: string;
-    status?: string;
-  }): Promise<
+  listDeploys: async (
+    params?: ListDeploysParams
+  ): Promise<
     ApiResponse<{
-      deploys: Deploy[];
+      items: Deploy[];
       total: number;
       page: number;
       page_size: number;

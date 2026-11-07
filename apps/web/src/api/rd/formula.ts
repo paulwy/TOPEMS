@@ -8,13 +8,27 @@ import type {
   CreateFormulaVersionRequest,
 } from './types';
 
+export type FormulaApprovalAction = 'submit' | 'approve' | 'reject';
+
+export interface FormulaReviewParams {
+  action: FormulaApprovalAction;
+  reviewer?: string;
+  comment?: string;
+}
+
+export interface ListFormulasParams {
+  project_id?: string;
+  status?: string;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
 export const formulaApi = {
-  listFormulas: async (params?: {
-    project_id?: string;
-    status?: string;
-  }): Promise<
-    ApiResponse<{ items: Formula[]; total: number; page: number; page_size: number }>
-  > => {
+  listFormulas: async (
+    params?: ListFormulasParams
+  ): Promise<ApiResponse<{ items: Formula[]; total: number; page: number; page_size: number }>> => {
     let url = '/formulas';
     if (params) {
       const searchParams = new URLSearchParams();
@@ -69,7 +83,21 @@ export const formulaApi = {
     return apiClient.rd.post(`/formulas/${formulaId}/versions`, data);
   },
 
-  approveFormula: async (id: string): Promise<ApiResponse<Formula>> => {
-    return apiClient.rd.post(`/formulas/${id}/approve`, {});
+  /**
+   * 配方评审：提交 / 通过 / 驳回。
+   * 后端契约：POST /api/rd/formulas/{id}/review
+   * body: { action, reviewer?, comment? }
+   * 批 38：原 approveFormula 已合并为本方法，不要另起一套。
+   */
+  reviewFormula: async (
+    id: string,
+    action: FormulaApprovalAction,
+    reviewer?: string,
+    comment?: string
+  ): Promise<ApiResponse<Formula>> => {
+    const body: FormulaReviewParams = { action };
+    if (reviewer !== undefined) body.reviewer = reviewer;
+    if (comment !== undefined) body.comment = comment;
+    return apiClient.rd.post(`/formulas/${id}/review`, body);
   },
 };

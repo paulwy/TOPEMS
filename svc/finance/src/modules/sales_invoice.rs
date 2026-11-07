@@ -1660,4 +1660,9 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/receivable-aging/export",
             get(export_receivable_aging),
         )
+        // 批 40：销售发票/收款路由统一挂 finance:sales_invoice:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:sales_invoice:read"),
+        ))
 }

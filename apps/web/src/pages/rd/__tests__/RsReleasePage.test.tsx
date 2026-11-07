@@ -17,11 +17,13 @@ vi.mock('@/api/rd', () => ({
             version: 'v2.8.1',
             deploy_no: 'DEPLOY-001',
             environment: 'production',
-            status: 'success',
+            status: 'active',
             deploy_time: '2026-06-01 10:00',
             deployer: '张三',
-            release_note: '修复若干问题',
             app_name: 'rd-app',
+            formula_id: 'F001',
+            formula_name: '基础配方A',
+            formula_code: 'FORMULA-A',
           },
         ],
         total: 1,
@@ -45,6 +47,13 @@ describe('RsReleasePage', () => {
     renderWithProviders(<RsReleasePage />);
     await waitFor(() => {
       expect(screen.getByText('v2.8.1')).toBeInTheDocument();
+    });
+  });
+
+  it('renders formula_name in release rows', async () => {
+    renderWithProviders(<RsReleasePage />);
+    await waitFor(() => {
+      expect(screen.getByText(/基础配方A/)).toBeInTheDocument();
     });
   });
 });

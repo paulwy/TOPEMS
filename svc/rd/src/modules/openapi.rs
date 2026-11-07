@@ -47,7 +47,7 @@ fn _health_check_detailed() {}
         crate::modules::formula::list_formulas,
         crate::modules::formula::get_formula,
         crate::modules::formula::get_formula_versions,
-        crate::modules::formula::approve_formula,
+        crate::modules::formula::review_formula,
         crate::modules::material::list_material_tests,
         crate::modules::material::list_by_project,
         crate::modules::material::list_by_experiment,

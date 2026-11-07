@@ -420,6 +420,11 @@ pub fn create_routes() -> axum::Router<AppState> {
                 .put(update_accounting_subject)
                 .delete(delete_accounting_subject),
         )
+        // 批 40：科目路由挂 finance:accounting_subject:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:accounting_subject:read"),
+        ))
 }
 
 // ============================================================================

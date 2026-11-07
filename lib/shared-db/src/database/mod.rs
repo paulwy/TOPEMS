@@ -61,8 +61,11 @@ async fn create_database_pool_from_reservation(
     let max_connections = reservation.granted();
     let min_connections = config.min_connections.unwrap_or(5).min(max_connections);
     let connect_timeout = config.connect_timeout.unwrap_or(30);
-    let idle_timeout = config.idle_timeout.unwrap_or(300);
-    let max_lifetime = config.max_lifetime.unwrap_or(1800);
+    let idle_timeout = config.idle_timeout.unwrap_or(120);
+    // max_lifetime 兜底默认 10 分钟（原 30 分钟）。注意：走 quick_bootstrap_with_db 的服务显式传入
+    // 1800，此兜底不生效——真正消除 DDL 后陈旧 prepared statement 的是下方 statement_cache_capacity(0)，
+    // 本项仅作次要兜底（加速连接轮换，缩短任何残余会话状态的最长存活时间）。
+    let max_lifetime = config.max_lifetime.unwrap_or(600);
 
     // 连接级 application_name：默认空值会让 pg_stat_activity 无法按模块归因，
     // 由 bootstrap_service 逐模块设置 DB_APPLICATION_NAME（如 finance-module）。
@@ -71,14 +74,23 @@ async fn create_database_pool_from_reservation(
         .unwrap_or_else(|_| "topems-service".to_string());
     let connect_options = PgConnectOptions::from_str(&config.url)
         .map_err(|e| TopemsError::Database(format!("数据库 DSN 解析失败: {e}")))?
-        .application_name(&application_name);
+        .application_name(&application_name)
+        // 禁用 prepared statement 客户端缓存（H1 根因修复）。
+        // 机理：DDL（如 ALTER COLUMN TYPE）后，旧连接上缓存的 prepared statement 仍引用旧
+        // schema 元数据，执行时报类型不匹配错误。设为 0 后每条查询都即时准备，
+        // DDL 后下一次查询自动用新 schema，彻底消除「DDL 后新旧连接交替 500/200」。
+        // 代价：每次查询多一次 Prepare 往返（~0.5-1ms/条），按「正确性优先」接受。
+        .statement_cache_capacity(0);
 
     let options = PgPoolOptions::new()
         .max_connections(max_connections)
         .min_connections(min_connections)
         .acquire_timeout(Duration::from_secs(connect_timeout))
         .idle_timeout(Duration::from_secs(idle_timeout))
-        .max_lifetime(Duration::from_secs(max_lifetime));
+        .max_lifetime(Duration::from_secs(max_lifetime))
+        // 借连接前做 SELECT 1 存活探测，剔除已断连/坏连接（H3）。
+        // 代价：每次借连接多一次极轻量查询（~0.3ms），换取坏连接零命中。
+        .test_before_acquire(true);
 
     // 单租户部署（MULTI_TENANT_ENABLED != true）且配置 DEFAULT_TENANT_ID 时，
     // 连接建立即固定租户上下文：FORCE RLS 下 service 层业务查询（不经 tenant_middleware txn）

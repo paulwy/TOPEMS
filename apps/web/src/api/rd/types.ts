@@ -162,6 +162,7 @@ export interface BatchTraceItem {
 
 export interface Formula {
   id: string;
+  tenant_id?: string;
   project_id: string;
   name: string;
   code: string;
@@ -170,6 +171,7 @@ export interface Formula {
   description?: string;
   ingredients?: FormulaIngredient[];
   process_steps?: string;
+  properties?: Record<string, unknown>;
   status: string;
   approval_status?: string;
   approved_by?: string;
@@ -434,6 +436,10 @@ export interface Deploy {
   deployer: string;
   operator: string;
   target_url?: string;
+  /** 批 38：发布记录关联的配方（LEFT JOIN rs.formulas），可为空 */
+  formula_id?: string | null;
+  formula_name?: string | null;
+  formula_code?: string | null;
   created_at: string;
   logs?: string;
 }
@@ -446,6 +452,8 @@ export interface CreateDeployRequest {
   environment: string;
   app_name: string;
   version: string;
+  /** 批 38：发布时绑定的配方 ID（可选） */
+  formula_id?: string;
 }
 
 export interface AuditLog {

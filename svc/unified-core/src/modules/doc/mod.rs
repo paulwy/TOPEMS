@@ -9,6 +9,6 @@ use axum::Router;
 
 use crate::AppState;
 
-pub fn create_routes() -> Router<AppState> {
-    handlers::create_routes()
+pub fn create_routes(state: &AppState) -> Router<AppState> {
+    handlers::create_routes(state)
 }

@@ -1356,38 +1356,112 @@ fn row_to_payable_json(row: &sqlx::postgres::PgRow) -> Value {
 
 // ==================== 路由 ====================
 
+/// V40 批 40 修复：operational 模块四组资源（expenses/budgets/receivables/payables）
+/// 原先仅在 `#[utoipa::path]` 文档注解里声明 `security`，路由层未挂任何权限中间件，
+/// 任意持有效 JWT 的同租户用户均可调用。照 `settlement_center/routes.rs` 惯例，
+/// 按资源 × 动作拆分子 Router 并挂 `require_permission` 精确串匹配。
 pub fn create_routes() -> Router<AppState> {
-    use axum::routing::get;
+    use axum::routing::{delete, get, post, put};
+    use topems_shared_auth::middleware::require_permission;
+
+    // ===== Expenses（费用报销）=====
+    let expenses_read = Router::new()
+        .route("/expenses", get(list_expenses))
+        .route("/expenses/{id}", get(get_expense))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense:read",
+        )));
+    let expenses_create = Router::new()
+        .route("/expenses", post(create_expense))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense:create",
+        )));
+    let expenses_update = Router::new()
+        .route("/expenses/{id}", put(update_expense))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense:update",
+        )));
+    let expenses_delete = Router::new()
+        .route("/expenses/{id}", delete(delete_expense))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense:delete",
+        )));
+
+    // ===== Budgets（预算）：写动作统一用 finance:budget:write（细码 create/update/delete 不存在）=====
+    let budgets_read = Router::new()
+        .route("/budgets", get(list_budgets))
+        .route("/budgets/{id}", get(get_budget))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:budget:read",
+        )));
+    let budgets_write = Router::new()
+        .route("/budgets", post(create_budget))
+        .route("/budgets/{id}", put(update_budget).delete(delete_budget))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:budget:write",
+        )));
+
+    // ===== Receivables（应收）=====
+    let receivables_read = Router::new()
+        .route("/receivables", get(list_receivables))
+        .route("/receivables/{id}", get(get_receivable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:read",
+        )));
+    let receivables_create = Router::new()
+        .route("/receivables", post(create_receivable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:create",
+        )));
+    let receivables_update = Router::new()
+        .route("/receivables/{id}", put(update_receivable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:update",
+        )));
+    let receivables_delete = Router::new()
+        .route("/receivables/{id}", delete(delete_receivable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:delete",
+        )));
+
+    // ===== Payables（应付）：复用 finance:receivable_payable:* 码族 =====
+    let payables_read = Router::new()
+        .route("/payables", get(list_payables))
+        .route("/payables/{id}", get(get_payable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable_payable:read",
+        )));
+    let payables_create = Router::new()
+        .route("/payables", post(create_payable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable_payable:create",
+        )));
+    let payables_update = Router::new()
+        .route("/payables/{id}", put(update_payable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable_payable:update",
+        )));
+    let payables_delete = Router::new()
+        .route("/payables/{id}", delete(delete_payable))
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable_payable:delete",
+        )));
+
     Router::new()
-        // 费用报销
-        .route("/expenses", get(list_expenses).post(create_expense))
-        .route(
-            "/expenses/{id}",
-            get(get_expense).put(update_expense).delete(delete_expense),
-        )
-        // 预算
-        .route("/budgets", get(list_budgets).post(create_budget))
-        .route(
-            "/budgets/{id}",
-            get(get_budget).put(update_budget).delete(delete_budget),
-        )
-        // 应收
-        .route(
-            "/receivables",
-            get(list_receivables).post(create_receivable),
-        )
-        .route(
-            "/receivables/{id}",
-            get(get_receivable)
-                .put(update_receivable)
-                .delete(delete_receivable),
-        )
-        // 应付
-        .route("/payables", get(list_payables).post(create_payable))
-        .route(
-            "/payables/{id}",
-            get(get_payable).put(update_payable).delete(delete_payable),
-        )
+        .merge(expenses_read)
+        .merge(expenses_create)
+        .merge(expenses_update)
+        .merge(expenses_delete)
+        .merge(budgets_read)
+        .merge(budgets_write)
+        .merge(receivables_read)
+        .merge(receivables_create)
+        .merge(receivables_update)
+        .merge(receivables_delete)
+        .merge(payables_read)
+        .merge(payables_create)
+        .merge(payables_update)
+        .merge(payables_delete)
 }
 
 #[cfg(test)]

@@ -2084,6 +2084,86 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.162 审计整改第四十一批：反向鉴权收口 + 对抗性验证（批 41，2026-11-07）
+
+原则「一步到位、安全不留死角」。承接批 40 §6「未覆盖（如实登记）」的六项遗留，逐项收口并做**真实对抗性验证**。
+
+① **doc 侧 74 条（分组漏归）**：`modules/doc/handlers.rs:626` 的 `create_routes()` 除 read/write/admin/dashboard 四组外，残余 `rest` 组仍是 auth-only，`GET /templates`（`list_templates`）就在其中——批 40 实测对无码用户 **200** 即此因。本批按 handler 职能与资源语义逐条并入已有组：**33→`doc:read` / 31→`doc:write` / 10→`doc:admin`**，`rest` 组只留 `GET /health`（健康探针，auth-only 保留）。全用 DB 已有码，未新建。逐条表见 `b41_doc_portal_report.md`。
+
+② **portal monitoring 5 条（语义错位）**：`monitoring.rs` 的 `get_monitoring_services:43` / `get_monitoring_metrics:98` / `get_monitoring_alerts:168` / `acknowledge_alert:221` / `get_monitoring_logs:236` **全部没有 Claims 参数**，纯转发 monitor 服务、失败时降级返回空列表，语义是**系统运维面**，却被挂在 `personal_routes`（个人自服务面，仅 auth 兜底）。用户表述"4 条"，实际代码 **5 条**（含 `POST /monitoring/alerts/{id}` 确认告警），按 5 条全部迁入 `admin_ops_routes`（与批 40 的 281 条同栈 rls→`portal:admin`→tenant→auth）。**迁移中修正的坑**：`personal_routes` 挂 `/api/portal` 前缀、子路由写相对路径，而 `admin_ops_routes` 用全路径——直接搬运会变成 `/api/monitoring/services`，已补全前缀，**URL 零变更**。
+
+③ **finance 95 条（网关兜底的假成立）**：14 个小文件原判为"依托网关层 `require_finance_write` 兜底"，但**该门只挡非 GET**——对 GET 而言兜底恒不成立，是真裸奔。单行 `grep get(` 会把 handler 内 DB `.get()` 误计入，改用跨行 route 声明括号平衡解析，确认 14 个文件 `require_permission` 出现次数原为 **0**。补挂 12 个文件：`reconciliation`→`finance:reconciliation:read`（新）、`event_routes`+`cqrs_routes`→`finance:event:read`（新）、`compliance_v51`→`finance:compliance:read`（新）、`audit_v52`→`finance:audit:read`（新）、`forecasting`+`forecast_v53`→`finance:budget:read`（复用）、`report_center`→`finance:report:read`（复用）、`decision_v60`→`finance:dashboard:read`（复用）、`treasury_v58`→`finance:treasury:read`（新）、`risk_v59`+`risk_v54`→`finance:risk:read`（新）。**无需补挂 2 个**：`voucher_template.rs`（无自有路由，全在 `mod.rs` voucher 域子 Router 内，批 40 已挂）、`bootstrap.rs`（仅 POST）。迁移 **0043** 补 6 码 + 授权 fm/admin/superadmin，幂等（首次 6+18 行、二次全 0 行）。
+
+④ **合计 174 条**（doc 74 + portal 5 + finance 95），新建码 6 个，**未重命名任何历史码**。
+
+⑤ **对抗性验证（真构造双租户，非单租户推断）**：建租户 B `…b0041` + B 用户 `…b0042` + 关联行 `…b0043`，A/B 对照数据各一份。**A 组 doc 14/14**：`GET /templates` employee **403** / 持 `doc:read` **200**，批 40 裸奔点闭合。**B 组 monitoring 5/5**：employee 全 403 / 持 `portal:admin` 全 200，且 46 条个人自服务未误伤。**C 组 finance 8/8**：6 个新码**逐个**签发实测（非抽样推断）均 403→200。**D 组跨租户双向**：A token+`x-tenant-id:…0001` 只见 `B41 A-user todo`、B token+`…b0041` 只见 `B41 B-user todo`，**互不可见**。**E 组跨用户写入**：A token 对 B 用户待办 `POST`/`DELETE` 均 **404**，DB 回查 `completed=false`/`deleted_at=NULL` **未被改写**；对照 A 完成自己的待办 **200 成功** + DB 变更，证明 404 是真实隔离而非端点失效，对照数据已回滚。**F 组 employee 横向 20 条**（ai/communication/plugin/portal/finance 跨域 manager 端点）**20/20 全 403**。**结论：无一条越权成功**。
+
+⑥ **载体选择的纠偏**：doc 模块 `DocumentService` 持裸 `PgPool`（`services/document.rs:7,11`）不走 `Db::scope` 请求级事务 → `app.tenant_id` GUC 恒空 → RLS 三分支全不成立 → **任何身份（含 superadmin）`GET /documents*` 恒 `data:null`/`[]`**。DB 直连证明 RLS 本身正常（`SET app.tenant_id='…b0041'` 能查到 d0042，`…0001` 查 d0042 为 0 行）——**是 fail-closed 功能缺陷，不是越权漏洞**，故 doc 上的"A 拿不到 B 文档"**不能**作为隔离证据，改用 `portal.portal_todos` 作可信载体。根因链：`lib/shared-db/src/database/mod.rs:96-137` 的 `after_connect` 仅在 `default_tenant` 为 `Some` 且非多租户时才设 GUC，当前 `.env` 是 `MULTI_TENANT_ENABLED=true` + `DEFAULT_TENANT_ID=…0001` → `default_tenant=None`。**已定性、本批未修**（改动面跨 shared-db 与 unified-core，需单独评估）。
+
+⑦ **顺带修掉一个既有功能缺陷（此前该功能整体不可用）**：`portal.portal_todos.user_id` 是 **`varchar`**，而 `svc/portal/src/modules/todos.rs` 写 `user_id = $1::uuid`（:48）、`user_id = $2::uuid`（:199、:245）→ PG 报 `operator does not exist: character varying = uuid` → 查询 `Err` → 走 `default_todos()` 硬编码兜底，**真实待办一条都查不出来**（任何用户都只看到「欢迎使用 TOPEMS 门户」「完善个人资料」两张假卡片）。改为 `user_id = $1`/`$2`（varchar 直接比较，避免 `::uuid` 在脏数据上抛错），`:147` 的 `VALUES ($1::uuid,…)` 保留（INSERT 的 id 列本就是 uuid）。复测 A/B 各自只见自己的待办、隔离成立。
+
+⑧ **测试数据清理（用完即清，已复核）**：`portal.portal_todos` f0041/f0042、`public.todos` e0041/e0042（插错的副本）、`public.core_doc_documents` d0041/d0042、`iam.tenant_users` b0043、`iam.users` b0042、`public.tenants` b0041 —— **六张表 remaining 全 0**。踩坑：把 `DELETE` 与一条对 uuid 列误用 `LIKE` 的验证 `SELECT` 放进同一 `psql -c` 多语句，后者报错 → **整个隐式事务回滚、删除被撤销**（首轮报 `DELETE 2` 但数据仍在），改逐表独立 `-tAc` 后复核通过。迁移 0043 补建的 6 码及其授权保留（正式迁移内容）。
+
+⑨ **门禁**：`cargo check` unified-core / portal / finance 均 **0 error**；`cargo build -p topems-server` exit 0（18.05s）；迁移四件套**全 exit 0**；0043 二次执行全 0 行；smoke **4501/4501 PASS、0 FAIL、豁免 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（500.23s，基线保持）；RLS 与表结构**未触碰**（仅权限行 + 角色授权 + 3 处 SQL 参数类型修正）；8099 PID **25940** health 200。
+
+⑩ **未覆盖（如实登记）**：unified-core iam 3 条禁动区（`/iam/roles`、`/iam/roles/{id}`、`/iam/permissions`）按"无把握不动"只登记未改；doc fail-closed 缺陷已定性未修；`public.core_doc_documents` 是否权威载体未确认（`flow`/`doc_service` schema 下同名表均 0 行）；finance 6 个新码的命名口径未经用户最终确认。
+
+⑪ **产物**：`artifacts/batch41/{b41_doc_portal_report.md, b41_finance_smallfiles_report.md, b41_adversarial_report.md}`；执行记录 `docs/audit/P3-32_反向鉴权收口与对抗性验证_批41_执行记录_2026-11-07.md`。
+
+## v1.161 审计整改第四十批：反向鉴权缺口全站补挂（批 40，2026-11-07）
+
+原则「一步到位、安全优先」。承接批 39 §4.4 附带发现——`security()` 只写文档不产生运行时校验。
+
+① **根因定性**：`#[utoipa::path(security(("BearerAuth" = ["code"])))]` 是 **OpenAPI 文档注解**，宏展开后无运行时逻辑。权限码运行时校验只有三种来源：服务级模块门禁 `require_module_access`/`require_module_write`（`lib/shared-auth/src/middleware/permission.rs:84`）、路由级 `require_permission`（`:29`）、handler 内手动校验。规模悬殊：**3531 处声明 vs 102 处实挂**。
+
+② **全站取证（机器化逐条判定）**：3531 条声明解析 → 定位 handler → 解析 Router 构造链（`.layer(require_permission)` 关联链上所有 route）→ 解析 handler 函数体权限调用，交叉产出清单。分层：**已受保护 2623（模块门禁）/ 172（路由层）/ 9（handler 内）= 2804**，**真实裸奔 702（19.9%）**，无法判定 25。702 全部集中在 6 个无模块门服务：**portal 328 / finance 135 / ai 129 / communication 85 / unified-core 20 / plugin-registry 8**。其余 22 个服务业务路由全被 `require_module_access` 覆盖。
+
+③ **对初始统计的三处修正（实测推翻）**：analytics 有模块门（`require_module_access("bi")` `routes.rs:640`）、integration 有（`:211`）、gis 有（`embedded.rs:421`）——初版按 `main.rs` 统计漏了在 `routes.rs`/`embedded.rs` 挂的门；communication 有**自定义 fn 包装 `admin_only()`**（`main.rs:9-16`，内部即 `require_permission("communication:admin")`，用 22 次），静态扫描未识别包装导致误判；portal 已有 `admin_routes` 挂 `portal:admin`，真缺口是**运维模块被误放进 `personal_routes`**。
+
+④ **finance 110 条（2 迁移）**：`operational.rs` 14 条按资源×动作挂细码；`mod.rs` **拆 6 个资源域子 Router**（account/voucher/report/payment/approval/ar_ap）分别挂 `finance:account:read`/`voucher:read`/`report:read`/`payment:read`/`expense_approval:read`/`receivable:read`；`financial_reports.rs` 24→`report:read`、`sales_invoice.rs` 15→`sales_invoice:read`、`reconcile_orders.rs` 7、`accounting_subjects.rs` 5、`currencies.rs` 4。迁移 **0040** 补 `finance:budget:write`、**0041** 补 7 码（sales_invoice:read|write / currency:write|delete / reconcile_orders:read|write / period:write），均幂等 + ROLLBACK 注释 + 授权 finance_manager/admin/superadmin。**中间纠偏**：初版把 `finance:report:read` 挂成 mod.rs 全局基线层 → `/vouchers` 实际要求"报表"码，口径错配，已拆资源域修正并重测。
+
+⑤ **portal 281（无需迁移）**：17 个运维模块（281 端点）原以连续 `.route()` 串挂主链、仅 `auth_middleware` 兜底 → 抽为 `admin_ops_routes`（`embedded.rs:1407-3023`），按既有 `admin_routes` 同栈（rls → `require_permission("portal:admin")` → tenant → auth）`.merge()` 回主 app，**URL 零变更**；46 条个人自服务（逐文件核实 user 隔离）保持、1 条公开保持，**328 精确闭合**。`portal:admin` 已绑 admin+superadmin、employee 0 行，无需迁移。
+
+⑥ **ai 123 + communication（三分法）**：授权现状是硬约束（`ai:*` employee 仅 1 个；`communication:*` **全库只 superadmin 1 个**），一刀切补码必 403。ai：**62→`ai:admin` / 61→`ai:read` / 6 个人面仅登录**，在 `svc/ai/src/routes.rs` 集中装配处拆三组子路由，未散改 24 个 handler。communication：**零代码改动**——`main.rs` 已有 `admin_only()` 覆盖 22 个管理路由（禁动区且无需改），缺口只在授权 → 迁移 **0042** 补授 `communication:admin` 给 admin + notification_manager。
+
+⑦ **unified-core 21 + plugin-registry 7（无需迁移）**：plugin simple_api 拆 read(`admin:plugin:read`)/write(`admin:plugin:write`)；unified-core doc 14 条分 `doc:read`/`doc:write`/`doc:admin`/`doc:dashboard:read` 四组。全用 DB 已有码。不动：iam 3 条（禁动区登记）、`/health`、`flow delete_template`（死代码，handler 存在但未注册路由）。
+
+⑧ **逐端实测（真实 HTTP，非静态推断；主 Agent 独立复核）**：token 用 HS256 手工签发（`.env` `JWT_SECRET`），**`sub` 必须是合法 UUID**（否则 `user_id()` 解析失败返回 400「无效的用户ID」——实测踩到的坑）。**portal**：`GET /api/portal/deployment-manager/deployments` **E403/A200/S200**；`GET /api/portal/todos` **E200**（个人面未误伤）。**finance**：`/vouchers`、`/payments`、`/reports/balance-sheet`、`/accounts` 四组，employee 403、持对应细码 fm 200、**`fm_admin_only`（持 `finance:admin` 无细码）403**、superadmin 200——证明细码层在网关层 `require_finance_write`（只挡非 GET）之后真正生效、非伞码糊过。**plugin**：`/api/plugin/runtime/list` E403 / 持 `admin:plugin:write` 200（持 `:read` 则 403）/ S200，精确匹配。**ai**：`/api/ai/agent/tools` E403、仅 `ai:read` 也 403、S200，管理面精确。
+
+⑨ **门禁**：`cargo check` 7 个受影响服务 **exit 0 / 0 error**（1m04s）；`cargo build -p topems-server` exit 0（1m32s）；迁移四件套**全 exit 0**；迁移 0040/0041/0042 二次执行均 0 行验幂等；smoke **4501/4501 PASS、0 FAIL、豁免 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（529.11s，基线保持）；本批**无表结构变更**（仅权限行 + 角色授权），RLS 未触碰；8099 PID 77197 health 200。
+
+⑩ **未覆盖（如实登记）**：finance 14 个小文件 ~39 条（reconciliation/voucher_template/event_routes/cqrs/compliance_v51/audit_v52/forecasting/forecast_v53/report_center/decision_v60/treasury_v58/risk_v59/risk_v54/bootstrap）依托网关层 `require_finance_write` + 模块保护，逐条理由见 `b40_finance_rest_report.md`；unified-core iam 3 条禁动区；**doc 侧未逐条运行时验证**（`/api/core/doc/templates` 对无码用户 200，说明未落在补挂路径或属读面）；portal `monitoring.rs` 4 条语义待产品评估；多租户交叉隔离未做真实双租户 A/B；个人面「跨用户越权读他人数据」未做对抗性验证。
+
+⑪ **产物**：`artifacts/batch40/{b40_gap_inventory.tsv（3531 行）, b40_gap_report.md, b40_finance_fix_report.md, b40_finance_rest_report.md, b40_portal_fix_report.md, b40_ai_comm_fix_report.md, b40_core_registry_fix_report.md}`；执行记录 `docs/audit/P3-31_反向鉴权缺口全站补挂_批40_执行记录_2026-11-07.md`。
+
+## v1.160 审计整改第三十九批：连接池 stale prepared statement 根治 + 对账口径修正（批 39，2026-11-07）
+
+- 记录：[P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md](docs/audit/P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md)。
+- **根因判定（H1 成立）**：批 38 观察到的 `list_formulas` 严格 `500/200` 交替，根因是 **sqlx 按连接缓存 prepared statement**（默认容量 100 条/连接）。迁移 `0036` 在服务运行中执行了 `ALTER COLUMN TYPE uuid→text`（`rs.formulas`/`rs.formula_versions.created_by`），**旧连接上缓存的语句仍引用旧 schema 元数据**、新连接按新 schema 准备；连接池交替借出两类连接 → 严格交替。`get_formula`/`list_deploys` 不涉及被改列，故同期全 200；「重启后即消失」也正因重启让全部连接重新 prepare。
+- **修复（不依赖重启）**：两处建池路径（`lib/shared-db/src/database/mod.rs:82`、`lib/shared-bootstrap/src/lib.rs:443`）统一 **`statement_cache_capacity(0)`** —— 禁用客户端语句缓存，每条查询即时准备，**DDL 后下一次查询自动用新 schema**，从机制上消除陈旧语句；加 **`test_before_acquire(true)`**（借连接前 `SELECT 1` 存活探测，剔除断连/坏连接）；`max_lifetime` 1800→600s、`idle_timeout` 300→120s 作次要兜底。**代价**：每条查询多一次 Prepare 往返（~0.5-1ms），按「正确性优先」接受；注意 `quick_bootstrap_with_db` 显式传 `Some(1800)` 会覆盖兜底默认，**真正的防线是 `statement_cache_capacity(0)`**（注释已据实写明，不留误导）。
+- **压测（主 Agent 独立复核，不采信单方自述）**：`GET /api/rd/formulas` 无参 + `approval_status=pending/approved/rejected` **各 50 次、共 200 次全 200、0 失败**，进程 **PID 64939 压测全程未变**（证明不是靠重启）；回归 `GET /deploys` 20/20、三条配方 `GET /formulas/{id}` 各 20/20 全 200。
+- **未独立复现原始现象（如实说明）**：修复前该现象能否稳定复现，依赖执行过程记录；本修复的确定性来自**机理**（禁用缓存后不存在陈旧语句）与 **200 次 0 失败**，不来自「修复前后对照重放」。
+- **对账口径修正（用户拍板）**：`scripts/audit_permission_codes.py::scan_sql_declared` 改为 **`sql_declared` 只扫 `database/init`**（现行声明），`database/migrations` 降级为**独立字段 `sql_history`**（仅回溯取证、不再计入声明基线）；**live DB 仍是权威**，`fe_orphan`/`db_only`/`fe_only` 判定规则一字未改。**这是口径修正，不是放宽判定**。
+- **新基线（差异全部来自口径变化，数据未变）**：`sql_declared_codes` **1087 → 12**；`sql_only` **92 → 1**；新增 `sql_history_orphan = 91`（migrations 中的历史孤立字面量，与批 38 独立复核的 91 项吻合）；主分类 9 项**逐项全等**（fe 445 / be 577 / db 995 / be_only 450 / fe_only 318 / fe_orphan 32 / db_only 570 / rename 0 / both 127）；数学闭合 `91 + 995 = 1086`、`91 + 1 = 92`；`database/init/**` 与 `database/migrations/**` **零改动**（`git status` 与 mtime 为证）。
+- **仅剩 1 项定性（初判被推翻）**：`finance:budget:write` 初判为「init 声明 + live DB 缺行 → 端点会 403 的真缺口」，**经运行时取证推翻**——`svc/finance/src/modules/operational.rs:640` 的 `security(...)` 属 `#[utoipa::path]` **文档注解**；`operational.rs` 内 `require_permission` **命中 0**、路由注册处**未挂权限中间件**；全仓运行时引用只出现在**生成的 OpenAPI 文档**中 → **纯文档层孤立字面量，live DB 无行不产生 403**。
+- **附带发现（登记不处置，超本批范围）**：`/budgets` 增删改端点在 finance 服务中**没有权限码粒度的访问控制**（`operational.rs` 12 处 `security(...)` 全是纯文档注解，运行时无人消费），任何持有效 JWT 的同租户用户均可调用（仅受 RLS 租户隔离约束）——「权限中间件未挂载」的反向鉴权缺口，与码缺失无关，另立任务。
+- **未做（维持登记）**：`rd.deploys.formula_id` 166 行**不回填**（种子数据 `app_name`/`version`/`project_name` 全空，无可推断依据，维持 NULL 待产品补录）。
+- **验证**：`cargo check -p topems-rd -p topems-server -p topems-master-data` **exit 0、0 error**；`cargo test -p topems-shared-db -p topems-shared-bootstrap --lib` **120 + 176 passed、0 failed**；smoke **4501/4501 PASS、0 FAIL、豁免 0**；迁移四件套（`check-migrations` / `check-migration-names` / `check-directed-migrations` / `check-migration-insert-shape`）**全 exit 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（与批 38 基线一致）。
+
+## v1.159 审计整改第三十八批：rd 三页面语义错配（批 38，2026-11-07）
+
+- 记录：[P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md](docs/audit/P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md)。
+- **审计 B 项关闭**：评审页 `rd.builds` → **`rs.formulas`**（自带 `approval_status`/`approved_by`/`approved_at`，评审语义天然落点，不新建表）；发布页 `rd.deploys` 补 **`formula_id`** 关联（FK + 索引 + LEFT JOIN 返回 `formula_name`/`formula_code`）；代码库页批复核批 33 成果、**不改**。评审→发布链路贯通。
+- **后端**：`POST /formulas/{id}/approve` → **`/review`**；`ApproveFormulaRequest{}`（空结构体）→ `ReviewFormulaRequest{action,reviewer,comment}`；`approve_formula` → `review_formula` 三态（`submit`→pending/draft、`approve`→approved/released、`reject`→rejected/draft，非法 action 400）；**修掉原端点两个实质缺陷**——`approved_by` 从不写入、请求体被完全忽略（`Json(_req)`）；`ListParams` 加 `approval_status`（`"none"` 表示筛 NULL）并同步 SELECT/COUNT；`list_deploys`/`get_deploy` 由 `SELECT *` 改 LEFT JOIN（rd 主 schema 即 `rs`，同 schema 合规、无需 boundary 例外）。
+- **迁移 `0036` 五步全幂等**（二次执行仅索引 NOTICE、其余 no-op）：`formula_id` 列 / FK `ON DELETE SET NULL` / `idx_rd_deploys_formula` / `ck_formulas_approval_status`（pending·approved·rejected）/ **`created_by` uuid→text（两表）**。
+- **查出并修复 4 个缺陷**：① **`created_by` 类型错配是 `rs.formulas` 长期 0 行的真因**（DB `uuid` vs Rust `String` → 创建永远 500，且一旦有数据 `list` 解码也会失败，该表从未被真正使用过）；② `list_formulas` 主查询缺 `deleted_at IS NULL`（与 COUNT 不一致）；③ `RsDeployPage.tsx:28` 读 `data.deploys` 而后端返 `items` → 该页恒为空数据；④ `approve_formula` 不写 `approved_by`。
+- **前端 12 文件**：评审页换 `formulaApi.listFormulas` + `reviewFormula`、**删 `transformStatus` 硬映射**（原把 `success/failed/running` 映射成已通过/已拒绝/评审中，导致「待评审」永不出现、通过驳回按钮永不显示）；发布页删 `transformStatus` 与**永远不显示的假回滚按钮**、加「发布配方」列、状态按真实 `active/inactive/archived`；schemas 删 `reviewer`/`comment_count`/`release_note`/`branch`/`commit_hash`/`build_type` 等**数据库中不存在的死字段**；4 个测试文件同步（`deploys`→`items`、`approveFormula`→两条 `reviewFormula` 用例）。
+- **端到端实测（真实 API，8099）**：`rs.formulas` 原本 **0 行**（直接改读会「读对表仍空」），故先修创建路径再经 API 造 3 条示例（pending/approved/rejected 各一）；**三动作各 2 轮全 200**、`approved_by` 逐条正确；**三过滤各 2 轮全 200**、各命中 1 条；不存在 id 的 review → 404「配方不存在」；`GET /deploys` total=**166** 且 item 含 `formula_id`/`formula_name`/`formula_code` 三键（当前 `null`，未回填）。
+- **SQL-only 92 项：`database/init` 侧可删 0 项**（主 Agent 独立复核，不采信 Subagent 单方结论）：92 项逐个在 `database/init/` 固定串匹配，**仅 `finance:budget:write` 命中 1 处且确有真实消费**（`svc/finance/src/modules/operational.rs:640` + `scripts/ci/perm-code-mapping.json:11`），其余 **91 项只存在于 `database/migrations/` 历史文件**。**根因是 `scripts/audit_permission_codes.py::scan_sql_declared:144-148` 把 `init ∪ migrations` 并集算作「SQL 声明」**——批 25 已 `DELETE` 的字面量永远计入 SQL-only、无法收敛。**属改审计口径、超出本批授权，未擅自动**（不采用「放宽判定过关」路径），登记待决策；对账各项 SQL-only 92 / fe_orphan 32 / db_only 570 **未变差**。
+- **未做（明确登记）**：166 行历史 deploy 的 `formula_id` **不回填**（`app_name`/`version`/`project_name` 全空的种子数据无法推断，硬填即伪造，留 NULL 待产品补录）；`rs.formulas.status` **不加 CHECK**（既有写入可能含中文值，加约束会破坏写入）。
+- **观察项（另立任务）**：诊断期见 `list_formulas` 严格 `500/200` 交替（同期 `get_formula`、`list_deploys` 全 200），服务重启后复测 **20/20 全 200** → 判定旧进程**连接池存在会话级坏连接**（`app.tenant_id` GUC 未生效致 RLS 过滤异常），**非本批引入**，需专项排查连接池初始化与坏连接剔除。
+- **验证**：`cargo check -p topems-rd` exit 0（6.84s）/ `cargo build -p topems-server` 11.25s / `typecheck` **0 error** / `eslint` **0 problems** / 全量 vitest **621 files、6642 passed、1 skipped、0 failed**（多 2 = `reviewFormula` 新用例）/ smoke **4501/4501 PASS、0 FAIL、豁免 0**（与批 37 基线一致，smoke 不覆盖 `/formulas`）/ 迁移四件套 PASS（`check-migrations` exit 0 零 FAIL）。
+
 ## v1.158 审计整改第三十七批：contract_fallback 全量清理（批 37，2026-11-07）
 
 > 原则：**一步到位，清理一步到位**。关闭批 36 登记的「contract_fallback 其余约 160 个占位端点仍 mutate_ok 假成功」遗留项。

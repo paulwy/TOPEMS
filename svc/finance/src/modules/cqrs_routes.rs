@@ -368,6 +368,11 @@ pub fn cqrs_routes() -> Router<AppState> {
             "/views/replay/{view_name}",
             axum::routing::post(replay_view),
         )
+        // 批 41：CQRS 视图/事件流路由统一挂 finance:event:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:event:read"),
+        ))
 }
 
 #[cfg(test)]

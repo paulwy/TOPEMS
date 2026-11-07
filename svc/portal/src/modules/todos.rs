@@ -45,7 +45,7 @@ async fn load_local_todos(db: &Db, txn_arc: &RequestTxn, user_id: &str) -> Vec<T
         SELECT id, title, service_code, service_name, due_date, priority,
                completed, todo_type, link_url
         FROM portal.portal_todos
-        WHERE user_id = $1::uuid AND deleted_at IS NULL
+        WHERE user_id = $1 AND deleted_at IS NULL
         ORDER BY completed ASC,
                  CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END ASC,
                  due_date ASC NULLS LAST,
@@ -197,7 +197,7 @@ async fn complete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &
         r#"
         UPDATE portal.portal_todos
         SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(uuid)
@@ -243,7 +243,7 @@ async fn delete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &st
         r#"
         UPDATE portal.portal_todos
         SET deleted_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(uuid)

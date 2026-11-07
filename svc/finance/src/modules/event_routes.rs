@@ -260,6 +260,11 @@ pub fn event_routes() -> Router<AppState> {
         .route("/sagas/{saga_id}", get(get_saga))
         .route("/sagas/{saga_id}/compensate", post(compensate_saga))
         .route("/pipeline/stats", get(pipeline_stats))
+        // 批 41：事件/Saga 观测路由统一挂 finance:event:read 细码（纵深防御；
+        // 写端点在网关层 require_finance_write 已要求 finance:admin）
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:event:read"),
+        ))
 }
 
 #[cfg(test)]
