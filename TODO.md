@@ -2084,6 +2084,28 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.163 审计整改第四十二批：doc 租户上下文修复 + 全站 RLS 裸池排查（批 42，2026-11-07）
+
+原则「一步到位、功能正确性优先」。修批 41 发现的最严重功能缺陷 —— doc 模块裸池不走请求级租户事务 → RLS fail-closed → 任何身份（含 superadmin）都查不到文档。纪律「修复必须走请求级租户事务，不改连接 baseline」「实测必须有真实文档数据」「同类排查以是否访问 RLS 表为准」。
+
+① **doc 租户上下文修复（20 个方法）**：`services/document.rs` 五方法（list/get/create/update/delete）+ `services/folder.rs` 五方法 + `services/template.rs` 六方法（含 list_categories）+ `handlers.rs` 的 `get_dashboard_handler`（单事务内 9 个 count）+ 3 个版本 handler（list/get/restore，restore 读写同事务），全部改为**方法内自开请求级事务**：`pool.begin()` → `SELECT set_config('app.tenant_id', $1, true)`（**true = SET LOCAL / 事务级**）→ 查询走 `&mut *tx` → `tx.commit()`。普通用户传真实 tenant_id（命中 `tenant_id = current_setting(...)` 分支），superadmin / 无租户传 nil UUID（命中全零旁路）。**未改 `lib/shared-db/src/database/mod.rs` 的 `after_connect` 连接 baseline**（用户明令禁止，会破坏多租户隔离）。配套：4 个 count helper 签名由 `&PgPool` 改 `&mut PgConnection` 且返回 `Result`。
+
+② **为什么中间件救不了（取证）**：`middleware/tenant_rls.rs:237` 用 `pool.acquire()` 独占一条连接做**会话级** `set_config(..., false)`，只注入 `TenantId` 不注入连接；业务再 `&self.pool` 借到的是**另一条**连接，GUC 不继承。故必须在业务方法内部自开事务。
+
+③ **顺带修掉两个被 fail-closed 掩盖的真实缺陷**：(a) 4 个 count helper 原为 `Err(_) => 0`，把数据库错误**静默伪装成"真实空结果"** → 改为 `?` 传播 + `tracing::error!` + `ApiResponse::server_error`；(b) `FolderService` 两处 SELECT 列与模型不匹配（缺 `sort_order`/`is_enabled`，多 `deleted_at`）→ 裸池下恒 0 行从无行可解析、`FromRow` 从不报错，列表永远"正常"返回空；修复有真实数据后立即 500，已补全为模型全部 10 字段。
+
+④ **权威载体定案（批 41 悬案关闭）**：判定实验（建一篇文档后查三 schema）→ `flow` 1 行 / `public` 0 行 / `doc_service` 0 行。机制 `svc/unified-core/src/embedded.rs:50` 固化 `std::env::set_var("SEARCH_PATH", "flow, public")`，无前缀 `core_doc_documents` 解析到 `flow`。**修正批 41 表述**：fail-closed 定性正确（`flow` 表启用 RLS），但"public 权威"假设错误；`public`/`doc_service` 是影子空表（后者未启用 RLS）。
+
+⑤ **真实数据实测（18 项全绿）**：A 创建 200 真实 id → A 列表 2 条 → A 详情有标题 → **B 列表 0 条** → **B 详情 A 文档 `data:null`** → superadmin 列表 2 条 → A 更新 200 标题变更 → **B 更新 A 文档 `data:null`** → DB 回查未被改写 → A 删除 `data:true` → 删后列表 0 → folder 创建/列表 A 1 条 → **folder 列表 B 0 条** → folder superadmin 1 条 → template 创建/列表 1 条 → template categories → versions 空列表 → dashboard `total_documents:3/total_folders:1/total_templates:1`，与 `flow` schema DB 真值（docs 3/folders 1/templates 1）完全一致。**前后端一致**：前端 `apiClient.doc` base 由 `VITE_DOC_SERVICE_URL` 决定（默认 `/api/core/doc`，`config/runtime.ts:85`），`DashboardPage.tsx`/`DocumentCenterPage.tsx` 调 `docApi.getDashboard()`/`list()`，URL 与字段名与后端一致，后端修好后前端无需改动。
+
+⑥ **同类缺陷全站排查**：口径「裸池 + 访问 RLS 表 + 无 GUC」。**确认 fail-closed 824 处**（生产 HTTP handler）、业务层自带 tenant_id 过滤（安全）378 处、SQL 未提取（动态拼接，需人工复核）1181 处。按服务：unified-core 200 / finance 137 / analytics 123 / mes 115 / qms 93 / lims 66 / ehs 63 / 其他 27。**Top 5**：`flow/monitor.rs`(41)、`qms/apqp.rs`(32，写路径带 tenant_id 而读路径漏)、`flow/approval.rs`(26)、`automation/mod.rs`(24)、`analytics/bi/comparison_analysis.rs`(14)。实证：`pg_policies` 1609 条 policy / 834 张 RLS 表；psql 不设 GUC 查 RLS 表 → 0 行。**本批只修 doc 模块**（用户明令对象），824 条横跨 8 服务与多个禁动区，全量登记为后续批次对象，不扩大改动面。
+
+⑦ **未覆盖登记**：iam 3 条禁动区（`/iam/roles`、`/iam/roles/{id}`、`/iam/permissions`）维持只登记不动；824 处 fail-closed 待后续批次；1181 处 SQL 未提取需人工复核；三份同名 `core_doc_*` 表的影子表清理属 DDL 变更，本批不动；`flow.core_doc_document_versions` 未启用 RLS（代码已按范式包裹，无副作用）。
+
+⑧ **测试数据清理**：`flow.core_doc_documents` 3 条 / `flow.core_doc_folders` 1 条 / `flow.core_doc_templates` 1 条 / `iam.tenant_users` 1 条 / `iam.users` 1 条 / `public.tenants` 1 条，**6 条 DELETE 全成功、复查 6 项 count 全 0**。纪律固化：建数据与清理一律**逐条独立 `-tAc`**（多语句任一报错会让整个隐式事务回滚、前序 DML 全撤销，本批与批 41 各复现一次）。
+
+**验证**：`cargo check` unified-core / shared-db **0 error**；`cargo build -p topems-server` exit 0；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed（507.42s，基线保持）**；迁移四件套 **全 exit 0**（本批无迁移文件，insert-shape 按设计 SKIP）；i18n 7-in-1 Gate ✅ PASS；smoke **4501/4501 PASS、0 FAIL、豁免 0**；8099 PID 73139 health 200；改动 4 文件 +329/−101；**RLS 与表结构未触碰**（纯代码改动，无新迁移）。执行记录见 `docs/audit/P3-33_doc租户上下文修复与全站RLS裸池排查_批42_执行记录_2026-11-07.md`。
+
 ## v1.162 审计整改第四十一批：反向鉴权收口 + 对抗性验证（批 41，2026-11-07）
 
 原则「一步到位、安全不留死角」。承接批 40 §6「未覆盖（如实登记）」的六项遗留，逐项收口并做**真实对抗性验证**。
