@@ -96,7 +96,14 @@ pub struct CreateFormulaVersionRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApproveFormulaRequest {}
+pub struct ReviewFormulaRequest {
+    /// 评审动作：submit（提交评审）/ approve（通过）/ reject（驳回）
+    pub action: String,
+    /// 评审人。缺省时后端回退为 "system"
+    pub reviewer: Option<String>,
+    /// 评审意见，仅写入审计日志（rs.formulas 无意见列，本批不新增）
+    pub comment: Option<String>,
+}
 
 #[cfg(test)]
 mod tests {
@@ -253,12 +260,18 @@ mod tests {
     }
 
     #[test]
-    fn test_approve_formula_request_empty_roundtrip() {
-        let req = ApproveFormulaRequest {};
+    fn test_review_formula_request_roundtrip() {
+        let req = ReviewFormulaRequest {
+            action: "approve".to_string(),
+            reviewer: Some("张三".to_string()),
+            comment: Some("配方评审通过".to_string()),
+        };
         let json = serde_json::to_string(&req).unwrap();
-        let back: ApproveFormulaRequest = serde_json::from_str(&json).unwrap();
+        let back: ReviewFormulaRequest = serde_json::from_str(&json).unwrap();
         let json2 = serde_json::to_string(&back).unwrap();
         assert_eq!(json, json2);
+        assert_eq!(back.action, "approve");
+        assert_eq!(back.reviewer.as_deref(), Some("张三"));
     }
 
     #[test]

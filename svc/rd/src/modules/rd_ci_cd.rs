@@ -522,9 +522,23 @@ pub struct CreateDeployRequest {
     pub environment: Option<String>,
     pub app_name: Option<String>,
     pub version: Option<String>,
+    /// 批 38：本次发布关联的配方（可空，回填历史留 NULL）
+    pub formula_id: Option<Uuid>,
 }
 
 fn deploy_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
+    // 批 38：formula_* 三列只在带 LEFT JOIN 的查询里出现；create_deploy 的
+    // RETURNING * 不含 formula_name / formula_code，故用 try_get 容错，
+    // 缺列时返回 null 而不是 panic。
+    let formula_id = row.try_get::<Option<Uuid>, _>("formula_id").ok().flatten();
+    let formula_name = row
+        .try_get::<Option<String>, _>("formula_name")
+        .ok()
+        .flatten();
+    let formula_code = row
+        .try_get::<Option<String>, _>("formula_code")
+        .ok()
+        .flatten();
     serde_json::json!({
         "id": row.get::<Uuid, _>("id").to_string(),
         "deploy_no": row.get::<String, _>("deploy_no"),
@@ -543,6 +557,9 @@ fn deploy_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "target_url": row.get::<Option<String>, _>("target_url"),
         "logs": row.get::<Option<String>, _>("logs"),
         "created_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+        "formula_id": formula_id.map(|v| v.to_string()),
+        "formula_name": formula_name,
+        "formula_code": formula_code,
     })
 }
 
@@ -570,14 +587,55 @@ pub async fn list_deploys(
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
-    let (total, rows) =
-        match list_typed(&mut *txn, "deploys", "deploy_no,app_name,version", &params).await {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::error!("查询部署列表失败: {}", e);
-                return Err(internal_error("查询部署列表失败"));
-            }
-        };
+    // 批 38：改用 LEFT JOIN rs.formulas 带出配方名/编码，替代 list_typed 的
+    // `SELECT * FROM rd.deploys`（后者无法表达跨表关联）。
+    // 注意：rd 服务的主 schema 就是 rs（scripts/schema_boundary.json），
+    // 这里 JOIN rs.formulas 属同 schema 访问，不是跨 schema 越界。
+    let rows = sqlx::query(
+        r#"
+        SELECT d.id, d.deploy_no, d.project_id, d.project_name, d.build_id, d.env,
+               d.deploy_type, d.environment, d.app_name, d.version, d.status, d.deploy_time,
+               d.deployer, d.operator, d.target_url, d.logs, d.created_at,
+               d.formula_id, f.name AS formula_name, f.code AS formula_code
+        FROM rd.deploys d
+        LEFT JOIN rs.formulas f ON f.id = d.formula_id
+        WHERE ($1::text IS NULL OR d.status = $1)
+          AND ($2::text IS NULL
+               OR d.deploy_no ILIKE '%' || $2 || '%'
+               OR d.app_name ILIKE '%' || $2 || '%'
+               OR d.version ILIKE '%' || $2 || '%')
+        ORDER BY d.created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&params.status)
+    .bind(&params.search)
+    .bind(page_size)
+    .bind((page - 1) * page_size)
+    .fetch_all(&mut **txn)
+    .await;
+    let rows = match rows {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询部署列表失败: {}", e);
+            return Err(internal_error("查询部署列表失败"));
+        }
+    };
+    let total: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*) FROM rd.deploys d
+        WHERE ($1::text IS NULL OR d.status = $1)
+          AND ($2::text IS NULL
+               OR d.deploy_no ILIKE '%' || $2 || '%'
+               OR d.app_name ILIKE '%' || $2 || '%'
+               OR d.version ILIKE '%' || $2 || '%')
+        "#,
+    )
+    .bind(&params.status)
+    .bind(&params.search)
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
     let items: Vec<serde_json::Value> = rows.iter().map(deploy_to_json).collect();
     Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
@@ -610,10 +668,20 @@ pub async fn get_deploy(
         Some(txn) => txn,
         None => return Err(internal_error("rls transaction unavailable")),
     };
-    let row = sqlx::query("SELECT * FROM rd.deploys WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&mut **txn)
-        .await;
+    let row = sqlx::query(
+        r#"
+        SELECT d.id, d.deploy_no, d.project_id, d.project_name, d.build_id, d.env,
+               d.deploy_type, d.environment, d.app_name, d.version, d.status, d.deploy_time,
+               d.deployer, d.operator, d.target_url, d.logs, d.created_at,
+               d.formula_id, f.name AS formula_name, f.code AS formula_code
+        FROM rd.deploys d
+        LEFT JOIN rs.formulas f ON f.id = d.formula_id
+        WHERE d.id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&mut **txn)
+    .await;
     match row {
         Ok(Some(r)) => Ok(ApiResponse::success(deploy_to_json(&r), "获取部署成功")),
         Ok(None) => Err(not_found("部署不存在")),
@@ -640,8 +708,8 @@ pub async fn create_deploy(
     let deploy_no = format!("DEPLOY-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
     let row = sqlx::query(
         "INSERT INTO rd.deploys \
-         (deploy_no, project_id, build_id, env, deploy_type, environment, app_name, version) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
+         (deploy_no, project_id, build_id, env, deploy_type, environment, app_name, version, formula_id) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) \
          RETURNING *",
     )
     .bind(&deploy_no)
@@ -652,6 +720,7 @@ pub async fn create_deploy(
     .bind(&req.environment)
     .bind(&req.app_name)
     .bind(&req.version)
+    .bind(req.formula_id)
     .fetch_one(&mut **txn)
     .await;
     match row {

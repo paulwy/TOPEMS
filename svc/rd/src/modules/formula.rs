@@ -47,6 +47,10 @@ pub struct ListParams {
     pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
+    /// 评审状态过滤（批 38）：pending / approved / rejected
+    /// 传 "none" 表示筛出尚未提交评审（approval_status IS NULL）的配方
+    #[serde(default, alias = "approvalStatus")]
+    pub approval_status: Option<String>,
 }
 impl ListParams {
     pub fn page_or_default(&self) -> i64 {
@@ -73,7 +77,7 @@ pub fn create_routes() -> Router<super::ApiState> {
             "/formulas/{id}/versions",
             get(get_formula_versions).post(create_formula_version),
         )
-        .route("/formulas/{id}/approve", post(approve_formula))
+        .route("/formulas/{id}/review", post(review_formula))
 }
 
 #[utoipa::path(
@@ -118,10 +122,17 @@ pub async fn list_formulas(
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
         FROM rs.formulas
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR project_id = $4)
+          -- 批 38：评审状态过滤。"none" 表示筛出尚未提交评审的配方
+          AND (
+              $7::text IS NULL
+              OR ($7::text = 'none' AND approval_status IS NULL)
+              OR (approval_status = NULLIF($7::text, 'none'))
+          )
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#,
@@ -132,6 +143,7 @@ pub async fn list_formulas(
     .bind(params.project_id)
     .bind(page_size)
     .bind(offset)
+    .bind(&params.approval_status)
     .fetch_all(&mut **txn)
     .await;
 
@@ -144,12 +156,18 @@ pub async fn list_formulas(
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR project_id = $4)
+                  AND (
+                      $5::text IS NULL
+                      OR ($5::text = 'none' AND approval_status IS NULL)
+                      OR (approval_status = NULLIF($5::text, 'none'))
+                  )
                 "#,
             )
             .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
+            .bind(&params.approval_status)
             .fetch_one(&mut **txn)
             .await;
 
@@ -762,7 +780,7 @@ pub async fn create_formula_version(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["rd:write"])),
-    path = "/formulas/{id}/approve",
+    path = "/formulas/{id}/review",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -772,14 +790,25 @@ pub async fn create_formula_version(
     ),
     tag = "formula"
 )]
-pub async fn approve_formula(
+/// 配方评审（批 38 新增，替代原 `/formulas/{id}/approve`）
+///
+/// 原 `approve_formula` 有两个缺陷：`approved_by` 从不写入、请求体被完全忽略
+/// （`Json(_req)`），且把 `status` 硬写成中文 `'已批准'`。该端点在前端零调用
+/// （全仓 grep `approveFormula` 仅命中定义处），故按"清理一步到位"直接替换为
+/// 三态 review 端点，不保留旧路径。
+///
+/// action 语义：
+///   - submit  提交评审  -> approval_status='pending'，清空 approved_by/approved_at
+///   - approve 评审通过  -> approval_status='approved'，写 approved_by/approved_at，status='released'
+///   - reject  评审驳回  -> approval_status='rejected'，写 approved_by/approved_at，status='draft'
+pub async fn review_formula(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-    Json(_req): Json<crate::models::ApproveFormulaRequest>,
+    Json(req): Json<crate::models::ReviewFormulaRequest>,
 ) -> ApiResponse<Formula> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -796,14 +825,41 @@ pub async fn approve_formula(
     };
     let now = Utc::now();
 
+    // 三种动作映射到 (approval_status, status)；评审人仅 approve/reject 落库
+    let (approval_status, target_status) = match req.action.as_str() {
+        "submit" => ("pending", "draft"),
+        "approve" => ("approved", "released"),
+        "reject" => ("rejected", "draft"),
+        other => {
+            return ApiResponse::error(
+                400,
+                &format!("action 仅支持 submit / approve / reject，收到：{}", other),
+            )
+        }
+    };
+    let write_reviewer = matches!(req.action.as_str(), "approve" | "reject");
+    let reviewer: Option<String> = if write_reviewer {
+        Some(
+            req.reviewer
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .unwrap_or("system")
+                .to_string(),
+        )
+    } else {
+        None
+    };
+
     let result = sqlx::query_as::<_, Formula>(
         r#"
         UPDATE rs.formulas SET
-            status = '已批准',
-            approval_status = 'approved',
-            approved_at = $2,
-            updated_at = $3
-        WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4)
+            status = $2,
+            approval_status = $3,
+            approved_by = $4,
+            approved_at = $5,
+            updated_at = $6
+        WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -811,7 +867,10 @@ pub async fn approve_formula(
         "#,
     )
     .bind(id)
-    .bind(now)
+    .bind(target_status)
+    .bind(approval_status)
+    .bind(reviewer.as_deref())
+    .bind(if write_reviewer { Some(now) } else { None })
     .bind(now)
     .bind(tenant_opt)
     .fetch_one(&mut **txn)
@@ -825,13 +884,18 @@ pub async fn approve_formula(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(formula, "配方审批成功")
+            let msg = match req.action.as_str() {
+                "submit" => "配方已提交评审",
+                "approve" => "配方评审通过",
+                _ => "配方评审已驳回",
+            };
+            ApiResponse::success(formula, msg)
         }
-        // RowNotFound：被审批配方不存在，转为业务内层 404（HTTP 仍为 200）
+        // RowNotFound：被评审配方不存在，转为业务内层 404（HTTP 仍为 200）
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("配方不存在"),
         Err(e) => {
-            tracing::error!("审批配方失败: {}", e);
-            ApiResponse::server_error("审批配方失败")
+            tracing::error!("配方评审失败: {}", e);
+            ApiResponse::server_error("配方评审失败")
         }
     }
 }

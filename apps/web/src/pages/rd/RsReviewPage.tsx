@@ -1,97 +1,133 @@
 import React from 'react';
 import { Box, Chip, Stack, Typography, Paper } from '@mui/material';
 import { Eye, Check, X } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { reviewSchema } from '@/schemas/rd';
-import { buildApi } from '@/api/rd';
-import type { Build, CreateBuildRequest } from '@/api/rd';
+import { formulaApi } from '@/api/rd';
+import type { Formula, CreateFormulaRequest } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>({
-  list: buildApi.listBuilds,
-  create: buildApi.createBuild,
+/**
+ * 批 38：评审页数据源从 rd.builds 切换为 rs.formulas。
+ * - 列表字段：配方名称 / 编码 / 版本 / 评审状态 / 评审人 / 评审时间
+ * - 评审动作：通过 / 驳回 → POST /api/rd/formulas/{id}/review
+ * - 不再使用 buildApi，不再做 success/failed/running 硬映射。
+ */
+const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest>({
+  list: formulaApi.listFormulas,
+  create: async () => {
+    throw new Error(i18n.t('rd.rs_review_page.k20'));
+  },
   update: async () => {
-    throw new Error('Build update not supported');
+    throw new Error(i18n.t('rd.rs_review_page.k21'));
   },
   delete: async () => {
-    throw new Error('Build delete not supported');
+    throw new Error(i18n.t('rd.rs_review_page.k22'));
   },
 });
-const reviewAdapter = baseAdapter as unknown as CrudApiAdapter<Build>;
-const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'error',
-  in_progress: 'primary',
-};
-function getStatusLabelMap(): Record<string, string> {
-  return {
-    pending: i18n.t('rd.rs_review_page.k0'),
-    approved: i18n.t('rd.rs_review_page.k1'),
-    rejected: i18n.t('rd.rs_review_page.k2'),
-    in_progress: i18n.t('rd.rs_review_page.k3'),
-  };
+const reviewAdapter = baseAdapter as unknown as CrudApiAdapter<Record<string, unknown>>;
+
+type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'none';
+
+function normalizeApprovalStatus(raw: unknown): ApprovalStatus {
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (s === 'pending') return 'pending';
+  if (s === 'approved') return 'approved';
+  if (s === 'rejected') return 'rejected';
+  return 'none';
 }
-function transformStatus(status: string): string {
-  if (status === 'success') return 'approved';
-  if (status === 'failed') return 'rejected';
-  if (status === 'running') return 'in_progress';
-  return status;
+
+function getApprovalStatusLabel(status: ApprovalStatus): string {
+  switch (status) {
+    case 'pending':
+      return i18n.t('rd.rs_review_page.k0');
+    case 'approved':
+      return i18n.t('rd.rs_review_page.k1');
+    case 'rejected':
+      return i18n.t('rd.rs_review_page.k2');
+    case 'none':
+    default:
+      return i18n.t('rd.rs_review_page.k17');
+  }
 }
+
+function getApprovalStatusColor(
+  status: ApprovalStatus
+): 'default' | 'primary' | 'success' | 'error' | 'warning' {
+  switch (status) {
+    case 'pending':
+      return 'warning';
+    case 'approved':
+      return 'success';
+    case 'rejected':
+      return 'error';
+    case 'none':
+    default:
+      return 'default';
+  }
+}
+
 const RsReviewPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const handleApprove = async (row: Record<string, unknown>) => {
-    try {
-      queryClient.setQueryData(
-        [...QUERY_KEYS.RD.REVIEWS],
-        (oldData: { reviews: Build[]; total: number } | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            reviews: oldData.reviews.map((r) =>
-              r.id === row.id ? { ...r, status: 'success' } : r
-            ),
-          };
-        }
-      );
+  const { user } = useAuth();
+  const reviewerName =
+    user?.full_name || user?.realName || user?.username || i18n.t('rd.rs_review_page.k18');
+
+  const reviewMutation = useMutation({
+    mutationFn: async (vars: { id: string; action: 'approve' | 'reject' }) => {
+      const response = await formulaApi.reviewFormula(vars.id, vars.action, reviewerName);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || i18n.t('rd.rs_review_page.k19'));
+      }
+      return response.data;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: [reviewSchema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('rd.rs_review_page.k4'),
-        message: i18n.t('rd.rs_review_page.k5'),
+        message:
+          vars.action === 'approve'
+            ? i18n.t('rd.rs_review_page.k5')
+            : i18n.t('rd.rs_review_page.k7'),
       });
-    } catch (error) {
-      console.error(i18n.t('pages.rs_review_page.k0'), error);
-    }
+    },
+    onError: (error: unknown) => {
+      logger.error('[RD] review formula failed', error);
+      addNotification({
+        type: 'error',
+        title: i18n.t('rd.rs_review_page.k19'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_review_page.k19'),
+      });
+    },
+  });
+
+  const handleApprove = async (row: Record<string, unknown>) => {
+    const id = String(row.id ?? '');
+    if (!id) return;
+    reviewMutation.mutate({ id, action: 'approve' });
   };
   const handleReject = async (row: Record<string, unknown>) => {
-    try {
-      queryClient.setQueryData(
-        [...QUERY_KEYS.RD.REVIEWS],
-        (oldData: { reviews: Build[]; total: number } | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            reviews: oldData.reviews.map((r) => (r.id === row.id ? { ...r, status: 'failed' } : r)),
-          };
-        }
-      );
-      addNotification({
-        type: 'success',
-        title: i18n.t('rd.rs_review_page.k6'),
-        message: i18n.t('rd.rs_review_page.k7'),
-      });
-    } catch (error) {
-      console.error(i18n.t('pages.rs_review_page.k1'), error);
-    }
+    const id = String(row.id ?? '');
+    if (!id) return;
+    reviewMutation.mutate({ id, action: 'reject' });
   };
+
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
       label: i18n.t('rd.rs_review_page.k8'),
@@ -107,7 +143,7 @@ const RsReviewPage: React.FC = () => {
         />
       ),
       onClick: handleApprove,
-      show: (row) => transformStatus(String(row.status ?? '')) === 'pending',
+      show: (row) => normalizeApprovalStatus(row.approval_status) === 'pending',
     },
     {
       label: i18n.t('rd.rs_review_page.k10'),
@@ -118,20 +154,28 @@ const RsReviewPage: React.FC = () => {
         />
       ),
       onClick: handleReject,
-      show: (row) => transformStatus(String(row.status ?? '')) === 'pending',
+      show: (row) => normalizeApprovalStatus(row.approval_status) === 'pending',
     },
   ];
+
   const detailContent = (row: Record<string, unknown>) => {
-    const status = transformStatus(String(row.status ?? ''));
-    const statusLabel = getStatusLabelMap()[status] || status;
-    const statusColor = STATUS_COLOR_MAP[status] || 'default';
+    const status = normalizeApprovalStatus(row.approval_status);
+    const statusLabel = getApprovalStatusLabel(status);
+    const statusColor = getApprovalStatusColor(status);
+    const formulaName = String(row.name ?? '');
+    const formulaCode = String(row.code ?? '');
+    const version = String(row.version ?? '');
+    const approvedBy = row.approved_by ? String(row.approved_by) : '-';
+    const approvedAt = row.approved_at ? String(row.approved_at) : '-';
+    const description = row.description ? String(row.description) : '-';
     return (
       <Box sx={{ py: 2 }}>
         <Typography
           variant='h6'
           sx={{ fontWeight: 'bold' }}
         >
-          {String(row.build_no ?? '')} - {String(row.project_name ?? '')}
+          {formulaName}
+          {version ? ` · v${version}` : ''}
         </Typography>
         <Stack
           direction='row'
@@ -141,26 +185,69 @@ const RsReviewPage: React.FC = () => {
           <Chip
             label={statusLabel}
             color={statusColor}
+            size='small'
           />
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {i18n.t('pages.rs_review_page.k0')}: {String(row.project_name ?? '')}
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {i18n.t('pages.rs_review_page.k1')}: {i18n.t('pages.rs_review_page.k2')}
-          </Typography>
+          {formulaCode ? (
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {i18n.t('rd.rs_review_page.k23')}: {formulaCode}
+            </Typography>
+          ) : null}
         </Stack>
         <Paper sx={{ p: 2, mt: 3, bgcolor: 'grey.100' }}>
-          <Typography variant='body2'>{i18n.t('rd.rs_review_page.k11')}</Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {i18n.t('rd.rs_review_page.k24')}
+          </Typography>
+          <Typography
+            variant='body2'
+            sx={{ mt: 1 }}
+          >
+            {description}
+          </Typography>
         </Paper>
+        <Stack
+          direction='row'
+          spacing={4}
+          sx={{ mt: 3 }}
+        >
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {i18n.t('rd.rs_review_page.k25')}
+            </Typography>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {approvedBy}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {i18n.t('rd.rs_review_page.k26')}
+            </Typography>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {approvedAt}
+            </Typography>
+          </Box>
+        </Stack>
       </Box>
     );
   };
+
   return (
     <PageContainer
       title={i18n.t('rd.rs_review_page.k12')}
@@ -182,4 +269,5 @@ const RsReviewPage: React.FC = () => {
     </PageContainer>
   );
 };
+
 export default RsReviewPage;

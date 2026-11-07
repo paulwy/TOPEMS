@@ -25,7 +25,7 @@ const deployApiAdapter: CrudApiAdapter<Deploy> = {
       throw new Error(response.message || i18n.t('rd.rs_deploy_page.k0'));
     }
     return {
-      data: response.data.deploys || [],
+      data: response.data.items || [],
       total: response.data.total || 0,
     };
   },

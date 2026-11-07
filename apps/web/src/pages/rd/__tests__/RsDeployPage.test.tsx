@@ -11,7 +11,7 @@ vi.mock('@/api/rd', () => ({
       code: 0,
       message: '',
       data: {
-        deploys: [
+        items: [
           {
             id: 'DP001',
             deploy_no: 'DEPLOY-2026-001',

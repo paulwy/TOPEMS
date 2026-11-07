@@ -60,7 +60,7 @@ const RsFormulaDetailPage: React.FC = () => {
   });
   const approveMutation = useMutation({
     mutationFn: async (formulaId: string) => {
-      const response = await formulaApi.approveFormula(formulaId);
+      const response = await formulaApi.reviewFormula(formulaId, 'approve');
       if (!response.success || !response.data) {
         throw new Error(response.message || i18n.t('rd.rs_formula_detail_page.k2'));
       }

@@ -2084,6 +2084,20 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.159 审计整改第三十八批：rd 三页面语义错配（批 38，2026-11-07）
+
+- 记录：[P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md](docs/audit/P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md)。
+- **审计 B 项关闭**：评审页 `rd.builds` → **`rs.formulas`**（自带 `approval_status`/`approved_by`/`approved_at`，评审语义天然落点，不新建表）；发布页 `rd.deploys` 补 **`formula_id`** 关联（FK + 索引 + LEFT JOIN 返回 `formula_name`/`formula_code`）；代码库页批复核批 33 成果、**不改**。评审→发布链路贯通。
+- **后端**：`POST /formulas/{id}/approve` → **`/review`**；`ApproveFormulaRequest{}`（空结构体）→ `ReviewFormulaRequest{action,reviewer,comment}`；`approve_formula` → `review_formula` 三态（`submit`→pending/draft、`approve`→approved/released、`reject`→rejected/draft，非法 action 400）；**修掉原端点两个实质缺陷**——`approved_by` 从不写入、请求体被完全忽略（`Json(_req)`）；`ListParams` 加 `approval_status`（`"none"` 表示筛 NULL）并同步 SELECT/COUNT；`list_deploys`/`get_deploy` 由 `SELECT *` 改 LEFT JOIN（rd 主 schema 即 `rs`，同 schema 合规、无需 boundary 例外）。
+- **迁移 `0036` 五步全幂等**（二次执行仅索引 NOTICE、其余 no-op）：`formula_id` 列 / FK `ON DELETE SET NULL` / `idx_rd_deploys_formula` / `ck_formulas_approval_status`（pending·approved·rejected）/ **`created_by` uuid→text（两表）**。
+- **查出并修复 4 个缺陷**：① **`created_by` 类型错配是 `rs.formulas` 长期 0 行的真因**（DB `uuid` vs Rust `String` → 创建永远 500，且一旦有数据 `list` 解码也会失败，该表从未被真正使用过）；② `list_formulas` 主查询缺 `deleted_at IS NULL`（与 COUNT 不一致）；③ `RsDeployPage.tsx:28` 读 `data.deploys` 而后端返 `items` → 该页恒为空数据；④ `approve_formula` 不写 `approved_by`。
+- **前端 12 文件**：评审页换 `formulaApi.listFormulas` + `reviewFormula`、**删 `transformStatus` 硬映射**（原把 `success/failed/running` 映射成已通过/已拒绝/评审中，导致「待评审」永不出现、通过驳回按钮永不显示）；发布页删 `transformStatus` 与**永远不显示的假回滚按钮**、加「发布配方」列、状态按真实 `active/inactive/archived`；schemas 删 `reviewer`/`comment_count`/`release_note`/`branch`/`commit_hash`/`build_type` 等**数据库中不存在的死字段**；4 个测试文件同步（`deploys`→`items`、`approveFormula`→两条 `reviewFormula` 用例）。
+- **端到端实测（真实 API，8099）**：`rs.formulas` 原本 **0 行**（直接改读会「读对表仍空」），故先修创建路径再经 API 造 3 条示例（pending/approved/rejected 各一）；**三动作各 2 轮全 200**、`approved_by` 逐条正确；**三过滤各 2 轮全 200**、各命中 1 条；不存在 id 的 review → 404「配方不存在」；`GET /deploys` total=**166** 且 item 含 `formula_id`/`formula_name`/`formula_code` 三键（当前 `null`，未回填）。
+- **SQL-only 92 项：`database/init` 侧可删 0 项**（主 Agent 独立复核，不采信 Subagent 单方结论）：92 项逐个在 `database/init/` 固定串匹配，**仅 `finance:budget:write` 命中 1 处且确有真实消费**（`svc/finance/src/modules/operational.rs:640` + `scripts/ci/perm-code-mapping.json:11`），其余 **91 项只存在于 `database/migrations/` 历史文件**。**根因是 `scripts/audit_permission_codes.py::scan_sql_declared:144-148` 把 `init ∪ migrations` 并集算作「SQL 声明」**——批 25 已 `DELETE` 的字面量永远计入 SQL-only、无法收敛。**属改审计口径、超出本批授权，未擅自动**（不采用「放宽判定过关」路径），登记待决策；对账各项 SQL-only 92 / fe_orphan 32 / db_only 570 **未变差**。
+- **未做（明确登记）**：166 行历史 deploy 的 `formula_id` **不回填**（`app_name`/`version`/`project_name` 全空的种子数据无法推断，硬填即伪造，留 NULL 待产品补录）；`rs.formulas.status` **不加 CHECK**（既有写入可能含中文值，加约束会破坏写入）。
+- **观察项（另立任务）**：诊断期见 `list_formulas` 严格 `500/200` 交替（同期 `get_formula`、`list_deploys` 全 200），服务重启后复测 **20/20 全 200** → 判定旧进程**连接池存在会话级坏连接**（`app.tenant_id` GUC 未生效致 RLS 过滤异常），**非本批引入**，需专项排查连接池初始化与坏连接剔除。
+- **验证**：`cargo check -p topems-rd` exit 0（6.84s）/ `cargo build -p topems-server` 11.25s / `typecheck` **0 error** / `eslint` **0 problems** / 全量 vitest **621 files、6642 passed、1 skipped、0 failed**（多 2 = `reviewFormula` 新用例）/ smoke **4501/4501 PASS、0 FAIL、豁免 0**（与批 37 基线一致，smoke 不覆盖 `/formulas`）/ 迁移四件套 PASS（`check-migrations` exit 0 零 FAIL）。
+
 ## v1.158 审计整改第三十七批：contract_fallback 全量清理（批 37，2026-11-07）
 
 > 原则：**一步到位，清理一步到位**。关闭批 36 登记的「contract_fallback 其余约 160 个占位端点仍 mutate_ok 假成功」遗留项。

@@ -5,34 +5,39 @@ import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 import RsReviewPage from '../RsReviewPage';
 
 vi.mock('@/api/rd', () => ({
-  buildApi: {
-    listBuilds: vi.fn().mockResolvedValue({
+  formulaApi: {
+    listFormulas: vi.fn().mockResolvedValue({
       success: true,
       code: 0,
       message: '',
       data: {
         items: [
           {
-            id: 'RV001',
-            title: '配方V2.0评审',
-            reviewer: '王五',
-            author: '李四',
-            status: 'pending',
-            create_time: '2026-06-01',
-            comment_count: 3,
+            id: 'F001',
+            name: '配方V2.0',
+            code: 'FORMULA-V2',
+            version: '2.0',
+            approval_status: 'pending',
+            approved_by: null,
+            approved_at: null,
             project_id: 'P001',
-            branch: 'main',
-            commit_hash: 'abc123',
-            build_type: 'manual',
-            build_no: 'BUILD-001',
-            project_name: '研发平台',
+            description: '测试配方',
           },
         ],
         total: 1,
       },
     }),
-    createBuild: vi.fn(),
+    reviewFormula: vi.fn().mockResolvedValue({
+      success: true,
+      code: 0,
+      message: '',
+      data: { id: 'F001', approval_status: 'approved' },
+    }),
   },
+}));
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({ user: { username: 'tester', full_name: 'Tester' } }),
 }));
 
 describe('RsReviewPage', () => {
@@ -45,10 +50,10 @@ describe('RsReviewPage', () => {
     expect(await screen.findByRole('heading', { name: '配方评审' })).toBeInTheDocument();
   });
 
-  it('renders review rows from mocked API', async () => {
+  it('renders formula rows from mocked API', async () => {
     renderWithProviders(<RsReviewPage />);
     await waitFor(() => {
-      expect(screen.getByText('配方V2.0评审')).toBeInTheDocument();
+      expect(screen.getByText('配方V2.0')).toBeInTheDocument();
     });
   });
 });
