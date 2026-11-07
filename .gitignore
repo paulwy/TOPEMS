@@ -37,6 +37,8 @@ auth-state.json
 config/standalone.env
 # Playwright E2E 运行时登录态（含真实 token，禁止入库）
 tests/e2e/.auth/
+# 本机凭据轮换快照 / 退役归档（JWT 密钥、plist 备份等，含明文，禁止入库）
+.secrets/
 
 # Frontend
 frontend/node_modules/
@@ -107,7 +109,8 @@ trae-ai-contest/
 .backups/
 .bak-*/
 *.bak
-*.bak-*   # 连字符形态（如 backup-topems.sh.bak-20261030）
+# 连字符形态（如 backup-topems.sh.bak-20261030）
+*.bak-*
 *.bak.*
 *.backup
 *.old
