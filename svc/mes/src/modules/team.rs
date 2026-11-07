@@ -35,7 +35,7 @@ struct TeamDetailRow {
     team_name: String,
     team_type: Option<String>,
     work_station_id: Option<Uuid>,
-    leader_id: Option<String>,
+    leader_id: Option<Uuid>,
     leader_name: Option<String>,
     member_count: i32,
     status: String,
@@ -52,7 +52,7 @@ struct TeamRow {
     team_name: String,
     team_type: Option<String>,
     work_station_id: Option<Uuid>,
-    leader_id: Option<String>,
+    leader_id: Option<Uuid>,
     leader_name: Option<String>,
     member_count: Option<i32>,
     status: Option<String>,
@@ -301,7 +301,11 @@ pub async fn list_teams(
                     Some(ws_name)
                 }
             },
-            leader_id: r.try_get::<Option<String>, _>("leader_id").ok().flatten(),
+            leader_id: r
+                .try_get::<Option<Uuid>, _>("leader_id")
+                .ok()
+                .flatten()
+                .map(|u| u.to_string()),
             leader_name: r.try_get::<Option<String>, _>("leader_name").ok().flatten(),
             member_count: r
                 .try_get::<Option<i32>, _>("member_count")
@@ -428,6 +432,7 @@ pub async fn create_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     // 租户来源统一为 Claims：tenant_id 必须随行写入，否则落 NULL 共享行，
     // 后续以 claims 租户为谓词的 UPDATE 永远匹配不到该班组。
     let tenant_id = get_tenant_id(&claims);
@@ -449,7 +454,7 @@ pub async fn create_team(
     .bind(req.team_name)
     .bind(req.team_type)
     .bind(work_station_id)
-    .bind(req.leader_id.as_deref())
+    .bind(leader_id)
     .bind(req.leader_name)
     .bind(req.description)
     .bind(Utc::now())
@@ -508,7 +513,7 @@ pub async fn create_team(
         team_type: result.team_type,
         work_station_id: result.work_station_id.map(|u| u.to_string()),
         work_station_name: None,
-        leader_id: result.leader_id,
+        leader_id: result.leader_id.map(|u| u.to_string()),
         leader_name: result.leader_name,
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
@@ -536,8 +541,9 @@ pub async fn update_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    // leader_id 列当前库结构为 character varying：按字符串绑定（与 create_team 一致）。
-    // 若按 Uuid 绑定，COALESCE($5::uuid, leader_id) 会与该列类型冲突。
+    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    // leader_id 列为 uuid（见迁移 20261103230000_db10_5433_varchar_text_to_uuid_19cols），
+    // 必须按 Uuid 绑定，否则 COALESCE($5::text, leader_id::uuid) 类型冲突。
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, TeamRow>(
@@ -563,7 +569,7 @@ pub async fn update_team(
     .bind(req.team_name)
     .bind(req.team_type)
     .bind(work_station_id)
-    .bind(req.leader_id.as_deref())
+    .bind(leader_id)
     .bind(req.leader_name)
     .bind(req.status)
     .bind(req.description)
@@ -589,7 +595,7 @@ pub async fn update_team(
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: None,
-                leader_id: r.leader_id,
+                leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
