@@ -422,3 +422,41 @@
 - `docs/audit/TOPEMS审计整改计划_2026-11-01.md`（批次表批 43 行，需按本节结论修订打法描述）
 - `artifacts/batch43/`：`FIX_SPEC.md`、`b43_nosql_recheck.csv`（1181 行）、`b43_nosql_recheck.md`（含 796 条新增清单）、`b43_mes_report.md`
 - `artifacts/batch42/`：`fail_closed_detail.csv`（824）、`audit_findings_v2.json`、`rls_tables_raw.txt`
+
+---
+
+## 12. W7：RLS 租户隔离重做（基于 `Db::scope*`，2026-11-08 立项）
+
+### 12.1 立项依据
+
+本地已 rebase 到 `origin/main@926fe1af2`（含远端 RLS 收敛方案）。批 43 的 `begin_tenant_txn`
+方案作废归档于 `artifacts/wip-archive-20261108/`；定性、可复用度、各域前置条件与批次表见
+**`docs/quality/rls-rework-after-rebase-2026-11-08.md`**。
+
+一句话结论：旧改动不可 cherry-pick，但 >80% 是机械映射（`begin_tenant_txn(pool, opt)` → `db.scope*`，
+`&mut *tx` → `&mut *scope`）；最耗工处是 `ScopedTxn` 不暴露 `PgConnection`，所有
+`&mut Transaction<'_, Postgres>` 辅助函数需改签名。
+
+### 12.2 约束（与原 RLS 工作流一致，另加两条）
+
+- 只允许一套事务工厂：`Db::scope() / scope_read() / scope_system() / scope_read_system() / scope_with()`；
+  **禁止**再引入 `begin_tenant_txn` 或域内私有 `open_admin_txn` / `rls_tenant()` 薄封装。
+- 未注入 `Db` 的域（analytics / finance / lims / unified-core / qms / ehs / erp）先改
+  `AppState` 与 `main.rs` 注入 `Db::new(pool, "<模块 search_path>")`，search_path 取值与
+  `svc/server/src/modules/*_real_module.rs` 中的显式值保持一致（W2-A 已固化）。
+- 每批必须做双租户实测（A 可见 / B 不可见 / 超管可见），不得只以编译通过收工。
+- 每批结束跑 `cargo check` + `clippy -D warnings` + `fmt` + `web-contract-smoke`（基线 4501）。
+
+### 12.3 批次建议
+
+| 批次 | 范围 | 前置 | 状态 |
+|---|---|---|---|
+| W7-0 | 打样：`settings/smtp.rs` 或 `erp`（2 处） | 无 | ⏳ 待开工 |
+| W7-1 | integration（14）+ erp（2）整域清零 | 二者已/易注入 `Db` | ⏳ |
+| W7-2 | mes 剩余（粗口径 553，已有 3 文件示范） | 无 | ⏳ |
+| W7-3 | analytics（169）+ finance（278） | 先注入 `Db` | ⏳ |
+| W7-4 | lims（202）+ qms（297）+ ehs（208） | 先注入 `Db` | ⏳ |
+| W7-5 | unified-core（566，原 407 处缺陷） | 先注入 `Db`；按 `artifacts/batch43/FIX_SPEC.md` 文件序 | ⏳ |
+
+> 括号内为 grep 粗口径的裸池引用数，含合法用法，**不可当缺陷数**；权威基线仍为 1620
+> （`artifacts/batch43/b43_nosql_recheck.csv`）。
