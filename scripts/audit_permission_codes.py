@@ -14,6 +14,13 @@ db 集合口径（批 26 变更）：
   连接串优先级：--dsn > 环境变量 TOPEMS_AUDIT_DSN > 环境变量 DATABASE_URL > 仓库根 .env 的
   DATABASE_URL；均无或 psql 不可用时回退 SQL 扫描（输出标注 db_source: sql_fallback 及原因）。
 
+SQL 声明基线口径（批 39 变更）：
+  sql_declared 只扫 database/init（现行声明）；database/migrations 拆为独立字段
+  sql_history_orphan / sql_history_codes / sql_history_also_current，仅作回溯取证，
+  不再计入声明基线。批 25 已 DELETE 的字面量原本留在 migrations 里，会被旧口径
+  （init ∪ migrations）永远计入 SQL-only、无法收敛；新口径下它们落入
+  sql_history_orphan（历史孤立字面量），不再污染声明基线。
+
 分类口径：
   ① be_only      BE 校验声明但 FE 未引用（前端菜单/按钮可能缺约束）
   ② fe_only      FE 引用但 BE 未声明（前端引用不存在的码，或被 DB 授权兜底）
@@ -142,10 +149,30 @@ def collect_live_db(
 
 
 def scan_sql_declared(limit_per_code: int = 5) -> Dict[str, List[Tuple[str, int]]]:
-    """SQL 文件中的码声明集（init + migrations），用于与 live DB 做漂移比对。"""
-    declared = scan_codes('database/init', ('.sql',), limit_per_code)
-    declared.update(scan_codes('database/migrations', ('.sql',), limit_per_code))
-    return declared
+    """现行 SQL 声明集：仅扫 ``database/init``。
+
+    批 39 口径修正：此前 ``init ∪ migrations`` 并集被算作「SQL 声明」，
+    导致批 25 已在 live DB ``DELETE`` 的码，其字面量仍留在 migrations 历史文件里
+    （``DELETE ... code IN ('...', ...)`` 多行列表 / 早期迁移 INSERT 后又被后续迁移清理），
+    永远计入 ``SQL-only`` 差集、无法收敛。现拆为两个独立集合：
+
+    - ``scan_sql_declared`` —— **声明基线**，仅 ``database/init``（现行声明）。
+    - ``scan_sql_history``  —— **历史回溯**，仅 ``database/migrations``，独立输出为
+      ``code_drift.sql_history_*``，不参与声明基线判定。
+
+    ``fe_orphan`` / ``db_only`` / ``fe_only`` 等主分类口径不变；live DB 仍是权威。
+    """
+    return scan_codes('database/init', ('.sql',), limit_per_code)
+
+
+def scan_sql_history(limit_per_code: int = 5) -> Dict[str, List[Tuple[str, int]]]:
+    """历史迁移文件里出现过的码字面量：仅扫 ``database/migrations``。
+
+    用于回溯取证（查「某码曾经在哪次迁移引入/删除」），**不**作为现行声明基线。
+    其中相当一部分是批 25 已 ``DELETE`` 的字面量、或早期迁移 INSERT 后被后续清理的码，
+    与 live DB / init 都不重合，应单独输出、不计入 ``sql_only``。
+    """
+    return scan_codes('database/migrations', ('.sql',), limit_per_code)
 
 
 def classify(fe: Dict, be: Dict, db: Dict) -> Dict:
@@ -226,8 +253,12 @@ def main() -> int:
     be = scan_codes('svc', ('.rs',), args.limit)
 
     # 批 26：db 集合改为读 live DB（运行时真实可用码）；SQL 声明集单独输出做漂移比对
+    # 批 39：SQL 声明基线拆为两路——
+    #   sql_declared = database/init（现行声明，与 live DB 做漂移比对）
+    #   sql_history  = database/migrations（历史回溯取证，独立输出，不计入声明基线）
     live_db, live_err = collect_live_db(dsn=args.dsn, limit_per_code=args.limit)
     sql_declared = scan_sql_declared(args.limit)
+    sql_history = scan_sql_history(args.limit)
     if live_db is not None:
         db = live_db
         db_source = 'live'
@@ -238,15 +269,23 @@ def main() -> int:
     report = classify(fe, be, db)
 
     # 口径与漂移信息（区分「口径变更」与「数据变化」）
-    db_set, sql_set = set(db), set(sql_declared)
+    db_set, sql_set, hist_set = set(db), set(sql_declared), set(sql_history)
     report['db_source'] = db_source
     report['db_source_error'] = live_err
     report['code_drift'] = {
         'live_db_codes': len(db_set),
         'sql_declared_codes': len(sql_set),
         'in_both': len(db_set & sql_set),
+        # 声明基线（init）与 live DB 的差集：真·冗余 / 真·未落地
         'sql_only_never_persisted': sorted(sql_set - db_set),
         'db_only_not_in_sql': sorted(db_set - sql_set),
+        # 历史迁移回溯（migrations）：与 live/init 三方对照
+        'sql_history_codes': len(hist_set),
+        # 仅在历史 migrations、既不在 init 声明、也不在 live DB 的码
+        # —— 典型为批 25 DELETE 后仍留在迁移文件里的字面量 / 已废弃码
+        'sql_history_orphan': sorted(hist_set - db_set - sql_set),
+        # migrations 里仍在 live DB / init 中的码（即现行码的历史引入点）
+        'sql_history_also_current': len(hist_set & (db_set | sql_set)),
     }
 
     if args.json:
@@ -263,10 +302,16 @@ def main() -> int:
     drift = report.get('code_drift') or {}
     if drift:
         print(
-            f"  漂移：SQL 声明 {drift['sql_declared_codes']} | live DB {drift['live_db_codes']} | "
+            f"  漂移：SQL 声明(init) {drift['sql_declared_codes']} | live DB {drift['live_db_codes']} | "
             f"交集 {drift['in_both']} | SQL-only {len(drift['sql_only_never_persisted'])} | "
             f"DB-only {len(drift['db_only_not_in_sql'])}"
         )
+        if 'sql_history_codes' in drift:
+            print(
+                f"  历史迁移(migrations) {drift['sql_history_codes']} 条；"
+                f"其中仅历史、未在 init/live 的孤立字面量 {len(drift['sql_history_orphan'])} 条；"
+                f"仍为现行码的历史引入点 {drift['sql_history_also_current']} 条"
+            )
     print(f"  ① be_only {counts['be_only']}   ② fe_only {counts['fe_only']}   ④ fe_orphan {counts['fe_orphan']}   db_only {counts['db_only']}")
     print(f"  ③ 命名不一致组 {counts['rename_groups']}")
     for group in report['rename_groups'][:20]:

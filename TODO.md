@@ -2084,6 +2084,20 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.160 审计整改第三十九批：连接池 stale prepared statement 根治 + 对账口径修正（批 39，2026-11-07）
+
+- 记录：[P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md](docs/audit/P3-30_连接池stale_prepared_statement与对账口径修正_批39_执行记录_2026-11-07.md)。
+- **根因判定（H1 成立）**：批 38 观察到的 `list_formulas` 严格 `500/200` 交替，根因是 **sqlx 按连接缓存 prepared statement**（默认容量 100 条/连接）。迁移 `0036` 在服务运行中执行了 `ALTER COLUMN TYPE uuid→text`（`rs.formulas`/`rs.formula_versions.created_by`），**旧连接上缓存的语句仍引用旧 schema 元数据**、新连接按新 schema 准备；连接池交替借出两类连接 → 严格交替。`get_formula`/`list_deploys` 不涉及被改列，故同期全 200；「重启后即消失」也正因重启让全部连接重新 prepare。
+- **修复（不依赖重启）**：两处建池路径（`lib/shared-db/src/database/mod.rs:82`、`lib/shared-bootstrap/src/lib.rs:443`）统一 **`statement_cache_capacity(0)`** —— 禁用客户端语句缓存，每条查询即时准备，**DDL 后下一次查询自动用新 schema**，从机制上消除陈旧语句；加 **`test_before_acquire(true)`**（借连接前 `SELECT 1` 存活探测，剔除断连/坏连接）；`max_lifetime` 1800→600s、`idle_timeout` 300→120s 作次要兜底。**代价**：每条查询多一次 Prepare 往返（~0.5-1ms），按「正确性优先」接受；注意 `quick_bootstrap_with_db` 显式传 `Some(1800)` 会覆盖兜底默认，**真正的防线是 `statement_cache_capacity(0)`**（注释已据实写明，不留误导）。
+- **压测（主 Agent 独立复核，不采信单方自述）**：`GET /api/rd/formulas` 无参 + `approval_status=pending/approved/rejected` **各 50 次、共 200 次全 200、0 失败**，进程 **PID 64939 压测全程未变**（证明不是靠重启）；回归 `GET /deploys` 20/20、三条配方 `GET /formulas/{id}` 各 20/20 全 200。
+- **未独立复现原始现象（如实说明）**：修复前该现象能否稳定复现，依赖执行过程记录；本修复的确定性来自**机理**（禁用缓存后不存在陈旧语句）与 **200 次 0 失败**，不来自「修复前后对照重放」。
+- **对账口径修正（用户拍板）**：`scripts/audit_permission_codes.py::scan_sql_declared` 改为 **`sql_declared` 只扫 `database/init`**（现行声明），`database/migrations` 降级为**独立字段 `sql_history`**（仅回溯取证、不再计入声明基线）；**live DB 仍是权威**，`fe_orphan`/`db_only`/`fe_only` 判定规则一字未改。**这是口径修正，不是放宽判定**。
+- **新基线（差异全部来自口径变化，数据未变）**：`sql_declared_codes` **1087 → 12**；`sql_only` **92 → 1**；新增 `sql_history_orphan = 91`（migrations 中的历史孤立字面量，与批 38 独立复核的 91 项吻合）；主分类 9 项**逐项全等**（fe 445 / be 577 / db 995 / be_only 450 / fe_only 318 / fe_orphan 32 / db_only 570 / rename 0 / both 127）；数学闭合 `91 + 995 = 1086`、`91 + 1 = 92`；`database/init/**` 与 `database/migrations/**` **零改动**（`git status` 与 mtime 为证）。
+- **仅剩 1 项定性（初判被推翻）**：`finance:budget:write` 初判为「init 声明 + live DB 缺行 → 端点会 403 的真缺口」，**经运行时取证推翻**——`svc/finance/src/modules/operational.rs:640` 的 `security(...)` 属 `#[utoipa::path]` **文档注解**；`operational.rs` 内 `require_permission` **命中 0**、路由注册处**未挂权限中间件**；全仓运行时引用只出现在**生成的 OpenAPI 文档**中 → **纯文档层孤立字面量，live DB 无行不产生 403**。
+- **附带发现（登记不处置，超本批范围）**：`/budgets` 增删改端点在 finance 服务中**没有权限码粒度的访问控制**（`operational.rs` 12 处 `security(...)` 全是纯文档注解，运行时无人消费），任何持有效 JWT 的同租户用户均可调用（仅受 RLS 租户隔离约束）——「权限中间件未挂载」的反向鉴权缺口，与码缺失无关，另立任务。
+- **未做（维持登记）**：`rd.deploys.formula_id` 166 行**不回填**（种子数据 `app_name`/`version`/`project_name` 全空，无可推断依据，维持 NULL 待产品补录）。
+- **验证**：`cargo check -p topems-rd -p topems-server -p topems-master-data` **exit 0、0 error**；`cargo test -p topems-shared-db -p topems-shared-bootstrap --lib` **120 + 176 passed、0 failed**；smoke **4501/4501 PASS、0 FAIL、豁免 0**；迁移四件套（`check-migrations` / `check-migration-names` / `check-directed-migrations` / `check-migration-insert-shape`）**全 exit 0**；全量 vitest **621 files / 6642 passed / 1 skipped / 0 failed**（与批 38 基线一致）。
+
 ## v1.159 审计整改第三十八批：rd 三页面语义错配（批 38，2026-11-07）
 
 - 记录：[P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md](docs/audit/P3-29_rd三页面语义错配_批38_执行记录_2026-11-07.md)。

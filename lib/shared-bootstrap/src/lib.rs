@@ -436,8 +436,17 @@ impl ServiceBootstrap {
             .and_then(|t| t.parse::<uuid::Uuid>().ok())
             .map(|u| u.to_string());
 
+        let connect_options = database_url
+            .parse::<sqlx::postgres::PgConnectOptions>()
+            .map_err(|e| anyhow::anyhow!("数据库 DSN 解析失败: {e}"))?
+            // 禁用 prepared statement 客户端缓存（H1 根因修复），与 shared-db 主池对齐。
+            .statement_cache_capacity(0);
+
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)
+            .idle_timeout(std::time::Duration::from_secs(120))
+            .max_lifetime(std::time::Duration::from_secs(600))
+            .test_before_acquire(true)
             .after_connect(move |conn, _meta| {
                 let sp = search_path.clone();
                 let dt = default_tenant.clone();
@@ -455,7 +464,7 @@ impl ServiceBootstrap {
                     Ok(())
                 })
             })
-            .connect(&database_url)
+            .connect_with(connect_options)
             .await?;
 
         reservation.commit();
