@@ -1184,7 +1184,7 @@ impl AssetCatalogManager {
 
     async fn list_categories(db: &sqlx::PgPool) -> Vec<AssetCategory> {
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "SELECT {ASSET_CATEGORY_COLS} FROM master_data.mdm_asset_categories"
+            "SELECT {ASSET_CATEGORY_COLS} FROM master_data.mdm_data_asset_categories"
         )))
         .fetch_all(db)
         .await

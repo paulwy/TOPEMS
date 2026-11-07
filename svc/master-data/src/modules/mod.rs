@@ -29,6 +29,8 @@ pub mod dict;
 pub mod master_data;
 // 供应商权威主数据（master_data.mdm_suppliers，scm/srm 汇入去重后的权威表，本批起完整 CRUD）
 pub mod supplier_master;
+// 供应商双向同步管道 —— mdm → scm/srm 下游写（后台异步，失败落死信）
+pub mod supplier_sync;
 // 供应商类别字典只读列表（master_data.mdm_supplier_categories，前端下拉/级联用）
 pub mod supplier_category_dict;
 

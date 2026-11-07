@@ -8,6 +8,7 @@ import VehiclePage from '../erp/VehiclePage';
 import MaterialManagementPage from '../erp/MaterialManagementPage';
 import AssetManagementPage from '../erp/AssetManagementPage';
 import { erpApi, vehicleApi, vehicleRequestApi, meetingRoomApi, assetApi } from '@/api/erp';
+import { masterDataApi } from '@/api/master-data';
 
 // 批次6：erp 域剩余 CrudPage 包装页真断言（照 CrmCrudPages 冻结范本）。
 // 3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）。
@@ -106,6 +107,20 @@ vi.mock('@/api/erp', () => ({
   assetApi: makeEntityApi(),
 }));
 
+// 批 34：SupplierManagementPage 已切 MDM 权威源（/api/master-data/suppliers），
+// mdm list 信封为 { items, total, page, page_size }，故 mock 用默认 itemsKey。
+vi.mock('@/api/master-data', () => ({
+  masterDataApi: {
+    suppliers: makeEntityApi(),
+    supplierCategories: {
+      list: vi.fn().mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0 },
+      }),
+    },
+  },
+}));
+
 describe('ErpCrudPages（批次6：Supplier/VehicleRequest/MeetingRoom 纯包装 + Vehicle/Material/Asset 统计卡）', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -194,8 +209,8 @@ describe('ErpCrudPages（批次6：Supplier/VehicleRequest/MeetingRoom 纯包装
     });
   };
 
-  describe('SupplierManagementPage（itemsField: suppliers 解包）', () => {
-    assertCrudBehavior(vi.mocked(erpApi.suppliers), 'supplierSchema', [
+  describe('SupplierManagementPage（批34 切 MDM，items 解包）', () => {
+    assertCrudBehavior(vi.mocked(masterDataApi.suppliers), 'supplierSchema', [
       { label: 'erp.supplier_management_page.k4', href: '/dashboard' },
       { label: 'ERP', href: '/erp' },
       { label: 'erp.supplier_management_page.k5' },

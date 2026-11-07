@@ -6,11 +6,13 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { createListPageCrudApi } from '@/schema/listPageCrudAdapter';
 import { getColumns } from '@/schema';
 import { supplierSchema } from '@/schemas/wms';
-import { scmApi } from '@/api/scm';
+import { masterDataApi } from '@/api/master-data';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
-const supplierApiAdapter = createCrudPageAdapter(scmApi.suppliers);
+// 切 MDM 权威源（2026-11-07）：WMS 供应商列表原本复用 scmApi.suppliers，
+// 现统一改走 /api/master-data/suppliers。mdm list 信封为 { items, total, page, page_size }。
+const supplierApiAdapter = createCrudPageAdapter(masterDataApi.suppliers);
 const supplierCrudApi = createListPageCrudApi<Record<string, unknown>>(
   supplierApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );

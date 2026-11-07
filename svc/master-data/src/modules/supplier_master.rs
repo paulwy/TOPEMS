@@ -24,6 +24,7 @@ use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use crate::modules::supplier_sync::{spawn_mdm_to_downstream, SupplierSyncPayload, SyncOp};
 use crate::shared::AppState;
 
 /// 请求级租户上下文（对齐 rls_middleware 同源：读 x-tenant-id 头；缺失/非法 → nil 全放行）
@@ -386,7 +387,48 @@ pub async fn create_supplier(
     .await;
 
     match row {
-        Ok(Some(s)) => api_success(s),
+        Ok(Some(s)) => {
+            // 主写入已提交（本接口无显式事务，单条 INSERT 即提交），后台异步同步到 scm/srm。
+            // 同步失败只落死信，不影响主请求返回。
+            let payload = SupplierSyncPayload {
+                supplier_no: s.supplier_no.clone(),
+                name: s.name.clone(),
+                legal_name: s.legal_name.clone(),
+                category: s.category.clone(),
+                category_code: s.category_code.clone(),
+                status: s.status.clone(),
+                tax_id: s.tax_id.clone(),
+                address: s.address.clone(),
+                contact_person: s.contact_person.clone(),
+                phone: s.phone.clone(),
+                email: s.email.clone(),
+                website: s.website.clone(),
+                credit_rating: s.credit_rating.clone(),
+                risk_level: s.risk_level.clone(),
+                bank_name: s.bank_name.clone(),
+                bank_account: s.bank_account.clone(),
+                remarks: s.remarks.clone(),
+                name_en: s.name_en.clone(),
+                lead_time_days: s.lead_time_days,
+                tenant_id: None,
+            };
+            // 补 tenant_id：从 s 里没有，单独查一次（轻量，仅后台同步用）
+            let db = state.db.clone();
+            let sno = s.supplier_no.clone();
+            let tenant_id = sqlx::query_scalar::<_, Option<Uuid>>(
+                "SELECT tenant_id FROM master_data.mdm_suppliers WHERE supplier_no = $1 AND deleted_at IS NULL",
+            )
+            .bind(&sno)
+            .fetch_optional(&db)
+            .await
+            .ok()
+            .flatten()
+            .flatten();
+            let mut payload = payload;
+            payload.tenant_id = tenant_id;
+            spawn_mdm_to_downstream(db, payload, SyncOp::Create);
+            api_success(s)
+        }
         Ok(None) => ApiResponse::from(TopemsError::Internal("创建供应商失败".to_string())),
         Err(e) => ApiResponse::from(map_write_error(e, "创建供应商")),
     }
@@ -481,7 +523,44 @@ pub async fn update_supplier(
     .await;
 
     match row {
-        Ok(Some(s)) => api_success(s),
+        Ok(Some(s)) => {
+            // 主写入已提交，后台同步到 scm/srm
+            let db = state.db.clone();
+            let sno = s.supplier_no.clone();
+            let tenant_id = sqlx::query_scalar::<_, Option<Uuid>>(
+                "SELECT tenant_id FROM master_data.mdm_suppliers WHERE supplier_no = $1 AND deleted_at IS NULL",
+            )
+            .bind(&sno)
+            .fetch_optional(&db)
+            .await
+            .ok()
+            .flatten()
+            .flatten();
+            let payload = SupplierSyncPayload {
+                supplier_no: s.supplier_no.clone(),
+                name: s.name.clone(),
+                legal_name: s.legal_name.clone(),
+                category: s.category.clone(),
+                category_code: s.category_code.clone(),
+                status: s.status.clone(),
+                tax_id: s.tax_id.clone(),
+                address: s.address.clone(),
+                contact_person: s.contact_person.clone(),
+                phone: s.phone.clone(),
+                email: s.email.clone(),
+                website: s.website.clone(),
+                credit_rating: s.credit_rating.clone(),
+                risk_level: s.risk_level.clone(),
+                bank_name: s.bank_name.clone(),
+                bank_account: s.bank_account.clone(),
+                remarks: s.remarks.clone(),
+                name_en: s.name_en.clone(),
+                lead_time_days: s.lead_time_days,
+                tenant_id,
+            };
+            spawn_mdm_to_downstream(db, payload, SyncOp::Update);
+            api_success(s)
+        }
         Ok(None) => ApiResponse::from(TopemsError::NotFound("供应商不存在".to_string())),
         Err(e) => ApiResponse::from(map_write_error(e, "更新供应商")),
     }
@@ -494,24 +573,49 @@ pub async fn delete_supplier(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let tenant = req_tenant_id(&headers);
-    match sqlx::query(
+    // RETURNING 拿到 supplier_no + tenant_id，用于后台同步软删 scm/srm
+    let deleted: Result<Option<(String, Option<Uuid>)>, sqlx::Error> = sqlx::query_as(
         r#"UPDATE master_data.mdm_suppliers
            SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+           RETURNING supplier_no, tenant_id"#,
     )
     .bind(id)
     .bind(tenant)
-    .execute(&state.db)
-    .await
-    {
-        Ok(r) => {
-            if r.rows_affected() == 0 {
-                ApiResponse::from(TopemsError::NotFound("供应商不存在".to_string()))
-            } else {
-                api_success("删除成功".to_string())
-            }
+    .fetch_optional(&state.db)
+    .await;
+
+    match deleted {
+        Ok(Some((supplier_no, tenant_id))) => {
+            // 主写入已提交，后台同步软删 scm/srm
+            let db = state.db.clone();
+            let payload = SupplierSyncPayload {
+                supplier_no,
+                name: String::new(),
+                legal_name: None,
+                category: None,
+                category_code: None,
+                status: String::new(),
+                tax_id: None,
+                address: None,
+                contact_person: None,
+                phone: None,
+                email: None,
+                website: None,
+                credit_rating: None,
+                risk_level: String::new(),
+                bank_name: None,
+                bank_account: None,
+                remarks: None,
+                name_en: None,
+                lead_time_days: None,
+                tenant_id,
+            };
+            spawn_mdm_to_downstream(db, payload, SyncOp::Delete);
+            api_success("删除成功".to_string())
         }
+        Ok(None) => ApiResponse::from(TopemsError::NotFound("供应商不存在".to_string())),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除供应商失败".to_string()))

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Box, Typography, Chip, Avatar, InputLabel, useTheme } from '@mui/material';
 import { Building2, Phone, Mail, MapPin, CreditCard, AlertTriangle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { srmApi, type Supplier } from '@/api/srm';
+import { masterDataApi, type MasterDataSupplier } from '@/api/master-data';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
+import { useDictionary } from '@/hooks/useDictionary';
 
 const riskColors: Record<string, string> = {
   low: 'success',
@@ -22,12 +23,14 @@ const riskColors: Record<string, string> = {
 const SrmSupplierDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
+  // 字典 hook：用于把 category_code 翻译成中文名；失败时 items 为空，回退原值
+  const { getNameZh } = useDictionary('supplierCategory');
 
-  const supplierQuery = useQuery<Supplier | null>({
+  const supplierQuery = useQuery<MasterDataSupplier | null>({
     queryKey: QUERY_KEYS.SRM.SUPPLIER(id || ''),
     queryFn: async () => {
       if (!id) throw new Error(i18n.t('pages.srm_supplier_detail_page.id_0'));
-      const res = await srmApi.getSupplier(id);
+      const res = await masterDataApi.suppliers.get(id);
       if (res.success && res.data) return res.data;
       throw new Error(res.message || i18n.t('pages.srm_supplier_detail_page.k1'));
     },
@@ -155,6 +158,10 @@ const SrmSupplierDetailPage: React.FC = () => {
 
   const basicInfoSection = useMemo<SectionConfig>(() => {
     if (!supplier) return { id: 'basic', content: null };
+    // 分类展示：优先 getNameZh(category_code)；无 category_code 或未命中时回退原 category 自由文本
+    const categoryDisplay = supplier.category_code
+      ? getNameZh(supplier.category_code, supplier.category || '')
+      : supplier.category || '';
     return {
       id: 'basic',
       title: i18n.t('pages.srm_supplier_detail_page.k13'),
@@ -186,7 +193,7 @@ const SrmSupplierDetailPage: React.FC = () => {
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {i18n.t('pages.srm_supplier_detail_page.k16')}
             </InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{supplier.category}</Typography>
+            <Typography sx={{ mt: 0.5 }}>{categoryDisplay}</Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -196,13 +203,15 @@ const SrmSupplierDetailPage: React.FC = () => {
               <Chip
                 icon={<AlertTriangle sx={{ width: 14, height: 14 }} />}
                 label={
-                  supplier.risklevel === 'low'
+                  supplier.risk_level === 'low'
                     ? i18n.t('pages.srm_supplier_detail_page.k18')
-                    : supplier.risklevel === 'medium'
+                    : supplier.risk_level === 'medium'
                       ? i18n.t('pages.srm_supplier_detail_page.k19')
                       : i18n.t('pages.srm_supplier_detail_page.k20')
                 }
-                color={riskColors[supplier.risklevel] as React.ComponentProps<typeof Chip>['color']}
+                color={
+                  riskColors[supplier.risk_level] as React.ComponentProps<typeof Chip>['color']
+                }
                 size='small'
               />
             </Box>
@@ -226,13 +235,13 @@ const SrmSupplierDetailPage: React.FC = () => {
               {i18n.t('pages.srm_supplier_detail_page.k22')}
             </InputLabel>
             <Typography sx={{ mt: 0.5 }}>
-              {new Date(supplier.created_at).toLocaleString('zh-CN')}
+              {new Date(supplier.created_at || '').toLocaleString('zh-CN')}
             </Typography>
           </Box>
         </Box>
       ),
     };
-  }, [supplier]);
+  }, [supplier, getNameZh]);
 
   if (loading) {
     return (

@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import ScmPurchaseOrderPage from '../scm/ScmPurchaseOrderPage';
 import ScmSupplierPage from '../scm/ScmSupplierPage';
 import { scmApi } from '@/api/scm';
+import { masterDataApi } from '@/api/master-data';
 
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api；
 // 本文件专门验证真实适配器的参数归一化/响应解包/错误翻译，需恢复真实实现。
@@ -70,6 +71,13 @@ vi.mock('@/api/scm', () => ({
       }),
       delete: vi.fn().mockResolvedValue({ success: true }),
     },
+  },
+}));
+
+// 切 MDM 权威源（2026-11-07）：ScmSupplierPage 从 scmApi.suppliers 改走 masterDataApi.suppliers。
+// mdm list 信封为 { items, total, page, page_size }，与 scm 老信封一致。
+vi.mock('@/api/master-data', () => ({
+  masterDataApi: {
     suppliers: {
       list: vi.fn().mockResolvedValue({
         success: true,
@@ -78,6 +86,9 @@ vi.mock('@/api/scm', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    supplierCategories: {
+      list: vi.fn().mockResolvedValue({ success: true, data: [] }),
     },
   },
 }));
@@ -179,7 +190,7 @@ describe('ScmCrudPages（批次4）', () => {
 
     const result = await props.apiAdapter.list({ pageSize: 10, search: '甲' });
 
-    expect(scmApi.suppliers.list).toHaveBeenCalledWith({ page_size: 10, search: '甲' });
+    expect(masterDataApi.suppliers.list).toHaveBeenCalledWith({ page_size: 10, search: '甲' });
     expect(result).toEqual({
       data: [{ id: 'sup-1', name: '供应商甲', status: 'active' }],
       total: 1,

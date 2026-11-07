@@ -51,15 +51,15 @@ export const supplierSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
-      // 后端真键 contact_name
-      name: 'contact_name',
+      // MDM 原生字段名 contact_person（原 scm 后端叫 contact_name）
+      name: 'contact_person',
       label: i18n.t('scm.supplier.k22'),
       type: 'text',
       listWidth: 100,
     },
     {
-      // 后端真键 contact_phone
-      name: 'contact_phone',
+      // MDM 原生字段名 phone（原 scm 后端叫 contact_phone）
+      name: 'phone',
       label: i18n.t('scm.supplier.k23'),
       type: 'text',
       listWidth: 120,
@@ -82,8 +82,8 @@ export const supplierSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['supplier_no', 'name', 'status', 'contact_name', 'contact_phone'],
-    searchFields: ['supplier_no', 'name', 'contact_name'],
+    columns: ['supplier_no', 'name', 'status', 'contact_person', 'phone'],
+    searchFields: ['supplier_no', 'name', 'contact_person'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -122,7 +122,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       title: i18n.t('scm.supplier.k46'),
-      fields: ['contact_name', 'contact_phone', 'email', 'address'],
+      fields: ['contact_person', 'phone', 'email', 'address'],
     },
   ],
 
