@@ -371,7 +371,8 @@ pub async fn login(
         must_change_password: user.must_change_password,
     };
 
-    let access_token = match claims.encode(&state.auth_state.jwt_secret) {
+    // P0：用户 token 采用紧凑编码，仅含身份/角色/权限版本哈希，权限由服务端解析。
+    let access_token = match claims.encode_compact(&state.auth_state.jwt_secret) {
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);
@@ -910,7 +911,8 @@ pub async fn refresh_token(
         must_change_password,
     };
 
-    let access_token = match claims.encode(&state.auth_state.jwt_secret) {
+    // P0：刷新换发同样使用紧凑编码，避免权限码重新膨胀进 token。
+    let access_token = match claims.encode_compact(&state.auth_state.jwt_secret) {
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);

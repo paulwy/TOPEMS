@@ -1421,7 +1421,7 @@ pub async fn switch_tenant(
         must_change_password: claims.must_change_password,
     };
 
-    let access_token = match new_claims.encode(&state.auth_state.jwt_secret) {
+    let access_token = match new_claims.encode_compact(&state.auth_state.jwt_secret) {
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);

@@ -6,7 +6,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use prometheus::{register_int_counter_vec, IntCounterVec};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
+use std::sync::{Arc, OnceLock};
 use uuid::Uuid;
 
 use topems_shared_core::{
@@ -28,6 +31,10 @@ pub struct Claims {
     pub username: String,
     pub role: String,
     pub roles: Vec<String>,
+    /// 权限码集合。用户 access token 采用紧凑编码时不再写入该字段
+    /// （由 auth_middleware 按 user_id 从服务端缓存解析后回填），
+    /// 因此反序列化必须允许缺省，保证紧凑 token 可正常校验。
+    #[serde(default)]
     pub permissions: Vec<String>,
     pub is_superuser: bool,
     pub exp: usize,
@@ -91,15 +98,64 @@ impl Claims {
     }
 
     pub fn encode(&self, secret: &str) -> Result<String, TopemsError> {
+        self.encode_value(self, secret)
+    }
+
+    /// 紧凑编码：仅承载身份、角色与权限版本哈希，不写入逐条权限码。
+    ///
+    /// 权限在服务端由 `auth_middleware` 按 `sub` 从规范化授权表解析并缓存，
+    /// 避免权限较多的角色把 JWT 撑到数十 KB（经 nginx 时触发请求头 400）。
+    pub fn encode_compact(&self, secret: &str) -> Result<String, TopemsError> {
+        #[derive(Serialize)]
+        struct CompactClaims<'a> {
+            sub: &'a str,
+            username: &'a str,
+            role: &'a str,
+            roles: &'a [String],
+            is_superuser: bool,
+            exp: usize,
+            iat: usize,
+            email: &'a Option<String>,
+            department: &'a Option<String>,
+            tenant_id: &'a Option<String>,
+            department_id: &'a Option<String>,
+            position_id: &'a Option<String>,
+            position_code: &'a Option<String>,
+            must_change_password: bool,
+            /// 权限版本：角色 + 权限码集合的稳定短哈希，用于观测与缓存一致性判定。
+            pv: String,
+        }
+
+        let compact = CompactClaims {
+            sub: &self.sub,
+            username: &self.username,
+            role: &self.role,
+            roles: &self.roles,
+            is_superuser: self.is_superuser,
+            exp: self.exp,
+            iat: self.iat,
+            email: &self.email,
+            department: &self.department,
+            tenant_id: &self.tenant_id,
+            department_id: &self.department_id,
+            position_id: &self.position_id,
+            position_code: &self.position_code,
+            must_change_password: self.must_change_password,
+            pv: permission_version(&self.roles, &self.permissions),
+        };
+        self.encode_value(&compact, secret)
+    }
+
+    fn encode_value<T: Serialize>(&self, value: &T, secret: &str) -> Result<String, TopemsError> {
         if secret.contains("-----BEGIN") {
             let encoding_key = EncodingKey::from_rsa_pem(secret.as_bytes())
                 .map_err(|e| TopemsError::Auth(format!("RSA 私钥解析失败: {}", e)))?;
-            encode(&Header::new(Algorithm::RS256), self, &encoding_key)
+            encode(&Header::new(Algorithm::RS256), value, &encoding_key)
                 .map_err(|e| TopemsError::Auth(format!("Failed to encode token: {}", e)))
         } else {
             encode(
                 &Header::new(Algorithm::HS256),
-                self,
+                value,
                 &EncodingKey::from_secret(secret.as_ref()),
             )
             .map_err(|e| TopemsError::Auth(format!("Failed to encode token: {}", e)))
@@ -107,11 +163,80 @@ impl Claims {
     }
 }
 
+/// 权限解析结果计数（`outcome` 维度）——Prometheus 指标。
+///
+/// - `resolved`：按 user_id 从授权表解析成功；
+/// - `version_mismatch`：token 内 `pv` 与服务端解析出的当前权限版本不一致；
+/// - `error`：解析失败（DB 不可用等），请求按 fail-closed 拒绝；
+/// - `invalid_user_id`：token `sub` 非法，请求按 fail-closed 拒绝。
+static PERMISSION_RESOLUTION: OnceLock<IntCounterVec> = OnceLock::new();
+
+#[allow(clippy::expect_used)]
+fn permission_resolution_metric() -> &'static IntCounterVec {
+    PERMISSION_RESOLUTION.get_or_init(|| {
+        register_int_counter_vec!(
+            "topems_auth_permission_resolution_total",
+            "Permission resolution outcomes in auth middleware (outcome=resolved|version_mismatch|error|invalid_user_id)",
+            &["outcome"]
+        )
+        .expect("failed to register topems_auth_permission_resolution_total")
+    })
+}
+
+fn record_permission_outcome(outcome: &str) {
+    permission_resolution_metric()
+        .with_label_values(&[outcome])
+        .inc();
+}
+
+/// 系统租户 ID（nil UUID）。RLS 策略把该值视为系统通道，可见全部租户行；
+/// 权限解析等系统级读取通过事务级 `SET LOCAL app.tenant_id` 使用它。
+pub const SYSTEM_TENANT_ID: &str = "00000000-0000-0000-0000-000000000000";
+
+/// 从已验签的 token 中提取 `pv`（权限版本哈希）声明。
+///
+/// 紧凑 token 由 `encode_compact` 写入 `pv`；旧 token / 服务 token 无该声明。
+/// 调用前 token 必须已通过 `verify_jwt_token` 验签，此处仅解析 payload，不再重复验签。
+pub fn token_permission_version(token: &str) -> Option<String> {
+    use base64::Engine;
+    let payload = token.split('.').nth(1)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload)
+        .ok()?;
+    let value: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
+    value.get("pv").and_then(|v| v.as_str()).map(str::to_string)
+}
+
+/// 权限版本哈希：对角色与权限码排序后取 SHA-256 前 16 个十六进制字符。
+///
+/// 写入紧凑 token 的 `pv`，并由中间件与服务端重新解析出的当前版本比对，用于
+/// 观测 token 与当前授权是否漂移；**不参与鉴权判定**（鉴权以服务端解析结果为准）。
+pub fn permission_version(roles: &[String], permissions: &[String]) -> String {
+    let mut roles = roles.to_vec();
+    roles.sort();
+    let mut permissions = permissions.to_vec();
+    permissions.sort();
+
+    // 复用 HMAC-SHA256（固定非密级盐）生成稳定哈希，取前 16 个十六进制字符。
+    let material = format!(
+        "{}\u{1e}{}",
+        roles.join("\u{1f}"),
+        permissions.join("\u{1f}")
+    );
+    sign_message(&material, "topems-permission-version")
+        .chars()
+        .take(16)
+        .collect()
+}
+
 #[derive(Debug, Clone)]
 pub struct AuthState {
     pub jwt_secret: String,
     pub refresh_secret: String,
     pub token_expiry_hours: i64,
+    /// 服务端权限解析器。未注入时（单测/未接库的服务）退化为使用 token 内权限码，
+    /// 保证既有行为不变；生产路径由 shared-bootstrap / portal 注入连接池。
+    permission_resolver: Option<Arc<PermissionResolver>>,
 }
 
 impl AuthState {
@@ -129,7 +254,22 @@ impl AuthState {
             jwt_secret,
             refresh_secret,
             token_expiry_hours,
+            permission_resolver: None,
         }
+    }
+
+    /// 注入服务端权限解析器：用户 token 校验后按 user_id 解析角色与权限码。
+    pub fn with_permission_resolver(mut self, pool: sqlx::PgPool) -> Self {
+        self.permission_resolver = Some(Arc::new(PermissionResolver::new(pool)));
+        self
+    }
+
+    /// 覆盖权限缓存 TTL（默认 `PERMISSION_CACHE_TTL_SECS` 或 60 秒）。
+    pub fn with_permission_cache_ttl(mut self, ttl: std::time::Duration) -> Self {
+        if let Some(resolver) = self.permission_resolver.as_mut() {
+            *resolver = Arc::new(PermissionResolver::with_ttl(resolver.pool.clone(), ttl));
+        }
+        self
     }
 
     /// 校验密钥强度；strict 模式下（生产 / 外部显式构造）不满足条件将 panic。
@@ -220,8 +360,144 @@ impl AuthState {
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
                 .unwrap_or(24),
+            permission_resolver: None,
         }
     }
+}
+
+/// 用户权限解析器：按 user_id 从规范化授权表解析角色与权限码，并做进程内 TTL 缓存。
+///
+/// # 生效时延口径（权限变更 / 改角色 / 登出）
+///
+/// 鉴权一律以服务端解析结果为准，token 内的权限码与 `pv` 都不参与放行判定：
+///
+/// - **同进程内**：角色/权限变更接口（`role.rs`、`user/roles.rs`、`user_permission.rs`）
+///   成功后调用 [`invalidate_user_permission_cache`] / [`invalidate_all_permission_caches`]，
+///   下一次请求立即按新授权解析，**无时延**。
+/// - **跨进程（多副本 / 独立服务）**：各进程各自持有缓存，无法互相推送失效事件；
+///   最迟在 TTL（默认 60 秒，`PERMISSION_CACHE_TTL_SECS` 可覆盖）后生效。
+///   这是当前选定的明确口径：用最多 60 秒的收敛窗口换取每请求不查库。
+/// - **登出**：删除 refresh token / 会话，阻止换发；access token 为无状态 JWT，
+///   在 `exp`（`JWT_EXPIRY_HOURS`，默认 24h）前仍可验签通过，但权限仍按服务端
+///   实时解析，不会因登出而保留过期授权。需要"登出即失效 access token"时应缩短
+///   `JWT_EXPIRY_HOURS` 或增加会话存在性校验（不在本次改造范围）。
+/// - **改角色**：等同权限变更，同进程立即、跨进程 ≤ TTL。
+///
+/// token 内的 `pv`（权限版本哈希）由中间件与服务端解析结果比对，仅用于观测
+/// "token 快照与当前授权是否漂移"（打点 `topems_auth_permission_resolution_total`），
+/// 不据此拒绝请求——否则权限变更后会引发全量 403，直到用户重新登录。
+#[derive(Debug, Clone)]
+pub struct PermissionResolver {
+    pool: sqlx::PgPool,
+    ttl: std::time::Duration,
+}
+
+#[derive(Debug, Clone)]
+struct PermissionCacheEntry {
+    roles: Vec<String>,
+    permissions: Vec<String>,
+    expires_at: std::time::Instant,
+}
+
+static PERMISSION_CACHE: std::sync::OnceLock<
+    parking_lot::RwLock<std::collections::HashMap<Uuid, PermissionCacheEntry>>,
+> = std::sync::OnceLock::new();
+
+fn permission_cache(
+) -> &'static parking_lot::RwLock<std::collections::HashMap<Uuid, PermissionCacheEntry>> {
+    PERMISSION_CACHE.get_or_init(|| parking_lot::RwLock::new(std::collections::HashMap::new()))
+}
+
+/// 默认权限缓存 TTL：生产 60 秒，可通过 `PERMISSION_CACHE_TTL_SECS` 调整。
+fn default_permission_cache_ttl() -> std::time::Duration {
+    let secs = std::env::var("PERMISSION_CACHE_TTL_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .filter(|s| *s > 0)
+        .unwrap_or(60);
+    std::time::Duration::from_secs(secs)
+}
+
+impl PermissionResolver {
+    pub fn new(pool: sqlx::PgPool) -> Self {
+        Self::with_ttl(pool, default_permission_cache_ttl())
+    }
+
+    pub fn with_ttl(pool: sqlx::PgPool, ttl: std::time::Duration) -> Self {
+        Self { pool, ttl }
+    }
+
+    /// 解析用户当前角色与权限码；命中未过期缓存时直接返回。
+    pub async fn resolve(&self, user_id: Uuid) -> Result<(Vec<String>, Vec<String>), sqlx::Error> {
+        if let Some(entry) = permission_cache().read().get(&user_id) {
+            if entry.expires_at > std::time::Instant::now() {
+                return Ok((entry.roles.clone(), entry.permissions.clone()));
+            }
+        }
+
+        // 授权表（core_user_roles / core_role_permissions）在生产为 FORCE RLS。
+        // 权限解析是"按 user_id 查授权"的系统读，必须在系统租户上下文下执行，
+        // 否则租户级授权行会被 RLS 过滤成空集合（静默降权）。
+        // `set_config(..., true)` 为事务级（SET LOCAL），事务结束即复位，不会污染
+        // 复用同一物理连接的后续请求；读操作结束回滚，不产生副作用。
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(SYSTEM_TENANT_ID)
+            .execute(&mut *tx)
+            .await?;
+
+        let roles = sqlx::query(
+            r#"
+            SELECT COALESCE(ARRAY_AGG(DISTINCT r.name), '{}') AS roles
+            FROM public.core_user_roles ur
+            JOIN public.core_roles r ON r.id = ur.role_id
+            WHERE ur.user_id = $1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .and_then(|row| row.try_get::<Vec<String>, _>("roles").ok())
+        .unwrap_or_default();
+
+        let permissions = sqlx::query(
+            r#"
+            SELECT COALESCE(ARRAY_AGG(DISTINCT p.code), '{}') AS permissions
+            FROM public.core_user_roles ur
+            JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+            JOIN public.core_permissions p ON p.id = rp.permission_id
+            WHERE ur.user_id = $1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .and_then(|row| row.try_get::<Vec<String>, _>("permissions").ok())
+        .unwrap_or_default();
+
+        tx.rollback().await?;
+
+        permission_cache().write().insert(
+            user_id,
+            PermissionCacheEntry {
+                roles: roles.clone(),
+                permissions: permissions.clone(),
+                expires_at: std::time::Instant::now() + self.ttl,
+            },
+        );
+
+        Ok((roles, permissions))
+    }
+}
+
+/// 用户级失效：角色授予/回收、用户角色替换后调用。
+pub fn invalidate_user_permission_cache(user_id: Uuid) {
+    permission_cache().write().remove(&user_id);
+}
+
+/// 全量失效：角色权限集合变更、角色删除后调用（影响该角色下所有用户）。
+pub fn invalidate_all_permission_caches() {
+    permission_cache().write().clear();
 }
 
 #[allow(
@@ -766,23 +1042,73 @@ pub async fn auth_middleware(
         );
     }
 
-    let auth_header = parts
+    let token = match parts
         .headers
         .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
+        .and_then(|h| h.to_str().ok())
+    {
+        Some(header) => header.strip_prefix("Bearer ").unwrap_or(header).to_string(),
+        None => return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response(),
+    };
 
-    let claims = if let Some(header) = auth_header {
-        let token = header.strip_prefix("Bearer ").unwrap_or(header);
-        match verify_jwt_token(token, &auth_state.jwt_secret) {
-            Ok(claims) => claims,
-            Err(e) => {
-                tracing::error!("Token verification failed: {}", e);
-                return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
+    let mut claims = match verify_jwt_token(&token, &auth_state.jwt_secret) {
+        Ok(claims) => claims,
+        Err(e) => {
+            tracing::error!("Token verification failed: {}", e);
+            return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
+        }
+    };
+
+    // P0：用户 token 不再承载逐条权限码，校验后按 user_id 从服务端授权表解析并回填。
+    // 超管走 is_superuser 短路；服务身份继续使用 token 内的显式权限集合。
+    //
+    // 解析失败按 fail-closed 拒绝（503）：回退空权限会把"DB 不可用"伪装成"无权限"，
+    // 表现为静默 403，既不安全也无法与真实的 403 区分。单测/未接库的服务未注入
+    // resolver，仍保持 token 内权限的既有行为（见 `AuthState::permission_resolver`）。
+    if !claims.is_superuser && !is_service_claims(&claims) {
+        if let Some(resolver) = auth_state.permission_resolver.as_ref() {
+            let user_id = match claims.user_id() {
+                Ok(user_id) => user_id,
+                Err(e) => {
+                    record_permission_outcome("invalid_user_id");
+                    tracing::error!(user = %claims.sub, error = %e, "token 中的用户 ID 非法，拒绝请求");
+                    return api_error::<()>(401, "认证失败：令牌中的用户标识非法").into_response();
+                }
+            };
+
+            match resolver.resolve(user_id).await {
+                Ok((roles, permissions)) => {
+                    claims.roles = roles;
+                    claims.permissions = permissions;
+                    record_permission_outcome("resolved");
+
+                    // `pv` 校验：token 内快照版本 vs 服务端解析出的当前版本。
+                    // 仅做漂移观测，不拒绝请求——服务端解析结果是鉴权权威来源。
+                    if let Some(token_pv) = token_permission_version(&token) {
+                        let current_pv = permission_version(&claims.roles, &claims.permissions);
+                        if token_pv != current_pv {
+                            record_permission_outcome("version_mismatch");
+                            tracing::info!(
+                                user = %claims.sub,
+                                token_pv = %token_pv,
+                                current_pv = %current_pv,
+                                "token 权限版本与当前授权漂移（已按服务端最新权限放行）"
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    record_permission_outcome("error");
+                    tracing::error!(
+                        user = %claims.sub,
+                        error = %e,
+                        "权限解析失败，按 fail-closed 拒绝请求（503）"
+                    );
+                    return api_error::<()>(503, "权限服务暂不可用，请稍后重试").into_response();
+                }
             }
         }
-    } else {
-        return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
-    };
+    }
 
     // 审计中间件在外层执行，读不到本层注入的 Claims；通过共享槽位回填审计归属。
     // 放在 must_change_password 拦截之前，确保被拒绝的请求也记录真实操作者。
@@ -933,6 +1259,100 @@ mod tests {
         };
         assert!(claims.has_permission("iam:users_read"));
         assert!(!claims.has_permission("iam:users_create"));
+    }
+
+    /// P0 回归：tenant_admin 级别的 1050 个权限码不得再写入 access token。
+    #[test]
+    fn test_compact_token_excludes_permissions() {
+        let permissions: Vec<String> = (0..1050)
+            .map(|i| format!("module{}:resource:read", i % 40))
+            .collect();
+        let claims = Claims {
+            sub: "11111111-1111-1111-1111-111111111111".to_string(),
+            username: "tenant_admin".to_string(),
+            role: "tenant_admin".to_string(),
+            roles: vec!["tenant_admin".to_string(), "employee".to_string()],
+            permissions,
+            is_superuser: false,
+            exp: 1_900_000_000,
+            iat: 1_800_000_000,
+            email: Some("tenant_admin@example.com".to_string()),
+            department: Some("总部".to_string()),
+            tenant_id: Some("00000000-0000-0000-0000-000000000001".to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        };
+
+        let secret = super_long_secret();
+        let legacy = claims.encode(secret).expect("legacy encode");
+        let compact = claims.encode_compact(secret).expect("compact encode");
+
+        // 改造前逐码写入 claims，字符数在 1 万以上；改造后仅身份/角色/版本哈希。
+        assert!(
+            legacy.chars().count() > 10_000,
+            "legacy token 应包含全部权限码，实际 {}",
+            legacy.chars().count()
+        );
+        assert!(
+            compact.chars().count() < 2_048,
+            "compact token 应远小于 nginx 默认请求头缓冲，实际 {}",
+            compact.chars().count()
+        );
+
+        // 紧凑 token 必须可正常校验，权限字段回退为空集合（由中间件服务端回填）。
+        let decoded = verify_jwt_token(&compact, secret).expect("compact decode");
+        assert!(decoded.permissions.is_empty());
+        assert_eq!(decoded.roles.len(), 2);
+        assert_eq!(
+            decoded.tenant_id.as_deref(),
+            Some("00000000-0000-0000-0000-000000000001")
+        );
+
+        println!(
+            "token chars: legacy={} compact={}",
+            legacy.chars().count(),
+            compact.chars().count()
+        );
+    }
+
+    /// 紧凑 token 必须携带 `pv`，且与按同一权限集合计算的版本一致；
+    /// 旧式 token 不含 `pv`，中间件不做漂移比对（保持兼容）。
+    #[test]
+    fn test_compact_token_carries_permission_version() {
+        let c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        let secret = super_long_secret();
+
+        let compact = c.encode_compact(secret).expect("compact encode");
+        let pv = token_permission_version(&compact).expect("compact token 应含 pv");
+        assert_eq!(pv, permission_version(&c.roles, &c.permissions));
+
+        let legacy = c.encode(secret).expect("legacy encode");
+        assert!(
+            token_permission_version(&legacy).is_none(),
+            "旧式 token 不应写入 pv"
+        );
+    }
+
+    /// 权限版本对角色/权限码顺序不敏感，且集合变化后版本随之变化。
+    #[test]
+    fn test_permission_version_order_insensitive_and_changes() {
+        let base = permission_version(
+            &["user".to_string(), "admin".to_string()],
+            &["a".to_string(), "b".to_string()],
+        );
+        let reordered = permission_version(
+            &["admin".to_string(), "user".to_string()],
+            &["b".to_string(), "a".to_string()],
+        );
+        assert_eq!(base, reordered, "版本应对顺序不敏感");
+
+        let changed = permission_version(
+            &["user".to_string(), "admin".to_string()],
+            &["a".to_string(), "b".to_string(), "c".to_string()],
+        );
+        assert_ne!(base, changed, "权限集合变化后版本必须变化");
     }
 
     #[test]

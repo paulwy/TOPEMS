@@ -71,7 +71,9 @@ pub async fn build_router(
     // 连接治理 B：共享运行时池之上固化本模块 search_path（public 在前，
     // 否则裸表名 core_faqs/core_guides 会解析到 portal 的空副本）。
     let scoped_db = topems_shared_db::scope::Db::new(db.clone(), "public, portal");
-    let app_state = AppState::new(scoped_db, event_publisher.clone()).await;
+    let app_state = AppState::new(scoped_db, event_publisher.clone())
+        .await
+        .with_permission_resolver(db.clone());
 
     // V68.1 A2.4.2: 帮助中心数据表 DDL 已收敛至迁移链（D7 双源消除），不再运行时自建
 

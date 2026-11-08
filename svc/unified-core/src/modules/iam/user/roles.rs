@@ -401,6 +401,7 @@ pub async fn assign_user_role(
 
     match result {
         Ok(_) => {
+            topems_shared_auth::invalidate_user_permission_cache(user_uuid);
             tracing::info!("Role {} assigned to user {} successfully", role_id, user_id);
 
             let response_body = serde_json::json!({
@@ -509,6 +510,7 @@ pub async fn remove_user_role(
                 );
             }
 
+            topems_shared_auth::invalidate_user_permission_cache(user_uuid);
             tracing::info!(
                 "Role {} removed from user {} successfully",
                 role_id,

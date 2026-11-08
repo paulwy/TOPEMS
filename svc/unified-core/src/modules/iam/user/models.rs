@@ -117,7 +117,7 @@ pub(crate) struct UserRow {
 /// P0-4：从规范化授权表实时解析用户角色与权限，与刷新换发（auth.rs refresh）同构：
 /// `core_user_roles → core_roles`（角色名）、`core_user_roles → core_role_permissions →
 /// core_permissions`（权限码）。采用运行时纯查询（非 sqlx 编译期宏），不依赖离线缓存。
-/// 无角色授权时 roles 回退 `["user"]`，兼容前端 `hasRole('user')` 形状；permissions 允许为空
+/// 无角色授权时 roles 保持空数组，不再伪造成 `["user"]`；permissions 允许为空
 ///（精确授权由后端中间件依据 JWT 判定）。供 `/users/me`、`/permissions/my-permissions` 复用，
 /// 登录签发在 auth.rs 以同一规范化结果组装 claims，保证 login 与 refresh 两路一致。
 pub(crate) async fn resolve_user_grants(
@@ -157,11 +157,6 @@ pub(crate) async fn resolve_user_grants(
     .and_then(|row| row.try_get::<Vec<String>, _>("permissions").ok())
     .unwrap_or_default();
 
-    let roles = if roles.is_empty() {
-        vec!["user".to_string()]
-    } else {
-        roles
-    };
     (roles, permissions)
 }
 

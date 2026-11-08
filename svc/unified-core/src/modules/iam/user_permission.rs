@@ -270,6 +270,7 @@ pub async fn update_user_permissions(
         ));
     }
 
+    topems_shared_auth::invalidate_user_permission_cache(user_uuid);
     tracing::info!("更新用户 {} 的角色权限成功", user_id);
 
     Json(serde_json::json!({

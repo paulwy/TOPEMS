@@ -73,7 +73,9 @@ async fn main() -> anyhow::Result<()> {
     // 帮助中心表（core_faqs/core_guides/core_guide_lessons/core_guide_progress）在 portal
     // schema 的副本已废弃（prod 全 0 行），权威数据在 public；顺序必须 public 在前。
     let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "public, portal");
-    let app_state = AppState::new(db, ctx.event_publisher.clone()).await;
+    let app_state = AppState::new(db, ctx.event_publisher.clone())
+        .await
+        .with_permission_resolver(ctx.db.clone());
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/health/detailed", get(health_check_detailed))

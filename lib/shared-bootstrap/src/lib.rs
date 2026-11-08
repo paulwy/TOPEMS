@@ -355,7 +355,7 @@ impl ServiceBootstrap {
 
         let start_time = Instant::now();
         let metrics = Arc::new(SystemMetrics::new());
-        let auth_state = AuthState::from_env();
+        let auth_state = AuthState::from_env().with_permission_resolver(db.clone());
 
         let app_state = AppState::new(
             db.clone(),
@@ -868,7 +868,7 @@ async fn bootstrap_service_inner(
     });
 
     let metrics = Arc::new(SystemMetrics::new());
-    let auth_state = AuthState::from_env();
+    let auth_state = AuthState::from_env().with_permission_resolver(db.clone());
     let start_time = Instant::now();
 
     let event_publisher = if config.enable_events {

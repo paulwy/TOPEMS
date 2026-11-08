@@ -49,6 +49,13 @@ impl FromRef<AppState> for Db {
 }
 
 impl AppState {
+    /// 注入服务端权限解析池：用户 JWT 不再携带逐条权限码，
+    /// 由 auth_middleware 按 user_id 从授权表解析并缓存。
+    pub fn with_permission_resolver(mut self, pool: sqlx::PgPool) -> Self {
+        self.auth_state = self.auth_state.clone().with_permission_resolver(pool);
+        self
+    }
+
     /// 构造服务客户端：
     /// - 模块化单体模式（`MONOLITH_SERVICE_URL` 已设置）：所有服务客户端指向统一入口（topems-server）
     /// - 独立部署模式：`from_env_default()`（环境变量 → 默认端口）

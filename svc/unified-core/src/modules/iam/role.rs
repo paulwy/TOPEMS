@@ -204,6 +204,7 @@ pub async fn create_role(
         ));
     }
 
+    topems_shared_auth::invalidate_all_permission_caches();
     tracing::info!("创建角色成功: {}", name);
 
     Json(serde_json::json!({
@@ -442,6 +443,7 @@ pub async fn update_role(
         ));
     }
 
+    topems_shared_auth::invalidate_all_permission_caches();
     tracing::info!("更新角色成功: {}", id);
 
     Json(serde_json::json!({
@@ -548,6 +550,7 @@ pub async fn delete_role(
         ));
     }
 
+    topems_shared_auth::invalidate_all_permission_caches();
     tracing::info!("删除角色成功: {}", id);
 
     Json(serde_json::json!({
@@ -644,11 +647,14 @@ pub async fn add_role_permission(
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "角色权限授权成功",
-            "data": null
-        })),
+        Ok(_) => {
+            topems_shared_auth::invalidate_all_permission_caches();
+            Json(serde_json::json!({
+                "success": true,
+                "message": "角色权限授权成功",
+                "data": null
+            }))
+        }
         Err(e) => {
             tracing::error!("角色权限授权失败: {}", e);
             Json(topems_shared_core::response::error_value(
@@ -692,11 +698,14 @@ pub async fn remove_role_permission(
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "角色权限移除成功",
-            "data": null
-        })),
+        Ok(_) => {
+            topems_shared_auth::invalidate_all_permission_caches();
+            Json(serde_json::json!({
+                "success": true,
+                "message": "角色权限移除成功",
+                "data": null
+            }))
+        }
         Err(e) => {
             tracing::error!("角色权限移除失败: {}", e);
             Json(topems_shared_core::response::error_value(
