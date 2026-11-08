@@ -385,8 +385,10 @@ if [ "$DO_FRONTEND" = true ]; then
   ssh $PROD_HOST "
     cd $PROD_REPO_DIR/dist
     ln -sfn $PROD_DIST_NAME/web current
-    # 更新 nginx 配置里的 root 路径
-    sed -i '' \"s|root .*dist/.*web;|root $PROD_REPO_DIR/dist/current;|\" /opt/homebrew/etc/nginx/servers/topems.conf
+    # 更新 nginx 配置里的 root 路径（HTTP 与 HTTPS 同步到同一版本目录）
+    for conf in /opt/homebrew/etc/nginx/servers/topems.conf /opt/homebrew/etc/nginx/servers/topems-ssl.conf; do
+      sed -i '' \"s|root .*dist/.*web;|root $PROD_REPO_DIR/dist/current;|\" \"\$conf\"
+    done
     /opt/homebrew/bin/nginx -t && /opt/homebrew/bin/nginx -s reload
     echo '前端部署完成: '$PROD_DIST_NAME
   "
