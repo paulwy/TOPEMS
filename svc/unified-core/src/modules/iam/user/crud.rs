@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::iam::auth::validate_password_strength;
+use crate::modules::iam::tenant_scope::{self, IamScope, UserTarget};
 
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
@@ -203,6 +204,13 @@ pub async fn create_user(
 
     let operator_id = &claims.sub;
 
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => {
+            return tenant_scope::forbidden("缺少租户上下文，无法创建租户用户");
+        }
+    };
+
     let username = payload
         .get("username")
         .and_then(|v| v.as_str())
@@ -341,7 +349,23 @@ pub async fn create_user(
         );
     }
 
-    let result = sqlx::query(
+    // 租户管理员创建的账号必须同时写入 core_tenant_users，否则后续按租户过滤
+    // 时看不到、也管不了自己刚建的账号。平台管理员保持既有行为（不写成员关系）。
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin create_user transaction: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("创建用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
+    let insert_result = sqlx::query(
         r#"
         INSERT INTO iam.users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
         VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
@@ -352,8 +376,39 @@ pub async fn create_user(
     .bind(email)
     .bind(hashed_password)
     .bind(full_name)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
+
+    let result = match insert_result {
+        Ok(_) => {
+            if let IamScope::Tenant(tenant_id) = scope {
+                if let Err(e) = sqlx::query(
+                    r#"
+                    INSERT INTO public.core_tenant_users (tenant_id, user_id, email, role, status)
+                    VALUES ($1, $2, $3, 'member', 'active')
+                    ON CONFLICT (tenant_id, user_id) DO NOTHING
+                    "#,
+                )
+                .bind(tenant_id)
+                .bind(user_id)
+                .bind(email)
+                .execute(&mut *tx)
+                .await
+                {
+                    let _ = tx.rollback().await;
+                    Err(e)
+                } else {
+                    tx.commit().await
+                }
+            } else {
+                tx.commit().await
+            }
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            Err(e)
+        }
+    };
 
     match result {
         Ok(_) => {
@@ -425,7 +480,7 @@ pub async fn create_user(
 
 pub async fn get_user(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: axum::http::HeaderMap,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -444,6 +499,27 @@ pub async fn get_user(
             );
         }
     };
+
+    let scope = match tenant_scope::read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
+        Err(e) => {
+            tracing::error!("Failed to check user target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    }
 
     let user: Option<UserRow> = sqlx::query_as(
         "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
@@ -548,16 +624,17 @@ pub async fn update_user(
         }
     };
 
-    let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1::UUID",
-    )
-    .bind(&id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(count) => count,
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法修改用户"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
         Err(e) => {
-            tracing::error!("Database query failed: {}", e);
+            tracing::error!("Failed to check user target scope: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(topems_shared_core::response::error_value(
@@ -566,14 +643,6 @@ pub async fn update_user(
                 )),
             );
         }
-    };
-
-    if existing_user_count == 0 {
-        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
-        return (
-            StatusCode::OK,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
     }
 
     if let Some(username) = payload.get("username").and_then(|v| v.as_str()) {
@@ -735,16 +804,17 @@ pub async fn delete_user(
         );
     }
 
-    let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1::UUID",
-    )
-    .bind(&id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(count) => count,
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法删除用户"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权删除超级管理员"),
         Err(e) => {
-            tracing::error!("Database query failed: {}", e);
+            tracing::error!("Failed to check user target scope: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(topems_shared_core::response::error_value(
@@ -753,14 +823,6 @@ pub async fn delete_user(
                 )),
             );
         }
-    };
-
-    if existing_user_count == 0 {
-        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
-        return (
-            StatusCode::OK,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
     }
 
     let delete_result = sqlx::query("UPDATE iam.users SET deleted_at = NOW() WHERE id = $1")

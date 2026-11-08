@@ -1,8 +1,9 @@
 //! Permission submodule - Permission management handlers
 
 use crate::AppState;
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 struct PermissionRow {
@@ -48,23 +49,8 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
 
     match result {
         Ok(permissions) => {
-            let permission_responses: Vec<PermissionResponse> = permissions
-                .into_iter()
-                .map(|p| {
-                    // 从 code 中提取 category（例如 "iam:users_read" -> "iam"）
-                    let category = extract_category(&p.code);
-
-                    PermissionResponse {
-                        id: p.id.to_string(),
-                        code: p.code.clone(),
-                        name: p.name,
-                        description: p.description,
-                        category,
-                        resource: p.resource,
-                        action: p.action,
-                    }
-                })
-                .collect();
+            let permission_responses: Vec<PermissionResponse> =
+                permissions.into_iter().map(to_response).collect();
 
             Json(serde_json::json!({
                 "success": true,
@@ -85,6 +71,70 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
 /// 从权限 code 中提取 category（例如 "iam:users_read" -> "iam"）
 fn extract_category(code: &str) -> String {
     code.split(':').next().unwrap_or("other").to_string()
+}
+
+fn to_response(p: PermissionRow) -> PermissionResponse {
+    let category = extract_category(&p.code);
+    PermissionResponse {
+        id: p.id.to_string(),
+        code: p.code.clone(),
+        name: p.name,
+        description: p.description,
+        category,
+        resource: p.resource,
+        action: p.action,
+    }
+}
+
+/// GET /iam/permissions/grantable — 返回“当前操作者可授予”的权限目录。
+///
+/// 平台管理员（含超管）得到全量；租户管理员只得到自身权限集中的码，
+/// 与 role handler 的“授予不得超出自身权限集”校验同源。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:role:read"])),
+    path = "/iam/permissions/grantable",
+    tag = "IAM-Permissions",
+    responses(
+        (status = 200, description = "当前操作者可授予的权限列表"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
+pub async fn list_grantable_permissions(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM permission list_grantable_permissions called");
+
+    let result = sqlx::query_as::<_, PermissionRow>(
+        "SELECT id, code, name, description, resource, action, created_at::timestamptz AS created_at FROM public.core_permissions WHERE deleted_at IS NULL ORDER BY code",
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(permissions) => {
+            let permission_responses: Vec<PermissionResponse> = permissions
+                .into_iter()
+                .filter(|p| claims.has_permission(&p.code))
+                .map(to_response)
+                .collect();
+
+            Json(serde_json::json!({
+                "success": true,
+                "message": "获取可授权限列表成功",
+                "data": permission_responses,
+                "code": 200
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch grantable permissions: {}", e);
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取可授权限列表失败: {}", e),
+            ))
+        }
+    }
 }
 
 /// PUT /permissions/{id} — P2-5 诚实 501：权限定义为系统种子数据，

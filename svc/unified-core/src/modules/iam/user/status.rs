@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use super::models::record_audit_log;
 use crate::modules::iam::auth::validate_password_strength;
+use crate::modules::iam::tenant_scope::{self, UserTarget};
 
 pub async fn disable_user(
     State(state): State<AppState>,
@@ -34,30 +35,25 @@ pub async fn disable_user(
         }
     };
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE id = $1::UUID")
-            .bind(&id)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("查询用户失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法停用用户"),
+    };
 
-    if existing_user_count == 0 {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
+    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权停用超级管理员"),
+        Err(e) => {
+            tracing::error!("Failed to check user target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
     }
 
     let result =
@@ -136,30 +132,25 @@ pub async fn enable_user(
         }
     };
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE id = $1::UUID")
-            .bind(&id)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("查询用户失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法启用用户"),
+    };
 
-    if existing_user_count == 0 {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
+    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权启用超级管理员"),
+        Err(e) => {
+            tracing::error!("Failed to check user target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
     }
 
     let result =

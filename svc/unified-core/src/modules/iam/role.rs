@@ -9,6 +9,56 @@ use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
+use crate::modules::iam::tenant_scope::{self, IamScope, RoleTarget};
+
+fn json_error(code: u16, message: &str) -> Json<serde_json::Value> {
+    Json(topems_shared_core::response::error_value(code, message))
+}
+
+/// 解析并校验待授予的权限 ID：
+/// - 非法/不存在的 ID -> 400；
+/// - 超出操作者自身权限集或平台层码 -> 403（租户管理员提权边界）。
+async fn resolve_permission_ids(
+    pool: &sqlx::PgPool,
+    claims: &Claims,
+    raw_ids: &[String],
+) -> Result<Vec<Uuid>, Json<serde_json::Value>> {
+    let mut unique: Vec<Uuid> = Vec::new();
+    for raw in raw_ids {
+        match Uuid::parse_str(raw) {
+            Ok(id) => {
+                if !unique.contains(&id) {
+                    unique.push(id);
+                }
+            }
+            Err(_) => return Err(json_error(400, "无效的权限ID格式")),
+        }
+    }
+
+    if unique.is_empty() {
+        return Ok(unique);
+    }
+
+    let rows: Vec<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, code FROM public.core_permissions WHERE deleted_at IS NULL AND id = ANY($1)",
+    )
+    .bind(&unique)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| json_error(500, &format!("查询权限失败: {}", e)))?;
+
+    if rows.len() != unique.len() {
+        return Err(json_error(400, "存在无效的权限ID"));
+    }
+
+    let codes: Vec<String> = rows.into_iter().map(|(_, code)| code).collect();
+    if !tenant_scope::can_grant_codes(claims, &codes) {
+        return Err(json_error(403, "不能授予平台层权限或超出自身权限集的权限"));
+    }
+
+    Ok(unique)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 struct RoleRow {
     id: uuid::Uuid,
@@ -132,6 +182,15 @@ pub async fn create_role(
     )
     .unwrap_or_default();
 
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法创建角色"),
+    };
+
+    if tenant_scope::is_reserved_role_name(&name) {
+        return json_error(403, "不能创建系统内置角色");
+    }
+
     // 检查角色名是否已存在
     let exists: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1)",
@@ -148,12 +207,22 @@ pub async fn create_role(
         ));
     }
 
+    // 授权上限：任何调用者都不得授予平台层码或超出自身权限集的权限。
+    let resolved_permission_ids =
+        match resolve_permission_ids(&state.pool, &claims, &permission_ids).await {
+            Ok(ids) => ids,
+            Err(resp) => return resp,
+        };
+
     let role_id = Uuid::new_v4();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
+    let tenant_id = match scope {
+        IamScope::Platform => claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or_else(Uuid::nil),
+        IamScope::Tenant(tenant_id) => tenant_id,
+    };
 
     // 事务创建角色和权限关联
     let mut tx = match state.pool.begin().await {
@@ -184,16 +253,14 @@ pub async fn create_role(
     }
 
     // 添加权限关联
-    for perm_id in &permission_ids {
-        if let Ok(perm_uuid) = Uuid::parse_str(perm_id) {
-            let _ = sqlx::query(
-                "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-            )
-            .bind(role_id)
-            .bind(perm_uuid)
-            .execute(&mut *tx)
-            .await;
-        }
+    for perm_uuid in &resolved_permission_ids {
+        let _ = sqlx::query(
+            "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+        )
+        .bind(role_id)
+        .bind(perm_uuid)
+        .execute(&mut *tx)
+        .await;
     }
 
     if let Err(e) = tx.commit().await {
@@ -232,6 +299,7 @@ pub async fn create_role(
 )]
 pub async fn get_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role get_role called with id: {}", id);
@@ -246,10 +314,17 @@ pub async fn get_role(
         }
     };
 
+    let tenant_filter = match tenant_scope::read_scope(&claims) {
+        Ok(IamScope::Platform) => None,
+        Ok(IamScope::Tenant(tenant_id)) => Some(tenant_id),
+        Err(_) => return json_error(403, "缺少租户上下文，无法查看角色"),
+    };
+
     let role = sqlx::query_as::<_, RoleRow>(
-        "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     )
     .bind(role_uuid)
+    .bind(tenant_filter)
     .fetch_optional(&state.pool)
     .await;
 
@@ -304,14 +379,15 @@ pub async fn update_role(
         payload
     );
 
-    // 租户约束：超管 nil -> None（全量），普通用户限本租户角色
+    // 租户约束：超管 nil -> None（全量），普通用户限本租户角色；
+    // 非超管必须带租户上下文，否则拒绝，避免“无租户=全量”的隐式放开。
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+        match tenant_scope::tenant_uuid(&claims) {
+            Some(tenant_id) => Some(tenant_id),
+            None => return json_error(403, "缺少租户上下文，无法更新角色"),
+        }
     };
 
     let role_uuid = match Uuid::parse_str(&id) {
@@ -325,18 +401,19 @@ pub async fn update_role(
     };
 
     // 检查角色是否存在（限定操作者租户）
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid))",
+    let current_name: Option<String> = sqlx::query_scalar(
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
     )
     .bind(role_uuid)
     .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .fetch_optional(&state.pool)
     .await
-    .unwrap_or(false);
+    .unwrap_or(None);
 
-    if !exists {
-        return Json(topems_shared_core::response::error_value(404, "角色不存在"));
-    }
+    let current_name = match current_name {
+        Some(name) => name,
+        None => return Json(topems_shared_core::response::error_value(404, "角色不存在")),
+    };
 
     let name = payload
         .get("name")
@@ -346,13 +423,42 @@ pub async fn update_role(
         .get("description")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let permission_ids: Option<Vec<String>> = serde_json::from_value(
-        payload
-            .get("permission_ids")
-            .cloned()
-            .unwrap_or(serde_json::Value::Null),
-    )
-    .ok();
+
+    if let Some(new_name) = &name {
+        if tenant_scope::is_reserved_role_name(new_name) && new_name != &current_name {
+            return json_error(403, "不能使用系统内置角色名");
+        }
+        if new_name != &current_name {
+            let name_exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1 AND id <> $2)",
+            )
+            .bind(new_name)
+            .bind(role_uuid)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(false);
+            if name_exists {
+                return json_error(409, "角色名已存在");
+            }
+        }
+    }
+
+    let permission_ids: Option<Vec<String>> = match payload.get("permission_ids") {
+        None => None,
+        Some(value) if value.is_null() => None,
+        Some(value) => match serde_json::from_value::<Vec<String>>(value.clone()) {
+            Ok(ids) => Some(ids),
+            Err(_) => return json_error(400, "permission_ids 格式错误"),
+        },
+    };
+
+    let resolved_permission_ids = match &permission_ids {
+        Some(ids) => match resolve_permission_ids(&state.pool, &claims, ids).await {
+            Ok(ids) => Some(ids),
+            Err(resp) => return resp,
+        },
+        None => None,
+    };
 
     // 事务更新角色和权限
     let mut tx = match state.pool.begin().await {
@@ -405,8 +511,8 @@ pub async fn update_role(
         }
     }
 
-    // 更新权限关联
-    if let Some(perm_ids) = permission_ids {
+    // 更新权限关联（已在上方完成“不得超出自身权限集”的校验）
+    if let Some(perm_ids) = resolved_permission_ids {
         // 删除现有权限关联
         if let Err(e) = sqlx::query("DELETE FROM public.core_role_permissions WHERE role_id = $1")
             .bind(role_uuid)
@@ -422,16 +528,14 @@ pub async fn update_role(
         }
 
         // 添加新的权限关联
-        for perm_id in &perm_ids {
-            if let Ok(perm_uuid) = Uuid::parse_str(perm_id) {
-                let _ = sqlx::query(
-                    "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-                )
-                .bind(role_uuid)
-                .bind(perm_uuid)
-                .execute(&mut *tx)
-                .await;
-            }
+        for perm_uuid in &perm_ids {
+            let _ = sqlx::query(
+                "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+            )
+            .bind(role_uuid)
+            .bind(perm_uuid)
+            .execute(&mut *tx)
+            .await;
         }
     }
 
@@ -455,6 +559,7 @@ pub async fn update_role(
 
 pub async fn delete_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role delete_role called with id: {}", id);
@@ -469,22 +574,32 @@ pub async fn delete_role(
         }
     };
 
-    // 检查是否是系统内置角色（不能删除）
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        match tenant_scope::tenant_uuid(&claims) {
+            Some(tenant_id) => Some(tenant_id),
+            None => return json_error(403, "缺少租户上下文，无法删除角色"),
+        }
+    };
+
+    // 检查角色是否存在且归属本租户，并拦截系统内置角色
     let role_name: Option<String> = sqlx::query_scalar(
-        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
     )
     .bind(role_uuid)
+    .bind(tenant_filter)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
 
-    if let Some(name) = &role_name {
-        if ["superadmin", "admin"].contains(&name.as_str()) {
-            return Json(topems_shared_core::response::error_value(
-                403,
-                "不能删除系统内置角色",
-            ));
-        }
+    let role_name = match role_name {
+        Some(name) => name,
+        None => return Json(topems_shared_core::response::error_value(404, "角色不存在")),
+    };
+
+    if tenant_scope::is_reserved_role_name(&role_name) {
+        return json_error(403, "不能删除系统内置角色");
     }
 
     // 检查是否有用户使用该角色
@@ -528,11 +643,14 @@ pub async fn delete_role(
         ));
     }
 
-    // 删除角色（软删除）
-    if let Err(e) = sqlx::query("UPDATE public.core_roles SET deleted_at = NOW() WHERE id = $1")
-        .bind(role_uuid)
-        .execute(&mut *tx)
-        .await
+    // 删除角色（软删除，附租户谓词作双保险）
+    if let Err(e) = sqlx::query(
+        "UPDATE public.core_roles SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+    )
+    .bind(role_uuid)
+    .bind(tenant_filter)
+    .execute(&mut *tx)
+    .await
     {
         let _ = tx.rollback().await;
         tracing::error!("删除角色失败: {}", e);
@@ -563,6 +681,7 @@ pub async fn delete_role(
 /// GET /roles/{id}/permissions — 列出角色已授权的权限 code 列表
 pub async fn get_role_permissions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     let role_uuid = match Uuid::parse_str(&id) {
@@ -574,6 +693,27 @@ pub async fn get_role_permissions(
             ));
         }
     };
+
+    let scope = match tenant_scope::read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法查看角色权限"),
+    };
+
+    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+        Ok(RoleTarget::Ok) => {}
+        // 集合类：角色不存在或跨租户/平台角色时返回空列表，不泄露存在性
+        Ok(RoleTarget::NotFound) => {
+            return Json(serde_json::json!({
+                "success": true,
+                "message": "获取角色权限成功",
+                "data": []
+            }));
+        }
+        Err(e) => {
+            tracing::error!("Failed to check role target scope: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    }
 
     // 集合类：角色不存在时返回空列表（HTTP 200），不裸 404
     let permissions: Vec<String> = sqlx::query_scalar(
@@ -596,9 +736,11 @@ pub async fn get_role_permissions(
     }))
 }
 
-/// POST /roles/{id}/permissions — 为角色授权权限（body: {permission_id} 或 {permission_code}）
+/// POST /roles/{id}/permissions — 为角色授权权限
+/// body 兼容三种形态：{permission_id}、{permission_code}、{permission_ids:[...]}
 pub async fn add_role_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -612,62 +754,98 @@ pub async fn add_role_permission(
         }
     };
 
-    // 支持传 permission_id（UUID）或 permission_code（字符串）
-    let permission_id: Option<Uuid> = match payload.get("permission_id").and_then(|v| v.as_str()) {
-        Some(pid) => Uuid::parse_str(pid).ok(),
-        None => match payload.get("permission_code").and_then(|v| v.as_str()) {
-            Some(code) => sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM public.core_permissions WHERE code = $1",
-            )
-            .bind(code)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten(),
-            None => None,
-        },
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法授权角色"),
     };
 
-    let permission_id = match permission_id {
-        Some(pid) => pid,
-        None => {
-            return Json(topems_shared_core::response::error_value(
-                400,
-                "无效的权限标识",
-            ));
-        }
-    };
-
-    let result = sqlx::query(
-        "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-    )
-    .bind(role_uuid)
-    .bind(permission_id)
-    .execute(&state.pool)
-    .await;
-
-    match result {
-        Ok(_) => {
-            topems_shared_auth::invalidate_all_permission_caches();
-            Json(serde_json::json!({
-                "success": true,
-                "message": "角色权限授权成功",
-                "data": null
-            }))
-        }
+    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+        Ok(RoleTarget::Ok) => {}
+        Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
         Err(e) => {
-            tracing::error!("角色权限授权失败: {}", e);
-            Json(topems_shared_core::response::error_value(
-                500,
-                &format!("角色权限授权失败: {}", e),
-            ))
+            tracing::error!("Failed to check role target scope: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
         }
     }
+
+    let mut raw_ids: Vec<String> = Vec::new();
+
+    if let Some(values) = payload.get("permission_ids").and_then(|v| v.as_array()) {
+        for value in values {
+            match value.as_str() {
+                Some(id) => raw_ids.push(id.to_string()),
+                None => return json_error(400, "permission_ids 格式错误"),
+            }
+        }
+    }
+    if let Some(id) = payload.get("permission_id").and_then(|v| v.as_str()) {
+        raw_ids.push(id.to_string());
+    }
+    if let Some(code) = payload.get("permission_code").and_then(|v| v.as_str()) {
+        let id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM public.core_permissions WHERE code = $1 AND deleted_at IS NULL",
+        )
+        .bind(code)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten();
+        match id {
+            Some(id) => raw_ids.push(id.to_string()),
+            None => return json_error(400, "无效的权限标识"),
+        }
+    }
+
+    if raw_ids.is_empty() {
+        return json_error(400, "无效的权限标识");
+    }
+
+    // 授权上限：租户管理员只能授予自身权限集内、且非平台层的权限。
+    let permission_ids = match resolve_permission_ids(&state.pool, &claims, &raw_ids).await {
+        Ok(ids) => ids,
+        Err(resp) => return resp,
+    };
+
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始事务失败: {}", e);
+            return json_error(500, &format!("角色权限授权失败: {}", e));
+        }
+    };
+
+    for permission_id in &permission_ids {
+        if let Err(e) = sqlx::query(
+            "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        )
+        .bind(role_uuid)
+        .bind(permission_id)
+        .execute(&mut *tx)
+        .await
+        {
+            let _ = tx.rollback().await;
+            tracing::error!("角色权限授权失败: {}", e);
+            return json_error(500, &format!("角色权限授权失败: {}", e));
+        }
+    }
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("提交事务失败: {}", e);
+        return json_error(500, &format!("角色权限授权失败: {}", e));
+    }
+
+    topems_shared_auth::invalidate_all_permission_caches();
+    Json(serde_json::json!({
+        "success": true,
+        "message": "角色权限授权成功",
+        "data": null
+    }))
 }
 
 /// DELETE /roles/{id}/permissions/{permission_id} — 移除角色的权限授权
 pub async fn remove_role_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, permission_id)): Path<(String, String)>,
 ) -> Json<serde_json::Value> {
     let role_uuid = match Uuid::parse_str(&id) {
@@ -688,6 +866,20 @@ pub async fn remove_role_permission(
             ));
         }
     };
+
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法移除角色权限"),
+    };
+
+    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+        Ok(RoleTarget::Ok) => {}
+        Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
+        Err(e) => {
+            tracing::error!("Failed to check role target scope: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    }
 
     let result = sqlx::query(
         "DELETE FROM public.core_role_permissions WHERE role_id = $1 AND permission_id = $2",

@@ -327,6 +327,7 @@
       "GET /api/core/monitor/users",
       "GET /api/core/performance",
       "GET /api/core/permissions",
+      "GET /api/core/permissions/grantable",
       "GET /api/core/permissions/my-permissions",
       "GET /api/core/positions",
       "GET /api/core/positions/{p}",

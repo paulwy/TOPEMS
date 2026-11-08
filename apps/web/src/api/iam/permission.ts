@@ -4,7 +4,9 @@ import type { CreatePermissionRequest, Permission, UpdatePermissionRequest } fro
 
 export const permissionApi = {
   listPermissions: async (): Promise<ApiResponse<Permission[]>> => {
-    return apiClient.iam.get<Permission[]>('/permissions');
+    // 平台管理员得到全量，租户管理员只得到自身可授予集合；避免租户侧调用
+    // 平台专属的 /permissions 被 403 后角色授权抽屉不可用。
+    return apiClient.iam.get<Permission[]>('/permissions/grantable');
   },
 
   createPermission: async (data: CreatePermissionRequest): Promise<ApiResponse<Permission>> => {

@@ -1,25 +1,22 @@
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
-use crate::middleware::permission::require_permission;
+use crate::middleware::permission::{require_any_permission, require_permission};
 use crate::modules;
+use crate::modules::iam::tenant_scope;
 use crate::AppState;
 
+const USER_READ_PERMS: &[&str] = &["iam:read", tenant_scope::TENANT_USER_READ];
+const USER_WRITE_PERMS: &[&str] = &["admin:iam:write", tenant_scope::TENANT_USER_WRITE];
+const USER_DELETE_PERMS: &[&str] = &["admin:iam:delete", tenant_scope::TENANT_USER_DELETE];
+const ROLE_READ_PERMS: &[&str] = &["iam:read", tenant_scope::TENANT_ROLE_READ];
+const ROLE_WRITE_PERMS: &[&str] = &["admin:iam:write", tenant_scope::TENANT_ROLE_WRITE];
+const ROLE_DELETE_PERMS: &[&str] = &["admin:iam:delete", tenant_scope::TENANT_ROLE_DELETE];
+
 pub fn iam_routes(state: &AppState) -> Router<AppState> {
+    // 平台专属读端点：租户管理员（仅持 tenant:iam:*）继续 403。
     let read = Router::new()
         .route("/health", get(modules::iam::permission::health))
-        .route("/users", get(modules::iam::user::list_users))
-        .route("/users/{id}", get(modules::iam::user::get_user))
-        // 自服务 GET（/users/me、自身权限、自身偏好）已拆到 `me` 路由组，仅需登录，
-        // 不再要求 iam:read；管理类用户/角色/权限查询仍在本层（iam:read）。
-        .route(
-            "/users/{user_id}/permissions",
-            get(modules::iam::user::get_user_permissions),
-        )
-        .route(
-            "/users/{user_id}/roles",
-            get(modules::iam::user::get_user_roles),
-        )
         .route(
             "/users/{user_id}/effective-permissions",
             get(modules::iam::user::get_effective_permissions),
@@ -34,24 +31,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/users/{user_id}/login-history/{tail}",
             get(modules::iam::user::get_login_history_with_tail),
         )
-        .route(
-            "/users/check-email",
-            get(modules::iam::user::check_email_availability),
-        )
-        .route(
-            "/users/check-username",
-            get(modules::iam::user::check_username_availability),
-        )
         .route("/access-logs", get(modules::iam::user::list_access_logs))
         .route(
             "/access-logs/user/{user_id}",
             get(modules::iam::user::get_user_access_logs),
-        )
-        .route("/roles", get(modules::iam::role::list_roles))
-        .route("/roles/{id}", get(modules::iam::role::get_role))
-        .route(
-            "/roles/{id}/permissions",
-            get(modules::iam::role::get_role_permissions),
         )
         .route(
             "/permissions",
@@ -71,7 +54,6 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/permissions/verify-multiple",
             post(modules::iam::permission_verify::verify_multiple_permissions),
         )
-        // 自身权限目录 GET /permissions/my-permissions 拆到 `me` 组（登录即可）。
         .route(
             "/users/{user_id}/positions",
             get(modules::iam::user_position::get_user_positions),
@@ -99,19 +81,35 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_permission("iam:read"),
         ));
 
-    let write = Router::new()
+    // 租户管理员可读：用户列表/详情/角色、用户可用性检查。
+    let tenant_user_read = Router::new()
+        .route("/users", get(modules::iam::user::list_users))
+        .route("/users/{id}", get(modules::iam::user::get_user))
+        .route(
+            "/users/{user_id}/permissions",
+            get(modules::iam::user::get_user_permissions),
+        )
+        .route(
+            "/users/{user_id}/roles",
+            get(modules::iam::user::get_user_roles),
+        )
+        .route(
+            "/users/check-email",
+            get(modules::iam::user::check_email_availability),
+        )
+        .route(
+            "/users/check-username",
+            get(modules::iam::user::check_username_availability),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(USER_READ_PERMS),
+        ));
+
+    // 租户管理员可写：建号/改资料/停用启用/分配角色。
+    let tenant_user_write = Router::new()
         .route("/users", post(modules::iam::user::create_user))
         .route("/users/{id}", put(modules::iam::user::update_user))
-        // 自服务写（自身资料、改密、头像、偏好、自身权限校验）已拆到 `me` 路由组，
-        // 仅需登录，不再要求 admin:iam:write；管理类建号/改他人/批量/角色权限仍在本层。
-        .route(
-            "/users/batch-delete",
-            post(modules::iam::user::batch_delete_users),
-        )
-        .route(
-            "/users/batch-update",
-            put(modules::iam::user::batch_update_users),
-        )
         .route(
             "/users/{user_id}/roles/{role_id}",
             post(modules::iam::user::assign_user_role),
@@ -121,17 +119,78 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             post(modules::iam::user::disable_user),
         )
         .route("/users/{id}/enable", post(modules::iam::user::enable_user))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(USER_WRITE_PERMS),
+        ));
+
+    let tenant_user_delete = Router::new()
+        .route("/users/{id}", delete(modules::iam::user::delete_user))
         .route(
-            "/users/{id}/password",
-            put(modules::iam::user::change_password),
+            "/users/{user_id}/roles/{role_id}",
+            delete(modules::iam::user::remove_user_role),
         )
-        .route("/access-logs", post(modules::iam::user::create_access_log))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(USER_DELETE_PERMS),
+        ));
+
+    // 租户角色读：列表/详情/已授权限 + 可授权限目录（仅返回操作者自身权限集）。
+    let tenant_role_read = Router::new()
+        .route("/roles", get(modules::iam::role::list_roles))
+        .route("/roles/{id}", get(modules::iam::role::get_role))
+        .route(
+            "/roles/{id}/permissions",
+            get(modules::iam::role::get_role_permissions),
+        )
+        .route(
+            "/permissions/grantable",
+            get(modules::iam::permission::list_grantable_permissions),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(ROLE_READ_PERMS),
+        ));
+
+    let tenant_role_write = Router::new()
         .route("/roles", post(modules::iam::role::create_role))
         .route("/roles/{id}", put(modules::iam::role::update_role))
         .route(
             "/roles/{id}/permissions",
             post(modules::iam::role::add_role_permission),
         )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(ROLE_WRITE_PERMS),
+        ));
+
+    let tenant_role_delete = Router::new()
+        .route("/roles/{id}", delete(modules::iam::role::delete_role))
+        .route(
+            "/roles/{id}/permissions/{permission_id}",
+            delete(modules::iam::role::remove_role_permission),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_any_permission(ROLE_DELETE_PERMS),
+        ));
+
+    // 平台专属写端点：租户管理员继续 403。
+    let write = Router::new()
+        .route(
+            "/users/batch-delete",
+            post(modules::iam::user::batch_delete_users),
+        )
+        .route(
+            "/users/batch-update",
+            put(modules::iam::user::batch_update_users),
+        )
+        // 管理员为他人重置密码仍限平台管理员；本人改密走 /users/me/password。
+        .route(
+            "/users/{id}/password",
+            put(modules::iam::user::change_password),
+        )
+        .route("/access-logs", post(modules::iam::user::create_access_log))
         // 前端 PermissionManagementPage createPermission：POST /permissions（契约兜底 stub）
         .route(
             "/permissions",
@@ -171,17 +230,8 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_permission("admin:iam:write"),
         ));
 
+    // 平台专属删除端点。
     let delete_routes = Router::new()
-        .route("/users/{id}", delete(modules::iam::user::delete_user))
-        .route(
-            "/users/{user_id}/roles/{role_id}",
-            delete(modules::iam::user::remove_user_role),
-        )
-        .route("/roles/{id}", delete(modules::iam::role::delete_role))
-        .route(
-            "/roles/{id}/permissions/{permission_id}",
-            delete(modules::iam::role::remove_role_permission),
-        )
         .route(
             "/permissions/{id}",
             delete(modules::iam::permission::delete_permission),
@@ -231,5 +281,16 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             put(modules::iam::user::update_preferences),
         );
 
-    Router::new().nest("/iam", read.merge(me).merge(write).merge(delete_routes))
+    Router::new().nest(
+        "/iam",
+        read.merge(me)
+            .merge(write)
+            .merge(delete_routes)
+            .merge(tenant_user_read)
+            .merge(tenant_user_write)
+            .merge(tenant_user_delete)
+            .merge(tenant_role_read)
+            .merge(tenant_role_write)
+            .merge(tenant_role_delete),
+    )
 }

@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::models::{record_audit_log, UserResponse, UserRow};
+use crate::modules::iam::tenant_scope::{self, IamScope, RoleTarget, UserTarget};
 
 #[derive(Debug, Serialize, ToSchema, sqlx::FromRow)]
 #[schema(as = UserRoleRow)]
@@ -47,7 +48,7 @@ struct UserPermissionRow {
 )]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
     headers: axum::http::HeaderMap,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -69,6 +70,28 @@ pub async fn get_user_permissions(
             );
         }
     };
+
+    let scope = match tenant_scope::read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户权限"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
+    {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
+        Err(e) => {
+            tracing::error!("Failed to check user target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    }
 
     let user: Option<UserRow> = sqlx::query_as(
         "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
@@ -207,7 +230,7 @@ pub async fn get_user_permissions(
 /// GET /users/{userId}/roles — 返回指定用户角色列表
 pub async fn get_user_roles(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     tracing::info!("IAM user get_user_roles called with user_id: {}", user_id);
@@ -226,16 +249,18 @@ pub async fn get_user_roles(
         }
     };
 
-    let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1",
-    )
-    .bind(user_uuid)
-    .fetch_one(&state.pool)
-    .await
+    let scope = match tenant_scope::read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户角色"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
     {
-        Ok(count) => count,
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
         Err(e) => {
-            tracing::error!("Database query failed: {}", e);
+            tracing::error!("Failed to check user target scope: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(topems_shared_core::response::error_value(
@@ -244,14 +269,6 @@ pub async fn get_user_roles(
                 )),
             );
         }
-    };
-
-    if existing_user_count == 0 {
-        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
-        return (
-            StatusCode::OK,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
     }
 
     let roles: Vec<UserRoleRow> = sqlx::query_as::<_, UserRoleRow>(
@@ -336,16 +353,18 @@ pub async fn assign_user_role(
         }
     };
 
-    let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1",
-    )
-    .bind(user_uuid)
-    .fetch_one(&state.pool)
-    .await
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法分配角色"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
     {
-        Ok(count) => count,
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
         Err(e) => {
-            tracing::error!("Database query failed: {}", e);
+            tracing::error!("Failed to check user target scope: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(topems_shared_core::response::error_value(
@@ -354,26 +373,13 @@ pub async fn assign_user_role(
                 )),
             );
         }
-    };
-
-    if existing_user_count == 0 {
-        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
-        return (
-            StatusCode::OK,
-            Json(topems_shared_core::response::error_value(404, "用户不存在")),
-        );
     }
 
-    let existing_role_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
-    )
-    .bind(role_uuid)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(count) => count,
+    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+        Ok(RoleTarget::Ok) => {}
+        Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
         Err(e) => {
-            tracing::error!("Database query failed: {}", e);
+            tracing::error!("Failed to check role target scope: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(topems_shared_core::response::error_value(
@@ -382,13 +388,28 @@ pub async fn assign_user_role(
                 )),
             );
         }
-    };
+    }
 
-    if existing_role_count == 0 {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(topems_shared_core::response::error_value(404, "角色不存在")),
-        );
+    // 租户管理员只能分配本租户内、且权限集不超出自身权限集/不含平台层码的角色，
+    // 防止借已有角色提权。
+    if let IamScope::Tenant(_) = scope {
+        match tenant_scope::role_permission_codes(&state.pool, role_uuid).await {
+            Ok(codes) => {
+                if !tenant_scope::can_grant_codes(&claims, &codes) {
+                    return tenant_scope::forbidden("不能授予平台层权限或超出自身权限集的角色");
+                }
+            }
+            Err(e) => {
+                tracing::error!("Failed to load role permissions: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询角色权限失败: {}", e),
+                    )),
+                );
+            }
+        }
     }
 
     let result = sqlx::query(
@@ -488,6 +509,43 @@ pub async fn remove_user_role(
             );
         }
     };
+
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+        Ok(scope) => scope,
+        Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法移除角色"),
+    };
+
+    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
+    {
+        Ok(UserTarget::Ok) => {}
+        Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
+        Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
+        Err(e) => {
+            tracing::error!("Failed to check user target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    }
+
+    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+        Ok(RoleTarget::Ok) => {}
+        Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
+        Err(e) => {
+            tracing::error!("Failed to check role target scope: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询角色失败: {}", e),
+                )),
+            );
+        }
+    }
 
     let result =
         sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1 AND role_id = $2")
