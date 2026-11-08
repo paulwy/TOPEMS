@@ -389,9 +389,11 @@ if [ "$DO_FRONTEND" = true ]; then
     for conf in /opt/homebrew/etc/nginx/servers/topems.conf /opt/homebrew/etc/nginx/servers/topems-ssl.conf; do
       sed -i '' \"s|root .*dist/.*web;|root $PROD_REPO_DIR/dist/current;|\" \"\$conf\"
     done
-    /opt/homebrew/bin/nginx -t && /opt/homebrew/bin/nginx -s reload
-    echo '前端部署完成: '$PROD_DIST_NAME
   "
+  # 门禁：nginx -t 必须语法通过且零 [warn]（stdout+stderr 都捕获），通过后才 reload
+  ssh $PROD_HOST 'bash -s -- --require' < "$LOCAL_REPO/scripts/verify-nginx-config.sh"
+  ssh $PROD_HOST '/opt/homebrew/bin/nginx -s reload'
+  info "前端部署完成: $PROD_DIST_NAME"
 fi
 
 # ── 完成 ──
