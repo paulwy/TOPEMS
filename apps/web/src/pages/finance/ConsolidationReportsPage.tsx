@@ -12,6 +12,7 @@ import {
   Download,
 } from 'lucide-react';
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -48,6 +49,12 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
+/**
+ * P0 止血：合并报表生成/发布/抵消尚未接入真实数据链路。
+ * 后端对应端点返回 501“未接入”，此开关保证页面不展示历史假数据、不提供假操作入口。
+ */
+const CONSOLIDATION_MODULE_AVAILABLE = false;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: i18n.t('finance.consolidation_reports_page.k5'), color: 'grey.500' },
@@ -411,28 +418,45 @@ export default function ConsolidationReportsPage() {
 
   return (
     <PageContainer maxWidth='xl'>
-      <StatsPageTemplate
-        title={t('finance.consolidation_reports_page.page_title')}
-        subtitle={t('finance.consolidation_reports_page.view')}
-        statCards={statCards}
-        statColumns={4}
-        charts={charts}
-        chartColumns={{ xs: 1, md: 2 }}
-        tables={tables}
-        loading={isLoading}
-        search={{
-          value: searchKeyword,
-          onChange: setSearchKeyword,
-          placeholder: t('finance.consolidation_reports_page.search_placeholder'),
-        }}
-        onRefresh={refetch}
-        showExport={true}
-        showRefresh={true}
-        showTimeRange={false}
-        showSearch={true}
-        customToolbar={customToolbar}
-        statCardDirection='row'
-      />
+      {CONSOLIDATION_MODULE_AVAILABLE ? (
+        <StatsPageTemplate
+          title={t('finance.consolidation_reports_page.page_title')}
+          subtitle={t('finance.consolidation_reports_page.view')}
+          statCards={statCards}
+          statColumns={4}
+          charts={charts}
+          chartColumns={{ xs: 1, md: 2 }}
+          tables={tables}
+          loading={isLoading}
+          search={{
+            value: searchKeyword,
+            onChange: setSearchKeyword,
+            placeholder: t('finance.consolidation_reports_page.search_placeholder'),
+          }}
+          onRefresh={refetch}
+          showExport={true}
+          showRefresh={true}
+          showTimeRange={false}
+          showSearch={true}
+          customToolbar={customToolbar}
+          statCardDirection='row'
+        />
+      ) : (
+        <Alert
+          severity='info'
+          sx={{ mb: 2 }}
+        >
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
+            {t('finance.consolidation_reports_page.unavailable_title')}
+          </Typography>
+          <Typography variant='body2'>
+            {t('finance.consolidation_reports_page.unavailable_desc')}
+          </Typography>
+        </Alert>
+      )}
 
       {showDetail && selectedReport && (
         <Dialog

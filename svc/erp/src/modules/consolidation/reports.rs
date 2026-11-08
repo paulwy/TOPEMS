@@ -6,10 +6,13 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
-use super::common::{call_finance_core_approval, log_audit, ConsolidationListParams};
+use super::common::{
+    call_finance_core_approval, log_audit, require_action_permission, ConsolidationListParams,
+};
 use super::ApiState;
 
 #[utoipa::path(
@@ -131,128 +134,28 @@ pub async fn get_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:consolidation-report:write"])),
     path = "/erp/consolidation/reports/generate-report",
     tag = "ConsolidationReports",
     operation_id = "generate_report",
     responses(
         (status = 200, description = "操作成功"),
+        (status = 501, description = "功能未接入"),
     ),
 )]
 pub async fn generate_report(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
-    Json(req): Json<GenerateConsolidationReportRequest>,
+    Extension(claims): Extension<Claims>,
+    Json(_req): Json<GenerateConsolidationReportRequest>,
 ) -> ApiResponse<ConsolidationReport> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
-    let id = Uuid::new_v4();
-    let report_no = format!(
-        "CR{}{:04}",
-        chrono::Utc::now().format("%Y%m"),
-        rand::random::<u16>() % 10000
-    );
-    let (year, month) = req.period.split_once('-').unwrap_or(("2026", "01"));
-    let year: i32 = year.parse().unwrap_or(2026);
-    let month: i32 = month.parse().unwrap_or(1);
-    let quarter = (month - 1) / 3 + 1;
-
-    let company_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp.consolidation_scope_companies WHERE scope_id = $1",
-    )
-    .bind(req.scope_id)
-    .fetch_one(&mut **txn)
-    .await
-    .unwrap_or(0);
-
-    let result = sqlx::query_as::<_, ConsolidationReport>(
-        r#"
-        INSERT INTO erp.consolidation_reports
-        (id, report_no, report_type, scope_id, period, year, quarter, month, status, company_count, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'calculating', $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING *
-        "#,
-    )
-    .bind(id)
-    .bind(&report_no)
-    .bind(&req.report_type)
-    .bind(req.scope_id)
-    .bind(&req.period)
-    .bind(year)
-    .bind(quarter)
-    .bind(month)
-    .bind(company_count)
-    .fetch_one(&mut **txn)
-    .await;
-
-    let _report = match result {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("生成合并报表失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("生成合并报表失败".to_string()));
-        }
-    };
-
-    let total_assets = 1000000.0 + (rand::random::<f64>() * 500000.0);
-    let total_liabilities = total_assets * 0.6;
-    let total_equity = total_assets - total_liabilities;
-
-    let updated_report = sqlx::query_as::<_, ConsolidationReport>(
-        r#"
-        UPDATE erp.consolidation_reports
-        SET status = 'completed',
-            total_assets = $2,
-            total_liabilities = $3,
-            total_equity = $4,
-            total_revenue = $5,
-            total_profit = $6,
-            net_profit = $7,
-            generated_at = NOW()
-        WHERE id = $1
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
-               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING *
-        "#,
-    )
-    .bind(id)
-    .bind(total_assets)
-    .bind(total_liabilities)
-    .bind(total_equity)
-    .bind(total_assets * 0.3)
-    .bind(total_assets * 0.1)
-    .bind(total_assets * 0.08)
-    .fetch_one(&mut **txn)
-    .await;
-
-    match updated_report {
-        Ok(report) => {
-            log_audit(
-                &state.db,
-                "generate",
-                "consolidation_report",
-                Some(id),
-                &headers,
-            )
-            .await;
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(report, "生成合并报表成功")
-        }
-        Err(e) => {
-            tracing::error!("更新合并报表失败: {}", e);
-            ApiResponse::from(TopemsError::Internal("更新合并报表失败".to_string()))
-        }
+    if let Err(e) = require_action_permission(&claims, "erp:consolidation-report:write") {
+        return e.0;
     }
+
+    // P0 止血：此前此处用 `1000000.0 + rand()` 造数并写入正式表、置为 completed。
+    // 在法人主体账簿归集与内部交易识别能力落地前，禁止写入任何金额。
+    ApiResponse::not_implemented(
+        "合并报表生成未接入：尚无法人主体账簿归集与内部交易匹配能力，功能暂不开放",
+    )
 }
 
 #[utoipa::path(
@@ -300,60 +203,10 @@ pub async fn get_report_lines(
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn export_report(
-    State(_state): State<ApiState>,
-    Path(report_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
-) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
-    let report = match sqlx::query_as::<_, ConsolidationReport>(
-        r#"
-        SELECT cr.*, cs.name as scope_name
-        FROM erp.consolidation_reports cr
-        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
-        WHERE cr.id = $1
-        "#,
-    )
-    .bind(report_id)
-    .fetch_optional(&mut **txn)
-    .await
-    {
-        Ok(Some(r)) => r,
-        Ok(None) => {
-            return ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string()))
-        }
-        Err(e) => {
-            tracing::error!("导出合并报表失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("导出合并报表失败".to_string()));
-        }
-    };
-
-    let lines = match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
-    )
-    .bind(report_id)
-    .fetch_all(&mut **txn)
-    .await
-    {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("导出合并报表行项目失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("导出合并报表行项目失败".to_string()));
-        }
-    };
-
-    let export_data = serde_json::json!({
-        "report": report,
-        "lines": lines,
-    });
-
-    ApiResponse::success(export_data, "导出合并报表成功")
+pub async fn export_report(Path(_report_id): Path<Uuid>) -> ApiResponse<serde_json::Value> {
+    // P0 止血：历史假数据仍可能残留于 erp.consolidation_reports，
+    // 导出会把这些金额带走。真实合并链路落地前统一不提供导出。
+    ApiResponse::not_implemented("合并报表导出未接入：合并数据生成能力尚未开放")
 }
 
 #[utoipa::path(
@@ -554,63 +407,25 @@ pub async fn approve_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:consolidation-report:approve"])),
     path = "/erp/consolidation/reports/{reportId}/publish",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),
-    responses((status = 200, description = "发布合并报表成功", body = ApiResponse<serde_json::Value>))
+    responses(
+        (status = 200, description = "发布合并报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 501, description = "功能未接入"),
+    )
 )]
 pub async fn publish_report(
-    State(state): State<ApiState>,
-    Path(report_id): Path<Uuid>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
+    Extension(claims): Extension<Claims>,
+    Path(_report_id): Path<Uuid>,
 ) -> ApiResponse<ConsolidationReport> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
-    let result = sqlx::query_as::<_, ConsolidationReport>(
-        r#"
-        UPDATE erp.consolidation_reports
-        SET status = 'published', published_at = NOW()
-        WHERE id = $1
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
-               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING *
-        "#,
-    )
-    .bind(report_id)
-    .fetch_optional(&mut **txn)
-    .await;
-
-    match result {
-        Ok(Some(report)) => {
-            log_audit(
-                &state.db,
-                "publish",
-                "consolidation_report",
-                Some(report_id),
-                &headers,
-            )
-            .await;
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(report, "发布合并报表成功")
-        }
-        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string())),
-        Err(e) => {
-            tracing::error!("发布合并报表失败: {}", e);
-            ApiResponse::from(TopemsError::Internal("发布合并报表失败".to_string()))
-        }
+    if let Err(e) = require_action_permission(&claims, "erp:consolidation-report:approve") {
+        return e.0;
     }
+
+    // P0 止血：生成链路已停用，历史报表中的金额不可信，禁止把假数据发布出去。
+    ApiResponse::not_implemented("合并报表发布未接入：合并数据生成能力尚未开放")
 }
 
 #[utoipa::path(
@@ -670,5 +485,93 @@ pub async fn delete_report(
                 "删除合并报表失败".to_string(),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::expect_used, clippy::unwrap_used)]
+mod p0_tests {
+    use super::*;
+
+    fn claims(permissions: Vec<String>, is_superuser: bool) -> Claims {
+        Claims {
+            sub: "11111111-1111-1111-1111-111111111111".to_string(),
+            username: "tester".to_string(),
+            role: "employee".to_string(),
+            roles: vec!["employee".to_string()],
+            permissions,
+            is_superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        }
+    }
+
+    fn generate_req() -> GenerateConsolidationReportRequest {
+        GenerateConsolidationReportRequest {
+            scope_id: Uuid::nil(),
+            report_type: "balance_sheet".to_string(),
+            period: "2026-10".to_string(),
+            include_prior_period: None,
+            auto_eliminate: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn generate_denies_module_level_user() {
+        let resp = generate_report(
+            Extension(claims(vec!["erp:write".to_string()], false)),
+            Json(generate_req()),
+        )
+        .await;
+        assert_eq!(resp.code, 403);
+        assert!(resp.data.is_none());
+    }
+
+    #[tokio::test]
+    async fn generate_returns_not_implemented_without_persisting() {
+        let resp = generate_report(
+            Extension(claims(
+                vec!["erp:consolidation-report:write".to_string()],
+                false,
+            )),
+            Json(generate_req()),
+        )
+        .await;
+        assert_eq!(resp.code, 501);
+        assert!(resp.data.is_none());
+        assert!(resp.message.contains("未接入"));
+    }
+
+    #[tokio::test]
+    async fn publish_denies_module_level_user() {
+        let resp = publish_report(
+            Extension(claims(vec!["erp:write".to_string()], false)),
+            Path(Uuid::nil()),
+        )
+        .await;
+        assert_eq!(resp.code, 403);
+        assert!(resp.data.is_none());
+    }
+
+    #[tokio::test]
+    async fn publish_returns_not_implemented_for_authorized_user() {
+        let resp = publish_report(
+            Extension(claims(
+                vec!["erp:consolidation-report:approve".to_string()],
+                false,
+            )),
+            Path(Uuid::nil()),
+        )
+        .await;
+        assert_eq!(resp.code, 501);
+        assert!(resp.data.is_none());
+        assert!(resp.message.contains("未接入"));
     }
 }

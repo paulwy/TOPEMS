@@ -3809,6 +3809,8 @@
   },
   "finance": {
     "consolidation_reports_page": {
+      "unavailable_title": "合并报表功能暂未开放",
+      "unavailable_desc": "当前版本尚未接入法人主体账簿归集、内部交易识别与抵消计算，生成、发布与抵消执行均已停用，不会产出任何合并数据。",
       "text_cb3b91": "合并资产负债表",
       "text_1fd96a": "合并利润表",
       "text_c4397e": "合并现金流量表",

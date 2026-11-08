@@ -307,45 +307,12 @@ pub async fn delete_company_relation(
     responses((status = 200, description = "获取公司财务数据成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_company_financial_data(
-    State(_state): State<ApiState>,
-    Path(company_id): Path<Uuid>,
-    Query(params): Query<ConsolidationListParams>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
+    Path(_company_id): Path<Uuid>,
+    Query(_params): Query<ConsolidationListParams>,
 ) -> ApiResponse<CompanyFinancialData> {
-    let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
-        Some(_txn) => _txn,
-        None => unreachable!("rls txn missing"),
-    };
-    ApiResponse::success(
-        CompanyFinancialData {
-            company_id,
-            company_name: "公司".to_string(),
-            period: params.period_from.unwrap_or_else(|| "2026-01".to_string()),
-            current_assets: 500000.0,
-            non_current_assets: 1000000.0,
-            total_assets: 1500000.0,
-            current_liabilities: 400000.0,
-            non_current_liabilities: 500000.0,
-            total_liabilities: 900000.0,
-            paid_in_capital: 300000.0,
-            capital_reserve: 100000.0,
-            surplus_reserve: 50000.0,
-            undistributed_profit: 150000.0,
-            total_equity: 600000.0,
-            revenue: 800000.0,
-            cost_of_goods_sold: 500000.0,
-            gross_profit: 300000.0,
-            operating_profit: 150000.0,
-            profit_before_tax: 120000.0,
-            net_profit: 100000.0,
-            operating_cash_flow: 80000.0,
-            investing_cash_flow: -50000.0,
-            financing_cash_flow: -20000.0,
-            net_cash_flow: 10000.0,
-        },
-        "获取公司财务数据成功",
+    // P0 止血：此前返回整组硬编码金额（current_assets=500000 等），会被前端当成
+    // 真实子公司财务数据展示。财务总账尚无 company_id 维度，无法按主体归集。
+    ApiResponse::not_implemented(
+        "公司财务数据未接入：财务账簿尚无法人主体维度，无法按公司归集报表数据",
     )
 }

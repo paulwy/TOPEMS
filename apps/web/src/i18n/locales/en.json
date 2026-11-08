@@ -3803,6 +3803,8 @@
   },
   "finance": {
     "consolidation_reports_page": {
+      "unavailable_title": "Consolidated reports are not available yet",
+      "unavailable_desc": "Legal-entity ledger aggregation, intercompany matching and elimination calculations are not connected in this version. Generation, publishing and elimination execution are disabled and no consolidated figures are produced.",
       "text_cb3b91": "Consolidated Balance Sheet",
       "text_1fd96a": "Consolidated Income Statement",
       "text_c4397e": "Consolidated Cash Flow Statement",

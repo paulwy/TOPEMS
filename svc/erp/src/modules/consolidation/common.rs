@@ -2,13 +2,32 @@ use axum::http::HeaderMap;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_db::{repository::ListQueryParams, AuditLogService};
-use uuid::Uuid;
-
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, TypedServiceClient,
 };
+use uuid::Uuid;
+
+/// 合并模块动作级权限门（精确匹配 `core_permissions.code`）。
+///
+/// 普通 ERP 用户只持有 `erp:read`/`erp:write` 等模块级码，不会自动获得这些动作码，
+/// 因此生成、发布、执行抵消必须单独授权。
+pub fn require_action_permission<T>(
+    claims: &Claims,
+    code: &str,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    if claims.has_permission(code) {
+        Ok(())
+    } else {
+        Err(axum::Json(ApiResponse::forbidden(&format!(
+            "权限不足：需要 {} 权限",
+            code
+        ))))
+    }
+}
 
 pub async fn log_audit(
     pool: &PgPool,
@@ -124,6 +143,49 @@ pub async fn call_finance_core_approval(
             "Finance Core returned error: {}",
             e
         ))),
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    fn claims(permissions: Vec<String>, is_superuser: bool) -> Claims {
+        Claims {
+            sub: "11111111-1111-1111-1111-111111111111".to_string(),
+            username: "tester".to_string(),
+            role: "employee".to_string(),
+            roles: vec!["employee".to_string()],
+            permissions,
+            is_superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        }
+    }
+
+    #[test]
+    fn action_permission_denies_module_level_erp_user() {
+        let c = claims(vec!["erp:read".to_string(), "erp:write".to_string()], false);
+        assert!(require_action_permission::<()>(&c, "erp:consolidation-report:write").is_err());
+    }
+
+    #[test]
+    fn action_permission_allows_exact_code_and_superuser() {
+        let c = claims(vec!["erp:consolidation-report:write".to_string()], false);
+        assert!(require_action_permission::<()>(&c, "erp:consolidation-report:write").is_ok());
+
+        let su = claims(Vec::new(), true);
+        assert!(
+            require_action_permission::<()>(&su, "erp:consolidation-elimination:write").is_ok()
+        );
     }
 }
 

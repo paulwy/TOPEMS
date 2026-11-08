@@ -1,15 +1,15 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    http::HeaderMap,
     Json,
 };
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
-use super::common::{log_audit, ConsolidationListParams};
+use super::common::{require_action_permission, ConsolidationListParams};
 use super::ApiState;
 
 #[utoipa::path(
@@ -116,115 +116,85 @@ pub async fn get_internal_transaction(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:consolidation-elimination:write"])),
     path = "/erp/consolidation/execute-elimination",
     tag = "Consolidation",
-    responses((status = 200, description = "执行内部交易抵消成功", body = ApiResponse<serde_json::Value>))
+    responses(
+        (status = 200, description = "执行内部交易抵消成功", body = ApiResponse<serde_json::Value>),
+        (status = 501, description = "功能未接入"),
+    )
 )]
-#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_elimination(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
-    Json(req): Json<ExecuteEliminationRequest>,
+    Extension(claims): Extension<Claims>,
+    Json(_req): Json<ExecuteEliminationRequest>,
 ) -> ApiResponse<EliminationResult> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
-    let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
-        sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
-        )
-        .bind(&rule_ids)
-        .bind(req.scope_id)
-        .fetch_all(&mut **txn)
-        .await
-        .unwrap_or_default()
-    } else {
-        sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
-        )
-        .bind(req.scope_id)
-        .fetch_all(&mut **txn)
-        .await
-        .unwrap_or_default()
-    };
-
-    let mut total_eliminated = 0.0;
-    let mut eliminated_count = 0;
-    let mut results = Vec::new();
-
-    for rule in &rules {
-        let transactions: Vec<InternalTransaction> = sqlx::query_as::<_, InternalTransaction>(
-            r#"
-            SELECT * FROM erp.internal_transactions
-            WHERE elimination_status = 'pending'
-              AND period = $1
-            "#,
-        )
-        .bind(&req.period)
-        .fetch_all(&mut **txn)
-        .await
-        .unwrap_or_default();
-
-        let rule_total: f64 = transactions
-            .iter()
-            .map(|t| t.amount.to_string().parse::<f64>().unwrap_or(0.0))
-            .sum();
-
-        total_eliminated += rule_total;
-        eliminated_count += transactions.len() as i64;
-
-        for tx in &transactions {
-            sqlx::query(
-                r#"
-                UPDATE erp.internal_transactions
-                SET elimination_status = 'eliminated', eliminated_amount = amount
-                WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-                "#,
-            )
-            .bind(tx.id)
-            .execute(&mut **txn)
-            .await
-            .ok();
-        }
-
-        results.push(RuleEliminationResult {
-            rule_id: rule.id,
-            rule_name: rule.name.clone(),
-            rule_type: rule.r#type.clone(),
-            transaction_count: transactions.len() as i64,
-            total_eliminated: rule_total,
-            success: true,
-            error_message: None,
-        });
+    if let Err(e) = require_action_permission(&claims, "erp:consolidation-elimination:write") {
+        return e.0;
     }
 
-    log_audit(
-        &state.db,
-        "execute_elimination",
-        "internal_transaction",
-        Some(req.scope_id),
-        &headers,
+    // P0 止血：旧实现把同一批 pending 交易按每条规则重复累计，再全部标记 eliminated，
+    // 且没有内部交易匹配表，结果必然错误。此处整体下线，不保留半可用状态。
+    ApiResponse::not_implemented(
+        "内部交易抵消未接入：缺少内部交易匹配表与可核对的抵销分录，功能暂不开放",
     )
-    .await;
+}
 
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("事务提交失败: {}", e);
-            return ApiResponse::server_error("事务提交失败");
+#[cfg(test)]
+#[allow(clippy::expect_used, clippy::unwrap_used)]
+mod p0_tests {
+    use super::*;
+
+    fn claims(permissions: Vec<String>, is_superuser: bool) -> Claims {
+        Claims {
+            sub: "11111111-1111-1111-1111-111111111111".to_string(),
+            username: "tester".to_string(),
+            role: "employee".to_string(),
+            roles: vec!["employee".to_string()],
+            permissions,
+            is_superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
         }
     }
-    ApiResponse::success(
-        EliminationResult {
-            eliminated_count,
-            total_eliminated,
-            results,
-        },
-        "执行抵消成功",
-    )
+
+    fn elimination_req() -> ExecuteEliminationRequest {
+        ExecuteEliminationRequest {
+            scope_id: Uuid::nil(),
+            period: "2026-10".to_string(),
+            rule_ids: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn execute_elimination_denies_module_level_user() {
+        let resp = execute_elimination(
+            Extension(claims(vec!["erp:write".to_string()], false)),
+            Json(elimination_req()),
+        )
+        .await;
+        assert_eq!(resp.code, 403);
+        assert!(resp.data.is_none());
+    }
+
+    #[tokio::test]
+    async fn execute_elimination_returns_not_implemented_for_authorized_user() {
+        let resp = execute_elimination(
+            Extension(claims(
+                vec!["erp:consolidation-elimination:write".to_string()],
+                false,
+            )),
+            Json(elimination_req()),
+        )
+        .await;
+        assert_eq!(resp.code, 501);
+        assert!(resp.data.is_none());
+        assert!(resp.message.contains("未接入"));
+    }
 }
