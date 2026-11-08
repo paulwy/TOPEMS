@@ -1633,7 +1633,7 @@ pub async fn sync_return_to_finance(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
-    locale: &str,
+    _locale: &str,
 ) -> Result<Uuid, TopemsError> {
     let return_record: Return = sqlx::query_as::<_, Return>(
         r#"
