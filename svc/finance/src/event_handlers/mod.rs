@@ -13,6 +13,8 @@ use topems_shared_event::event::{
     SettlementApprovedPayload, SettlementCreatedPayload, SettlementRejectedPayload,
 };
 
+use crate::services::finance::company::resolve_tenant_company;
+
 type HandlerResult = std::result::Result<(), TopemsError>;
 
 /// 自动凭证分录：按科目 code 解析 account_id；code 不存在即 fail-closed（不写半张凭证）。
@@ -214,6 +216,8 @@ impl FinanceEventHandlers {
         let period = format!("{:04}{:02}", now.year(), now.month());
         let voucher_no = Self::generate_voucher_no(voucher_type, now);
         let created_by = created_by.unwrap_or("system");
+        // 记账主体：事件不带公司，单主体租户解析唯一公司，多主体/无主体 fail-closed
+        let company_id = resolve_tenant_company(&self.db, tenant_id).await?;
 
         let mut tx = self
             .db
@@ -223,12 +227,13 @@ impl FinanceEventHandlers {
 
         // 幂等键落点：finance.uq_finance_voucher_tenant_source（部分唯一索引）
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_module, source_id, created_by)
-             VALUES ($1, $2, $3, $4, $5::voucher_type, $6, $7, 'draft', $8, $9, $10, $11)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_module, source_id, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6::voucher_type, $7, $8, 'draft', $9, $10, $11, $12)
              ON CONFLICT (tenant_id, source_module, source_id) WHERE source_id IS NOT NULL AND deleted_at IS NULL DO NOTHING
              RETURNING id"),
         )
         .bind(tenant_id)
+        .bind(company_id)
         .bind(&voucher_no)
         .bind(now)
         .bind(&period)
@@ -274,12 +279,13 @@ impl FinanceEventHandlers {
             };
 
             sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, aux_type, aux_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"),
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (tenant_id, company_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, aux_type, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
             )
             .bind(tenant_id)
+            .bind(company_id)
             .bind(voucher_id)
-            .bind(i as i32 + 1)
+            .bind(i32::try_from(i + 1).unwrap_or(i32::MAX))
             .bind(account_id)
             .bind(&account_code)
             .bind(&account_name)
@@ -1289,6 +1295,15 @@ mod p2a_e2e_tests {
             .await
             .expect("创建测试租户失败");
 
+        // P2a 公司维度：凭证必须归属唯一公司主体
+        sqlx::query(
+            "INSERT INTO hrm.companies (tenant_id, name, code, status) VALUES ($1, 'P2a 测试公司', 'DEFAULT', 'active')",
+        )
+        .bind(tenant_id)
+        .execute(&pool)
+        .await
+        .expect("创建测试公司失败");
+
         sqlx::query("SELECT finance.bootstrap_defaults($1)")
             .bind(tenant_id)
             .execute(&pool)
@@ -1405,6 +1420,14 @@ mod p2a_e2e_tests {
             .execute(&pool)
             .await
             .unwrap();
+        // 有公司但无科目：确保失败点是「缺科目」而不是「无公司主体」
+        sqlx::query(
+            "INSERT INTO hrm.companies (tenant_id, name, code, status) VALUES ($1, 'P2a Bare 公司', 'DEFAULT', 'active')",
+        )
+        .bind(bare_tenant)
+        .execute(&pool)
+        .await
+        .unwrap();
         let bare_event = Event::new(
             EventType::SalesOrderApproved,
             "test",
@@ -1457,6 +1480,10 @@ mod p2a_e2e_tests {
                 .execute(&pool)
                 .await;
             let _ = sqlx::query("DELETE FROM finance.core_finance_periods WHERE tenant_id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+            let _ = sqlx::query("DELETE FROM hrm.companies WHERE tenant_id = $1")
                 .bind(tid)
                 .execute(&pool)
                 .await;

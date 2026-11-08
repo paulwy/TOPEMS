@@ -47,7 +47,8 @@
       "schema": "finance",
       "search_path": "finance, public",
       "allow": [
-        "erp"
+        "erp",
+        "hrm"
       ]
     },
     "gis": {

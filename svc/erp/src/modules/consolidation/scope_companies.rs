@@ -144,6 +144,12 @@ pub async fn add_scope_company(
         }
         Err(e) => {
             tracing::error!("添加公司到合并范围失败: {}", e);
+            // 外键违反（23503）：公司或合并范围不存在 → 语义化 400，而非 500
+            if let sqlx::Error::Database(db_err) = &e {
+                if db_err.code().as_deref() == Some("23503") {
+                    return ApiResponse::bad_request("关联的公司或合并范围不存在");
+                }
+            }
             ApiResponse::from(TopemsError::Internal("添加公司到合并范围失败".to_string()))
         }
     }

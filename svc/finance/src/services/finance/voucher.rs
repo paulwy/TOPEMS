@@ -7,6 +7,7 @@ use uuid::Uuid;
 use super::super::super::models::*;
 use topems_shared_core::error::TopemsError;
 
+use super::company::resolve_tenant_company;
 use super::FinanceService;
 
 fn parse_period_str(s: &str) -> Result<(i32, i32), TopemsError> {
@@ -59,6 +60,9 @@ impl FinanceService {
 
         self.check_period_open(tenant_id, period.clone()).await?;
 
+        // 记账主体：凭证必须归属确定公司，多主体/无主体 fail-closed
+        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+
         let total_debit: Decimal = req.lines.iter().map(|l| l.debit).sum();
         let total_credit: Decimal = req.lines.iter().map(|l| l.credit).sum();
 
@@ -71,11 +75,12 @@ impl FinanceService {
             .await?;
 
         let voucher: Voucher = sqlx::query_as(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)
              RETURNING *"),
         )
         .bind(tenant_id)
+        .bind(company_id)
         .bind(voucher_no)
         .bind(req.voucher_date)
         .bind(period)
@@ -94,8 +99,8 @@ impl FinanceService {
                 .await?;
 
             let voucher_line = sqlx::query_as(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, tenant_id, company_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                  RETURNING *"),
             )
             .bind(voucher.id)
@@ -111,6 +116,7 @@ impl FinanceService {
             .bind(line.aux_type.clone())
             .bind(line.aux_id)
                 .bind(tenant_id)
+            .bind(company_id)
             .fetch_one(&self.db_pool)
             .await?;
 
@@ -277,6 +283,16 @@ impl FinanceService {
             TopemsError::ValidationFailed(msg)
         })?;
 
+        // 记账主体：过账写入 ledger/aux_balances 必须带公司维度
+        let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+            "finance",
+            "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
+        ))
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?
+        .ok_or_else(|| TopemsError::ValidationFailed("凭证缺少公司归属，拒绝过账".to_string()))?;
+
         let period_month_str = &voucher.period;
         let (p_year, p_month): (i32, i32) = match parse_period_str(period_month_str) {
             Ok(v) => v,
@@ -331,10 +347,11 @@ impl FinanceService {
             };
 
             sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_ledger (tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, aux_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"),
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_ledger (tenant_id, company_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"),
             )
             .bind(tenant_id)
+            .bind(company_id)
             .bind(line.account_id)
             .bind(line.account_code.clone())
             .bind(line.account_name.clone())
@@ -353,14 +370,15 @@ impl FinanceService {
             // 辅助核算余额：凭证行带 aux 时同步 upsert aux_balances（按 租户+科目+aux+期间 累加）
             if let (Some(aux_type), Some(aux_id)) = (line.aux_type.as_deref(), line.aux_id) {
                 sqlx::query(only_own_schema_query!("finance", r#"
-                    INSERT INTO finance.core_finance_aux_balances (tenant_id, account_id, aux_type, aux_id, period, debit_balance, credit_balance)
-                    VALUES ($1, $2, $3::public.aux_type, $4, $5, $6, $7)
-                    ON CONFLICT (tenant_id, account_id, aux_type, aux_id, period)
+                    INSERT INTO finance.core_finance_aux_balances (tenant_id, company_id, account_id, aux_type, aux_id, period, debit_balance, credit_balance)
+                    VALUES ($1, $2, $3, $4::public.aux_type, $5, $6, $7, $8)
+                    ON CONFLICT (tenant_id, company_id, account_id, aux_type, aux_id, period)
                     DO UPDATE SET debit_balance = finance.core_finance_aux_balances.debit_balance + EXCLUDED.debit_balance,
                                   credit_balance = finance.core_finance_aux_balances.credit_balance + EXCLUDED.credit_balance,
                                   updated_at = CURRENT_TIMESTAMP
                 "#))
                 .bind(tenant_id)
+                .bind(company_id)
                 .bind(line.account_id)
                 .bind(aux_type)
                 .bind(aux_id)
@@ -779,6 +797,17 @@ impl FinanceService {
             .execute(&self.db_pool)
             .await?;
 
+            let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+                "finance",
+                "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
+            ))
+            .bind(voucher_id)
+            .fetch_one(&self.db_pool)
+            .await?
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed("凭证缺少公司归属，拒绝更新分录".to_string())
+            })?;
+
             let mut new_lines = Vec::new();
             for (i, line) in lines.iter().enumerate() {
                 let account = self
@@ -786,8 +815,8 @@ impl FinanceService {
                     .await?;
 
                 let voucher_line = sqlx::query_as(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id, company_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                      RETURNING *"),
                 )
                 .bind(voucher_id)
@@ -801,6 +830,7 @@ impl FinanceService {
                 .bind(line.project_id)
                 .bind(line.department_id)
                 .bind(tenant_id)
+                .bind(company_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
@@ -927,18 +957,19 @@ impl FinanceService {
             .await?;
 
         // 辅助核算余额回滚：按该凭证的 aux 行减回 aux_balances（软删 ledger 的同时）
-        let aux_lines: Vec<(Uuid, String, Uuid, Decimal, Decimal)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT account_id, aux_type, aux_id, debit, credit FROM finance.core_finance_voucher_lines WHERE tenant_id = $1 AND voucher_id = $2 AND aux_id IS NOT NULL AND deleted_at IS NULL"),
+        let aux_lines: Vec<(Uuid, Uuid, String, Uuid, Decimal, Decimal)> = sqlx::query_as(
+            only_own_schema_query!("finance", "SELECT company_id, account_id, aux_type, aux_id, debit, credit FROM finance.core_finance_voucher_lines WHERE tenant_id = $1 AND voucher_id = $2 AND aux_id IS NOT NULL AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
         .fetch_all(&self.db_pool)
         .await?;
-        for (account_id, aux_type, aux_id, debit, credit) in aux_lines {
+        for (company_id, account_id, aux_type, aux_id, debit, credit) in aux_lines {
             sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_aux_balances
-                SET debit_balance = GREATEST(debit_balance - $3, 0), credit_balance = GREATEST(credit_balance - $4, 0), updated_at = CURRENT_TIMESTAMP
-                WHERE tenant_id = $1 AND account_id = $2 AND aux_type = $5::public.aux_type AND aux_id = $6 AND period = $7"))
+                SET debit_balance = GREATEST(debit_balance - $4, 0), credit_balance = GREATEST(credit_balance - $5, 0), updated_at = CURRENT_TIMESTAMP
+                WHERE tenant_id = $1 AND company_id = $2 AND account_id = $3 AND aux_type = $6::public.aux_type AND aux_id = $7 AND period = $8"))
                 .bind(tenant_id)
+                .bind(company_id)
                 .bind(account_id)
                 .bind(debit)
                 .bind(credit)
@@ -982,16 +1013,19 @@ impl FinanceService {
         let total_debit: Decimal = req.lines.iter().map(|l| l.debit).sum();
         let total_credit: Decimal = req.lines.iter().map(|l| l.credit).sum();
 
+        let company_id = resolve_tenant_company(&mut *tx, tenant_id).await?;
+
         let voucher_no = self
             .generate_voucher_no_with_tx(tx, tenant_id, req.voucher_type.clone())
             .await?;
 
         let voucher: Voucher = sqlx::query_as(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)
              RETURNING *"),
         )
         .bind(tenant_id)
+        .bind(company_id)
         .bind(voucher_no)
         .bind(req.voucher_date)
         .bind(period)
@@ -1015,8 +1049,8 @@ impl FinanceService {
             .await?;
 
             let voucher_line: VoucherLine = sqlx::query_as(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id, company_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                  RETURNING *"),
             )
             .bind(voucher.id)
@@ -1030,6 +1064,7 @@ impl FinanceService {
             .bind(line.project_id)
             .bind(line.department_id)
                 .bind(tenant_id)
+            .bind(company_id)
             .fetch_one(&mut *tx)
             .await?;
 
@@ -1105,6 +1140,17 @@ impl FinanceService {
         .execute(&mut *tx)
         .await?;
 
+        let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+            "finance",
+            "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
+        ))
+        .bind(voucher_id)
+        .fetch_one(&mut *tx)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("凭证缺少公司归属，拒绝更新分录".to_string())
+        })?;
+
         for (i, line) in lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
@@ -1116,8 +1162,8 @@ impl FinanceService {
             .await?;
 
             sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"),
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id, company_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
             )
             .bind(voucher_id)
             .bind(i as i32 + 1)
@@ -1130,6 +1176,7 @@ impl FinanceService {
             .bind(line.project_id)
             .bind(line.department_id)
             .bind(tenant_id)
+            .bind(company_id)
             .execute(&mut *tx)
             .await?;
         }

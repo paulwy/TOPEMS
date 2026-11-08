@@ -3,6 +3,7 @@ use serde_json::Value;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::company::resolve_tenant_company;
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
@@ -394,16 +395,18 @@ impl FinanceService {
             let description = format!("自动生成凭证 - {} (源: {})", rule.name, source_no);
 
             let voucher_type = rule.output_voucher_type.as_str();
+            let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
 
             let insert_result = sqlx::query(only_own_schema_query!(
                 "finance",
                 r#"INSERT INTO finance.core_finance_vouchers
-                    (id, tenant_id, voucher_no, voucher_date, period, voucher_type,
+                    (id, tenant_id, company_id, voucher_no, voucher_date, period, voucher_type,
                      total_debit, total_credit, status, description, created_by)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)"#
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)"#
             ))
             .bind(voucher_id)
             .bind(tenant_id)
+            .bind(company_id)
             .bind(&voucher_no)
             .bind(now)
             .bind(&period)
@@ -468,8 +471,8 @@ impl FinanceService {
                     "finance",
                     r#"INSERT INTO finance.core_finance_voucher_lines
                         (voucher_id, line_no, account_id, account_code, account_name,
-                         description, debit, credit, tenant_id)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#
+                         description, debit, credit, tenant_id, company_id)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
                 ))
                 .bind(voucher_id)
                 .bind(line_no)
@@ -480,6 +483,7 @@ impl FinanceService {
                 .bind(debit)
                 .bind(credit)
                 .bind(tenant_id)
+                .bind(company_id)
                 .execute(&self.db_pool)
                 .await;
 

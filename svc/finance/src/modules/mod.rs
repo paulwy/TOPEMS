@@ -3695,7 +3695,7 @@ pub async fn reverse_voucher(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
-    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
+    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, company_id, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
         .bind(reversal_id)
         .bind(tenant_id)
         .bind(voucher_id)
@@ -4537,15 +4537,18 @@ pub async fn set_opening_balance(
     Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
+    let Some(tenant_id) = claims
         .tenant_id
         .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
-    // 由科目 id 解析 code/name/组织
-    let subject: Option<(String, Option<String>, Option<Uuid>)> = sqlx::query_as(
+        .and_then(|s| Uuid::parse_str(s).ok())
+    else {
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
+    // 由科目 id 解析 code/name
+    let subject: Option<(String, Option<String>)> = sqlx::query_as(
         only_own_schema_query!(
             "finance",
-            "SELECT code, name, tenant_id FROM finance.core_finance_accounts WHERE id = $1 AND is_enabled = true LIMIT 1"
+            "SELECT code, name FROM finance.core_finance_accounts WHERE id = $1 AND is_enabled = true LIMIT 1"
         ),
     )
     .bind(account_id)
@@ -4553,14 +4556,25 @@ pub async fn set_opening_balance(
     .await
     .ok()
     .flatten();
-    let Some((subject_code, subject_name, org_id)) = subject else {
+    let Some((subject_code, subject_name)) = subject else {
         return ApiResponse::not_found("科目不存在");
     };
-    let company_id = req
+    // 记账主体：显式传入优先；否则按租户解析唯一公司（多主体 fail-closed）
+    let company_id = match req
         .get("company_id")
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .or(org_id);
+    {
+        Some(v) => v,
+        None => {
+            match crate::services::finance::company::resolve_tenant_company(&state.pool, tenant_id)
+                .await
+            {
+                Ok(v) => v,
+                Err(e) => return ApiResponse::from(e),
+            }
+        }
+    };
     let period = req
         .get("period")
         .and_then(|v| v.as_str())
@@ -4579,8 +4593,9 @@ pub async fn set_opening_balance(
     let _ = sqlx::query(only_own_schema_query!(
         "erp",
         r#"UPDATE erp.opening_balances SET deleted_at = NOW()
-           WHERE subject_code = $1 AND period = $2 AND ($3::uuid IS NULL OR company_id = $3)"#
+           WHERE tenant_id = $1 AND subject_code = $2 AND period = $3 AND company_id = $4"#
     ))
+    .bind(tenant_id)
     .bind(&subject_code)
     .bind(&period)
     .bind(company_id)
