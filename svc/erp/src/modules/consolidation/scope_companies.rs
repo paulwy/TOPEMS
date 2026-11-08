@@ -6,9 +6,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
-use super::common::log_audit;
+use super::common::{company_scope_error, ensure_company_scope, log_audit, CompanyAccess};
 use super::ApiState;
 
 #[utoipa::path(
@@ -22,6 +23,7 @@ use super::ApiState;
 pub async fn list_scope_companies(
     State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -31,14 +33,37 @@ pub async fn list_scope_companies(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    // 只返回当前用户有主体范围的公司；平台超管传 NULL 表示不额外过滤。
+    let viewer: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        match Uuid::parse_str(&claims.sub) {
+            Ok(id) => Some(id),
+            Err(_) => {
+                return ApiResponse::from(TopemsError::PermissionDenied {
+                    required: "company-scope".to_string(),
+                })
+            }
+        }
+    };
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        SELECT * FROM erp.consolidation_scope_companies
-        WHERE deleted_at IS NULL AND scope_id = $1
-        ORDER BY is_parent DESC, company_name ASC
+        SELECT * FROM erp.consolidation_scope_companies sc
+        WHERE sc.deleted_at IS NULL AND sc.scope_id = $1
+          AND (
+              $2::uuid IS NULL
+              OR EXISTS (
+                  SELECT 1 FROM public.core_user_company_scopes s
+                  WHERE s.tenant_id = sc.tenant_id
+                    AND s.user_id = $2
+                    AND s.company_id = sc.company_id
+              )
+          )
+        ORDER BY sc.is_parent DESC, sc.company_name ASC
         "#,
     )
     .bind(scope_id)
+    .bind(viewer)
     .fetch_all(&mut **txn)
     .await
     {
@@ -62,6 +87,7 @@ pub async fn list_scope_companies(
 pub async fn add_scope_company(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -72,6 +98,11 @@ pub async fn add_scope_company(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    if let Err(e) =
+        ensure_company_scope(&mut **txn, &claims, req.company_id, CompanyAccess::Write).await
+    {
+        return company_scope_error(e);
+    }
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
@@ -130,6 +161,7 @@ pub async fn update_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -140,6 +172,33 @@ pub async fn update_scope_company(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let target: Option<Uuid> = match sqlx::query_scalar(
+        r#"
+        SELECT company_id FROM erp.consolidation_scope_companies
+        WHERE id = $1 AND deleted_at IS NULL
+          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#,
+    )
+    .bind(company_id)
+    .fetch_optional(&mut **txn)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询合并范围公司失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询合并范围公司失败".to_string()));
+        }
+    };
+    let Some(target_company) = target else {
+        return ApiResponse::from(TopemsError::ResourceNotFound(
+            "合并范围公司不存在".to_string(),
+        ));
+    };
+    if let Err(e) =
+        ensure_company_scope(&mut **txn, &claims, target_company, CompanyAccess::Write).await
+    {
+        return company_scope_error(e);
+    }
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         UPDATE erp.consolidation_scope_companies
@@ -205,6 +264,7 @@ pub async fn remove_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -214,6 +274,33 @@ pub async fn remove_scope_company(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let target: Option<Uuid> = match sqlx::query_scalar(
+        r#"
+        SELECT company_id FROM erp.consolidation_scope_companies
+        WHERE id = $1 AND deleted_at IS NULL
+          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#,
+    )
+    .bind(company_id)
+    .fetch_optional(&mut **txn)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询合并范围公司失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询合并范围公司失败".to_string()));
+        }
+    };
+    let Some(target_company) = target else {
+        return ApiResponse::from(TopemsError::ResourceNotFound(
+            "合并范围公司不存在".to_string(),
+        ));
+    };
+    if let Err(e) =
+        ensure_company_scope(&mut **txn, &claims, target_company, CompanyAccess::Write).await
+    {
+        return company_scope_error(e);
+    }
     match sqlx::query(
         "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )

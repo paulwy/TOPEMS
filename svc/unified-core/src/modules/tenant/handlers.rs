@@ -12,6 +12,7 @@ use super::models::*;
 use crate::modules::iam::auth::validate_password_strength;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
 
 /// List all tenants with pagination and filtering (super admin only)
@@ -243,6 +244,7 @@ pub async fn create_tenant(
 async fn seed_tenant_defaults(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     tenant_id: Uuid,
+    tenant_name: &str,
     admin_username: &str,
     admin_email: &str,
     admin_password: &str,
@@ -333,7 +335,38 @@ async fn seed_tenant_defaults(
         TopemsError::DatabaseQuery(format!("Failed to seed default department setting: {}", e))
     })?;
 
+    // 7. P1：0 公司租户供给时自动建一个默认法人主体，保证主体范围校验有落点。
+    ensure_default_company(&mut *tx, tenant_id, tenant_name).await?;
+
     Ok(admin_user_id)
+}
+
+/// P1：为 0 公司租户创建默认法人主体（幂等）。
+///
+/// 名称取租户名（业务方后续可在 HRM 设置中改名，迁移不改名）；
+/// `code` 固定 `DEFAULT`，由 `(tenant_id, lower(code)) WHERE deleted_at IS NULL`
+/// 唯一索引保证重复供给不会新增第二家公司。
+pub(crate) async fn ensure_default_company(
+    conn: &mut sqlx::PgConnection,
+    tenant_id: Uuid,
+    tenant_name: &str,
+) -> Result<(), TopemsError> {
+    sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        INSERT INTO hrm.companies (tenant_id, code, name, status, created_at, updated_at)
+        VALUES ($1, 'DEFAULT', $2, 'active', now(), now())
+        ON CONFLICT DO NOTHING
+        "#,
+        "hrm"
+    ))
+    .bind(tenant_id)
+    .bind(tenant_name)
+    .execute(conn)
+    .await
+    .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to seed default company: {}", e)))?;
+
+    Ok(())
 }
 
 /// P34-4: hardcoded catalog of basic-tier modules that should be
@@ -503,6 +536,7 @@ pub async fn onboard_tenant(
     let admin_user_id = match seed_tenant_defaults(
         &mut tx,
         tenant.id,
+        &tenant.name,
         &req.admin_username,
         &req.admin_email,
         &req.admin_password,
@@ -3082,5 +3116,101 @@ pub async fn collect_tenant_usage(
             tracing::error!("[Tenant] usage collect failed: {}", e);
             Json(CoreResponse::error("租户用量采集失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod p1_company_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
+    use super::ensure_default_company;
+    use uuid::Uuid;
+
+    async fn setup(pool: &sqlx::PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS hrm")
+            .execute(pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS hrm.companies (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                tenant_id uuid NOT NULL,
+                code varchar(64) NOT NULL,
+                name varchar(255) NOT NULL,
+                status varchar(20) NOT NULL DEFAULT 'active',
+                created_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                deleted_at timestamptz
+            )
+            "#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            r#"
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_companies_tenant_code
+                ON hrm.companies (tenant_id, lower(code))
+                WHERE deleted_at IS NULL
+            "#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn default_company_created_once_per_tenant(pool: sqlx::PgPool) {
+        setup(&pool).await;
+        let tenant = Uuid::new_v4();
+        let mut conn = pool.acquire().await.unwrap();
+        ensure_default_company(&mut *conn, tenant, "租户A")
+            .await
+            .unwrap();
+        ensure_default_company(&mut *conn, tenant, "租户A")
+            .await
+            .unwrap();
+        drop(conn);
+
+        let (count, code, name): (i64, String, String) = sqlx::query_as(
+            "SELECT COUNT(*)::bigint, MIN(code), MIN(name) FROM hrm.companies WHERE tenant_id = $1 AND deleted_at IS NULL",
+        )
+        .bind(tenant)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert_eq!(count, 1, "重复供给不得新增第二家公司");
+        assert_eq!(code, "DEFAULT");
+        assert_eq!(name, "租户A");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn zero_company_tenant_gets_default_company(pool: sqlx::PgPool) {
+        setup(&pool).await;
+        let tenant = Uuid::new_v4();
+        let before: i64 =
+            sqlx::query_scalar("SELECT COUNT(*)::bigint FROM hrm.companies WHERE tenant_id = $1")
+                .bind(tenant)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(before, 0);
+
+        let mut conn = pool.acquire().await.unwrap();
+        ensure_default_company(&mut *conn, tenant, "新租户")
+            .await
+            .unwrap();
+        drop(conn);
+
+        let after: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM hrm.companies WHERE tenant_id = $1 AND deleted_at IS NULL",
+        )
+        .bind(tenant)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(after, 1);
     }
 }

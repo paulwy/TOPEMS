@@ -260,53 +260,94 @@ pub async fn setup_company_info(
         ));
     }
 
-    // P0-2：无则 INSERT、有则 UPDATE 的 upsert（新库 companies 为空，原 UPDATE
-    // fetch_one 失败会 500）。列名以 live DDL 为准：联系邮箱是 contact_email，
-    // 不是旧 SQL 里的 email（该列不存在）。可选字段沿用 COALESCE 语义：
-    // 仅在本次传入时覆盖，未传保留原值。
-    let result = sqlx::query_as::<_, Company>(only_own_schema_query!(
-        "hrm",
-        r#"
-        INSERT INTO hrm.companies (
-            id, tenant_id, name, short_name, registration_number,
-            tax_number, address, contact_phone, contact_email, website, description,
-            status, created_at, updated_at
-        ) VALUES (
-            $1,
-            COALESCE($12::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
-            $2, $3, $4, $5, $6, $7, $8, $9, $10,
-            'active', $11, $11
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            short_name = COALESCE(EXCLUDED.short_name, companies.short_name),
-            registration_number = COALESCE(EXCLUDED.registration_number, companies.registration_number),
-            tax_number = COALESCE(EXCLUDED.tax_number, companies.tax_number),
-            address = COALESCE(EXCLUDED.address, companies.address),
-            contact_phone = COALESCE(EXCLUDED.contact_phone, companies.contact_phone),
-            contact_email = COALESCE(EXCLUDED.contact_email, companies.contact_email),
-            website = COALESCE(EXCLUDED.website, companies.website),
-            description = COALESCE(EXCLUDED.description, companies.description),
-            updated_at = EXCLUDED.updated_at
-        RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
-                  tax_number, address, contact_phone, contact_email, website, description,
-                  status, created_at, updated_at
-        "#
-    ))
-    .bind(Uuid::new_v4())
-    .bind(&req.name)
-    .bind(&req.short_name)
-    .bind(&req.registration_number)
-    .bind(&req.tax_number)
-    .bind(&req.address)
-    .bind(&req.contact_phone)
-    .bind(&req.email)
-    .bind(&req.website)
-    .bind(&req.description)
-    .bind(now)
-    .bind(tenant_filter)
-    .fetch_one(&mut **txn)
-    .await;
+    // P1：按租户 upsert——同一租户只保留一个设置主体，重复保存必须更新同一行，
+    // 不再每次生成新 id（旧实现 ON CONFLICT (id) + Uuid::new_v4() 必然 INSERT 新公司，
+    // 在 code 唯一约束上线后会被打回）。列名以 live DDL 为准：联系邮箱是 contact_email。
+    // 可选字段沿用 COALESCE 语义：仅在本次传入时覆盖，未传保留原值。
+    let tenant_uuid = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    let existing_company: Option<Uuid> = match sqlx::query_scalar(
+        "SELECT id FROM hrm.companies WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at ASC LIMIT 1",
+    )
+    .bind(tenant_uuid)
+    .fetch_optional(&mut **txn)
+    .await
+    {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("查询公司信息失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询公司信息失败".to_string()));
+        }
+    };
+
+    let result = if let Some(company_id) = existing_company {
+        sqlx::query_as::<_, Company>(only_own_schema_query!(
+            "hrm",
+            r#"
+            UPDATE hrm.companies SET
+                name = $2,
+                short_name = COALESCE($3, short_name),
+                registration_number = COALESCE($4, registration_number),
+                tax_number = COALESCE($5, tax_number),
+                address = COALESCE($6, address),
+                contact_phone = COALESCE($7, contact_phone),
+                contact_email = COALESCE($8, contact_email),
+                website = COALESCE($9, website),
+                description = COALESCE($10, description),
+                updated_at = $11
+            WHERE id = $1 AND deleted_at IS NULL
+            RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
+                      tax_number, address, contact_phone, contact_email, website, description,
+                      status, created_at, updated_at
+            "#
+        ))
+        .bind(company_id)
+        .bind(&req.name)
+        .bind(&req.short_name)
+        .bind(&req.registration_number)
+        .bind(&req.tax_number)
+        .bind(&req.address)
+        .bind(&req.contact_phone)
+        .bind(&req.email)
+        .bind(&req.website)
+        .bind(&req.description)
+        .bind(now)
+        .fetch_one(&mut **txn)
+        .await
+    } else {
+        let company_id = Uuid::new_v4();
+        let code = format!("COMP-{}", company_id.simple());
+        sqlx::query_as::<_, Company>(only_own_schema_query!(
+            "hrm",
+            r#"
+            INSERT INTO hrm.companies (
+                id, tenant_id, code, name, short_name, registration_number,
+                tax_number, address, contact_phone, contact_email, website, description,
+                status, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                'active', $13, $13
+            )
+            RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
+                      tax_number, address, contact_phone, contact_email, website, description,
+                      status, created_at, updated_at
+            "#
+        ))
+        .bind(company_id)
+        .bind(tenant_uuid)
+        .bind(code)
+        .bind(&req.name)
+        .bind(&req.short_name)
+        .bind(&req.registration_number)
+        .bind(&req.tax_number)
+        .bind(&req.address)
+        .bind(&req.contact_phone)
+        .bind(&req.email)
+        .bind(&req.website)
+        .bind(&req.description)
+        .bind(now)
+        .fetch_one(&mut **txn)
+        .await
+    };
 
     match result {
         Ok(company) => {

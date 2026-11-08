@@ -1,6 +1,7 @@
 //! IAM module - Identity and Access Management
 
 pub mod auth;
+pub mod company_scope;
 pub mod permission;
 pub mod permission_metadata;
 pub mod permission_verify;

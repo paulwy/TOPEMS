@@ -22,6 +22,7 @@ tracing.workspace = true
 thiserror.workspace = true
 sqlx = { workspace = true, features = ["rust_decimal"] }
 topems-shared-bootstrap = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true

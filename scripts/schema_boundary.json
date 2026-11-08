@@ -37,8 +37,9 @@
       "schema": "erp",
       "search_path": "erp, public",
       "allow": [
-        "finance",
         "crm",
+        "finance",
+        "hrm",
         "master_data"
       ]
     },
@@ -155,7 +156,9 @@
     "unified-core": {
       "schema": "public",
       "search_path": "public",
-      "allow": []
+      "allow": [
+        "hrm"
+      ]
     },
     "wms": {
       "schema": "wms",

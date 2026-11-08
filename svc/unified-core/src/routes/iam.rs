@@ -94,6 +94,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             get(modules::iam::user::get_user_roles),
         )
         .route(
+            "/users/{user_id}/company-scopes",
+            get(modules::iam::company_scope::get_user_company_scopes),
+        )
+        .route(
             "/users/check-email",
             get(modules::iam::user::check_email_availability),
         )
@@ -113,6 +117,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/users/{user_id}/roles/{role_id}",
             post(modules::iam::user::assign_user_role),
+        )
+        .route(
+            "/users/{user_id}/company-scopes",
+            put(modules::iam::company_scope::update_user_company_scopes),
         )
         .route(
             "/users/{id}/disable",

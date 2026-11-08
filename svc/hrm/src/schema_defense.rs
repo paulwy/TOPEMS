@@ -17,6 +17,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         "companies",
         &[
             ("organization_id", "UUID NOT NULL"),
+            ("code", "VARCHAR(64) NOT NULL"),
+            ("functional_currency", "VARCHAR(3) NOT NULL DEFAULT 'CNY'"),
             ("name", "VARCHAR(255) NOT NULL"),
             ("short_name", "VARCHAR(100)"),
             ("registration_number", "VARCHAR(100)"),
