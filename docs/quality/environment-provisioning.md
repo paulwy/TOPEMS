@@ -27,6 +27,7 @@
 | 参考数据元数据 | `database/baseline/baseline_20261105235700_data.json` |
 | 参考数据资产 | `database/baseline/baseline_20261105235700_data.sql.gz`（sha256 见元数据） |
 | 基线规模 | 表 **1349** / 账本成功记录 **576** / 参考数据 **11 张表、2277 行** |
+| 前向后终态（2026-11-08 实测） | 表 **1343**（净变更 −6，含前向合法 DROP）/ 账本 **623**（576 + 47 条前向）/ `max(version)=20261108090000` |
 
 锚点语义：**锚点及以前的所有 schema 变更已包含在 schema 快照中**，对应账本记录已写入 `_sqlx_migrations`；
 锚点时刻的参考数据已包含在 data 快照中。锚点之后的迁移必须按版本顺序前向应用。
@@ -63,7 +64,11 @@ bash scripts/db/provision-env.sh --env prod-replica --db topems_prod_replica \
 | `--admin-password-stdin` | 从 stdin 读取密码（不回显、不走 argv）；不传则随机生成 20 位 |
 | `--admin-password-file <path>` | 额外把密码写入 0600 文件（默认不写；禁止仓库内路径） |
 | `--reset-admin-password` | 已存在同名/同邮箱用户时显式重置密码；默认跳过且不改密码 |
+| `--escalate-existing` | 同名用户已存在但**不是管理员**时，显式允许提升为管理员（默认拒绝；不会改其密码） |
 | `--admin-only` | 仅对已供给库执行管理员创建/校验/重置，不改结构/数据/迁移（幂等与运维重置入口） |
+| `--runtime-role <name>` | 运行角色名（默认 `topems_app`，需已由 `setup-db.sh --create-user` 创建）；供给末尾自动执行全库授权与连接自检 |
+| `--runtime-dsn <dsn>` | 运行角色连接串（自检用；也可用 `RUNTIME_DATABASE_URL`） |
+| `--health-url <url>` | 供给末尾校验 `/health` 必须返回 200（也可用 `HEALTH_URL`；未提供时仅告警） |
 | `--allow-prod-admin` | 仅 `prod-replica` 显式允许管理员操作（强警告；真 prod 永不可用） |
 | `--force-nonempty` | 显式允许覆盖非空库：`DROP DATABASE ... WITH (FORCE)` + 重建，打印 ⚠️ WARN；**prod 形态一律不可用** |
 | `--prod-ssh` / `--prod-dsn` | prod 只读比对入口（仅 `SELECT` information_schema） |
@@ -72,11 +77,19 @@ bash scripts/db/provision-env.sh --env prod-replica --db topems_prod_replica \
 流程（固定顺序）：建库（不存在）→ 非空守卫 → 恢复 schema（`gunzip | psql`，`ON_ERROR_STOP=1`）→ 恢复账本 →
 **恢复参考数据**（逐表行数与元数据精确一致）→ 校验「表数 1349 / 账本 576 / max(version)=anchor」→
 `apply-forward.sh --anchor <anchor>`（只应用 `version > anchor`）→
-终态校验（表数 ≥ 基线、`max(version) ≥ anchor`、参考数据行数允许前向增量、admin 权限最小集、10 表结构指纹与 prod 比对）
-→（可选 `--with-admin`）创建/校验初始管理员。管理员放在**前向迁移与终态校验之后**：避免任何 `> anchor`
-迁移改写 `iam.users` 时覆盖管理员，也避免在结构/数据异常环境里先写入用户。
+终态校验（**必需表存在性**、`max(version) ≥ anchor`、参考数据行数允许前向增量、admin 权限最小集、10 表结构指纹与 prod 比对）
+→（可选 `--with-admin`）创建/校验初始管理员 →
+**运行角色授权与自检**（`grant-topems-app.sql` 按当前目标库授权 → 运行角色能连库 → admin 账号存在 → `/health` 200，任一失败 exit 1）。
+管理员放在**前向迁移与终态校验之后**：避免任何 `> anchor` 迁移改写 `iam.users` 时覆盖管理员，也避免在结构/数据异常环境里先写入用户。
 
-**幂等**：完整供给重复执行命中非空库 → 默认 **exit 1**（不静默覆盖）；确认重建必须显式 `--force-nonempty`。
+> 终态不再断言「总表数 ≥ 基线」：前向迁移可包含合法 `DROP TABLE`（如 P4 清理影子表），
+> 总表数会下降。改为校验 [scripts/db/provision-env.sh](../../scripts/db/provision-env.sh) 中
+> `REQUIRED_TABLES`（覆盖各模块代表表）全部存在，并输出「基线表数 → 终态表数（净变更）」。
+
+**幂等**：完整供给重复执行命中非空库 → 默认 **exit 1**（不静默覆盖），并打印**可直接复制**的恢复命令：
+- 已完整供给（账本 max ≥ 磁盘最新迁移）→ 提示 `--admin-only`（创建/校验管理员，不重建库）；
+- 前向未完成 → 提示 `apply-forward.sh` 续跑；结构不完整 → 提示完整 `--force-nonempty` 重建命令。
+确认重建必须显式 `--force-nonempty`。
 `--data-only` 可重复执行：仅清理并恢复 11 张纳入表，不触碰其他表；外部表引用导致删除失败时 fail-closed。
 `--admin-only` 可重复执行：管理员已存在 → **exit 0** 并打印「已存在，跳过」，不改密码；重置必须显式 `--reset-admin-password`。
 **fail-closed**：探测失败、sha256 不匹配、账本/表数/锚点/指纹任一不符 → exit 1；**永不回退 `sqlx migrate run`**。
@@ -185,7 +198,7 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 | 用例 | 结果 |
 |---|---|
 | `--env test --dsn postgresql://air@127.0.0.1:55432/p4_provision_test --prod-ssh <user>@<prod-host>` | exit 0：建库 → restore → 前向 0 条 → 表 1349 / 账本 576 / max 20261105235700 → 10/10 指纹一致 |
-| 重复执行（非空，未加 force） | exit 1，诊断库名/表数/账本 max，提示 `--force-nonempty` |
+| 重复执行（非空，未加 force） | exit 1，诊断库名/表数/账本 max，并给出完整可复制的 `--admin-only`（已全量前向）或 `apply-forward.sh` / `--force-nonempty`（未完成）命令 |
 | `--force-nonempty` 重建 | exit 0 + `⚠️ WARN`，DROP+CREATE 后重新供给 |
 | 篡改 schema 资产 1 字节 | exit 1（sha256 不匹配，未连接目标库） |
 | 构造 `version < anchor` 新迁移 | `check-baseline-integrity` exit 1（验后删除） |
@@ -222,6 +235,27 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 | 首次失败 | `ERROR: relation "core_api_version_configs" already exists`——重建窗口内有外部客户端在新库抢先建表（非 dump 自身问题：同一 dump 在本地空库完整恢复 1349 表）；清理并发后原命令重跑一次通过，未改用 `sqlx migrate run` 或手工 DROP |
 
 > prod 全程零操作（未连接、未比对）。后续新环境与 test 复位统一走 `provision-env.sh`。
+
+### 8.2 全量前向 + 自检复测（2026-11-08，本地 scratch）
+
+本轮将首轮演练的 P0/P1 修复并入基线规范后，按「空库 → 一条命令」复测：
+
+| 项 | 值 |
+|---|---|
+| 入口 | `provision-env.sh --env dev --db topems_init_trial_fix2_20261108_083134 --with-admin --admin-password-stdin --runtime-role topems_app --runtime-dsn <scratch> --health-url http://127.0.0.1:18080/health --skip-prod-fingerprint` |
+| 结果 | exit 0，8s |
+| 终态 | 表 1343（基线 1349，前向净变更 −6）/ 账本 623（576 + 47）/ `max(version)=20261108090000` / 参考数据 11 表 2277 行（前向增量叠加） |
+| 必需表 | `REQUIRED_TABLES` 32/32 存在（替代「总表数 ≥ 基线」断言） |
+| 参考数据增量 | roles 15→25、permissions 986→1128、role_permissions 653→2012、menu_groups 122→141、menus 423→449 |
+| admin 权限 | 1128 条，含 `iam:read`（新增迁移 `20261108090000_admin_role_grant_all_permissions.sql`） |
+| 运行角色授权 | `topems_app` 按当前库动态授权；连接自检通过 |
+| 健康检查 | `/health` → 200；admin 登录 200；`/iam/users`、`/iam/roles` 均 200 |
+| 非 superuser admin 角色 | `is_superuser=false` + `roles=["admin"]` → `/iam/users`、`/iam/roles` 均 200 |
+| 非空重跑 | exit 1，打印可直接复制的 `--admin-only` 命令；原样执行 exit 0 |
+| 弱口令 `abc123` | exit 1（最短 8 位）；旧密码未失效 |
+| 既有非管理员提权 | 默认 exit 1；`--escalate-existing` 后 exit 0，并明确输出「将把 X 提升为管理员」 |
+| `--with-admin` 未启用 | exit 0 + 红色醒目 WARN（无管理员、任何人无法登录） |
+| 空角色用户 | `roles=[]`、`role=""`（不再伪造 `user`） |
 
 ## 9. 参考数据基线（reference data）
 
@@ -302,8 +336,10 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 
 ### 10.2 密码策略与传递
 
-- 策略与代码实际校验一致：**6–64 字节**（`password.len()`）。自动生成固定 **20 位**，保证大写/小写/数字各至少一个；
-  若通过 `--admin-password-stdin` 传入，则按 6–64 字节校验，不做额外复杂度拒绝（与产品创建/改密入口一致）。
+- 策略统一为共享函数 `validate_password_strength`（`svc/unified-core/src/modules/iam/auth.rs`）：
+  **8–64 字节，且同时包含大写字母、小写字母和数字**。`topems-admin-pass`、API 创建用户/改密/租户开通
+  以及 provision 的 `--admin-password-stdin` 与 `--admin-only --reset-admin-password` 全部走同一实现。
+  自动生成固定 **20 位**，天然满足该复杂度。
 - 密码**默认随机生成**；`--admin-password-stdin` 从 stdin 读取（不走 argv、不回显）；`--admin-password-file`
   额外写入 0600 文件（默认不写）。
 - 生成后**只在 stderr 打印一次**并提示「仅本次显示」；stdin 模式不回显。
@@ -320,6 +356,8 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
   并重新执行正/反例校验。
 - 命中多个用户（一个 username、另一个 email）或已软删除同名 → **exit 1**，要求人工处理。
 - 邮箱已属其他用户名（仅 email 命中）→ **exit 1**，拒绝把既有普通用户提升为管理员。
+- 同名用户已存在但**未绑定 admin 角色** → 默认 **exit 1**；必须显式 `--escalate-existing`，
+  且输出明确写出「将把 X 提升为管理员（保留原密码）」。不再静默提权。
 - 已供给库可用 `--admin-only` 重复执行上述语义，不改结构/参考数据/迁移。
 
 ### 10.4 prod 禁用策略

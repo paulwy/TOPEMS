@@ -1,46 +1,63 @@
--- topems_app 受限角色全库授权（幂等 · 动态版）
+-- 运行角色全库授权（幂等 · 动态版 · 库名/角色名参数化）
 -- 用途：服务运行时池（NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE，仅 DML）
 -- 迁移/DDL 走 MIGRATE_URL owner 池（topems），见 .env
--- 新库重建后执行顺序：建角色 → 本脚本 → 默认权限（已内置）
--- 2026-09-26 重写：动态遍历所有 schema，自动覆盖新增表
+-- 调用方式：
+--   psql <目标库 DSN> -v ON_ERROR_STOP=1 -v runtime_role=topems_app \
+--        -f scripts/db/grant-topems-app.sql
+-- 前置：运行角色必须已存在（由 scripts/deploy/setup-db.sh --create-user 创建）。
+-- 本脚本不再创建角色、不再内置任何默认口令，也不硬编码 topems 库名。
+
+-- 把 psql 变量转成会话 GUC，供 DO 块内使用（psql 变量不会在 dollar-quoted 块内替换）
+SELECT set_config('topems.runtime_role', :'runtime_role', false);
 
 -- ================================================
--- 1. 建角色（幂等）
+-- 1. 运行角色存在性检查（不创建角色）
 -- ================================================
 DO $$
+DECLARE
+  v_role TEXT := current_setting('topems.runtime_role');
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'topems_app') THEN
-    CREATE ROLE topems_app LOGIN PASSWORD 'topems_app_secret'
-      NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = v_role) THEN
+    RAISE EXCEPTION
+      '运行角色 % 不存在；请先执行 setup-db.sh --create-user 创建角色后再授权', v_role;
   END IF;
 END
 $$;
 
-GRANT CONNECT ON DATABASE topems TO topems_app;
+-- ================================================
+-- 2. 当前目标库 CONNECT 授权（库名动态解析）
+-- ================================================
+SELECT format(
+  'GRANT CONNECT ON DATABASE %I TO %I',
+  current_database(),
+  current_setting('topems.runtime_role')
+) \gexec
 
 -- ================================================
--- 2. 全 schema USAGE 授权
+-- 3. 全 schema USAGE 授权
 -- ================================================
 DO $$
 DECLARE
   r RECORD;
+  v_role TEXT := current_setting('topems.runtime_role');
 BEGIN
   FOR r IN
     SELECT schema_name FROM information_schema.schemata
     WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
       AND schema_name NOT LIKE 'pg_toast%'
   LOOP
-    EXECUTE format('GRANT USAGE ON SCHEMA %I TO topems_app', r.schema_name);
+    EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', r.schema_name, v_role);
   END LOOP;
 END
 $$;
 
 -- ================================================
--- 3. 全库表 DML 授权（动态遍历）
+-- 4. 全库表 DML 授权（动态遍历）
 -- ================================================
 DO $$
 DECLARE
   r RECORD;
+  v_role TEXT := current_setting('topems.runtime_role');
 BEGIN
   FOR r IN
     SELECT table_schema, table_name
@@ -50,19 +67,20 @@ BEGIN
       AND table_schema NOT LIKE 'pg_toast%'
   LOOP
     EXECUTE format(
-      'GRANT SELECT, INSERT, UPDATE, DELETE ON %I.%I TO topems_app',
-      r.table_schema, r.table_name
+      'GRANT SELECT, INSERT, UPDATE, DELETE ON %I.%I TO %I',
+      r.table_schema, r.table_name, v_role
     );
   END LOOP;
 END
 $$;
 
 -- ================================================
--- 4. 全库 Sequence USAGE 授权
+-- 5. 全库 Sequence USAGE 授权
 -- ================================================
 DO $$
 DECLARE
   r RECORD;
+  v_role TEXT := current_setting('topems.runtime_role');
 BEGIN
   FOR r IN
     SELECT sequence_schema, sequence_name
@@ -71,46 +89,55 @@ BEGIN
       AND sequence_schema NOT LIKE 'pg_toast%'
   LOOP
     EXECUTE format(
-      'GRANT USAGE, SELECT ON SEQUENCE %I.%I TO topems_app',
-      r.sequence_schema, r.sequence_name
+      'GRANT USAGE, SELECT ON SEQUENCE %I.%I TO %I',
+      r.sequence_schema, r.sequence_name, v_role
     );
   END LOOP;
 END
 $$;
 
 -- ================================================
--- 5. 设置默认权限（关键！新增表自动授权）
+-- 6. 设置默认权限（新增表自动授权）
 -- ================================================
--- 以后所有由 topems 用户创建的表/sequence，自动授权给 topems_app
-ALTER DEFAULT PRIVILEGES
-  FOR ROLE topems
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO topems_app;
-
-ALTER DEFAULT PRIVILEGES
-  FOR ROLE topems
-  GRANT USAGE, SELECT ON SEQUENCES TO topems_app;
+-- 按当前供给账号（目标库 owner）设置，不再硬编码 topems。
+DO $$
+DECLARE
+  v_role TEXT := current_setting('topems.runtime_role');
+  v_owner TEXT := current_user;
+BEGIN
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I',
+    v_owner, v_role
+  );
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I GRANT USAGE, SELECT ON SEQUENCES TO %I',
+    v_owner, v_role
+  );
+END
+$$;
 
 -- ================================================
--- 6. 验证输出
+-- 7. 验证输出
 -- ================================================
 DO $$
 DECLARE
+  v_role TEXT := current_setting('topems.runtime_role');
   table_count INT;
   seq_count INT;
 BEGIN
   SELECT COUNT(*) INTO table_count
   FROM information_schema.role_table_grants
-  WHERE grantee = 'topems_app'
+  WHERE grantee = v_role
     AND privilege_type = 'SELECT';
 
   SELECT COUNT(*) INTO seq_count
   FROM information_schema.role_usage_grants
-  WHERE grantee = 'topems_app'
+  WHERE grantee = v_role
     AND object_type = 'SEQUENCE';
 
-  RAISE NOTICE '✅ topems_app 授权完成：';
+  RAISE NOTICE '运行角色授权完成：%', v_role;
   RAISE NOTICE '   - 表授权数: %', table_count;
   RAISE NOTICE '   - Sequence 授权数: %', seq_count;
-  RAISE NOTICE '   - 默认权限已设置：新增表自动授权给 topems_app';
+  RAISE NOTICE '   - 默认权限已设置（owner=%，新增表自动授权）', current_user;
 END
 $$;
