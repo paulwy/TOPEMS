@@ -9,6 +9,7 @@ use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use super::models::record_audit_log;
+use crate::modules::iam::auth::validate_password_strength;
 
 pub async fn disable_user(
     State(state): State<AppState>,
@@ -288,6 +289,12 @@ pub async fn change_password(
                 400,
                 "新密码不能为空",
             )),
+        );
+    }
+    if let Err(message) = validate_password_strength(new_password) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(topems_shared_core::response::error_value(400, &message)),
         );
     }
 

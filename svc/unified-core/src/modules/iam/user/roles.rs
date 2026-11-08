@@ -152,7 +152,7 @@ pub async fn get_user_permissions(
         role: if u.is_superuser {
             "admin".to_string()
         } else {
-            "user".to_string()
+            role_names.first().cloned().unwrap_or_default()
         },
         roles: role_names,
         permissions: permission_codes,

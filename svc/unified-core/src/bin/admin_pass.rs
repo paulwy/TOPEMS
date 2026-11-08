@@ -21,13 +21,9 @@ use std::fs::{self, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
-use topems_unified_core::modules::iam::auth::verify_password;
+use topems_unified_core::modules::iam::auth::{validate_password_strength, verify_password};
 
-/// 产品代码实际校验下限（见 `iam/user/crud.rs` 与 `iam/user/profile_ext.rs`）。
-const MIN_LENGTH: usize = 6;
-/// 产品密码策略声明的上限（`GET /iam/auth/password-policy`）。
-const MAX_LENGTH: usize = 64;
-/// 自动生成密码长度（同时满足声明的 8 位下限与大小写/数字建议）。
+/// 自动生成密码长度（同时满足 8 位下限与大小写/数字要求）。
 const GENERATED_LENGTH: usize = 20;
 
 fn fail(message: &str) -> ! {
@@ -96,18 +92,9 @@ fn read_password_from_stdin() -> String {
     buffer
 }
 
-/// 与产品校验规则一致：非空、6–64 字节（Rust `len()` 与代码中的 `password.len()` 同口径）。
+/// 与产品密码策略一致：最少 8 位、最多 64 字节，且包含大写/小写/数字。
 fn validate_password(password: &str) -> Result<(), String> {
-    if password.is_empty() {
-        return Err("密码为空".to_string());
-    }
-    if password.len() < MIN_LENGTH {
-        return Err(format!("密码长度不足 {MIN_LENGTH} 位（产品代码校验规则）"));
-    }
-    if password.len() > MAX_LENGTH {
-        return Err(format!("密码长度超过 {MAX_LENGTH} 字节"));
-    }
-    Ok(())
+    validate_password_strength(password)
 }
 
 fn write_secret(path: &str, content: &str) {

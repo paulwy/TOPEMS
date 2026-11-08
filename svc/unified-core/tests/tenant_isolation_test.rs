@@ -266,7 +266,7 @@ async fn tenant_isolation_user_access() {
         &tenant1_token,
         json!({
             "username": "tenant1_user",
-            "password": "password123",
+            "password": "Password123",
             "email": "tenant1@example.com",
             "name": "Tenant1 User"
         }),
@@ -443,7 +443,7 @@ async fn tenant_isolation_cross_tenant_user_list() {
         &tenant1_token,
         json!({
             "username": "tenant1_user",
-            "password": "password123",
+            "password": "Password123",
             "email": "tenant1@example.com",
             "name": "Tenant1 User"
         }),
@@ -455,7 +455,7 @@ async fn tenant_isolation_cross_tenant_user_list() {
         &tenant2_token,
         json!({
             "username": "tenant2_user",
-            "password": "password123",
+            "password": "Password123",
             "email": "tenant2@example.com",
             "name": "Tenant2 User"
         }),

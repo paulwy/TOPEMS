@@ -187,7 +187,7 @@ pub async fn get_current_user(
                 role: if u.is_superuser {
                     "admin".to_string()
                 } else {
-                    "user".to_string()
+                    roles.first().cloned().unwrap_or_default()
                 },
                 roles,
                 permissions,

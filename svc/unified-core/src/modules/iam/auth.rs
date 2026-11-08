@@ -623,15 +623,9 @@ pub async fn register(
         ));
     }
 
-    // 验证密码强度（至少8字符，包含数字和字母）
-    if password.len() < 8
-        || !password.chars().any(|c| c.is_ascii_alphabetic())
-        || !password.chars().any(|c| c.is_ascii_digit())
-    {
-        return Json(topems_shared_core::response::error_value(
-            400,
-            "密码至少8个字符，必须包含字母和数字",
-        ));
+    // 验证密码强度：与创建用户/改密/admin 工具同一实现
+    if let Err(message) = validate_password_strength(password) {
+        return Json(topems_shared_core::response::error_value(400, &message));
     }
 
     // 检查用户名是否已存在
@@ -1466,15 +1460,9 @@ pub async fn reset_password(
         ));
     }
 
-    // 验证密码强度
-    if new_password.len() < 8
-        || !new_password.chars().any(|c| c.is_ascii_alphabetic())
-        || !new_password.chars().any(|c| c.is_ascii_digit())
-    {
-        return Json(topems_shared_core::response::error_value(
-            400,
-            "密码至少8个字符，必须包含字母和数字",
-        ));
+    // 验证密码强度：与创建用户/改密/admin 工具同一实现
+    if let Err(message) = validate_password_strength(new_password) {
+        return Json(topems_shared_core::response::error_value(400, &message));
     }
 
     // 查询重置令牌
@@ -1873,6 +1861,32 @@ async fn resolve_membership_tenant(pool: &sqlx::PgPool, user_id: Uuid) -> Option
             None
         }
     }
+}
+
+/// 产品密码策略：最少 8 位、最多 64 字节，且同时包含大写、小写和数字。
+///
+/// 与 `GET /iam/auth/password-policy` 声明保持一致；初始管理员工具、
+/// 用户创建、用户改密统一调用本函数，避免供给侧与 API 侧出现双口径。
+pub const PASSWORD_MIN_LENGTH: usize = 8;
+pub const PASSWORD_MAX_LENGTH: usize = 64;
+
+pub fn validate_password_strength(password: &str) -> Result<(), String> {
+    if password.is_empty() {
+        return Err("密码不能为空".to_string());
+    }
+    if password.chars().count() < PASSWORD_MIN_LENGTH {
+        return Err(format!("密码长度不能少于 {PASSWORD_MIN_LENGTH} 位"));
+    }
+    if password.len() > PASSWORD_MAX_LENGTH {
+        return Err(format!("密码长度不能超过 {PASSWORD_MAX_LENGTH} 字节"));
+    }
+    let has_upper = password.chars().any(char::is_uppercase);
+    let has_lower = password.chars().any(char::is_lowercase);
+    let has_digit = password.chars().any(|c| c.is_ascii_digit());
+    if !has_upper || !has_lower || !has_digit {
+        return Err("密码必须同时包含大写字母、小写字母和数字".to_string());
+    }
+    Ok(())
 }
 
 /// 密码校验（登录 / 初始管理员工具共用同一实现）

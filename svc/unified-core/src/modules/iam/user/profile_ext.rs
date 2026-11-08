@@ -5,6 +5,8 @@ use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
+use crate::modules::iam::auth::validate_password_strength;
+
 use super::models::{is_valid_email, record_audit_log, resolve_user_grants, UserResponse, UserRow};
 
 /// GET /users/me/permissions — 返回当前用户权限（与已有 /permissions/my-permissions 不同路径）
@@ -79,7 +81,7 @@ pub async fn get_my_permissions(
         role: if u.is_superuser {
             "admin".to_string()
         } else {
-            "user".to_string()
+            role_names.first().cloned().unwrap_or_default()
         },
         roles: role_names.clone(),
         permissions: permission_codes.clone(),
@@ -271,18 +273,16 @@ pub async fn update_current_user(
 
             let data = match user {
                 Some(u) => {
-                    let roles = if u.is_superuser {
-                        vec!["admin".to_string(), "user".to_string()]
+                    let (roles, permissions) = if u.is_superuser {
+                        (
+                            vec!["admin".to_string(), "user".to_string()],
+                            topems_shared_auth::auth::get_permissions()
+                                .iter()
+                                .map(|p| p.id.clone())
+                                .collect(),
+                        )
                     } else {
-                        vec!["user".to_string()]
-                    };
-                    let permissions = if u.is_superuser {
-                        topems_shared_auth::auth::get_permissions()
-                            .iter()
-                            .map(|p| p.id.clone())
-                            .collect()
-                    } else {
-                        vec!["iam:users_read".to_string()]
+                        resolve_user_grants(&state.pool, u.id).await
                     };
                     serde_json::json!(UserResponse {
                         id: u.id.to_string(),
@@ -292,7 +292,7 @@ pub async fn update_current_user(
                         role: if u.is_superuser {
                             "admin".to_string()
                         } else {
-                            "user".to_string()
+                            roles.first().cloned().unwrap_or_default()
                         },
                         roles,
                         permissions,
@@ -403,13 +403,10 @@ pub async fn change_my_password(
         );
     }
 
-    if new_password.len() < 6 {
+    if let Err(message) = validate_password_strength(new_password) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(topems_shared_core::response::error_value(
-                400,
-                "新密码长度不能少于6位",
-            )),
+            Json(topems_shared_core::response::error_value(400, &message)),
         );
     }
 
@@ -581,18 +578,16 @@ pub async fn update_my_avatar(
 
             let data = match user {
                 Some(u) => {
-                    let roles = if u.is_superuser {
-                        vec!["admin".to_string(), "user".to_string()]
+                    let (roles, permissions) = if u.is_superuser {
+                        (
+                            vec!["admin".to_string(), "user".to_string()],
+                            topems_shared_auth::auth::get_permissions()
+                                .iter()
+                                .map(|p| p.id.clone())
+                                .collect(),
+                        )
                     } else {
-                        vec!["user".to_string()]
-                    };
-                    let permissions = if u.is_superuser {
-                        topems_shared_auth::auth::get_permissions()
-                            .iter()
-                            .map(|p| p.id.clone())
-                            .collect()
-                    } else {
-                        vec!["iam:users_read".to_string()]
+                        resolve_user_grants(&state.pool, u.id).await
                     };
                     serde_json::json!(UserResponse {
                         id: u.id.to_string(),
@@ -602,7 +597,7 @@ pub async fn update_my_avatar(
                         role: if u.is_superuser {
                             "admin".to_string()
                         } else {
-                            "user".to_string()
+                            roles.first().cloned().unwrap_or_default()
                         },
                         roles,
                         permissions,

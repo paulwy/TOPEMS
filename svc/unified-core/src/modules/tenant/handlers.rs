@@ -9,6 +9,7 @@ use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::models::*;
+use crate::modules::iam::auth::validate_password_strength;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_db::scope::Db;
@@ -453,13 +454,11 @@ pub async fn onboard_tenant(
     if req.name.trim().is_empty() || req.code.trim().is_empty() {
         return Json(CoreResponse::error("Tenant name and code are required"));
     }
-    if req.admin_username.trim().is_empty()
-        || req.admin_email.trim().is_empty()
-        || req.admin_password.len() < 6
-    {
-        return Json(CoreResponse::error(
-            "Admin username, email and a password (>=6 chars) are required",
-        ));
+    if req.admin_username.trim().is_empty() || req.admin_email.trim().is_empty() {
+        return Json(CoreResponse::error("Admin username and email are required"));
+    }
+    if let Err(message) = validate_password_strength(&req.admin_password) {
+        return Json(CoreResponse::error(&message));
     }
 
     let mut tx = match state.pool.begin().await {

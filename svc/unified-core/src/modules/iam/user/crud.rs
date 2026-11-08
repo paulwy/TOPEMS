@@ -10,6 +10,8 @@ use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::modules::iam::auth::validate_password_strength;
+
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
 #[utoipa::path(
@@ -132,7 +134,7 @@ pub async fn list_users(
                         role: if u.is_superuser {
                             "admin".to_string()
                         } else {
-                            "user".to_string()
+                            roles.first().cloned().unwrap_or_default()
                         },
                         roles,
                         permissions,
@@ -245,14 +247,11 @@ pub async fn create_user(
         );
     }
 
-    if password.len() < 6 {
-        tracing::warn!("Create user failed: password too short");
+    if let Err(message) = validate_password_strength(password) {
+        tracing::warn!("Create user failed: {}", message);
         return (
             StatusCode::BAD_REQUEST,
-            Json(topems_shared_core::response::error_value(
-                400,
-                "密码长度不能少于6位",
-            )),
+            Json(topems_shared_core::response::error_value(400, &message)),
         );
     }
 
@@ -494,7 +493,7 @@ pub async fn get_user(
                 role: if u.is_superuser {
                     "admin".to_string()
                 } else {
-                    "user".to_string()
+                    roles.first().cloned().unwrap_or_default()
                 },
                 roles,
                 permissions,
