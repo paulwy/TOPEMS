@@ -287,7 +287,7 @@ impl FinanceService {
             }
         };
         let period_status: Option<String> = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3")
+            only_own_schema_query!("finance", "SELECT status::text FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3")
         )
         .bind(tenant_id)
         .bind(p_year)

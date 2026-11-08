@@ -1682,55 +1682,8 @@ pub async fn sync_return_to_finance(
         recon_id
     );
 
-    // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
-    // 原 `INSERT INTO erp.vouchers` 改为调用 POST /api/erp/vouchers
-    // 凭证字段与 erp CreateFinancialVoucherRequest schema 保持一致：
-    // voucher_number/voucher_date/period/summary/maker_name/items
-    // 借贷必须平衡：total_debit == total_credit
-    // graceful fallback：失败仅 warn，不阻塞主流程
-    let voucher_no = format!("REFUND-{}", return_record.return_no);
-    let voucher_payload = serde_json::json!({
-        "voucher_number": voucher_no,
-        "voucher_date": now,
-        "period": period,
-        "summary": format!("退款凭证 - {}", return_record.return_no),
-        "maker_name": "crm-refund-sync",
-        "items": [
-            {
-                "line_number": 1,
-                "subject_code": "6603",
-                "summary": format!("退款 - {}", return_record.return_no),
-                "debit_amount": refund_amount_f64,
-                "credit_amount": 0.0,
-            },
-            {
-                "line_number": 2,
-                "subject_code": "1002",
-                "summary": format!("退款 - {}", return_record.return_no),
-                "debit_amount": 0.0,
-                "credit_amount": refund_amount_f64,
-            }
-        ]
-    });
-    match erp_client
-        .create_voucher(&voucher_payload, Some(locale))
-        .await
-    {
-        Ok(_) => {
-            tracing::debug!(
-                "退换货 {} 已生成退款凭证（voucher_no={}）",
-                return_record.return_no,
-                voucher_no
-            );
-        }
-        Err(e) => {
-            tracing::warn!(
-                "退换货 {} 退款凭证生成失败（graceful fallback）: {}",
-                return_record.return_no,
-                e
-            );
-        }
-    }
+    // 退款凭证已收敛至 finance：finance 订阅 ReturnCompleted 事件生成完整平衡分录，
+    // CRM 不再直调 ERP 写凭证（避免双账簿与漏记）。
 
     Ok(recon_id)
 }

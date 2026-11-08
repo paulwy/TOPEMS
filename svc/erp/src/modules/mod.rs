@@ -29,7 +29,6 @@ pub mod db_structure;
 pub mod dict;
 pub mod documents;
 pub mod erp_plugin;
-pub mod finance;
 pub mod fixed_asset;
 pub mod health;
 pub mod holidays;
@@ -72,7 +71,6 @@ pub mod mdm_v49;
 pub mod meeting_room;
 pub mod office_supplies;
 pub mod openapi;
-pub mod opening_balance;
 pub mod order_calc;
 pub mod procurement_e2e;
 pub mod production_order;
@@ -146,11 +144,9 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(bank_account::create_routes())
         .merge(consolidation::create_routes())
         .merge(fixed_asset::create_routes())
-        .merge(finance::create_routes())
         .merge(dict::create_routes())
         .merge(db_structure::create_routes())
         .merge(office_supplies::create_routes())
-        .merge(opening_balance::create_routes())
         .merge(meeting_room::create_routes())
         .merge(vehicles::create_routes())
         .merge(documents::create_routes())

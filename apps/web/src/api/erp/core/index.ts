@@ -43,7 +43,6 @@ export { fixedAssetApi } from './fixedAsset';
 export { officeSupplyApi } from './officeSupply';
 export { vehicleApi } from './vehicle';
 export { dictApi } from './dict';
-export { openingBalanceApi } from './openingBalance';
 export { searchApi } from './search';
 export { leaveRequestApi } from './leaveRequest';
 export { hrProxyApi } from './hrProxy';

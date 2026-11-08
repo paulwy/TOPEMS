@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { dictApi, openingBalanceApi, searchApi } from '../erp/core';
+import { dictApi, searchApi } from '../erp/core';
+import { openingBalanceApi } from '../finance';
 import apiClient from '../client';
 
 vi.mock('../client', () => ({
   default: {
     erp: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
+    finance: {
       get: vi.fn(),
       post: vi.fn(),
       put: vi.fn(),
@@ -134,7 +141,7 @@ describe('V140 ERP - dictApi', () => {
 });
 
 describe('V140 ERP - openingBalanceApi', () => {
-  const mockClient = apiClient.erp as {
+  const mockClient = apiClient.finance as {
     get: vi.Mock;
     post: vi.Mock;
     put: vi.Mock;
@@ -154,14 +161,14 @@ describe('V140 ERP - openingBalanceApi', () => {
       period: '2026-08',
     });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances?page=1&page_size=20&company_id=C-001&period=2026-08'
+      '/accounts/opening-balances?page=1&page_size=20&company_id=C-001&period=2026-08'
     );
   });
 
   it('should get opening balance by id', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { id: 'OB-001' } });
     await openingBalanceApi.get('OB-001');
-    expect(mockClient.get).toHaveBeenCalledWith('/finance/accounts/opening-balances/OB-001');
+    expect(mockClient.get).toHaveBeenCalledWith('/accounts/opening-balances/OB-001');
   });
 
   it('should create opening balance', async () => {
@@ -173,7 +180,7 @@ describe('V140 ERP - openingBalanceApi', () => {
       debit_balance: 1000,
       credit_balance: 0,
     });
-    expect(mockClient.post).toHaveBeenCalledWith('/finance/accounts/opening-balances', {
+    expect(mockClient.post).toHaveBeenCalledWith('/accounts/opening-balances', {
       company_id: 'C-001',
       subject_code: '1001',
       period: '2026-08',
@@ -185,7 +192,7 @@ describe('V140 ERP - openingBalanceApi', () => {
   it('should update opening balance', async () => {
     mockClient.put.mockResolvedValue({ success: true, data: { id: 'OB-001' } });
     await openingBalanceApi.update('OB-001', { debit_balance: 2000 });
-    expect(mockClient.put).toHaveBeenCalledWith('/finance/accounts/opening-balances/OB-001', {
+    expect(mockClient.put).toHaveBeenCalledWith('/accounts/opening-balances/OB-001', {
       debit_balance: 2000,
     });
   });
@@ -193,13 +200,13 @@ describe('V140 ERP - openingBalanceApi', () => {
   it('should remove opening balance', async () => {
     mockClient.delete.mockResolvedValue({ success: true, data: '' });
     await openingBalanceApi.remove('OB-001');
-    expect(mockClient.delete).toHaveBeenCalledWith('/finance/accounts/opening-balances/OB-001');
+    expect(mockClient.delete).toHaveBeenCalledWith('/accounts/opening-balances/OB-001');
   });
 
   it('delete should alias remove', async () => {
     mockClient.delete.mockResolvedValue({ success: true, data: '' });
     await openingBalanceApi.delete('OB-001');
-    expect(mockClient.delete).toHaveBeenCalledWith('/finance/accounts/opening-balances/OB-001');
+    expect(mockClient.delete).toHaveBeenCalledWith('/accounts/opening-balances/OB-001');
   });
 
   it('should batch import opening balances', async () => {
@@ -217,24 +224,22 @@ describe('V140 ERP - openingBalanceApi', () => {
       },
     ];
     await openingBalanceApi.import(data);
-    expect(mockClient.post).toHaveBeenCalledWith('/finance/accounts/opening-balances/batch', data);
+    expect(mockClient.post).toHaveBeenCalledWith('/accounts/opening-balances/batch', data);
   });
 
   it('should carry forward opening balances', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { rows_affected: 5 } });
     await openingBalanceApi.carryForward({ from_period: '2026-07', to_period: '2026-08' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances/carry-forward',
-      { from_period: '2026-07', to_period: '2026-08' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/accounts/opening-balances/carry-forward', {
+      from_period: '2026-07',
+      to_period: '2026-08',
+    });
   });
 
   it('should support page_size parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await openingBalanceApi.list({ page: 1, page_size: 50 } as unknown);
-    expect(mockClient.get).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances?page=1&page_size=50'
-    );
+    expect(mockClient.get).toHaveBeenCalledWith('/accounts/opening-balances?page=1&page_size=50');
   });
 });
 

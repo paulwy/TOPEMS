@@ -4108,6 +4108,10 @@ pub async fn get_opening_balances(
         .get("period")
         .and_then(|v| v.as_str())
         .map(|s| s.replace('-', ""));
+    let subject_code = params
+        .get("subject_code")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let page: i64 = params
         .get("page")
         .and_then(|v| v.as_str())
@@ -4142,12 +4146,14 @@ pub async fn get_opening_balances(
             WHERE deleted_at IS NULL
               AND ($1::uuid IS NULL OR company_id = $1)
               AND ($2::text IS NULL OR period = $2)
-              AND ($3::uuid IS NULL OR tenant_id = $3)
+              AND ($3::text IS NULL OR subject_code = $3)
+              AND ($4::uuid IS NULL OR tenant_id = $4)
             ORDER BY created_at DESC
-            LIMIT $4 OFFSET $5"#
+            LIMIT $5 OFFSET $6"#
     ))
     .bind(company_id)
     .bind(&period)
+    .bind(&subject_code)
     .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
@@ -4162,10 +4168,12 @@ pub async fn get_opening_balances(
                    WHERE deleted_at IS NULL
                      AND ($1::uuid IS NULL OR company_id = $1)
                      AND ($2::text IS NULL OR period = $2)
-                     AND ($3::uuid IS NULL OR tenant_id = $3)"#
+                     AND ($3::text IS NULL OR subject_code = $3)
+                     AND ($4::uuid IS NULL OR tenant_id = $4)"#
             ))
             .bind(company_id)
             .bind(&period)
+            .bind(&subject_code)
             .bind(tenant_id)
             .fetch_one(&state.pool)
             .await
@@ -4194,6 +4202,252 @@ pub async fn get_opening_balances(
             ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
+}
+
+pub async fn get_opening_balance(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let row: Result<
+        Option<(
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            f64,
+            f64,
+            Option<Uuid>,
+            chrono::DateTime<chrono::Utc>,
+            chrono::DateTime<chrono::Utc>,
+        )>,
+        sqlx::Error,
+    > = sqlx::query_as(only_own_schema_query!(
+        "erp",
+        r#"SELECT id, company_id, subject_code, subject_name, period,
+                  debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at
+           FROM erp.opening_balances
+           WHERE id = $1 AND deleted_at IS NULL
+             AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match row {
+        Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": id, "company_id": cid, "subject_code": code,
+                    "subject_name": name.unwrap_or_default(), "period": p,
+                    "debit_balance": debit, "credit_balance": credit,
+                    "tenant_id": tid, "created_at": created_at, "updated_at": updated_at,
+                }),
+                "查询成功",
+            )
+        }
+        Ok(None) => ApiResponse::not_found("期初余额不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+    }
+}
+
+pub async fn update_opening_balance(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let period = req
+        .get("period")
+        .and_then(|v| v.as_str())
+        .map(|s| s.replace('-', ""));
+    let debit_balance: Option<f64> = req.get("debit_balance").and_then(|v| v.as_f64());
+    let credit_balance: Option<f64> = req.get("credit_balance").and_then(|v| v.as_f64());
+    let subject_name: Option<String> = req
+        .get("subject_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let row: Result<
+        Option<(
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            f64,
+            f64,
+            Option<Uuid>,
+            chrono::DateTime<chrono::Utc>,
+            chrono::DateTime<chrono::Utc>,
+        )>,
+        sqlx::Error,
+    > = sqlx::query_as(only_own_schema_query!(
+        "erp",
+        r#"UPDATE erp.opening_balances SET
+               debit_balance = COALESCE($3, debit_balance),
+               credit_balance = COALESCE($4, credit_balance),
+               subject_name = COALESCE($5, subject_name),
+               period = COALESCE($6, period),
+               updated_at = NOW()
+           WHERE id = $1 AND deleted_at IS NULL
+             AND ($2::uuid IS NULL OR tenant_id = $2)
+           RETURNING id, company_id, subject_code, subject_name, period,
+                     debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at"#
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .bind(debit_balance)
+    .bind(credit_balance)
+    .bind(subject_name)
+    .bind(period)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match row {
+        Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": id, "company_id": cid, "subject_code": code,
+                    "subject_name": name.unwrap_or_default(), "period": p,
+                    "debit_balance": debit, "credit_balance": credit,
+                    "tenant_id": tid, "created_at": created_at, "updated_at": updated_at,
+                }),
+                "更新成功",
+            )
+        }
+        Ok(None) => ApiResponse::not_found("期初余额不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
+    }
+}
+
+pub async fn delete_opening_balance(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<String> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let res = sqlx::query(only_own_schema_query!(
+        "erp",
+        r#"UPDATE erp.opening_balances SET deleted_at = NOW()
+           WHERE id = $1 AND deleted_at IS NULL
+             AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
+
+    match res {
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(String::new(), "删除成功"),
+        Ok(_) => ApiResponse::not_found("期初余额不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
+    }
+}
+
+pub async fn import_opening_balances(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(rows): Json<Vec<serde_json::Value>>,
+) -> ApiResponse<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let mut success_count = 0;
+    let mut failed_count = 0;
+    let mut errors: Vec<String> = Vec::new();
+
+    for (idx, row) in rows.iter().enumerate() {
+        let Some(company_id) = row
+            .get("company_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+        else {
+            failed_count += 1;
+            errors.push(format!("第 {} 行: company_id 必填/非法", idx + 1));
+            continue;
+        };
+        let subject_code = row
+            .get("subject_code")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
+        if subject_code.is_empty() {
+            failed_count += 1;
+            errors.push(format!("第 {} 行: subject_code 必填", idx + 1));
+            continue;
+        }
+        let period = row
+            .get("period")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .replace('-', "");
+        let debit_balance = row
+            .get("debit_balance")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
+        let credit_balance = row
+            .get("credit_balance")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
+        let subject_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true LIMIT 1"
+        ))
+        .bind(&subject_code)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten();
+
+        let res = sqlx::query(only_own_schema_query!(
+            "erp",
+            r#"INSERT INTO erp.opening_balances
+                (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, tenant_id, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())"#
+        ))
+        .bind(Uuid::new_v4())
+        .bind(company_id)
+        .bind(&subject_code)
+        .bind(subject_name.as_deref().unwrap_or(""))
+        .bind(&period)
+        .bind(debit_balance)
+        .bind(credit_balance)
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await;
+
+        match res {
+            Ok(_) => success_count += 1,
+            Err(e) => {
+                failed_count += 1;
+                errors.push(format!("第 {} 行: {}", idx + 1, e));
+            }
+        }
+    }
+
+    ApiResponse::success(
+        serde_json::json!({
+            "success_count": success_count,
+            "failed_count": failed_count,
+            "errors": errors,
+        }),
+        "导入完成",
+    )
 }
 
 pub async fn create_opening_balances(
@@ -5065,6 +5319,16 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/accounts/opening-balances",
             axum::routing::get(get_opening_balances).post(create_opening_balances),
+        )
+        .route(
+            "/accounts/opening-balances/batch",
+            axum::routing::post(import_opening_balances),
+        )
+        .route(
+            "/accounts/opening-balances/{id}",
+            axum::routing::get(get_opening_balance)
+                .put(update_opening_balance)
+                .delete(delete_opening_balance),
         )
         .route(
             "/accounts/{account_id}/opening-balance",

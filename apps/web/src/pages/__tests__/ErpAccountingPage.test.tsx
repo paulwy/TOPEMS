@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AccountingManagementPage from '../erp/AccountingManagementPage';
-import { accountingSubjectApi, openingBalanceApi } from '@/api/erp';
+import { accountingSubjectApi, openingBalanceApi } from '@/api/finance';
 import { useNotificationStore } from '@/store';
 
 // AccountingManagementPage：Tabs 会计科目/期初余额 + CrudPage + 期初余额结转 useMutation。
@@ -43,7 +43,7 @@ vi.mock('@/schemas/finance', () => ({
   openingBalanceSchema: { name: 'openingBalanceSchema' },
 }));
 
-vi.mock('@/api/erp', () => ({
+vi.mock('@/api/finance', () => ({
   accountingSubjectApi: {
     list: vi.fn().mockResolvedValue({
       success: true,

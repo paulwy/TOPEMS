@@ -26,12 +26,12 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
-    EventType, HrmPayrollPostedPayload, InventoryUpdatedPayload, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, MesWorkReportSubmittedPayload, OpportunityWonPayload,
-    PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
-    PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
-    ReconciliationUpdatedPayload, ReturnCompletedPayload, SalesOrderApprovedPayload,
-    StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
+    EventType, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    MesWorkReportSubmittedPayload, OpportunityWonPayload, PaymentMadePayload,
+    PaymentReceivedPayload, PmProjectCompletedPayload, PurchaseOrderApprovedPayload,
+    ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
+    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
+    WorkOrderCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -60,10 +60,8 @@ impl ErpEventHandlers {
         let h5 = self.clone();
         let h6 = self.clone();
         let h7 = self.clone();
-        let h8 = self.clone();
         let h9 = self.clone();
         let h10 = self.clone();
-        let h11 = self.clone();
         let h12 = self.clone();
         let h13 = self.clone();
         let h14 = self.clone();
@@ -73,7 +71,6 @@ impl ErpEventHandlers {
         let h18 = self.clone();
         let h19 = self.clone();
         let h20 = self.clone();
-        let h21 = self.clone();
         let h22 = self.clone();
 
         Ok(subscriber
@@ -161,18 +158,6 @@ impl ErpEventHandlers {
                     }
                 })
             })
-            .subscribe_handler(vec![EventType::PmProjectSettled], move |event| {
-                let h = h8.clone();
-                Box::pin(async move {
-                    match h.handle_pm_project_settled(event).await {
-                        Ok(()) => Ok(()),
-                        Err(e) => {
-                            tracing::error!("[erp] handle_pm_project_settled 失败: {}", e);
-                            Err(e)
-                        }
-                    }
-                })
-            })
             .subscribe_handler(vec![EventType::OpportunityWon], move |event| {
                 let h = h9.clone();
                 Box::pin(async move {
@@ -192,18 +177,6 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_inventory_updated 失败: {}", e);
-                            Err(e)
-                        }
-                    }
-                })
-            })
-            .subscribe_handler(vec![EventType::ReturnCompleted], move |event| {
-                let h = h11.clone();
-                Box::pin(async move {
-                    match h.handle_return_completed(event).await {
-                        Ok(()) => Ok(()),
-                        Err(e) => {
-                            tracing::error!("[erp] handle_return_completed 失败: {}", e);
                             Err(e)
                         }
                     }
@@ -329,18 +302,6 @@ impl ErpEventHandlers {
                     }
                 })
             })
-            .subscribe_handler(vec![EventType::HrmPayrollPosted], move |event| {
-                let h = h21.clone();
-                Box::pin(async move {
-                    match h.handle_hrm_payroll_posted(event).await {
-                        Ok(()) => Ok(()),
-                        Err(e) => {
-                            tracing::error!("[erp] handle_hrm_payroll_posted 失败: {}", e);
-                            Err(e)
-                        }
-                    }
-                })
-            })
             .subscribe_handler(vec![EventType::MesWorkReportSubmitted], move |event| {
                 let h = h22.clone();
                 Box::pin(async move {
@@ -384,9 +345,6 @@ impl ErpEventHandlers {
             let amount = amount.unwrap_or(rust_decimal::Decimal::ZERO);
             let receivable_no = format!("REC-{}", payload.order_no);
             let now = chrono::Utc::now();
-            let period = order_date
-                .map(|d| d.format("%Y-%m").to_string())
-                .unwrap_or_else(|| now.format("%Y-%m").to_string());
 
             let mut tx = self
                 .db
@@ -425,79 +383,8 @@ impl ErpEventHandlers {
                 }
             }
 
-            let voucher_no = format!("VOU-SALE-{}", payload.order_no);
-            let voucher_date = order_date.unwrap_or(now);
-
-            let existing_voucher: Option<(uuid::Uuid,)> = sqlx::query_as(
-                r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-            )
-            .bind(&voucher_no)
-            .bind(&period)
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售凭证失败: {}", e)))?;
-
-            if existing_voucher.is_none() {
-                let voucher_id = uuid::Uuid::new_v4();
-
-                sqlx::query(
-                    r#"INSERT INTO erp.financial_vouchers
-                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'sales_order', $7, $8, $8, $9)"#,
-                )
-                .bind(voucher_id)
-                .bind(&voucher_no)
-                .bind(voucher_date)
-                .bind(&period)
-                .bind(format!("销售订单{}确认收入", payload.order_no))
-                .bind(amount)
-                .bind(payload.order_id.to_string())
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建销售凭证失败: {}", e)))?;
-
-                sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $5, $6)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("销售订单{}应收账款", payload.order_no))
-                .bind(amount)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（应收账款）失败: {}", e)))?;
-
-                sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $5, $6)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("销售订单{}销售收入", payload.order_no))
-                .bind(amount)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（主营业务收入）失败: {}", e)))?;
-
-                tracing::info!(
-                    "[erp] 已生成销售凭证 {} 金额={} 关联订单 {}",
-                    voucher_no,
-                    amount,
-                    payload.order_no
-                );
-            } else {
-                tracing::info!("[erp] 销售凭证已存在 {}，跳过创建", voucher_no);
-            }
-
+            // 凭证写入已收敛至 finance（finance 订阅 SalesOrderApproved 写完整分录），
+            // ERP 侧只保留业务应收记录，不再写 erp.financial_vouchers / erp.voucher_items。
             tx.commit()
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
@@ -537,9 +424,6 @@ impl ErpEventHandlers {
             let amount = amount.unwrap_or(0.0);
             let payable_no = format!("PAY-{}", payload.order_no);
             let now = chrono::Utc::now();
-            let period = order_date
-                .map(|d| d.format("%Y-%m").to_string())
-                .unwrap_or_else(|| now.format("%Y-%m").to_string());
 
             let mut tx = self
                 .db
@@ -578,79 +462,8 @@ impl ErpEventHandlers {
                 }
             }
 
-            let voucher_no = format!("VOU-PURCHASE-{}", payload.order_no);
-            let voucher_date = order_date.unwrap_or(now);
-
-            let existing_voucher: Option<(uuid::Uuid,)> = sqlx::query_as(
-                r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-            )
-            .bind(&voucher_no)
-            .bind(&period)
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("查询采购凭证失败: {}", e)))?;
-
-            if existing_voucher.is_none() {
-                let voucher_id = uuid::Uuid::new_v4();
-
-                sqlx::query(
-                    r#"INSERT INTO erp.financial_vouchers
-                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'purchase_order', $7, $8, $8, $9)"#,
-                )
-                .bind(voucher_id)
-                .bind(&voucher_no)
-                .bind(voucher_date)
-                .bind(&period)
-                .bind(format!("采购订单{}确认入库", payload.order_no))
-                .bind(amount)
-                .bind(payload.order_id.to_string())
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建采购凭证失败: {}", e)))?;
-
-                sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 1, '1403', '原材料', $3, $4, 0, $5, $5, $6)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("采购订单{}原材料入库", payload.order_no))
-                .bind(amount)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（原材料）失败: {}", e)))?;
-
-                sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5, $6)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("采购订单{}应付账款", payload.order_no))
-                .bind(amount)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（应付账款）失败: {}", e)))?;
-
-                tracing::info!(
-                    "[erp] 已生成采购凭证 {} 金额={} 关联订单 {}",
-                    voucher_no,
-                    amount,
-                    payload.order_no
-                );
-            } else {
-                tracing::info!("[erp] 采购凭证已存在 {}，跳过创建", voucher_no);
-            }
-
+            // 凭证写入已收敛至 finance（finance 订阅 PurchaseOrderApproved 写完整分录），
+            // ERP 侧只保留业务应付记录，不再写 erp.financial_vouchers / erp.voucher_items。
             tx.commit()
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
@@ -701,53 +514,9 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        let voucher_no = format!("STK-IN-{}", payload.inbound_no);
-        let now = chrono::Utc::now();
-
-        sqlx::query(
-            r#"INSERT INTO erp.vouchers
-               (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
-               VALUES ($1, 'stock_inbound', $2, 'draft', $3, $4)
-               ON CONFLICT (voucher_no) DO NOTHING"#,
-        )
-        .bind(&voucher_no)
-        .bind(&payload.inbound_no)
-        .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&self.db)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建入库凭证失败: {}", e)))?;
-
-        tracing::info!("[erp] 已生成库存入库凭证 {}", voucher_no);
-
-        if payload.reference_order_id.is_some() {
-            let production_voucher_no = format!("PROD-IN-{}", payload.inbound_no);
-            let pv_result = sqlx::query(
-                r#"INSERT INTO erp.vouchers
-                   (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
-                   VALUES ($1, 'production_inbound', $2, 'draft', $3, $4)
-                   ON CONFLICT (voucher_no) DO NOTHING"#,
-            )
-            .bind(&production_voucher_no)
-            .bind(&payload.inbound_no)
-            .bind(now)
-            .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-            .execute(&self.db)
-            .await;
-
-            match pv_result {
-                Ok(_) => {
-                    tracing::info!(
-                        "[erp] 生产入库凭证已生成 - voucher_no={}",
-                        production_voucher_no
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[erp] 生产入库凭证生成失败（graceful fallback）: {}", e);
-                }
-            }
-        }
-
+        // erp.vouchers 已停写（无金额凭证桩，无账务意义）；库存成本凭证待后续按估值链路立项，
+        // 账务凭证唯一落点 = finance.core_finance_vouchers。
+        tracing::info!("[erp] StockInbound 已忽略（erp.vouchers 停写）");
         Ok(())
     }
 
@@ -766,24 +535,8 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        let voucher_no = format!("STK-OUT-{}", payload.outbound_no);
-        let now = chrono::Utc::now();
-
-        sqlx::query(
-            r#"INSERT INTO erp.vouchers
-               (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
-               VALUES ($1, 'stock_outbound', $2, 'draft', $3, $4)
-               ON CONFLICT (voucher_no) DO NOTHING"#,
-        )
-        .bind(&voucher_no)
-        .bind(&payload.outbound_no)
-        .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&self.db)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建出库凭证失败: {}", e)))?;
-
-        tracing::info!("[erp] 已生成库存出库凭证 {}", voucher_no);
+        // erp.vouchers 已停写（无金额凭证桩，无账务意义）；账务凭证唯一落点 = finance。
+        tracing::info!("[erp] StockOutbound 已忽略（erp.vouchers 停写）");
         Ok(())
     }
 
@@ -807,7 +560,6 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
         let onboard_date = payload.onboard_date.unwrap_or(now);
-        let period = onboard_date.format("%Y-%m").to_string();
 
         let onboarding_cost = 500.0;
         let payable_no = format!("PAY-ONBOARD-{}", payload.employee_id);
@@ -853,90 +605,8 @@ impl ErpEventHandlers {
             }
         }
 
-        let voucher_no = format!("VOU-ONBOARD-{}", payload.employee_id);
-
-        let existing_voucher: Option<(uuid::Uuid,)> = match sqlx::query_as(
-            r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-        )
-        .bind(&voucher_no)
-        .bind(&period)
-        .fetch_optional(&mut *tx)
-        .await
-        {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::warn!("[erp] 查询入职费用凭证失败（graceful fallback）: {}", e);
-                let _ = tx.rollback().await;
-                return Ok(());
-            }
-        };
-
-        if existing_voucher.is_none() {
-            let voucher_id = uuid::Uuid::new_v4();
-            let summary = format!("员工{}入职费用", payload.name);
-
-            let voucher_result = sqlx::query(
-                r#"INSERT INTO erp.financial_vouchers
-                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'hr_onboarding', $7, $8, $8, $9)"#,
-            )
-            .bind(voucher_id)
-            .bind(&voucher_no)
-            .bind(onboard_date)
-            .bind(&period)
-            .bind(&summary)
-            .bind(onboarding_cost)
-            .bind(payload.employee_id.to_string())
-            .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-            .execute(&mut *tx)
-            .await;
-
-            match voucher_result {
-                Ok(_) => {
-                    let _ = sqlx::query(
-                        r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                           VALUES ($1, $2, 1, '6602', '管理费用', $3, $4, 0, $5, $5, $6)"#,
-                    )
-                    .bind(uuid::Uuid::new_v4())
-                    .bind(voucher_id)
-                    .bind(format!("员工{}入职培训费", payload.name))
-                    .bind(onboarding_cost)
-                    .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&mut *tx)
-                    .await;
-
-                    let _ = sqlx::query(
-                        r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-                           VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5, $6)"#,
-                    )
-                    .bind(uuid::Uuid::new_v4())
-                    .bind(voucher_id)
-                    .bind(format!("员工{}入职费用应付", payload.name))
-                    .bind(onboarding_cost)
-                    .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&mut *tx)
-                    .await;
-
-                    tracing::info!(
-                        "[erp] 已生成入职费用凭证 {} 金额={} 员工={}",
-                        voucher_no,
-                        onboarding_cost,
-                        payload.name
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[erp] 创建入职费用凭证失败（graceful fallback）: {}", e);
-                }
-            }
-        } else {
-            tracing::info!("[erp] 入职费用凭证已存在 {}，跳过创建", voucher_no);
-        }
-
+        // 凭证写入已收敛至 finance（finance 订阅 EmployeeOnboarded 写完整分录），
+        // ERP 侧只保留业务应付记录。
         match tx.commit().await {
             Ok(_) => {}
             Err(e) => {
@@ -973,7 +643,6 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
         let completed_at = payload.completed_at.unwrap_or(now);
-        let period = completed_at.format("%Y-%m").to_string();
 
         let receivable_no = format!("REC-PROJ-{}", payload.project_id);
         let project_amount = 10000.0;
@@ -1019,264 +688,13 @@ impl ErpEventHandlers {
             }
         }
 
-        let voucher_no = format!("VOU-PROJ-COMPLETE-{}", payload.project_id);
-
-        let existing_voucher: Option<(uuid::Uuid,)> = match sqlx::query_as(
-            r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-        )
-        .bind(&voucher_no)
-        .bind(&period)
-        .fetch_optional(&mut *tx)
-        .await
-        {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::warn!("[erp] 查询项目完成凭证失败（graceful fallback）: {}", e);
-                let _ = tx.rollback().await;
-                return Ok(());
-            }
-        };
-
-        if existing_voucher.is_none() {
-            let voucher_id = uuid::Uuid::new_v4();
-            let summary = format!("项目{}完成确认收入", payload.project_name);
-
-            let voucher_result = sqlx::query(
-                r#"INSERT INTO erp.financial_vouchers
-                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_project', $7, $8, $9, $9, $10)"#,
-            )
-            .bind(voucher_id)
-            .bind(&voucher_no)
-            .bind(completed_at)
-            .bind(&period)
-            .bind(&summary)
-            .bind(project_amount)
-            .bind(payload.project_id.to_string())
-            .bind(payload.project_id)
-            .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-            .execute(&mut *tx)
-            .await;
-
-            match voucher_result {
-                Ok(_) => {
-                    let _ = sqlx::query(
-                        r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
-                           VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $6, $6, $7)"#,
-                    )
-                    .bind(uuid::Uuid::new_v4())
-                    .bind(voucher_id)
-                    .bind(format!("项目{}应收款", payload.project_name))
-                    .bind(project_amount)
-                    .bind(payload.project_id)
-                    .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&mut *tx)
-                    .await;
-
-                    let _ = sqlx::query(
-                        r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
-                           VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $6, $6, $7)"#,
-                    )
-                    .bind(uuid::Uuid::new_v4())
-                    .bind(voucher_id)
-                    .bind(format!("项目{}完成收入", payload.project_name))
-                    .bind(project_amount)
-                    .bind(payload.project_id)
-                    .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&mut *tx)
-                    .await;
-
-                    tracing::info!(
-                        "[erp] 已生成项目完成收入凭证 {} 金额={} 项目={}",
-                        voucher_no,
-                        project_amount,
-                        payload.project_name
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[erp] 创建项目完成凭证失败（graceful fallback）: {}", e);
-                }
-            }
-        } else {
-            tracing::info!("[erp] 项目完成凭证已存在 {}，跳过创建", voucher_no);
-        }
-
+        // 凭证写入已收敛至 finance（finance 订阅 PmProjectCompleted 写完整分录），
+        // ERP 侧只保留业务应收记录。
         match tx.commit().await {
             Ok(_) => {}
             Err(e) => {
                 tracing::warn!(
                     "[erp] PmProjectCompleted 提交事务失败（graceful fallback）: {}",
-                    e
-                );
-            }
-        }
-
-        Ok(())
-    }
-
-    /// PmProjectSettled → 自动生成项目结算财务凭证
-    ///
-    /// 项目结算后自动生成结算财务凭证，根据结算金额结转项目成本和收入。
-    /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
-    async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
-        let payload: PmProjectSettledPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| {
-                TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e))
-            })?;
-
-        tracing::info!(
-            "[erp] PmProjectSettled 处理 - project_name={}, project_id={}, settled_amount={:?}, settled_at={:?}, trace_id={:?}",
-            payload.project_name,
-            payload.project_id,
-            payload.settled_amount,
-            payload.settled_at,
-            event.trace_id
-        );
-
-        let now = chrono::Utc::now();
-        let settled_at = payload.settled_at.unwrap_or(now);
-        let period = settled_at.format("%Y-%m").to_string();
-        let settled_amount = payload
-            .settled_amount
-            .unwrap_or(rust_decimal::Decimal::ZERO);
-
-        if settled_amount <= rust_decimal::Decimal::ZERO {
-            tracing::info!(
-                "[erp] 项目结算金额为 0，跳过凭证生成 - project_id={}",
-                payload.project_id
-            );
-            return Ok(());
-        }
-
-        let voucher_no = format!("VOU-PROJ-SETTLE-{}", payload.project_id);
-
-        let mut tx = match self.db.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
-                tracing::warn!(
-                    "[erp] PmProjectSettled 开启事务失败（graceful fallback）: {}",
-                    e
-                );
-                return Ok(());
-            }
-        };
-
-        let existing_voucher: Option<(uuid::Uuid,)> = match sqlx::query_as(
-            r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-        )
-        .bind(&voucher_no)
-        .bind(&period)
-        .fetch_optional(&mut *tx)
-        .await
-        {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::warn!("[erp] 查询项目结算凭证失败（graceful fallback）: {}", e);
-                let _ = tx.rollback().await;
-                return Ok(());
-            }
-        };
-
-        if existing_voucher.is_some() {
-            tracing::info!("[erp] 项目结算凭证已存在 {}，跳过创建", voucher_no);
-            let _ = tx.rollback().await;
-            return Ok(());
-        }
-
-        let voucher_id = uuid::Uuid::new_v4();
-        let summary = format!("项目{}结算", payload.project_name);
-        let cost_amount = settled_amount * rust_decimal::Decimal::new(7, 1);
-
-        let voucher_result = sqlx::query(
-            r#"INSERT INTO erp.financial_vouchers
-               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_settlement', $7, $8, $9, $9, $10)"#,
-        )
-        .bind(voucher_id)
-        .bind(&voucher_no)
-        .bind(settled_at)
-        .bind(&period)
-        .bind(&summary)
-        .bind(settled_amount)
-        .bind(payload.project_id.to_string())
-        .bind(payload.project_id)
-        .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&mut *tx)
-        .await;
-
-        match voucher_result {
-            Ok(_) => {
-                let _ = sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 1, '6401', '主营业务成本', $3, $4, 0, $5, $6, $6, $7)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("项目{}结转成本", payload.project_name))
-                .bind(cost_amount)
-                .bind(payload.project_id)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await;
-
-                let _ = sqlx::query(
-                    r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
-                       VALUES ($1, $2, 2, '1405', '库存商品', $3, 0, $4, $5, $6, $6, $7)"#,
-                )
-                .bind(uuid::Uuid::new_v4())
-                .bind(voucher_id)
-                .bind(format!("项目{}成本结转", payload.project_name))
-                .bind(cost_amount)
-                .bind(payload.project_id)
-                .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                .execute(&mut *tx)
-                .await;
-
-                let profit_amount = settled_amount - cost_amount;
-                if profit_amount > rust_decimal::Decimal::ZERO {
-                    let _ = sqlx::query(
-                        r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
-                           VALUES ($1, $2, 3, '4103', '本年利润', $3, $4, 0, $5, $6, $6, $7)"#,
-                    )
-                    .bind(uuid::Uuid::new_v4())
-                    .bind(voucher_id)
-                    .bind(format!("项目{}结转利润", payload.project_name))
-                    .bind(profit_amount)
-                    .bind(payload.project_id)
-                    .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&mut *tx)
-                    .await;
-                }
-
-                tracing::info!(
-                    "[erp] 已生成项目结算凭证 {} 金额={} 项目={}",
-                    voucher_no,
-                    settled_amount,
-                    payload.project_name
-                );
-            }
-            Err(e) => {
-                tracing::warn!("[erp] 创建项目结算凭证失败（graceful fallback）: {}", e);
-            }
-        }
-
-        match tx.commit().await {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(
-                    "[erp] PmProjectSettled 提交事务失败（graceful fallback）: {}",
                     e
                 );
             }
@@ -1425,141 +843,6 @@ impl ErpEventHandlers {
                 );
             }
         }
-
-        Ok(())
-    }
-
-    /// ReturnCompleted → 退款凭证自动生成
-    ///
-    /// V19.6: 从占位实现升级为真实凭证生成。
-    /// 退款在退货完成时触发，CRM 发布 ReturnCompleted，
-    /// ERP 订阅后自动生成退款凭证（借：主营业务收入/应交税费，贷：应收账款/银行存款）。
-    async fn handle_return_completed(&self, event: Event) -> HandlerResult {
-        let payload: ReturnCompletedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| {
-                TopemsError::ValidationFailed(format!("解析 ReturnCompleted payload 失败: {}", e))
-            })?;
-
-        tracing::info!(
-            "[erp] ReturnCompleted 处理 - return_no={}, customer_id={:?}, customer_name={:?}, refund_amount={}, return_type={}, status={}, trace_id={:?}",
-            payload.return_no,
-            payload.customer_id,
-            payload.customer_name,
-            payload.refund_amount,
-            payload.return_type,
-            payload.status,
-            event.trace_id
-        );
-
-        let now = chrono::Utc::now();
-        // completed_at 是 String 类型，提取前 7 位 "YYYY-MM" 作为周期；为空或过短时回退到当前月份
-        let period = if payload.completed_at.len() >= 7 {
-            payload.completed_at[..7].to_string()
-        } else {
-            now.format("%Y-%m").to_string()
-        };
-        let refund_amount = payload.refund_amount;
-
-        if refund_amount <= rust_decimal::Decimal::ZERO {
-            tracing::info!(
-                "[erp] 退款金额为 0，跳过凭证生成 - return_no={}",
-                payload.return_no
-            );
-            return Ok(());
-        }
-
-        let voucher_no = format!("VOU-REFUND-{}", payload.return_no);
-
-        // 幂等检查：同一退换单不会重复生成退款凭证
-        let existing_voucher: Option<(uuid::Uuid,)> = sqlx::query_as(
-            r#"SELECT id FROM erp.financial_vouchers WHERE voucher_number = $1 AND period = $2"#,
-        )
-        .bind(&voucher_no)
-        .bind(&period)
-        .fetch_optional(&self.db)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("查询退款凭证失败: {}", e)))?;
-
-        if existing_voucher.is_some() {
-            tracing::info!("[erp] 退款凭证已存在 {}，跳过创建", voucher_no);
-            return Ok(());
-        }
-
-        let mut tx = self
-            .db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
-
-        // 创建退款凭证头
-        let voucher_id = uuid::Uuid::new_v4();
-        let summary = format!(
-            "退换单{}退款，客户{}",
-            payload.return_no,
-            payload.customer_name.as_deref().unwrap_or("未知")
-        );
-
-        sqlx::query(
-            r#"INSERT INTO erp.financial_vouchers
-               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'return_order', $7, $8, $8, $9)"#,
-        )
-        .bind(voucher_id)
-        .bind(&voucher_no)
-        .bind(now)
-        .bind(&period)
-        .bind(&summary)
-        .bind(refund_amount)
-        .bind(payload.return_id.to_string())
-        .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证失败: {}", e)))?;
-
-        // 凭证明细1：借 - 主营业务收入（冲减收入）
-        sqlx::query(
-            r#"INSERT INTO erp.voucher_items
-               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, 1, '6001', '主营业务收入', $3, $4, 0, $5, $5, $6)"#,
-        )
-        .bind(uuid::Uuid::new_v4())
-        .bind(voucher_id)
-        .bind(format!("退换货{}冲减收入", payload.return_no))
-        .bind(refund_amount)
-        .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证明细（收入冲减）失败: {}", e)))?;
-
-        // 凭证明细2：贷 - 应收账款/银行存款
-        let customer_label = payload.customer_name.as_deref().unwrap_or("客户");
-        sqlx::query(
-            r#"INSERT INTO erp.voucher_items
-               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, 2, '1122', '应收账款', $3, 0, $4, $5, $5, $6)"#,
-        )
-        .bind(uuid::Uuid::new_v4())
-        .bind(voucher_id)
-        .bind(format!("退换货{}退款给{}", payload.return_no, customer_label))
-        .bind(refund_amount)
-        .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证明细（应收退款）失败: {}", e)))?;
-
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
-
-        tracing::info!(
-            "[erp] 已生成退款凭证 {} 金额={} 关联退换单 {}",
-            voucher_no,
-            refund_amount,
-            payload.return_no
-        );
 
         Ok(())
     }
@@ -2079,103 +1362,6 @@ impl ErpEventHandlers {
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("更新 erp.fin_reconciliations 失败: {}", e))
         })?;
-
-        Ok(())
-    }
-
-    /// HrmPayrollPosted → 生成财务凭证（D2 U2 环1：hrm 工资过账事件化）
-    /// （hrm 发工资核算完成事件 → erp 在本 schema 内落库，不再跨 schema 直写）
-    /// 幂等：按 (source_system='HRM', source_id=payroll_run_id) 去重，同 payroll_run_id 重放只建证一次。
-    async fn handle_hrm_payroll_posted(&self, event: Event) -> HandlerResult {
-        let payload: HrmPayrollPostedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| {
-                TopemsError::ValidationFailed(format!("解析 HrmPayrollPosted payload 失败: {}", e))
-            })?;
-
-        tracing::info!(
-            "[erp] HrmPayrollPosted 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
-            payload.voucher_number,
-            payload.payroll_run_id,
-            payload.entries.len(),
-            event.trace_id
-        );
-
-        // 幂等去重：同一 payroll_run_id 已建证则直接跳过（事件重放/重复投递不重复建证）
-        let already: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM erp.financial_vouchers WHERE source_system = 'HRM' AND source_id = $1)",
-        )
-        .bind(payload.payroll_run_id.to_string())
-        .fetch_one(&self.db)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("查询幂等键(payroll_run_id)失败: {}", e)))?;
-        if already {
-            tracing::info!(
-                "[erp] HrmPayrollPosted 幂等跳过 - payroll_run_id={} 已存在凭证",
-                payload.payroll_run_id
-            );
-            return Ok(());
-        }
-
-        let voucher_id = uuid::Uuid::new_v4();
-        let now = chrono::Utc::now();
-
-        // 创建凭证主记录（status=draft，source_system=HRM，source_id=payroll_run_id）
-        sqlx::query(
-            r#"INSERT INTO erp.financial_vouchers
-               (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status,
-                total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12, $13)"#,
-        )
-        .bind(voucher_id)
-        .bind(&payload.voucher_number)
-        .bind(payload.voucher_date)
-        .bind(&payload.period)
-        .bind(&payload.summary)
-        .bind(payload.maker_id)
-        .bind(&payload.maker_name)
-        .bind(payload.total_gross)
-        .bind(payload.total_gross)
-        .bind(payload.payroll_run_id.to_string())
-        .bind(now)
-        .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&self.db)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("创建 erp.financial_vouchers 失败: {}", e)))?;
-
-        // 创建凭证分录（借贷平衡由 hrm 侧纯函数保证）
-        for entry in &payload.entries {
-            sqlx::query(
-                r#"INSERT INTO erp.voucher_items
-                   (id, voucher_id, line_number, subject_code, subject_name, summary,
-                    debit_amount, credit_amount, department_id, created_at, updated_at, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
-            )
-            .bind(uuid::Uuid::new_v4())
-            .bind(voucher_id)
-            .bind(entry.line_number)
-            .bind(&entry.subject_code)
-            .bind(&entry.subject_name)
-            .bind(&payload.summary)
-            .bind(entry.debit_amount)
-            .bind(entry.credit_amount)
-            .bind(payload.department_id)
-            .bind(now)
-            .bind(now)
-            .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-            .execute(&self.db)
-            .await
-            .map_err(|e| {
-                TopemsError::DatabaseQuery(format!("创建 erp.voucher_items 失败: {}", e))
-            })?;
-        }
-
-        tracing::info!(
-            "[erp] HrmPayrollPosted 完成 - voucher_id={}, voucher_number={}, entries={}",
-            voucher_id,
-            payload.voucher_number,
-            payload.entries.len()
-        );
 
         Ok(())
     }

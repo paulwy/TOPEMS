@@ -190,7 +190,7 @@ function parseBlocks(src, kw) {
   return out;
 }
 
-const MOD_ROOT = path.join(APPS, 'modules');
+const MOD_ROOT = path.join(APPS, 'module-configs');
 const cfgs = fs
   .readdirSync(MOD_ROOT)
   .map((d) => path.join(MOD_ROOT, d, 'config.ts'))

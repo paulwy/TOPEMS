@@ -18,6 +18,7 @@ import { reconciliationApi } from './reconciliation';
 import { riskV54Api } from './riskV54';
 import { taxApi } from './tax';
 import { currencyApi } from './currency';
+import { openingBalanceApi } from './openingBalance';
 
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
@@ -31,6 +32,8 @@ export { expenseApi } from './expense';
 export { budgetApi } from './budget';
 export { taxApi } from './tax';
 export { accountingSubjectApi } from './accountingSubject';
+export { openingBalanceApi } from './openingBalance';
+export type { OpeningBalance } from './openingBalance';
 export { currencyApi } from './currency';
 export { auxAccountApi } from './auxAccount';
 
@@ -86,6 +89,7 @@ export const financeApi = {
   riskV54: riskV54Api,
   tax: taxApi,
   currency: currencyApi,
+  openingBalance: openingBalanceApi,
 
   async getDashboard(): Promise<ApiResponse<FinanceDashboardStats>> {
     return apiClient.finance.get<FinanceDashboardStats>('/dashboard');

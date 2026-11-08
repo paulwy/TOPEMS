@@ -5,14 +5,65 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, PaymentMadePayload,
-    PaymentReceivedPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
+    EmployeeOnboardedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmPayrollPostedPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
+    PmProjectSettledPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
     ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
-    SalesOrderApprovedPayload, SalesOrderCreatedPayload, SettlementApprovedPayload,
-    SettlementCreatedPayload, SettlementRejectedPayload,
+    ReturnCompletedPayload, SalesOrderApprovedPayload, SalesOrderCreatedPayload,
+    SettlementApprovedPayload, SettlementCreatedPayload, SettlementRejectedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
+
+/// 自动凭证分录：按科目 code 解析 account_id；code 不存在即 fail-closed（不写半张凭证）。
+struct AutoVoucherLine {
+    account_code: String,
+    debit: Decimal,
+    credit: Decimal,
+    description: String,
+    aux_type: Option<&'static str>,
+    aux_id: Option<uuid::Uuid>,
+}
+
+impl AutoVoucherLine {
+    fn debit(
+        account_code: impl Into<String>,
+        amount: Decimal,
+        description: impl Into<String>,
+    ) -> Self {
+        Self {
+            account_code: account_code.into(),
+            debit: amount,
+            credit: Decimal::ZERO,
+            description: description.into(),
+            aux_type: None,
+            aux_id: None,
+        }
+    }
+
+    fn credit(
+        account_code: impl Into<String>,
+        amount: Decimal,
+        description: impl Into<String>,
+    ) -> Self {
+        Self {
+            account_code: account_code.into(),
+            debit: Decimal::ZERO,
+            credit: amount,
+            description: description.into(),
+            aux_type: None,
+            aux_id: None,
+        }
+    }
+
+    fn with_aux(mut self, aux_type: &'static str, aux_id: Option<uuid::Uuid>) -> Self {
+        if aux_id.is_some() {
+            self.aux_type = Some(aux_type);
+            self.aux_id = aux_id;
+        }
+        self
+    }
+}
 
 /// U6-2：事件 payload 金额已全链升级为 Decimal，Finance 入站直接消费 Decimal。
 
@@ -45,6 +96,11 @@ impl FinanceEventHandlers {
         let h10 = self.clone();
         let h11 = self.clone();
         let h12 = self.clone();
+        let h13 = self.clone();
+        let h14 = self.clone();
+        let h15 = self.clone();
+        let h16 = self.clone();
+        let h17 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(vec![EventType::SalesOrderCreated], move |event| {
@@ -94,6 +150,26 @@ impl FinanceEventHandlers {
             .subscribe_handler(vec![EventType::SettlementRejected], move |event| {
                 let h = h12.clone();
                 Box::pin(async move { h.handle_settlement_rejected(event).await })
+            })
+            .subscribe_handler(vec![EventType::EmployeeOnboarded], move |event| {
+                let h = h13.clone();
+                Box::pin(async move { h.handle_employee_onboarded(event).await })
+            })
+            .subscribe_handler(vec![EventType::PmProjectCompleted], move |event| {
+                let h = h14.clone();
+                Box::pin(async move { h.handle_pm_project_completed(event).await })
+            })
+            .subscribe_handler(vec![EventType::PmProjectSettled], move |event| {
+                let h = h15.clone();
+                Box::pin(async move { h.handle_pm_project_settled(event).await })
+            })
+            .subscribe_handler(vec![EventType::ReturnCompleted], move |event| {
+                let h = h16.clone();
+                Box::pin(async move { h.handle_return_completed(event).await })
+            })
+            .subscribe_handler(vec![EventType::HrmPayrollPosted], move |event| {
+                let h = h17.clone();
+                Box::pin(async move { h.handle_hrm_payroll_posted(event).await })
             }))
     }
 
@@ -103,61 +179,135 @@ impl FinanceEventHandlers {
         format!("AUTO-{}-{}-{}", voucher_type, period_prefix, time_suffix)
     }
 
+    /// 写一张完整、借贷平衡的自动凭证（头 + 全部分录）。
+    ///
+    /// - 幂等：`(tenant_id, source_module, source_id)` 命中部分唯一索引 → 整单跳过；
+    /// - fail-closed：任一科目 code 在本租户不存在即返回 Err，事务回滚（不写半张凭证），
+    ///   由事件层重试 / DLQ 兜底，绝不静默降级。
     async fn create_auto_voucher(
         &self,
         voucher_type: &str,
         description: &str,
-        // U6: 金额改 Decimal，直接绑定 NUMERIC(18,4) 列，消除 f64->NUMERIC 的浮点隐式转换
-        amount: Decimal,
         source_type: &str,
         source_id: uuid::Uuid,
         created_by: Option<&str>,
         tenant_id: uuid::Uuid,
+        lines: Vec<AutoVoucherLine>,
     ) -> Result<Option<uuid::Uuid>, TopemsError> {
+        if lines.is_empty() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "自动凭证无分录，拒绝生成: source={}/{}",
+                source_type, source_id
+            )));
+        }
+
+        let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
+        let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
+        if total_debit != total_credit || total_debit <= Decimal::ZERO {
+            return Err(TopemsError::ValidationFailed(format!(
+                "自动凭证借贷不平衡（借 {} / 贷 {}），拒绝生成: source={}/{}",
+                total_debit, total_credit, source_type, source_id
+            )));
+        }
+
         let now = Utc::now();
         let period = format!("{:04}{:02}", now.year(), now.month());
         let voucher_no = Self::generate_voucher_no(voucher_type, now);
         let created_by = created_by.unwrap_or("system");
 
+        let mut tx = self
+            .db
+            .begin()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启自动凭证事务失败: {}", e)))?;
+
+        // 幂等键落点：finance.uq_finance_voucher_tenant_source（部分唯一索引）
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_module, source_id, created_by)
-             VALUES ($11, $1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
-             ON CONFLICT (tenant_id, source_module, source_id) DO NOTHING
+             VALUES ($1, $2, $3, $4, $5::voucher_type, $6, $7, 'draft', $8, $9, $10, $11)
+             ON CONFLICT (tenant_id, source_module, source_id) WHERE source_id IS NOT NULL AND deleted_at IS NULL DO NOTHING
              RETURNING id"),
         )
+        .bind(tenant_id)
         .bind(&voucher_no)
         .bind(now)
         .bind(&period)
         .bind(voucher_type)
-        .bind(amount)
-        .bind(amount)
+        .bind(total_debit)
+        .bind(total_credit)
         .bind(description)
         .bind(source_type)
-        .bind(source_id)
+        .bind(source_id.to_string())
         .bind(created_by)
-        .bind(tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut *tx)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证失败: {}", e)))?;
 
-        if let Some(vid) = voucher_id {
-            tracing::info!(
-                "[finance] 自动生成凭证: {} ({}), 金额: {}, 来源: {}/{}",
-                voucher_no,
-                voucher_type,
-                amount,
-                source_type,
-                source_id
-            );
-            Ok(Some(vid))
-        } else {
+        let Some(voucher_id) = voucher_id else {
+            tx.rollback()
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("回滚自动凭证事务失败: {}", e)))?;
             tracing::info!(
                 "[finance] 凭证已存在（幂等跳过）, 来源: {}/{}",
                 source_type,
                 source_id
             );
-            Ok(None)
+            return Ok(None);
+        };
+
+        for (i, line) in lines.iter().enumerate() {
+            let account: Option<(uuid::Uuid, String, String)> = sqlx::query_as(
+                only_own_schema_query!("finance", "SELECT id, code, name FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2 AND deleted_at IS NULL AND is_enabled = TRUE"),
+            )
+            .bind(tenant_id)
+            .bind(&line.account_code)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("解析会计科目 {} 失败: {}", line.account_code, e)))?;
+
+            // fail-closed：缺科目不做任何兜底映射，直接中止整张凭证
+            let Some((account_id, account_code, account_name)) = account else {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "缺少会计科目 {}（租户 {}），自动凭证拒绝生成: source={}/{}",
+                    line.account_code, tenant_id, source_type, source_id
+                )));
+            };
+
+            sqlx::query(
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, aux_type, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"),
+            )
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .bind(i as i32 + 1)
+            .bind(account_id)
+            .bind(&account_code)
+            .bind(&account_name)
+            .bind(&line.description)
+            .bind(line.debit)
+            .bind(line.credit)
+            .bind(line.aux_type)
+            .bind(line.aux_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细失败: {}", e)))?;
         }
+
+        tx.commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交自动凭证事务失败: {}", e)))?;
+
+        tracing::info!(
+            "[finance] 自动生成凭证: {} ({}), 借贷: {}/{}, 分录: {}, 来源: {}/{}",
+            voucher_no,
+            voucher_type,
+            total_debit,
+            total_credit,
+            lines.len(),
+            source_type,
+            source_id
+        );
+        Ok(Some(voucher_id))
     }
 
     async fn handle_sales_order_created(&self, event: Event) -> HandlerResult {
@@ -205,40 +355,8 @@ impl FinanceEventHandlers {
             return Ok(());
         }
 
-        let description = format!(
-            "销售订单 {} 创建 - {}",
-            payload.order_no,
-            payload
-                .customer_name
-                .unwrap_or_else(|| "未知客户".to_string())
-        );
-
-        match self
-            .create_auto_voucher(
-                "receivable_draft",
-                &description,
-                amount,
-                "sales_order_created",
-                payload.order_id,
-                payload.created_by.as_deref(),
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
-            )
-            .await
-        {
-            Ok(Some(voucher_id)) => {
-                tracing::info!("[finance] 应收款草稿生成成功: voucher_id={}", voucher_id);
-            }
-            Ok(None) => {
-                tracing::info!(
-                    "[finance] 应收款草稿已存在（幂等跳过）, order_id={}",
-                    payload.order_id
-                );
-            }
-            Err(e) => {
-                tracing::error!("[finance] 应收款草稿生成失败: {}", e);
-            }
-        }
-
+        // 创建阶段只存金额快照，不生成凭证：收入在审批事件确认，
+        // 避免「半张凭证」以及同一订单创建/审批重复确认收入。
         Ok(())
     }
 
@@ -288,13 +406,26 @@ impl FinanceEventHandlers {
 
         match self
             .create_auto_voucher(
-                "receivable",
+                "general",
                 &description,
-                amount,
                 "sales_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
                 payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                vec![
+                    AutoVoucherLine::debit(
+                        "1122",
+                        amount,
+                        format!("销售订单{}应收账款", payload.order_no),
+                    )
+                    .with_aux("customer", payload.customer_id),
+                    AutoVoucherLine::credit(
+                        "6001",
+                        amount,
+                        format!("销售订单{}销售收入", payload.order_no),
+                    )
+                    .with_aux("customer", payload.customer_id),
+                ],
             )
             .await
         {
@@ -309,6 +440,7 @@ impl FinanceEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[finance] 应收凭证生成失败: {}", e);
+                return Err(e);
             }
         }
 
@@ -361,13 +493,26 @@ impl FinanceEventHandlers {
 
         match self
             .create_auto_voucher(
-                "payable",
+                "general",
                 &description,
-                amount,
                 "purchase_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
                 payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                vec![
+                    AutoVoucherLine::debit(
+                        "1403",
+                        amount,
+                        format!("采购订单{}原材料入库", payload.order_no),
+                    )
+                    .with_aux("supplier", payload.supplier_id),
+                    AutoVoucherLine::credit(
+                        "2202",
+                        amount,
+                        format!("采购订单{}应付账款", payload.order_no),
+                    )
+                    .with_aux("supplier", payload.supplier_id),
+                ],
             )
             .await
         {
@@ -382,6 +527,7 @@ impl FinanceEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[finance] 应付凭证生成失败: {}", e);
+                return Err(e);
             }
         }
 
@@ -424,11 +570,23 @@ impl FinanceEventHandlers {
             .create_auto_voucher(
                 "receipt",
                 &description,
-                amount,
                 "payment_received",
                 payload.payment_id,
                 None,
                 payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                vec![
+                    AutoVoucherLine::debit(
+                        "1002",
+                        amount,
+                        format!("收款{}存入银行", payload.payment_no),
+                    ),
+                    AutoVoucherLine::credit(
+                        "1122",
+                        amount,
+                        format!("收款{}冲减应收账款", payload.payment_no),
+                    )
+                    .with_aux("customer", payload.customer_id),
+                ],
             )
             .await
         {
@@ -443,6 +601,7 @@ impl FinanceEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[finance] 收款凭证生成失败: {}", e);
+                return Err(e);
             }
         }
 
@@ -485,11 +644,23 @@ impl FinanceEventHandlers {
             .create_auto_voucher(
                 "payment",
                 &description,
-                amount,
                 "payment_made",
                 payload.payment_id,
                 None,
                 payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                vec![
+                    AutoVoucherLine::debit(
+                        "2202",
+                        amount,
+                        format!("付款{}冲减应付账款", payload.payment_no),
+                    )
+                    .with_aux("supplier", payload.supplier_id),
+                    AutoVoucherLine::credit(
+                        "1002",
+                        amount,
+                        format!("付款{}银行付款", payload.payment_no),
+                    ),
+                ],
             )
             .await
         {
@@ -504,6 +675,7 @@ impl FinanceEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[finance] 付款凭证生成失败: {}", e);
+                return Err(e);
             }
         }
 
@@ -576,46 +748,8 @@ impl FinanceEventHandlers {
             .await;
         }
 
-        let amount = payload.total_amount.unwrap_or(Decimal::ZERO);
-        if amount <= Decimal::ZERO {
-            tracing::warn!("[finance] 采购订单金额为 0，跳过凭证生成");
-            return Ok(());
-        }
-
-        let description = format!(
-            "采购订单 {} 创建 - {}",
-            payload.order_no,
-            payload
-                .supplier_name
-                .unwrap_or_else(|| "未知供应商".to_string())
-        );
-
-        match self
-            .create_auto_voucher(
-                "payable_draft",
-                &description,
-                amount,
-                "purchase_order_created",
-                payload.order_id,
-                payload.created_by.as_deref(),
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
-            )
-            .await
-        {
-            Ok(Some(voucher_id)) => {
-                tracing::info!("[finance] 应付凭证草稿生成成功: voucher_id={}", voucher_id);
-            }
-            Ok(None) => {
-                tracing::info!(
-                    "[finance] 应付凭证草稿已存在（幂等跳过）, order_id={}",
-                    payload.order_id
-                );
-            }
-            Err(e) => {
-                tracing::error!("[finance] 应付凭证草稿生成失败: {}", e);
-            }
-        }
-
+        // 创建阶段只存金额快照，不生成凭证：应付在审批事件确认，
+        // 避免「半张凭证」以及同一订单创建/审批重复确认负债。
         Ok(())
     }
 
@@ -698,6 +832,202 @@ impl FinanceEventHandlers {
             payload.rejected_by
         );
         let _ = self.reject_settlement_snapshot(&payload).await;
+        Ok(())
+    }
+
+    // ========================================================
+    // ERP 侧原 7 类写凭证点收敛后的 finance 处理器
+    // ========================================================
+
+    /// EmployeeOnboarded：入职费用计提（沿用 ERP 原口径：管理费用 / 应付账款 500 元）
+    async fn handle_employee_onboarded(&self, event: Event) -> HandlerResult {
+        let payload: EmployeeOnboardedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 EmployeeOnboarded payload 失败: {}", e))
+        })?;
+
+        let amount = Decimal::from(500);
+        self.create_auto_voucher(
+            "general",
+            &format!("员工{}入职费用", payload.name),
+            "employee",
+            payload.employee_id,
+            None,
+            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            vec![
+                AutoVoucherLine::debit("6602", amount, format!("员工{}入职培训费", payload.name)),
+                AutoVoucherLine::credit(
+                    "2202",
+                    amount,
+                    format!("员工{}入职费用应付", payload.name),
+                ),
+            ],
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// PmProjectCompleted：项目完成确认收入（沿用 ERP 原口径：10,000 元应收 / 收入）
+    async fn handle_pm_project_completed(&self, event: Event) -> HandlerResult {
+        let payload: PmProjectCompletedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 PmProjectCompleted payload 失败: {}", e))
+        })?;
+
+        let amount = Decimal::from(10000);
+        self.create_auto_voucher(
+            "general",
+            &format!("项目{}完成确认收入", payload.project_name),
+            "pm_project_completed",
+            payload.project_id,
+            payload.completed_by.as_deref(),
+            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            vec![
+                AutoVoucherLine::debit(
+                    "1122",
+                    amount,
+                    format!("项目{}应收款", payload.project_name),
+                ),
+                AutoVoucherLine::credit(
+                    "6001",
+                    amount,
+                    format!("项目{}完成收入", payload.project_name),
+                ),
+            ],
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// PmProjectSettled：按结算金额结转项目成本（借 6401 / 贷 1405，借贷平衡）
+    ///
+    /// 收入已在项目完成时确认，结算阶段只结转成本；
+    /// ERP 原实现额外记了一笔 4103 本年利润，导致借贷不平（半张凭证），此处不沿用。
+    async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
+        let payload: PmProjectSettledPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e))
+        })?;
+
+        let settled_amount = payload.settled_amount.unwrap_or(Decimal::ZERO);
+        if settled_amount <= Decimal::ZERO {
+            tracing::info!(
+                "[finance] 项目结算金额为 0，跳过凭证生成 - project_id={}",
+                payload.project_id
+            );
+            return Ok(());
+        }
+
+        let cost_amount = settled_amount * Decimal::new(7, 1);
+        self.create_auto_voucher(
+            "general",
+            &format!("项目{}结算成本结转", payload.project_name),
+            "pm_project_settled",
+            payload.project_id,
+            payload.settled_by.as_deref(),
+            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            vec![
+                AutoVoucherLine::debit(
+                    "6401",
+                    cost_amount,
+                    format!("项目{}结算成本", payload.project_name),
+                ),
+                AutoVoucherLine::credit(
+                    "1405",
+                    cost_amount,
+                    format!("项目{}库存商品结转", payload.project_name),
+                ),
+            ],
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// ReturnCompleted：退款完成冲减收入与应收
+    async fn handle_return_completed(&self, event: Event) -> HandlerResult {
+        let payload: ReturnCompletedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 ReturnCompleted payload 失败: {}", e))
+        })?;
+
+        if payload.refund_amount <= Decimal::ZERO {
+            tracing::info!(
+                "[finance] 退款金额为 0，跳过凭证生成 - return_id={}",
+                payload.return_id
+            );
+            return Ok(());
+        }
+
+        let customer_name = payload
+            .customer_name
+            .clone()
+            .unwrap_or_else(|| "未知客户".to_string());
+        self.create_auto_voucher(
+            "general",
+            &format!("退款单{}完成 - {}", payload.return_no, customer_name),
+            "return_order",
+            payload.return_id,
+            None,
+            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            vec![
+                AutoVoucherLine::debit(
+                    "6001",
+                    payload.refund_amount,
+                    format!("退款单{}冲减收入", payload.return_no),
+                )
+                .with_aux("customer", payload.customer_id),
+                AutoVoucherLine::credit(
+                    "1122",
+                    payload.refund_amount,
+                    format!("退款单{}冲减应收", payload.return_no),
+                )
+                .with_aux("customer", payload.customer_id),
+            ],
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// HrmPayrollPosted：按 payroll 事件携带的明细科目生成工资凭证
+    ///
+    /// 明细分录来自 HRM 计算引擎（subject_code 为 6 位明细科目）；
+    /// 任一科目在 finance 缺失即整单失败（fail-closed），不静默少记。
+    async fn handle_hrm_payroll_posted(&self, event: Event) -> HandlerResult {
+        let payload: HrmPayrollPostedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 HrmPayrollPosted payload 失败: {}", e))
+        })?;
+
+        if payload.entries.is_empty() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "工资过账事件无分录，拒绝生成凭证: payroll_run_id={}",
+                payload.payroll_run_id
+            )));
+        }
+
+        let lines = payload
+            .entries
+            .iter()
+            .map(|entry| AutoVoucherLine {
+                account_code: entry.subject_code.clone(),
+                debit: entry.debit_amount,
+                credit: entry.credit_amount,
+                description: format!("工资{}-{}", payload.period, entry.subject_name),
+                aux_type: None,
+                aux_id: None,
+            })
+            .collect();
+
+        self.create_auto_voucher(
+            "general",
+            &payload.summary,
+            "hrm_payroll",
+            payload.payroll_run_id,
+            Some(payload.maker_name.as_str()),
+            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            lines,
+        )
+        .await?;
+
         Ok(())
     }
 
@@ -892,7 +1222,7 @@ pub async fn start_event_subscribers(
     let subscriber = handlers.build_subscriber()?;
 
     tracing::info!(
-        "[finance] 启动事件订阅者，注册 12 类业务事件 handler（销售/采购/收付款+对账/结算快照）"
+        "[finance] 启动事件订阅者，注册 17 类业务事件 handler（销售/采购/收付款/对账/结算 + 入职/项目/退款/薪资）"
     );
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
@@ -930,5 +1260,210 @@ mod tests {
         assert_eq!(total_debit, total_credit);
         assert_eq!(total_debit - total_credit, Decimal::ZERO);
         assert!(total_debit > Decimal::ZERO);
+    }
+}
+
+#[cfg(test)]
+mod p2a_e2e_tests {
+    use super::*;
+    use crate::services::FinanceService;
+    use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
+
+    /// P2a 第一笔端到端证据（需真实数据库）：
+    /// 业务事件 → finance 生成含借贷分录的凭证 → 过账 → ledger / aux_balances 有行；
+    /// 重放同一事件不产生重复凭证；缺科目时 fail-closed 不落半张凭证。
+    ///
+    /// 运行：DATABASE_URL=... cargo test -p topems-finance --bin topems-finance -- --ignored p2a
+    #[tokio::test]
+    #[ignore = "需要真实数据库：DATABASE_URL"]
+    async fn event_to_posted_voucher_is_balanced_and_idempotent() {
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL 未设置");
+        let pool = sqlx::PgPool::connect(&url).await.unwrap();
+
+        let tenant_id = uuid::Uuid::new_v4();
+        sqlx::query("INSERT INTO public.core_tenants (id, name, code) VALUES ($1, $2, $3)")
+            .bind(tenant_id)
+            .bind("P2a Auto Voucher E2E")
+            .bind(format!("p2a-{}", &tenant_id.to_string()[..8]))
+            .execute(&pool)
+            .await
+            .expect("创建测试租户失败");
+
+        sqlx::query("SELECT finance.bootstrap_defaults($1)")
+            .bind(tenant_id)
+            .execute(&pool)
+            .await
+            .expect("播种默认科目失败");
+
+        let handlers = FinanceEventHandlers {
+            db: pool.clone(),
+            event_publisher: None,
+        };
+
+        let order_id = uuid::Uuid::new_v4();
+        let customer_id = uuid::Uuid::new_v4();
+        let event = Event::new(
+            EventType::SalesOrderApproved,
+            "test",
+            serde_json::json!({
+                "order_id": order_id,
+                "order_no": "SO-P2A-001",
+                "customer_id": customer_id,
+                "customer_name": "P2a 测试客户",
+                "total_amount": 1000.00,
+                "approved_by": "tester",
+                "tenant_id": tenant_id,
+            }),
+        );
+
+        // 1) 事件 → 完整平衡分录凭证
+        handlers
+            .handle_sales_order_approved(event.clone())
+            .await
+            .expect("自动凭证生成失败");
+
+        let voucher: (uuid::Uuid, Decimal, Decimal) = sqlx::query_as(
+            "SELECT id, total_debit, total_credit FROM finance.core_finance_vouchers WHERE tenant_id = $1 AND source_module = 'sales_order' AND source_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(order_id.to_string())
+        .fetch_one(&pool)
+        .await
+        .expect("未找到凭证");
+
+        let lines: Vec<(String, Decimal, Decimal)> = sqlx::query_as(
+            "SELECT account_code, debit, credit FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+        )
+        .bind(voucher.0)
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+        assert_eq!(lines.len(), 2, "应生成两行分录");
+        assert_eq!(lines[0].0, "1122");
+        assert_eq!(lines[0].1, Decimal::new(1000, 0));
+        assert_eq!(lines[1].0, "6001");
+        assert_eq!(lines[1].2, Decimal::new(1000, 0));
+        assert_eq!(voucher.1, voucher.2, "凭证借贷必须相等");
+
+        // 2) 重放同一事件：不产生重复凭证
+        handlers
+            .handle_sales_order_approved(event.clone())
+            .await
+            .expect("重放事件不应失败");
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1 AND source_module = 'sales_order' AND source_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(order_id.to_string())
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(count, 1, "重放事件不得重复生成凭证");
+
+        // 3) 过账 → ledger / aux_balances 有行
+        let service = FinanceService::new(
+            pool.clone(),
+            TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
+                .expect("构造 workflow 客户端失败"),
+        );
+        service.submit_voucher(tenant_id, voucher.0).await.unwrap();
+        service
+            .approve_voucher(tenant_id, voucher.0, "tester")
+            .await
+            .unwrap();
+        let posted = service
+            .post_voucher(tenant_id, voucher.0, "tester")
+            .await
+            .unwrap();
+        assert_eq!(posted.status.to_string(), "posted");
+
+        let ledger_count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM finance.core_finance_ledger WHERE voucher_id = $1",
+        )
+        .bind(voucher.0)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(ledger_count, 2, "过账后 ledger 应有 2 行");
+
+        let aux_count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM finance.core_finance_aux_balances WHERE tenant_id = $1 AND aux_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(customer_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert!(aux_count >= 1, "过账后 aux_balances 应有行");
+
+        // 4) 缺科目 fail-closed：新租户未播种任何科目
+        let bare_tenant = uuid::Uuid::new_v4();
+        sqlx::query("INSERT INTO public.core_tenants (id, name, code) VALUES ($1, $2, $3)")
+            .bind(bare_tenant)
+            .bind("P2a Bare Tenant")
+            .bind(format!("p2a-bare-{}", &bare_tenant.to_string()[..8]))
+            .execute(&pool)
+            .await
+            .unwrap();
+        let bare_event = Event::new(
+            EventType::SalesOrderApproved,
+            "test",
+            serde_json::json!({
+                "order_id": uuid::Uuid::new_v4(),
+                "order_no": "SO-P2A-BARE",
+                "total_amount": 100.00,
+                "tenant_id": bare_tenant,
+            }),
+        );
+        let err = handlers
+            .handle_sales_order_approved(bare_event)
+            .await
+            .expect_err("缺科目必须 fail-closed");
+        assert!(
+            err.to_string().contains("缺少会计科目"),
+            "错误信息应明确指出缺科目: {err}"
+        );
+        let bare_vouchers: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1",
+        )
+        .bind(bare_tenant)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(bare_vouchers, 0, "失败时不得落半张凭证");
+
+        // 清理测试租户数据（先子后父）
+        for tid in [tenant_id, bare_tenant] {
+            let _ =
+                sqlx::query("DELETE FROM finance.core_finance_aux_balances WHERE tenant_id = $1")
+                    .bind(tid)
+                    .execute(&pool)
+                    .await;
+            let _ = sqlx::query("DELETE FROM finance.core_finance_ledger WHERE tenant_id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+            let _ =
+                sqlx::query("DELETE FROM finance.core_finance_voucher_lines WHERE tenant_id = $1")
+                    .bind(tid)
+                    .execute(&pool)
+                    .await;
+            let _ = sqlx::query("DELETE FROM finance.core_finance_vouchers WHERE tenant_id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+            let _ = sqlx::query("DELETE FROM finance.core_finance_accounts WHERE tenant_id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+            let _ = sqlx::query("DELETE FROM finance.core_finance_periods WHERE tenant_id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+            let _ = sqlx::query("DELETE FROM public.core_tenants WHERE id = $1")
+                .bind(tid)
+                .execute(&pool)
+                .await;
+        }
     }
 }

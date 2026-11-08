@@ -22,7 +22,7 @@ import {
   openingBalanceApi,
   type AccountingSubject,
   type OpeningBalance,
-} from '@/api/erp';
+} from '@/api/finance';
 import i18n from '@/i18n';
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
 
