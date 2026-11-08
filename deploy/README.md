@@ -39,10 +39,22 @@ deploy/
 │   └── services/             # 各服务 Deployment
 ├── systemd/                  # systemd 服务单元（生产主路径）
 │   └── *.service             # 各服务的 systemd unit 文件
-└── nginx/                    # Nginx 反向代理配置（通用）
-    ├── topems.conf           # 反向代理/TLS 入口配置
+└── nginx/                    # Nginx 反向代理配置（通用 + macOS 生产镜像模板）
+    ├── topems.conf           # Linux 反向代理/TLS 入口模板（topems_safe access_log）
+    ├── macos/                # macOS 生产镜像模板（nginx.conf + servers/topems.conf、topems-ssl.conf）
     └── topems-ca.crt         # 私有 CA 根证书（本地生成，.gitignore 精确忽略，不入库）
 ```
+
+## Nginx 日志策略（access_log / topems_safe）
+
+- 所有 nginx 模板统一使用 `log_format topems_safe`：只记录 `method + $uri + $server_protocol`，**不落 query string**，避免 token/password 类参数写入日志。
+- `nginx/topems.conf`（Linux 模板）：`http` 块定义 `topems_safe`，80/443 server 级写 `/var/log/nginx/topems_access.log`；`/health`、`/metrics` 保持 `access_log off`。
+- `nginx/macos/`（macOS 生产镜像模板，对应 `/opt/homebrew/etc/nginx/`）：
+  - `nginx.conf`：定义 `topems_safe`；全局 `access_log` 保持注释，由 server 级显式开启（避免默认 server 另写一份未轮转日志）。
+  - `servers/topems.conf`、`servers/topems-ssl.conf`：server 级 `access_log __TOPEMS_HOME__/nginx/logs/access.log topems_safe`。
+  - 占位符：`__TOPEMS_HOME__` = 应用根目录（如 `$HOME/topems`）；`__TOPEMS_WEB_ROOT__` = 前端静态目录（如 `<repo>/dist/current`）。部署前按环境替换，模板本身不含用户目录硬编码。
+- 轮转：`scripts/rotate-nginx-logs.sh`，PID 默认 `/opt/homebrew/var/run/nginx.pid`（缺失回退 `$TOPEMS_HOME/nginx/nginx.pid`），保留最近 `KEEP_DAYS`（默认 7）份。
+- `scripts/deploy-prod.sh` 不会生成或覆盖上述 nginx 配置，仅在 `--frontend` 时把 `servers/topems.conf` 的 `root` 改为 `<repo>/dist/current` 并 reload。
 
 ## Nginx TLS 证书（`nginx/topems-ca.crt`）
 

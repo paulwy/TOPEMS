@@ -25,7 +25,7 @@ OUT="${1:-/tmp/topems-nginx-dev}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$REPO_ROOT/deploy/nginx/topems.conf"
 
-mkdir -p "$OUT/certs" "$OUT/html"
+mkdir -p "$OUT/certs" "$OUT/html" "$OUT/logs"
 echo "ok" > "$OUT/html/index.html"
 
 # 自签证书（30 天，CN=localhost + SAN）
@@ -47,6 +47,7 @@ s = s.replace("    use epoll;\n", "")                       # 2
 s = s.replace("pid /run/nginx.pid;", "pid %s/nginx.pid;" % out)  # 3
 s = s.replace("include /etc/nginx/mime.types;", "include /opt/homebrew/etc/nginx/mime.types;")  # 4
 s = s.replace("/etc/nginx/certs/", "%s/certs/" % out)       # 5
+s = s.replace("/var/log/nginx/", "%s/logs/" % out)          # 5b: 访问日志落演练目录（避免本机无 /var/log/nginx 权限）
 s = re.sub(r"(server localhost:)\d+", r"\g<1>8099", s)      # 6
 s = re.sub(r"^[ \t]*brotli[^;]*;[ \t]*\n", "", s, flags=re.M)  # 7
 # 7b: root 改演练 html（覆盖 TOPEMS 生产 root /var/www/topems/web 与 nginx 默认 /usr/share/nginx/html；
