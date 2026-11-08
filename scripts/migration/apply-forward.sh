@@ -246,7 +246,6 @@ fi
 
 echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}${ONLY_RAW:+，only=$ONLY_RAW}）"
 [[ ${#DEFERRED[@]} -gt 0 ]] && { echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）："; printf '  %s\n' "${DEFERRED[@]}"; }
-FAILED=()
 for f in "${PENDING[@]}"; do
   b="$(basename "$f")"
   v="${b%%_*}"
@@ -259,9 +258,11 @@ for f in "${PENDING[@]}"; do
     remote_sha="$(remote_run "shasum -a 256 $(sq "$remote_path")" | awk '{print $1}')"
     if [[ "$local_sha" != "$remote_sha" ]]; then
       echo "   FAILED：远端迁移文件 sha256 不一致 ${b}（local=$local_sha remote=${remote_sha:-<missing>}）" >&2
-      FAILED+=("$b")
       rm -f "$tmp"
-      continue
+      # 2026-11-09 事故复盘：本脚本原先用 FAILED 数组累计、循环结束后才退出，
+      # 导致 20261108135000 失败后仍继续执行 20261108140000 并 COMMIT，
+      # 生产出现「账本半应用 + 旧唯一键已删」的中间态。迁移必须 fail-fast。
+      exit 1
     fi
     {
       printf '\\i %s\n' "$remote_path"
@@ -271,7 +272,9 @@ for f in "${PENDING[@]}"; do
     if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f - < "$tmp" > /tmp/topems_forward_last.log 2>&1; then
       echo "   FAILED" >&2
       tail -5 /tmp/topems_forward_last.log >&2
-      FAILED+=("$b")
+      rm -f "$tmp"
+      echo "== 中止：${b} 失败，后续迁移未执行" >&2
+      exit 1
     fi
   else
     {
@@ -282,17 +285,13 @@ for f in "${PENDING[@]}"; do
     if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f "$tmp" > /tmp/topems_forward_last.log 2>&1; then
       echo "   FAILED" >&2
       tail -5 /tmp/topems_forward_last.log >&2
-      FAILED+=("$b")
+      rm -f "$tmp"
+      echo "== 中止：${b} 失败，后续迁移未执行" >&2
+      exit 1
     fi
   fi
   rm -f "$tmp"
 done
 
-if [[ ${#FAILED[@]} -gt 0 ]]; then
-  echo "== 失败 ${#FAILED[@]} 条" >&2
-  printf '  %s\n' "${FAILED[@]}" >&2
-  exit 1
-fi
-
-echo "== OK：应用 ${#PENDING[@]} 条，失败 0"
+echo "== OK：应用 ${#PENDING[@]} 条，无失败"
 exit 0
