@@ -54,7 +54,7 @@ deploy/
   - `servers/topems.conf`、`servers/topems-ssl.conf`：server 级 `access_log __TOPEMS_HOME__/nginx/logs/access.log topems_safe`。
   - 占位符：`__TOPEMS_HOME__` = 应用根目录（如 `$HOME/topems`）；`__TOPEMS_WEB_ROOT__` = 前端静态目录（如 `<repo>/dist/current`）。部署前按环境替换，模板本身不含用户目录硬编码。
 - 轮转：`scripts/rotate-nginx-logs.sh`，PID 默认 `/opt/homebrew/var/run/nginx.pid`（缺失回退 `$TOPEMS_HOME/nginx/nginx.pid`），保留最近 `KEEP_DAYS`（默认 7）份。
-- `scripts/deploy-prod.sh` 不会生成或覆盖上述 nginx 配置，仅在 `--frontend` 时把 `servers/topems.conf` 的 `root` 改为 `<repo>/dist/current` 并 reload。
+- `scripts/deploy-prod.sh` 不会生成或覆盖上述 nginx 配置，仅在 `--frontend` 时把 `servers/topems.conf` 与 `servers/topems-ssl.conf` 的 `root` 统一改为 `<repo>/dist/current` 并 reload。
 
 ## Nginx TLS 证书（`nginx/topems-ca.crt`）
 
