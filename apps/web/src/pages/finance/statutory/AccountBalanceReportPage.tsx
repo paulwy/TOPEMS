@@ -11,7 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { reportApi } from '@/api/finance/report';
-import type { AccountBalanceReport, ApiResponse, UnpostedInfo } from '@/types/finance';
+import type { AccountBalanceReport, ApiResponse } from '@/types/finance';
 import { PageContainer } from '@/components/common';
 import { StatutoryReportFilters } from './StatutoryReportFilters';
 import {
@@ -35,8 +35,7 @@ async function fetchAccountBalance(params: {
     return {
       report: response.data,
       checks: response.data.checks ?? [],
-      unposted:
-        (response.data as AccountBalanceReport & { unposted?: UnpostedInfo }).unposted ?? null,
+      unposted: response.data.unposted ?? null,
       conflict: false,
     };
   } catch (error) {
@@ -45,7 +44,7 @@ async function fetchAccountBalance(params: {
       return {
         report: null,
         checks: payload.checks ?? [],
-        unposted: (payload as AccountBalanceReport & { unposted?: UnpostedInfo }).unposted ?? null,
+        unposted: payload.unposted ?? null,
         conflict: true,
       };
     }
@@ -68,7 +67,6 @@ export default function AccountBalanceReportPage() {
   const outcome = reportQuery.data;
   const checks = outcome?.checks ?? [];
   const report = outcome?.report ?? null;
-  // 科目余额表当前契约未下发 unposted；若后端补齐则自动展示，不在此处拼凑。
   const unposted = outcome?.unposted ?? null;
   const isEmpty =
     !!report &&
@@ -112,6 +110,10 @@ export default function AccountBalanceReportPage() {
 
       {checks.length > 0 && <ChecksAlert checks={checks} />}
 
+      {!reportQuery.isLoading && !reportQuery.isError && unposted && (
+        <UnpostedBanner unposted={unposted} />
+      )}
+
       {!reportQuery.isLoading && !reportQuery.isError && isEmpty && (
         <ReportEmpty
           title={t('finance.statutory.accountBalance.emptyTitle')}
@@ -120,96 +122,93 @@ export default function AccountBalanceReportPage() {
       )}
 
       {!reportQuery.isLoading && !reportQuery.isError && report && !isEmpty && (
-        <>
-          {unposted && <UnpostedBanner unposted={unposted} />}
-          <Paper variant='outlined'>
-            <TableContainer sx={{ maxHeight: 640 }}>
-              <Table
-                size='small'
-                stickyHeader
-                aria-label={t('finance.statutory.accountBalance.title')}
-              >
-                <TableHead>
-                  <TableRow>
-                    <TableCell rowSpan={2}>
-                      {t('finance.statutory.accountBalance.accountCode')}
-                    </TableCell>
-                    <TableCell rowSpan={2}>
-                      {t('finance.statutory.accountBalance.accountName')}
-                    </TableCell>
+        <Paper variant='outlined'>
+          <TableContainer sx={{ maxHeight: 640 }}>
+            <Table
+              size='small'
+              stickyHeader
+              aria-label={t('finance.statutory.accountBalance.title')}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell rowSpan={2}>
+                    {t('finance.statutory.accountBalance.accountCode')}
+                  </TableCell>
+                  <TableCell rowSpan={2}>
+                    {t('finance.statutory.accountBalance.accountName')}
+                  </TableCell>
+                  <TableCell
+                    align='center'
+                    colSpan={2}
+                  >
+                    {t('finance.statutory.accountBalance.opening')}
+                  </TableCell>
+                  <TableCell
+                    align='center'
+                    colSpan={2}
+                  >
+                    {t('finance.statutory.accountBalance.periodMovement')}
+                  </TableCell>
+                  <TableCell
+                    align='center'
+                    colSpan={2}
+                  >
+                    {t('finance.statutory.accountBalance.ytd')}
+                  </TableCell>
+                  <TableCell
+                    align='center'
+                    colSpan={2}
+                  >
+                    {t('finance.statutory.accountBalance.closing')}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  {[0, 1, 2, 3].flatMap((group) => [
                     <TableCell
-                      align='center'
-                      colSpan={2}
+                      key={`debit-${group}`}
+                      align='right'
                     >
-                      {t('finance.statutory.accountBalance.opening')}
-                    </TableCell>
+                      {t('finance.statutory.accountBalance.debit')}
+                    </TableCell>,
                     <TableCell
-                      align='center'
-                      colSpan={2}
+                      key={`credit-${group}`}
+                      align='right'
                     >
-                      {t('finance.statutory.accountBalance.periodMovement')}
-                    </TableCell>
-                    <TableCell
-                      align='center'
-                      colSpan={2}
-                    >
-                      {t('finance.statutory.accountBalance.ytd')}
-                    </TableCell>
-                    <TableCell
-                      align='center'
-                      colSpan={2}
-                    >
-                      {t('finance.statutory.accountBalance.closing')}
-                    </TableCell>
+                      {t('finance.statutory.accountBalance.credit')}
+                    </TableCell>,
+                  ])}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {report.items.map((item) => (
+                  <TableRow key={item.account_id}>
+                    <TableCell>{item.account_code}</TableCell>
+                    <TableCell>{item.account_name}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.opening_debit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.opening_credit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.period_debit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.period_credit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.ytd_debit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.ytd_credit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.closing_debit)}</TableCell>
+                    <TableCell align='right'>{formatMoney(item.closing_credit)}</TableCell>
                   </TableRow>
-                  <TableRow>
-                    {[0, 1, 2, 3].flatMap((group) => [
-                      <TableCell
-                        key={`debit-${group}`}
-                        align='right'
-                      >
-                        {t('finance.statutory.accountBalance.debit')}
-                      </TableCell>,
-                      <TableCell
-                        key={`credit-${group}`}
-                        align='right'
-                      >
-                        {t('finance.statutory.accountBalance.credit')}
-                      </TableCell>,
-                    ])}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {report.items.map((item) => (
-                    <TableRow key={item.account_id}>
-                      <TableCell>{item.account_code}</TableCell>
-                      <TableCell>{item.account_name}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.opening_debit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.opening_credit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.period_debit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.period_credit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.ytd_debit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.ytd_credit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.closing_debit)}</TableCell>
-                      <TableCell align='right'>{formatMoney(item.closing_credit)}</TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow sx={{ '& td': { fontWeight: 600 } }}>
-                    <TableCell colSpan={2}>{t('finance.statutory.accountBalance.total')}</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_opening_debit)}</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_opening_credit)}</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_period_debit)}</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_period_credit)}</TableCell>
-                    <TableCell align='right'>—</TableCell>
-                    <TableCell align='right'>—</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_closing_debit)}</TableCell>
-                    <TableCell align='right'>{formatMoney(report.total_closing_credit)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </>
+                ))}
+                <TableRow sx={{ '& td': { fontWeight: 600 } }}>
+                  <TableCell colSpan={2}>{t('finance.statutory.accountBalance.total')}</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_opening_debit)}</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_opening_credit)}</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_period_debit)}</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_period_credit)}</TableCell>
+                  <TableCell align='right'>—</TableCell>
+                  <TableCell align='right'>—</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_closing_debit)}</TableCell>
+                  <TableCell align='right'>{formatMoney(report.total_closing_credit)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
     </PageContainer>
   );

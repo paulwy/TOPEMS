@@ -461,6 +461,8 @@ pub struct AccountBalanceReport {
     pub total_closing_debit: Decimal,
     #[serde(serialize_with = "money_str::serialize")]
     pub total_closing_credit: Decimal,
+    /// 未过账凭证提示：口径与资产负债表/利润表一致，只提示不计入表内金额。
+    pub unposted: UnpostedInfo,
     pub balanced: bool,
     pub checks: Vec<BalanceCheckIssue>,
 }

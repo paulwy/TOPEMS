@@ -275,3 +275,126 @@ async fn test_auxiliary_account() {
     assert_eq!(aux_account.name, "测试项目");
     assert_eq!(aux_account.aux_type, AuxType::Project);
 }
+
+/// 存在 draft 凭证时，科目余额表接口返回非零 `unposted`，且未过账金额不进入表内合计。
+#[tokio::test]
+#[ignore = "requires PostgreSQL"]
+async fn test_account_balance_report_unposted_not_in_totals() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
+    let pool = create_test_pool().await;
+    let tenant_id = create_test_tenant(&pool).await;
+    let company_id = Uuid::new_v4();
+    let service = FinanceService::new(
+        pool.clone(),
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
+            .expect("Failed to create workflow client"),
+    );
+
+    let period = "202611";
+    let cash_id = Uuid::new_v4();
+    let payable_id = Uuid::new_v4();
+
+    for (id, code, name, account_type) in [
+        (cash_id, "1001", "库存现金", "asset"),
+        (payable_id, "2001", "应付账款", "liability"),
+    ] {
+        sqlx::query(
+            r#"INSERT INTO finance.core_finance_accounts (id, tenant_id, code, name, account_type)
+               VALUES ($1, $2, $3, $4, $5::account_type)"#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .bind(code)
+        .bind(name)
+        .bind(account_type)
+        .execute(&pool)
+        .await
+        .expect("Failed to create account");
+    }
+
+    // 已过账凭证：进入总账，构成本期借贷各 1,000。
+    let posted_voucher_id = Uuid::new_v4();
+    sqlx::query(
+        r#"INSERT INTO finance.core_finance_vouchers
+             (id, tenant_id, company_id, voucher_no, voucher_date, period,
+              voucher_type, total_debit, total_credit, status, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, 'general', 1000, 1000, 'posted', 'test_user')"#,
+    )
+    .bind(posted_voucher_id)
+    .bind(tenant_id)
+    .bind(company_id)
+    .bind("TEST-AB-POSTED")
+    .bind(Utc::now())
+    .bind(period)
+    .execute(&pool)
+    .await
+    .expect("Failed to create posted voucher");
+
+    for (account_id, code, name, debit, credit) in [
+        (cash_id, "1001", "库存现金", 1000_i64, 0_i64),
+        (payable_id, "2001", "应付账款", 0, 1000),
+    ] {
+        sqlx::query(
+            r#"INSERT INTO finance.core_finance_ledger
+                 (tenant_id, company_id, account_id, account_code, account_name,
+                  voucher_id, voucher_no, voucher_date, period, debit, credit)
+               VALUES ($1, $2, $3, $4, $5, $6, 'TEST-AB-POSTED', $7, $8, $9, $10)"#,
+        )
+        .bind(tenant_id)
+        .bind(company_id)
+        .bind(account_id)
+        .bind(code)
+        .bind(name)
+        .bind(posted_voucher_id)
+        .bind(Utc::now())
+        .bind(period)
+        .bind(debit)
+        .bind(credit)
+        .execute(&pool)
+        .await
+        .expect("Failed to create ledger entry");
+    }
+
+    // 未过账凭证：不进总账，只能在 unposted 提示里出现。
+    sqlx::query(
+        r#"INSERT INTO finance.core_finance_vouchers
+             (id, tenant_id, company_id, voucher_no, voucher_date, period,
+              voucher_type, total_debit, total_credit, status, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, 'general', 500, 500, 'draft', 'test_user')"#,
+    )
+    .bind(Uuid::new_v4())
+    .bind(tenant_id)
+    .bind(company_id)
+    .bind("TEST-AB-DRAFT")
+    .bind(Utc::now())
+    .bind(period)
+    .execute(&pool)
+    .await
+    .expect("Failed to create draft voucher");
+
+    let report = service
+        .get_account_balance_report(tenant_id, company_id, period)
+        .await
+        .expect("Failed to get account balance report");
+
+    assert_eq!(report.unposted.count, 1, "应提示 1 张未过账凭证");
+    assert_eq!(
+        report.unposted.amount,
+        Decimal::from(500),
+        "未过账提示金额应为 draft 凭证合计"
+    );
+    assert!(report.balanced, "表内勾稽应平衡");
+    assert_eq!(
+        report.total_period_debit,
+        Decimal::from(1000),
+        "本期借方只含已过账金额"
+    );
+    assert_eq!(
+        report.total_period_credit,
+        Decimal::from(1000),
+        "本期贷方只含已过账金额"
+    );
+}

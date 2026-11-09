@@ -941,6 +941,7 @@ export interface AccountBalanceReport {
   total_period_credit: string;
   total_closing_debit: string;
   total_closing_credit: string;
+  unposted: UnpostedInfo;
   balanced: boolean;
   checks: BalanceCheckIssue[];
 }

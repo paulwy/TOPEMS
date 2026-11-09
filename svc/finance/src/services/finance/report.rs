@@ -327,7 +327,8 @@ impl FinanceService {
     ) -> Result<AccountBalanceReport, TopemsError> {
         let year_start = format!("{}01", &period[..4]);
 
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             WITH base AS (
                 SELECT ob.account_id,
@@ -391,7 +392,8 @@ impl FinanceService {
             WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
             ORDER BY a.code
             "#,
-        )
+            "erp"
+        ))
         .bind(tenant_id)
         .bind(company_id)
         .bind(period)
@@ -443,11 +445,13 @@ impl FinanceService {
 
         let mut checks = Vec::new();
 
-        let unlinked: i64 = sqlx::query_scalar(
+        let unlinked: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"SELECT COUNT(*) FROM erp.opening_balances
                WHERE tenant_id = $1 AND company_id = $2
                  AND deleted_at IS NULL AND account_id IS NULL"#,
-        )
+            "erp"
+        ))
         .bind(tenant_id)
         .bind(company_id)
         .fetch_one(&self.db_pool)
@@ -497,6 +501,11 @@ impl FinanceService {
 
         let balanced = checks.is_empty();
 
+        // 未过账凭证只做提示，不计入 items 与各合计。
+        let unposted = self
+            .get_unposted_info(tenant_id, company_id, period)
+            .await?;
+
         Ok(AccountBalanceReport {
             company_id,
             period: period.to_string(),
@@ -507,6 +516,7 @@ impl FinanceService {
             total_period_credit,
             total_closing_debit,
             total_closing_credit,
+            unposted,
             balanced,
             checks,
         })
@@ -579,7 +589,8 @@ impl FinanceService {
         company_id: Uuid,
         period: &str,
     ) -> Result<(StatutoryBalanceSheet, StatutoryIncomeStatement), TopemsError> {
-        let bs_rows = sqlx::query(
+        let bs_rows = sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             WITH base AS (
                 SELECT ob.account_id, ob.period AS base_period,
@@ -636,7 +647,8 @@ impl FinanceService {
             ) m ON TRUE
             WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
             "#,
-        )
+            "erp"
+        ))
         .bind(tenant_id)
         .bind(company_id)
         .bind(period)
