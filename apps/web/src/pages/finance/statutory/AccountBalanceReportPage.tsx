@@ -163,22 +163,20 @@ export default function AccountBalanceReportPage() {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    {[0, 1, 2, 3].map((group) => (
+                    {[0, 1, 2, 3].flatMap((group) => [
                       <TableCell
                         key={`debit-${group}`}
                         align='right'
                       >
                         {t('finance.statutory.accountBalance.debit')}
-                      </TableCell>
-                    ))}
-                    {[0, 1, 2, 3].map((group) => (
+                      </TableCell>,
                       <TableCell
                         key={`credit-${group}`}
                         align='right'
                       >
                         {t('finance.statutory.accountBalance.credit')}
-                      </TableCell>
-                    ))}
+                      </TableCell>,
+                    ])}
                   </TableRow>
                 </TableHead>
                 <TableBody>
