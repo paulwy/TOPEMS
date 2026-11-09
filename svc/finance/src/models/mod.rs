@@ -750,6 +750,60 @@ pub struct IncomeItem {
     pub amount: Decimal,
 }
 
+/// 报表行（映射表驱动后的输出单位）。
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct ReportLineItem {
+    pub line_code: String,
+    pub line_name: String,
+    pub line_level: i16,
+    pub sort_no: i32,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub amount: Decimal,
+}
+
+/// 未过账凭证提示：只提示，不进表（P3 第二批）。
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct UnpostedInfo {
+    pub count: i64,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub amount: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct StatutoryBalanceSheet {
+    pub company_id: Uuid,
+    pub period: String,
+    pub assets: Vec<ReportLineItem>,
+    pub liabilities: Vec<ReportLineItem>,
+    pub equity: Vec<ReportLineItem>,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_assets: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_liabilities: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_equity: Decimal,
+    pub unposted: UnpostedInfo,
+    pub balanced: bool,
+    pub checks: Vec<BalanceCheckIssue>,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct StatutoryIncomeStatement {
+    pub company_id: Uuid,
+    pub period: String,
+    pub revenues: Vec<ReportLineItem>,
+    pub expenses: Vec<ReportLineItem>,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_revenue: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_expense: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub net_income: Decimal,
+    pub unposted: UnpostedInfo,
+    pub balanced: bool,
+    pub checks: Vec<BalanceCheckIssue>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "aux_type")]
 #[sqlx(rename_all = "snake_case")]

@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use sqlx::Row;
+use std::collections::BTreeMap;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -518,5 +519,359 @@ fn split_net(net: Decimal) -> (Decimal, Decimal) {
         (net, Decimal::ZERO)
     } else {
         (Decimal::ZERO, -net)
+    }
+}
+
+#[derive(Default)]
+struct LineAcc {
+    line_code: String,
+    line_name: String,
+    line_level: i16,
+    sort_no: i32,
+    amount: Decimal,
+    include_unclosed_pl: bool,
+}
+
+fn accumulate_line(
+    map: &mut BTreeMap<(i32, String), LineAcc>,
+    line_code: String,
+    line_name: String,
+    line_level: i16,
+    sort_no: i32,
+    include_unclosed_pl: bool,
+    amount: Decimal,
+) {
+    let entry = map
+        .entry((sort_no, line_code.clone()))
+        .or_insert_with(|| LineAcc {
+            line_code,
+            line_name,
+            line_level,
+            sort_no,
+            amount: Decimal::ZERO,
+            include_unclosed_pl,
+        });
+    entry.amount += amount;
+    entry.include_unclosed_pl = entry.include_unclosed_pl || include_unclosed_pl;
+}
+
+fn into_line_items(map: BTreeMap<(i32, String), LineAcc>) -> Vec<ReportLineItem> {
+    map.into_values()
+        .map(|acc| ReportLineItem {
+            line_code: acc.line_code,
+            line_name: acc.line_name,
+            line_level: acc.line_level,
+            sort_no: acc.sort_no,
+            amount: acc.amount,
+        })
+        .collect()
+}
+
+impl FinanceService {
+    /// 映射表驱动的法定报表：资产负债表 + 利润表 + 三道勾稽。
+    ///
+    /// 科目归类全部来自 `finance.core_finance_report_line_map`：
+    /// 租户/公司级 override 优先于全局模板，同级别按最长前缀优先。
+    /// 未过账凭证只统计提示，不进表（总账只有过账后才写入）。
+    pub async fn get_statutory_reports(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        period: &str,
+    ) -> Result<(StatutoryBalanceSheet, StatutoryIncomeStatement), TopemsError> {
+        let bs_rows = sqlx::query(
+            r#"
+            WITH base AS (
+                SELECT ob.account_id, ob.period AS base_period,
+                       (ob.debit_balance - ob.credit_balance) AS base_net
+                FROM erp.opening_balances ob
+                WHERE ob.tenant_id = $1 AND ob.company_id = $2
+                  AND ob.deleted_at IS NULL AND ob.account_id IS NOT NULL
+                  AND ob.period <= $3
+                  AND ob.period = (
+                      SELECT max(ob2.period) FROM erp.opening_balances ob2
+                      WHERE ob2.tenant_id = ob.tenant_id AND ob2.company_id = ob.company_id
+                        AND ob2.account_id = ob.account_id AND ob2.deleted_at IS NULL
+                        AND ob2.period <= $3
+                  )
+            ),
+            opening_move AS (
+                SELECT l.account_id, SUM(l.debit - l.credit) AS net
+                FROM finance.core_finance_ledger l
+                LEFT JOIN base b ON b.account_id = l.account_id
+                WHERE l.tenant_id = $1 AND l.company_id = $2 AND l.period < $3
+                  AND (b.base_period IS NULL OR l.period > b.base_period)
+                GROUP BY l.account_id
+            ),
+            period_move AS (
+                SELECT l.account_id, SUM(l.debit - l.credit) AS net
+                FROM finance.core_finance_ledger l
+                WHERE l.tenant_id = $1 AND l.company_id = $2 AND l.period = $3
+                GROUP BY l.account_id
+            )
+            SELECT a.code AS account_code,
+                   a.account_type::text AS account_type,
+                   COALESCE(pm.net, 0) AS period_net,
+                   COALESCE(b.base_net, 0) + COALESCE(om.net, 0) + COALESCE(pm.net, 0) AS closing_net,
+                   m.line_code, m.line_name, m.line_level, m.sort_no,
+                   m.direction, m.section, m.include_unclosed_pl
+            FROM finance.core_finance_accounts a
+            LEFT JOIN base b ON b.account_id = a.id
+            LEFT JOIN opening_move om ON om.account_id = a.id
+            LEFT JOIN period_move pm ON pm.account_id = a.id
+            LEFT JOIN LATERAL (
+                SELECT mm.line_code, mm.line_name, mm.line_level, mm.sort_no,
+                       mm.direction, mm.section, mm.include_unclosed_pl
+                FROM finance.core_finance_report_line_map mm
+                WHERE mm.report_type = 'balance_sheet'
+                  AND (mm.tenant_id IS NULL OR mm.tenant_id = $1)
+                  AND (mm.company_id IS NULL OR mm.company_id = $2)
+                  AND mm.section IN ('asset', 'liability', 'equity')
+                  AND a.code LIKE mm.match_value
+                ORDER BY (mm.tenant_id IS NOT NULL) DESC,
+                         (mm.company_id IS NOT NULL) DESC,
+                         length(mm.match_value) DESC,
+                         mm.sort_no
+                LIMIT 1
+            ) m ON TRUE
+            WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(company_id)
+        .bind(period)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        let mut asset_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
+        let mut liability_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
+        let mut equity_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
+        let mut unclosed_pl = Decimal::ZERO;
+        let mut unclosed_pl_delta = Decimal::ZERO;
+        let mut current_year_profit_delta = Decimal::ZERO;
+        let mut equity_delta = Decimal::ZERO;
+
+        for row in &bs_rows {
+            let account_code: String = row.get("account_code");
+            let account_type: String = row.get("account_type");
+            let period_net: Decimal = row.get("period_net");
+            let closing_net: Decimal = row.get("closing_net");
+
+            if account_type == "income" || account_type == "expense" {
+                unclosed_pl += -closing_net;
+                unclosed_pl_delta += -period_net;
+            }
+            if account_code.starts_with("4103") {
+                current_year_profit_delta += -period_net;
+            }
+
+            let section: Option<String> = row.try_get("section").unwrap_or(None);
+            let Some(section) = section else { continue };
+            let direction: String = row.get("direction");
+            let amount = if direction == "debit" {
+                closing_net
+            } else {
+                -closing_net
+            };
+            if section == "equity" {
+                equity_delta += -period_net;
+            }
+
+            let args = (
+                row.get::<String, _>("line_code"),
+                row.get::<String, _>("line_name"),
+                row.get::<i16, _>("line_level"),
+                row.get::<i32, _>("sort_no"),
+                row.get::<bool, _>("include_unclosed_pl"),
+            );
+            let target = match section.as_str() {
+                "asset" => &mut asset_map,
+                "liability" => &mut liability_map,
+                _ => &mut equity_map,
+            };
+            accumulate_line(target, args.0, args.1, args.2, args.3, args.4, amount);
+        }
+
+        // 未结转损益并入「本年利润」行（映射表 include_unclosed_pl 标记）。
+        for map in [&mut asset_map, &mut liability_map, &mut equity_map] {
+            for acc in map.values_mut() {
+                if acc.include_unclosed_pl {
+                    acc.amount += unclosed_pl;
+                }
+            }
+        }
+
+        let assets = into_line_items(asset_map);
+        let liabilities = into_line_items(liability_map);
+        let equity = into_line_items(equity_map);
+        let total_assets: Decimal = assets.iter().map(|i| i.amount).sum();
+        let total_liabilities: Decimal = liabilities.iter().map(|i| i.amount).sum();
+        let total_equity: Decimal = equity.iter().map(|i| i.amount).sum();
+
+        let is_rows = sqlx::query(
+            r#"
+            WITH period_move AS (
+                SELECT l.account_id, SUM(l.debit - l.credit) AS net
+                FROM finance.core_finance_ledger l
+                WHERE l.tenant_id = $1 AND l.company_id = $2 AND l.period = $3
+                  AND NOT EXISTS (
+                      SELECT 1 FROM finance.core_finance_vouchers v
+                      WHERE v.id = l.voucher_id AND v.source_module = 'finance_period_close'
+                  )
+                GROUP BY l.account_id
+            )
+            SELECT a.code AS account_code,
+                   COALESCE(pm.net, 0) AS period_net,
+                   m.line_code, m.line_name, m.line_level, m.sort_no, m.direction, m.section
+            FROM finance.core_finance_accounts a
+            LEFT JOIN period_move pm ON pm.account_id = a.id
+            JOIN LATERAL (
+                SELECT mm.line_code, mm.line_name, mm.line_level, mm.sort_no, mm.direction, mm.section
+                FROM finance.core_finance_report_line_map mm
+                WHERE mm.report_type = 'income_statement'
+                  AND (mm.tenant_id IS NULL OR mm.tenant_id = $1)
+                  AND (mm.company_id IS NULL OR mm.company_id = $2)
+                  AND mm.section IN ('income', 'expense')
+                  AND a.code LIKE mm.match_value
+                ORDER BY (mm.tenant_id IS NOT NULL) DESC,
+                         (mm.company_id IS NOT NULL) DESC,
+                         length(mm.match_value) DESC,
+                         mm.sort_no
+                LIMIT 1
+            ) m ON TRUE
+            WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(company_id)
+        .bind(period)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        let mut revenue_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
+        let mut expense_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
+        for row in &is_rows {
+            let period_net: Decimal = row.get("period_net");
+            let direction: String = row.get("direction");
+            let section: String = row.get("section");
+            let amount = if direction == "debit" {
+                period_net
+            } else {
+                -period_net
+            };
+            let target = if section == "income" {
+                &mut revenue_map
+            } else {
+                &mut expense_map
+            };
+            accumulate_line(
+                target,
+                row.get("line_code"),
+                row.get("line_name"),
+                row.get("line_level"),
+                row.get("sort_no"),
+                false,
+                amount,
+            );
+        }
+
+        let revenues = into_line_items(revenue_map);
+        let expenses = into_line_items(expense_map);
+        let total_revenue: Decimal = revenues.iter().map(|i| i.amount).sum();
+        let total_expense: Decimal = expenses.iter().map(|i| i.amount).sum();
+        let net_income = total_revenue - total_expense;
+
+        let unposted = self
+            .get_unposted_info(tenant_id, company_id, period)
+            .await?;
+
+        let mut checks = Vec::new();
+        let bs_diff = total_assets - (total_liabilities + total_equity);
+        if bs_diff != Decimal::ZERO {
+            checks.push(BalanceCheckIssue {
+                code: "balance_sheet_unbalanced".to_string(),
+                message: "资产合计 != 负债合计 + 所有者权益合计".to_string(),
+                expected: total_assets,
+                actual: total_liabilities + total_equity,
+                difference: bs_diff,
+            });
+        }
+
+        let profit_diff = net_income - (current_year_profit_delta + unclosed_pl_delta);
+        if profit_diff != Decimal::ZERO {
+            checks.push(BalanceCheckIssue {
+                code: "profit_vs_current_year_profit".to_string(),
+                message: "净利润 != 本年利润科目变动（含未结转损益）".to_string(),
+                expected: net_income,
+                actual: current_year_profit_delta + unclosed_pl_delta,
+                difference: profit_diff,
+            });
+        }
+
+        let equity_diff = net_income - (equity_delta + unclosed_pl_delta);
+        if equity_diff != Decimal::ZERO {
+            checks.push(BalanceCheckIssue {
+                code: "profit_vs_equity_change".to_string(),
+                message: "净利润 != 所有者权益变动（含未结转损益）".to_string(),
+                expected: net_income,
+                actual: equity_delta + unclosed_pl_delta,
+                difference: equity_diff,
+            });
+        }
+
+        let balanced = checks.is_empty();
+        let checks_for_bs = checks.clone();
+
+        Ok((
+            StatutoryBalanceSheet {
+                company_id,
+                period: period.to_string(),
+                assets: if balanced { assets } else { Vec::new() },
+                liabilities: if balanced { liabilities } else { Vec::new() },
+                equity: if balanced { equity } else { Vec::new() },
+                total_assets,
+                total_liabilities,
+                total_equity,
+                unposted: unposted.clone(),
+                balanced,
+                checks: checks_for_bs,
+            },
+            StatutoryIncomeStatement {
+                company_id,
+                period: period.to_string(),
+                revenues: if balanced { revenues } else { Vec::new() },
+                expenses: if balanced { expenses } else { Vec::new() },
+                total_revenue,
+                total_expense,
+                net_income,
+                unposted,
+                balanced,
+                checks,
+            },
+        ))
+    }
+
+    async fn get_unposted_info(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        period: &str,
+    ) -> Result<UnpostedInfo, TopemsError> {
+        let row = sqlx::query(
+            r#"SELECT COUNT(*) AS cnt, COALESCE(SUM(total_debit), 0) AS amount
+               FROM finance.core_finance_vouchers
+               WHERE tenant_id = $1 AND company_id = $2 AND period = $3
+                 AND status IN ('draft', 'submitted', 'approved')"#,
+        )
+        .bind(tenant_id)
+        .bind(company_id)
+        .bind(period)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(UnpostedInfo {
+            count: row.get("cnt"),
+            amount: row.get("amount"),
+        })
     }
 }

@@ -383,8 +383,8 @@ impl FinanceService {
         let period = format!("{:04}12", year);
 
         let voucher = sqlx::query_as::<_, Voucher>(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, source_module)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, 'finance_period_close')
              RETURNING *"),
         )
         .bind(tenant_id)

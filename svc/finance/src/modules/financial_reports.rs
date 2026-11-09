@@ -1309,8 +1309,11 @@ pub async fn generate_balance_sheet(
         Err(resp) => return resp,
     };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    match service.get_balance_sheet(tenant_id, &req.period).await {
-        Ok(sheet) => {
+    match service
+        .get_statutory_reports(tenant_id, company_id, &req.period)
+        .await
+    {
+        Ok((sheet, _)) if sheet.balanced => {
             let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
             match upsert_report(
                 &state.pool,
@@ -1327,6 +1330,18 @@ pub async fn generate_balance_sheet(
                 Ok(report) => ApiResponse::success(report, "生成资产负债表成功"),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
+        }
+        Ok((sheet, _)) => {
+            // 勾稽不通过：409 + 差异明细，不落库、不出表。
+            let mut resp =
+                ApiResponse::<serde_json::Value>::error(409, "资产负债表勾稽未通过，已拒绝出表");
+            resp.data = Some(serde_json::json!({
+                "company_id": sheet.company_id,
+                "period": sheet.period,
+                "checks": sheet.checks,
+                "unposted": sheet.unposted,
+            }));
+            resp
         }
         Err(e) => ApiResponse::from(TopemsError::internal("生成失败", e)),
     }
@@ -1473,8 +1488,11 @@ pub async fn generate_income_statement(
         Err(resp) => return resp,
     };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    match service.get_income_statement(tenant_id, &req.period).await {
-        Ok(stmt) => {
+    match service
+        .get_statutory_reports(tenant_id, company_id, &req.period)
+        .await
+    {
+        Ok((_, stmt)) if stmt.balanced => {
             let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
             match upsert_report(
                 &state.pool,
@@ -1491,6 +1509,18 @@ pub async fn generate_income_statement(
                 Ok(report) => ApiResponse::success(report, "生成利润表成功"),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
+        }
+        Ok((_, stmt)) => {
+            // 勾稽不通过：409 + 差异明细，不落库、不出表。
+            let mut resp =
+                ApiResponse::<serde_json::Value>::error(409, "利润表勾稽未通过，已拒绝出表");
+            resp.data = Some(serde_json::json!({
+                "company_id": stmt.company_id,
+                "period": stmt.period,
+                "checks": stmt.checks,
+                "unposted": stmt.unposted,
+            }));
+            resp
         }
         Err(e) => ApiResponse::from(TopemsError::internal("生成失败", e)),
     }
