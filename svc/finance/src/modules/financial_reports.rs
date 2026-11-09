@@ -54,6 +54,52 @@ fn period_string((y, m): (i32, i32)) -> String {
     format!("{:04}{:02}", y, m)
 }
 
+/// 报表期间入口校验：兼容 `YYYYMM` 与 `YYYY-MM`，内部一律归一为 `YYYYMM`
+/// （与 account-balance 口径一致）。无法解析时直接 400，不允许把非法参数
+/// 当成“该期间无业务”静默返回 200 空表。
+fn normalize_report_period(raw: &str) -> Result<String, ApiResponse<serde_json::Value>> {
+    parse_period(raw)
+        .map(period_string)
+        .ok_or_else(|| ApiResponse::error(400, "period 格式无效，应为 YYYYMM（兼容 YYYY-MM）"))
+}
+
+/// 归一后的期间是否真的发生过总账业务：用于响应体区分
+/// “该期间确实无业务”（200 + has_data=false）与“期间参数无法解析”（400）。
+async fn period_has_business(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+    company_id: Uuid,
+    period: &str,
+) -> Result<bool, sqlx::Error> {
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_ledger
+         WHERE tenant_id = $1 AND company_id = $2 AND period = $3"
+    ))
+    .bind(tenant_id)
+    .bind(company_id)
+    .bind(period)
+    .fetch_one(pool)
+    .await?;
+    Ok(count > 0)
+}
+
+/// 在报表载荷上显式标注期间与数据状态，避免“空表”与“无业务”不可区分。
+fn annotate_period_business(
+    mut data: serde_json::Value,
+    period: &str,
+    has_business: bool,
+) -> serde_json::Value {
+    if let Some(obj) = data.as_object_mut() {
+        obj.insert("period".into(), serde_json::json!(period));
+        obj.insert("has_data".into(), serde_json::json!(has_business));
+        if !has_business {
+            obj.insert("data_status".into(), serde_json::json!("no_business"));
+        }
+    }
+    data
+}
+
 /// 期间借贷/净额汇总，全程 Decimal（NUMERIC(18,4)），不经 f64，避免尾差。
 async fn period_net_total(
     pool: &sqlx::PgPool,
@@ -1321,26 +1367,47 @@ pub async fn generate_balance_sheet(
         Ok(v) => v,
         Err(resp) => return resp,
     };
+    // 入参 `YYYY-MM` / `YYYYMM` 一律归一为 `YYYYMM`；无法解析直接 400。
+    let period = match normalize_report_period(&req.period) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service
-        .get_statutory_reports(tenant_id, company_id, &req.period)
+        .get_statutory_reports(tenant_id, company_id, &period)
         .await
     {
         Ok((sheet, _)) if sheet.balanced => {
-            let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
+            let has_business =
+                match period_has_business(&state.pool, tenant_id, company_id, &period).await {
+                    Ok(v) => v,
+                    Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
+                };
+            let data = annotate_period_business(
+                serde_json::to_value(&sheet).unwrap_or(serde_json::json!({})),
+                &period,
+                has_business,
+            );
             match upsert_report(
                 &state.pool,
                 tenant_id,
                 company_id,
                 "balance_sheet",
-                &req.period,
+                &period,
                 currency,
                 data,
                 &claims.username,
             )
             .await
             {
-                Ok(report) => ApiResponse::success(report, "生成资产负债表成功"),
+                Ok(report) => ApiResponse::success(
+                    report,
+                    if has_business {
+                        "生成资产负债表成功"
+                    } else {
+                        "生成资产负债表成功（该期间无业务数据）"
+                    },
+                ),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
@@ -1500,26 +1567,47 @@ pub async fn generate_income_statement(
         Ok(v) => v,
         Err(resp) => return resp,
     };
+    // 入参 `YYYY-MM` / `YYYYMM` 一律归一为 `YYYYMM`；无法解析直接 400。
+    let period = match normalize_report_period(&req.period) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service
-        .get_statutory_reports(tenant_id, company_id, &req.period)
+        .get_statutory_reports(tenant_id, company_id, &period)
         .await
     {
         Ok((_, stmt)) if stmt.balanced => {
-            let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
+            let has_business =
+                match period_has_business(&state.pool, tenant_id, company_id, &period).await {
+                    Ok(v) => v,
+                    Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
+                };
+            let data = annotate_period_business(
+                serde_json::to_value(&stmt).unwrap_or(serde_json::json!({})),
+                &period,
+                has_business,
+            );
             match upsert_report(
                 &state.pool,
                 tenant_id,
                 company_id,
                 "income_statement",
-                &req.period,
+                &period,
                 currency,
                 data,
                 &claims.username,
             )
             .await
             {
-                Ok(report) => ApiResponse::success(report, "生成利润表成功"),
+                Ok(report) => ApiResponse::success(
+                    report,
+                    if has_business {
+                        "生成利润表成功"
+                    } else {
+                        "生成利润表成功（该期间无业务数据）"
+                    },
+                ),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
@@ -2884,5 +2972,36 @@ mod tests {
         assert_eq!(query.currency_code.as_deref(), Some("CNY"));
         assert_eq!(query.page, Some(1));
         assert_eq!(query.page_size, Some(20));
+    }
+
+    #[test]
+    fn test_period_normalization_dash_and_compact_return_same_data() {
+        // 锁住：`2026-10` 与 `202610` 归一后完全一致。生成报表的查询、落库键
+        // 与响应载荷都只使用归一值，因此两个入参必然返回同一份数据。
+        let dash = normalize_report_period("2026-10").expect("YYYY-MM 应可解析");
+        let compact = normalize_report_period("202610").expect("YYYYMM 应可解析");
+        assert_eq!(dash, "202610");
+        assert_eq!(dash, compact);
+
+        let payload = serde_json::json!({"total_assets": "0", "balanced": true});
+        assert_eq!(
+            annotate_period_business(payload.clone(), &dash, false),
+            annotate_period_business(payload, &compact, false)
+        );
+    }
+
+    #[test]
+    fn test_period_normalization_rejects_unparseable_with_400() {
+        // 锁住：非法期间必须 4xx，不得静默返回 200 空表。
+        for raw in [
+            "2026-13", "202613", "2026/10", "2026-1", "26-10", "", "2026100", "2026-1a",
+        ] {
+            let resp = match normalize_report_period(raw) {
+                Ok(v) => panic!("input={raw:?} 应被拒绝，实际归一为 {v}"),
+                Err(e) => e,
+            };
+            assert_eq!(resp.code, 400, "input={raw:?}");
+            assert!(!resp.success, "input={raw:?}");
+        }
     }
 }
