@@ -362,13 +362,15 @@ impl FinanceService {
             ));
         }
 
-        let profit_account = match self.get_account_by_code(tenant_id, "3101", locale).await {
+        // 种子科目（20261108135000_p2a_single_ledger_convergence.sql）使用企业会计准则编码：
+        // 4103 本年利润 / 4104 利润分配。年结损益先归集到本年利润，缺失时退回利润分配。
+        let profit_account = match self.get_account_by_code(tenant_id, "4103", locale).await {
             Ok(account) => account,
             Err(_) => self
-                .get_account_by_code(tenant_id, "3103", locale)
+                .get_account_by_code(tenant_id, "4104", locale)
                 .await
                 .map_err(|_| {
-                    TopemsError::ValidationFailed("未找到本年利润科目(3101或3103)".to_string())
+                    TopemsError::ValidationFailed("未找到本年利润科目(4103或4104)".to_string())
                 })?,
         };
 

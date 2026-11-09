@@ -1096,6 +1096,8 @@ pub async fn get_subscription_history(
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct GenerateReportRequest {
     pub org_id: Option<String>,
+    /// P3：法人主体，必传（单公司租户也不省略）。
+    pub company_id: Option<String>,
     pub period: String,
     pub compare_period: Option<String>,
     pub currency_code: Option<String>,
@@ -1107,6 +1109,8 @@ pub struct GenerateReportRequest {
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct GetReportQuery {
     pub org_id: Option<String>,
+    /// P3：法人主体，必传（单公司租户也不省略）。
+    pub company_id: Option<String>,
     pub period: String,
     pub currency_code: Option<String>,
 }
@@ -1114,6 +1118,8 @@ pub struct GetReportQuery {
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct HistoryReportQuery {
     pub org_id: Option<String>,
+    /// P3：法人主体，必传（单公司租户也不省略）。
+    pub company_id: Option<String>,
     pub start_period: String,
     pub end_period: String,
     pub currency_code: Option<String>,
@@ -1124,23 +1130,27 @@ pub struct HistoryReportQuery {
 async fn upsert_report(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
+    company_id: Uuid,
     report_type: &str,
     period: &str,
     currency_code: &str,
     data: serde_json::Value,
     generated_by: &str,
 ) -> Result<serde_json::Value, sqlx::Error> {
+    // org_id 承接公司维度（历史唯一键 (report_type, org_id, period, currency_code) 不重建），
+    // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"
-        INSERT INTO financial_reports (report_type, org_id, tenant_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
-        VALUES ($1, $2, $2, $3, $4, 'draft', 'draft', $5, $6, NOW())
+        INSERT INTO financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
+        VALUES ($1, $3, $2, $3, $4, $5, 'draft', 'draft', $6, $7, NOW())
         ON CONFLICT (report_type, org_id, period, currency_code)
-        DO UPDATE SET data = EXCLUDED.data, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
-        RETURNING id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at
+        DO UPDATE SET data = EXCLUDED.data, company_id = EXCLUDED.company_id, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
+        RETURNING id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at
         "#),
     )
     .bind(report_type)
     .bind(tenant_id)
+    .bind(company_id)
     .bind(period)
     .bind(currency_code)
     .bind(data)
@@ -1152,6 +1162,7 @@ async fn upsert_report(
         "id": row.get::<Uuid, _>("id"),
         "report_type": row.get::<String, _>("report_type"),
         "org_id": row.get::<Option<Uuid>, _>("org_id"),
+        "company_id": row.get::<Uuid, _>("company_id"),
         "period": row.get::<String, _>("period"),
         "currency_code": row.get::<String, _>("currency_code"),
         "status": row.get::<String, _>("status"),
@@ -1164,19 +1175,22 @@ async fn upsert_report(
 async fn fetch_report(
     pool: &sqlx::PgPool,
     tenant_id: Option<Uuid>,
+    company_id: Uuid,
     report_type: &str,
     period: &str,
     currency_code: &str,
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let row = sqlx::query(
-        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period = $3 AND currency_code = $4"#),
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($5::uuid IS NULL OR company_id = $5)
+             AND report_type = $2 AND period = $3 AND currency_code = $4"#),
     )
     .bind(tenant_id)
     .bind(report_type)
     .bind(period)
     .bind(currency_code)
+    .bind(company_id)
     .fetch_optional(pool)
     .await?;
 
@@ -1185,6 +1199,7 @@ async fn fetch_report(
             "id": r.get::<Uuid, _>("id"),
             "report_type": r.get::<String, _>("report_type"),
             "org_id": r.get::<Option<Uuid>, _>("org_id"),
+            "company_id": r.get::<Uuid, _>("company_id"),
             "period": r.get::<String, _>("period"),
             "currency_code": r.get::<String, _>("currency_code"),
             "status": r.get::<String, _>("status"),
@@ -1199,6 +1214,7 @@ async fn fetch_report(
 async fn fetch_history(
     pool: &sqlx::PgPool,
     tenant_id: Option<Uuid>,
+    company_id: Uuid,
     report_type: &str,
     start_period: &str,
     end_period: &str,
@@ -1208,9 +1224,10 @@ async fn fetch_history(
 ) -> Result<(Vec<serde_json::Value>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
     let rows = sqlx::query(
-        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period >= $3 AND period <= $4
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($8::uuid IS NULL OR company_id = $8)
+             AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)
            ORDER BY period DESC
            LIMIT $6 OFFSET $7"#),
@@ -1222,13 +1239,15 @@ async fn fetch_history(
     .bind(currency_code)
     .bind(page_size)
     .bind(offset)
+    .bind(company_id)
     .fetch_all(pool)
     .await?;
 
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COUNT(*) FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period >= $3 AND period <= $4
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($6::uuid IS NULL OR company_id = $6)
+             AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)"#
     ))
     .bind(tenant_id)
@@ -1236,6 +1255,7 @@ async fn fetch_history(
     .bind(start_period)
     .bind(end_period)
     .bind(currency_code)
+    .bind(company_id)
     .fetch_one(pool)
     .await?;
 
@@ -1260,6 +1280,12 @@ async fn fetch_history(
     Ok((items, total))
 }
 
+/// P3：报表主体必须显式传入，单公司租户也不做省略推断。
+fn required_company_id(raw: Option<&str>) -> Result<Uuid, ApiResponse<serde_json::Value>> {
+    raw.and_then(|s| Uuid::parse_str(s).ok())
+        .ok_or_else(|| ApiResponse::error(400, "company_id 必传（单公司租户也不省略）"))
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
@@ -1278,6 +1304,10 @@ pub async fn generate_balance_sheet(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(req.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service.get_balance_sheet(tenant_id, &req.period).await {
         Ok(sheet) => {
@@ -1285,6 +1315,7 @@ pub async fn generate_balance_sheet(
             match upsert_report(
                 &state.pool,
                 tenant_id,
+                company_id,
                 "balance_sheet",
                 &req.period,
                 currency,
@@ -1350,9 +1381,14 @@ pub async fn get_balance_sheet(
         Some(tenant_id)
     };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_report(
         &state.pool,
         tenant_id_opt,
+        company_id,
         "balance_sheet",
         &params.period,
         currency,
@@ -1400,9 +1436,14 @@ pub async fn get_balance_sheet_history(
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_history(
         &state.pool,
         tenant_id,
+        company_id,
         "balance_sheet",
         &params.start_period,
         &params.end_period,
@@ -1427,6 +1468,10 @@ pub async fn generate_income_statement(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(req.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service.get_income_statement(tenant_id, &req.period).await {
         Ok(stmt) => {
@@ -1434,6 +1479,7 @@ pub async fn generate_income_statement(
             match upsert_report(
                 &state.pool,
                 tenant_id,
+                company_id,
                 "income_statement",
                 &req.period,
                 currency,
@@ -1462,9 +1508,14 @@ pub async fn get_income_statement(
         Some(tenant_id)
     };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_report(
         &state.pool,
         tenant_id_opt,
+        company_id,
         "income_statement",
         &params.period,
         currency,
@@ -1514,9 +1565,14 @@ pub async fn get_income_statement_history(
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_history(
         &state.pool,
         tenant_id,
+        company_id,
         "income_statement",
         &params.start_period,
         &params.end_period,
@@ -1541,6 +1597,10 @@ pub async fn generate_cash_flow(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(req.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service
         .get_cash_flow_statement(tenant_id, &req.period)
@@ -1551,6 +1611,7 @@ pub async fn generate_cash_flow(
             match upsert_report(
                 &state.pool,
                 tenant_id,
+                company_id,
                 "cash_flow",
                 &req.period,
                 currency,
@@ -1590,9 +1651,14 @@ pub async fn get_cash_flow(
         Some(tenant_id)
     };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_report(
         &state.pool,
         tenant_id_opt,
+        company_id,
         "cash_flow",
         &params.period,
         currency,
@@ -1631,9 +1697,14 @@ pub async fn get_cash_flow_history(
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let company_id = match required_company_id(params.company_id.as_deref()) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     match fetch_history(
         &state.pool,
         tenant_id,
+        company_id,
         "cash_flow",
         &params.start_period,
         &params.end_period,

@@ -4414,11 +4414,23 @@ pub async fn import_opening_balances(
         .ok()
         .flatten();
 
+        // P3：期初行必须带 account_id（报表按 id 归集并做一致性校验）。
+        let account_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT id FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND code = $2 LIMIT 1"
+        ))
+        .bind(tenant_id)
+        .bind(&subject_code)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten();
+
         let res = sqlx::query(only_own_schema_query!(
             "erp",
             r#"INSERT INTO erp.opening_balances
-                (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, tenant_id, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())"#
+                (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())"#
         ))
         .bind(Uuid::new_v4())
         .bind(company_id)
@@ -4427,6 +4439,7 @@ pub async fn import_opening_balances(
         .bind(&period)
         .bind(debit_balance)
         .bind(credit_balance)
+        .bind(account_id)
         .bind(tenant_id)
         .execute(&state.pool)
         .await;
@@ -4498,13 +4511,25 @@ pub async fn create_opening_balances(
     .ok()
     .flatten();
 
+    // P3：期初行必须带 account_id（报表按 id 归集并做一致性校验）。
+    let account_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT id FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND code = $2 LIMIT 1"
+    ))
+    .bind(tenant_id)
+    .bind(&subject_code)
+    .fetch_optional(&state.pool)
+    .await
+    .ok()
+    .flatten();
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"INSERT INTO erp.opening_balances
-            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, tenant_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
+            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#
     ))
     .bind(id)
     .bind(company_id)
@@ -4513,6 +4538,7 @@ pub async fn create_opening_balances(
     .bind(&period)
     .bind(debit_balance)
     .bind(credit_balance)
+    .bind(account_id)
     .bind(tenant_id)
     .bind(now)
     .bind(now)
@@ -4607,8 +4633,8 @@ pub async fn set_opening_balance(
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"INSERT INTO erp.opening_balances
-            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, tenant_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
+            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $11, $8, $9, $10)"#
     ))
     .bind(id)
     .bind(company_id)
@@ -4620,6 +4646,7 @@ pub async fn set_opening_balance(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
+    .bind(account_id)
     .execute(&state.pool)
     .await;
 
@@ -4665,8 +4692,8 @@ pub async fn carry_forward_opening_balance(
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"INSERT INTO erp.opening_balances
-            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, tenant_id, created_at, updated_at)
-           SELECT gen_random_uuid(), company_id, subject_code, subject_name, $1, debit_balance, credit_balance, tenant_id, NOW(), NOW()
+            (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
+           SELECT gen_random_uuid(), company_id, subject_code, subject_name, $1, debit_balance, credit_balance, account_id, tenant_id, NOW(), NOW()
            FROM erp.opening_balances
            WHERE period = $2 AND deleted_at IS NULL
              AND ($3::uuid IS NULL OR company_id = $3)
@@ -5199,14 +5226,56 @@ pub async fn reject_expense_approval(
 // ==================== RC4a 补齐: 报表基础 ====================
 
 pub async fn get_account_balance_report(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(
-        serde_json::json!({"items": [], "total_records": 0}),
-        "查询成功",
-    )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    else {
+        return ApiResponse::from(TopemsError::Unauthorized);
+    };
+
+    // 决定 6：单公司租户同样必须显式传 company_id，不做省略推断。
+    let Some(company_id) = params
+        .get("company_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    else {
+        return ApiResponse::error(400, "company_id 必传（单公司租户也不允许省略）");
+    };
+
+    let Some(period) = params
+        .get("period")
+        .and_then(|v| v.as_str())
+        .map(|s| s.replace('-', ""))
+    else {
+        return ApiResponse::error(400, "period 必传（YYYYMM 或 YYYY-MM）");
+    };
+    if period.len() != 6 || !period.chars().all(|c| c.is_ascii_digit()) {
+        return ApiResponse::error(400, "period 格式非法，应为 YYYYMM");
+    }
+
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    match service
+        .get_account_balance_report(tenant_id, company_id, &period)
+        .await
+    {
+        Ok(report) if report.balanced => {
+            let data = serde_json::to_value(&report).unwrap_or(serde_json::json!({}));
+            ApiResponse::success(data, "查询成功")
+        }
+        Ok(report) => {
+            // 校验不通过：409 + 差异明细，不返回空表。
+            let mut resp =
+                ApiResponse::<serde_json::Value>::error(409, "科目余额表校验未通过，已拒绝出表");
+            resp.data = Some(serde_json::to_value(&report).unwrap_or(serde_json::json!({})));
+            resp
+        }
+        Err(e) => ApiResponse::from(TopemsError::internal("生成科目余额表失败", e)),
+    }
 }
 
 pub async fn get_account_ledger_report(

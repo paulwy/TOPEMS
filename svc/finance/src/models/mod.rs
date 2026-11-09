@@ -397,6 +397,74 @@ pub struct TrialBalance {
     pub credit_balance: Decimal,
 }
 
+/// 报表金额统一序列化为字符串：避免前端 JS 以 f64 解析时丢精度（P3 决定 7）。
+pub mod money_str {
+    use rust_decimal::Decimal;
+    use serde::Serializer;
+
+    pub fn serialize<S: Serializer>(value: &Decimal, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&value.normalize().to_string())
+    }
+}
+
+/// 科目余额表行：期初 + 本期发生 + 本年累计 + 期末，全部 Decimal（序列化为字符串）。
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct AccountBalanceItem {
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: String,
+    pub account_type: String,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub opening_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub opening_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub period_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub period_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub ytd_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub ytd_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub closing_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub closing_credit: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct BalanceCheckIssue {
+    pub code: String,
+    pub message: String,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub expected: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub actual: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub difference: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct AccountBalanceReport {
+    pub company_id: Uuid,
+    pub period: String,
+    pub items: Vec<AccountBalanceItem>,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_opening_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_opening_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_period_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_period_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_closing_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_closing_credit: Decimal,
+    pub balanced: bool,
+    pub checks: Vec<BalanceCheckIssue>,
+}
+
 #[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct Period {
     pub id: Uuid,

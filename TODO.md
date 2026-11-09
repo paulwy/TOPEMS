@@ -496,3 +496,29 @@
 - handler 级伞码：`/api/finance/approval-configs`（GET/POST）、
   `/api/finance/approval-configs/{id}`（GET/PUT/DELETE）。
 - 权限码基数：生产 finance 域 74 条细分码（补 `finance:admin` 后 75 条）。
+
+---
+
+## 14. P3 法定报表（2026-11-09 立项）
+
+### 14.1 技术债：期初余额仍留在 `erp.opening_balances`
+
+- 现状（本批决定 5）：期初表**不搬迁**，保留在 `erp`；`finance` 侧报表直读该表。
+- 已做：`erp.opening_balances` 补 `account_id`，迁移期按 `tenant_id + subject_code` 回填并
+  fail-closed 校验（`20261109110000_p3_opening_balance_account_link.sql`）；报表接口在运行期
+  再次校验「期初行必须已关联科目 + 期初/期末借贷平衡」，不通过返回 409。
+- 未做（P4）：
+  - 表归属仍跨 schema，`finance` 直连 `erp`（W2-C 同源问题）；
+  - `set_opening_balance` 等写入端点仍用 `f64` 入参，未改 `Decimal`；
+  - 期初无币种字段，多币种折算未支持；
+  - 期初与总账之间只做「借贷平衡 + 科目可解析」的一致性校验，未做逐科目
+    「上年期末 = 本年期初」的勾稽。
+- 迁移评审时需一并处理：`erp.opening_balances` 若迁入 `finance`，需同步删掉 W2-C 的
+  直连 allow 条目与 `scripts/schema_boundary.json` 中 `finance.allow` 的 `erp` 例外。
+
+### 14.2 技术债：`financial_reports.org_id` 语义
+
+- 本批把历史报表的 `org_id` 对齐为 `company_id`（既有唯一键
+  `(report_type, org_id, period, currency_code)` 无法 DROP 重建，门禁禁止）。
+- 后续（P4）应正式用 `company_id` 唯一键替换，并移除 `org_id` 的歧义用法。
+
