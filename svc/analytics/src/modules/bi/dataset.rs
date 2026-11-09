@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -87,18 +87,24 @@ pub struct Dataset {
     pub updated_at: DateTime<Utc>,
 }
 
-pub fn create_routes() -> Router<AppState> {
+/// 数据集读路由（由 routes.rs 叠加细粒度码 bi:dataset:read）
+pub fn create_read_routes() -> Router<AppState> {
     Router::new()
-        .route("/datasets", get(list_datasets).post(create_dataset))
-        .route(
-            "/datasets/{id}",
-            get(get_dataset).put(update_dataset).delete(delete_dataset),
-        )
-        .route("/datasets/{id}/publish", post(publish_dataset))
-        .route("/datasets/{id}/refresh", post(refresh_dataset))
+        .route("/datasets", get(list_datasets))
+        .route("/datasets/{id}", get(get_dataset))
         .route("/datasets/{id}/preview", get(get_dataset_preview))
+        // 查询与 SQL 试跑属于只读计算语义（POST 仅为传参）
         .route("/datasets/query", post(query_dataset))
         .route("/datasets/test-sql", post(test_sql_query))
+}
+
+/// 数据集写路由（由 routes.rs 叠加细粒度码 bi:dataset:write）
+pub fn create_write_routes() -> Router<AppState> {
+    Router::new()
+        .route("/datasets", post(create_dataset))
+        .route("/datasets/{id}", put(update_dataset).delete(delete_dataset))
+        .route("/datasets/{id}/publish", post(publish_dataset))
+        .route("/datasets/{id}/refresh", post(refresh_dataset))
 }
 
 #[utoipa::path(

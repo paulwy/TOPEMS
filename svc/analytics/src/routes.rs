@@ -11,9 +11,7 @@ use axum::{
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims;
-use topems_shared_auth::middleware::{
-    require_module_access, require_module_write, require_permission,
-};
+use topems_shared_auth::middleware::{require_module_access, require_permission};
 use topems_shared_core::response::ApiResponse;
 
 use crate::modules;
@@ -21,638 +19,768 @@ use crate::shared::AppState;
 
 /// 组装 BI + Report 受保护业务路由（对应独立部署 main.rs 的 protected_routes）。
 /// 已包含 `require_module_access("bi")` 权限层 + AppState。
+/// 组装 BI + Report 受保护业务路由（对应独立部署 main.rs 的 protected_routes）。
+///
+/// 细粒度权限：每个业务子域拆成「读」「写」两组路由，各自叠加
+/// `bi:<sub>:read` / `bi:<sub>:write`；外层仅保留 `require_module_access("bi")`
+/// 模块门（不再使用模块伞码 `bi:admin`，避免租户域角色被整域 403）。
 pub fn create_protected_routes(app_state: AppState) -> Router {
-    let protected_routes = Router::new()
-        // ===== BI routes (prefix: /api/bi) =====
-        // Dashboard
-        .route("/dashboard", get(modules::bi::dashboard::list_dashboards))
-        .route("/dashboard", post(modules::bi::dashboard::create_dashboard))
-        .route(
-            "/dashboard/public",
-            get(modules::bi::dashboard::get_public_dashboards),
-        )
-        // Dashboard Templates - must come before {id} routes
-        .route(
-            "/dashboard/template",
-            get(modules::bi::dashboard::list_dashboard_templates),
-        )
-        .route(
-            "/dashboard/template",
-            post(modules::bi::dashboard::create_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            get(modules::bi::dashboard::get_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            put(modules::bi::dashboard::update_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            delete(modules::bi::dashboard::delete_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{template_id}/create",
-            post(modules::bi::dashboard::create_dashboard_from_template),
-        )
-        // Dashboard by ID
-        .route(
-            "/dashboard/{id}",
-            get(modules::bi::dashboard::get_dashboard),
-        )
-        .route(
-            "/dashboard/{id}",
-            put(modules::bi::dashboard::update_dashboard),
-        )
-        .route(
-            "/dashboard/{id}",
-            delete(modules::bi::dashboard::delete_dashboard),
-        )
-        .route(
-            "/dashboard/{id}/clone",
-            post(modules::bi::dashboard::clone_dashboard),
-        )
-        // Dashboard Share
-        .route(
-            "/dashboard/{id}/share",
-            post(modules::bi::dashboard::create_share_link),
-        )
-        .route(
-            "/dashboard/{id}/shares",
-            get(modules::bi::dashboard::list_share_links),
-        )
-        .route(
-            "/dashboard/share/{share_id}",
-            get(modules::bi::dashboard::get_shared_dashboard),
-        )
-        .route(
-            "/dashboard/share/{share_id}",
-            delete(modules::bi::dashboard::delete_share_link),
-        )
-        // Dashboard Export/Import
-        .route(
-            "/dashboard/{id}/export",
-            get(modules::bi::dashboard::export_dashboard),
-        )
-        .route(
-            "/dashboard/import",
-            post(modules::bi::dashboard::import_dashboard),
-        )
-        // Dashboard Real-time Data
-        .route(
-            "/dashboard/{id}/realtime",
-            get(modules::bi::dashboard::query_dashboard_realtime_data),
-        )
-        // Dashboard Refresh
-        .route(
-            "/dashboard/{id}/refresh",
-            post(modules::bi::dashboard::refresh_dashboard_data),
-        )
-        .route(
-            "/dashboard/{id}/auto-refresh",
-            post(modules::bi::dashboard::set_auto_refresh),
-        )
-        // Dashboard Export (PDF/Excel)
-        .route(
-            "/dashboard/{id}/export/pdf",
-            get(modules::bi::dashboard::export_dashboard_pdf),
-        )
-        .route(
-            "/dashboard/{id}/export/excel",
-            get(modules::bi::dashboard::export_dashboard_excel),
-        )
-        // Dashboard by user - must come after all specific paths
-        .route(
-            "/dashboard/user/{owner_id}",
-            get(modules::bi::dashboard::get_user_dashboards),
-        )
-        // Widget
-        .route("/widget", get(modules::bi::widget::list_widgets))
-        .route("/widget", post(modules::bi::widget::create_widget))
-        .route("/widget/{id}", get(modules::bi::widget::get_widget))
-        .route("/widget/{id}", put(modules::bi::widget::update_widget))
-        .route("/widget/{id}", delete(modules::bi::widget::delete_widget))
-        .route(
-            "/widget/{id}/data",
-            get(modules::bi::widget::get_widget_data),
-        )
-        .route(
-            "/widget/{id}/data/realtime",
-            get(modules::bi::widget::get_widget_data_realtime),
-        )
-        .route(
-            "/widget/{id}/cache/invalidate",
-            post(modules::bi::widget::invalidate_widget_cache),
-        )
-        .route(
-            "/widget/cache/invalidate-all",
-            post(modules::bi::widget::invalidate_all_widget_cache),
-        )
-        .route(
-            "/widget/dashboard/{dashboard_id}",
-            get(modules::bi::widget::get_widgets_by_dashboard),
-        )
-        // Data Source - 读路由；写路由见下方 datasource_write_routes（细粒度码）
-        .route(
-            "/data-sources",
-            get(modules::bi::datasource::list_datasources),
-        )
-        .route(
-            "/data-sources/{id}",
-            get(modules::bi::datasource::get_datasource),
-        )
-        // Dataset
-        .merge(modules::bi::dataset::create_routes())
-        // Sync Records
-        .route(
-            "/sync-records",
-            get(modules::bi::sync_records::list_sync_records),
-        )
-        .route(
-            "/sync-records",
-            post(modules::bi::sync_records::create_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            get(modules::bi::sync_records::get_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            put(modules::bi::sync_records::update_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            delete(modules::bi::sync_records::delete_sync_record),
-        )
-        .route(
-            "/sync-records/{id}/retry",
-            post(modules::bi::sync_records::retry_sync),
-        )
-        // Visualization
-        .route(
-            "/visualization",
-            get(modules::bi::visualization::list_visualizations),
-        )
-        .route(
-            "/visualization",
-            post(modules::bi::visualization::create_visualization),
-        )
-        .route(
-            "/visualization/chart-types",
-            get(modules::bi::visualization::get_chart_types),
-        )
-        .route(
-            "/visualization/line",
-            post(modules::bi::visualization::generate_line_chart),
-        )
-        .route(
-            "/visualization/bar",
-            post(modules::bi::visualization::generate_bar_chart),
-        )
-        .route(
-            "/visualization/pie",
-            post(modules::bi::visualization::generate_pie_chart),
-        )
-        .route(
-            "/visualization/gauge",
-            post(modules::bi::visualization::generate_gauge_chart),
-        )
-        .route(
-            "/dashboards/{dashboard_id}/links",
-            get(modules::bi::visualization::get_chart_link_config),
-        )
-        .route(
-            "/dashboards/{dashboard_id}/links",
-            put(modules::bi::visualization::update_chart_link_config),
-        )
-        .route(
-            "/annotations/{annotation_id}",
-            delete(modules::bi::visualization::delete_chart_annotation),
-        )
-        .route(
-            "/widgets/{widget_id}/export",
-            post(modules::bi::visualization::export_chart),
-        )
-        .route(
-            "/widgets/{widget_id}/drilldown",
-            get(modules::bi::visualization::get_drilldown_config)
-                .put(modules::bi::visualization::update_drilldown_config),
-        )
-        .route(
-            "/widgets/{widget_id}/drilldown/execute",
-            post(modules::bi::visualization::execute_drilldown),
-        )
-        .route(
-            "/widgets/{widget_id}/annotations",
-            get(modules::bi::visualization::get_chart_annotations)
-                .post(modules::bi::visualization::create_chart_annotation),
-        )
-        .route(
-            "/widgets/{widget_id}/fullscreen",
-            get(modules::bi::visualization::get_fullscreen_chart),
-        )
-        // Comparison Analysis
-        .route(
-            "/comparison-analysis",
-            get(modules::bi::comparison_analysis::list_comparisons),
-        )
-        .route(
-            "/comparison-analysis",
-            post(modules::bi::comparison_analysis::create_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            get(modules::bi::comparison_analysis::get_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            put(modules::bi::comparison_analysis::update_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            delete(modules::bi::comparison_analysis::delete_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}/run",
-            post(modules::bi::comparison_analysis::run_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}/result",
-            get(modules::bi::comparison_analysis::get_comparison_result),
-        )
-        // Self-Service Report
-        .route(
-            "/report",
-            get(modules::bi::self_service_report::list_reports),
-        )
-        .route(
-            "/report",
-            post(modules::bi::self_service_report::create_report),
-        )
-        .route(
-            "/report/{id}",
-            get(modules::bi::self_service_report::get_report),
-        )
-        .route(
-            "/report/{id}",
-            put(modules::bi::self_service_report::update_report),
-        )
-        .route(
-            "/report/{id}",
-            delete(modules::bi::self_service_report::delete_report),
-        )
-        .route(
-            "/report/{id}/query",
-            post(modules::bi::self_service_report::query_report_data),
-        )
-        .route(
-            "/report/{id}/export",
-            get(modules::bi::self_service_report::export_report),
-        )
-        // Data Drilldown
-        .route(
-            "/drilldown/path",
-            get(modules::bi::data_drilldown::list_drilldown_paths),
-        )
-        .route(
-            "/drilldown/path",
-            post(modules::bi::data_drilldown::create_drilldown_path),
-        )
-        .route(
-            "/drilldown/path/{id}",
-            get(modules::bi::data_drilldown::get_drilldown_path),
-        )
-        .route(
-            "/drilldown/path/{id}",
-            put(modules::bi::data_drilldown::update_drilldown_path),
-        )
-        .route(
-            "/drilldown/path/{id}",
-            delete(modules::bi::data_drilldown::delete_drilldown_path),
-        )
-        .route(
-            "/drilldown/drill-down",
-            post(modules::bi::data_drilldown::drill_down),
-        )
-        .route(
-            "/drilldown/roll-up",
-            post(modules::bi::data_drilldown::roll_up),
-        )
-        .route(
-            "/drilldown/history",
-            post(modules::bi::data_drilldown::get_drilldown_history),
-        )
-        // Multidimensional Analysis
-        .route(
-            "/multidim/cube",
-            post(modules::bi::multidimensional_analysis::query_cube),
-        )
-        .route(
-            "/multidim/slice",
-            post(modules::bi::multidimensional_analysis::slice_cube),
-        )
-        .route(
-            "/multidim/dice",
-            post(modules::bi::multidimensional_analysis::dice_cube),
-        )
-        .route(
-            "/multidim/pivot",
-            post(modules::bi::multidimensional_analysis::pivot_table),
-        )
-        .route(
-            "/multidim/rank",
-            post(modules::bi::multidimensional_analysis::rank_data),
-        )
-        // Predictive Analysis
-        .route(
-            "/prediction/moving-average",
-            post(modules::bi::predictive_analysis::moving_average_forecast),
-        )
-        .route(
-            "/prediction/exponential-smoothing",
-            post(modules::bi::predictive_analysis::exponential_smoothing_forecast),
-        )
-        .route(
-            "/prediction/trend",
-            post(modules::bi::predictive_analysis::trend_analysis),
-        )
-        .route(
-            "/prediction/compare",
-            post(modules::bi::predictive_analysis::prediction_comparison),
-        )
-        // Row-Level Permission
-        .route(
-            "/permission/rule",
-            get(modules::bi::row_level_permission::list_permission_rules),
-        )
-        .route(
-            "/permission/rule",
-            post(modules::bi::row_level_permission::create_permission_rule),
-        )
-        .route(
-            "/permission/rule/{id}",
-            get(modules::bi::row_level_permission::get_permission_rule),
-        )
-        .route(
-            "/permission/rule/{id}",
-            put(modules::bi::row_level_permission::update_permission_rule),
-        )
-        .route(
-            "/permission/rule/{id}",
-            delete(modules::bi::row_level_permission::delete_permission_rule),
-        )
-        .route(
-            "/permission/validate",
-            post(modules::bi::row_level_permission::validate_permission),
-        )
-        .route(
-            "/permission/filter",
-            post(modules::bi::row_level_permission::filter_data),
-        )
-        .route(
-            "/permission/user/{user_id}",
-            get(modules::bi::row_level_permission::get_user_permissions),
-        )
-        // Permission (frontend aligned paths)
-        .route(
-            "/permissions/row-level",
-            get(modules::bi::row_level_permission::list_permission_rules),
-        )
-        .route(
-            "/permissions/row-level",
-            post(modules::bi::row_level_permission::create_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            get(modules::bi::row_level_permission::get_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            put(modules::bi::row_level_permission::update_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            delete(modules::bi::row_level_permission::delete_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}/test",
-            post(modules::bi::row_level_permission::validate_permission),
-        )
-        .route(
-            "/permissions/data",
-            get(modules::bi::row_level_permission::list_permission_rules),
-        )
-        .route(
-            "/permissions/data",
-            post(modules::bi::row_level_permission::create_permission_rule),
-        )
-        .route(
-            "/permissions/data/{id}",
-            put(modules::bi::row_level_permission::update_permission_rule),
-        )
-        .route(
-            "/permissions/data/{id}",
-            delete(modules::bi::row_level_permission::delete_permission_rule),
-        )
-        .route(
-            "/permissions/check",
-            get(modules::bi::row_level_permission::check_permission),
-        )
-        // Analytics Summary（统一前缀 /api/bi，不再叠词 /bi/analytics/summary → /bi/summary）
-        .route(
-            "/summary",
-            get(modules::bi::analytics::get_summary_analytics),
-        )
-        .route(
-            "/development",
-            get(modules::bi::analytics::get_development_analytics),
-        )
-        .route(
-            "/quality",
-            get(modules::bi::analytics::get_quality_analytics),
-        )
-        .route(
-            "/production",
-            get(modules::bi::analytics::get_production_analytics),
-        )
-        .route(
-            "/laboratory",
-            get(modules::bi::analytics::get_laboratory_analytics),
-        )
-        .route(
-            "/overview",
-            get(modules::bi::analytics::get_analytics_overview),
-        )
-        .route(
-            "/{module_id}",
-            get(modules::bi::analytics::get_module_analytics),
-        )
-        // 兼容遗留路径（v7.7 前使用 /analytics/*，v7.8 起统一为 /*）
-        .route(
-            "/analytics/summary",
-            get(modules::bi::analytics::get_summary_analytics),
-        )
-        .route(
-            "/analytics/development",
-            get(modules::bi::analytics::get_development_analytics),
-        )
-        .route(
-            "/analytics/quality",
-            get(modules::bi::analytics::get_quality_analytics),
-        )
-        .route(
-            "/analytics/production",
-            get(modules::bi::analytics::get_production_analytics),
-        )
-        .route(
-            "/analytics/laboratory",
-            get(modules::bi::analytics::get_laboratory_analytics),
-        )
-        .route(
-            "/analytics/overview",
-            get(modules::bi::analytics::get_analytics_overview),
-        )
-        .route(
-            "/analytics/{module_id}",
-            get(modules::bi::analytics::get_module_analytics),
-        )
-        // RS Analytics
-        .route("/rs/summary", get(modules::bi::analytics::get_rs_summary))
-        .route(
-            "/rs/project-timeline",
-            get(modules::bi::analytics::get_rs_project_timeline),
-        )
-        .route(
-            "/rs/experiment-success-rate",
-            get(modules::bi::analytics::get_rs_experiment_success_rate),
-        )
-        .route(
-            "/rs/material-usage",
-            get(modules::bi::analytics::get_rs_material_usage),
-        )
-        .route(
-            "/rs/project-ranking",
-            get(modules::bi::analytics::get_rs_project_ranking),
-        )
-        // LIMS Analytics
-        .route(
-            "/lims/summary",
-            get(modules::bi::analytics::get_lims_summary),
-        )
-        .route(
-            "/lims/sample-timeline",
-            get(modules::bi::analytics::get_lims_sample_timeline),
-        )
-        .route(
-            "/lims/test-pass-rate",
-            get(modules::bi::analytics::get_lims_test_pass_rate),
-        )
-        .route(
-            "/lims/instrument-usage",
-            get(modules::bi::analytics::get_lims_instrument_usage),
-        )
-        .route(
-            "/lims/sample-status-distribution",
-            get(modules::bi::analytics::get_lims_sample_status_distribution),
-        )
-        // QMS Analytics
-        .route("/qms/summary", get(modules::bi::analytics::get_qms_summary))
-        .route(
-            "/qms/quality-trend",
-            get(modules::bi::analytics::get_qms_quality_trend),
-        )
-        .route(
-            "/qms/issue-distribution",
-            get(modules::bi::analytics::get_qms_issue_distribution),
-        )
-        // EHS Analytics
-        .route(
-            "/ehs/summary",
-            get(modules::bi::analytics::get_ehs_analytics),
-        )
-        .route(
-            "/ehs/risk-distribution",
-            get(modules::bi::analytics::get_ehs_risk_distribution),
-        )
-        .route(
-            "/ehs/incident-trend",
-            get(modules::bi::analytics::get_ehs_incident_trend),
-        )
-        // SRM Analytics
-        .route(
-            "/srm/summary",
-            get(modules::bi::analytics::get_srm_analytics),
-        )
-        .route(
-            "/srm/supplier-ranking",
-            get(modules::bi::analytics::get_srm_supplier_ranking),
-        )
-        .route(
-            "/srm/order-timeline",
-            get(modules::bi::analytics::get_srm_order_timeline),
-        )
-        // PDM Analytics
-        .route("/pdm/summary", get(modules::bi::analytics::get_pdm_summary))
-        .route(
-            "/pdm/production-trend",
-            get(modules::bi::analytics::get_pdm_production_trend),
-        )
-        .route(
-            "/pdm/batch-status-distribution",
-            get(modules::bi::analytics::get_pdm_batch_status_distribution),
-        )
-        // ===== Reports Center（RC4a: 报表中心统计与导出） =====
-        // 注意: 放在 .merge(report::create_routes()) 之前，避免 Router 合并
-        //       可能引入的顺序/状态边界问题导致路由 404
-        .route("/reports-center/stats", get(reports_center_stats))
-        .route(
-            "/reports-center/export/{report_type}",
-            post(reports_center_export),
-        )
-        // ===== Report routes (prefix: /api/bi/report/*，不再叠词) =====
-        // - modules::report::create_routes() 注册复数路径: /reports, /templates, /schedules, /subscriptions
-        // - Self-Service Report（上方）注册单数路径: /report, /report/{id}, /report/{id}/query, /report/{id}/export
-        .merge(modules::report::create_routes())
-        // Health & Metrics（注意: 使用相对路径 /health/detailed，嵌套 /api/bi 后
-        //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
-        //       无鉴权的 /health（服务级健康检查）区分开）
+    /// 给一个子域路由组叠加细粒度权限码并注入状态。
+    fn guarded(state: &AppState, code: &'static str, router: Router<AppState>) -> Router {
+        router
+            .layer(axum::middleware::from_fn(require_permission(code)))
+            .with_state(state.clone())
+    }
+
+    // ===== Dashboard =====
+    let dashboard_read = guarded(
+        &app_state,
+        "bi:dashboard:read",
+        Router::new()
+            .route("/dashboard", get(modules::bi::dashboard::list_dashboards))
+            .route(
+                "/dashboard/public",
+                get(modules::bi::dashboard::get_public_dashboards),
+            )
+            .route(
+                "/dashboard/template",
+                get(modules::bi::dashboard::list_dashboard_templates),
+            )
+            .route(
+                "/dashboard/template/{id}",
+                get(modules::bi::dashboard::get_dashboard_template),
+            )
+            .route(
+                "/dashboard/{id}",
+                get(modules::bi::dashboard::get_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/shares",
+                get(modules::bi::dashboard::list_share_links),
+            )
+            .route(
+                "/dashboard/share/{share_id}",
+                get(modules::bi::dashboard::get_shared_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/export",
+                get(modules::bi::dashboard::export_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/realtime",
+                get(modules::bi::dashboard::query_dashboard_realtime_data),
+            )
+            .route(
+                "/dashboard/{id}/export/pdf",
+                get(modules::bi::dashboard::export_dashboard_pdf),
+            )
+            .route(
+                "/dashboard/{id}/export/excel",
+                get(modules::bi::dashboard::export_dashboard_excel),
+            )
+            .route(
+                "/dashboard/user/{owner_id}",
+                get(modules::bi::dashboard::get_user_dashboards),
+            ),
+    );
+
+    let dashboard_write = guarded(
+        &app_state,
+        "bi:dashboard:write",
+        Router::new()
+            .route("/dashboard", post(modules::bi::dashboard::create_dashboard))
+            .route(
+                "/dashboard/template",
+                post(modules::bi::dashboard::create_dashboard_template),
+            )
+            .route(
+                "/dashboard/template/{id}",
+                put(modules::bi::dashboard::update_dashboard_template)
+                    .delete(modules::bi::dashboard::delete_dashboard_template),
+            )
+            .route(
+                "/dashboard/template/{template_id}/create",
+                post(modules::bi::dashboard::create_dashboard_from_template),
+            )
+            .route(
+                "/dashboard/{id}",
+                put(modules::bi::dashboard::update_dashboard)
+                    .delete(modules::bi::dashboard::delete_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/clone",
+                post(modules::bi::dashboard::clone_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/share",
+                post(modules::bi::dashboard::create_share_link),
+            )
+            .route(
+                "/dashboard/share/{share_id}",
+                delete(modules::bi::dashboard::delete_share_link),
+            )
+            .route(
+                "/dashboard/import",
+                post(modules::bi::dashboard::import_dashboard),
+            )
+            .route(
+                "/dashboard/{id}/refresh",
+                post(modules::bi::dashboard::refresh_dashboard_data),
+            )
+            .route(
+                "/dashboard/{id}/auto-refresh",
+                post(modules::bi::dashboard::set_auto_refresh),
+            ),
+    );
+
+    // ===== Widget =====
+    let widget_read = guarded(
+        &app_state,
+        "bi:widget:read",
+        Router::new()
+            .route("/widget", get(modules::bi::widget::list_widgets))
+            .route("/widget/{id}", get(modules::bi::widget::get_widget))
+            .route(
+                "/widget/{id}/data",
+                get(modules::bi::widget::get_widget_data),
+            )
+            .route(
+                "/widget/{id}/data/realtime",
+                get(modules::bi::widget::get_widget_data_realtime),
+            )
+            .route(
+                "/widget/dashboard/{dashboard_id}",
+                get(modules::bi::widget::get_widgets_by_dashboard),
+            ),
+    );
+
+    let widget_write = guarded(
+        &app_state,
+        "bi:widget:write",
+        Router::new()
+            .route("/widget", post(modules::bi::widget::create_widget))
+            .route(
+                "/widget/{id}",
+                put(modules::bi::widget::update_widget).delete(modules::bi::widget::delete_widget),
+            )
+            .route(
+                "/widget/{id}/cache/invalidate",
+                post(modules::bi::widget::invalidate_widget_cache),
+            )
+            .route(
+                "/widget/cache/invalidate-all",
+                post(modules::bi::widget::invalidate_all_widget_cache),
+            ),
+    );
+
+    // ===== Data Source =====
+    let datasource_read = guarded(
+        &app_state,
+        "bi:data_source:read",
+        Router::new()
+            .route(
+                "/data-sources",
+                get(modules::bi::datasource::list_datasources),
+            )
+            .route(
+                "/data-sources/{id}",
+                get(modules::bi::datasource::get_datasource),
+            ),
+    );
+
+    let datasource_write = guarded(
+        &app_state,
+        "bi:data_source:write",
+        Router::new()
+            .route(
+                "/data-sources",
+                post(modules::bi::datasource::create_datasource),
+            )
+            .route(
+                "/data-sources/{id}",
+                put(modules::bi::datasource::update_datasource)
+                    .delete(modules::bi::datasource::delete_datasource),
+            )
+            .route(
+                "/data-sources/{id}/test",
+                post(modules::bi::datasource::test_datasource),
+            )
+            .route(
+                "/data-sources/{id}/refresh",
+                post(modules::bi::datasource::refresh_datasource),
+            ),
+    );
+
+    // ===== Dataset =====
+    let dataset_read = guarded(
+        &app_state,
+        "bi:dataset:read",
+        modules::bi::dataset::create_read_routes(),
+    );
+    let dataset_write = guarded(
+        &app_state,
+        "bi:dataset:write",
+        modules::bi::dataset::create_write_routes(),
+    );
+
+    // ===== Sync Records =====
+    let sync_read = guarded(
+        &app_state,
+        "bi:sync_record:read",
+        Router::new()
+            .route(
+                "/sync-records",
+                get(modules::bi::sync_records::list_sync_records),
+            )
+            .route(
+                "/sync-records/{id}",
+                get(modules::bi::sync_records::get_sync_record),
+            ),
+    );
+
+    let sync_write = guarded(
+        &app_state,
+        "bi:sync_record:write",
+        Router::new()
+            .route(
+                "/sync-records",
+                post(modules::bi::sync_records::create_sync_record),
+            )
+            .route(
+                "/sync-records/{id}",
+                put(modules::bi::sync_records::update_sync_record)
+                    .delete(modules::bi::sync_records::delete_sync_record),
+            )
+            .route(
+                "/sync-records/{id}/retry",
+                post(modules::bi::sync_records::retry_sync),
+            ),
+    );
+
+    // ===== Visualization =====
+    let visualization_read = guarded(
+        &app_state,
+        "bi:visualization:read",
+        Router::new()
+            .route(
+                "/visualization",
+                get(modules::bi::visualization::list_visualizations),
+            )
+            .route(
+                "/visualization/chart-types",
+                get(modules::bi::visualization::get_chart_types),
+            )
+            .route(
+                "/visualization/line",
+                post(modules::bi::visualization::generate_line_chart),
+            )
+            .route(
+                "/visualization/bar",
+                post(modules::bi::visualization::generate_bar_chart),
+            )
+            .route(
+                "/visualization/pie",
+                post(modules::bi::visualization::generate_pie_chart),
+            )
+            .route(
+                "/visualization/gauge",
+                post(modules::bi::visualization::generate_gauge_chart),
+            )
+            .route(
+                "/dashboards/{dashboard_id}/links",
+                get(modules::bi::visualization::get_chart_link_config),
+            )
+            .route(
+                "/widgets/{widget_id}/drilldown",
+                get(modules::bi::visualization::get_drilldown_config),
+            )
+            .route(
+                "/widgets/{widget_id}/drilldown/execute",
+                post(modules::bi::visualization::execute_drilldown),
+            )
+            .route(
+                "/widgets/{widget_id}/annotations",
+                get(modules::bi::visualization::get_chart_annotations),
+            )
+            .route(
+                "/widgets/{widget_id}/fullscreen",
+                get(modules::bi::visualization::get_fullscreen_chart),
+            ),
+    );
+
+    let visualization_write = guarded(
+        &app_state,
+        "bi:visualization:write",
+        Router::new()
+            .route(
+                "/visualization",
+                post(modules::bi::visualization::create_visualization),
+            )
+            .route(
+                "/dashboards/{dashboard_id}/links",
+                put(modules::bi::visualization::update_chart_link_config),
+            )
+            .route(
+                "/annotations/{annotation_id}",
+                delete(modules::bi::visualization::delete_chart_annotation),
+            )
+            .route(
+                "/widgets/{widget_id}/export",
+                post(modules::bi::visualization::export_chart),
+            )
+            .route(
+                "/widgets/{widget_id}/drilldown",
+                put(modules::bi::visualization::update_drilldown_config),
+            )
+            .route(
+                "/widgets/{widget_id}/annotations",
+                post(modules::bi::visualization::create_chart_annotation),
+            ),
+    );
+
+    // ===== Comparison Analysis =====
+    let comparison_read = guarded(
+        &app_state,
+        "bi:comparison:read",
+        Router::new()
+            .route(
+                "/comparison-analysis",
+                get(modules::bi::comparison_analysis::list_comparisons),
+            )
+            .route(
+                "/comparison-analysis/{id}",
+                get(modules::bi::comparison_analysis::get_comparison),
+            )
+            .route(
+                "/comparison-analysis/{id}/result",
+                get(modules::bi::comparison_analysis::get_comparison_result),
+            ),
+    );
+
+    let comparison_write = guarded(
+        &app_state,
+        "bi:comparison:write",
+        Router::new()
+            .route(
+                "/comparison-analysis",
+                post(modules::bi::comparison_analysis::create_comparison),
+            )
+            .route(
+                "/comparison-analysis/{id}",
+                put(modules::bi::comparison_analysis::update_comparison)
+                    .delete(modules::bi::comparison_analysis::delete_comparison),
+            )
+            .route(
+                "/comparison-analysis/{id}/run",
+                post(modules::bi::comparison_analysis::run_comparison),
+            ),
+    );
+
+    // ===== Self-Service Report（单数路径） =====
+    let self_report_read = guarded(
+        &app_state,
+        "bi:report:read",
+        Router::new()
+            .route(
+                "/report",
+                get(modules::bi::self_service_report::list_reports),
+            )
+            .route(
+                "/report/{id}",
+                get(modules::bi::self_service_report::get_report),
+            )
+            .route(
+                "/report/{id}/query",
+                post(modules::bi::self_service_report::query_report_data),
+            )
+            .route(
+                "/report/{id}/export",
+                get(modules::bi::self_service_report::export_report),
+            ),
+    );
+
+    let self_report_write = guarded(
+        &app_state,
+        "bi:report:write",
+        Router::new()
+            .route(
+                "/report",
+                post(modules::bi::self_service_report::create_report),
+            )
+            .route(
+                "/report/{id}",
+                put(modules::bi::self_service_report::update_report)
+                    .delete(modules::bi::self_service_report::delete_report),
+            ),
+    );
+
+    // ===== Data Drilldown =====
+    let drilldown_read = guarded(
+        &app_state,
+        "bi:drilldown:read",
+        Router::new()
+            .route(
+                "/drilldown/path",
+                get(modules::bi::data_drilldown::list_drilldown_paths),
+            )
+            .route(
+                "/drilldown/path/{id}",
+                get(modules::bi::data_drilldown::get_drilldown_path),
+            )
+            .route(
+                "/drilldown/drill-down",
+                post(modules::bi::data_drilldown::drill_down),
+            )
+            .route(
+                "/drilldown/roll-up",
+                post(modules::bi::data_drilldown::roll_up),
+            )
+            .route(
+                "/drilldown/history",
+                post(modules::bi::data_drilldown::get_drilldown_history),
+            ),
+    );
+
+    let drilldown_write = guarded(
+        &app_state,
+        "bi:drilldown:write",
+        Router::new()
+            .route(
+                "/drilldown/path",
+                post(modules::bi::data_drilldown::create_drilldown_path),
+            )
+            .route(
+                "/drilldown/path/{id}",
+                put(modules::bi::data_drilldown::update_drilldown_path)
+                    .delete(modules::bi::data_drilldown::delete_drilldown_path),
+            ),
+    );
+
+    // ===== Multidimensional Analysis（全部为只读计算） =====
+    let multidim_read = guarded(
+        &app_state,
+        "bi:multidim:read",
+        Router::new()
+            .route(
+                "/multidim/cube",
+                post(modules::bi::multidimensional_analysis::query_cube),
+            )
+            .route(
+                "/multidim/slice",
+                post(modules::bi::multidimensional_analysis::slice_cube),
+            )
+            .route(
+                "/multidim/dice",
+                post(modules::bi::multidimensional_analysis::dice_cube),
+            )
+            .route(
+                "/multidim/pivot",
+                post(modules::bi::multidimensional_analysis::pivot_table),
+            )
+            .route(
+                "/multidim/rank",
+                post(modules::bi::multidimensional_analysis::rank_data),
+            ),
+    );
+
+    // ===== Predictive Analysis（全部为只读计算） =====
+    let prediction_read = guarded(
+        &app_state,
+        "bi:prediction:read",
+        Router::new()
+            .route(
+                "/prediction/moving-average",
+                post(modules::bi::predictive_analysis::moving_average_forecast),
+            )
+            .route(
+                "/prediction/exponential-smoothing",
+                post(modules::bi::predictive_analysis::exponential_smoothing_forecast),
+            )
+            .route(
+                "/prediction/trend",
+                post(modules::bi::predictive_analysis::trend_analysis),
+            )
+            .route(
+                "/prediction/compare",
+                post(modules::bi::predictive_analysis::prediction_comparison),
+            ),
+    );
+
+    // ===== Row-Level Permission =====
+    let permission_read = guarded(
+        &app_state,
+        "bi:permission_rule:read",
+        Router::new()
+            .route(
+                "/permission/rule",
+                get(modules::bi::row_level_permission::list_permission_rules),
+            )
+            .route(
+                "/permission/rule/{id}",
+                get(modules::bi::row_level_permission::get_permission_rule),
+            )
+            .route(
+                "/permission/validate",
+                post(modules::bi::row_level_permission::validate_permission),
+            )
+            .route(
+                "/permission/filter",
+                post(modules::bi::row_level_permission::filter_data),
+            )
+            .route(
+                "/permission/user/{user_id}",
+                get(modules::bi::row_level_permission::get_user_permissions),
+            )
+            // 前端对齐路径
+            .route(
+                "/permissions/row-level",
+                get(modules::bi::row_level_permission::list_permission_rules),
+            )
+            .route(
+                "/permissions/row-level/{id}",
+                get(modules::bi::row_level_permission::get_permission_rule),
+            )
+            .route(
+                "/permissions/row-level/{id}/test",
+                post(modules::bi::row_level_permission::validate_permission),
+            )
+            .route(
+                "/permissions/data",
+                get(modules::bi::row_level_permission::list_permission_rules),
+            )
+            .route(
+                "/permissions/check",
+                get(modules::bi::row_level_permission::check_permission),
+            ),
+    );
+
+    let permission_write = guarded(
+        &app_state,
+        "bi:permission_rule:write",
+        Router::new()
+            .route(
+                "/permission/rule",
+                post(modules::bi::row_level_permission::create_permission_rule),
+            )
+            .route(
+                "/permission/rule/{id}",
+                put(modules::bi::row_level_permission::update_permission_rule)
+                    .delete(modules::bi::row_level_permission::delete_permission_rule),
+            )
+            .route(
+                "/permissions/row-level",
+                post(modules::bi::row_level_permission::create_permission_rule),
+            )
+            .route(
+                "/permissions/row-level/{id}",
+                put(modules::bi::row_level_permission::update_permission_rule)
+                    .delete(modules::bi::row_level_permission::delete_permission_rule),
+            )
+            .route(
+                "/permissions/data",
+                post(modules::bi::row_level_permission::create_permission_rule),
+            )
+            .route(
+                "/permissions/data/{id}",
+                put(modules::bi::row_level_permission::update_permission_rule)
+                    .delete(modules::bi::row_level_permission::delete_permission_rule),
+            ),
+    );
+
+    // ===== Analytics Summary / 域分析 / 报表中心统计（统一只读码） =====
+    let analytics_read = guarded(
+        &app_state,
+        "bi:analytics:read",
+        Router::new()
+            .route(
+                "/summary",
+                get(modules::bi::analytics::get_summary_analytics),
+            )
+            .route(
+                "/development",
+                get(modules::bi::analytics::get_development_analytics),
+            )
+            .route(
+                "/quality",
+                get(modules::bi::analytics::get_quality_analytics),
+            )
+            .route(
+                "/production",
+                get(modules::bi::analytics::get_production_analytics),
+            )
+            .route(
+                "/laboratory",
+                get(modules::bi::analytics::get_laboratory_analytics),
+            )
+            .route(
+                "/overview",
+                get(modules::bi::analytics::get_analytics_overview),
+            )
+            .route(
+                "/{module_id}",
+                get(modules::bi::analytics::get_module_analytics),
+            )
+            // 兼容遗留路径（v7.7 前 /analytics/*）
+            .route(
+                "/analytics/summary",
+                get(modules::bi::analytics::get_summary_analytics),
+            )
+            .route(
+                "/analytics/development",
+                get(modules::bi::analytics::get_development_analytics),
+            )
+            .route(
+                "/analytics/quality",
+                get(modules::bi::analytics::get_quality_analytics),
+            )
+            .route(
+                "/analytics/production",
+                get(modules::bi::analytics::get_production_analytics),
+            )
+            .route(
+                "/analytics/laboratory",
+                get(modules::bi::analytics::get_laboratory_analytics),
+            )
+            .route(
+                "/analytics/overview",
+                get(modules::bi::analytics::get_analytics_overview),
+            )
+            .route(
+                "/analytics/{module_id}",
+                get(modules::bi::analytics::get_module_analytics),
+            )
+            // RS / LIMS / QMS / EHS / SRM / PDM 域分析
+            .route("/rs/summary", get(modules::bi::analytics::get_rs_summary))
+            .route(
+                "/rs/project-timeline",
+                get(modules::bi::analytics::get_rs_project_timeline),
+            )
+            .route(
+                "/rs/experiment-success-rate",
+                get(modules::bi::analytics::get_rs_experiment_success_rate),
+            )
+            .route(
+                "/rs/material-usage",
+                get(modules::bi::analytics::get_rs_material_usage),
+            )
+            .route(
+                "/rs/project-ranking",
+                get(modules::bi::analytics::get_rs_project_ranking),
+            )
+            .route(
+                "/lims/summary",
+                get(modules::bi::analytics::get_lims_summary),
+            )
+            .route(
+                "/lims/sample-timeline",
+                get(modules::bi::analytics::get_lims_sample_timeline),
+            )
+            .route(
+                "/lims/test-pass-rate",
+                get(modules::bi::analytics::get_lims_test_pass_rate),
+            )
+            .route(
+                "/lims/instrument-usage",
+                get(modules::bi::analytics::get_lims_instrument_usage),
+            )
+            .route(
+                "/lims/sample-status-distribution",
+                get(modules::bi::analytics::get_lims_sample_status_distribution),
+            )
+            .route("/qms/summary", get(modules::bi::analytics::get_qms_summary))
+            .route(
+                "/qms/quality-trend",
+                get(modules::bi::analytics::get_qms_quality_trend),
+            )
+            .route(
+                "/qms/issue-distribution",
+                get(modules::bi::analytics::get_qms_issue_distribution),
+            )
+            .route(
+                "/ehs/summary",
+                get(modules::bi::analytics::get_ehs_analytics),
+            )
+            .route(
+                "/ehs/risk-distribution",
+                get(modules::bi::analytics::get_ehs_risk_distribution),
+            )
+            .route(
+                "/ehs/incident-trend",
+                get(modules::bi::analytics::get_ehs_incident_trend),
+            )
+            .route(
+                "/srm/summary",
+                get(modules::bi::analytics::get_srm_analytics),
+            )
+            .route(
+                "/srm/supplier-ranking",
+                get(modules::bi::analytics::get_srm_supplier_ranking),
+            )
+            .route(
+                "/srm/order-timeline",
+                get(modules::bi::analytics::get_srm_order_timeline),
+            )
+            .route("/pdm/summary", get(modules::bi::analytics::get_pdm_summary))
+            .route(
+                "/pdm/production-trend",
+                get(modules::bi::analytics::get_pdm_production_trend),
+            )
+            .route(
+                "/pdm/batch-status-distribution",
+                get(modules::bi::analytics::get_pdm_batch_status_distribution),
+            )
+            // 报表中心统计/导出
+            .route("/reports-center/stats", get(reports_center_stats))
+            .route(
+                "/reports-center/export/{report_type}",
+                post(reports_center_export),
+            ),
+    );
+
+    // ===== Reports Center（复数路径） =====
+    let reports_center_read = guarded(
+        &app_state,
+        "bi:report:read",
+        modules::report::create_read_routes(),
+    );
+    let reports_center_write = guarded(
+        &app_state,
+        "bi:report:write",
+        modules::report::create_write_routes(),
+    );
+
+    // ===== 健康明细：仅模块门，不叠加业务码（供监控探针） =====
+    let health_detailed = Router::new()
         .route("/health/detailed", get(detailed_health))
-        // 模块门只负责「能进 BI + 读」；其余写路由仍要求模块伞码 bi:admin。
-        // 路由前缀与前端菜单均为 /api/bi、业务权限码均为 bi:*，故模块门对齐 bi。
-        .layer(axum::middleware::from_fn(require_module_write("bi")))
-        .layer(axum::middleware::from_fn(require_module_access("bi")))
         .with_state(app_state.clone());
 
-    // 数据源写路由：数据源是本域独立资源，按细粒度码 bi:data_source:write 判定，
-    // 不再挂在 bi:admin 模块伞码下（否则租户域角色被 403 挡住，见
-    // docs/quality/prod-schema-drift-2026-11-09.md 权限码专项）。
-    // 注意：本 Router 在 protected_routes 层化之后 merge，故只带自己的两层守卫。
-    let datasource_write_routes = Router::new()
-        .route(
-            "/data-sources",
-            post(modules::bi::datasource::create_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            put(modules::bi::datasource::update_datasource)
-                .delete(modules::bi::datasource::delete_datasource),
-        )
-        .route(
-            "/data-sources/{id}/test",
-            post(modules::bi::datasource::test_datasource),
-        )
-        .route(
-            "/data-sources/{id}/refresh",
-            post(modules::bi::datasource::refresh_datasource),
-        )
+    dashboard_read
+        .merge(dashboard_write)
+        .merge(widget_read)
+        .merge(widget_write)
+        .merge(datasource_read)
+        .merge(datasource_write)
+        .merge(dataset_read)
+        .merge(dataset_write)
+        .merge(sync_read)
+        .merge(sync_write)
+        .merge(visualization_read)
+        .merge(visualization_write)
+        .merge(comparison_read)
+        .merge(comparison_write)
+        .merge(self_report_read)
+        .merge(self_report_write)
+        .merge(drilldown_read)
+        .merge(drilldown_write)
+        .merge(multidim_read)
+        .merge(prediction_read)
+        .merge(permission_read)
+        .merge(permission_write)
+        .merge(analytics_read)
+        .merge(reports_center_read)
+        .merge(reports_center_write)
+        .merge(health_detailed)
         .layer(axum::middleware::from_fn(require_module_access("bi")))
-        .layer(axum::middleware::from_fn(require_permission(
-            "bi:data_source:write",
-        )))
-        .with_state(app_state);
-
-    protected_routes.merge(datasource_write_routes)
 }
 
 #[utoipa::path(
