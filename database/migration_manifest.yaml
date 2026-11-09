@@ -987,3 +987,17 @@ pending_forward_patches:
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；ADD COLUMN 前有存量行守卫（有行则 RAISE EXCEPTION，不伪造回填）"
     note: "生产两表 0 行（2026-11-09 只读核实）；tenant_id 不设 DEFAULT，写入方必须显式提供"
 
+  - version: "20261109170000"
+    file: "database/migrations/20261109170000_p5_b3_unique_indexes.sql"
+    status: to_apply
+    effect: "为代码 upsert/ON CONFLICT 依赖的 15 处业务键补唯一索引（ai/crm/flow/mobile/pdm/pm/public/qms/scm/srm）"
+    destructive_scan: "仅 CREATE UNIQUE INDEX；表/列缺失或已有重复键时 NOTICE 跳过，不删改数据"
+    note: "flow.core_migration_history 代码列与库结构整体不一致，不属缺索引，本批跳过并另行处理"
+
+  - version: "20261109180000"
+    file: "database/migrations/20261109180000_p5_owner_strict_normalize.sql"
+    status: to_apply
+    effect: "六张 finance `_v52` 表、finance.cqrs_snapshots、bi.org_stats 的 owner 归一到 topems_prod 并授服务角色读写"
+    destructive_scan: "仅 ALTER OWNER / GRANT；生产库缺 topems_prod 角色或 hrm 读权限时 RAISE EXCEPTION 中止，不删改数据"
+    note: "前向补丁，不改已推送的 160000/160100/160200；非生产才允许降级 topems_app"
+

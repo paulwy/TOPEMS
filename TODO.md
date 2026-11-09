@@ -522,3 +522,15 @@
   `(report_type, org_id, period, currency_code)` 无法 DROP 重建，门禁禁止）。
 - 后续（P4）应正式用 `company_id` 唯一键替换，并移除 `org_id` 的歧义用法。
 
+
+---
+
+## 15. v5.2 审计模块下线口径（2026-11-09 立项）
+
+- 六张 `_v52` 表（`finance_alert_configs_v52`、`finance_alert_history_v52`、
+  `finance_anomaly_alerts_v52`、`finance_audit_findings_v52`、
+  `finance_detection_configs_v52`、`finance_audit_rules_v52`）是同属 v5.2 审计模块的
+  同一数据面，现已代号对齐、列补齐、契约零差异、0 行，处于可用状态。
+- **口径**：将来若决定整体下线 v5.2 审计模块，六张表**同批处置**，
+  不做单体删除——单删一张会留下半拆模块与死引用，成本高于保留。
+- 决策记录：第六张 `finance_audit_rules_v52` 保留，不删除（2026-11-09）。
