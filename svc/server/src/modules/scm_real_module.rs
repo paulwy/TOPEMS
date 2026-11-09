@@ -10,13 +10,12 @@
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
-use std::sync::Arc;
 use std::time::Duration;
 use topems_scm::modules::{create_routes, ApiState};
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_core::l2_cache::L2CacheConfig;
 
 /// 真实 SCM 模块：持有数据库连接池 + 完整业务路由 + 缓存
 pub struct ScmRealModule {
@@ -87,9 +86,18 @@ impl ScmRealModule {
             auth_state: ctx.auth_state.clone(),
             cache: None,
             event_publisher: ctx.event_publisher.clone(),
-            supplier_cache: Arc::new(AsyncL2Cache::new_l1_only(supplier_l2_config)),
-            purchase_cache: Arc::new(AsyncL2Cache::new_l1_only(purchase_l2_config)),
-            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(dict_l2_config)),
+            supplier_cache: crate::modules::cache_init::build_l2_cache(
+                "scm:supplier",
+                supplier_l2_config,
+            )
+            .await,
+            purchase_cache: crate::modules::cache_init::build_l2_cache(
+                "scm:purchase",
+                purchase_l2_config,
+            )
+            .await,
+            dict_cache: crate::modules::cache_init::build_l2_cache("scm:dict", dict_l2_config)
+                .await,
         };
 
         // 4. 业务路由（tenant 中间件 + 权限中间件 + with_state）

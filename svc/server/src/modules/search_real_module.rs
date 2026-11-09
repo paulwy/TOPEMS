@@ -24,7 +24,12 @@ pub struct SearchRealModule {
 
 impl SearchRealModule {
     /// 异步构建真实 Search 模块
-    pub async fn build() -> Result<Self> {
+    ///
+    /// `server_port`：宿主单体实际监听端口。search 的投影回填需要访问 erp 的
+    /// `/api/erp/internal/searchable-snapshot`，单体形态下 erp 与 search 同进程，
+    /// 回环地址由宿主端口推导（不读 `ERP_URL`、不写死 8010——那会让请求打到
+    /// 不存在的独立 erp 端口，只打 warn 静默失败）。
+    pub async fn build(server_port: u16) -> Result<Self> {
         let config = ServiceConfig {
             name: "topems-search",
             port: 8092,
@@ -52,7 +57,62 @@ impl SearchRealModule {
         if let Err(e) = topems_search::projection::start_projection_subscriber(db.clone()).await {
             tracing::warn!("⚠️ search 投影订阅者启动失败: {}", e);
         }
-        topems_search::projection::backfill_projections(&db).await;
+
+        // 单体形态投影回填：erp 与本模块同进程，回环 + 自签服务令牌，
+        // 不再依赖 ERP_URL / BACKFILL_TOKEN 环境变量（缺失时独立进程会 error 跳过）。
+        // 模块 build 发生在 HTTP 监听 bind 之前，首次请求必然 connection refused：
+        // 因此投递到后台任务，等待监听就绪并有限重试；最终失败打 error 而不是静默 warn。
+        let erp_base = format!("http://127.0.0.1:{server_port}");
+        match topems_shared_auth::service::issue_service_token(
+            &ctx.auth_state.jwt_secret,
+            "search-backfill-service",
+            &["*"],
+            Some(10 * 365 * 24 * 3600),
+        ) {
+            Ok(token) => {
+                let backfill_db = db.clone();
+                tokio::spawn(async move {
+                    const MAX_ATTEMPTS: u32 = 6;
+                    for attempt in 1..=MAX_ATTEMPTS {
+                        // 首次等待监听 bind（2s），之后按 3s 退避
+                        let delay = if attempt == 1 { 2 } else { 3 };
+                        tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+                        if topems_search::projection::backfill_projections_with(
+                            &backfill_db,
+                            &erp_base,
+                            &token,
+                        )
+                        .await
+                        {
+                            tracing::info!(
+                                "[search] 单体形态投影回填完成（endpoint={}，第 {} 次尝试）",
+                                erp_base,
+                                attempt
+                            );
+                            return;
+                        }
+                        tracing::warn!(
+                            "[search] 单体形态投影回填第 {}/{} 次失败（endpoint={}），继续重试",
+                            attempt,
+                            MAX_ATTEMPTS,
+                            erp_base
+                        );
+                    }
+                    tracing::error!(
+                        "[search] 单体形态投影回填 {} 次均失败（endpoint={}）：搜索投影仅靠事件增量，\
+                         历史数据缺口无法补齐，请检查 erp 快照端点与 JWT_SECRET 一致性",
+                        MAX_ATTEMPTS,
+                        erp_base
+                    );
+                });
+            }
+            Err(e) => {
+                tracing::error!(
+                    "[search] 自签 backfill 服务令牌失败，跳过投影回填（历史数据不会被补全）: {}",
+                    e
+                );
+            }
+        }
 
         // 公开路由（无状态）
         let public_routes =

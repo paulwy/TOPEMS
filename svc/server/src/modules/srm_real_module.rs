@@ -69,7 +69,7 @@ impl SrmRealModule {
             ..Default::default()
         };
         let supplier_cache: Arc<AsyncL2Cache<serde_json::Value>> =
-            Arc::new(AsyncL2Cache::new_l1_only(l2_config));
+            crate::modules::cache_init::build_l2_cache("srm:supplier", l2_config).await;
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))

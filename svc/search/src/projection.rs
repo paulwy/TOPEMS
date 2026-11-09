@@ -26,7 +26,8 @@ const ZERO_TENANT: &str = "00000000-0000-0000-0000-000000000000";
 /// 启动时探测投影表（migration 版本化后不再自举建表）。表缺失返回 Err，由
 /// 调用方告警（migration 未应用）；投影未就绪时搜索为空结果，待事件/backfill 追平。
 pub async fn init_projection_table(db: &Db) -> Result<(), sqlx::Error> {
-    let mut scope = db.scope_read().await?;
+    // 启动期无请求上下文：必须走系统读作用域，否则 RLS fail-closed 会误报缺表。
+    let mut scope = db.scope_read_system().await?;
     let exists: Option<String> =
         sqlx::query_scalar("SELECT to_regclass('public.search_entity_projections')::text")
             .fetch_optional(&mut scope)
@@ -48,7 +49,7 @@ async fn apply_event(db: &Db, payload: SearchableEntityChangedPayload) -> Result
         .unwrap_or_else(|| Uuid::parse_str(ZERO_TENANT).unwrap_or_default());
 
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant)
         .await
         .map_err(|e| TopemsError::Internal(format!("search 投影 scope begin 失败: {}", e)))?;
 
@@ -157,17 +158,69 @@ pub async fn start_projection_subscriber(db: Db) -> Result<(), TopemsError> {
     Ok(())
 }
 
+/// 回填配置：erp 快照端点地址 + 访问令牌。
+///
+/// 显式传入而不在库内部读取环境变量/写死端口，方便独立进程（读 env）与
+/// 模块化单体（同进程回环 + 自签令牌）复用同一实现。
+#[derive(Debug, Clone)]
+pub struct BackfillEndpoint {
+    /// erp 服务基础地址，如 `http://erp:8010` 或单体回环 `http://127.0.0.1:8099`
+    pub erp_base: String,
+    /// 访问 `/api/erp/internal/searchable-snapshot` 的 JWT（必须含 exp）
+    pub token: String,
+}
+
+impl BackfillEndpoint {
+    /// 独立部署形态：从环境变量读取。缺任一配置时明确报错并返回 None（跳过回填），
+    /// 不再回退 `localhost:8010` 造成"请求打到不存在端口、只打 warn"的静默失败。
+    pub fn from_env() -> Option<Self> {
+        let erp_base = match std::env::var("ERP_URL") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                tracing::error!(
+                    "[search] 未配置 ERP_URL：跳过投影回填。历史数据不会被补全，\
+                     搜索投影只能依赖后续事件增量。请显式设置 ERP_URL（如 http://erp:8010）"
+                );
+                return None;
+            }
+        };
+        let token = match std::env::var("BACKFILL_TOKEN") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                tracing::error!(
+                    "[search] 未配置 BACKFILL_TOKEN：erp 快照端点受全局认证保护，\
+                     跳过投影回填（历史数据不会被补全）。请用与 JWT_SECRET 同签发的远期服务令牌填充"
+                );
+                return None;
+            }
+        };
+        Some(Self { erp_base, token })
+    }
+}
+
+/// 启动时差距对账（独立部署形态）：从环境读取 `ERP_URL`/`BACKFILL_TOKEN` 后回填。
+pub async fn backfill_projections(db: &Db) -> bool {
+    match BackfillEndpoint::from_env() {
+        Some(ep) => backfill_projections_with(db, &ep.erp_base, &ep.token).await,
+        None => false,
+    }
+}
+
 /// 启动时差距对账：从 erp 快照端点拉取全量可搜索实体，逐行 UPSERT 进投影。
 ///
 /// 用途：补齐"停消费期间/历史未发事件"造成的投影缺口。读模型重建走 erp HTTP
-/// 快照（不直读 erp schema，守住 schema 边界）；best-effort——erp 不可达仅告警，
-/// 不阻塞 search 启动，后续增量仍由事件流收敛。
-pub async fn backfill_projections(db: &Db) {
-    let erp_base = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
-    let url = format!("{}/api/erp/internal/searchable-snapshot", erp_base);
+/// 快照（不直读 erp schema，守住 schema 边界）；不阻塞 search 启动——失败时
+/// 明确 error 并返回 false，由调用方决定是否重试/告警，后续增量仍由事件流收敛。
+///
+/// 返回 true 表示快照拉取与投影补写成功；false 表示失败（调用方可重试）。
+pub async fn backfill_projections_with(db: &Db, erp_base: &str, token: &str) -> bool {
+    let url = format!(
+        "{}/api/erp/internal/searchable-snapshot",
+        erp_base.trim_end_matches('/')
+    );
 
-    // backfill 前差距：投影已有行数
-    let before: i64 = match db.scope_read().await {
+    // backfill 前差距：投影已有行数（全量计数走系统读作用域）
+    let before: i64 = match db.scope_read_system().await {
         Ok(mut scope) => {
             sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
                 .fetch_optional(&mut scope)
@@ -179,68 +232,91 @@ pub async fn backfill_projections(db: &Db) {
         Err(_) => 0,
     };
 
-    let client = reqwest::Client::builder()
+    let client = match reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
-        .build();
-    let token = std::env::var("BACKFILL_TOKEN").ok();
-    let mut rb = match client {
-        Ok(c) => c.get(&url),
+        .build()
+    {
+        Ok(c) => c,
         Err(e) => {
-            tracing::warn!("[search] backfill 构建 HTTP 客户端失败: {}（跳过对账）", e);
-            return;
+            tracing::error!("[search] backfill 构建 HTTP 客户端失败: {}", e);
+            return false;
         }
     };
-    if let Some(t) = token.as_deref() {
-        rb = rb.bearer_auth(t);
-    }
-    let resp = rb.send().await;
 
-    match resp {
-        Ok(r) => match r.json::<serde_json::Value>().await {
-            Ok(body) => {
-                let items = body
-                    .get("data")
-                    .and_then(|d| d.as_array())
-                    .cloned()
-                    .unwrap_or_default();
-                let mut upserted = 0;
-                for item in items {
-                    if let Ok(payload) =
-                        serde_json::from_value::<SearchableEntityChangedPayload>(item)
-                    {
-                        if apply_event(db, payload).await.is_ok() {
-                            upserted += 1;
-                        }
-                    }
-                }
-                let after: i64 = match db.scope_read().await {
-                    Ok(mut scope) => {
-                        sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
-                            .fetch_optional(&mut scope)
-                            .await
-                            .ok()
-                            .flatten()
-                            .unwrap_or(0)
-                    }
-                    Err(_) => 0,
-                };
-                tracing::info!(
-                    "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 投影行数 {} -> {}",
-                    upserted,
-                    upserted,
-                    before,
-                    after
-                );
-            }
-            Err(e) => {
-                tracing::warn!("[search] backfill 解析快照响应失败: {}（跳过对账）", e);
-            }
-        },
+    let resp = match client.get(&url).bearer_auth(token).send().await {
+        Ok(r) => r,
         Err(e) => {
-            tracing::warn!(
-                "[search] backfill 拉取 erp 快照失败: {}（erp 未起则跳过，不阻塞）",
+            tracing::error!(
+                "[search] backfill 拉取 erp 快照失败（endpoint={}）: {}",
+                url,
                 e
             );
+            return false;
+        }
+    };
+
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        tracing::error!(
+            "[search] backfill 快照端点返回非 2xx（endpoint={}, status={}）: {}",
+            url,
+            status,
+            body.chars().take(300).collect::<String>()
+        );
+        return false;
+    }
+
+    let body = match resp.json::<serde_json::Value>().await {
+        Ok(b) => b,
+        Err(e) => {
+            tracing::error!("[search] backfill 解析快照响应失败: {}", e);
+            return false;
+        }
+    };
+    let items = body
+        .get("data")
+        .and_then(|d| d.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let source_count = items.len();
+    let mut upserted = 0;
+    let mut failed = 0;
+    for item in items {
+        let payload = match serde_json::from_value::<SearchableEntityChangedPayload>(item) {
+            Ok(p) => p,
+            Err(e) => {
+                failed += 1;
+                tracing::error!("[search] backfill 快照条目反序列化失败: {}", e);
+                continue;
+            }
+        };
+        match apply_event(db, payload).await {
+            Ok(()) => upserted += 1,
+            Err(e) => {
+                failed += 1;
+                tracing::error!("[search] backfill 投影写入失败: {}", e);
+            }
         }
     }
+    let after: i64 = match db.scope_read_system().await {
+        Ok(mut scope) => {
+            sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
+                .fetch_optional(&mut scope)
+                .await
+                .ok()
+                .flatten()
+                .unwrap_or(0)
+        }
+        Err(_) => 0,
+    };
+    tracing::info!(
+        "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 失败 {} 行, 投影行数 {} -> {}",
+        source_count,
+        upserted,
+        failed,
+        before,
+        after
+    );
+    failed == 0
 }

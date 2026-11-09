@@ -80,7 +80,8 @@ impl WmsRealModule {
             Ok(c) => Arc::new(c),
             Err((c, _)) => Arc::new(c),
         };
-        let inventory_cache = Arc::new(AsyncL2Cache::new_l1_only(
+        let inventory_cache = crate::modules::cache_init::build_l2_cache(
+            "wms:inventory",
             L2CacheConfig {
                 instance_prefix: "wms".to_string(),
                 l1_ttl: Duration::from_secs(60),
@@ -89,8 +90,10 @@ impl WmsRealModule {
                 ..Default::default()
             }
             .with_metrics("wms", "inventory"),
-        ));
-        let dict_cache = Arc::new(AsyncL2Cache::new_l1_only(
+        )
+        .await;
+        let dict_cache = crate::modules::cache_init::build_l2_cache(
+            "wms:dict",
             L2CacheConfig {
                 instance_prefix: "wms".to_string(),
                 l1_ttl: Duration::from_secs(60),
@@ -99,7 +102,8 @@ impl WmsRealModule {
                 ..Default::default()
             }
             .with_metrics("wms", "dict"),
-        ));
+        )
+        .await;
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),

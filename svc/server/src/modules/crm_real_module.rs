@@ -100,10 +100,19 @@ impl CrmRealModule {
             }
             .with_metrics("crm", entity)
         }
-        let customer_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("customer")));
-        let opportunity_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("opportunity")));
-        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(crm_l2_config("dict")));
-        let dashboard_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("dashboard")));
+        let customer_cache =
+            crate::modules::cache_init::build_l2_cache("crm:customer", crm_l2_config("customer"))
+                .await;
+        let opportunity_cache = crate::modules::cache_init::build_l2_cache(
+            "crm:opportunity",
+            crm_l2_config("opportunity"),
+        )
+        .await;
+        let dict_cache: Arc<AsyncL2Cache<String>> =
+            crate::modules::cache_init::build_l2_cache("crm:dict", crm_l2_config("dict")).await;
+        let dashboard_cache =
+            crate::modules::cache_init::build_l2_cache("crm:dashboard", crm_l2_config("dashboard"))
+                .await;
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),

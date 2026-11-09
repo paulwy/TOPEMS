@@ -161,6 +161,23 @@ async fn main() -> Result<()> {
     // bootstrap_service 内部也会 dotenv，但那时首个池已创建、预算分母已固化。
     let _ = dotenv::dotenv();
 
+    // 监听端口：只解析一次并贯穿全进程（模块 build 需要知道宿主回环端口，
+    // 如 search 投影回填访问同进程 erp 快照；HTTP bind 复用同一值）。
+    // 未设置时显式告警并采用约定默认 8099（nginx 全 /api/* 代理目标），不静默；
+    // 已设置但非法则启动即报错，避免带着错误端口起来却对外不可达。
+    let server_port: u16 = match std::env::var("SERVER_PORT") {
+        Ok(p) => p
+            .trim()
+            .parse::<u16>()
+            .map_err(|e| anyhow::anyhow!("SERVER_PORT 非法（{p}）: {e}"))?,
+        Err(_) => {
+            tracing::warn!(
+                "SERVER_PORT 未设置：使用约定默认端口 8099，请确认 nginx 反代目标与该端口一致"
+            );
+            8099
+        }
+    };
+
     // 池数由注册表（下方 build 列表）推导，必须在首个池创建前设置。
     // DB_EXPECTED_POOLS 仅作一致性校验：不一致时告警并采用推导值（见 budget::from_env）。
     let derived_pools = derived_db_pools();
@@ -503,7 +520,7 @@ async fn main() -> Result<()> {
     #[cfg(feature = "module-search")]
     {
         use topems_server::modules::search_real_module::SearchRealModule;
-        match SearchRealModule::build().await {
+        match SearchRealModule::build(server_port).await {
             Ok(real_search) => {
                 registry
                     .lock()
@@ -710,10 +727,7 @@ async fn main() -> Result<()> {
     // ================================================
     // 启动 HTTP 服务（健康检查 + 模块路由聚合）
     // ================================================
-    let port = std::env::var("SERVER_PORT")
-        .ok()
-        .and_then(|p| p.parse::<u16>().ok())
-        .unwrap_or(8099);
+    let port = server_port;
 
     let app = registry.lock().unwrap().merge_routes();
     // [U1-b2 D1] 原 3 行借用 unified-core mes 投影 handler 的根层路由（/ws/mes/dashboard、

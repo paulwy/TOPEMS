@@ -21,7 +21,7 @@ use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::health::SimpleHealthConfig;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_core::l2_cache::L2CacheConfig;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
 use topems_unified_core::modules::subscription::PlanTier;
@@ -80,7 +80,7 @@ impl QmsRealModule {
             pool: ctx.db.clone(),
             health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
-            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
+            dict_cache: crate::modules::cache_init::build_l2_cache("qms:dict", l2_config).await,
             workflow_client,
         };
 

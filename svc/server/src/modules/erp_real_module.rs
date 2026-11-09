@@ -19,7 +19,7 @@ use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_core::l2_cache::L2CacheConfig;
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
@@ -126,7 +126,7 @@ impl ErpRealModule {
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
-            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
+            dict_cache: crate::modules::cache_init::build_l2_cache("erp:dict", l2_config).await,
             notification_client,
             hrm_client,
             encryption: Arc::new(encryption_service),

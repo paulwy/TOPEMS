@@ -318,15 +318,8 @@ pub async fn query_audit_logs(
             (items, total)
         }
         _ => {
-            let db = state.db.clone();
-            let mut scope = match db.scope_read().await {
-                Ok(scope) => scope,
-                Err(e) => {
-                    tracing::error!("数据库作用域创建失败: {}", e);
-                    return ApiResponse::server_error("数据库作用域创建失败");
-                }
-            };
-
+            // 复用函数入口已开启的作用域：此处再开一个会同时占用两条连接，
+            // 嵌入模式共享池额度紧张时 acquire 超时 → 访问审计查询稳定 500。
             let total: i64 = sqlx::query_scalar(
                 r#"
                 SELECT COUNT(*) FROM public.audit_logs
@@ -470,6 +463,10 @@ pub async fn get_audit_log_stats(
             .await
             .unwrap_or(0);
 
+            // 释放连接后再调用辅助查询（辅助函数内部自成作用域），
+            // 否则单请求同时占用两条连接，小池下会 acquire 超时表现为请求挂死。
+            let _ = scope.commit().await;
+
             stats.by_action = load_top_by_column(
                 &state,
                 "public.permission_audit_logs",
@@ -505,18 +502,14 @@ pub async fn get_audit_log_stats(
 
             stats.failure_total = stats.total - stats.success_total;
 
+            // 同上：先释放连接，再走辅助查询。
+            let _ = scope.commit().await;
+
             stats.by_user = load_login_top_users(&state).await;
         }
         _ => {
-            let db = state.db.clone();
-            let mut scope = match db.scope_read().await {
-                Ok(scope) => scope,
-                Err(e) => {
-                    tracing::error!("数据库作用域创建失败: {}", e);
-                    return ApiResponse::server_error("数据库作用域创建失败");
-                }
-            };
-
+            // 复用函数入口已开启的作用域：此处再开一个会同时占用两条连接，
+            // 嵌入模式共享池额度紧张时 acquire 超时 → 访问审计统计稳定 500。
             stats.total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
             )
@@ -931,8 +924,7 @@ async fn fetch_export_rows(
             .await?
         }
         _ => {
-            let db = state.db.clone();
-            let mut scope = db.scope_read().await?;
+            // 复用 fetch_export_rows 入口已开启的作用域，避免同请求占用两条连接。
             let rows = sqlx::query(
                 r#"
                 SELECT id, user_id::text, user_name, action, entity_type, entity_id,

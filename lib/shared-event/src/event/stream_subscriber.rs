@@ -55,7 +55,9 @@ impl Default for ConsumerConfig {
     fn default() -> Self {
         Self {
             group_name: "default".to_string(),
-            consumer_name: format!("consumer-{}", uuid::Uuid::new_v4()),
+            // 稳定消费者名：同名消费者重启后复用同一 consumer（Redis Streams 按名归并），
+            // 避免每次启动生成新 consumer 在 XINFO CONSUMERS 里无限泄漏。
+            consumer_name: "consumer".to_string(),
             block_ms: 5000,
             count: 10,
             max_retries: 3,
@@ -87,16 +89,29 @@ pub struct StreamEventSubscriber {
 impl StreamEventSubscriber {
     /// 创建新的 Stream 事件订阅者
     pub fn new(service_name: &str) -> EventResult<Self> {
-        let redis_url =
-            env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url = match env::var("REDIS_URL") {
+            Ok(url) if !url.trim().is_empty() => url,
+            _ => {
+                // 不静默回退：缺少 REDIS_URL 时事件总线不可用，明确告警后按本地默认连接尝试，
+                // 便于本地开发，但生产中必须由部署环境注入。
+                warn!(
+                    "REDIS_URL 未设置（服务 {}）：事件订阅将回退到 redis://localhost:6379，\
+                     生产环境请显式配置 REDIS_URL，否则事件消费者无法连接生产 Redis",
+                    service_name
+                );
+                "redis://localhost:6379".to_string()
+            }
+        };
 
         let redis_client = Client::open(redis_url)?;
 
         let group_name =
             env::var("EVENT_CONSUMER_GROUP").unwrap_or_else(|_| format!("{}-group", service_name));
 
+        // 稳定消费者名（不再包含随机 UUID）：同一服务/组的多实例共享同名消费者，
+        // Redis Streams 会把消息分摊给组内消费者；重启复用同名 consumer，不泄漏。
         let consumer_name = env::var("EVENT_CONSUMER_NAME")
-            .unwrap_or_else(|_| format!("{}-consumer-{}", service_name, uuid::Uuid::new_v4()));
+            .unwrap_or_else(|_| format!("{}-consumer", service_name));
 
         let config = ConsumerConfig {
             group_name,

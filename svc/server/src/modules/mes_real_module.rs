@@ -17,7 +17,7 @@ use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_core::l2_cache::L2CacheConfig;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
@@ -83,7 +83,7 @@ impl MesRealModule {
             db: topems_shared_db::scope::Db::new(ctx.db.clone(), "mes, public, shared"),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
-            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
+            dict_cache: crate::modules::cache_init::build_l2_cache("mes:dict", l2_config).await,
             // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，service token erp:admin；失败优雅降级）
             erp_client: TypedServiceClient::<ErpApi>::from_env_default()
                 .and_then(|c| {

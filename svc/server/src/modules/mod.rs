@@ -13,6 +13,8 @@
 pub mod ai_real_module;
 #[cfg(feature = "module-advanced")]
 pub mod analytics_real_module;
+/// 单体形态多级缓存（L1 + Redis L2）统一初始化（无 feature 门控，被各 real_module 复用）
+pub mod cache_init;
 #[cfg(feature = "module-communication")]
 pub mod communication_real_module;
 #[cfg(feature = "module-crm")]

@@ -82,11 +82,23 @@ impl LimsRealModule {
             }
             .with_metrics("lims", entity)
         }
-        let sample_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("sample")));
-        let task_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("task")));
-        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(lims_l2_config("dict")));
-        let test_method_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("test_method")));
-        let instrument_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("instrument")));
+        let sample_cache =
+            crate::modules::cache_init::build_l2_cache("lims:sample", lims_l2_config("sample"))
+                .await;
+        let task_cache =
+            crate::modules::cache_init::build_l2_cache("lims:task", lims_l2_config("task")).await;
+        let dict_cache: Arc<AsyncL2Cache<String>> =
+            crate::modules::cache_init::build_l2_cache("lims:dict", lims_l2_config("dict")).await;
+        let test_method_cache = crate::modules::cache_init::build_l2_cache(
+            "lims:test_method",
+            lims_l2_config("test_method"),
+        )
+        .await;
+        let instrument_cache = crate::modules::cache_init::build_l2_cache(
+            "lims:instrument",
+            lims_l2_config("instrument"),
+        )
+        .await;
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),

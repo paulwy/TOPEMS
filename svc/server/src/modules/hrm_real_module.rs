@@ -20,7 +20,7 @@ use topems_shared_auth::security::init_encryption_from_env;
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
 use topems_shared_core::config::CacheConfig;
 use topems_shared_core::error::Result;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_core::l2_cache::L2CacheConfig;
 use topems_shared_event::cache::InMemoryCache as EventInMemoryCache;
 use topems_shared_event::redis::CacheService;
 
@@ -89,7 +89,8 @@ impl HrmRealModule {
             cache,
             encryption: Arc::new(encryption),
             event_publisher: ctx.event_publisher.clone(),
-            employee_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
+            employee_cache: crate::modules::cache_init::build_l2_cache("hrm:employee", l2_config)
+                .await,
         };
 
         // 6. 插件路由（lib 内 handler）

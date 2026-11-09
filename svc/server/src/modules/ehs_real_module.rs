@@ -81,9 +81,13 @@ impl EhsRealModule {
             }
             .with_metrics("ehs", entity)
         }
-        let hazard_cache = Arc::new(AsyncL2Cache::new_l1_only(ehs_l2_config("hazard")));
-        let training_cache = Arc::new(AsyncL2Cache::new_l1_only(ehs_l2_config("training")));
-        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(ehs_l2_config("dict")));
+        let hazard_cache =
+            crate::modules::cache_init::build_l2_cache("ehs:hazard", ehs_l2_config("hazard")).await;
+        let training_cache =
+            crate::modules::cache_init::build_l2_cache("ehs:training", ehs_l2_config("training"))
+                .await;
+        let dict_cache: Arc<AsyncL2Cache<String>> =
+            crate::modules::cache_init::build_l2_cache("ehs:dict", ehs_l2_config("dict")).await;
 
         // 6. 健康检查配置
         let health_config = SimpleHealthConfig::new("topems-ehs").with_db(ctx.db.clone());
