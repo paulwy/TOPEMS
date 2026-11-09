@@ -43,9 +43,9 @@ ledger_evidence:
     source: "database/baseline/baseline_20261105235700.json"
 
 repo_evidence:
-  migrations_14digit: 647
-  migration_files_total: 661
-  checksums_entries: 661
+  migrations_14digit: 649
+  migration_files_total: 663
+  checksums_entries: 663
   source: "database/migrations/、database/checksums.txt（2026-11-09 本地计数）"
 
 legacy_orphans_total: 43
@@ -879,3 +879,15 @@ pending_forward_patches:
     status: to_apply
     effect: "BI 细粒度权限码"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码"
+  - version: "20261109101300"
+    file: "database/migrations/20261109101300_p3_bi_schema_drift_align.sql"
+    status: to_apply
+    effect: "BI 域生产结构漂移对齐（补 tenant_id、created_by 回正 text）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 ALTER TABLE 守卫式变更"
+    note: "已推送到 main 且已应用到生产；本轮仅补登记，不重放"
+  - version: "20261109101400"
+    file: "database/migrations/20261109101400_p3_bi_missing_compare_visual_write.sql"
+    status: to_apply
+    effect: "BI 补 comparison/visualization 写码并同域授予"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码"
+    note: "已推送到 main 且已应用到生产；本轮仅补登记，不重放"
