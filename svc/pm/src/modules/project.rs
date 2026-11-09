@@ -15,7 +15,7 @@ use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    commit_retry, EventPublisher, EventType, PmProjectCreatedPayload,
+    commit_retry, EventPublisher, EventType, PmProjectCompletedPayload, PmProjectCreatedPayload,
 };
 
 use crate::modules::effective_tenant_id;
@@ -520,6 +520,23 @@ async fn update_project(
         }
     };
 
+    // 更新前状态与租户：用于判断是否真的「流转到 completed」，事件只在真实流转时发布。
+    let previous: Option<(String, Uuid)> = match sqlx::query_as(only_own_schema_query!(
+        "pm",
+        "SELECT status, tenant_id FROM pm.projects WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(previous) => previous,
+        Err(e) => {
+            let _ = scope.rollback().await;
+            tracing::error!("查询项目原状态失败: {}", e);
+            return ApiResponse::server_error("查询项目原状态失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         r#"
@@ -589,6 +606,38 @@ async fn update_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
+
+            // 只在真实流转到 completed 时发布一次 PmProjectCompleted（重复 PUT 同一状态不重发）。
+            let became_completed = project.status == "completed"
+                && previous
+                    .as_ref()
+                    .map(|(status, _)| status.as_str())
+                    != Some("completed");
+            if became_completed {
+                if let Some(ref publisher) = state.event_publisher {
+                    let payload = PmProjectCompletedPayload {
+                        project_id: project.id,
+                        project_name: project.name.clone(),
+                        completed_by: user_id.map(str::to_string),
+                        completed_at: Some(now),
+                        tenant_id: previous.as_ref().map(|(_, tenant_id)| *tenant_id),
+                    };
+                    let et = EventType::PmProjectCompleted;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
+                        tracing::warn!(
+                            "[pm] PmProjectCompleted 事件发布失败: {}，入重试队列",
+                            e
+                        );
+                        commit_retry::push_retry_typed("pm", et, &payload).await;
+                    } else {
+                        tracing::info!(
+                            "[pm] PmProjectCompleted 事件发布成功 - project_id={}",
+                            payload.project_id
+                        );
+                    }
+                }
+            }
+
             ApiResponse::success(project, "更新项目成功")
         }
         Ok(None) => {

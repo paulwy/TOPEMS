@@ -11,7 +11,8 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    commit_retry, EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
+    commit_retry, EventPublisher, EventType, PmProjectSettledPayload, SettlementApprovedPayload,
+    SettlementCreatedPayload,
 };
 use uuid::Uuid;
 
@@ -294,7 +295,7 @@ async fn update_settlement(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pm:write"])),
+    security(("BearerAuth" = ["pm:settlement:write"])),
     path = "/settlements/{id}/approve",
     params(
 ("id" = String, Path, description = "id")
@@ -338,6 +339,53 @@ async fn approve_settlement(
 
     match settlement {
         Ok(s) => {
+            // 项目名称用于事件与下游应收/凭证显示；取不到就留空，不编造。
+            let project: Option<(String, Option<chrono::DateTime<Utc>>)> = sqlx::query_as(
+                only_own_schema_query!(
+                    "pm",
+                    "SELECT name, settled_at FROM pm.projects WHERE id = $1 AND deleted_at IS NULL"
+                ),
+            )
+            .bind(s.project_id)
+            .fetch_optional(&mut scope)
+            .await
+            .ok()
+            .flatten();
+
+            let (project_name, already_settled) = match project {
+                Some((name, settled_at)) => (name, settled_at.is_some()),
+                None => (String::new(), true),
+            };
+
+            // 首次结算把结算额/时间/操作人落到项目上；已结算则保持原值不动。
+            // 下游以项目为幂等键（erp 应收 REC-PROJ-{project_id}、finance 凭证 source_id=project_id），
+            // 所以 PM 只在「首次结算」发布 PmProjectSettled，重复结算不再发事件。
+            let newly_settled = if already_settled {
+                false
+            } else {
+                let updated = sqlx::query(only_own_schema_query!(
+                    "pm",
+                    "UPDATE pm.projects
+                        SET settled_amount = $1, settled_at = $2, settled_by = $3, updated_at = $2
+                      WHERE id = $4 AND settled_at IS NULL AND deleted_at IS NULL"
+                ))
+                .bind(s.amount)
+                .bind(now)
+                .bind(&approved_by)
+                .bind(s.project_id)
+                .execute(&mut scope)
+                .await;
+
+                match updated {
+                    Ok(r) => r.rows_affected() == 1,
+                    Err(e) => {
+                        let _ = scope.rollback().await;
+                        tracing::error!("写入项目结算字段失败: {}", e);
+                        return ApiResponse::server_error("写入项目结算字段失败");
+                    }
+                }
+            };
+
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交数据库事务失败: {}", e);
                 return ApiResponse::server_error("提交数据库事务失败");
@@ -356,6 +404,31 @@ async fn approve_settlement(
                         e
                     );
                     commit_retry::push_retry_typed("pm", et, &payload).await;
+                }
+
+                if newly_settled {
+                    // 项目结算事件：finance 确认收入（借 1122 / 贷 6001），erp 生成项目应收。
+                    let settled_payload = PmProjectSettledPayload {
+                        project_id: s.project_id,
+                        project_name,
+                        settled_amount: Some(s.amount),
+                        settled_by: Some(payload.approved_by.clone()),
+                        settled_at: Some(now),
+                        tenant_id: Some(tenant_id),
+                    };
+                    let et = EventType::PmProjectSettled;
+                    if let Err(e) = publisher.publish_event(et, &settled_payload).await {
+                        tracing::warn!(
+                            "[PM Settlement] 发布 PmProjectSettled 失败: {}，入重试队列",
+                            e
+                        );
+                        commit_retry::push_retry_typed("pm", et, &settled_payload).await;
+                    }
+                } else {
+                    tracing::info!(
+                        "[PM Settlement] 项目 {} 已结算，跳过 PmProjectSettled（幂等）",
+                        s.project_id
+                    );
                 }
             }
             ApiResponse::success(s, "决算审批通过")
