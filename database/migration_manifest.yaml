@@ -950,3 +950,10 @@ pending_forward_patches:
     status: to_apply
     effect: "内部交易台账/扫描/对账细码 + 租户域角色授予"
     destructive_scan: "无 DML 命中；INSERT 权限码与角色授予（回滚段 DELETE 为注释）"
+  - version: "20261109150000"
+    file: "database/migrations/20261109150000_p4_tenant_admin_ledger_permissions.sql"
+    status: to_apply
+    effect: "tenant_admin 补授 4 枚内部交易台账/扫描/对账细码（守卫式幂等）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码与角色绑定（回滚段 DELETE 为注释）"
+    note: "不含 erp:consolidation-elimination:write 及任何抵消执行类权限，三权分离归 P4 第二批"
+

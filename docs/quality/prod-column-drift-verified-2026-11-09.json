@@ -1,0 +1,4298 @@
+{
+ "generated_at": "2026-11-09",
+ "prod_evidence": {
+  "file": "docs/quality/prod_schema_live_20261109.json",
+  "generated_at": "2026-11-09T18:17:14.615774+08:00",
+  "database": "topems_prod",
+  "ledger_max_version": "20261109140200",
+  "ledger_rows": 630,
+  "tables": 1351,
+  "columns": 17106
+ },
+ "contract_evidence": {
+  "sqlx_files": 296,
+  "rust_sql_literals": 6267,
+  "contract_refs": 64664,
+  "tables_referenced": 807
+ },
+ "summary": {
+  "P0/column_missing": 109,
+  "P0/on_conflict_no_unique": 24,
+  "P0/table_missing": 8,
+  "P2/column_missing_ambiguous": 10,
+  "P2/notnull_ambiguous": 15,
+  "P3/column_missing": 7,
+  "P3/column_missing_ambiguous": 2,
+  "P3/table_missing": 3
+ },
+ "p0_classification": {
+  "true_positive": 141
+ },
+ "methodology": {
+  "duplicate_table_names": 240,
+  "unqualified_refs_on_duplicate_names": 9462,
+  "sqlx_queries_with_select_star": 0,
+  "literal_rejected": {
+   "literal_rejected_short": 185871,
+   "literal_rejected_placeholder": 3236,
+   "literal_rejected_jdbc": 301
+  }
+ },
+ "diff_vs_baseline_report": {
+  "old_p0": 179,
+  "resolved": 38,
+  "persisted": 165,
+  "newly": 13,
+  "old_total": 209,
+  "new_total": 178
+ },
+ "findings": [
+  {
+   "id": "P0-0001",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "activated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:587",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:704"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0002",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "is_active",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:204",
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:322",
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:587",
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:662",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:295",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:469",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:704",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:816"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0003",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "license_type",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:204",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:295"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0004",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "plugin_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:204",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:295"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0005",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:204",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:295"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0006",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.erp_production_orders",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/production_order.rs:176"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0007",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.event_idempotency",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:1394"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0008",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0009",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "category",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0010",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0011",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "invoice_date",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0012",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "invoice_number",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0013",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "paid_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:1006",
+    "svc/erp/src/event_handlers/mod.rs:1024"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0014",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580",
+    "svc/erp/src/event_handlers/mod.rs:1006",
+    "svc/erp/src/event_handlers/mod.rs:1024"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0015",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "supplier_name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0016",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0017",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.payables",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580",
+    "svc/erp/src/event_handlers/mod.rs:1006",
+    "svc/erp/src/event_handlers/mod.rs:1024"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0018",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0019",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0020",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "customer_name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0021",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "invoice_date",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0022",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "invoice_number",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0023",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "project_name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0024",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "received_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:884",
+    "svc/erp/src/event_handlers/mod.rs:902",
+    "svc/erp/src/event_handlers/mod.rs:920"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0025",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662",
+    "svc/erp/src/event_handlers/mod.rs:884",
+    "svc/erp/src/event_handlers/mod.rs:902",
+    "svc/erp/src/event_handlers/mod.rs:920"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0026",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0027",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.receivables",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662",
+    "svc/erp/src/event_handlers/mod.rs:884",
+    "svc/erp/src/event_handlers/mod.rs:902",
+    "svc/erp/src/event_handlers/mod.rs:920"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0028",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "approval_type",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0029",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "approver_role",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0030",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "approver_users",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0031",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "conditions",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0032",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "is_active",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0033",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "notify_users",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0034",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_approval_nodes",
+   "column": "timeout_hours",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/approval_configs.rs:102",
+    "svc/finance/src/services/finance/approval_configs.rs:180"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0035",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_payment_workflow",
+   "column": "workflow_instance_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/payment_workflow.rs:101"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0036",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "actual_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0037",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "budget_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0038",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "budget_item_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0039",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "classification",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0040",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "period",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0041",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "trend",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0042",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "variance_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0043",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_budget_variances_v53",
+   "column": "variance_percentage",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:857"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0044",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "confidence",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0045",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "entity_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0046",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "model_version",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0047",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "period",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0048",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "predicted_inflow",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0049",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "predicted_net",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0050",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "predicted_outflow",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0051",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_cash_flow_predictions_v53",
+   "column": "scenario",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:268"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0052",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "accuracy",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0053",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "entity_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0054",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "is_active",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0055",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "model_type",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0056",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "parameters",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0057",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "trained_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0058",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "account_code",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/voucher_template_entries.rs:193",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/modules/mod.rs:2053",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0059",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "amount_formula",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/voucher_template_entries.rs:193",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/modules/mod.rs:2053",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0060",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0061",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "description",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/voucher_template_entries.rs:193",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/modules/mod.rs:2053",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0062",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "direction",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/voucher_template_entries.rs:193",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/modules/mod.rs:2053",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0063",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_template_lines",
+   "column": "sort_order",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/voucher_template_entries.rs:137",
+    "svc/finance/src/modules/voucher_template_entries.rs:193",
+    "svc/finance/src/modules/voucher_template_entries.rs:268",
+    "svc/finance/src/modules/mod.rs:1979",
+    "svc/finance/src/modules/mod.rs:2053",
+    "svc/finance/src/modules/mod.rs:2149",
+    "svc/finance/src/services/finance/voucher_template.rs:233",
+    "svc/finance/src/services/finance/voucher_template.rs:338"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0064",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.reconciliation_item_snapshots",
+   "column": "match_status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/settlement_center/service.rs:205"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0065",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.reconciliation_item_snapshots",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/settlement_center/service.rs:205"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0066",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "gis.geodata",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/gis/src/modules/geodata.rs:130"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0067",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "gis.geofeatures",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/gis/src/modules/geodata.rs:186"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0068",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "gis.map_layers",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/gis/src/modules/map.rs:391"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0069",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "gis.spatial_analysis",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/gis/src/modules/spatial.rs:95",
+    "svc/gis/src/modules/spatial.rs:192",
+    "svc/gis/src/modules/spatial.rs:285"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0070",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.core_inter_module_sync",
+   "column": "max_retries",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/handlers/sync.rs:727"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0071",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.core_inter_module_sync",
+   "column": "retry_count",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/handlers/sync.rs:727"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0072",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.core_inter_module_sync",
+   "column": "source_entity",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/handlers/sync.rs:727"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0073",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.core_inter_module_sync",
+   "column": "source_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/handlers/sync.rs:727"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0074",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.crm_erp_sync",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/crm_erp_sync.rs:200",
+    "svc/integration/src/crm_erp_sync.rs:253",
+    "svc/integration/src/crm_erp_sync.rs:283"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0075",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.crm_scm_sync",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/crm_scm_sync.rs:192",
+    "svc/integration/src/crm_scm_sync.rs:247",
+    "svc/integration/src/crm_scm_sync.rs:277"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0076",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.erp_wms_sync",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/erp_wms_sync.rs:193",
+    "svc/integration/src/erp_wms_sync.rs:248",
+    "svc/integration/src/erp_wms_sync.rs:278"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0077",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "integration.hrm_finance_sync",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/integration/src/hrm_finance_sync.rs:196",
+    "svc/integration/src/hrm_finance_sync.rs:245",
+    "svc/integration/src/hrm_finance_sync.rs:274"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0078",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "code",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0079",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0080",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "domain",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0081",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "last_synced_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0082",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "local_entity_type",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0083",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "master_data_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0084",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0085",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "payload_snapshot",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0086",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "source_service",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0087",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0088",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0089",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0090",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "portal.portal_todos",
+   "column": "completed",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/portal/src/modules/graphql_mutation_impls.rs:148",
+    "svc/portal/src/modules/todos.rs:197"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0091",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "portal.portal_todos",
+   "column": "service_code",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/portal/src/modules/graphql_mutation_impls.rs:104",
+    "svc/portal/src/modules/todos.rs:144"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0092",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "portal.portal_todos",
+   "column": "service_name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/portal/src/modules/graphql_mutation_impls.rs:104",
+    "svc/portal/src/modules/todos.rs:144"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0093",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "portal.portal_todos",
+   "column": "todo_type",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/portal/src/modules/graphql_mutation_impls.rs:104",
+    "svc/portal/src/modules/todos.rs:144"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0094",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "portal.portal_todos",
+   "column": "user_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/portal/src/modules/graphql_mutation_impls.rs:104",
+    "svc/portal/src/modules/todos.rs:144"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0095",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "public.audit_logs",
+   "column": "origin",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "lib/shared-db/src/audit.rs:291"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0096",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "public.core_notification_templates",
+   "column": "status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/communication/src/notification.rs:3935"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0097",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "scm.purchase_contract_items",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/scm/src/modules/purchase_contract.rs:176",
+    "svc/scm/src/modules/purchase_contract.rs:373"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0098",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "scm.supplier_admission_audit_items",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/scm/src/modules/supplier_admission.rs:683"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0099",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "approved_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0100",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "approved_by",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0101",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0102",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "order_number",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0103",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "payable_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0104",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "status",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0105",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "supplier_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0106",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "supplier_name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0107",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "synced_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0108",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "total_amount",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0109",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "wms.purchase_order_snapshots",
+   "column": "updated_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/src/event_handlers/mod.rs:392"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0110",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "ai.ai_training_samples",
+   "column": "source_type,source_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (source_type, source_id)",
+   "refs": [
+    "svc/ai/src/event_handlers/mod.rs:66"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0111",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "core.core_tenant_plugins",
+   "column": "tenant_id,plugin_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, plugin_id)",
+   "refs": [
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs:204",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:295"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0112",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "crm.customer_tags",
+   "column": "customer_id,tag",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (customer_id, tag)",
+   "refs": [
+    "svc/crm/src/modules/customer_profile.rs:418"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0113",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "erp.materials",
+   "column": "code",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (code)",
+   "refs": [
+    "svc/erp/src/modules/material.rs:466"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0114",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "erp.payables",
+   "column": "invoice_number",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (invoice_number)",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:435",
+    "svc/erp/src/event_handlers/mod.rs:580"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0115",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "erp.receivables",
+   "column": "invoice_number",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (invoice_number)",
+   "refs": [
+    "svc/erp/src/event_handlers/mod.rs:356",
+    "svc/erp/src/event_handlers/mod.rs:662"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0116",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "finance.core_finance_periods",
+   "column": "tenant_id,year,month",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, year, month)",
+   "refs": [
+    "svc/finance/src/modules/mod.rs:3915"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0117",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "finance.core_finance_vouchers",
+   "column": "tenant_id,source_module,source_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, source_module, source_id)",
+   "refs": [
+    "svc/finance/src/event_handlers/mod.rs:230"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0118",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "finance.finance_prediction_models_v53",
+   "column": "model_type",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (model_type)",
+   "refs": [
+    "svc/finance/src/modules/forecast_v53.rs:622"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0119",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "flow.core_flow_variables|public.core_flow_variables",
+   "column": "scope,instance_id,task_id,workflow_id,var_key",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (scope, instance_id, task_id, workflow_id, var_key)",
+   "refs": [
+    "svc/unified-core/src/modules/flow/variable.rs:158"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0120",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "plugin_name,version,script_name",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (plugin_name, version, script_name)",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0121",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "mobile.mobile_push_notifications",
+   "column": "source_type,source_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (source_type, source_id)",
+   "refs": [
+    "svc/mobile/src/event_handlers/mod.rs:101"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0122",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "pdm.pdm_master_data_refs",
+   "column": "master_data_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (master_data_id)",
+   "refs": [
+    "svc/pdm/src/event_handlers/mod.rs:255"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0123",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "pdm.pdm_project_members",
+   "column": "tenant_id,project_id,user_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, project_id, user_id)",
+   "refs": [
+    "svc/pdm/src/modules/project.rs:735"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0124",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "pm.project_benefits",
+   "column": "project_id,period_type,period_date",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (project_id, period_type, period_date)",
+   "refs": [
+    "svc/pm/src/modules/project_benefit.rs:296"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0125",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "pm.project_members",
+   "column": "project_id,user_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (project_id, user_id)",
+   "refs": [
+    "svc/pm/src/modules/project_member.rs:121"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0126",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "public.automation_variables",
+   "column": "tenant_id,key",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, key)",
+   "refs": [
+    "svc/unified-core/src/modules/automation/mod.rs:1024"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0127",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "public.monitor_settings",
+   "column": "tenant_id,key",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, key)",
+   "refs": [
+    "svc/monitor/src/modules/monitor/settings.rs:161",
+    "svc/monitor/src/modules/monitor/settings.rs:275"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0128",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "public.system_settings",
+   "column": "tenant_id,key",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, key)",
+   "refs": [
+    "svc/erp/src/modules/settings.rs:249"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0129",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "qms.qa_corrective_actions",
+   "column": "action_no",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (action_no)",
+   "refs": [
+    "svc/qms/src/modules/integration.rs:65"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0130",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "scm.suppliers",
+   "column": "supplier_no",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (supplier_no)",
+   "refs": [
+    "svc/master-data/src/modules/supplier_sync.rs:173"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0131",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "scm.wms_inventory_snapshots",
+   "column": "warehouse_id,item_code",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (warehouse_id, item_code)",
+   "refs": [
+    "svc/scm/src/event_handlers/mod.rs:873"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0132",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "srm.supplier_performance",
+   "column": "supplier_id,tenant_id",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (supplier_id, tenant_id)",
+   "refs": [
+    "svc/srm/src/event_handlers/mod.rs:209"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0133",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "srm.suppliers",
+   "column": "supplier_no",
+   "prod_actual": "无完整唯一索引/主键",
+   "code_contract": "ON CONFLICT (supplier_no)",
+   "refs": [
+    "svc/master-data/src/modules/supplier_sync.rs:255"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0134",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "bi.org_stats",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/analytics/src/routes.rs:930"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "核对是否视图/动态表名；若确需，补迁移建表；否则删除该查询",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0135",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "cqrs_snapshots",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/domain/pg_event_store.rs:148",
+    "svc/finance/src/domain/pg_event_store.rs:297"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "核对是否视图/动态表名；若确需，补迁移建表；否则删除该查询",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P0-0136",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_alert_configs_v52",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/modules/audit_v52.rs:1484",
+    "svc/finance/src/modules/audit_v52.rs:1507",
+    "svc/finance/src/modules/audit_v52.rs:1524"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "表名不一致：生产为 finance.finance_alert_configs_v，代码用 finance_alert_configs_v52；改代码或补视图",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive",
+   "near_name": "finance.finance_alert_configs_v"
+  },
+  {
+   "id": "P0-0137",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_alert_history_v52",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/modules/audit_v52.rs:1540",
+    "svc/finance/src/modules/audit_v52.rs:1634",
+    "svc/finance/src/modules/audit_v52.rs:1580",
+    "svc/finance/src/modules/audit_v52.rs:1582"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "表名不一致：生产为 finance.finance_alert_history_v，代码用 finance_alert_history_v52；改代码或补视图",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive",
+   "near_name": "finance.finance_alert_history_v"
+  },
+  {
+   "id": "P0-0138",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_anomaly_alerts_v52",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/modules/audit_v52.rs:1003",
+    "svc/finance/src/modules/audit_v52.rs:1358",
+    "svc/finance/src/modules/audit_v52.rs:1360",
+    "svc/finance/src/modules/audit_v52.rs:1438"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "表名不一致：生产为 finance.finance_anomaly_alerts_v，代码用 finance_anomaly_alerts_v52；改代码或补视图",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive",
+   "near_name": "finance.finance_anomaly_alerts_v"
+  },
+  {
+   "id": "P0-0139",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_audit_findings_v52",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/modules/audit_v52.rs:875",
+    "svc/finance/src/modules/audit_v52.rs:877"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "表名不一致：生产为 finance.finance_audit_findings_v，代码用 finance_audit_findings_v52；改代码或补视图",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive",
+   "near_name": "finance.finance_audit_findings_v"
+  },
+  {
+   "id": "P0-0140",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_detection_configs_v52",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/modules/audit_v52.rs:1414"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "表名不一致：生产为 finance.finance_detection_configs_v，代码用 finance_detection_configs_v52；改代码或补视图",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive",
+   "near_name": "finance.finance_detection_configs_v"
+  },
+  {
+   "id": "P0-0141",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance_u8_import_records",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/services/finance/u8_import.rs:90",
+    "svc/finance/src/services/finance/u8_import.rs:142",
+    "svc/finance/src/services/finance/u8_import.rs:264",
+    "svc/finance/src/services/finance/u8_import.rs:185",
+    "svc/finance/src/services/finance/u8_import.rs:208",
+    "svc/finance/src/services/finance/u8_import.rs:241"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "核对是否视图/动态表名；若确需，补迁移建表；否则删除该查询",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "classification": "true_positive"
+  },
+  {
+   "id": "P2-0142",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "default_credit_account",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0143",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "default_debit_account",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0144",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "is_default",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302",
+    "svc/finance/src/services/finance/voucher_template.rs:423",
+    "svc/finance/src/services/finance/voucher_template.rs:431"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0145",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "voucher_type",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0146",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_file_permissions|public.core_file_permissions",
+   "column": "tenant_id",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/unified-core/src/modules/file/manage.rs:986"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0147",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "checksum",
+   "prod_actual": "同名表分布于 3 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0148",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "execution_time_ms",
+   "prod_actual": "同名表分布于 3 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0149",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "rolled_back_at",
+   "prod_actual": "同名表分布于 3 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:150"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0150",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "script_name",
+   "prod_actual": "同名表分布于 3 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0151",
+   "severity": "P2",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "status",
+   "prod_actual": "同名表分布于 3 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120",
+    "tools/migration-sdk/src/history.rs:150"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "跨 schema 同名表：确认代码目标 schema 后复核；不计入 P0",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0152",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment",
+   "column": "equipment_code",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:947",
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:1074",
+    "svc/mes/src/modules/equipment_oee.rs:1027",
+    "svc/mes/src/modules/equipment_oee.rs:539",
+    "svc/mes/src/modules/equipment_oee.rs:1124",
+    "svc/mes/src/modules/equipment.rs:1310"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0153",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment",
+   "column": "equipment_name",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:937",
+    "svc/mes/src/modules/equipment.rs:1065",
+    "svc/mes/src/modules/equipment_oee.rs:1027",
+    "svc/mes/src/modules/equipment_oee.rs:539",
+    "svc/mes/src/modules/equipment_oee.rs:1124",
+    "svc/mes/src/modules/equipment.rs:1310"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0154",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment",
+   "column": "status",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment_oee.rs:1124"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0155",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_inspections",
+   "column": "equipment_id",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:1337",
+    "svc/mes/src/modules/equipment.rs:1206"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0156",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_inspections",
+   "column": "inspection_date",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:1337",
+    "svc/mes/src/modules/equipment.rs:1206"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0157",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_inspections",
+   "column": "inspector",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:1337",
+    "svc/mes/src/modules/equipment.rs:1206"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0158",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_maintenance_records",
+   "column": "description",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:891",
+    ".sqlx/query-a2f37eb4e543c51ae2928ac3c8c4a726ba323c3a77d719faf21b710da329682e.json"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0159",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_maintenance_records",
+   "column": "equipment_id",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:891",
+    ".sqlx/query-a2f37eb4e543c51ae2928ac3c8c4a726ba323c3a77d719faf21b710da329682e.json"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0160",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_maintenance_records",
+   "column": "maintainer",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:891",
+    ".sqlx/query-a2f37eb4e543c51ae2928ac3c8c4a726ba323c3a77d719faf21b710da329682e.json"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0161",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.equipment_maintenance_records",
+   "column": "status",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/equipment.rs:786",
+    "svc/mes/src/modules/equipment.rs:891",
+    ".sqlx/query-a2f37eb4e543c51ae2928ac3c8c4a726ba323c3a77d719faf21b710da329682e.json"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0162",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.process_flow_steps",
+   "column": "sequence",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/mes/src/modules/process_flow.rs:791",
+    "svc/mes/src/modules/process_flow.rs:1217",
+    "svc/mes/src/modules/process_flow.rs:688",
+    "svc/mes/src/modules/process_flow.rs:1105"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0163",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.process_flows",
+   "column": "code",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    ".sqlx/query-04bc3df4b6c18aeeb276c3027716cdec3d4197331431dcff03bde09a2cbe7348.json",
+    "svc/mes/src/modules/process_flow.rs:461",
+    "svc/mes/src/modules/process_flow.rs:395"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0164",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "mes.process_flows",
+   "column": "name",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    ".sqlx/query-04bc3df4b6c18aeeb276c3027716cdec3d4197331431dcff03bde09a2cbe7348.json",
+    "svc/mes/src/modules/process_flow.rs:461",
+    "svc/mes/src/modules/process_flow.rs:1196",
+    "svc/mes/src/modules/process_flow.rs:395"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0165",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "wms.inventory",
+   "column": "material_code",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/wms/src/modules/inventory_alert.rs:571",
+    "svc/wms/src/modules/inventory_alert.rs:317",
+    "svc/wms/src/modules/inventory_alert.rs:738",
+    "svc/wms/src/modules/inventory_alert.rs:160"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P2-0166",
+   "severity": "P2",
+   "kind": "notnull_ambiguous",
+   "schema_table": "wms.inventory",
+   "column": "warehouse_id",
+   "prod_actual": "跨 schema 可空性不一致",
+   "code_contract": "代码按非空解码",
+   "refs": [
+    "svc/wms/src/modules/inventory_alert.rs:537",
+    "svc/wms/src/modules/inventory_alert.rs:317",
+    "svc/wms/src/modules/inventory_alert.rs:738",
+    "svc/wms/src/modules/inventory_alert.rs:160"
+   ],
+   "evidence": "sqlx 编译期输出列",
+   "suggested_action": "确认目标 schema；若落在可空版本，需补 NOT NULL 或改 Option<T>",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": false
+  },
+  {
+   "id": "P3-0167",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "mes.material_categories",
+   "column": "created_at",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/mes/tests/integration_tests.rs:1882"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0168",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "mes.material_categories",
+   "column": "description",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/mes/tests/integration_tests.rs:1882",
+    "svc/mes/tests/integration_tests.rs:1898"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0169",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "mes.material_categories",
+   "column": "name",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/mes/tests/integration_tests.rs:1882",
+    "svc/mes/tests/integration_tests.rs:1898"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0170",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "mes.material_categories",
+   "column": "sort_order",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/mes/tests/integration_tests.rs:1882",
+    "svc/mes/tests/integration_tests.rs:1898"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0171",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "mes.material_categories",
+   "column": "tenant_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/mes/tests/integration_tests.rs:1882"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0172",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "wms.serial_numbers",
+   "column": "org_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/tests/serial_number_e2e.rs:97"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0173",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "wms.sync_records",
+   "column": "org_id",
+   "prod_actual": "实时快照中列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/wms/tests/sync_records_e2e.rs:80"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0174",
+   "severity": "P3",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "iam.core_role_permissions|public.core_role_permissions",
+   "column": "tenant_id",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "lib/shared-auth/tests/permission_backfill_e2e.rs:82"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0175",
+   "severity": "P3",
+   "kind": "column_missing_ambiguous",
+   "schema_table": "iam.core_user_roles|public.core_user_roles",
+   "column": "tenant_id",
+   "prod_actual": "同名表分布于 2 个 schema，均无此列",
+   "code_contract": "代码引用",
+   "refs": [
+    "lib/shared-auth/tests/permission_backfill_e2e.rs:65"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": false,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0176",
+   "severity": "P3",
+   "kind": "table_missing",
+   "schema_table": "events",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "lib/tests/rls.rs:117"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0177",
+   "severity": "P3",
+   "kind": "table_missing",
+   "schema_table": "orders",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "lib/tests/rls.rs:195",
+    "lib/shared-db/src/query_optimizer.rs:247"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  },
+  {
+   "id": "P3-0178",
+   "severity": "P3",
+   "kind": "table_missing",
+   "schema_table": "products",
+   "column": "",
+   "prod_actual": "实时生产快照中不存在",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "lib/tests/rls.rs:48"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "test": true,
+   "declared_after_snapshot": false,
+   "from_tests": true
+  }
+ ],
+ "resolved_findings": [
+  {
+   "id": "P0-0008",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.internal_transactions",
+   "column": "confirmed_at",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:517"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109140000:timestamptz",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0009",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.internal_transactions",
+   "column": "confirmed_by",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:517"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109140000:varchar(100)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0010",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.internal_transactions",
+   "column": "disputed_at",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:517",
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:615"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109140000:timestamptz",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0011",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.internal_transactions",
+   "column": "disputed_by",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:517",
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:615"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109140000:varchar(100)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0012",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.internal_transactions",
+   "column": "disputed_reason",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:517",
+    "svc/erp/src/modules/consolidation/internal_transactions.rs:615"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109140000:text",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0013",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "erp.opening_balances",
+   "column": "account_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/mod.rs:4461",
+    "svc/finance/src/modules/mod.rs:4560",
+    "svc/finance/src/modules/mod.rs:4665",
+    "svc/finance/src/modules/mod.rs:4724"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110000:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0041",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_aux_balances",
+   "column": "company_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher.rs:372",
+    "svc/finance/src/services/finance/periods.rs:753"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108140000:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0042",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_ledger",
+   "column": "company_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/tests/finance_service_tests.rs:341",
+    "svc/finance/src/services/finance/voucher.rs:350",
+    "svc/finance/src/services/finance/periods.rs:730",
+    "svc/erp/src/modules/consolidation/elimination_flow.rs:1218"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108140000:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0044",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_voucher_lines",
+   "column": "company_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/event_handlers/mod.rs:282",
+    "svc/finance/src/services/finance/voucher_generation.rs:472",
+    "svc/finance/src/services/finance/voucher.rs:102",
+    "svc/finance/src/services/finance/voucher.rs:818",
+    "svc/finance/src/services/finance/voucher.rs:1052",
+    "svc/finance/src/services/finance/voucher.rs:1165",
+    "svc/finance/src/services/finance/periods.rs:705"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108140000:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0045",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_vouchers",
+   "column": "company_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/tests/finance_service_tests.rs:321",
+    "svc/finance/tests/finance_service_tests.rs:363",
+    "svc/finance/src/event_handlers/mod.rs:230",
+    "svc/finance/src/modules/mod.rs:3721",
+    "svc/finance/src/services/finance/voucher_generation.rs:402",
+    "svc/finance/src/services/finance/voucher.rs:78",
+    "svc/finance/src/services/finance/voucher.rs:1023",
+    "svc/finance/src/services/finance/periods.rs:684"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108140000:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0046",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_vouchers",
+   "column": "source_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/event_handlers/mod.rs:230"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108135000:varchar(64)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0047",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.core_finance_vouchers",
+   "column": "source_module",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/event_handlers/mod.rs:230",
+    "svc/finance/src/services/finance/periods.rs:684"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108135000:varchar(64)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0076",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "default_credit_account",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0077",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "default_debit_account",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0078",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "is_default",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302",
+    "svc/finance/src/services/finance/voucher_template.rs:423",
+    "svc/finance/src/services/finance/voucher_template.rs:431"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0079",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.finance_voucher_templates|public.finance_voucher_templates",
+   "column": "voucher_type",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/services/finance/voucher_template.rs:206",
+    "svc/finance/src/services/finance/voucher_template.rs:302"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0080",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "approval_comment",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1825"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:text",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0081",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "approval_status",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156",
+    "svc/finance/src/modules/financial_reports.rs:1800",
+    "svc/finance/src/modules/financial_reports.rs:1825",
+    "svc/finance/src/modules/financial_reports.rs:1852",
+    "svc/finance/src/modules/financial_reports.rs:1891",
+    "svc/finance/src/modules/financial_reports.rs:1916"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:varchar(32)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0082",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "approved_at",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1825"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:timestamptz",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0083",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "approved_by",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1825"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:varchar(128)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0084",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "company_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110200:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0085",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "currency_code",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:varchar(8)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0086",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "generated_at",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:timestamptz",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0087",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "generated_by",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:varchar(128)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0088",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "org_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:uuid",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0089",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "rejection_reason",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1852"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261109110150:text",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0092",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_file_permissions|public.core_file_permissions",
+   "column": "tenant_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/unified-core/src/modules/file/manage.rs:986"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0093",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "checksum",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0094",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "execution_time_ms",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0095",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "rolled_back_at",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:150"
+   ],
+   "evidence": "UPDATE SET 目标",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0096",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "script_name",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0097",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "flow.core_migration_history|iam.core_migration_history|public.core_migration_history",
+   "column": "status",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "tools/migration-sdk/src/history.rs:85",
+    "tools/migration-sdk/src/history.rs:120",
+    "tools/migration-sdk/src/history.rs:150"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0102",
+   "severity": "P0",
+   "kind": "column_missing",
+   "schema_table": "hrm.companies",
+   "column": "code",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "svc/unified-core/tests/p1_company_scopes_migration_tests.rs:263",
+    "svc/unified-core/src/modules/tenant/handlers.rs:356",
+    "svc/hrm/src/modules/setup.rs:321",
+    "svc/finance/src/event_handlers/mod.rs:1300",
+    "svc/finance/src/event_handlers/mod.rs:1425"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "补列（ADD COLUMN，注意 NOT NULL/默认值），或修正代码列名",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "20261108130000:varchar(64)",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0149",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "finance.core_finance_aux_balances",
+   "column": "tenant_id,company_id,account_id,aux_type,aux_id,period",
+   "prod_actual": "无匹配唯一索引/主键",
+   "code_contract": "ON CONFLICT (tenant_id, company_id, account_id, aux_type, aux_id, period)",
+   "refs": [
+    "svc/finance/src/services/finance/voucher.rs:372",
+    "svc/finance/src/services/finance/periods.rs:753"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0153",
+   "severity": "P0",
+   "kind": "on_conflict_no_unique",
+   "schema_table": "finance.financial_reports|public.financial_reports",
+   "column": "report_type,org_id,period,currency_code",
+   "prod_actual": "无匹配唯一索引/主键",
+   "code_contract": "ON CONFLICT (report_type, org_id, period, currency_code)",
+   "refs": [
+    "svc/finance/src/modules/financial_reports.rs:1156"
+   ],
+   "evidence": "ON CONFLICT 目标",
+   "suggested_action": "补唯一索引，或改用 ON CONFLICT ON CONSTRAINT / 调整冲突列",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0170",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "erp.elimination_candidates",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261109140100（晚于生产账本水位，待窗口应用）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/erp/src/modules/consolidation/elimination_flow.rs:421",
+    "svc/erp/src/modules/consolidation/elimination_flow.rs:499",
+    "svc/erp/src/modules/consolidation/elimination_flow.rs:1357"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "随对应前向补丁上线；上线前该路径必然失败",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0171",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "finance.core_finance_report_line_map",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261109110160（晚于生产账本水位，待窗口应用）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/finance/src/services/finance/report.rs:594",
+    "svc/finance/src/services/finance/report.rs:730"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "随对应前向补丁上线；上线前该路径必然失败",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P0-0178",
+   "severity": "P0",
+   "kind": "table_missing",
+   "schema_table": "master_data.mdm_data_asset_categories",
+   "column": "",
+   "prod_actual": "表不存在（任何 schema）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/master-data/src/modules/knowledge_v53.rs:1224"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "核对是否为遗留/未提交迁移；若确实需要，补迁移建表；否则删除该查询",
+   "declared_after_snapshot": false,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P2-0195",
+   "severity": "P2",
+   "kind": "table_missing",
+   "schema_table": "master_data.mdm_supplier_categories",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261107000031（<= 生产账本水位，属快照盲区）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/master-data/src/modules/supplier_sync.rs:81",
+    "svc/master-data/src/modules/supplier_category_dict.rs:52",
+    "svc/master-data/src/modules/supplier_master.rs:291",
+    "svc/scm/src/modules/supplier.rs:190",
+    "svc/srm/src/modules/supplier.rs:192"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "生产账本已含该版本，按快照盲区处理；下次基线刷新自动消除",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P2-0196",
+   "severity": "P2",
+   "kind": "table_missing",
+   "schema_table": "master_data.mdm_suppliers",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261107000029（<= 生产账本水位，属快照盲区）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/master-data/src/modules/supplier_master.rs:375",
+    "svc/master-data/src/modules/supplier_master.rs:498",
+    "svc/master-data/src/modules/supplier_master.rs:602",
+    "svc/master-data/src/modules/supplier_master.rs:443",
+    "svc/master-data/src/modules/supplier_master.rs:555",
+    "svc/scm/src/modules/supplier.rs:210",
+    "svc/scm/src/modules/supplier.rs:290",
+    "svc/erp/src/modules/search.rs:166",
+    "svc/srm/src/modules/supplier.rs:211",
+    "svc/srm/src/modules/supplier.rs:289"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "生产账本已含该版本，按快照盲区处理；下次基线刷新自动消除",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P2-0197",
+   "severity": "P2",
+   "kind": "table_missing",
+   "schema_table": "master_data.mdm_sync_dead_letter",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261107000033（<= 生产账本水位，属快照盲区）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/master-data/src/modules/supplier_sync.rs:143",
+    "svc/scm/src/modules/supplier.rs:269",
+    "svc/srm/src/modules/supplier.rs:268"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "生产账本已含该版本，按快照盲区处理；下次基线刷新自动消除",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P2-0198",
+   "severity": "P2",
+   "kind": "table_missing",
+   "schema_table": "public.core_user_company_scopes",
+   "column": "",
+   "prod_actual": "快照中不存在；建表于 20261108130000（<= 生产账本水位，属快照盲区）",
+   "code_contract": "代码引用该表",
+   "refs": [
+    "svc/unified-core/tests/p1_company_scopes_migration_tests.rs:144",
+    "svc/unified-core/tests/p1_company_scopes_migration_tests.rs:208",
+    "svc/unified-core/tests/p1_company_scopes_migration_tests.rs:218",
+    "svc/unified-core/src/modules/iam/company_scope.rs:133",
+    "svc/unified-core/src/modules/iam/company_scope.rs:308",
+    "svc/unified-core/src/modules/iam/company_scope.rs:296",
+    "svc/erp/src/modules/consolidation/company_relations.rs:54",
+    "svc/erp/src/modules/consolidation/company_relations.rs:114",
+    "svc/erp/src/modules/consolidation/scope_companies.rs:50",
+    "svc/erp/src/modules/consolidation/common.rs:123"
+   ],
+   "evidence": "FROM/JOIN/INTO 表引用",
+   "suggested_action": "生产账本已含该版本，按快照盲区处理；下次基线刷新自动消除",
+   "declared_after_snapshot": true,
+   "from_tests": false,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P3-0199",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "iam.core_role_permissions|public.core_role_permissions",
+   "column": "tenant_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "lib/shared-auth/tests/permission_backfill_e2e.rs:82"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "declared_after_snapshot": false,
+   "from_tests": true,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  },
+  {
+   "id": "P3-0200",
+   "severity": "P3",
+   "kind": "column_missing",
+   "schema_table": "iam.core_user_roles|public.core_user_roles",
+   "column": "tenant_id",
+   "prod_actual": "列不存在",
+   "code_contract": "代码引用",
+   "refs": [
+    "lib/shared-auth/tests/permission_backfill_e2e.rs:65"
+   ],
+   "evidence": "INSERT 列清单",
+   "suggested_action": "仅测试代码引用：确认测试库具备该对象，不影响生产",
+   "declared_after_snapshot": false,
+   "from_tests": true,
+   "declared_state": "未在迁移链找到显式声明",
+   "classification": "false_positive",
+   "resolution": "实时快照中对象存在（11-05 基线滞后或抽取误判），已消解"
+  }
+ ],
+ "report": "docs/quality/prod-column-drift-verified-2026-11-09.md",
+ "baseline_report": "docs/quality/prod-column-drift-full-2026-11-09.md"
+}
