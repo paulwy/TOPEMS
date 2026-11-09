@@ -78,10 +78,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub fn create_write_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route("/formulas", post(create_formula))
-        .route(
-            "/formulas/{id}",
-            put(update_formula).delete(delete_formula),
-        )
+        .route("/formulas/{id}", put(update_formula).delete(delete_formula))
         .route("/formulas/{id}/versions", post(create_formula_version))
         .route("/formulas/{id}/review", post(review_formula))
 }
