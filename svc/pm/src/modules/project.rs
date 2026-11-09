@@ -609,10 +609,7 @@ async fn update_project(
 
             // 只在真实流转到 completed 时发布一次 PmProjectCompleted（重复 PUT 同一状态不重发）。
             let became_completed = project.status == "completed"
-                && previous
-                    .as_ref()
-                    .map(|(status, _)| status.as_str())
-                    != Some("completed");
+                && previous.as_ref().map(|(status, _)| status.as_str()) != Some("completed");
             if became_completed {
                 if let Some(ref publisher) = state.event_publisher {
                     let payload = PmProjectCompletedPayload {
@@ -624,10 +621,7 @@ async fn update_project(
                     };
                     let et = EventType::PmProjectCompleted;
                     if let Err(e) = publisher.publish_event(et, &payload).await {
-                        tracing::warn!(
-                            "[pm] PmProjectCompleted 事件发布失败: {}，入重试队列",
-                            e
-                        );
+                        tracing::warn!("[pm] PmProjectCompleted 事件发布失败: {}，入重试队列", e);
                         commit_retry::push_retry_typed("pm", et, &payload).await;
                     } else {
                         tracing::info!(
