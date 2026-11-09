@@ -893,20 +893,28 @@ pending_forward_patches:
     note: "已推送到 main 且已应用到生产；本轮仅补登记，不重放"
   - version: "20261109110000"
     file: "database/migrations/20261109110000_p3_opening_balance_account_link.sql"
-    status: to_apply
+    status: applied
     effect: "erp.opening_balances 补 account_id + 回填 + 索引 + 一致性校验"
     destructive_scan: "UPDATE 带豁免标记（ticket P3-BATCH1-OPENING-ACCOUNT，max 500000）；生产 0 行"
+    note: "2026-11-09 部署 S1 已入账"
   - version: "20261109110100"
     file: "database/migrations/20261109110100_p3_report_line_map.sql"
-    status: to_apply
+    status: superseded
     effect: "创建 finance.core_finance_report_line_map + 唯一索引 + RLS + 全局模板种子"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE TABLE + INSERT 种子"
+    note: "部署 S1 入账 110150 后水位越过本版本；按设计不重放旧版本，改由 20261109110160 幂等承接"
   - version: "20261109110150"
     file: "database/migrations/20261109110150_p3_financial_reports_align.sql"
-    status: to_apply
+    status: applied
     effect: "生产 finance.financial_reports 结构对齐：补 11 列 + 唯一键 (report_type,org_id,period,currency_code) + 空表 NOT NULL/默认值收紧"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；ADD COLUMN IF NOT EXISTS + 约束存在性守卫 + 空表守卫 SET NOT NULL"
-    note: "部署前发现生产该表仍为旧 10 列形状，20261109110200 的 org_id 回填与报表落库均依赖本迁移；版本号刻意小于 20261109110200"
+    note: "部署前发现生产该表仍为旧 10 列形状，20261109110200 的 org_id 回填与报表落库均依赖本迁移；版本号刻意小于 20261109110200；2026-11-09 部署 S1 已入账"
+  - version: "20261109110160"
+    file: "database/migrations/20261109110160_p3_report_line_map_forward.sql"
+    status: to_apply
+    effect: "承接 202611091100：创建 finance.core_finance_report_line_map + 唯一索引 + RLS + 全局模板种子（内容等价、幂等）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE TABLE IF NOT EXISTS + policy 存在性守卫 + INSERT WHERE NOT EXISTS"
+    supersedes: [ "202611091100" ]
   - version: "20261109110200"
     file: "database/migrations/20261109110200_p3_financial_reports_company.sql"
     status: to_apply
