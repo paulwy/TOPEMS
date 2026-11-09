@@ -466,3 +466,33 @@
 
 > 括号内为 grep 粗口径的裸池引用数，含合法用法，**不可当缺陷数**；权威基线仍为 1620
 > （`artifacts/batch43/b43_nosql_recheck.csv`）。
+
+---
+
+## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）
+
+### 13.1 现状
+- 网关 `svc/server/src/modules/finance_real_module.rs` 的 `require_finance_write` 对所有
+  非 GET/HEAD/OPTIONS 的 `/api/finance/**` 硬校验 `finance:admin`（精确匹配，非前缀）。
+- 该码在生产 `core_permissions` 中长期缺失（历史迁移 `20261107000024_finance_admin_seed.sql`
+  早于账本锚点，从未登记进生产账本），导致除超管外所有角色的财务写请求 403；
+  内层路由的细分码（如 `finance:voucher:read`）根本没有机会生效。
+- 2026-11-09 已用 `20261108141500_finance_admin_umbrella_grant.sql` 补码并授予
+  `tenant_admin` / `finance_manager` 止血；**本次未改动网关**。
+
+### 13.2 为什么现在不改
+- 止血批次要求最小变更、可快速回退；改网关会改变全部财务路由的鉴权语义，
+  需要单独的全量回归（凭证、总账、辅助核算、期间、报表、资金、税务、审批配置）。
+
+### 13.3 目标设计（二选一，开工前定稿）
+- A. 网关按方法与资源判细分码：GET → `finance:<resource>:read`，写 → `finance:<resource>:write`；
+  无法映射的资源显式白名单并保留伞码兜底。
+- B. 网关只做模块准入（任意 `finance:` 前缀），写权限完全交给各路由组的
+  `require_permission("finance:xxx:write")`，删除"有细分码却被伞码拦住"的结构性矛盾。
+- 无论哪种，`finance:admin` 的定位收窄为"审批配置等管理端点"，不再作为全模块写门。
+
+### 13.4 涉及接口
+- 网关：全部 `/api/finance/**` 非 GET 请求（凭证、总账、辅助核算、期间、报表、资金、税务等）。
+- handler 级伞码：`/api/finance/approval-configs`（GET/POST）、
+  `/api/finance/approval-configs/{id}`（GET/PUT/DELETE）。
+- 权限码基数：生产 finance 域 74 条细分码（补 `finance:admin` 后 75 条）。
