@@ -143,7 +143,43 @@ pub struct InternalTransaction {
     pub remaining_amount: rust_decimal::Decimal,
     pub voucher_id: Option<uuid::Uuid>,
     pub elimination_voucher_id: Option<uuid::Uuid>,
+    pub confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub confirmed_by: Option<String>,
+    pub disputed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub disputed_by: Option<String>,
+    pub disputed_reason: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateInternalTransactionRequest {
+    pub transaction_no: Option<String>,
+    pub transaction_date: Option<chrono::NaiveDate>,
+    /// 兼容 `YYYYMM` / `YYYY-MM`，落库统一 `YYYYMM`
+    pub period: String,
+    pub from_company_id: uuid::Uuid,
+    pub to_company_id: uuid::Uuid,
+    /// `current_account`（往来）或 `sale_purchase`（购销）
+    pub transaction_type: String,
+    pub description: Option<String>,
+    pub amount: rust_decimal::Decimal,
+    pub currency: Option<String>,
+    pub voucher_id: Option<uuid::Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInternalTransactionRequest {
+    pub transaction_date: Option<chrono::NaiveDate>,
+    pub period: Option<String>,
+    pub transaction_type: Option<String>,
+    pub description: Option<String>,
+    pub amount: Option<rust_decimal::Decimal>,
+    pub voucher_id: Option<uuid::Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisputeInternalTransactionRequest {
+    pub reason: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,22 +189,135 @@ pub struct ExecuteEliminationRequest {
     pub rule_ids: Option<Vec<uuid::Uuid>>,
 }
 
+// ==================== 凭证扫描候选 ====================
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EliminationResult {
-    pub eliminated_count: i64,
-    pub total_eliminated: f64,
-    pub results: Vec<RuleEliminationResult>,
+pub struct ScanCandidatesRequest {
+    pub scope_id: uuid::Uuid,
+    /// 兼容 `YYYYMM` / `YYYY-MM`
+    pub period: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RuleEliminationResult {
-    pub rule_id: uuid::Uuid,
-    pub rule_name: String,
-    pub rule_type: String,
+pub struct ScanCandidatesResult {
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+    pub eligible_company_count: i64,
+    pub pairs_scanned: i64,
+    pub candidates_created: i64,
+    pub candidates_existing: i64,
+    pub candidates_ambiguous_skipped: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct EliminationCandidate {
+    pub id: uuid::Uuid,
+    pub tenant_id: Option<uuid::Uuid>,
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+    pub from_company_id: uuid::Uuid,
+    pub to_company_id: uuid::Uuid,
+    pub transaction_type: String,
+    pub account_pair: String,
+    pub amount: rust_decimal::Decimal,
+    pub debit_voucher_id: uuid::Uuid,
+    pub credit_voucher_id: uuid::Uuid,
+    pub from_ledger_id: uuid::Uuid,
+    pub to_ledger_id: uuid::Uuid,
+    pub aux_type: Option<String>,
+    pub aux_id: Option<uuid::Uuid>,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CandidateListQuery {
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+    pub status: Option<String>,
+}
+
+// ==================== 对账与抵消预演 ====================
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationQuery {
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationPair {
+    pub company_a_id: uuid::Uuid,
+    pub company_a_name: String,
+    pub company_b_id: uuid::Uuid,
+    pub company_b_name: String,
+    pub transaction_type: String,
+    pub account_pair: String,
+    pub company_a_amount: rust_decimal::Decimal,
+    pub company_b_amount: rust_decimal::Decimal,
+    pub difference: rust_decimal::Decimal,
+    pub remaining_amount: rust_decimal::Decimal,
     pub transaction_count: i64,
-    pub total_eliminated: f64,
-    pub success: bool,
-    pub error_message: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationSummary {
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+    pub pairs: Vec<ReconciliationPair>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EliminationPreviewRequest {
+    pub scope_id: uuid::Uuid,
+    /// 兼容 `YYYYMM` / `YYYY-MM`
+    pub period: String,
+    /// 可选：只预演指定公司对 `[[company_a, company_b], ...]`
+    pub company_pairs: Option<Vec<Vec<uuid::Uuid>>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EliminationDraftLine {
+    pub company_id: uuid::Uuid,
+    pub account_code: String,
+    pub debit: rust_decimal::Decimal,
+    pub credit: rust_decimal::Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EliminationDraftVoucher {
+    pub transaction_type: String,
+    pub account_pair: String,
+    pub amount: rust_decimal::Decimal,
+    pub lines: Vec<EliminationDraftLine>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EliminationPreviewPair {
+    pub company_a_id: uuid::Uuid,
+    pub company_a_name: String,
+    pub company_b_id: uuid::Uuid,
+    pub company_b_name: String,
+    pub transaction_type: String,
+    pub account_pair: String,
+    pub company_a_amount: rust_decimal::Decimal,
+    pub company_b_amount: rust_decimal::Decimal,
+    pub difference: rust_decimal::Decimal,
+    pub remaining_amount: rust_decimal::Decimal,
+    pub transaction_count: i64,
+    pub status: String,
+    pub eliminable_amount: rust_decimal::Decimal,
+    pub blocked: bool,
+    pub block_reasons: Vec<String>,
+    pub draft_voucher: Option<EliminationDraftVoucher>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EliminationPreview {
+    pub scope_id: uuid::Uuid,
+    pub period: String,
+    pub blocked: bool,
+    pub total_eliminable: rust_decimal::Decimal,
+    pub pairs: Vec<EliminationPreviewPair>,
 }
 
 // ==================== 合并报表 ====================

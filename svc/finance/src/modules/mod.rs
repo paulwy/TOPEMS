@@ -53,6 +53,29 @@ use topems_shared_event::event::{
     commit_retry, EventType, PaymentMadePayload, PaymentReceivedPayload,
 };
 
+/// 期间解析：兼容 `YYYYMM` 与旧格式 `YYYY-MM`
+fn parse_period_ym(period: &str) -> Option<(i32, i32)> {
+    let bytes = period.as_bytes();
+    let (year_part, month_part) = if bytes.len() == 6 {
+        (period.get(0..4)?, period.get(4..6)?)
+    } else if bytes.len() == 7 && bytes[4] == b'-' {
+        (period.get(0..4)?, period.get(5..7)?)
+    } else {
+        return None;
+    };
+    if !year_part.bytes().all(|b| b.is_ascii_digit())
+        || !month_part.bytes().all(|b| b.is_ascii_digit())
+    {
+        return None;
+    }
+    let year: i32 = year_part.parse().ok()?;
+    let month: i32 = month_part.parse().ok()?;
+    if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
+        return None;
+    }
+    Some((year, month))
+}
+
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
     parent_id: Option<Uuid>,
@@ -3881,15 +3904,12 @@ pub async fn open_period_v2(
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    // period 形如 "YYYY-MM"；表 core_finance_periods 以 (tenant_id, year, month) 为唯一键。
+    // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；核心表以 (tenant_id, year, month) 为唯一键。
     let period = req.period.unwrap_or_default();
-    let parts: Vec<&str> = period.split('-').collect();
-    let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
-    let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
-    if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return ApiResponse::bad_request("period 格式应为 YYYY-MM");
-    }
-    let period_name = format!("{:04}-{:02}", year, month);
+    let Some((year, month)) = parse_period_ym(&period) else {
+        return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
+    };
+    let period_name = format!("{:04}{:02}", year, month);
     let start_date = format!("{:04}-{:02}-01", year, month);
     let end_date = format!("{:04}-{:02}-28", year, month);
     let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, created_at, updated_at) VALUES ($1, $2, $3, $4, 'open', $5::timestamp, $6::timestamp, NOW(), NOW()) ON CONFLICT (tenant_id, year, month) DO UPDATE SET status = 'open', updated_at = NOW()"))
@@ -3917,13 +3937,11 @@ pub async fn close_period_v2(
 ) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    // period 形如 "YYYY-MM"；表 core_finance_periods 列为 year/month（无 period 列），按 (tenant_id, year, month) 定位。
-    let parts: Vec<&str> = period.split('-').collect();
-    let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
-    let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
-    if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return ApiResponse::bad_request("period 格式应为 YYYY-MM");
-    }
+    // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；target 表列为 year/month，按 (tenant_id, year, month) 定位。
+    let Some((year, month)) = parse_period_ym(&period) else {
+        return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
+    };
+    let period_name = format!("{:04}{:02}", year, month);
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND year = $2 AND month = $3"))
         .bind(tenant_id)
         .bind(year)
@@ -3936,7 +3954,7 @@ pub async fn close_period_v2(
                 ApiResponse::not_found("会计期间不存在")
             } else {
                 ApiResponse::success(
-                    serde_json::json!({"period": period, "status": "closed"}),
+                    serde_json::json!({"period": period_name, "status": "closed"}),
                     "关闭成功",
                 )
             }

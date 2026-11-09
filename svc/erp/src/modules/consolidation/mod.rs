@@ -4,6 +4,7 @@ use super::ApiState;
 
 pub mod common;
 pub mod company_relations;
+pub mod elimination_flow;
 pub mod elimination_rules;
 pub mod internal_transactions;
 pub mod reports;
@@ -24,7 +25,14 @@ pub use elimination_rules::{
 };
 
 pub use internal_transactions::{
+    confirm_internal_transaction, create_internal_transaction, dispute_internal_transaction,
     execute_elimination, get_internal_transaction, list_internal_transactions,
+    update_internal_transaction,
+};
+
+pub use elimination_flow::{
+    get_reconciliation_summary, list_elimination_candidates, preview_eliminations,
+    scan_elimination_candidates,
 };
 
 pub use reports::{
@@ -69,11 +77,35 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route(
             "/consolidation/internal-transactions",
-            get(list_internal_transactions),
+            get(list_internal_transactions).post(create_internal_transaction),
         )
         .route(
             "/consolidation/internal-transactions/{transactionId}",
-            get(get_internal_transaction),
+            get(get_internal_transaction).put(update_internal_transaction),
+        )
+        .route(
+            "/consolidation/internal-transactions/{transactionId}/confirm",
+            post(confirm_internal_transaction),
+        )
+        .route(
+            "/consolidation/internal-transactions/{transactionId}/dispute",
+            post(dispute_internal_transaction),
+        )
+        .route(
+            "/consolidation/elimination-candidates/scan",
+            post(scan_elimination_candidates),
+        )
+        .route(
+            "/consolidation/elimination-candidates",
+            get(list_elimination_candidates),
+        )
+        .route(
+            "/consolidation/reconciliations",
+            get(get_reconciliation_summary),
+        )
+        .route(
+            "/consolidation/eliminations/preview",
+            post(preview_eliminations),
         )
         .route(
             "/consolidation/execute-elimination",

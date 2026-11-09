@@ -18,14 +18,24 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
+/// 期间解析：兼容 `YYYYMM` 与旧格式 `YYYY-MM`
 fn parse_period(s: &str) -> Option<(i32, i32)> {
-    let parts: Vec<&str> = s.split('-').collect();
-    if parts.len() != 2 {
+    let bytes = s.as_bytes();
+    let (year_part, month_part) = if bytes.len() == 6 {
+        (s.get(0..4)?, s.get(4..6)?)
+    } else if bytes.len() == 7 && bytes[4] == b'-' {
+        (s.get(0..4)?, s.get(5..7)?)
+    } else {
+        return None;
+    };
+    if !year_part.bytes().all(|b| b.is_ascii_digit())
+        || !month_part.bytes().all(|b| b.is_ascii_digit())
+    {
         return None;
     }
-    let y: i32 = parts[0].parse().ok()?;
-    let m: i32 = parts[1].parse().ok()?;
-    if !(1..=12).contains(&m) {
+    let y: i32 = year_part.parse().ok()?;
+    let m: i32 = month_part.parse().ok()?;
+    if y < 1900 || !(1..=12).contains(&m) {
         return None;
     }
     Some((y, m))
@@ -39,8 +49,9 @@ fn next_period((y, m): (i32, i32)) -> (i32, i32) {
     }
 }
 
+/// 期间输出统一 `YYYYMM`（与账簿 period 存储一致）
 fn period_string((y, m): (i32, i32)) -> String {
-    format!("{:04}-{:02}", y, m)
+    format!("{:04}{:02}", y, m)
 }
 
 /// 期间借贷/净额汇总，全程 Decimal（NUMERIC(18,4)），不经 f64，避免尾差。
@@ -335,11 +346,13 @@ pub async fn get_report_trend(
     };
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => return ApiResponse::bad_request("period_from 格式无效，应为 YYYY-MM"),
+        None => {
+            return ApiResponse::bad_request("period_from 格式无效，应为 YYYYMM（兼容 YYYY-MM）")
+        }
     };
     let end = match params.period_to.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => return ApiResponse::bad_request("period_to 格式无效，应为 YYYY-MM"),
+        None => return ApiResponse::bad_request("period_to 格式无效，应为 YYYYMM（兼容 YYYY-MM）"),
     };
 
     let mut points: Vec<serde_json::Value> = Vec::new();

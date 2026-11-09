@@ -1,8 +1,8 @@
 {
   "_comment": "聚合 OpenAPI 棘轮基线（只允许下降）。重生成产物后运行 --update-baseline 收紧。",
-  "updated_at": "2026-11-08T18:03:37.239Z",
-  "live_routes_count": 3929,
-  "aggregated_routes_count": 873,
-  "missing_in_openapi": 3791,
+  "updated_at": "2026-11-09T09:16:52.484Z",
+  "live_routes_count": 3934,
+  "aggregated_routes_count": 879,
+  "missing_in_openapi": 3790,
   "extra_in_openapi": 735
 }

@@ -2,7 +2,8 @@
 //!
 //! 从 `models/consolidation.rs` 及对应 modules 中提取的业务纯逻辑。
 
-use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::{Decimal, RoundingStrategy};
 use std::fmt;
 
 // ── 股权 / 合并比例计算 ────────────────────────────────
@@ -142,31 +143,92 @@ pub fn calculate_goodwill(
 
 // ── 校验 ───────────────────────────────────────────────
 
-/// 会计期间校验：格式 `YYYY-MM`
-#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
-pub fn validate_accounting_period(period: &str) -> bool {
-    if period.len() != 7 {
-        return false;
-    }
+/// 解析期间为 (年, 月)：同时接受 `YYYYMM` 与旧格式 `YYYY-MM`
+fn parse_period_parts(period: &str) -> Option<(i32, u32)> {
     let bytes = period.as_bytes();
-    if bytes[4] != b'-' {
-        return false;
+    let (year_bytes, month_bytes) = if bytes.len() == 6 {
+        bytes.split_at(4)
+    } else if bytes.len() == 7 {
+        let (year, rest) = bytes.split_at(4);
+        match rest.split_first() {
+            Some((b'-', month)) => (year, month),
+            _ => return None,
+        }
+    } else {
+        return None;
+    };
+    let mut year = 0i32;
+    for b in year_bytes {
+        if !b.is_ascii_digit() {
+            return None;
+        }
+        year = year * 10 + i32::from(*b - b'0');
     }
-    let year_ok = bytes[0..4].iter().all(|b| b.is_ascii_digit());
-    let month_ok = bytes[5..7].iter().all(|b| b.is_ascii_digit());
-    if !year_ok || !month_ok {
-        return false;
+    let mut month = 0u32;
+    for b in month_bytes {
+        if !b.is_ascii_digit() {
+            return None;
+        }
+        month = month * 10 + u32::from(*b - b'0');
     }
-    // year ≥ 1900，month 01-12
-    let y = std::str::from_utf8(&bytes[0..4])
-        .ok()
-        .and_then(|s| s.parse::<i32>().ok())
-        .unwrap_or(0);
-    let m = std::str::from_utf8(&bytes[5..7])
-        .ok()
-        .and_then(|s| s.parse::<u32>().ok())
-        .unwrap_or(0);
-    y >= 1900 && (1..=12).contains(&m)
+    if year < 1900 || !(1..=12).contains(&month) {
+        return None;
+    }
+    Some((year, month))
+}
+
+/// 期间归一：入参兼容 `YYYYMM` / `YYYY-MM`，输出统一 `YYYYMM`
+pub fn normalize_accounting_period(period: &str) -> Option<String> {
+    let (year, month) = parse_period_parts(period)?;
+    Some(format!("{:04}{:02}", year, month))
+}
+
+/// 会计期间校验：兼容 `YYYYMM` 与 `YYYY-MM`
+pub fn validate_accounting_period(period: &str) -> bool {
+    parse_period_parts(period).is_some()
+}
+
+/// 期间所在月份的期末日期（用于合并范围成员有效期判定）
+pub fn period_end_date(period: &str) -> Option<chrono::NaiveDate> {
+    use chrono::NaiveDate;
+    let (year, month) = parse_period_parts(period)?;
+    let (next_year, next_month) = if month == 12 {
+        (year + 1, 1)
+    } else {
+        (year, month + 1)
+    };
+    NaiveDate::from_ymd_opt(next_year, next_month, 1)?.pred_opt()
+}
+
+/// 金额量化到分（对账容差 0.00，全链路按分比较）
+pub fn quantize_money(amount: Decimal) -> Decimal {
+    // 财务口径：四舍五入（远离零），避免银行家舍入在 0.005 上产生意外差异。
+    amount.round_dp_with_strategy(2, RoundingStrategy::MidpointAwayFromZero)
+}
+
+/// 金额转分（仅用于等额比较，禁止浮点）
+pub fn amount_to_cents(amount: Decimal) -> i64 {
+    (quantize_money(amount) * Decimal::from(100))
+        .to_i64()
+        .unwrap_or(0)
+}
+
+/// 台账交易类型归一：往来 / 购销
+pub fn canonical_transaction_type(value: &str) -> Option<&'static str> {
+    match value {
+        "current_account" | "receivable_payable" | "往来" => Some("current_account"),
+        "sale_purchase" | "internal_sales" | "购销" => Some("sale_purchase"),
+        _ => None,
+    }
+}
+
+/// 交易类型对应的科目配对
+pub fn account_pair_for_transaction_type(value: &str) -> Option<&'static str> {
+    match canonical_transaction_type(value)? {
+        "current_account" => Some("1122-2202"),
+        "sale_purchase" => Some("6001-6401"),
+        _ => None,
+    }
 }
 
 /// 合并方法校验：`equity` / `cost` / `proportional` / `full`
@@ -174,11 +236,11 @@ pub fn validate_consolidation_method(method: &str) -> bool {
     matches!(method, "equity" | "cost" | "proportional" | "full")
 }
 
-/// 抵消状态: `pending` / `processing` / `eliminated` / `partial` / `error`
+/// 台账状态机: `unmatched` / `confirmed` / `eliminated` / `disputed`
 pub fn validate_elimination_status(status: &str) -> bool {
     matches!(
         status,
-        "pending" | "processing" | "eliminated" | "partial" | "error"
+        "unmatched" | "confirmed" | "eliminated" | "disputed"
     )
 }
 
@@ -216,7 +278,7 @@ impl fmt::Display for ConsolidationError {
             ConsolidationError::InvalidPeriod(val) => {
                 write!(
                     f,
-                    "无效的会计期间: {}, 格式要求 YYYY-MM (年份≥1900, 月份01-12)",
+                    "无效的会计期间: {}, 格式要求 YYYYMM 或 YYYY-MM (年份≥1900, 月份01-12)",
                     val
                 )
             }
@@ -530,6 +592,41 @@ mod tests {
         assert!(!validate_accounting_period("2025-XX"));
     }
 
+    #[test]
+    fn test_period_valid_compact_format() {
+        assert!(validate_accounting_period("202506"));
+        assert_eq!(
+            normalize_accounting_period("2025-06").as_deref(),
+            Some("202506")
+        );
+        assert_eq!(
+            normalize_accounting_period("202506").as_deref(),
+            Some("202506")
+        );
+        assert_eq!(normalize_accounting_period("2025-6"), None);
+        assert_eq!(normalize_accounting_period("2025/06"), None);
+    }
+
+    #[test]
+    fn test_period_end_date() {
+        assert_eq!(
+            period_end_date("202602").map(|d| d.to_string()),
+            Some("2026-02-28".to_string())
+        );
+        assert_eq!(
+            period_end_date("2026-12").map(|d| d.to_string()),
+            Some("2026-12-31".to_string())
+        );
+        assert_eq!(period_end_date("2026-13"), None);
+    }
+
+    #[test]
+    fn test_amount_to_cents_quantizes() {
+        use rust_decimal::Decimal as D;
+        assert_eq!(amount_to_cents(D::new(100, 2)), 100);
+        assert_eq!(amount_to_cents(D::new(1005, 3)), 101);
+    }
+
     // ── 状态类校验 ─────────────────────────────
 
     #[test]
@@ -547,7 +644,7 @@ mod tests {
 
     #[test]
     fn test_elimination_status_all_valid() {
-        for s in ["pending", "processing", "eliminated", "partial", "error"].iter() {
+        for s in ["unmatched", "confirmed", "eliminated", "disputed"].iter() {
             assert!(validate_elimination_status(s));
         }
     }
