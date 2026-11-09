@@ -1,0 +1,881 @@
+# TOPEMS 迁移处置台账（manifest）
+#
+# 作用：为「仓库存在、生产账本不存在」的迁移逐条登记处置，作为方案 C
+#       （全量差集 + 处置台账）的 B0 登记产物。本文件只做登记，不改变
+#       apply-forward.sh 的筛选逻辑、不写生产库、不重放任何历史迁移。
+#
+# 不变量（方案 C）：
+#   Repo14 = Applied ⊎ ToApply ⊎ Hold ⊎ Excluded ⊎ Superseded ⊎ Obsolete ⊎ Forwarded
+#   Applied = Ledger14 ∩ Repo14
+#   ToApply 必须是 version > 实时账本 max 的新版本（旧版本不得 in-place 重放）
+#
+# 证据口径（重要）：
+#   1) 生产账本现状（607 行 / 14 位 593 / anchor 20261108141500 / failed 0）与
+#      逐版本生产结构/数据结论，来自只读审计：
+#      docs/quality/prod-schema-drift-2026-11-09.md（2026-11-09，全程 SELECT/pg_dump）。
+#   2) 历史基线结构/账本，来自：
+#      database/baseline/prod_schema_20261105235700.sql.gz（1349 表，2026-11-05）
+#      database/baseline/prod_ledger_20261105235700.sql（576 行，max 20261105235700）
+#   3) 代码引用以仓库当前 HEAD 为准（文件:行号）。
+#   4) 未使用「文件名猜测」；每条结论至少有一条账本/目录/数据/代码证据。
+#
+# 本文件随门禁补丁一并提交，作为方案 C 的 B0 登记产物；后续处置只追加、不改写历史。
+
+schema_version: 1
+generated_at: "2026-11-09"
+scope: >-
+  仓库存在（14 位版本）、生产 _sqlx_migrations 不存在、且 version <= 当前锚点
+  20261108141500 的 43 个迁移。不包含 2026-11-09 新增的 11 个前向补丁
+  （它们在账本 max 之上，单独列在 pending_forward_patches，状态 to_apply）。
+
+ledger_evidence:
+  current_prod:
+    ledger_rows: 607
+    ledger_rows_14digit: 593
+    ledger_rows_legacy_3digit: 14
+    failed_rows: 0
+    anchor: "20261108141500"
+    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1"
+  baseline_snapshot:
+    file: "database/baseline/prod_ledger_20261105235700.sql"
+    ledger_rows: 576
+    max_version: "20261105235700"
+    source: "database/baseline/baseline_20261105235700.json"
+
+repo_evidence:
+  migrations_14digit: 647
+  migration_files_total: 661
+  checksums_entries: 661
+  source: "database/migrations/、database/checksums.txt（2026-11-09 本地计数）"
+
+legacy_orphans_total: 43
+disposition_summary:
+  applied: 0
+  to_apply: 0
+  hold: 8
+  excluded: 16
+  superseded: 3
+  obsolete: 5
+  forwarded: 11
+  total: 43
+
+notes:
+  - >-
+    43 条中 applied=0：它们都不在账本；applied 仅用于将来账本核对时描述
+    「已入账」的版本。
+  - >-
+    43 条中 to_apply=0：全部 version <= 当前账本 max。方案 C 不允许把旧版本
+    in-place 重放（重放 DELETE/UPDATE/DDL 会二次修改生产数据），只能
+    excluded/superseded/obsolete/forwarded/hold。
+  - >-
+    forwarded 表示旧文件永不应用，效果由 forward_patch（version > 当前 max）
+    承接；forward_patch 自身在 pending_forward_patches 中登记为 to_apply。
+  - >-
+    定向迁移（dbNN_test/dbNN_5433/test_*/5433_*）在生产入口被
+    scripts/ci/check-directed-migrations.mjs 与 apply-forward.sh --prod 拒绝。
+
+entries:
+
+  # ===== 定向迁移（15 条，excluded） =====
+  - version: "20261103210000"
+    file: "database/migrations/20261103210000_db08_test_varchar_to_text_190cols.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝，从未进入 prod 候选集"
+    declared_objects: [ "190 列 varchar→text（test 库类型对齐）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod；生产类型以基线快照为准" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；check-directed-migrations.mjs 与 --prod 双重拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用。类型治理另发 version > 当前 max 的前向迁移"
+
+  - version: "20261103220000"
+    file: "database/migrations/20261103220000_db09_test_iam_position_id_bigint_to_uuid.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "iam.position_id bigint→uuid（test 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261103230000"
+    file: "database/migrations/20261103230000_db10_5433_varchar_text_to_uuid_19cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "19 列 varchar/text→uuid（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104000000"
+    file: "database/migrations/20261104000000_db11_5433_varchar_to_text_24cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "24 列 varchar→text（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104010000"
+    file: "database/migrations/20261104010000_db12_5433_date_timestamptz_21cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "21 列 date→timestamptz（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104020000"
+    file: "database/migrations/20261104020000_db13_5433_numeric_double_20cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "20 列 numeric→double precision（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104030000"
+    file: "database/migrations/20261104030000_db14_test_varchar_to_uuid_7cols_with_data.sql"
+    class: directed
+    why_deferred: "定向 test 迁移（含数据转换）；prod 命名门禁拒绝"
+    declared_objects: [ "7 列 varchar→uuid（test 库，带数据）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104040000"
+    file: "database/migrations/20261104040000_db15_5433_integer_bigint_16cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "16 列 integer/bigint 对齐（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104050000"
+    file: "database/migrations/20261104050000_db16_5433_tenant_id_rls_decouple_14cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移（RLS 解耦）；prod 命名门禁拒绝"
+    declared_objects: [ "14 列 tenant_id/RLS 解耦（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod；生产 RLS 以基线快照为准" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104060000"
+    file: "database/migrations/20261104060000_db17_5433_misc_12cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "12 列杂项类型对齐（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261104070000"
+    file: "database/migrations/20261104070000_db18_5433_special_types_8cols.sql"
+    class: directed
+    why_deferred: "定向 5433 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "8 列特殊类型/枚举/jsonb 对齐（5433 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_5433；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261105110000"
+    file: "database/migrations/20261105110000_db20_test_timestamptz_align_prod_169cols.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "169 列 timestamptz 对齐（test 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261105120000"
+    file: "database/migrations/20261105120000_db21_test_varchar_numeric_widen_16cols.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "16 列 varchar/numeric 扩宽（test 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261105150000"
+    file: "database/migrations/20261105150000_db23_test_type_align_4cols.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "4 列类型对齐（test 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  - version: "20261105180000"
+    file: "database/migrations/20261105180000_db24_test_rfm_numeric_2cols.sql"
+    class: directed
+    why_deferred: "定向 test 迁移；prod 命名门禁拒绝"
+    declared_objects: [ "RFM 2 列 numeric 对齐（test 库）" ]
+    prod_presence: { status: "not_applicable", detail: "定向迁移不应用于 prod" }
+    disposition: excluded
+    basis: "文件名命中 dbNN_test；prod 门禁拒绝"
+    evidence:
+      - { kind: code, ref: "scripts/ci/check-directed-migrations.mjs", detail: "定向命名规则拦截" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "无该版本记录" }
+    precondition: "无；永不应用"
+
+  # ===== 功能性迁移（28 条） =====
+
+  - version: "20261105145000"
+    file: "database/migrations/20261105145000_finance_currency_master_fix.sql"
+    class: effect_already_present
+    why_deferred: "锚点以下未记账的历史手工执行；基线生成时列入 KNOWN_NOT_APPLIED 白名单"
+    declared_objects: [ "finance.core_finance_currencies（幂等建表/修列 + 基础币种数据）" ]
+    prod_presence:
+      status: "present"
+      detail: "表存在，当前生产 16 行（只读审计）"
+      checked_at: "2026-11-09"
+    disposition: obsolete
+    basis: "效果已在生产；仅账本未登记。重放会再次写币种数据，无收益"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "CREATE TABLE finance.core_finance_currencies 存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:314", detail: "当前生产表存在（16 行）" }
+      - { kind: ledger, ref: "database/baseline/prod_ledger_20261105235700.sql", detail: "576 行账本中无该版本；当前 607 行账本仍无" }
+      - { kind: doc, ref: "scripts/migration/gen-baseline.sh:52-69", detail: "KNOWN_NOT_APPLIED 白名单第 14 项" }
+    precondition: "无；不应用。若需补账本，只能走基线口径评审，禁止手工 INSERT"
+
+  - version: "20261105235800"
+    file: "database/migrations/20261105235800_iam_refresh_token_privileged_lookup.sql"
+    class: superseded
+    why_deferred: "2026-11-06 窗口显式 --defer 保持 pending（窗口 9.1，17 条 defer 之一）"
+    declared_objects:
+      - "SECURITY DEFINER 函数 iam.iam_refresh_token_lookup / iam.iam_refresh_token_revoke"
+      - "public.core_refresh_tokens 的读写策略"
+    prod_presence:
+      status: "absent"
+      detail: "函数已被 20261107000016 回退删除；当前生产函数数 0，与声明链最终态一致"
+      checked_at: "2026-11-09"
+    disposition: superseded
+    superseded_by: "20261107000016"
+    basis: "000016 已应用并删除特权函数；000016 在账本（不在 43 条孤儿内）"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "iam_refresh_token_lookup 不存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:844", detail: "执行前实测 iam_refresh_token_lookup/revoke = 0 个" }
+      - { kind: ledger, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:865-878", detail: "20261107000016 已应用并入账" }
+      - { kind: doc, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:430", detail: "明确列为 defer 未应用" }
+    precondition: "无；永不应用。特权函数路径已回退，重放会重新引入安全面"
+
+  - version: "20261106000001"
+    file: "database/migrations/20261106000001_permission_code_unify_bi_mes_wms.sql"
+    class: permission
+    why_deferred: "2026-11-06 窗口显式 --defer（窗口 9.1 的 17 条之一）"
+    declared_objects:
+      - "public.core_permissions：bi:data_source:write、mes:work_order:write、wms:stocktake:read、wms:stocktake:write"
+    prod_presence:
+      status: "partial"
+      detail: "canonical 读码已存在；3 个 :write 码缺失（wms:stocktake:read 已存在）"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "残余 3 码由 20261109100700 前向补齐；旧文件的 canonical 部分已在生产"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:316", detail: "canonical 读码已存在；3 个 :write 码缺失" }
+      - { kind: code, ref: "docs/quality/prod-schema-drift-2026-11-09.md:113-116", detail: "mes/bi/wms 写路由强制校验这些码" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:49-51", detail: "前向补丁包含 mes:work_order:write / bi:data_source:write / wms:stocktake:write" }
+      - { kind: doc, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:430", detail: "defer 未应用" }
+    precondition: "20261109100700 在窗口应用并入账（version > 当前 max）"
+
+  - version: "20261107000001"
+    file: "database/migrations/20261107000001_iam_core_public_authority_sync.sql"
+    class: permission
+    why_deferred: "2026-11-06 窗口显式 --defer；批次 3 再次保持 defer（为满足 592 行验收口径）"
+    declared_objects:
+      - "public.core_permissions 补齐 4 码：bi:data_source:write、mes:work_order:write、wms:stocktake:read、wms:stocktake:write"
+    prod_presence:
+      status: "partial"
+      detail: "wms:stocktake:read 已存在；另外 3 码缺失"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "3 个缺失写码由 20261109100700 承接；旧文件不重放"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:316-317", detail: "canonical 读码在、写码缺" }
+      - { kind: doc, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:931-935", detail: "000001 保持 defer；4 码中 3 缺、1 已存在" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:49-51", detail: "前向补丁包含 3 个写码" }
+    precondition: "20261109100700 应用并入账"
+
+  - version: "20261107000002"
+    file: "database/migrations/20261107000002_tenant_modules_tier_column.sql"
+    class: superseded
+    why_deferred: "锚点以下未记账；2026-11-06 窗口未纳入白名单（tier 三条被重编号为 000014–000016）"
+    declared_objects: [ "public/iam.core_tenant_modules.tier 列" ]
+    prod_presence:
+      status: "partial"
+      detail: "public.core_tenant_modules 已有 tier varchar default 'basic'（可空）；仅 iam 影子副本缺（0 行、无代码引用）"
+      checked_at: "2026-11-05"
+    disposition: superseded
+    superseded_by: "20261107000014"
+    basis: "000014 已应用，且 public 的 tier 已存在；不需要给 iam 影子补列"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "public.core_tenant_modules.tier varchar default 'basic' 存在；iam.core_tenant_modules 无 tier" }
+      - { kind: ledger, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:862-878", detail: "20261107000014 已应用并入账" }
+      - { kind: code, ref: "docs/quality/prod-schema-drift-2026-11-09.md:134", detail: "代码使用未限定名，search_path 落在 public" }
+    precondition: "无；永不应用"
+
+  - version: "20261107000015"
+    file: "database/migrations/20261107000015_auth_rls_system_context_branch.sql"
+    class: security
+    why_deferred: "2026-11-06 窗口显式 --defer；批次 3 再次 defer（RLS 系统上下文分支需安全评审）"
+    declared_objects:
+      - "public.core_refresh_tokens / public.core_sessions 的 tenant_isolation 策略全 0 分支"
+    prod_presence:
+      status: "absent"
+      detail: "两表策略缺「全 0 = 系统上下文」分支；当前短连接 refresh/logout 依赖 owner 绕过 RLS，潜在风险"
+      checked_at: "2026-11-09"
+    disposition: excluded
+    basis: "放宽 RLS 可见范围属安全决策，未评审前不得自动应用；排除不等于已解决"
+    evidence:
+      - { kind: doc, ref: "docs/quality/prod-schema-drift-2026-11-09.md:319", detail: "两表策略缺全 0 分支；owner 绕过 RLS" }
+      - { kind: code, ref: "database/migrations/20261107000015_auth_rls_system_context_branch.sql:22-28", detail: "文件自述全 0 上下文可见全部租户行，禁止扩散" }
+      - { kind: doc, ref: "docs/quality/prod-window-execution-master-2026-11-06.md:864", detail: "defer 8 条中包含 000015" }
+    precondition: "安全/架构 owner 书面批准 + 仅限两张认证表 + 新版本前向迁移 + 负例测试；批准前保持 excluded"
+    owner: "security-owner（待指派）"
+    expiry: "2026-12-31"
+
+  - version: "20261107000019"
+    file: "database/migrations/20261107000019_drop_communication_email_templates.sql"
+    class: cleanup
+    why_deferred: "无逐条 defer 记录；被 20261107000018 → 20261108141500 的锚点跳跃跨过"
+    declared_objects: [ "DROP communication.core_email_templates" ]
+    prod_presence:
+      status: "present_empty"
+      detail: "表存在，0 行；当前代码无引用（仅 schema_defense.rs 断言不存在）"
+      checked_at: "2026-11-09"
+    disposition: obsolete
+    basis: "清理目标仍存在但为空且无代码引用；删除非功能必需，可另行新版本清理"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:180", detail: "0 行；代码无引用" }
+      - { kind: code, ref: "svc/communication/src/schema_defense.rs:7,117", detail: "断言 core_email_templates 不再创建" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "43 条孤儿之一，未入账" }
+    precondition: "无；不应用。若清理，另发 version > max 的 DROP 迁移（带 IF EXISTS + 0 行守卫）"
+
+  - version: "20261107000020"
+    file: "database/migrations/20261107000020_align_finance_payments_created_by_and_pm_tags.sql"
+    class: effect_already_present
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "finance.core_finance_payments.created_by uuid→varchar(100)"
+      - "pm.projects.tags text[]→jsonb"
+    prod_presence:
+      status: "present"
+      detail: "生产 created_by 已为 character varying(100)，tags 已为 jsonb default '{}'；与声明一致，diff 为空"
+      checked_at: "2026-11-05"
+    disposition: obsolete
+    basis: "文件自述 prod 分支均为 no-op；基线快照已证实类型正确"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "created_by varchar(100)；pm.projects.tags jsonb default '{}'" }
+      - { kind: code, ref: "database/migrations/20261107000020_align_finance_payments_created_by_and_pm_tags.sql:7-8", detail: "prod 上两条分支均为 no-op，禁止当作 prod 迁移方案" }
+      - { kind: doc, ref: "docs/quality/prod-schema-drift-2026-11-09.md:321", detail: "列类型已一致（diff 为空）" }
+    precondition: "无；不应用"
+
+  - version: "20261107000021"
+    file: "database/migrations/20261107000021_route_permission_gaps_batch27.sql"
+    class: permission
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "public.core_permissions：finance:account:read 等路由缺口码" ]
+    prod_presence:
+      status: "absent"
+      detail: "finance:account:read 缺失"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "缺失码由 20261109100700 的前向 INSERT 承接"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:322", detail: "finance:account:read 缺失" }
+      - { kind: code, ref: "svc/finance/src/modules/mod.rs:5373", detail: "路由侧强制校验 finance:account:read" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:48", detail: "前向补丁包含 finance:account:read" }
+    precondition: "20261109100700 应用并入账"
+
+  - version: "20261107000022"
+    file: "database/migrations/20261107000022_domain_manager_roles_batch28.sql"
+    class: dependency
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "public.core_roles：rd_manager、integration_manager、workflow_manager、aps_manager、tms_manager、bi_manager、monitor_manager、notification_manager、doc_manager、ticket_manager"
+    prod_presence:
+      status: "absent"
+      detail: "10 个域管理员角色全部不存在（生产仅 16 个角色）"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "无前向补丁创建这些角色；角色命名/职责需产品确认，000023/000042 的授权依赖它"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:156", detail: "10 角色全缺；生产仅 16 角色" }
+      - { kind: code, ref: "database/migrations/20261107000022_domain_manager_roles_batch28.sql", detail: "声明 10 个角色 INSERT" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "产品/权限 owner 确认角色清单；新版本创建角色（version > max）；随后 000023/000042 的授权由新版本承接"
+    owner: "IAM/权限 owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000023"
+    file: "database/migrations/20261107000023_domain_admin_code_grants_batch28.sql"
+    class: dependency
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "core_role_permissions：域管理员角色 × 权限码授权" ]
+    prod_presence:
+      status: "absent"
+      detail: "依赖的 10 个角色不存在；当前授权 INSERT 会命中 0 行而静默成功"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "必须先有 000022 的角色；直接应用会产生 0 行授权，看似成功实际空转"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:156,324", detail: "角色缺失；授权行 0" }
+      - { kind: code, ref: "database/migrations/20261107000023_domain_admin_code_grants_batch28.sql", detail: "基于角色名的授权 INSERT" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "000022 角色由新版本创建并核验存在后，再发新版本授权；旧文件不应用"
+    owner: "IAM/权限 owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000024"
+    file: "database/migrations/20261107000024_finance_admin_seed.sql"
+    class: superseded
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过；实际由后续窗口 20261108141500 补齐"
+    declared_objects: [ "public.core_permissions：finance:admin" ]
+    prod_presence:
+      status: "present"
+      detail: "finance:admin 已存在（由 20261108141500 补齐）"
+      checked_at: "2026-11-09"
+    disposition: superseded
+    superseded_by: "20261108141500"
+    basis: "效果已由更高版本完成并入账；旧文件不重放"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:325", detail: "finance:admin 已存在（20261108141500 补齐）" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1", detail: "20261108141500 在账本，是当前锚点" }
+      - { kind: doc, ref: "docs/quality/prod-schema-drift-2026-11-09.md:17", detail: "finance:admin 两次事故同源" }
+    precondition: "无；永不应用"
+
+  - version: "20261107000025"
+    file: "database/migrations/20261107000025_seed_menus_batch29.sql"
+    class: dependency
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "菜单组与菜单项种子（含 采购管理 等）" ]
+    prod_presence:
+      status: "partial"
+      detail: "抽查 4 个菜单组存在；完整性未核对（不能仅凭文件名判定已满足）"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "部分效果在、完整性未知；需与 000025 清单逐项比对后再定 forward/obsolete"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:326", detail: "抽查 4 个菜单组存在；需人工确认完整性" }
+      - { kind: code, ref: "database/migrations/20261107000025_seed_menus_batch29.sql", detail: "声明多组菜单/菜单项种子" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "按菜单 key/路径逐项比对生产；缺口清单确认后发新版本补齐；或确认 000044–000046 已覆盖后改 superseded"
+    owner: "前端/菜单 owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000026"
+    file: "database/migrations/20261107000026_seed_asset_categories_batch31.sql"
+    class: data
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "erp.asset_categories 资产分类种子（GB/T 14885 六大类）" ]
+    prod_presence:
+      status: "present_empty"
+      detail: "表存在、0 行；种子未进入生产"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "种子内容需业务确认；直接重放旧文件会重复写入"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:157,327", detail: "表存在、0 行（B4）" }
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "erp.asset_categories 表存在（2026-11-05）" }
+      - { kind: code, ref: "database/migrations/20261107000026_seed_asset_categories_batch31.sql", detail: "声明分类种子 INSERT" }
+    precondition: "资产域 owner 确认分类清单；新版本 seed（幂等 ON CONFLICT）应用后核对行数"
+    owner: "资产/ERP owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000027"
+    file: "database/migrations/20261107000027_drop_dead_tables_batch31.sql"
+    class: cleanup
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过；生产侧仅部分目标被清理"
+    declared_objects:
+      - "DROP erp.core_erp_suppliers"
+      - "DROP crm.core_crm_customers"
+      - "DROP crm.customers_tenant_null_backup_20260919"
+    prod_presence:
+      status: "partial"
+      detail: "备份表 crm.customers_tenant_null_backup_20260919 已不存在（基线快照即无）；erp.core_erp_suppliers / crm.core_crm_customers 仍存在且 0 行"
+      checked_at: "2026-11-09"
+    disposition: obsolete
+    basis: "剩余 2 张为 0 行 skeleton 表、代码零引用；清理非功能必需，可选新版本"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "erp.core_erp_suppliers / crm.core_crm_customers 存在；crm.customers_tenant_null_backup_20260919 不存在" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:181-182", detail: "两张表 0 行，可安全清理" }
+      - { kind: doc, ref: "docs/audit/P3-21_架构级缺陷收敛实施_批31_执行记录_2026-11-07.md:276", detail: "备份表本地已 drop；不等于 prod 账本已登记" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:328", detail: "3 张 0 行遗留表仍在（审计表述）；实际备份表已不在基线" }
+    precondition: "无；不应用。若清理，另发 version > max 的 DROP（to_regclass + 0 行守卫）；与 000019/000035 可合并"
+
+  - version: "20261107000028"
+    file: "database/migrations/20261107000028_cleanup_erp_customers_batch32.sql"
+    class: data
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过；生产是否已清理未获确认"
+    declared_objects: [ "DELETE erp.customers 中 5 个指定 id 的 B1 测试行" ]
+    prod_presence:
+      status: "unknown"
+      detail: "erp.customers 存在且为活跃表；5 行 B1 测试数据是否仍在生产未确认（本地批 32 已执行 DELETE 5，不能等同于生产）"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "纯 DELETE；生产数据口径需业务/数据 owner 确认；禁止重放旧文件"
+    evidence:
+      - { kind: code, ref: "database/migrations/20261107000028_cleanup_erp_customers_batch32.sql:34-45", detail: "DELETE ... WHERE id IN (5 个已知 id) AND deleted_at IS NOT NULL AND 无 sales_orders 引用" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:329", detail: "数据清理，需人工确认" }
+      - { kind: doc, ref: "docs/audit/P3-22_供应商权威源建设与遗留清理_批32_执行记录_2026-11-07.md:11,287", detail: "本地已执行 DELETE 5；仅为本地证据" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "数据 owner 核对 5 个 id 在生产是否存在；确认后发新版本前向 DELETE（固定 id + deleted_at + 无 FK 引用 + max_rows=5 标记）；备份 CSV 已存在"
+    owner: "ERP/数据 owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000029"
+    file: "database/migrations/20261107000029_create_mdm_supplier_master_batch32.sql"
+    class: structure
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "master_data.mdm_suppliers（25 列 + 唯一约束 + RLS + 索引）" ]
+    prod_presence:
+      status: "absent"
+      detail: "生产表不存在；代码 CRUD 直查该表"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100100"
+    basis: "由 20261109100100 前向建表；旧文件不重放"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "CREATE TABLE master_data.mdm_suppliers 不存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:129,330", detail: "表缺（A1）" }
+      - { kind: code, ref: "svc/master-data/src/modules/supplier_master.rs:1,3", detail: "CRUD 直查 master_data.mdm_suppliers" }
+      - { kind: code, ref: "database/migrations/20261109100100_p3_drift_mdm_suppliers.sql", detail: "前向补丁建表" }
+    precondition: "20261109100100 应用并入账；随后供应商写端点可用"
+
+  - version: "20261107000030"
+    file: "database/migrations/20261107000030_seed_mdm_supplier_master_batch32.sql"
+    class: data
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "master_data.mdm_suppliers 供应商种子（287 行来源）" ]
+    prod_presence:
+      status: "absent"
+      detail: "依赖的 mdm_suppliers 表不存在；生产无种子"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "依赖 000029；种子来源/去重口径需确认；新增补丁批次中没有对应的 9100500"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:331", detail: "依赖 A1；种子缺失（B4）" }
+      - { kind: code, ref: "database/migrations/20261107000030_seed_mdm_supplier_master_batch32.sql", detail: "声明供应商种子写入" }
+      - { kind: ledger, ref: "database/migrations/20261109100100_p3_drift_mdm_suppliers.sql", detail: "前向补丁仅建表，不含 seed" }
+    precondition: "20261109100100 建表完成 + SCM/SRM 来源去重口径确认；新版本 seed（幂等）应用"
+    owner: "MDM/SCM owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000031"
+    file: "database/migrations/20261107000031_supplier_category_dict_and_backfill.sql"
+    class: structure
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "master_data.mdm_supplier_categories（分类字典）"
+      - "mdm_suppliers.category_code 回填"
+    prod_presence:
+      status: "absent"
+      detail: "字典表不存在；category_code 列/回填不存在"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100200"
+    basis: "由 20261109100200 前向承接字典与回填；旧文件不重放"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "master_data.mdm_supplier_categories 不存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:130,332", detail: "表/列缺（A2）" }
+      - { kind: code, ref: "svc/scm/src/modules/supplier.rs:191", detail: "查询 master_data.mdm_supplier_categories" }
+      - { kind: code, ref: "database/migrations/20261109100200_p3_drift_mdm_supplier_categories.sql", detail: "前向补丁承接字典与回填" }
+    precondition: "20261109100200 应用并入账（依赖 9100100 的 mdm_suppliers）"
+
+  - version: "20261107000032"
+    file: "database/migrations/20261107000032_scm_supplier_null_no_soft_delete.sql"
+    class: data
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过；软删口径待确认"
+    declared_objects: [ "UPDATE scm.suppliers SET deleted_at=now() WHERE id=... AND supplier_no IS NULL" ]
+    prod_presence:
+      status: "unknown"
+      detail: "scm.suppliers 存在；目标行是否已软删未确认（文件自述本地实测 196→195，仅为本地证据）"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "纯 UPDATE 数据口径；需 SCM owner 确认；禁止重放旧文件"
+    evidence:
+      - { kind: code, ref: "database/migrations/20261107000032_scm_supplier_null_no_soft_delete.sql:41-47", detail: "UPDATE 单行（固定 id + 全零租户 + supplier_no IS NULL + deleted_at IS NULL）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:333", detail: "纯 DML；需人工确认口径" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "SCM owner 确认该测试行仍存在且可软删；发新版本前向 UPDATE（固定 id + max_rows=1 标记）；旧文件不应用"
+    owner: "SCM owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000033"
+    file: "database/migrations/20261107000033_mdm_sync_dead_letter.sql"
+    class: structure
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "master_data.mdm_sync_dead_letter（同步死信表）" ]
+    prod_presence:
+      status: "absent"
+      detail: "生产表不存在；同步失败路径会二次异常并丢失失败记录"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100300"
+    basis: "由 20261109100300 前向建表；旧文件不重放"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "master_data.mdm_sync_dead_letter 不存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:131,334", detail: "表缺（A3）" }
+      - { kind: code, ref: "svc/scm/src/modules/supplier.rs:270", detail: "INSERT INTO master_data.mdm_sync_dead_letter" }
+      - { kind: code, ref: "database/migrations/20261109100300_p3_drift_mdm_sync_dead_letter.sql", detail: "前向补丁建表" }
+    precondition: "20261109100300 应用并入账"
+
+  - version: "20261107000034"
+    file: "database/migrations/20261107000034_mdm_rename_asset_categories_to_data_asset_categories.sql"
+    class: structure
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "master_data.mdm_asset_categories RENAME TO mdm_data_asset_categories" ]
+    prod_presence:
+      status: "partial"
+      detail: "旧名表存在、0 行；新名表不存在"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100400"
+    basis: "由 20261109100400 前向改名（含 0 行守卫）；旧文件不重放"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "mdm_asset_categories 存在；mdm_data_asset_categories 不存在（2026-11-05）" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:130,335", detail: "新名缺、旧名 0 行（A4）" }
+      - { kind: code, ref: "svc/master-data/src/modules/knowledge_v53.rs:1224", detail: "查询 master_data.mdm_data_asset_categories" }
+      - { kind: code, ref: "database/migrations/20261109100400_p3_drift_mdm_asset_categories_rename.sql", detail: "前向补丁改名（带行数守卫）" }
+    precondition: "20261109100400 应用并入账；执行前确认旧表 0 行"
+
+  - version: "20261107000035"
+    file: "database/migrations/20261107000035_mark_mdm_suppliers_category_deprecated.sql"
+    class: metadata
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "COMMENT ON COLUMN master_data.mdm_suppliers.category 标废弃" ]
+    prod_presence:
+      status: "absent"
+      detail: "依赖的 mdm_suppliers 表不存在，注释对象不存在"
+      checked_at: "2026-11-09"
+    disposition: obsolete
+    basis: "纯元数据注释；非功能；可在 9100100 建表后的后续补丁中顺带处理"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:336", detail: "仅 COMMENT；依赖 A1" }
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "mdm_suppliers 不存在" }
+      - { kind: code, ref: "database/migrations/20261107000035_mark_mdm_suppliers_category_deprecated.sql", detail: "仅 COMMENT ON COLUMN" }
+    precondition: "无；不应用。若需要，新版本在 9100100 建表后 COMMENT"
+
+  - version: "20261107000036"
+    file: "database/migrations/20261107000036_rd_deploy_formula_link_batch38.sql"
+    class: structure
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "rd.deploys.formula_id + FK + idx_rd_deploys_formula"
+      - "rs.formulas / rs.formula_versions.created_by uuid→text"
+      - "ck_formulas_approval_status"
+    prod_presence:
+      status: "absent"
+      detail: "rd.deploys.formula_id 缺；rs.* created_by 仍为 uuid；约束/索引缺"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100600 + 20261109100800"
+    basis: "按域拆分由两个前向补丁承接（rd 关联列 / rs 类型与约束）；旧文件不重放"
+    evidence:
+      - { kind: catalog, ref: "database/baseline/prod_schema_20261105235700.sql.gz", detail: "rd.deploys 无 formula_id；rs.formulas/formula_versions.created_by 为 uuid" }
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:337", detail: "列缺、类型不匹配、约束/索引缺（A5/A6/B1/B2）" }
+      - { kind: code, ref: "svc/rd/src/modules/rd_ci_cd.rs:526,533", detail: "读取/绑定 formula_id" }
+      - { kind: code, ref: "svc/rd/src/models/formula.rs", detail: "created_by: String 与库 uuid 不匹配" }
+      - { kind: code, ref: "database/migrations/20261109100600_p3_drift_rd_deploy_formula.sql", detail: "rd 域前向承接" }
+      - { kind: code, ref: "database/migrations/20261109100800_p3_drift_rs_formula_type_align.sql", detail: "rs 域类型/约束前向承接（0 行守卫）" }
+    precondition: "20261109100600 与 20261109100800 应用并入账；两表 0 行时方可类型转换"
+
+  - version: "20261107000040"
+    file: "database/migrations/20261107000040_finance_budget_perm_batch40.sql"
+    class: permission
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "public.core_permissions：finance:budget:write" ]
+    prod_presence:
+      status: "absent"
+      detail: "finance:budget:write 缺失"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "缺失码由 20261109100700 承接"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:338", detail: "finance:budget:write 缺（A-2）" }
+      - { kind: code, ref: "svc/finance/src/modules/operational.rs:655,1401", detail: "路由强制校验 finance:budget:write" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:34", detail: "前向补丁包含 finance:budget:write" }
+    precondition: "20261109100700 应用并入账"
+
+  - version: "20261107000041"
+    file: "database/migrations/20261107000041_finance_submodule_perms_batch40.sql"
+    class: permission
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "public.core_permissions：finance:currency:write/delete、finance:period:write、finance:reconcile_orders:read/write、finance:sales_invoice:read/write"
+    prod_presence:
+      status: "absent"
+      detail: "7 个财务细码全部缺失"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "7 码由 20261109100700 承接"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:339", detail: "7 个财务细码缺（A-2）" }
+      - { kind: code, ref: "svc/finance/src/modules/sales_invoice.rs", detail: "销售发票路由强制校验对应码" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:35-41", detail: "前向补丁包含 7 码" }
+    precondition: "20261109100700 应用并入账"
+
+  - version: "20261107000042"
+    file: "database/migrations/20261107000042_ai_comm_perm_grants_batch40.sql"
+    class: dependency
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects: [ "core_role_permissions：notification_manager 等角色的授权" ]
+    prod_presence:
+      status: "absent"
+      detail: "权限码已存在，但 notification_manager 等角色缺失，授权空转"
+      checked_at: "2026-11-09"
+    disposition: hold
+    basis: "依赖 000022 的域管理员角色；无前向补丁创建角色"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:156,340", detail: "码存在；角色缺失导致授权空转（B3）" }
+      - { kind: code, ref: "database/migrations/20261107000042_ai_comm_perm_grants_batch40.sql", detail: "按角色名授权" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "000022 角色由新版本创建后，再发新版本授权；旧文件不应用"
+    owner: "IAM/权限 owner（待指派）"
+    expiry: "2026-12-15"
+
+  - version: "20261107000043"
+    file: "database/migrations/20261107000043_finance_smallfiles_perms_batch41.sql"
+    class: permission
+    why_deferred: "无逐条 defer 记录；锚点跳跃跨过"
+    declared_objects:
+      - "public.core_permissions：finance:audit:read、finance:compliance:read、finance:event:read、finance:reconciliation:read、finance:risk:read、finance:treasury:read"
+    prod_presence:
+      status: "absent"
+      detail: "6 个财务小文件只读码全部缺失"
+      checked_at: "2026-11-09"
+    disposition: forwarded
+    forward_patch: "20261109100700"
+    basis: "6 码由 20261109100700 承接"
+    evidence:
+      - { kind: data, ref: "docs/quality/prod-schema-drift-2026-11-09.md:341", detail: "6 个财务小文件码缺（A-2）" }
+      - { kind: code, ref: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql:42-47", detail: "前向补丁包含 6 码" }
+      - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
+    precondition: "20261109100700 应用并入账"
+
+# ===== 43 条之外的待应用前向补丁（status: to_apply） =====
+# 说明：它们 version > 当前账本 max 20261108141500，是方案 C 下唯一允许应用的集合。
+# 43 条旧文件的 forwarded 效果由这里承接；本清单不参与 43 条计数。
+
+pending_forward_patches:
+  - version: "20261109100100"
+    file: "database/migrations/20261109100100_p3_drift_mdm_suppliers.sql"
+    status: to_apply
+    effect: "创建 master_data.mdm_suppliers + 索引/约束/RLS"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 CREATE/ALTER ADD"
+    replaces: [ "20261107000029" ]
+  - version: "20261109100200"
+    file: "database/migrations/20261109100200_p3_drift_mdm_supplier_categories.sql"
+    status: to_apply
+    effect: "创建 mdm_supplier_categories + category_code 列/回填"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 CREATE/ALTER ADD/INSERT"
+    replaces: [ "20261107000031" ]
+  - version: "20261109100300"
+    file: "database/migrations/20261109100300_p3_drift_mdm_sync_dead_letter.sql"
+    status: to_apply
+    effect: "创建 master_data.mdm_sync_dead_letter"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 CREATE"
+    replaces: [ "20261107000033" ]
+  - version: "20261109100400"
+    file: "database/migrations/20261109100400_p3_drift_mdm_asset_categories_rename.sql"
+    status: to_apply
+    effect: "master_data.mdm_asset_categories 改名（0 行守卫）+ 约束/索引/策略改名"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；RENAME 带 to_regclass + 行数守卫"
+    replaces: [ "20261107000034" ]
+  - version: "20261109100600"
+    file: "database/migrations/20261109100600_p3_drift_rd_deploy_formula.sql"
+    status: to_apply
+    effect: "rd.deploys.formula_id + FK(ON DELETE SET NULL) + 索引"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；ADD COLUMN + FK + INDEX"
+    replaces: [ "20261107000036（rd 部分）" ]
+  - version: "20261109100700"
+    file: "database/migrations/20261109100700_p3_drift_rbac_submodule_codes.sql"
+    status: to_apply
+    effect: "补齐 18 个权限码（15 finance + mes/bi/wms 3 写码）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码"
+    replaces: [ "20261106000001", "20261107000001", "20261107000021", "20261107000040", "20261107000041", "20261107000043" ]
+  - version: "20261109100800"
+    file: "database/migrations/20261109100800_p3_drift_rs_formula_type_align.sql"
+    status: to_apply
+    effect: "rs.formulas/formula_versions version/created_by 类型对齐 + ck_formulas_approval_status"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；ALTER COLUMN TYPE 带 information_schema + 0 行双重守卫"
+    replaces: [ "20261107000036（rs 部分）" ]
+  - version: "20261109100900"
+    file: "database/migrations/20261109100900_p3_drift_tenant_admin_module_read.sql"
+    status: to_apply
+    effect: "tenant_admin 补 master-data:read / rd:read 授权"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT/ON CONFLICT"
+  - version: "20261109101000"
+    file: "database/migrations/20261109101000_p3_drift_tenant_admin_rd_formula_write.sql"
+    status: to_apply
+    effect: "tenant_admin 补 rd:formula:write 授权"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT/ON CONFLICT"
+  - version: "20261109101100"
+    file: "database/migrations/20261109101100_p3_drift_tenant_admin_module_reads_align.sql"
+    status: to_apply
+    effect: "tenant_admin 模块只读授权对齐"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT/ON CONFLICT"
+  - version: "20261109101200"
+    file: "database/migrations/20261109101200_p3_bi_finegrained_permissions.sql"
+    status: to_apply
+    effect: "BI 细粒度权限码"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码"

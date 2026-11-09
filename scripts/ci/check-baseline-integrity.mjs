@@ -116,6 +116,31 @@ for (const [i, a] of anchors.entries()) {
   prev = cur;
 }
 
+// ── 1b) 锚点只增不减（提交阶段拦截“下移锚点”） ──────────────────────────────
+// anchors.json 是锚点历史的唯一账本。已提交锚点在暂存版本中消失、或最大锚点变小，
+// 都视为「下移锚点」，直接阻断。CI 中 HEAD 即当前提交，此处自然为 no-op。
+try {
+  const prevRaw = execSync('git show HEAD:database/baseline/anchors.json', {
+    cwd: ROOT,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'ignore'],
+  });
+  const prevDoc = JSON.parse(prevRaw);
+  const prevAnchors = Array.isArray(prevDoc.anchors) ? prevDoc.anchors : [];
+  const curSet = new Set(anchors.map((a) => String(a.anchor_version)));
+  const removed = prevAnchors
+    .map((a) => String(a.anchor_version))
+    .filter((v) => !curSet.has(v));
+  if (removed.length > 0) {
+    violations.push(`anchors.json 删除了已登记锚点（禁止下移/重写历史）：${removed.join(', ')}`);
+  }
+  const prevMax = prevAnchors.reduce((m, a) => Math.max(m, Number(a.anchor_version) || 0), 0);
+  const curMax = anchors.reduce((m, a) => Math.max(m, Number(a.anchor_version) || 0), 0);
+  if (prevMax > 0 && curMax < prevMax) {
+    violations.push(`anchors.json 最新锚点下移：${curMax} < 上一提交 ${prevMax}`);
+  }
+} catch { /* 首次提交或无 git 历史：跳过 */ }
+
 // ── 2) 最新锚点 = 最新 baseline 元数据 ─────────────────────────────────────
 const metaFiles = existsSync(BASELINE_DIR)
   ? readdirSync(BASELINE_DIR).filter((f) => /^baseline_\d{14}\.json$/.test(f))

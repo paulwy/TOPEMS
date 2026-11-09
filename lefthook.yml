@@ -254,7 +254,7 @@ pre-commit:
       tags: database migrations
       run: |
         set -e
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^database/migrations/.*\.sql$|^scripts/ci/check-(directed|destructive)-sql\.mjs$|^scripts/ci/destructive-sql-baseline\.json$" || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^database/migrations/.*\.sql$|^database/migration_manifest\.yaml$|^scripts/ci/check-(directed|destructive)-sql\.mjs$|^scripts/ci/destructive-sql-baseline\.json$" || true)
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-directed-migrations.mjs --changed-only
         node scripts/ci/check-destructive-sql.mjs

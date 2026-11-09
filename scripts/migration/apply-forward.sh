@@ -15,12 +15,26 @@
 #   任何 pending 既不在 --only 也不在 --defer → 在产生任何 DDL 之前硬失败（exit 1）。
 #   未给 --only 时保持旧行为（全部 pending），供历史路径使用。
 #
-# prod 唯一入口：`--prod` 时对白名单内每条 pending 做双重校验：
+# prod 唯一入口：`--prod` 时对白名单内每条 pending 做两层校验（拆层，互不短路）：
 #   1) 定向迁移命名（dbNN_test / dbNN_5433 / test_* / 5433_*，与 CI 检查同口径）→ 拒绝；
-#   2) 无守卫高危语句（ALTER COLUMN TYPE / DROP COLUMN / DROP CONSTRAINT / DROP TABLE CASCADE，
-#      调用 scripts/ci/check-destructive-sql.mjs 同口径判定）→ 拒绝。
-#   命中任一条即硬失败并列出清单，提示必须走「基线 + 前向迁移」路径。
-#   环境变量 WINDOW_TARGET=prod 时若未带 --prod，直接拒绝（exit 1）。
+#      `--only` / `--allow-pending` 只能豁免这一层。
+#   2) 破坏性语句（DELETE / UPDATE / TRUNCATE / DROP COLUMN / DROP TABLE / 高危 DDL，
+#      调用 scripts/ci/check-destructive-sql.mjs --check-file --strict）→ 始终执行；
+#      `--only` / `--allow-pending` 不得绕过；完整性守卫也只按「历史基线」处理，
+#      进入 pending 的历史文件必须重新按新文件标准判定。
+#
+# 破坏性语句运行时开关（逐版本、绑定变更单）：
+#   --allow-destructive=<version>  仅对该版本生效（不支持逗号/通配）；
+#   必须设置 PROD_CHANGE_TICKET，且与文件内豁免标记 destructive-ticket 完全一致；
+#   执行前在只读事务（ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
+#   超过 destructive-max-rows（DROP 必须为 0）→ 拒绝执行；
+#   TRUNCATE 不提供任何开关。
+#
+# 锚点下移拦截：
+#   --anchor 不得低于账本 max(success)；prod 下必须与账本 max 完全一致，否则拒绝。
+#   非 prod 需显式 ALLOW_ANCHOR_REWIND=1 且 PROD_CHANGE_TICKET 非空才放行（仅演练用）。
+#   旧版本永不 in-place 重放：请在 database/migration_manifest.yaml 登记处置，
+#   用 version > 账本 max 的前向补丁承接效果。
 #
 # SSH 模式（prod 主机不在本地暴露 DSN）：
 #   --ssh-host <user@host>   --remote-db <db>   --remote-mig-dir <已投递校验的远端目录>
@@ -48,6 +62,7 @@ DB=""
 ANCHOR=""
 PROD=0
 ALLOW_PENDING=()
+ALLOW_DESTRUCTIVE=""
 ONLY_RAW=""
 DEFER_RAW=""
 SSH_HOST="${WINDOW_SSH_HOST:-}"
@@ -65,6 +80,7 @@ while [[ $# -gt 0 ]]; do
     --anchor) ANCHOR="$2"; shift 2 ;;
     --prod) PROD=1; shift ;;
     --allow-pending) ALLOW_PENDING+=("$2"); shift 2 ;;
+    --allow-destructive=*) ALLOW_DESTRUCTIVE="${1#*=}"; shift ;;
     --only) ONLY_RAW="$2"; shift 2 ;;
     --defer) DEFER_RAW="$2"; shift 2 ;;
     --ssh-host) SSH_HOST="$2"; shift 2 ;;
@@ -99,12 +115,15 @@ if [[ -n "$SSH_HOST" ]]; then
   [[ -n "$REMOTE_DB" ]] || { echo "SSH 模式需要 --remote-db" >&2; exit 2; }
   [[ -n "$REMOTE_MIG_DIR" ]] || { echo "SSH 模式需要 --remote-mig-dir（已投递并校验的迁移目录）" >&2; exit 2; }
   psql_exec() { remote_psql "$@"; }
+  psql_stdin() { remote_psql -q -tA -f -; }
 elif [[ -n "$DSN" ]]; then
   PSQL=(psql "$DSN")
   psql_exec() { "${PSQL[@]}" "$@"; }
+  psql_stdin() { "${PSQL[@]}" -q -tA -v ON_ERROR_STOP=1 -f -; }
 elif [[ -n "$DB" ]]; then
   PSQL=(psql -h "${PGHOST:-/tmp}" -U "${PGUSER:-air}" -d "$DB")
   psql_exec() { "${PSQL[@]}" "$@"; }
+  psql_stdin() { "${PSQL[@]}" -q -tA -v ON_ERROR_STOP=1 -f -; }
 else
   echo "需要 --dsn / --db，或 --ssh-host + --remote-db + --remote-mig-dir" >&2
   exit 2
@@ -113,6 +132,37 @@ fi
 if [[ -z "$ANCHOR" ]]; then
   ANCHOR="$(psql_exec -tA -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
   [[ -n "$ANCHOR" && "$ANCHOR" != "NULL" ]] || { echo "无法读取锚点（账本为空？）" >&2; exit 2; }
+fi
+
+# --- 锚点下移/前跳拦截 -------------------------------------------------------
+# 账本 max(success) 是唯一水位线；显式 --anchor 不得偏离，避免把锚点以下的
+# 历史 defer 重新变成 pending（这正是 43 个孤儿产生的机制）。
+LEDGER_MAX="$(psql_exec -tA -c "SELECT COALESCE(max(version),0) FROM _sqlx_migrations WHERE success" 2>/dev/null || echo 0)"
+if [[ "$LEDGER_MAX" =~ ^[0-9]+$ ]] && (( 10#$LEDGER_MAX > 0 )) && (( 10#$ANCHOR != 10#$LEDGER_MAX )); then
+  echo "== 拒绝：锚点偏离账本水位（--anchor=$ANCHOR，账本 max=$LEDGER_MAX）" >&2
+  echo "   锚点下移会把历史 defer 重新纳入扫描；锚点上跳会静默跳过 pending。" >&2
+  echo "   旧版本不得 in-place 重放：请在 database/migration_manifest.yaml 登记处置，用 > 账本 max 的前向补丁承接。" >&2
+  if [[ $PROD -eq 1 ]]; then
+    echo "   prod 模式不允许任何锚点偏离（含 --allow-anchor-rewind）。" >&2
+    exit 1
+  fi
+  if [[ "${ALLOW_ANCHOR_REWIND:-0}" != "1" || -z "${PROD_CHANGE_TICKET:-}" ]]; then
+    echo "   仅演练场景可显式 ALLOW_ANCHOR_REWIND=1 且设置 PROD_CHANGE_TICKET。" >&2
+    exit 1
+  fi
+  echo "   警告：已按 ALLOW_ANCHOR_REWIND=1 放行（ticket=$PROD_CHANGE_TICKET），本区间必须由 --only/--defer 严格约束。" >&2
+fi
+
+# --- --allow-destructive 参数校验：单版本、精确、不支持列表/通配 -------------
+if [[ -n "$ALLOW_DESTRUCTIVE" ]]; then
+  if [[ ! "$ALLOW_DESTRUCTIVE" =~ ^[0-9]{14}$ ]]; then
+    echo "拒绝：--allow-destructive 只接受单个 14 位版本号（不支持逗号/通配）: $ALLOW_DESTRUCTIVE" >&2
+    exit 2
+  fi
+  if [[ -z "${PROD_CHANGE_TICKET:-}" ]]; then
+    echo "拒绝：--allow-destructive=<version> 必须同时设置 PROD_CHANGE_TICKET（用于比对标记 ticket）" >&2
+    exit 2
+  fi
 fi
 
 ONLY=()
@@ -155,6 +205,7 @@ done
 DENY_RE='(^|_)(db[0-9]+_(test|5433)|5433_|test_)'
 
 PENDING=()
+PENDING_DG=()
 DENIED=()
 OUT_OF_MANIFEST=()
 DEFERRED=()
@@ -178,19 +229,33 @@ while IFS= read -r f; do
     OUT_OF_MANIFEST+=("$b")
     continue
   fi
-  if [[ $PROD -eq 1 ]] && { [[ ${#ONLY[@]} -gt 0 ]] || ! is_allowed_pending "$v"; }; then
-    # 防线 1：定向迁移命名（prod 不允许）
-    if [[ "$b" =~ $DENY_RE ]]; then
+  if [[ $PROD -eq 1 ]]; then
+    # 防线 1：定向迁移命名；--only / --allow-pending 只豁免这一层
+    if [[ "$b" =~ $DENY_RE ]] && ! { [[ ${#ONLY[@]} -gt 0 ]] || is_allowed_pending "$v"; }; then
       DENIED+=("$b [定向迁移命名]")
       continue
     fi
-    # 防线 2：无守卫高危语句（与 CI 检查同口径）
+    # 防线 2：破坏性语句；始终执行，--only / --allow-pending 不得绕过
     if command -v node >/dev/null 2>&1; then
       guard_log="/tmp/topems_guard_${v}.log"
-      if ! node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" >"$guard_log" 2>&1; then
-        cnt="$(grep -c '^  L[0-9]' "$guard_log" 2>/dev/null || true)"
-        DENIED+=("$b [无守卫高危语句 ${cnt:-0} 条]")
-        continue
+      if ! node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" --strict >"$guard_log" 2>&1; then
+        # 仅当该版本被逐版本批准、且 ticket 与标记一致时，才进入预演
+        if [[ -n "$ALLOW_DESTRUCTIVE" && "$v" == "$ALLOW_DESTRUCTIVE" ]]; then
+          dg_plan="/tmp/topems_dg_plan_${v}.json"
+          if node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" --strict \
+              --approve-ticket="${PROD_CHANGE_TICKET:-}" --plan-file="$dg_plan" >>"$guard_log" 2>&1; then
+            PENDING_DG+=("$v")
+          else
+            echo "-- $b 破坏性语句未获批准：" >&2
+            grep -E 'DENY|destructive-ticket' "$guard_log" >&2 || true
+            DENIED+=("$b [破坏性语句未获 --allow-destructive 批准]")
+            continue
+          fi
+        else
+          cnt="$(grep -c '^  L[0-9]' "$guard_log" 2>/dev/null || true)"
+          DENIED+=("$b [破坏性语句 ${cnt:-0} 条；需 --allow-destructive=$v]")
+          continue
+        fi
       fi
     else
       DENIED+=("$b [无法校验：node 缺失，拒绝在 prod 应用]")
@@ -243,6 +308,46 @@ if [[ ${#PENDING[@]} -eq 0 ]]; then
   [[ ${#APPLIED_ONLY[@]} -gt 0 ]] && echo "== --only 中已应用: ${APPLIED_ONLY[*]}"
   exit 0
 fi
+
+# --- 破坏性语句执行前预演（只读事务 + ROLLBACK，不产生任何写入） -------------
+# 逐版本、逐语句：DELETE/UPDATE 统计受影响行数，DROP TABLE 统计目标表现存行数；
+# 任一超过标记 destructive-max-rows（DROP 必须为 0）即拒绝，且发生在任何 DDL 之前。
+for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
+  dg_plan="/tmp/topems_dg_plan_${v}.json"
+  if [[ ! -f "$dg_plan" ]]; then
+    echo "== 拒绝：版本 $v 缺少破坏性预演计划 $dg_plan" >&2
+    exit 1
+  fi
+  preflight_sql="/tmp/topems_dg_preflight_${v}.sql"
+  node -e '
+    const fs = require("fs");
+    const p = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const q = (s) => String(s).replace(/\x27/g, "\x27\x27");
+    for (const s of p.statements) {
+      if (s.kind === "DELETE" || s.kind === "UPDATE") {
+        const sql = s.sql.replace(/;\s*$/, "");
+        console.log(`SELECT ${s.line} AS line, \x27${s.kind}\x27 AS kind, ${Number(s.maxRows)} AS max_rows, count(*)::bigint AS n FROM (${sql} RETURNING 1) AS __dg;`);
+      } else if (s.kind === "DROP TABLE") {
+        const t = q(s.table);
+        console.log(`SELECT ${s.line} AS line, \x27DROP TABLE\x27 AS kind, 0 AS max_rows, CASE WHEN to_regclass(\x27${t}\x27) IS NULL THEN 0 ELSE (xpath(\x27/row/c/text()\x27, query_to_xml(\x27SELECT count(*) AS c FROM ${t}\x27, false, true, \x27\x27)))[1]::text::bigint END AS n;`);
+      } else {
+        console.log(`SELECT ${s.line} AS line, \x27${s.kind}\x27 AS kind, ${Number(s.maxRows)} AS max_rows, 0::bigint AS n;`);
+      }
+    }
+  ' "$dg_plan" > "$preflight_sql"
+  dg_rows="$({ printf 'BEGIN;\n'; cat "$preflight_sql"; printf '\nROLLBACK;\n'; } | psql_stdin)" || {
+    echo "== 拒绝：版本 $v 破坏性预演失败（未产生任何写入）" >&2
+    exit 1
+  }
+  while IFS='|' read -r dg_line dg_kind dg_max dg_n; do
+    [[ -n "${dg_line:-}" ]] || continue
+    if (( 10#${dg_n:-0} > 10#${dg_max:-0} )); then
+      echo "== 拒绝：版本 $v 第 ${dg_line} 行 ${dg_kind} 预演影响 ${dg_n} 行 > 允许 ${dg_max} 行（未产生任何写入）" >&2
+      exit 1
+    fi
+    echo "   预演 OK：版本 $v 第 ${dg_line} 行 ${dg_kind} → ${dg_n} 行（上限 ${dg_max}）"
+  done <<< "$dg_rows"
+done
 
 echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}${ONLY_RAW:+，only=$ONLY_RAW}）"
 [[ ${#DEFERRED[@]} -gt 0 ]] && { echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）："; printf '  %s\n' "${DEFERRED[@]}"; }
