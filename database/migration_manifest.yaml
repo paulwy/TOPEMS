@@ -1008,3 +1008,9 @@ pending_forward_patches:
     destructive_scan: "仅 ADD COLUMN IF NOT EXISTS；三列可空、不回填、不设默认值，不删改数据"
     note: "前向迁移，不改已推送历史；结算确认时 PM 写入并在首次结算发布 PmProjectSettled"
 
+  - version: "20261109200000"
+    file: "database/migrations/20261109200000_p5_b4_finance_v52_typmod_backfill.sql"
+    status: to_apply
+    effect: "六张 finance `_v52` 表回填 17 列 typmod（14×varchar(255)、3×numeric(18,2)）；finance_audit_rules_v52 对齐 6 处语义差异（text→varchar(255)、created_by uuid→varchar(255)、is_active 默认 false、created_at/updated_at 去 now() 默认、id 默认 gen_random_uuid()）"
+    destructive_scan: "ALTER COLUMN TYPE 位于 DO 块且逐列比对 atttypmod 守卫；created_by 为 uuid 且表内非 0 行时 RAISE EXCEPTION 中止；金额列存在 >2 位小数时 RAISE EXCEPTION 拒绝静默舍入；无 DELETE/UPDATE/TRUNCATE/DROP"
+    note: "前向补丁 > 20261109190000，不改已推送历史；幂等（已正确类型/默认值则跳过）"
