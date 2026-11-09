@@ -42,8 +42,9 @@
  *
  * 运行时开关（prod 专用）：
  *   `--check-file <path> --strict`：文件含完整豁免标记时仍返回非 0，提示必须传 --allow-destructive；
- *   `--check-file <path> --strict --approve-ticket=<ticket> --plan-file=<json>`：
- *     ticket 必须与每个标记的 destructive-ticket 完全一致；一致时输出待执行计划（含 max-rows / SQL）。
+ *   `--check-file <path> --strict --approve-ticket=<ticket>[,<ticket>...] --plan-file=<json>`：
+ *     --approve-ticket 支持逗号列表；文件内每个标记的 destructive-ticket 都必须被显式列出，
+ *     任何未列出的票据仍然 DENY（不降低审批数量、不引入默认放行）。一致时输出待执行计划（含 max-rows / SQL）。
  *   TRUNCATE 无任何运行时开关。
  *
  * 用法：
@@ -77,7 +78,11 @@ const checkFileIdx = args.indexOf('--check-file');
 const CHECK_FILE = checkFileIdx >= 0 ? args[checkFileIdx + 1] : null;
 const DIRS = args.reduce((acc, a, i) => (a === '--dir' && args[i + 1] ? acc.concat(args[i + 1]) : acc), []);
 const approveArg = args.find((a) => a.startsWith('--approve-ticket='));
-const APPROVE_TICKET = approveArg ? approveArg.slice('--approve-ticket='.length) : null;
+const APPROVE_TICKET_RAW = approveArg ? approveArg.slice('--approve-ticket='.length) : null;
+// 逗号列表：文件内每条标记的 ticket 必须被显式列出；未列出的票据仍然 DENY。
+const APPROVE_TICKETS = APPROVE_TICKET_RAW
+  ? APPROVE_TICKET_RAW.split(',').map((t) => t.trim()).filter(Boolean)
+  : [];
 const planArg = args.find((a) => a.startsWith('--plan-file='));
 const PLAN_FILE = planArg ? planArg.slice('--plan-file='.length) : null;
 
@@ -579,16 +584,17 @@ if (CHECK_FILE) {
   }
 
   if (approvals.length > 0) {
-    if (!APPROVE_TICKET) {
+    if (APPROVE_TICKETS.length === 0) {
       console.error(`DENY: ${CHECK_FILE} 含 ${approvals.length} 条带豁免标记的破坏性语句`);
       console.error('  运行时必须显式传 --allow-destructive=<version>，并设置 PROD_CHANGE_TICKET；');
+      console.error('  PROD_CHANGE_TICKET 可为逗号列表，但每个标记票据都必须被显式列出。');
       console.error('  TRUNCATE 无任何运行时开关。');
       process.exit(1);
     }
-    const mismatched = approvals.filter((a) => a.ticket !== APPROVE_TICKET);
+    const mismatched = approvals.filter((a) => !APPROVE_TICKETS.includes(a.ticket));
     if (mismatched.length > 0) {
-      console.error(`DENY: ${CHECK_FILE} 有 ${mismatched.length} 条标记的 destructive-ticket 与 PROD_CHANGE_TICKET 不一致`);
-      for (const a of mismatched) console.error(`  L${a.line} ticket=${a.ticket} env=${APPROVE_TICKET}`);
+      console.error(`DENY: ${CHECK_FILE} 有 ${mismatched.length} 条标记的 destructive-ticket 未被显式列出`);
+      for (const a of mismatched) console.error(`  L${a.line} ticket=${a.ticket} 已列出=${APPROVE_TICKETS.join(',')}`);
       process.exit(1);
     }
     if (PLAN_FILE) {
@@ -597,7 +603,7 @@ if (CHECK_FILE) {
         JSON.stringify(
           {
             file: CHECK_FILE,
-            ticket: APPROVE_TICKET,
+            ticket: APPROVE_TICKETS.join(','),
             statements: approvals.map((a) => ({
               kind: a.kind,
               line: a.line,
@@ -612,7 +618,7 @@ if (CHECK_FILE) {
         ) + '\n'
       );
     }
-    console.log(`APPROVE: ${CHECK_FILE} ${approvals.length} 条（ticket=${APPROVE_TICKET}${PLAN_FILE ? `，plan=${PLAN_FILE}` : ''}）`);
+    console.log(`APPROVE: ${CHECK_FILE} ${approvals.length} 条（ticket=${APPROVE_TICKETS.join(',')}${PLAN_FILE ? `，plan=${PLAN_FILE}` : ''}）`);
     process.exit(0);
   }
 

@@ -891,3 +891,48 @@ pending_forward_patches:
     effect: "BI 补 comparison/visualization 写码并同域授予"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码"
     note: "已推送到 main 且已应用到生产；本轮仅补登记，不重放"
+  - version: "20261109110000"
+    file: "database/migrations/20261109110000_p3_opening_balance_account_link.sql"
+    status: to_apply
+    effect: "erp.opening_balances 补 account_id + 回填 + 索引 + 一致性校验"
+    destructive_scan: "UPDATE 带豁免标记（ticket P3-BATCH1-OPENING-ACCOUNT，max 500000）；生产 0 行"
+  - version: "20261109110100"
+    file: "database/migrations/20261109110100_p3_report_line_map.sql"
+    status: to_apply
+    effect: "创建 finance.core_finance_report_line_map + 唯一索引 + RLS + 全局模板种子"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE TABLE + INSERT 种子"
+  - version: "20261109110200"
+    file: "database/migrations/20261109110200_p3_financial_reports_company.sql"
+    status: to_apply
+    effect: "finance.financial_reports 补 company_id + 回填 + org_id 对齐 + NOT NULL + 索引"
+    destructive_scan: "UPDATE ×2 带豁免标记（ticket P3-BATCH1-REPORT-COMPANY，max 100000）；生产 0 行"
+  - version: "20261109120000"
+    file: "database/migrations/20261109120000_p3_report_line_map_section.sql"
+    status: to_apply
+    effect: "映射表补 section/include_unclosed_pl + 回填 + NOT NULL + CHECK + 索引"
+    destructive_scan: "UPDATE ×2 带豁免标记（tickets P3-BATCH2-LINE-SECTION + P3-BATCH2-UNCLOSED-PL，max 10000）"
+  - version: "20261109120500"
+    file: "database/migrations/20261109120500_p3_report_line_map_grant.sql"
+    status: to_apply
+    effect: "finance.core_finance_report_line_map 授予 SELECT/INSERT/UPDATE/DELETE"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；GRANT"
+  - version: "20261109130000"
+    file: "database/migrations/20261109130000_menu_seed_p3_statutory_reports.sql"
+    status: to_apply
+    effect: "财务域挂载科目余额表/资产负债表/利润表三个菜单"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT ... ON CONFLICT"
+  - version: "20261109140000"
+    file: "database/migrations/20261109140000_p4_internal_transaction_ledger.sql"
+    status: to_apply
+    effect: "内部交易台账状态机/金额守恒/租户内唯一；客户供应商补集团映射"
+    destructive_scan: "UPDATE 带豁免标记（ticket P4-INTERTXN-20261109，max 10000）；生产 0 行"
+  - version: "20261109140100"
+    file: "database/migrations/20261109140100_p4_elimination_candidates.sql"
+    status: to_apply
+    effect: "创建 erp.elimination_candidates + 唯一键 + RLS"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE TABLE + 索引/策略"
+  - version: "20261109140200"
+    file: "database/migrations/20261109140200_p4_consolidation_ledger_permissions.sql"
+    status: to_apply
+    effect: "内部交易台账/扫描/对账细码 + 租户域角色授予"
+    destructive_scan: "无 DML 命中；INSERT 权限码与角色授予（回滚段 DELETE 为注释）"

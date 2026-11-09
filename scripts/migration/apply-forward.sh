@@ -25,7 +25,8 @@
 #
 # 破坏性语句运行时开关（逐版本、绑定变更单）：
 #   --allow-destructive=<version>  仅对该版本生效（不支持逗号/通配）；
-#   必须设置 PROD_CHANGE_TICKET，且与文件内豁免标记 destructive-ticket 完全一致；
+#   必须设置 PROD_CHANGE_TICKET，且文件内每个标记的 destructive-ticket 都必须被
+#   PROD_CHANGE_TICKET 显式列出（逗号列表）；未列出的票据仍被拒绝。
 #   执行前在只读事务（ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
 #   超过 destructive-max-rows（DROP 必须为 0）→ 拒绝执行；
 #   TRUNCATE 不提供任何开关。

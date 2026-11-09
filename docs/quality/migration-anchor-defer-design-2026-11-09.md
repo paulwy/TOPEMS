@@ -663,7 +663,7 @@ WHERE id IN ('b6a1bb76-...', '8d173214-...', ...)
 | `destructive-kind` | 是 | `DELETE` / `UPDATE` / `DROP COLUMN` / `DROP TABLE`；`TRUNCATE` 不接受 |
 | `destructive-reason` | 是 | ≥10 个字符，必须说明「删/改哪些行、为什么」 |
 | `destructive-owner` | 是 | 数据/域 owner 的稳定标识（不用个人姓名） |
-| `destructive-ticket` | 是 | 变更单/事故单号；运行时必须与 `PROD_CHANGE_TICKET` 完全一致 |
+| `destructive-ticket` | 是 | 变更单/事故单号；运行时必须被 `PROD_CHANGE_TICKET` 显式列出（单值或逗号列表） |
 | `destructive-expires` | 是 | ISO 日期；不得早于当天，且不得超过提交日 + 180 天 |
 | `destructive-max-rows` | DELETE/UPDATE 必填 | 非负整数；运行时执行后核对 `GET DIAGNOSTICS` 受影响行数，超过即回滚 |
 | `destructive-rows-at-review` | DROP TABLE/COLUMN 必填 | 必须为 `0`（评审时实测 0 行） |
@@ -673,7 +673,9 @@ WHERE id IN ('b6a1bb76-...', '8d173214-...', ...)
 
 - `apply-forward.sh --allow-destructive=<version>` 才允许执行带标记的 DML；未传该参数时，即使标记完整也拒绝。
 - 该参数只对 `<version>` 精确生效，不支持逗号列表/通配。
-- `PROD_CHANGE_TICKET` 必须与标记的 `destructive-ticket` 一致；不一致 → 拒绝。
+- `PROD_CHANGE_TICKET` 必须显式列出文件内每个标记的 `destructive-ticket`；支持逗号列表
+  （如 `P3-BATCH2-LINE-SECTION,P3-BATCH2-UNCLOSED-PL`），任何未列出的票据 → 拒绝。
+  这不降低审批数量：每个标记票据仍需人工逐项给出，不引入默认放行。
 - `TRUNCATE` 无任何运行时开关。
 - 执行后比对实际行数与 `max-rows`；超限 → 同一事务内 `ROLLBACK`（`apply-forward` 已是单文件事务，抛错即可）。
 
