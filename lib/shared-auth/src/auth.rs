@@ -441,10 +441,16 @@ impl PermissionResolver {
         // `set_config(..., true)` 为事务级（SET LOCAL），事务结束即复位，不会污染
         // 复用同一物理连接的后续请求；读操作结束回滚，不产生副作用。
         let mut tx = self.pool.begin().await?;
-        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind(SYSTEM_TENANT_ID)
-            .execute(&mut *tx)
-            .await?;
+        // 系统通道：nil 租户 + `app.rls_system='on'`。只设 nil 租户时，
+        // `core_roles` 里 `tenant_id='...0001'` 的系统角色在 B1 收口后不可见
+        // （权限集合少一条），故必须同时打开系统分支。
+        sqlx::query(
+            "SELECT set_config('app.tenant_id', $1, true), \
+                    set_config('app.rls_system', 'on', true)",
+        )
+        .bind(SYSTEM_TENANT_ID)
+        .execute(&mut *tx)
+        .await?;
 
         let roles = sqlx::query(
             r#"

@@ -48,6 +48,7 @@ pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
 
     AppState {
         auth_state: auth_state.clone(),
+        db: topems_shared_db::scope::Db::new(pool.clone(), "public, shared"),
         pool: pool.clone(),
         health_config: SimpleHealthConfig::new("test-unified-core"),
         ws_state: Arc::new(WsState::new(Arc::new(auth_state))),

@@ -70,7 +70,7 @@ pub async fn get_my_permissions(
                 .collect(),
         )
     } else {
-        resolve_user_grants(&state.pool, u.id).await
+        resolve_user_grants(&state.db, u.id).await
     };
 
     let user_response = UserResponse {
@@ -282,7 +282,7 @@ pub async fn update_current_user(
                                 .collect(),
                         )
                     } else {
-                        resolve_user_grants(&state.pool, u.id).await
+                        resolve_user_grants(&state.db, u.id).await
                     };
                     serde_json::json!(UserResponse {
                         id: u.id.to_string(),
@@ -587,7 +587,7 @@ pub async fn update_my_avatar(
                                 .collect(),
                         )
                     } else {
-                        resolve_user_grants(&state.pool, u.id).await
+                        resolve_user_grants(&state.db, u.id).await
                     };
                     serde_json::json!(UserResponse {
                         id: u.id.to_string(),

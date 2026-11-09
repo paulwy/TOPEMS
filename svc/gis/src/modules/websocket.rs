@@ -272,8 +272,18 @@ async fn handle_socket(
                                                     .as_deref()
                                                     .and_then(|t| Uuid::parse_str(t).ok())
                                             };
-                                            // 后台 WS 任务只持有 Db 句柄，订阅校验时开只读作用域并按需提交。
-                                            let allowed: Vec<String> = match db.scope_read().await {
+                                            // WS 任务在 spawn 后没有请求 task-local，必须显式选通道：
+                                            // 超管 = 系统通道；普通用户 = 指定租户（解析失败取 nil，fail-closed）。
+                                            let is_system = claims.is_superuser;
+                                            let scope_res = if is_system {
+                                                db.scope_read_system().await
+                                            } else {
+                                                db.scope_read_for_tenant(
+                                                    tenant_filter.unwrap_or_else(Uuid::nil),
+                                                )
+                                                .await
+                                            };
+                                            let allowed: Vec<String> = match scope_res {
                                                 Ok(mut scope) => {
                                                     let rows = sqlx::query_scalar(
                                                         only_own_schema_query!(
@@ -422,7 +432,15 @@ async fn handle_device_socket(
                         .as_deref()
                         .and_then(|t| Uuid::parse_str(t).ok())
                 };
-                let status: Option<String> = match db.scope_read().await {
+                // WS 升级任务没有请求 task-local：超管走系统通道，普通用户按租户显式开作用域。
+                let is_system = claims.is_superuser;
+                let scope_res = if is_system {
+                    db.scope_read_system().await
+                } else {
+                    db.scope_read_for_tenant(tenant_filter.unwrap_or_else(Uuid::nil))
+                        .await
+                };
+                let status: Option<String> = match scope_res {
                     Ok(mut scope) => {
                         let status = sqlx::query_scalar(only_own_schema_query!(
                             "gis",

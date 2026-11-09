@@ -19,8 +19,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
+
+use crate::scope::Db;
 
 /// 对账日志记录
 ///
@@ -55,16 +57,16 @@ pub struct CreateReconciliationLogRequest {
 /// resolve_reconciliation_issue 三处内联 SQL。
 #[derive(Debug, Clone)]
 pub struct ReconciliationLogService {
-    pool: PgPool,
+    db: Db,
     table_name: String,
     refs_table_name: String,
 }
 
 impl ReconciliationLogService {
     /// 创建服务实例（默认表名 core_mdm_reconciliation_log + core_master_data_refs）
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self {
-            pool,
+            db,
             table_name: "master_data.core_mdm_reconciliation_log".to_string(),
             refs_table_name: "master_data.core_master_data_refs".to_string(),
         }
@@ -74,12 +76,12 @@ impl ReconciliationLogService {
     ///
     /// 表名仅接受硬编码常量，不接受外部用户输入，避免 SQL 注入。
     pub fn with_tables(
-        pool: PgPool,
+        db: Db,
         log_table: impl Into<String>,
         refs_table: impl Into<String>,
     ) -> Self {
         Self {
-            pool,
+            db,
             table_name: log_table.into(),
             refs_table_name: refs_table.into(),
         }
@@ -109,14 +111,16 @@ impl ReconciliationLogService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let record = sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(&req.domain)
             .bind(&req.master_data_id)
             .bind(&req.issue_type)
             .bind(&req.description)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(record)
     }
 
@@ -144,11 +148,13 @@ impl ReconciliationLogService {
             "#,
             self.table_name, self.refs_table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(result.rows_affected())
     }
 
@@ -179,11 +185,13 @@ impl ReconciliationLogService {
                 base
             )
         };
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let rows = sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(rows)
     }
 
@@ -204,11 +212,13 @@ impl ReconciliationLogService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(issue_id)
             .bind(tenant_id)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(result.rows_affected() > 0)
     }
 }

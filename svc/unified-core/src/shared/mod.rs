@@ -42,6 +42,11 @@ use crate::shared::config_store_simple::ConfigStoreService;
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
+    /// 租户上下文数据库句柄（public + shared schema）。
+    ///
+    /// 租户数据查询一律走 `db.scope*`，由 `auth_middleware` 写入的 task-local
+    /// 自动带 `app.tenant_id`；无请求上下文的后台/脚本入口用 `scope_*_system`。
+    pub db: topems_shared_db::scope::Db,
     pub health_config: SimpleHealthConfig,
     pub ws_state: Arc<WsState>,
     pub http_client: Client,

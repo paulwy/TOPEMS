@@ -10,6 +10,7 @@
 use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
     EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
@@ -704,7 +705,10 @@ impl CrmEventHandlers {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
         // V284: 复用 shared-db MasterDataRefService（消除 crm_master_data_refs 内联 SQL）
-        let svc = MasterDataRefService::with_table(self.db.clone(), "crm_master_data_refs");
+        let svc = MasterDataRefService::with_table(
+            Db::new(self.db.clone(), "crm, public, shared"),
+            "crm_master_data_refs",
+        );
         let req = UpsertLocalMasterDataRefRequest {
             master_data_id: event.master_data_id.clone(),
             tenant_id: event.tenant_id,

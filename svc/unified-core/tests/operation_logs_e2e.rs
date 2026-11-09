@@ -13,8 +13,10 @@ use topems_unified_core::modules::audit::handlers::{
     get_operation_log, get_operation_log_stats, list_operation_logs,
 };
 use topems_unified_core::modules::audit::models::{
-    OperationLog, OperationLogListResponse, OperationLogQuery, OperationLogStatsResponse,
+    OperationLog, OperationLogListResponse, OperationLogQuery, OperationLogRecord,
+    OperationLogStatsResponse,
 };
+use topems_unified_core::modules::audit::service::record_operation_log;
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -200,4 +202,43 @@ async fn stats_counts_inserted_rows(pool: sqlx::PgPool) {
     let resp = get_operation_log_stats(State(state), Extension(claims)).await;
     let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 3);
+}
+
+/// 回归：`tokio::spawn` 丢失 task-local 后，审计写入仍必须落库（W7 审计断流）。
+///
+/// 直接在没有请求上下文的情况下调用 `record_operation_log`，模拟异步
+/// spawn 的实际执行环境；nil 租户走系统通道，写入后独立查询计数验证。
+#[sqlx::test(migrations = false)]
+async fn record_operation_log_writes_without_request_context(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let state = test_app_state(pool.clone());
+
+    let id = record_operation_log(
+        &state.db,
+        OperationLogRecord {
+            tenant_id: uuid::Uuid::nil(),
+            user_id: None,
+            user_name: "anonymous".to_string(),
+            module: "iam".to_string(),
+            operation: "read".to_string(),
+            resource_type: "User".to_string(),
+            resource_id: None,
+            description: Some("async audit regression".to_string()),
+            request_data: None,
+            response_status: Some(200),
+            ip_address: Some("127.0.0.1".to_string()),
+            user_agent: Some("test".to_string()),
+            trace_id: Some("trace-async".to_string()),
+        },
+    )
+    .await
+    .unwrap();
+
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_operation_logs WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(count, 1, "异步审计写入必须真实落库");
 }

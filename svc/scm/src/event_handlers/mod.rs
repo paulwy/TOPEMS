@@ -7,6 +7,7 @@ use topems_shared_core::cache::{
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
     InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
@@ -644,7 +645,10 @@ impl ScmEventHandlers {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
         // V284: 复用 shared-db MasterDataRefService（消除 scm_master_data_refs 内联 SQL）
-        let svc = MasterDataRefService::with_table(self.db.clone(), "scm_master_data_refs");
+        let svc = MasterDataRefService::with_table(
+            Db::new(self.db.clone(), "scm, public, shared"),
+            "scm_master_data_refs",
+        );
         let req = UpsertLocalMasterDataRefRequest {
             master_data_id: event.master_data_id.clone(),
             tenant_id: event.tenant_id,

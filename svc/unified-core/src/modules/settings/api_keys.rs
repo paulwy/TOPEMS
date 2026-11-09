@@ -78,13 +78,23 @@ pub async fn list_api_keys(
     };
     let pattern = format!("{}%", API_KEY_PREFIX);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create API key read scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取 API Key 列表失败", e));
+        }
+    };
+
     let result = sqlx::query(
         "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND setting_key LIKE $2 ORDER BY updated_at DESC",
     )
     .bind(tenant_id)
     .bind(&pattern)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(rows) => {
@@ -163,6 +173,14 @@ pub async fn create_api_key(
         }
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create API key write scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("创建 API Key 失败", e));
+        }
+    };
+
     let result = sqlx::query(
         r#"
         INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
@@ -172,13 +190,15 @@ pub async fn create_api_key(
     .bind(tenant_id)
     .bind(&key)
     .bind(&serialized)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     if let Err(e) = result {
         tracing::error!("Failed to create API key: {}", e);
         return ApiResponse::from(TopemsError::internal("创建 API Key 失败", e));
     }
+
+    scope.commit().await.ok();
 
     // Return the entry with a masked secret (mask the plaintext, not the
     // ciphertext that was persisted).
@@ -196,12 +216,22 @@ pub async fn delete_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create API key write scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("删除 API Key 失败", e));
+        }
+    };
+
     let result =
         sqlx::query("UPDATE public.core_tenant_settings SET deleted_at = NOW() WHERE tenant_id = $1 AND setting_key = $2")
             .bind(tenant_id)
             .bind(&key)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -224,13 +254,23 @@ pub async fn get_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create API key read scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取 API Key 详情失败", e));
+        }
+    };
+
     let result = sqlx::query(
         "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(row) => {
@@ -277,12 +317,20 @@ pub async fn update_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create API key write scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("更新 API Key 失败", e));
+        }
+    };
+
     let existing = sqlx::query(
         "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match existing {
@@ -342,8 +390,10 @@ pub async fn update_api_key(
     .bind(&serialized)
     .bind(tenant_id)
     .bind(&key)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

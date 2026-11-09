@@ -5,6 +5,7 @@ use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -225,8 +226,11 @@ pub async fn login(
             .into_response();
     }
 
-    let user = match sqlx::query_as::<_, UserRow>(
-        r#"
+    // 登录无 Claims / 无请求上下文：用户查询走系统通道（显式 nil 租户 + rls_system='on'）。
+    let user_lookup: Result<Option<UserRow>, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"
         SELECT u.id, u.username, u.email, u.password_hash,
           CASE WHEN $2 = 'en' THEN COALESCE(u.full_name_en, u.full_name) ELSE u.full_name END AS full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
@@ -237,12 +241,17 @@ pub async fn login(
         FROM iam.users u
         WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
         "#,
-    )
-    .bind(username)
-    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&state.pool)
-    .await
-    {
+        )
+        .bind(username)
+        .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
+        .fetch_optional(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(row)
+    }
+    .await;
+
+    let user = match user_lookup {
         Ok(Some(u)) => u,
         Ok(None) => {
             tracing::warn!("Login failed: user not found - {}", username);
@@ -255,7 +264,14 @@ pub async fn login(
                 "用户不存在",
             )
             .await;
-            return (axum::http::StatusCode::UNAUTHORIZED, Json(topems_shared_core::response::error_value(401, "用户名或密码错误"))).into_response();
+            return (
+                axum::http::StatusCode::UNAUTHORIZED,
+                Json(topems_shared_core::response::error_value(
+                    401,
+                    "用户名或密码错误",
+                )),
+            )
+                .into_response();
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
@@ -268,7 +284,14 @@ pub async fn login(
                 "内部服务器错误",
             )
             .await;
-            return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, Json(topems_shared_core::response::error_value(500, "内部服务器错误"))).into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -325,18 +348,16 @@ pub async fn login(
             vec!["*".to_string()],
         )
     } else {
-        crate::modules::iam::user::resolve_user_grants(&state.pool, user.id).await
+        crate::modules::iam::user::resolve_user_grants(&state.db, user.id).await
     };
 
     // 查询用户所属租户，未关联时 fallback 到默认租户
     //
-    // `public.core_tenant_users` 受 RLS(FORCE) 保护，而 login 无 JWT、tenant_middleware 不会
-    // 设置 `app.tenant_id`：裸池查询命中 `flow.core_tenant_users`（空表）且 RLS 遮蔽，
-    // 恒回退 0001。membership 解析发生在租户确定之前，故在独立只读事务内显式落 nil 租户
-    // （策略 `GUC=nil OR tenant_id=GUC` 的全局分支），只暴露该用户自身的 membership 行；
-    // 之后的会话写入仍按解析出的真实租户设置 GUC。
+    // login 无 JWT、tenant_middleware 不会设置 `app.tenant_id`：membership 解析发生在
+    // 租户确定之前，走系统通道（显式 nil 租户 + rls_system='on'）只读取该用户自身的
+    // membership 行；之后的会话写入仍按解析出的真实租户设置 GUC。
     let tenant_id = Some(
-        resolve_membership_tenant(&state.pool, user.id)
+        resolve_membership_tenant(&state.db, user.id)
             .await
             .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
     );
@@ -403,10 +424,15 @@ pub async fn login(
     let credentials_result: Result<(), sqlx::Error> = async {
         let mut tx = state.pool.begin().await?;
 
-        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind(&tenant_ctx)
-            .execute(&mut *tx)
-            .await?;
+        // 真实租户上下文 + 系统通道开关：会话/刷新令牌落真实租户，
+        // 同时允许后续把上下文临时切回 nil 写登录审计。
+        sqlx::query(
+            "SELECT set_config('app.tenant_id', $1, true), \
+                    set_config('app.rls_system', 'on', true)",
+        )
+        .bind(&tenant_ctx)
+        .execute(&mut *tx)
+        .await?;
 
         sqlx::query(
             "INSERT INTO public.core_sessions (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
@@ -628,12 +654,19 @@ pub async fn register(
         return Json(topems_shared_core::response::error_value(400, &message));
     }
 
-    // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE username = $1")
-        .bind(username)
-        .fetch_one(&state.pool)
-        .await
-    {
+    // 检查用户名是否已存在（注册无 Claims：系统通道读）
+    let username_exists: Result<i64, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let count =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE username = $1")
+                .bind(username)
+                .fetch_one(&mut scope)
+                .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+    .await;
+    match username_exists {
         Ok(count) if count > 0 => {
             return Json(topems_shared_core::response::error_value(
                 409,
@@ -650,12 +683,18 @@ pub async fn register(
         }
     }
 
-    // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE email = $1")
-        .bind(email)
-        .fetch_one(&state.pool)
-        .await
-    {
+    // 检查邮箱是否已存在（注册无 Claims：系统通道读）
+    let email_exists: Result<i64, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE email = $1")
+            .bind(email)
+            .fetch_one(&mut scope)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+    .await;
+    match email_exists {
         Ok(count) if count > 0 => {
             return Json(topems_shared_core::response::error_value(
                 409,
@@ -686,20 +725,26 @@ pub async fn register(
 
     // 创建用户：统一写 iam.users（身份权威表；2026-10-28 收敛后 core_users 已废弃）
     let user_id = Uuid::new_v4();
-    let write_core = sqlx::query(
-        r#"
+    let write_core = async {
+        let mut scope = state.db.scope_system().await?;
+        sqlx::query(
+            r#"
         INSERT INTO iam.users (id, username, email, password_hash, full_name, full_name_en, status, is_superuser, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', false, NOW())
         ON CONFLICT (username) DO NOTHING
         "#,
-    )
-    .bind(user_id)
-    .bind(username)
-    .bind(email)
-    .bind(&password_hash)
-    .bind(&full_name)
-    .bind(&full_name_en)
-    .execute(&state.pool)
+        )
+        .bind(user_id)
+        .bind(username)
+        .bind(email)
+        .bind(&password_hash)
+        .bind(&full_name)
+        .bind(&full_name_en)
+        .execute(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok::<(), sqlx::Error>(())
+    }
     .await;
     match write_core {
         Ok(_) => {
@@ -752,10 +797,10 @@ pub async fn refresh_token(
     let refresh_token_hash = hash_token(&refresh_token);
 
     // RLS FORCE：refresh 请求无 JWT，中间件不设置连接上下文；此处以系统级上下文
-    // （全 0 = RLS 策略管理分支）校验 token 归属，后续写路径再落真实租户上下文。
+    // （nil 租户 + rls_system='on'）校验 token 归属，后续写路径再落真实租户上下文。
     let row = {
-        let mut ctx_tx = match state.pool.begin().await {
-            Ok(tx) => tx,
+        let mut scope = match state.db.scope_read_system().await {
+            Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
                 return (
@@ -768,22 +813,6 @@ pub async fn refresh_token(
                     .into_response();
             }
         };
-        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind("00000000-0000-0000-0000-000000000000")
-            .execute(&mut *ctx_tx)
-            .await
-        {
-            tracing::error!("设置租户上下文失败: {}", e);
-            let _ = ctx_tx.rollback().await;
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(
-                    500,
-                    "内部服务器错误",
-                )),
-            )
-                .into_response();
-        }
         let r = sqlx::query(
             "SELECT rt.user_id, u.username, u.is_superuser, u.email,
                (u.status = 'active') AS is_active,
@@ -799,9 +828,9 @@ pub async fn refresh_token(
              WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
         )
         .bind(&refresh_token_hash)
-        .fetch_optional(&mut *ctx_tx)
+        .fetch_optional(&mut scope)
         .await;
-        match ctx_tx.commit().await {
+        match scope.commit().await {
             Ok(()) => r,
             Err(e) => {
                 tracing::error!("提交租户上下文事务失败: {}", e);
@@ -872,9 +901,9 @@ pub async fn refresh_token(
             .unwrap_or_default()
     };
 
-    // 查询用户所属租户，未关联时 fallback 到默认租户（与 login 同口径，见 login 处注释）
+    // 查询用户所属租户，未关联时 fallback 到默认租户（与 login 同口径：系统通道读）
     let tenant_id = Some(
-        resolve_membership_tenant(&state.pool, user_id)
+        resolve_membership_tenant(&state.db, user_id)
             .await
             .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
     );
@@ -948,11 +977,15 @@ pub async fn refresh_token(
         }
     };
 
-    // RLS FORCE：revoke/INSERT 需真实租户上下文（refresh 已从 core_tenant_users 解析出 tenant_id）
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(&tenant_ctx)
-        .execute(&mut *tx)
-        .await
+    // RLS FORCE：revoke/INSERT 需真实租户上下文，并显式打开系统通道
+    // （refresh 已从 core_tenant_users 解析出 tenant_id）
+    if let Err(e) = sqlx::query(
+        "SELECT set_config('app.tenant_id', $1, true), \
+                set_config('app.rls_system', 'on', true)",
+    )
+    .bind(&tenant_ctx)
+    .execute(&mut *tx)
+    .await
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
@@ -1113,10 +1146,10 @@ pub async fn logout(
     let token_hash = hex::encode(hasher.finalize());
 
     // RLS FORCE：logout 请求无 JWT，中间件不设置连接上下文；以系统级上下文
-    // （全 0 = RLS 策略管理分支）校验 token 归属，后续删除/吊销落真实租户上下文。
+    // （nil 租户 + rls_system='on'）校验 token 归属，后续删除/吊销落真实租户上下文。
     let user_id: Result<Option<Uuid>, sqlx::Error> = {
-        let mut ctx_tx = match state.pool.begin().await {
-            Ok(tx) => tx,
+        let mut scope = match state.db.scope_read_system().await {
+            Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
                 return (
@@ -1126,26 +1159,13 @@ pub async fn logout(
                     .into_response();
             }
         };
-        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind("00000000-0000-0000-0000-000000000000")
-            .execute(&mut *ctx_tx)
-            .await
-        {
-            tracing::error!("设置租户上下文失败: {}", e);
-            let _ = ctx_tx.rollback().await;
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(500, "登出失败")),
-            )
-                .into_response();
-        }
         let r = sqlx::query_scalar(
             "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
         )
         .bind(&token_hash)
-        .fetch_optional(&mut *ctx_tx)
+        .fetch_optional(&mut scope)
         .await;
-        match ctx_tx.commit().await {
+        match scope.commit().await {
             Ok(()) => r,
             Err(e) => {
                 tracing::error!("提交租户上下文事务失败: {}", e);
@@ -1193,9 +1213,9 @@ pub async fn logout(
     tracing::info!("IAM auth logout called for user_id: {}", user_id);
 
     // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
-    // 未关联时 fallback 到默认租户，与 login/refresh 同口径）
+    // 未关联时 fallback 到默认租户，与 login/refresh 同口径；解析走系统通道读）
     let tenant_id = Some(
-        resolve_membership_tenant(&state.pool, user_id)
+        resolve_membership_tenant(&state.db, user_id)
             .await
             .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
     );
@@ -1213,10 +1233,14 @@ pub async fn logout(
         }
     };
 
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(&tenant_id)
-        .execute(&mut *tx)
-        .await
+    // 删除/吊销需真实租户上下文 + 系统通道开关
+    if let Err(e) = sqlx::query(
+        "SELECT set_config('app.tenant_id', $1, true), \
+                set_config('app.rls_system', 'on', true)",
+    )
+    .bind(&tenant_id)
+    .execute(&mut *tx)
+    .await
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
@@ -1306,16 +1330,23 @@ pub async fn forgot_password(
 
     // 邮件通道在 prod 不可用（SMTP 出站连接超时），改为站内通知管理员人工处置。
     // 先确认存在可受理的管理员；该检查与邮箱是否注册无关，不会泄露账号是否存在。
-    let admin_count = match sqlx::query_scalar::<_, i64>(
-        r#"
+    // 找回密码无 Claims：系统通道读受理人
+    let admin_count: Result<i64, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let count = sqlx::query_scalar::<_, i64>(
+            r#"
         SELECT COUNT(*) FROM iam.users
         WHERE status = 'active' AND deleted_at IS NULL
           AND (is_superuser OR 'admin' = ANY(roles))
         "#,
-    )
-    .fetch_one(&state.pool)
-    .await
-    {
+        )
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+    .await;
+    let admin_count = match admin_count {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("查询密码重置受理人失败: {}", e);
@@ -1334,9 +1365,11 @@ pub async fn forgot_password(
         ));
     }
 
-    // 查找用户
-    let user = match sqlx::query_as::<_, UserRow>(
-        r#"
+    // 查找用户（系统通道读）
+    let user_lookup: Result<Option<UserRow>, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"
         SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
           COALESCE(u.roles, '{}') AS roles,
@@ -1346,11 +1379,15 @@ pub async fn forgot_password(
         FROM iam.users u
         WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
         "#,
-    )
-    .bind(email)
-    .fetch_optional(&state.pool)
-    .await
-    {
+        )
+        .bind(email)
+        .fetch_optional(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(row)
+    }
+    .await;
+    let user = match user_lookup {
         Ok(Some(u)) => u,
         Ok(None) => {
             // 出于安全考虑，即使邮箱不存在也返回成功消息
@@ -1375,20 +1412,29 @@ pub async fn forgot_password(
     let reset_token = generate_refresh_token();
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
-    // 保存重置令牌到数据库
-    match sqlx::query(
-        "INSERT INTO unified_core.password_resets (user_id, token, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = $3",
-    )
-    .bind(user.id)
-    .bind(&reset_token)
-    .bind(expires_at)
-    .execute(&state.pool)
-    .await
-    {
+    // 保存重置令牌到数据库（系统通道写）
+    let save_reset: Result<(), sqlx::Error> = async {
+        let mut scope = state.db.scope_system().await?;
+        sqlx::query(
+            "INSERT INTO unified_core.password_resets (user_id, token, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = $3",
+        )
+        .bind(user.id)
+        .bind(&reset_token)
+        .bind(expires_at)
+        .execute(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(())
+    }
+    .await;
+    match save_reset {
         Ok(_) => tracing::debug!("Password reset token saved for user: {}", user.username),
         Err(e) => {
             tracing::error!("Failed to save password reset token: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     }
 
@@ -1397,8 +1443,10 @@ pub async fn forgot_password(
         "用户 {}（{}）请求重置密码。\n重置令牌：{}\n有效期 1 小时。可在忘记密码页使用该令牌完成重置，或在用户管理中直接重置。",
         user.username, email, reset_token
     );
-    match sqlx::query(
-        r#"
+    let notify_admins: Result<u64, sqlx::Error> = async {
+        let mut scope = state.db.scope_system().await?;
+        let result = sqlx::query(
+            r#"
         INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
         SELECT gen_random_uuid(), u.id, $1, $2, 'system', 2,
                jsonb_build_object('source', 'password_reset', 'requested_email', $3, 'requested_user_id', $4),
@@ -1407,18 +1455,22 @@ pub async fn forgot_password(
         WHERE u.status = 'active' AND u.deleted_at IS NULL
           AND (u.is_superuser OR 'admin' = ANY(u.roles))
         "#,
-    )
-    .bind("密码重置申请")
-    .bind(&notification_content)
-    .bind(email)
-    .bind(user.id.to_string())
-    .execute(&state.pool)
-    .await
-    {
-        Ok(result) => tracing::info!(
+        )
+        .bind("密码重置申请")
+        .bind(&notification_content)
+        .bind(email)
+        .bind(user.id.to_string())
+        .execute(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result.rows_affected())
+    }
+    .await;
+    match notify_admins {
+        Ok(rows_affected) => tracing::info!(
             "Password reset request for {} notified {} admin(s)",
             email,
-            result.rows_affected()
+            rows_affected
         ),
         Err(e) => {
             tracing::error!("Failed to notify admins for password reset: {}", e);
@@ -1465,14 +1517,20 @@ pub async fn reset_password(
         return Json(topems_shared_core::response::error_value(400, &message));
     }
 
-    // 查询重置令牌
-    let row = match sqlx::query(
-        "SELECT user_id FROM unified_core.password_resets WHERE token = $1 AND expires_at > NOW()",
-    )
-    .bind(reset_token)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    // 查询重置令牌（无 Claims：系统通道读）
+    let token_lookup: Result<Option<sqlx::postgres::PgRow>, sqlx::Error> = async {
+        let mut scope = state.db.scope_read_system().await?;
+        let row = sqlx::query(
+            "SELECT user_id FROM unified_core.password_resets WHERE token = $1 AND expires_at > NOW()",
+        )
+        .bind(reset_token)
+        .fetch_optional(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(row)
+    }
+    .await;
+    let row = match token_lookup {
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Invalid or expired password reset token");
@@ -1504,17 +1562,9 @@ pub async fn reset_password(
         }
     };
 
-    // 更新用户密码
-    let transaction = state.pool.begin().await;
-    if transaction.is_err() {
-        tracing::error!("Failed to begin transaction");
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "内部服务器错误",
-        ));
-    }
-    let mut tx = match transaction {
-        Ok(tx) => tx,
+    // 更新用户密码（重置密码无 Claims：整段走系统通道写）
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to start transaction: {}", e);
             return Json(topems_shared_core::response::error_value(
@@ -1528,13 +1578,13 @@ pub async fn reset_password(
     match sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
         .bind(&password_hash)
         .bind(user_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
     {
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to update password: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return Json(topems_shared_core::response::error_value(
                 500,
                 "密码更新失败",
@@ -1545,13 +1595,13 @@ pub async fn reset_password(
     // 删除重置令牌（使用后立即失效）
     match sqlx::query("DELETE FROM unified_core.password_resets WHERE token = $1")
         .bind(reset_token)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
     {
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to delete password reset token: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return Json(topems_shared_core::response::error_value(
                 500,
                 "内部服务器错误",
@@ -1562,7 +1612,7 @@ pub async fn reset_password(
     // 使所有现有会话失效
     match sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
         .bind(user_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
     {
         Ok(_) => {}
@@ -1571,7 +1621,7 @@ pub async fn reset_password(
         }
     }
 
-    if tx.commit().await.is_err() {
+    if scope.commit().await.is_err() {
         tracing::error!("Failed to commit transaction");
         return Json(topems_shared_core::response::error_value(
             500,
@@ -1829,27 +1879,22 @@ pub async fn get_security_settings() -> Json<serde_json::Value> {
 
 /// 解析用户所属租户（login / refresh / logout 共用）。
 ///
-/// `public.core_tenant_users` 是 ENABLE+FORCE RLS 表，策略为
-/// `GUC=nil OR tenant_id=GUC`。这几条认证引导路径都发生在租户确定之前、且无 JWT，
-/// `tenant_middleware` 不会设置 `app.tenant_id`；裸池查询既会被 RLS 遮蔽（0 行），
-/// 又可能按 search_path 命中 `flow`/`iam` 下的同名空表。因此这里在独立只读事务内
-/// 显式落 nil 租户（策略的全局分支），只读取 `user_id` 命中的 membership 行，
-/// 不会放大到其它表；解析出的真实租户随后用于会话/令牌的租户上下文。
-async fn resolve_membership_tenant(pool: &sqlx::PgPool, user_id: Uuid) -> Option<Uuid> {
+/// `public.core_tenant_users` 受 ENABLE+FORCE RLS 保护。这几条认证引导路径都发生在
+/// 租户确定之前、且无 JWT，`tenant_middleware` 不会设置 `app.tenant_id`；因此不能
+/// 用请求通道（fail-closed）或裸池（0 行）。这里走系统通道（显式 nil 租户 +
+/// `app.rls_system='on'`），只读取 `user_id` 命中的 membership 行；解析出的真实租户
+/// 随后用于会话/令牌的租户上下文。
+async fn resolve_membership_tenant(db: &Db, user_id: Uuid) -> Option<Uuid> {
     let result = async {
-        let mut tx = pool.begin().await?;
-        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind(Uuid::nil().to_string())
-            .execute(&mut *tx)
-            .await?;
+        let mut scope = db.scope_read_system().await?;
         let tid = sqlx::query_scalar::<_, Uuid>(
             "SELECT tenant_id FROM public.core_tenant_users \
              WHERE user_id = $1 AND status = 'active' LIMIT 1",
         )
         .bind(user_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut scope)
         .await?;
-        let _ = tx.rollback().await;
+        scope.commit().await?;
         Ok::<Option<Uuid>, sqlx::Error>(tid)
     }
     .await;

@@ -76,13 +76,23 @@ pub async fn get_smtp_config(
         Some(tenant_uuid(&claims))
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create SMTP config read scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取 SMTP 配置失败", e));
+        }
+    };
+
     let result = sqlx::query(
         "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
     )
     .bind(tenant_id)
     .bind(SMTP_CONFIG_KEY)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(Some(row)) => {
@@ -126,6 +136,14 @@ pub async fn update_smtp_config(
 ) -> ApiResponse<SmtpConfig> {
     let tenant_id = tenant_uuid(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create SMTP config write scope: {}", e);
+            return ApiResponse::from(TopemsError::internal("保存 SMTP 配置失败", e));
+        }
+    };
+
     // If the caller submitted the masked placeholder or an empty password,
     // preserve the previously stored password so the secret is not clobbered.
     let mut to_store = payload.clone();
@@ -135,7 +153,7 @@ pub async fn update_smtp_config(
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
         if let Ok(Some(row)) = existing {
             let raw: String = row.get("setting_value");
@@ -169,13 +187,15 @@ pub async fn update_smtp_config(
     .bind(tenant_id)
     .bind(SMTP_CONFIG_KEY)
     .bind(&serialized)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     if let Err(e) = result {
         tracing::error!("Failed to save SMTP config: {}", e);
         return ApiResponse::from(TopemsError::internal("保存 SMTP 配置失败", e));
     }
+
+    scope.commit().await.ok();
 
     // Return the config with a masked password.
     let mut response = to_store;
@@ -202,13 +222,21 @@ pub async fn test_smtp_config(
         cfg
     } else {
         let tenant_id = tenant_uuid(&claims);
+        let mut scope = match state.db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("Failed to create SMTP config read scope: {}", e);
+                return ApiResponse::from(TopemsError::internal("读取 SMTP 配置失败", e));
+            }
+        };
         let row = sqlx::query(
             "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
+        scope.commit().await.ok();
         match row {
             Ok(Some(r)) => {
                 let raw: String = r.get("setting_value");

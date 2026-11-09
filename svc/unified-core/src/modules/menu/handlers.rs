@@ -47,6 +47,14 @@ pub async fn list_groups(
         Some(get_tenant_id_from_claims(&claims))
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单分组读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询菜单分组总数失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
@@ -56,7 +64,7 @@ pub async fn list_groups(
     .bind(search.clone())
     .bind(status.clone())
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -82,7 +90,7 @@ pub async fn list_groups(
         .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -91,6 +99,8 @@ pub async fn list_groups(
             return ApiResponse::from(TopemsError::Internal("查询菜单分组列表失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     api_success(MenuGroupListResponse {
         items,
@@ -109,9 +119,17 @@ pub async fn get_group(
         MENU_GROUP_COLUMNS
     );
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单分组读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询菜单分组详情失败".to_string()));
+        }
+    };
+
     let group: Option<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -120,6 +138,8 @@ pub async fn get_group(
             return ApiResponse::from(TopemsError::Internal("查询菜单分组详情失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     match group {
         Some(g) => api_success(g),
@@ -151,13 +171,21 @@ pub async fn create_group(
         MENU_GROUP_COLUMNS
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单分组写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建菜单分组失败".to_string()));
+        }
+    };
+
     let group: MenuGroup = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(req.name)
         .bind(req.code)
         .bind(req.icon)
         .bind(req.sort_order.unwrap_or(0))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -166,6 +194,8 @@ pub async fn create_group(
             return ApiResponse::from(TopemsError::Internal("创建菜单分组失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     api_success(group)
 }
@@ -197,6 +227,14 @@ pub async fn update_group(
         MENU_GROUP_COLUMNS
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单分组写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新菜单分组失败".to_string()));
+        }
+    };
+
     let group: Option<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.name)
         .bind(req.code)
@@ -206,7 +244,7 @@ pub async fn update_group(
         .bind(chrono::Utc::now())
         .bind(id)
         .bind(tenant_opt)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -215,6 +253,8 @@ pub async fn update_group(
             return ApiResponse::from(TopemsError::Internal("更新菜单分组失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     match group {
         Some(g) => api_success(g),
@@ -235,11 +275,21 @@ pub async fn delete_group(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单分组写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除菜单分组失败".to_string()));
+        }
+    };
+
     let result = sqlx::query(r#"UPDATE public.core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
         .bind(tenant_opt)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("菜单分组删除成功".to_string()),
@@ -270,6 +320,14 @@ pub async fn list_menus(
         Some(get_tenant_id_from_claims(&claims))
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单项读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询菜单项总数失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.core_menus
            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
@@ -283,7 +341,7 @@ pub async fn list_menus(
     .bind(search.clone())
     .bind(status.clone())
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -313,7 +371,7 @@ pub async fn list_menus(
         .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -322,6 +380,8 @@ pub async fn list_menus(
             return ApiResponse::from(TopemsError::Internal("查询菜单项列表失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     api_success(MenuListResponse {
         items,
@@ -337,9 +397,17 @@ pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> Ap
         MENU_COLUMNS
     );
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单项读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询菜单项详情失败".to_string()));
+        }
+    };
+
     let menu: Option<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -348,6 +416,8 @@ pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> Ap
             return ApiResponse::from(TopemsError::Internal("查询菜单项详情失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     match menu {
         Some(m) => api_success(m),
@@ -379,6 +449,14 @@ pub async fn create_menu(
         MENU_COLUMNS
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单项写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建菜单项失败".to_string()));
+        }
+    };
+
     let menu: Menu = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(req.group_id)
@@ -389,7 +467,7 @@ pub async fn create_menu(
         .bind(req.icon)
         .bind(req.sort_order.unwrap_or(0))
         .bind(req.permissions)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -398,6 +476,8 @@ pub async fn create_menu(
             return ApiResponse::from(TopemsError::Internal("创建菜单项失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     api_success(menu)
 }
@@ -433,6 +513,14 @@ pub async fn update_menu(
         MENU_COLUMNS
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单项写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新菜单项失败".to_string()));
+        }
+    };
+
     let menu: Option<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.group_id)
         .bind(req.parent_id)
@@ -446,7 +534,7 @@ pub async fn update_menu(
         .bind(chrono::Utc::now())
         .bind(id)
         .bind(tenant_opt)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -455,6 +543,8 @@ pub async fn update_menu(
             return ApiResponse::from(TopemsError::Internal("更新菜单项失败".to_string()));
         }
     };
+
+    scope.commit().await.ok();
 
     match menu {
         Some(m) => api_success(m),
@@ -475,11 +565,21 @@ pub async fn delete_menu(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("创建菜单项写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除菜单项失败".to_string()));
+        }
+    };
+
     let result = sqlx::query(r#"UPDATE public.core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
         .bind(tenant_opt)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+
+    scope.commit().await.ok();
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("菜单项删除成功".to_string()),
@@ -649,12 +749,23 @@ pub async fn my_menu_tree(
                    ORDER BY sort_order ASC, code ASC"#,
                 MENU_READ_COLUMNS
             );
+            let mut scope = match state.db.scope_read().await {
+                Ok(scope) => scope,
+                Err(e) => {
+                    tracing::error!("创建角色化菜单读作用域失败: {}", e);
+                    return ApiResponse::<MenuTreeResponse>::from(TopemsError::Internal(
+                        "查询角色化菜单失败".to_string(),
+                    ))
+                    .into_response();
+                }
+            };
             match sqlx::query_as::<_, DbMenuRow>(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_opt)
-                .fetch_all(&state.pool)
+                .fetch_all(&mut scope)
                 .await
             {
                 Ok(rows) => {
+                    scope.commit().await.ok();
                     let rows = std::sync::Arc::new(rows);
                     state.menu_cache.put(cache_key, rows.as_ref().clone());
                     rows

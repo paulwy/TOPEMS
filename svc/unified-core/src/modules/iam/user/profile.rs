@@ -176,7 +176,7 @@ pub async fn get_current_user(
                         .collect(),
                 )
             } else {
-                resolve_user_grants(&state.pool, u.id).await
+                resolve_user_grants(&state.db, u.id).await
             };
 
             let user_response = UserResponse {

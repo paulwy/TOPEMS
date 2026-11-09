@@ -77,7 +77,7 @@ impl PdmEventHandlers {
             payload.total_amount
         );
 
-        let material_count = match self.db.scope_read().await {
+        let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
                 let count = sqlx::query_scalar::<_, i64>(
                     "SELECT COUNT(*) FROM pdm_materials WHERE status = 'active'",
@@ -124,7 +124,7 @@ impl PdmEventHandlers {
         );
 
         if let Some(product_id) = payload.product_id {
-            let config_count = match self.db.scope_read().await {
+            let config_count = match self.db.scope_read_system().await {
                 Ok(mut scope) => {
                     let count = sqlx::query_scalar::<_, i64>(
                         "SELECT COUNT(*) FROM pdm_configurations WHERE product_id = $1",
@@ -178,7 +178,7 @@ impl PdmEventHandlers {
             payload.received_by
         );
 
-        let material_count = match self.db.scope_read().await {
+        let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
                 let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_materials")
                     .fetch_one(&mut scope)

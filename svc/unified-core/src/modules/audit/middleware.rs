@@ -154,10 +154,14 @@ pub async fn operation_audit_middleware(
         trace_id: request_id,
     };
 
-    // 异步写入日志，不阻塞响应
-    let pool = state.pool.clone();
+    // 异步写入日志，不阻塞响应。
+    //
+    // `tokio::spawn` 会丢弃请求的 task-local 租户上下文，因此这里不能用
+    // `Db::scope()`（fail-closed 会直接报 "RLS context missing"），而是把
+    // `record.tenant_id` 显式带过去，由 `record_operation_log` 按租户/系统通道写入。
+    let db = state.db.clone();
     tokio::spawn(async move {
-        if let Err(e) = record_operation_log(&pool, record).await {
+        if let Err(e) = record_operation_log(&db, record).await {
             topems_shared_core::metrics::AUDIT_WRITE_FAILURES_TOTAL
                 .with_label_values(&["operation_log"])
                 .inc();

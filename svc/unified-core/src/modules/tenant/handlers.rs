@@ -13,7 +13,6 @@ use crate::modules::iam::auth::validate_password_strength;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::scope::Db;
 
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(
@@ -27,6 +26,21 @@ pub async fn list_tenants(
     let offset = (page - 1) * page_size;
 
     let search = params.search.clone();
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户列表读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                ListTenantsResponse {
+                    items: Vec::new(),
+                    total: 0,
+                    page,
+                    page_size,
+                },
+                "Tenants retrieved",
+            ));
+        }
+    };
     let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
@@ -37,7 +51,7 @@ pub async fn list_tenants(
             .bind(p)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -49,7 +63,7 @@ pub async fn list_tenants(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -61,7 +75,7 @@ pub async fn list_tenants(
             .bind(p)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -73,7 +87,7 @@ pub async fn list_tenants(
             .bind(p)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -84,7 +98,7 @@ pub async fn list_tenants(
             .bind(format!("%{}%", s))
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -95,7 +109,7 @@ pub async fn list_tenants(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -106,7 +120,7 @@ pub async fn list_tenants(
             .bind(p)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -116,7 +130,7 @@ pub async fn list_tenants(
             )
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -125,15 +139,17 @@ pub async fn list_tenants(
     let total: i64 = if let Some(s) = search {
         sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1")
             .bind(format!("%{}%", s))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0)
     } else {
         sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0)
     };
+
+    let _ = scope.commit().await;
 
     let response = ListTenantsResponse {
         items: tenants,
@@ -152,11 +168,20 @@ pub async fn get_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
@@ -171,11 +196,20 @@ pub async fn get_tenant_by_code(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&code)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
@@ -189,6 +223,17 @@ pub async fn create_tenant(
     Json(req): Json<CreateTenantRequest>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Creating tenant: {}", req.name);
+
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create tenant: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to create tenant: {}",
+                e
+            )));
+        }
+    };
 
     match sqlx::query_as::<_, Tenant>(
         r#"
@@ -204,10 +249,11 @@ pub async fn create_tenant(
     .bind(&req.license_type)
     .bind(req.license_expires_at)
     .bind(req.trial_expires_at)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(tenant) => {
+            let _ = scope.commit().await;
             // P0-3: 租户创建后自动同步默认权限集（基于 plan tier）
             let plan_tier = crate::modules::subscription::PlanTier::from_str(&tenant.plan)
                 .unwrap_or(crate::modules::subscription::PlanTier::Basic);
@@ -242,7 +288,7 @@ pub async fn create_tenant(
 /// `is_superuser = true`. Per-tenant role cloning is deferred pending a
 /// schema change to make `core_roles.(name, tenant_id)` the unique key.
 async fn seed_tenant_defaults(
-    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
     tenant_id: Uuid,
     tenant_name: &str,
     admin_username: &str,
@@ -260,7 +306,7 @@ async fn seed_tenant_defaults(
         sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE username = $1 OR email = $2")
             .bind(admin_username)
             .bind(admin_email)
-            .fetch_one(&mut **tx)
+            .fetch_one(&mut *tx)
             .await
             .map_err(|e| {
                 TopemsError::DatabaseQuery(format!("Failed to check existing admin user: {}", e))
@@ -283,7 +329,7 @@ async fn seed_tenant_defaults(
     .bind(admin_email)
     .bind(&password_hash)
     .bind(admin_username)
-    .fetch_one(&mut **tx)
+    .fetch_one(&mut *tx)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to create admin user: {}", e)))?;
 
@@ -297,7 +343,7 @@ async fn seed_tenant_defaults(
     .bind(tenant_id)
     .bind(admin_user_id)
     .bind(admin_email)
-    .execute(&mut **tx)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         TopemsError::DatabaseQuery(format!("Failed to create tenant membership: {}", e))
@@ -312,7 +358,7 @@ async fn seed_tenant_defaults(
         "#,
     )
     .bind(admin_user_id)
-    .execute(&mut **tx)
+    .execute(&mut *tx)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to assign superadmin role: {}", e)))?;
 
@@ -329,7 +375,7 @@ async fn seed_tenant_defaults(
     .bind(tenant_id)
     .bind(default_department_name)
     .bind(default_department_description)
-    .execute(&mut **tx)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         TopemsError::DatabaseQuery(format!("Failed to seed default department setting: {}", e))
@@ -346,11 +392,14 @@ async fn seed_tenant_defaults(
 /// 名称取租户名（业务方后续可在 HRM 设置中改名，迁移不改名）；
 /// `code` 固定 `DEFAULT`，由 `(tenant_id, lower(code)) WHERE deleted_at IS NULL`
 /// 唯一索引保证重复供给不会新增第二家公司。
-pub(crate) async fn ensure_default_company(
-    conn: &mut sqlx::PgConnection,
+pub(crate) async fn ensure_default_company<'e, E>(
+    conn: E,
     tenant_id: Uuid,
     tenant_name: &str,
-) -> Result<(), TopemsError> {
+) -> Result<(), TopemsError>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
     sqlx::query(only_own_schema_query!(
         "public",
         r#"
@@ -428,7 +477,7 @@ const BASIC_MODULE_CODES: &[(&str, &str)] = &[
 /// that already exist (e.g. from a re-onboard attempt) are skipped via
 /// `ON CONFLICT DO NOTHING`.
 async fn activate_basic_modules(
-    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
     tenant_id: Uuid,
 ) -> Result<(), TopemsError> {
     // 批 13：先按业务域写域级条目 `<domain>:core`，使 core_tenant_modules 的
@@ -445,7 +494,7 @@ async fn activate_basic_modules(
         .bind(tenant_id)
         .bind(format!("{domain}:core"))
         .bind(format!("{domain} 基础套件"))
-        .execute(&mut **tx)
+        .execute(&mut *tx)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("Failed to activate basic domain {domain}: {}", e))
@@ -463,7 +512,7 @@ async fn activate_basic_modules(
         .bind(tenant_id)
         .bind(module_code)
         .bind(module_name)
-        .execute(&mut **tx)
+        .execute(&mut *tx)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!(
@@ -494,7 +543,7 @@ pub async fn onboard_tenant(
         return Json(CoreResponse::error(&message));
     }
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.scope().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin onboarding transaction: {}", e);
@@ -518,7 +567,7 @@ pub async fn onboard_tenant(
     .bind(&req.tenant_type)
     .bind(&req.plan)
     .bind(&req.license_type)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut tx)
     .await
     {
         Ok(t) => t,
@@ -595,6 +644,13 @@ pub async fn update_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Updating tenant: {}", id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -619,9 +675,11 @@ pub async fn update_tenant(
     .bind(req.quota_storage_gb)
     .bind(req.quota_api_calls)
     .bind(&req.features)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => {
@@ -653,6 +711,13 @@ pub async fn activate_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Activating tenant: {}", id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -662,9 +727,11 @@ pub async fn activate_tenant(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant activated")),
@@ -679,6 +746,13 @@ pub async fn suspend_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Suspending tenant: {}", id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -688,9 +762,11 @@ pub async fn suspend_tenant(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant suspended")),
@@ -706,9 +782,16 @@ pub async fn get_tenant_quota(
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
@@ -727,7 +810,7 @@ pub async fn get_tenant_quota(
                 "#,
             )
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None)
             .unwrap_or(TenantUsage {
@@ -744,6 +827,8 @@ pub async fn get_tenant_quota(
                 total_cost_cents: None,
                 created_at: chrono::Utc::now(),
             });
+
+            let _ = scope.commit().await;
 
             let quota = TenantQuotaResponse {
                 tenant_id: id,
@@ -778,13 +863,22 @@ pub async fn list_tenant_modules(
 ) -> Json<CoreResponse<Vec<TenantModule>>> {
     tracing::info!("[Tenant] Listing modules for tenant: {}", tenant_id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户模块读作用域失败: {}", e);
+            return Json(CoreResponse::success(Vec::new(), "Modules retrieved"));
+        }
+    };
     let modules: Vec<TenantModule> = sqlx::query_as(
         "SELECT id, tenant_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM core_tenant_modules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY activated_at DESC",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(modules, "Modules retrieved"))
 }
@@ -800,6 +894,17 @@ pub async fn activate_module(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to activate module: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to activate module: {}",
+                e
+            )));
+        }
+    };
+
     match sqlx::query_as::<_, TenantModule>(
         r#"
         INSERT INTO core_tenant_modules (tenant_id, module_code, is_active)
@@ -811,10 +916,13 @@ pub async fn activate_module(
     )
     .bind(tenant_id)
     .bind(&module_code)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
-        Ok(module) => Json(CoreResponse::success(module, "Module activated")),
+        Ok(module) => {
+            let _ = scope.commit().await;
+            Json(CoreResponse::success(module, "Module activated"))
+        }
         Err(e) => {
             tracing::error!("Failed to activate module: {}", e);
             Json(CoreResponse::error(&format!(
@@ -836,6 +944,13 @@ pub async fn deactivate_module(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建模块写作用域失败: {}", e);
+            return Json(CoreResponse::error("Module not found"));
+        }
+    };
     let module: Option<TenantModule> = sqlx::query_as(
         r#"
         UPDATE core_tenant_modules
@@ -846,9 +961,11 @@ pub async fn deactivate_module(
     )
     .bind(tenant_id)
     .bind(&module_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match module {
         Some(m) => Json(CoreResponse::success(m, "Module deactivated")),
@@ -863,10 +980,19 @@ pub async fn delete_tenant(
 ) -> Json<CoreResponse<String>> {
     tracing::info!("[Tenant] Deleting tenant: {}", id);
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let result = sqlx::query("UPDATE core_tenants SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -888,6 +1014,21 @@ pub async fn get_tenant_users(
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户成员读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                ListTenantUsersResponse {
+                    items: Vec::new(),
+                    total: 0,
+                    page,
+                    page_size,
+                },
+                "Tenant users retrieved",
+            ));
+        }
+    };
     let users: Vec<TenantUser> = match (params.search, params.role, params.status) {
         (Some(s), Some(r), Some(st)) => {
             sqlx::query_as(
@@ -899,7 +1040,7 @@ pub async fn get_tenant_users(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -912,7 +1053,7 @@ pub async fn get_tenant_users(
             .bind(r)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -925,7 +1066,7 @@ pub async fn get_tenant_users(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -938,7 +1079,7 @@ pub async fn get_tenant_users(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -950,7 +1091,7 @@ pub async fn get_tenant_users(
             .bind(format!("%{}%", s))
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -962,7 +1103,7 @@ pub async fn get_tenant_users(
             .bind(r)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -974,7 +1115,7 @@ pub async fn get_tenant_users(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -985,7 +1126,7 @@ pub async fn get_tenant_users(
             .bind(tenant_id)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         }
@@ -995,9 +1136,11 @@ pub async fn get_tenant_users(
         "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+
+    let _ = scope.commit().await;
 
     let response = ListTenantUsersResponse {
         items: users,
@@ -1032,6 +1175,17 @@ pub async fn invite_member(
         last_login: None,
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to invite member: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to invite member: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query(
         r#"
         INSERT INTO core_tenant_users (id, tenant_id, user_id, email, role, status, created_at)
@@ -1045,8 +1199,10 @@ pub async fn invite_member(
     .bind(&tenant_user.role)
     .bind(&tenant_user.status)
     .bind(tenant_user.created_at)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(_) => Json(CoreResponse::success(tenant_user, "Member invited")),
@@ -1071,13 +1227,22 @@ pub async fn remove_member(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户成员写作用域失败: {}", e);
+            return Json(CoreResponse::error("Member not found"));
+        }
+    };
     let result = sqlx::query(
         "UPDATE core_tenant_users SET deleted_at = NOW() WHERE tenant_id = $1 AND user_id = $2",
     )
     .bind(tenant_id)
     .bind(user_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -1099,6 +1264,13 @@ pub async fn update_member_role(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户成员写作用域失败: {}", e);
+            return Json(CoreResponse::error("Member not found"));
+        }
+    };
     let user: Option<TenantUser> = sqlx::query_as(
         r#"
         UPDATE core_tenant_users
@@ -1111,9 +1283,11 @@ pub async fn update_member_role(
     .bind("active")
     .bind(tenant_id)
     .bind(user_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match user {
         Some(u) => Json(CoreResponse::success(u, "Member role updated")),
@@ -1128,11 +1302,28 @@ pub async fn get_tenant_stats(
 ) -> Json<CoreResponse<TenantStats>> {
     tracing::info!("[Tenant] Getting stats for tenant: {}", id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户统计读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                TenantStats {
+                    total_users: 0,
+                    active_users: 0,
+                    storage_used_gb: 0.0,
+                    api_requests_today: 0,
+                    monthly_active_users: 0,
+                    last_30d_logins: 0,
+                },
+                "Tenant stats retrieved",
+            ));
+        }
+    };
     let total_users: i32 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1140,7 +1331,7 @@ pub async fn get_tenant_stats(
         "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1152,7 +1343,7 @@ pub async fn get_tenant_stats(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1164,9 +1355,11 @@ pub async fn get_tenant_stats(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+
+    let _ = scope.commit().await;
 
     let stats = TenantStats {
         total_users,
@@ -1187,11 +1380,27 @@ pub async fn get_usage_metrics(
 ) -> Json<CoreResponse<UsageMetrics>> {
     tracing::info!("[Tenant] Getting usage metrics for tenant: {}", id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                UsageMetrics {
+                    tenant_id: id,
+                    users_count: 0,
+                    storage_used_gb: 0.0,
+                    api_requests_today: 0,
+                    updated_at: chrono::Utc::now(),
+                },
+                "Usage metrics retrieved",
+            ));
+        }
+    };
     let users_count: i32 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1203,7 +1412,7 @@ pub async fn get_usage_metrics(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1215,9 +1424,11 @@ pub async fn get_usage_metrics(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+
+    let _ = scope.commit().await;
 
     let metrics = UsageMetrics {
         tenant_id: id,
@@ -1237,12 +1448,21 @@ pub async fn get_billing_info(
 ) -> Json<CoreResponse<TenantBillingInfo>> {
     tracing::info!("[Tenant] Getting billing info for tenant: {}", id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let row =
         sqlx::query("SELECT plan, status FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match row {
         Some(r) => {
@@ -1300,13 +1520,21 @@ pub async fn get_current_tenant_context(
         }
     } else {
         // Look up user's first active tenant membership
-        match sqlx::query_scalar::<_, Uuid>(
+        let mut scope = match state.db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("[Tenant] DB query error: {}", e);
+                return Json(CoreResponse::error(&format!("DB error: {}", e)));
+            }
+        };
+        let membership = sqlx::query_scalar::<_, Uuid>(
             "SELECT tenant_id FROM core_tenant_users WHERE deleted_at IS NULL AND user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
         )
         .bind(user_id)
-        .fetch_optional(&state.pool)
-        .await
-        {
+        .fetch_optional(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        match membership {
             Ok(Some(tid)) => tid,
             Ok(None) => {
                 tracing::warn!("[Tenant] No tenant found for user: {}", user_id);
@@ -1352,6 +1580,13 @@ pub async fn get_my_tenants(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建我的租户读作用域失败: {}", e);
+            return Json(CoreResponse::success(Vec::new(), "My tenants retrieved"));
+        }
+    };
     let tenants: Vec<Tenant> = sqlx::query_as(
         "SELECT t.* FROM core_tenants t
          INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
@@ -1360,9 +1595,11 @@ pub async fn get_my_tenants(
     )
     .bind(user_id)
     .bind(opt_tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(tenants, "My tenants retrieved"))
 }
@@ -1404,13 +1641,20 @@ pub async fn switch_tenant(
     };
 
     // 验证用户是否属于该租户
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户切换读作用域失败: {}", e);
+            return Json(CoreResponse::error("用户不属于该租户或租户已禁用"));
+        }
+    };
     let tenant_member: Option<(Uuid, String)> = sqlx::query_as(
         "SELECT tenant_id, role FROM core_tenant_users
          WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND user_id = $2 AND status = 'active'",
     )
     .bind(tenant_id)
     .bind(user_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
@@ -1422,9 +1666,11 @@ pub async fn switch_tenant(
     // 获取租户信息
     let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(tenant_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     let tenant = match tenant {
         Some(t) => t,
@@ -1479,11 +1725,20 @@ pub async fn get_tenant_by_slug(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by slug: {}", slug);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
+            return Json(CoreResponse::error("Tenant not found"));
+        }
+    };
     let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&slug)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
@@ -1501,14 +1756,19 @@ async fn tenant_setting_get(
     prefix: &str,
 ) -> Result<serde_json::Value, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("读取租户配置失败", e)),
+    };
     let row = sqlx::query(
         "SELECT setting_value FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|e| TopemsError::internal("读取租户配置失败", e))?;
+    let _ = scope.commit().await;
     match row {
         Some(r) => {
             let raw: String = r.get("setting_value");
@@ -1529,6 +1789,10 @@ async fn tenant_setting_put(
     let key = format!("{}{}", prefix, tenant_id);
     let serialized =
         serde_json::to_string(value).map_err(|e| TopemsError::internal("序列化租户配置失败", e))?;
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("写入租户配置失败", e)),
+    };
     sqlx::query(
         r#"
         INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
@@ -1539,9 +1803,13 @@ async fn tenant_setting_put(
     .bind(tenant_id)
     .bind(&key)
     .bind(&serialized)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| TopemsError::internal("写入租户配置失败", e))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::internal("写入租户配置失败", e))?;
     Ok(())
 }
 
@@ -1612,11 +1880,16 @@ async fn tenant_features_read(
     state: &AppState,
     tenant_id: &Uuid,
 ) -> Result<serde_json::Map<String, serde_json::Value>, TopemsError> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("读取租户特性失败", e)),
+    };
     let row = sqlx::query("SELECT features FROM core_tenants WHERE id = $1 AND deleted_at IS NULL")
         .bind(tenant_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::internal("读取租户特性失败", e))?;
+    let _ = scope.commit().await;
     match row {
         Some(r) => {
             let raw: serde_json::Value = r.get("features");
@@ -1640,14 +1913,22 @@ async fn tenant_features_write(
     features: &serde_json::Map<String, serde_json::Value>,
 ) -> Result<(), TopemsError> {
     let value = serde_json::Value::Object(features.clone());
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("写入租户特性失败", e)),
+    };
     sqlx::query(
         "UPDATE core_tenants SET features = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&value)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| TopemsError::internal("写入租户特性失败", e))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::internal("写入租户特性失败", e))?;
     Ok(())
 }
 
@@ -1754,14 +2035,19 @@ async fn tenant_setting_array(
     prefix: &str,
 ) -> Result<Vec<serde_json::Value>, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("读取租户域名失败", e)),
+    };
     let row = sqlx::query(
         "SELECT setting_value FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|e| TopemsError::internal("读取租户域名失败", e))?;
+    let _ = scope.commit().await;
     match row {
         Some(r) => {
             let raw: String = r.get("setting_value");
@@ -1890,15 +2176,20 @@ const TENANT_WEBHOOKS_PREFIX: &str = "tenant_webhooks_";
 
 /// 写租户设置前先校验租户存在（防御：假 uuid 直写会触发 core_tenant_settings FK 违规）
 async fn ensure_tenant_exists(state: &AppState, tenant_id: &Uuid) -> Result<(), TopemsError> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::DatabaseQuery(format!("查询租户失败: {}", e))),
+    };
     let found: Option<Uuid> = sqlx::query_scalar(
         r#"
         SELECT id FROM public.core_tenants WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("查询租户失败: {}", e)))?;
+    let _ = scope.commit().await;
     if found.is_none() {
         return Err(TopemsError::DatabaseRecordNotFound(format!(
             "租户不存在: {}",
@@ -1918,6 +2209,10 @@ async fn tenant_coll_write(
     let key = format!("{}{}", prefix, tenant_id);
     let serialized = serde_json::to_string(&serde_json::Value::Array(arr.to_vec()))
         .map_err(|e| TopemsError::internal("序列化失败", e))?;
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => return Err(TopemsError::internal("写入失败", e)),
+    };
     sqlx::query(
         r#"
         INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
@@ -1928,9 +2223,13 @@ async fn tenant_coll_write(
     .bind(tenant_id)
     .bind(&key)
     .bind(&serialized)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| TopemsError::internal("写入失败", e))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::internal("写入失败", e))?;
     Ok(())
 }
 
@@ -2618,12 +2917,20 @@ const TENANT_BILL_SUB_PREFIX: &str = "tenant_billing_sub_";
 const TENANT_BILL_CARD_PREFIX: &str = "tenant_billing_card_";
 
 async fn tenant_billing_default(state: &AppState, tenant_id: &Uuid) -> serde_json::Value {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
+            return serde_json::json!({"plan": "free", "status": "inactive"});
+        }
+    };
     let row =
         sqlx::query("SELECT plan, status FROM core_tenants WHERE id = $1 AND deleted_at IS NULL")
             .bind(tenant_id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
+    let _ = scope.commit().await;
     match row {
         Some(r) => {
             let plan: String = r.get("plan");
@@ -2775,11 +3082,26 @@ pub async fn get_tenant_analytics_overview(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户分析读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                serde_json::json!({
+                    "members": 0,
+                    "active_modules": 0,
+                    "usage": {"users": 0, "storage_mb": 0, "api_calls": 0},
+                    "period": "latest",
+                }),
+                "Analytics overview retrieved",
+            ));
+        }
+    };
     let usage: serde_json::Value = sqlx::query(
         "SELECT COALESCE(users_count,0) AS users, COALESCE(storage_used_mb,0) AS storage_mb, COALESCE(api_calls_count,0) AS api_calls FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 1",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| serde_json::json!({
         "users": r.get::<i32,_>("users"),
@@ -2791,7 +3113,7 @@ pub async fn get_tenant_analytics_overview(
         "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| r.get::<i64, _>("count"))
     .unwrap_or(0);
@@ -2799,10 +3121,13 @@ pub async fn get_tenant_analytics_overview(
         "SELECT COUNT(*) FROM core_tenant_modules WHERE tenant_id = $1 AND is_active = TRUE",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| r.get::<i64, _>("count"))
     .unwrap_or(0);
+
+    let _ = scope.commit().await;
+
     Json(CoreResponse::success(
         serde_json::json!({
             "members": members,
@@ -2820,11 +3145,21 @@ pub async fn get_tenant_usage(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                serde_json::Value::Array(Vec::new()),
+                "Usage retrieved",
+            ));
+        }
+    };
     let rows: Vec<serde_json::Value> = sqlx::query(
         "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 12",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -2837,6 +3172,7 @@ pub async fn get_tenant_usage(
         "base_cost": r.get::<String,_>("base_cost"),
     }))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::Value::Array(rows),
         "Usage retrieved",
@@ -2850,8 +3186,7 @@ pub async fn get_tenant_api_usage(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs（请求审计中间件写入）按租户成员反查聚合
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut scope = match state.db.scope_read().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -2895,8 +3230,7 @@ pub async fn get_tenant_activity(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按日聚合
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut scope = match state.db.scope_read().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -2930,8 +3264,7 @@ pub async fn get_tenant_top_endpoints(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut scope = match state.db.scope_read().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -2964,16 +3297,27 @@ pub async fn get_tenant_user_stats(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户用户统计读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                serde_json::json!({"total": 0, "by_role": []}),
+                "User stats retrieved",
+            ));
+        }
+    };
     let by_role: Vec<serde_json::Value> = sqlx::query(
         "SELECT role, COUNT(*) AS cnt FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL GROUP BY role",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|r| serde_json::json!({"role": r.get::<String,_>("role"), "count": r.get::<i64,_>("cnt")}))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::json!({"total": by_role.iter().map(|v| v["count"].as_i64().unwrap_or(0)).sum::<i64>(), "by_role": serde_json::Value::Array(by_role)}),
         "User stats retrieved",
@@ -2986,22 +3330,21 @@ pub async fn get_tenant_real_time(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建租户实时指标读作用域失败: {}", e);
+            return Json(CoreResponse::error("租户实时指标查询失败"));
+        }
+    };
     let active: i64 = sqlx::query(
         "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL AND status = 'active'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| r.get::<i64,_>("count"))
     .unwrap_or(0);
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
-        Ok(scope) => scope,
-        Err(e) => {
-            tracing::error!("数据库作用域创建失败: {}", e);
-            return Json(CoreResponse::error("租户实时指标查询失败"));
-        }
-    };
     let requests_last_minute: i64 = sqlx::query(
         "SELECT COUNT(*)::bigint AS cnt FROM public.audit_logs a
          JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
@@ -3029,10 +3372,20 @@ pub async fn get_governance_trends(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Tenant] 创建治理趋势读作用域失败: {}", e);
+            return Json(CoreResponse::success(
+                serde_json::Value::Array(Vec::new()),
+                "Governance trends retrieved",
+            ));
+        }
+    };
     let rows: Vec<serde_json::Value> = sqlx::query(
         "SELECT period_start::text, period_end::text, COALESCE(SUM(users_count),0)::bigint AS users_count, COALESCE(SUM(storage_used_mb),0)::bigint AS storage_used_mb, COALESCE(SUM(api_calls_count),0)::bigint AS api_calls_count, COALESCE(SUM(base_cost),0)::text AS base_cost FROM core_tenant_usage GROUP BY period_start, period_end ORDER BY period_start DESC LIMIT 6",
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -3045,6 +3398,7 @@ pub async fn get_governance_trends(
         "base_cost": r.get::<String,_>("base_cost"),
     }))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::Value::Array(rows),
         "Governance trends retrieved",
@@ -3069,8 +3423,7 @@ pub async fn collect_tenant_usage(
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // INSERT 内含 public.audit_logs 聚合子查询；写事务才能同时满足读 RLS 与写入。
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope().await {
+    let mut scope = match state.db.scope().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3100,13 +3453,24 @@ pub async fn collect_tenant_usage(
     match result {
         Ok(r) => {
             let rows = r.rows_affected();
+            let mut scope = match state.db.scope_read().await {
+                Ok(scope) => scope,
+                Err(e) => {
+                    tracing::error!("[Tenant] 创建用量读作用域失败: {}", e);
+                    return Json(CoreResponse::success(
+                        serde_json::json!({"collected_tenants": rows, "total_users_this_period": 0, "period_start": "current_month"}),
+                        "Usage snapshot collected",
+                    ));
+                }
+            };
             let total_users: i64 = sqlx::query(
                 "SELECT COALESCE(SUM(users_count), 0)::bigint FROM public.core_tenant_usage WHERE period_start = date_trunc('month', CURRENT_DATE)::date",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .map(|row| row.get("coalesce"))
             .unwrap_or(0);
+            let _ = scope.commit().await;
             Json(CoreResponse::success(
                 serde_json::json!({"collected_tenants": rows, "total_users_this_period": total_users, "period_start": "current_month"}),
                 "Usage snapshot collected",

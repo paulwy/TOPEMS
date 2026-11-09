@@ -98,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!("[pdm] 开始缓存预热...");
 
             // 预热查询使用裸表名，必须走模块作用域（事务级 search_path）
-            let mut scope = match warmup_db.scope_read().await {
+            let mut scope = match warmup_db.scope_read_system().await {
                 Ok(scope) => scope,
                 Err(e) => {
                     tracing::warn!("[pdm] 缓存预热建立作用域失败: {}", e);

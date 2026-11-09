@@ -30,6 +30,13 @@ pub async fn record_login(
 
     let login_time = Utc::now();
 
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("记录登录日志作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("记录登录日志失败".to_string()));
+        }
+    };
     let log: LoginLog = match sqlx::query_as(
         r#"
         INSERT INTO public.core_login_logs
@@ -46,7 +53,7 @@ pub async fn record_login(
     .bind(req.status)
     .bind(req.error_message)
     .bind(login_time)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -55,6 +62,7 @@ pub async fn record_login(
             return ApiResponse::from(TopemsError::Internal("记录登录日志失败".to_string()));
         }
     };
+    let _ = scope.commit().await;
 
     api_success(log)
 }
@@ -68,10 +76,13 @@ pub async fn list_login_logs(
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(Uuid::nil())
+    let tenant_id = super::handlers::claims_tenant_filter(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("登录日志查询作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询登录日志失败".to_string()));
+        }
     };
 
     let username_like = query.username.as_ref().map(|s| format!("%{}%", s));
@@ -107,7 +118,7 @@ pub async fn list_login_logs(
     .bind(ip_address_like)
     .bind(start_time)
     .bind(end_time)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -155,7 +166,7 @@ pub async fn list_login_logs(
     .bind(end_time2)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -178,10 +189,13 @@ pub async fn get_login_log(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LoginLog> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(Uuid::nil())
+    let tenant_id = super::handlers::claims_tenant_filter(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("登录日志详情作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询登录日志详情失败".to_string()));
+        }
     };
 
     let log: Option<LoginLog> = match sqlx::query_as(
@@ -190,7 +204,7 @@ pub async fn get_login_log(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -211,14 +225,22 @@ pub async fn delete_login_log(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
     let tenant_id = Uuid::nil();
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("删除登录日志作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除登录日志失败".to_string()));
+        }
+    };
 
     let result = sqlx::query(
         r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success(true),
@@ -239,6 +261,13 @@ pub async fn batch_delete_login_logs(
     }
 
     let tenant_id = Uuid::nil();
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("批量删除登录日志作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("批量删除登录日志失败".to_string()));
+        }
+    };
 
     let uuids: Vec<Uuid> = req
         .ids
@@ -267,13 +296,14 @@ pub async fn batch_delete_login_logs(
         query = query.bind(uuid);
     }
 
-    let result = match query.execute(&state.pool).await {
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("批量删除登录日志失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("批量删除登录日志失败".to_string()));
         }
     };
+    let _ = scope.commit().await;
 
     api_success(json!({
         "deleted_count": result.rows_affected(),

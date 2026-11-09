@@ -121,9 +121,44 @@ impl Db {
         Ok(scope)
     }
 
+    /// 显式租户读作用域（只读事务 + 指定租户，`app.rls_system='off'`）。
+    ///
+    /// 仅供**按租户遍历/批处理**（后台任务、数据修复、导出）使用；
+    /// 请求链路请用 [`Db::scope_read`]，由 task-local 自动带上下文。
+    pub async fn scope_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION READ ONLY")
+            .execute(&mut *tx)
+            .await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Owned(tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(tenant, false).await?;
+        Ok(scope)
+    }
+
+    /// 显式租户写作用域（读写事务 + 指定租户，`app.rls_system='off'`）。
+    ///
+    /// 同 [`Db::scope_read_for_tenant`]，仅用于按租户遍历的后台/批处理路径。
+    pub async fn scope_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        let tx = self.pool.begin().await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Owned(tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(tenant, false).await?;
+        Ok(scope)
+    }
+
     /// 健康检查（不暴露底层池）。
+    ///
+    /// 健康检查没有请求上下文，必须显式系统通道；否则 fail-closed 后
+    /// 探针会在第一条 SQL 前就报「缺少租户上下文」。
     pub async fn check_health(&self) -> sqlx::Result<()> {
-        let mut scope = self.scope_read().await?;
+        let mut scope = self.scope_read_system().await?;
         sqlx::query("SELECT 1").execute(&mut scope).await?;
         scope.commit().await
     }
@@ -208,10 +243,19 @@ impl ScopedTxn<'_> {
     /// 只读/读写作用域各自 `BEGIN`，与 `tenant_middleware` 的请求事务不是同一条连接；
     /// 不在这里补 `app.tenant_id` / `app.rls_system`，内联谓词与策略里的
     /// `current_setting(..., true)` 就是 NULL（「未设即豁免」分支）＝跨租户放行。
-    /// 无请求上下文（后台任务/脚本）保持不设 GUC，由策略 fail-closed 拦截。
+    ///
+    /// 无请求上下文（后台任务/脚本/CLI/测试）**必须报错**，不得静默执行：
+    /// 静默执行会落到数据库的 fail-closed（0 行）或被旧策略放行（全量），
+    /// 两种结果都无法与"真的没数据"区分。非请求入口改用
+    /// [`Db::scope_system`] / [`Db::scope_read_system`] 或
+    /// [`Db::scope_for_tenant`] / [`Db::scope_read_for_tenant`]。
     async fn apply_request_tenant(&mut self) -> sqlx::Result<()> {
         let Some(ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
-            return Ok(());
+            return Err(sqlx::Error::Protocol(
+                "RLS context missing: 无租户上下文，禁止执行租户数据查询；\
+                 后台任务/脚本请改用 Db::scope_system()/scope_read_system() 或按租户遍历"
+                    .into(),
+            ));
         };
         self.apply_explicit_tenant(ctx.tenant, ctx.system).await
     }

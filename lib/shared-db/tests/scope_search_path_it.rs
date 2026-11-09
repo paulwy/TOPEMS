@@ -19,9 +19,15 @@
 
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_shared_db::scope::Db;
+use uuid::Uuid;
 
 const BASELINE: &str = "iam,shared,public";
+
+fn test_tenant() -> Uuid {
+    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+}
 
 fn database_url() -> Option<String> {
     std::env::var("TOPEMS_IT_DATABASE_URL").ok()
@@ -79,7 +85,7 @@ async fn scope_sets_and_restores_search_path() {
     // 作用域内：SET LOCAL 覆盖为 public
     drop(conn);
     let db = Db::new(pool.clone(), "public");
-    let mut scope = db.scope_read().await.unwrap();
+    let mut scope = db.scope_read_for_tenant(test_tenant()).await.unwrap();
     let in_scope = show_in_scope(&mut scope).await;
     let schema: String = sqlx::query_scalar("SELECT current_schema()")
         .fetch_one(&mut scope)
@@ -98,7 +104,7 @@ async fn scope_sets_and_restores_search_path() {
 
     // 读写作用域同样生效
     drop(conn);
-    let mut scope = db.scope().await.unwrap();
+    let mut scope = db.scope_for_tenant(test_tenant()).await.unwrap();
     let rw = show_in_scope(&mut scope).await;
     let schema: String = sqlx::query_scalar("SELECT current_schema()")
         .fetch_one(&mut scope)
@@ -128,7 +134,10 @@ async fn concurrent_scopes_do_not_leak_schema() {
 
     let (a, b) = tokio::join!(
         async {
-            let mut s = db_public.scope_read().await.unwrap();
+            let mut s = db_public
+                .scope_read_for_tenant(test_tenant())
+                .await
+                .unwrap();
             let p = show_in_scope(&mut s).await;
             tokio::time::sleep(Duration::from_millis(150)).await;
             let schema: String = sqlx::query_scalar("SELECT current_schema()")
@@ -140,7 +149,10 @@ async fn concurrent_scopes_do_not_leak_schema() {
         },
         async {
             tokio::time::sleep(Duration::from_millis(50)).await;
-            let mut s = db_information.scope_read().await.unwrap();
+            let mut s = db_information
+                .scope_read_for_tenant(test_tenant())
+                .await
+                .unwrap();
             let p = show_in_scope(&mut s).await;
             let schema: String = sqlx::query_scalar("SELECT current_schema()")
                 .fetch_one(&mut s)
@@ -166,27 +178,179 @@ async fn scope_with_reuses_request_txn() {
     let pool = pool_with_baseline(&url, 1).await;
     let db = Db::new(pool.clone(), "public");
 
-    // 模拟 tenant_middleware：请求级事务 + RLS 上下文
+    // 模拟 tenant_middleware：请求级事务 + 认证中间件写入的 task-local 上下文
     let mut txn = pool.begin().await.unwrap();
-    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind("00000000-0000-0000-0000-000000000001")
-        .execute(&mut *txn)
-        .await
-        .unwrap();
 
-    let mut scope = db.scope_with(&mut txn).await.unwrap();
-    let p = show_in_scope(&mut scope).await;
-    let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
-        .fetch_one(&mut scope)
-        .await
-        .unwrap();
-    println!("[scope_with] SHOW search_path = {p}, app.tenant_id = {tenant}");
+    let ctx = RlsRequestTenant {
+        tenant: test_tenant(),
+        system: false,
+    };
+    let (p, tenant, rls_system) = scope_request_tenant(ctx, async {
+        let mut scope = db.scope_with(&mut txn).await.unwrap();
+        let p = show_in_scope(&mut scope).await;
+        let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        let rls_system: String =
+            sqlx::query_scalar("SELECT COALESCE(current_setting('app.rls_system', true), 'off')")
+                .fetch_one(&mut scope)
+                .await
+                .unwrap();
+        scope.commit().await.unwrap(); // 借用事务：空操作，由中间件提交
+        (p, tenant, rls_system)
+    })
+    .await;
+    println!(
+        "[scope_with] SHOW search_path = {p}, app.tenant_id = {tenant}, app.rls_system = {rls_system}"
+    );
     assert_eq!(p, "public");
-    assert_eq!(tenant, "00000000-0000-0000-0000-000000000001");
-    scope.commit().await.unwrap(); // 借用事务：空操作，由中间件提交
+    assert_eq!(tenant, test_tenant().to_string());
+    assert_eq!(rls_system, "off");
     txn.commit().await.unwrap();
 
     // 借用事务由中间件提交后，连接同样恢复基线
     let mut conn = pool.acquire().await.unwrap();
     assert_eq!(show_path(&mut conn).await, BASELINE);
+}
+
+/// 无请求上下文必须报错，不得静默执行（裁决 3）。
+#[tokio::test]
+async fn scope_without_context_errors() {
+    let Some(url) = database_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+    let pool = pool_with_baseline(&url, 1).await;
+    let db = Db::new(pool, "public");
+
+    let read_err = db.scope_read().await.expect_err("scope_read 应报错");
+    println!("[no context] scope_read error = {read_err}");
+    assert!(
+        read_err.to_string().contains("RLS context missing"),
+        "错误信息应指明缺少租户上下文，实际：{read_err}"
+    );
+
+    let write_err = db.scope().await.expect_err("scope 应报错");
+    println!("[no context] scope error = {write_err}");
+    assert!(write_err.to_string().contains("RLS context missing"));
+}
+
+/// 有请求上下文时，普通租户设 tenant + `rls_system='off'`；超管走系统通道。
+#[tokio::test]
+async fn request_context_sets_tenant_guc() {
+    let Some(url) = database_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+    let pool = pool_with_baseline(&url, 2).await;
+    let db = Db::new(pool, "public");
+
+    let tenant_ctx = RlsRequestTenant {
+        tenant: test_tenant(),
+        system: false,
+    };
+    let (tenant, system) = scope_request_tenant(tenant_ctx, async {
+        let mut scope = db.scope_read().await.unwrap();
+        let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        let system: String = sqlx::query_scalar("SELECT current_setting('app.rls_system', true)")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        scope.commit().await.unwrap();
+        (tenant, system)
+    })
+    .await;
+    println!("[tenant ctx] app.tenant_id = {tenant}, app.rls_system = {system}");
+    assert_eq!(tenant, test_tenant().to_string());
+    assert_eq!(system, "off");
+
+    let system_ctx = RlsRequestTenant {
+        tenant: Uuid::nil(),
+        system: true,
+    };
+    let (tenant, system) = scope_request_tenant(system_ctx, async {
+        let mut scope = db.scope_read().await.unwrap();
+        let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        let system: String = sqlx::query_scalar("SELECT current_setting('app.rls_system', true)")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        scope.commit().await.unwrap();
+        (tenant, system)
+    })
+    .await;
+    println!("[system ctx] app.tenant_id = {tenant}, app.rls_system = {system}");
+    assert_eq!(tenant, Uuid::nil().to_string());
+    assert_eq!(system, "on");
+}
+
+/// 系统通道：显式 nil 租户 + `app.rls_system='on'`，不需要请求上下文。
+#[tokio::test]
+async fn system_scope_sets_guc_without_request_context() {
+    let Some(url) = database_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+    let pool = pool_with_baseline(&url, 1).await;
+    let db = Db::new(pool, "public");
+
+    let mut scope = db.scope_read_system().await.unwrap();
+    let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    let system: String = sqlx::query_scalar("SELECT current_setting('app.rls_system', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    println!("[scope_read_system] app.tenant_id = {tenant}, app.rls_system = {system}");
+    assert_eq!(tenant, Uuid::nil().to_string());
+    assert_eq!(system, "on");
+    scope.commit().await.unwrap();
+
+    let mut scope = db.scope_system().await.unwrap();
+    let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    let system: String = sqlx::query_scalar("SELECT current_setting('app.rls_system', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    println!("[scope_system] app.tenant_id = {tenant}, app.rls_system = {system}");
+    assert_eq!(tenant, Uuid::nil().to_string());
+    assert_eq!(system, "on");
+    scope.rollback().await.unwrap();
+}
+
+/// 按租户遍历：显式租户 + `rls_system='off'`，不需要请求上下文。
+#[tokio::test]
+async fn scope_for_tenant_sets_guc() {
+    let Some(url) = database_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+    let pool = pool_with_baseline(&url, 1).await;
+    let db = Db::new(pool, "public");
+
+    let mut scope = db.scope_read_for_tenant(test_tenant()).await.unwrap();
+    let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    let system: String = sqlx::query_scalar("SELECT current_setting('app.rls_system', true)")
+        .fetch_one(&mut scope)
+        .await
+        .unwrap();
+    println!("[scope_read_for_tenant] app.tenant_id = {tenant}, app.rls_system = {system}");
+    assert_eq!(tenant, test_tenant().to_string());
+    assert_eq!(system, "off");
+    scope.commit().await.unwrap();
 }

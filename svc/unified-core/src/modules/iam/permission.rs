@@ -41,11 +41,22 @@ struct PermissionResponse {
 pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM permission list_permissions called");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("权限目录作用域创建失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取权限列表失败: {}", e),
+            ));
+        }
+    };
     let result = sqlx::query_as::<_, PermissionRow>(
         "SELECT id, code, name, description, resource, action, created_at::timestamptz AS created_at FROM public.core_permissions ORDER BY code"
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(permissions) => {
@@ -106,11 +117,22 @@ pub async fn list_grantable_permissions(
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM permission list_grantable_permissions called");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("可授权限作用域创建失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取可授权限失败: {}", e),
+            ));
+        }
+    };
     let result = sqlx::query_as::<_, PermissionRow>(
         "SELECT id, code, name, description, resource, action, created_at::timestamptz AS created_at FROM public.core_permissions WHERE deleted_at IS NULL ORDER BY code",
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(permissions) => {

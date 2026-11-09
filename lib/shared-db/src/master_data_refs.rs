@@ -15,8 +15,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
+
+use crate::scope::Db;
 
 /// 主数据引用（core schema：含 version 列）
 ///
@@ -97,15 +99,15 @@ pub struct UpsertLocalMasterDataRefRequest {
 /// crm 1 处 + scm 1 处重复 SQL。表名通过构造函数指定，默认 `core_master_data_refs`。
 #[derive(Debug, Clone)]
 pub struct MasterDataRefService {
-    pool: PgPool,
+    db: Db,
     table_name: String,
 }
 
 impl MasterDataRefService {
     /// 创建服务实例（默认表名 `core_master_data_refs`，public schema）
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self {
-            pool,
+            db,
             table_name: "core_master_data_refs".to_string(),
         }
     }
@@ -114,9 +116,9 @@ impl MasterDataRefService {
     ///
     /// 表名应仅含服务前缀 + `_master_data_refs`（如 `crm_master_data_refs`），
     /// 不接受外部用户输入，避免 SQL 注入。
-    pub fn with_table(pool: PgPool, table_name: impl Into<String>) -> Self {
+    pub fn with_table(db: Db, table_name: impl Into<String>) -> Self {
         Self {
-            pool,
+            db,
             table_name: table_name.into(),
         }
     }
@@ -149,6 +151,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
@@ -157,8 +160,9 @@ impl MasterDataRefService {
             .bind(name)
             .bind(status)
             .bind(source_service)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(())
     }
 
@@ -182,13 +186,15 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let record = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(name)
             .bind(status)
             .bind(master_data_id)
             .bind(tenant_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(record)
     }
 
@@ -208,11 +214,13 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(())
     }
 
@@ -230,11 +238,13 @@ impl MasterDataRefService {
                FROM {} WHERE master_data_id = $1 AND tenant_id = $2"#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(result)
     }
 
@@ -253,12 +263,14 @@ impl MasterDataRefService {
                FROM {} WHERE tenant_id = $1 AND domain = $2 AND code = $3"#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(code)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(result)
     }
 
@@ -329,8 +341,10 @@ impl MasterDataRefService {
             list_query = list_query.bind(s);
         }
 
-        let total: i64 = count_query.fetch_one(&self.pool).await?;
-        let items = list_query.fetch_all(&self.pool).await?;
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let total: i64 = count_query.fetch_one(&mut scope).await?;
+        let items = list_query.fetch_all(&mut scope).await?;
+        scope.commit().await?;
         Ok((items, total))
     }
 
@@ -342,10 +356,12 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -355,11 +371,13 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -374,12 +392,14 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status = $3",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -394,12 +414,14 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status != $3",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -413,11 +435,13 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(status)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -433,12 +457,14 @@ impl MasterDataRefService {
                WHERE tenant_id = $1 AND domain = $2 AND status = 'active' AND last_synced_at < $3"#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(threshold)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -453,11 +479,13 @@ impl MasterDataRefService {
                WHERE tenant_id = $1 AND status = 'active' AND last_synced_at < $2"#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -471,12 +499,14 @@ impl MasterDataRefService {
             "SELECT MAX(updated_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await?
             .flatten();
+        scope.commit().await?;
         Ok(result)
     }
 
@@ -490,12 +520,14 @@ impl MasterDataRefService {
             "SELECT MAX(last_synced_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await?
             .flatten();
+        scope.commit().await?;
         Ok(result)
     }
 
@@ -513,10 +545,12 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -536,11 +570,13 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(count)
     }
 
@@ -560,10 +596,12 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let rows = sqlx::query_as::<_, DuplicateRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(rows)
     }
 
@@ -583,11 +621,13 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let rows = sqlx::query_as::<_, StaleRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(rows)
     }
 
@@ -616,6 +656,7 @@ impl MasterDataRefService {
                    updated_at = NOW()"#,
             self.table_name
         );
+        let mut scope = self.db.scope_for_tenant(req.tenant_id).await?;
         let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(&req.master_data_id)
             .bind(req.tenant_id)
@@ -626,8 +667,9 @@ impl MasterDataRefService {
             .bind(&req.source_service)
             .bind(&req.local_entity_type)
             .bind(&req.payload_snapshot)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(result.rows_affected())
     }
 }

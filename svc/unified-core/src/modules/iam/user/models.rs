@@ -121,9 +121,19 @@ pub(crate) struct UserRow {
 ///（精确授权由后端中间件依据 JWT 判定）。供 `/users/me`、`/permissions/my-permissions` 复用，
 /// 登录签发在 auth.rs 以同一规范化结果组装 claims，保证 login 与 refresh 两路一致。
 pub(crate) async fn resolve_user_grants(
-    pool: &sqlx::PgPool,
+    db: &Db,
     user_id: uuid::Uuid,
 ) -> (Vec<String>, Vec<String>) {
+    // 「按 user_id 查授权」是系统读（设计文档 §6.4）：登录/刷新无 Claims，
+    // 统一走系统通道，避免依赖请求上下文或裸池（裸池在严格 RLS 下恒 0 行）。
+    let mut scope = match db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("解析用户授权失败（数据库作用域创建）: {}", e);
+            return (Vec::new(), Vec::new());
+        }
+    };
+
     let roles: Vec<String> = sqlx::query(
         r#"
         SELECT COALESCE(ARRAY_AGG(DISTINCT r.name), '{}') AS roles
@@ -133,7 +143,7 @@ pub(crate) async fn resolve_user_grants(
         "#,
     )
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten()
@@ -150,12 +160,14 @@ pub(crate) async fn resolve_user_grants(
         "#,
     )
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten()
     .and_then(|row| row.try_get::<Vec<String>, _>("permissions").ok())
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     (roles, permissions)
 }

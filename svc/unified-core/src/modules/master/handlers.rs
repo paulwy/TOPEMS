@@ -33,6 +33,7 @@ use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_db::audit::AuditLogService;
 use topems_shared_db::master_data_refs::MasterDataRefService;
 use topems_shared_db::reconciliation_log::ReconciliationLogService;
+use topems_shared_db::scope::Db;
 
 /// V284: shared-db MasterDataRef → unified-core MasterDataRef 转换
 impl From<topems_shared_db::master_data_refs::MasterDataRef> for MasterDataRef {
@@ -109,9 +110,9 @@ pub struct MasterDataService {
 impl MasterDataService {
     pub fn new(pool: PgPool) -> Self {
         Self {
-            ref_service: MasterDataRefService::new(pool.clone()),
+            ref_service: MasterDataRefService::new(Db::new(pool.clone(), "public, shared")),
             audit_service: AuditLogService::new(pool.clone()),
-            recon_service: ReconciliationLogService::new(pool.clone()),
+            recon_service: ReconciliationLogService::new(Db::new(pool.clone(), "public, shared")),
             pool,
         }
     }

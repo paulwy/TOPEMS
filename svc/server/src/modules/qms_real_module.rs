@@ -106,9 +106,11 @@ impl QmsRealModule {
                 topems_shared_auth::auth::auth_middleware,
             ));
 
+        let db_stats =
+            topems_shared_db::scope::Db::new(state.pool.clone(), "public, shared").stats();
         tracing::info!(
             "✅ 真实 qms 模块已接入统一入口（db={}，prefix={}）",
-            state.pool.size(),
+            db_stats.size,
             config.api_prefix
         );
 
@@ -136,11 +138,13 @@ impl Module for QmsRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("qms-real", ModuleGroup::Wms);
-        let db_ok = self.app_state.pool.size() > 0;
+        let db_stats =
+            topems_shared_db::scope::Db::new(self.app_state.pool.clone(), "public, shared").stats();
+        let db_ok = db_stats.size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.app_state.pool.size()),
+            detail: format!("连接池大小 {}", db_stats.size),
         });
         if self.app_state.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

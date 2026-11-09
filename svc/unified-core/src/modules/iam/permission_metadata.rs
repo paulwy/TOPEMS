@@ -27,11 +27,24 @@ pub async fn get_permission_metadata(
 ) -> Json<PermissionMetadataResponse> {
     tracing::info!("IAM permission metadata requested");
 
+    // 公开端点（服务启动自动同步权限元数据），无请求上下文 → 必须显式系统通道。
+    let mut scope = match state.db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("权限元数据作用域创建失败: {}", e);
+            return Json(PermissionMetadataResponse {
+                success: false,
+                message: format!("获取权限元数据失败: {}", e),
+                data: Vec::new(),
+            });
+        }
+    };
     let result = sqlx::query!(
         "SELECT code, name, description, resource, action FROM public.core_permissions ORDER BY code"
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(permissions) => {

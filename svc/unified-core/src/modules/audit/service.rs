@@ -1,14 +1,25 @@
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::{OperationLog, OperationLogRecord};
+use topems_shared_db::scope::Db;
 
 /// 写入一条操作审计日志。供 middleware 与业务代码调用。
+///
+/// 显式按 `record.tenant_id` 选择通道：
+/// - 有租户 → `scope_for_tenant`（审计行落在该租户，策略 `tenant_id = 当前租户` 可写）；
+/// - nil（匿名/登录失败/系统操作）→ `scope_system`。
+///
+/// 不依赖 task-local：`middleware` 在 `tokio::spawn` 里调用，task-local 会丢失。
 pub async fn record_operation_log(
-    pool: &PgPool,
+    db: &Db,
     record: OperationLogRecord,
 ) -> Result<Uuid, sqlx::Error> {
     let id = Uuid::new_v4();
+    let mut scope = if record.tenant_id.is_nil() {
+        db.scope_system().await?
+    } else {
+        db.scope_for_tenant(record.tenant_id).await?
+    };
 
     sqlx::query(
         r#"
@@ -37,18 +48,24 @@ pub async fn record_operation_log(
     .bind(record.ip_address)
     .bind(record.user_agent)
     .bind(record.trace_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(id)
 }
 
 pub async fn get_operation_log(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     id: Uuid,
 ) -> Result<Option<OperationLog>, sqlx::Error> {
-    sqlx::query_as::<_, OperationLog>(
+    let mut scope = if tenant_id.is_nil() {
+        db.scope_read_system().await?
+    } else {
+        db.scope_read_for_tenant(tenant_id).await?
+    };
+    let row = sqlx::query_as::<_, OperationLog>(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
                   resource_type, resource_id, description, request_data,
                   response_status, ip_address, user_agent, trace_id, created_at
@@ -57,8 +74,10 @@ pub async fn get_operation_log(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(pool)
-    .await
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 /// 根据 HTTP 方法和路径推断 module / operation / resource_type

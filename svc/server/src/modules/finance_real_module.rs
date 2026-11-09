@@ -104,9 +104,11 @@ impl FinanceRealModule {
                 topems_shared_auth::auth::auth_middleware,
             ));
 
+        let db_stats =
+            topems_shared_db::scope::Db::new(state.pool.clone(), "public, shared").stats();
         tracing::info!(
             "✅ 真实 finance 模块已接入统一入口（db={}，prefix={}）",
-            state.pool.size(),
+            db_stats.size,
             config.api_prefix
         );
 

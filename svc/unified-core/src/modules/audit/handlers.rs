@@ -10,12 +10,28 @@ use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::scope::Db;
 
 use super::audit_query::AuditLogQueryParams;
 use super::models::{
     OperationLog, OperationLogListResponse, OperationLogQuery, OperationLogStatsResponse,
 };
+
+/// 审计查询的租户过滤条件。
+///
+/// 超管 / service 身份 = `None`（系统通道，全量）；普通用户 = 自己的租户，
+/// 解析失败取 nil（fail-closed，不会退化成全量）。
+pub(crate) fn claims_tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser || topems_shared_auth::service::is_service_claims(claims) {
+        return None;
+    }
+    Some(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or_else(Uuid::nil),
+    )
+}
 
 pub async fn list_operation_logs(
     State(state): State<AppState>,
@@ -26,12 +42,13 @@ pub async fn list_operation_logs(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    // 当前实现：租户上下文来自 middleware 注入或为系统租户。
-    // 超管读全量，普通租户按系统租户过滤。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(Uuid::nil())
+    let tenant_id = claims_tenant_filter(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计查询作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询操作审计日志失败".to_string()));
+        }
     };
 
     let user_id = query.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
@@ -79,7 +96,7 @@ pub async fn list_operation_logs(
     .bind(start_time)
     .bind(end_time)
     .bind(query.success)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -125,7 +142,7 @@ pub async fn list_operation_logs(
     .bind(query.success)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -150,10 +167,15 @@ pub async fn get_operation_log(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OperationLog> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(Uuid::nil())
+    let tenant_id = claims_tenant_filter(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计详情作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "查询操作审计日志详情失败".to_string(),
+            ));
+        }
     };
 
     let log: Option<OperationLog> = match sqlx::query_as::<_, OperationLog>(
@@ -165,7 +187,7 @@ pub async fn get_operation_log(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -189,17 +211,20 @@ pub async fn get_operation_log_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<OperationLogStatsResponse> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(Uuid::nil())
+    let tenant_id = claims_tenant_filter(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计统计作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
+        }
     };
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_operation_logs WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -215,7 +240,7 @@ pub async fn get_operation_log_stats(
            GROUP BY module ORDER BY COUNT(*) DESC"#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -231,7 +256,7 @@ pub async fn get_operation_log_stats(
            GROUP BY operation ORDER BY COUNT(*) DESC"#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -304,6 +329,13 @@ pub async fn get_permission_change(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("权限变更详情作用域创建失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询权限变更详情失败".to_string()));
+        }
+    };
     match sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
         r#"
         SELECT
@@ -332,7 +364,7 @@ pub async fn get_permission_change(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(entry)) => {
@@ -476,8 +508,7 @@ pub async fn get_access_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut scope = match state.db.scope_read().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);

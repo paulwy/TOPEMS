@@ -21,7 +21,6 @@ use crate::AppState;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::scope::Db;
 
 // ==================== 数据模型 ====================
 
@@ -145,6 +144,14 @@ pub async fn query_audit_logs(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<PaginatedAuditLogs> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计查询作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let source = resolve_source(params.source.as_deref());
     let (page, page_size) = clamp_pagination(params.page, params.page_size);
     let offset = (page - 1) * page_size;
@@ -176,7 +183,7 @@ pub async fn query_audit_logs(
             .bind(start_date)
             .bind(end_date)
             .bind(params.search.as_deref())
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -226,7 +233,7 @@ pub async fn query_audit_logs(
             .bind(params.search.as_deref())
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
 
@@ -255,7 +262,7 @@ pub async fn query_audit_logs(
             .bind(params.ip_address.as_deref())
             .bind(start_date)
             .bind(end_date)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -304,14 +311,14 @@ pub async fn query_audit_logs(
             .bind(end_date)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
 
             (items, total)
         }
         _ => {
-            let db = Db::new(state.pool.clone(), "public, shared");
+            let db = state.db.clone();
             let mut scope = match db.scope_read().await {
                 Ok(scope) => scope,
                 Err(e) => {
@@ -422,6 +429,14 @@ pub async fn get_audit_log_stats(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<AuditLogStats> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计统计作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let source = resolve_source(params.source.as_deref());
     let start_date = parse_datetime(params.start_date.as_deref());
     let end_date = parse_datetime(params.end_date.as_deref());
@@ -444,14 +459,14 @@ pub async fn get_audit_log_stats(
             )
             .bind(start_date)
             .bind(end_date)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.permission_audit_logs WHERE changed_at >= CURRENT_DATE",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -470,21 +485,21 @@ pub async fn get_audit_log_stats(
             )
             .bind(start_date)
             .bind(end_date)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.core_login_logs WHERE login_time >= CURRENT_DATE",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.success_total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.core_login_logs WHERE status = 'success'",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -493,7 +508,7 @@ pub async fn get_audit_log_stats(
             stats.by_user = load_login_top_users(&state).await;
         }
         _ => {
-            let db = Db::new(state.pool.clone(), "public, shared");
+            let db = state.db.clone();
             let mut scope = match db.scope_read().await {
                 Ok(scope) => scope,
                 Err(e) => {
@@ -584,7 +599,7 @@ async fn load_top_by_column(
         deleted_filter = deleted_filter,
     );
     let rows = if table == "public.audit_logs" {
-        let db = Db::new(state.pool.clone(), "public, shared");
+        let db = state.db.clone();
         let mut scope = match db.scope_read().await {
             Ok(scope) => scope,
             Err(e) => {
@@ -601,12 +616,21 @@ async fn load_top_by_column(
         let _ = scope.commit().await;
         rows
     } else {
-        sqlx::query(sqlx::AssertSqlSafe(sql))
+        let mut scope = match state.db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("数据库作用域创建失败: {}", e);
+                return Vec::new();
+            }
+        };
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(start_date)
             .bind(end_date)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
+            .unwrap_or_default();
+        let _ = scope.commit().await;
+        rows
     };
     rows.into_iter()
         .map(|row| AuditLogCount {
@@ -617,7 +641,7 @@ async fn load_top_by_column(
 }
 
 async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
-    let db = Db::new(state.pool.clone(), "public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_read().await {
         Ok(scope) => scope,
         Err(e) => {
@@ -649,6 +673,13 @@ async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
 }
 
 async fn load_login_top_users(state: &AppState) -> Vec<AuditLogCount> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Vec::new();
+        }
+    };
     let rows = sqlx::query(
         r#"
         SELECT username AS key, COUNT(*) AS count
@@ -659,9 +690,10 @@ async fn load_login_top_users(state: &AppState) -> Vec<AuditLogCount> {
         LIMIT 10
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
@@ -703,7 +735,7 @@ async fn load_trend(
         deleted_filter = deleted_filter,
     );
     let rows = if table == "public.audit_logs" {
-        let db = Db::new(state.pool.clone(), "public, shared");
+        let db = state.db.clone();
         let mut scope = match db.scope_read().await {
             Ok(scope) => scope,
             Err(e) => {
@@ -720,12 +752,21 @@ async fn load_trend(
         let _ = scope.commit().await;
         rows
     } else {
-        sqlx::query(sqlx::AssertSqlSafe(sql))
+        let mut scope = match state.db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("数据库作用域创建失败: {}", e);
+                return Vec::new();
+            }
+        };
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(start_date)
             .bind(end_date)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
+            .unwrap_or_default();
+        let _ = scope.commit().await;
+        rows
     };
     rows.into_iter()
         .map(|row| AuditLogTrend {
@@ -826,6 +867,14 @@ async fn fetch_export_rows(
     start_date: Option<DateTime<Utc>>,
     end_date: Option<DateTime<Utc>>,
 ) -> Result<Vec<ExportRow>, sqlx::Error> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("审计导出作用域创建失败: {}", e);
+            return Err(e);
+        }
+    };
+
     let limit: i64 = 10_000;
 
     let rows: Vec<sqlx::postgres::PgRow> = match source {
@@ -851,7 +900,7 @@ async fn fetch_export_rows(
             .bind(params.action.as_deref())
             .bind(params.user_id.as_deref())
             .bind(limit)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await?
         }
         "login_logs" => {
@@ -878,11 +927,11 @@ async fn fetch_export_rows(
                     .and_then(|s| Uuid::parse_str(s).ok()),
             )
             .bind(limit)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await?
         }
         _ => {
-            let db = Db::new(state.pool.clone(), "public, shared");
+            let db = state.db.clone();
             let mut scope = db.scope_read().await?;
             let rows = sqlx::query(
                 r#"
