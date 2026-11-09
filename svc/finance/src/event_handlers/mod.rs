@@ -845,20 +845,48 @@ impl FinanceEventHandlers {
     // ERP 侧原 7 类写凭证点收敛后的 finance 处理器
     // ========================================================
 
-    /// EmployeeOnboarded：入职费用计提（沿用 ERP 原口径：管理费用 / 应付账款 500 元）
+    /// EmployeeOnboarded：入职费用计提（管理费用 / 应付账款）
+    ///
+    /// 入职成本来自租户配置 public.core_tenant_settings('erp.employee_onboarding_cost')，
+    /// 未配置则跳过，不再写死 500 元占位金额。
     async fn handle_employee_onboarded(&self, event: Event) -> HandlerResult {
         let payload: EmployeeOnboardedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 EmployeeOnboarded payload 失败: {}", e))
         })?;
 
-        let amount = Decimal::from(500);
+        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
+        let configured_cost: Option<Option<Decimal>> = sqlx::query_scalar(
+            r#"SELECT NULLIF(setting_value, '')::numeric
+               FROM public.core_tenant_settings
+               WHERE tenant_id = $1
+                 AND setting_key = 'erp.employee_onboarding_cost'
+                 AND deleted_at IS NULL
+               LIMIT 1"#,
+        )
+        .bind(tenant_id)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("读取入职成本配置失败: {}", e)))?;
+
+        let amount = match configured_cost.flatten() {
+            Some(cost) => cost,
+            None => {
+                tracing::info!(
+                    "[finance] 租户 {} 未配置 erp.employee_onboarding_cost，跳过入职费用凭证（employee_id={}）",
+                    tenant_id,
+                    payload.employee_id
+                );
+                return Ok(());
+            }
+        };
+
         self.create_auto_voucher(
             "general",
             &format!("员工{}入职费用", payload.name),
             "employee",
             payload.employee_id,
             None,
-            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            tenant_id,
             vec![
                 AutoVoucherLine::debit("6602", amount, format!("员工{}入职培训费", payload.name)),
                 AutoVoucherLine::credit(
@@ -873,42 +901,29 @@ impl FinanceEventHandlers {
         Ok(())
     }
 
-    /// PmProjectCompleted：项目完成确认收入（沿用 ERP 原口径：10,000 元应收 / 收入）
+    /// PmProjectCompleted：项目完成仅记录，不确认收入
+    ///
+    /// pm.projects 没有合同额/结算额，完成时不存在可确认的真实金额；
+    /// 原先写死 10,000 元属占位假数据。收入改在 PmProjectSettled 按 settled_amount 确认。
     async fn handle_pm_project_completed(&self, event: Event) -> HandlerResult {
         let payload: PmProjectCompletedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 PmProjectCompleted payload 失败: {}", e))
         })?;
 
-        let amount = Decimal::from(10000);
-        self.create_auto_voucher(
-            "general",
-            &format!("项目{}完成确认收入", payload.project_name),
-            "pm_project_completed",
-            payload.project_id,
-            payload.completed_by.as_deref(),
-            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
-            vec![
-                AutoVoucherLine::debit(
-                    "1122",
-                    amount,
-                    format!("项目{}应收款", payload.project_name),
-                ),
-                AutoVoucherLine::credit(
-                    "6001",
-                    amount,
-                    format!("项目{}完成收入", payload.project_name),
-                ),
-            ],
-        )
-        .await?;
+        tracing::info!(
+            "[finance] PmProjectCompleted 处理 - project_name={}, project_id={}, 等待 PmProjectSettled 按结算额确认收入",
+            payload.project_name,
+            payload.project_id
+        );
 
         Ok(())
     }
 
-    /// PmProjectSettled：按结算金额结转项目成本（借 6401 / 贷 1405，借贷平衡）
+    /// PmProjectSettled：按结算金额确认收入 + 结转成本（借贷平衡）
     ///
-    /// 收入已在项目完成时确认，结算阶段只结转成本；
-    /// ERP 原实现额外记了一笔 4103 本年利润，导致借贷不平（半张凭证），此处不沿用。
+    /// 收入：借 1122 / 贷 6001（settled_amount）；
+    /// 成本：借 6401 / 贷 1405（settled_amount × 70%）。
+    /// 金额全部来自真实结算额，不再使用完成时的固定 10,000 元。
     async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
         let payload: PmProjectSettledPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e))
@@ -926,12 +941,22 @@ impl FinanceEventHandlers {
         let cost_amount = settled_amount * Decimal::new(7, 1);
         self.create_auto_voucher(
             "general",
-            &format!("项目{}结算成本结转", payload.project_name),
+            &format!("项目{}结算收入与成本", payload.project_name),
             "pm_project_settled",
             payload.project_id,
             payload.settled_by.as_deref(),
             payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             vec![
+                AutoVoucherLine::debit(
+                    "1122",
+                    settled_amount,
+                    format!("项目{}结算应收款", payload.project_name),
+                ),
+                AutoVoucherLine::credit(
+                    "6001",
+                    settled_amount,
+                    format!("项目{}结算收入", payload.project_name),
+                ),
                 AutoVoucherLine::debit(
                     "6401",
                     cost_amount,

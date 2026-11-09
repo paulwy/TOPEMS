@@ -956,4 +956,34 @@ pending_forward_patches:
     effect: "tenant_admin 补授 4 枚内部交易台账/扫描/对账细码（守卫式幂等）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；INSERT 权限码与角色绑定（回滚段 DELETE 为注释）"
     note: "不含 erp:consolidation-elimination:write 及任何抵消执行类权限，三权分离归 P4 第二批"
+  - version: "20261109160000"
+    file: "database/migrations/20261109160000_p5_b1_finance_audit_v52_tables.sql"
+    status: to_apply
+    effect: "六张 finance_*_v 审计壳表改名 _v52（守卫式）并补齐 v5.2 列/唯一索引/RLS；含 finance_audit_rules_v 同形壳表"
+    destructive_scan: "RENAME 位于 DO 块内、带 to_regclass 双向守卫；DDL 门禁扫描 0 命中（无 DELETE/UPDATE/TRUNCATE/DROP）"
+    note: "类型来源 fixtures/full_schema_contract.sql（2026-10-15 dump，本地 42/42 一致，核验 2026-11-09）；壳表遗留 tenant_id 默认租户已 DROP DEFAULT"
+  - version: "20261109160100"
+    file: "database/migrations/20261109160100_p5_b1_finance_cqrs_snapshots.sql"
+    status: to_apply
+    effect: "创建 finance.cqrs_snapshots（聚合快照）+ 类型索引 + owner/GRANT"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE TABLE/INDEX + owner/GRANT"
+    note: "列从 svc/finance/src/domain/pg_event_store.rs 的 SQL 反推（2026-11-09）"
+  - version: "20261109160200"
+    file: "database/migrations/20261109160200_p5_b1_bi_org_stats.sql"
+    status: to_apply
+    effect: "创建 bi.org_stats 物化视图（组织计数快照）+ 唯一索引 + 初刷 + owner/GRANT"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；CREATE MATERIALIZED VIEW + REFRESH"
+    note: "仅当服务角色对 hrm 基表有 SELECT 时才归一 owner，否则保留当前 owner 并只授读；analytics 去掉 unwrap_or(0) 静默降级"
+  - version: "20261109160300"
+    file: "database/migrations/20261109160300_p5_b2_finance_columns.sql"
+    status: to_apply
+    effect: "svc/finance 7 表补列（19 列）+ 3 个 ON CONFLICT 唯一索引；parameters text→jsonb（用户裁决 B）"
+    destructive_scan: "ALTER COLUMN TYPE 位于 DO 块且带 information_schema 守卫；门禁扫描 0 命中"
+    note: "NOT NULL 以 DDL 为准，本批缺失列 DDL 均可空，一律可空落地；indexes 用 IF NOT EXISTS"
+  - version: "20261109160400"
+    file: "database/migrations/20261109160400_p5_b2_erp_columns.sql"
+    status: to_apply
+    effect: "erp.payables/receivables 补列；erp_production_orders/event_idempotency 加 tenant_id uuid NOT NULL + FORCE RLS + 租户谓词；3 个唯一索引"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；ADD COLUMN 前有存量行守卫（有行则 RAISE EXCEPTION，不伪造回填）"
+    note: "生产两表 0 行（2026-11-09 只读核实）；tenant_id 不设 DEFAULT，写入方必须显式提供"
 

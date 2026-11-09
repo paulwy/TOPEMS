@@ -202,7 +202,7 @@ pub async fn install_plugin_simple(
     // Create installation
     let installation_result = sqlx::query_as(
         r#"
-        INSERT INTO core.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
+        INSERT INTO iam.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
         ON CONFLICT (tenant_id, plugin_id)
         DO UPDATE SET is_active = true, activated_at = NOW()
@@ -320,7 +320,7 @@ pub async fn uninstall_plugin_simple(
             // Tier 1: Disable - set is_active = false but keep data
             let installation: Option<TenantPlugin> = sqlx::query_as(
                 r#"
-                UPDATE core.core_tenant_plugins
+                UPDATE iam.core_tenant_plugins
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
@@ -358,7 +358,7 @@ pub async fn uninstall_plugin_simple(
             // Tier 2: Uninstall - remove from tenant_plugins but keep data
             let result = sqlx::query(
                 r#"
-                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
+                UPDATE iam.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -419,7 +419,7 @@ pub async fn uninstall_plugin_simple(
 
             let result = sqlx::query(
                 r#"
-                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
+                UPDATE iam.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -516,7 +516,7 @@ pub async fn list_tenant_installed_plugins(
                p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
                p.version as plugin_version, p.category as plugin_category,
                pi.runtime_status, pi.runtime_url, pi.last_heartbeat
-        FROM core.core_tenant_plugins tp
+        FROM iam.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
         LEFT JOIN core.core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE tp.tenant_id = $1
@@ -585,7 +585,7 @@ pub async fn enable_plugin_simple(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core.core_tenant_plugins
+        UPDATE iam.core_tenant_plugins
         SET is_active = true, activated_at = NOW()
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
@@ -660,7 +660,7 @@ pub async fn disable_plugin_simple(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core.core_tenant_plugins
+        UPDATE iam.core_tenant_plugins
         SET is_active = false
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *

@@ -123,7 +123,7 @@ pub async fn list_tenant_plugins(
             p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
-        FROM core.core_tenant_plugins tp
+        FROM iam.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
         ORDER BY tp.is_active DESC, tp.activated_at DESC
@@ -188,7 +188,7 @@ pub async fn list_my_plugins(
             p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
-        FROM core.core_tenant_plugins tp
+        FROM iam.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
         WHERE ($1::uuid IS NULL OR tp.tenant_id = $1)
         ORDER BY tp.is_active DESC, tp.activated_at DESC
@@ -265,7 +265,7 @@ async fn install_plugin_inner(
         for dep_code in &deps {
             let is_installed: Option<bool> = sqlx::query_scalar(
                 r#"SELECT EXISTS(
-                    SELECT 1 FROM core.core_tenant_plugins tp
+                    SELECT 1 FROM iam.core_tenant_plugins tp
                     JOIN core.core_plugins p ON tp.plugin_id = p.id
                     WHERE tp.deleted_at IS NULL AND tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
                 )"#,
@@ -293,7 +293,7 @@ async fn install_plugin_inner(
 
     let installation_result = sqlx::query_as(
         r#"
-        INSERT INTO core.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
+        INSERT INTO iam.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
         ON CONFLICT (tenant_id, plugin_id) 
         DO UPDATE SET is_active = true, activated_at = NOW()
@@ -442,7 +442,7 @@ async fn uninstall_plugin_inner(
     let dependent_plugins: Vec<String> = sqlx::query_scalar(
         r#"
         SELECT p.code FROM core.core_plugins p
-        JOIN core.core_tenant_plugins tp ON tp.plugin_id = p.id
+        JOIN iam.core_tenant_plugins tp ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
           AND tp.is_active = true
           AND p.code != $2
@@ -467,7 +467,7 @@ async fn uninstall_plugin_inner(
         UninstallTier::Disable => {
             let installation: Option<TenantPlugin> = sqlx::query_as(
                 r#"
-                UPDATE core.core_tenant_plugins
+                UPDATE iam.core_tenant_plugins
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
@@ -504,7 +504,7 @@ async fn uninstall_plugin_inner(
         UninstallTier::Uninstall => {
             let result = sqlx::query(
                 r#"
-                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
+                UPDATE iam.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -564,7 +564,7 @@ async fn uninstall_plugin_inner(
 
             let result = sqlx::query(
                 r#"
-                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
+                UPDATE iam.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -702,7 +702,7 @@ async fn activate_plugin_inner(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core.core_tenant_plugins
+        UPDATE iam.core_tenant_plugins
         SET is_active = true, activated_at = NOW()
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
@@ -814,7 +814,7 @@ async fn deactivate_plugin_inner(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core.core_tenant_plugins
+        UPDATE iam.core_tenant_plugins
         SET is_active = false
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
@@ -976,7 +976,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT id, tenant_id, plugin_id, installed_version, is_active, created_at, updated_at FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
+            "SELECT id, tenant_id, plugin_id, installed_version, is_active, created_at, updated_at FROM iam.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)

@@ -39,6 +39,11 @@ use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
 
+/// f64 → Decimal，仅在 DB 边界使用；金额列（numeric）不接受 f64 直接落库。
+fn decimal_from_f64(value: f64) -> Decimal {
+    Decimal::from_f64_retain(value).unwrap_or(Decimal::ZERO)
+}
+
 // ==================== 枚举类型 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -139,12 +144,12 @@ impl VarianceTrend {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct CashFlowPrediction {
     pub id: Uuid,
-    pub entity_id: String,
+    pub entity_id: Uuid,
     pub period: String,
-    pub predicted_inflow: f64,
-    pub predicted_outflow: f64,
-    pub predicted_net: f64,
-    pub confidence: f64,
+    pub predicted_inflow: Decimal,
+    pub predicted_outflow: Decimal,
+    pub predicted_net: Decimal,
+    pub confidence: Decimal,
     pub scenario: String,
     pub model_version: String,
     pub created_at: DateTime<Utc>,
@@ -155,9 +160,9 @@ pub struct CashFlowPrediction {
 pub struct PredictionModelRecord {
     pub id: Uuid,
     pub model_type: String,
-    pub entity_id: String,
+    pub entity_id: Option<Uuid>,
     pub parameters: serde_json::Value,
-    pub accuracy: f64,
+    pub accuracy: Decimal,
     pub is_active: bool,
     pub trained_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -167,12 +172,12 @@ pub struct PredictionModelRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct BudgetVariance {
     pub id: Uuid,
-    pub budget_item_id: String,
+    pub budget_item_id: Uuid,
     pub period: String,
     pub budget_amount: Decimal,
     pub actual_amount: Decimal,
     pub variance_amount: Decimal,
-    pub variance_percentage: f64,
+    pub variance_percentage: Decimal,
     pub classification: String,
     pub trend: String,
     pub created_at: DateTime<Utc>,
@@ -253,13 +258,27 @@ impl CashFlowPredictor {
             .unwrap_or(PredictionScenario::Realistic);
         let horizon = req.horizon_months.unwrap_or(1) as f64;
 
-        let historical = Self::fetch_historical_data(pool, tenant_id, &req.entity_id).await?;
+        // finance_cash_flow_predictions_v53.entity_id 为 uuid（DDL 2026-10-15），
+        // 请求体仍是字符串，边界处解析，非法值直接拒绝而不是静默生成随机 ID。
+        let entity_id = Uuid::parse_str(&req.entity_id).map_err(|_| {
+            sqlx::Error::Protocol(format!(
+                "entity_id 必须是 UUID（finance_cash_flow_predictions_v53.entity_id 为 uuid）: {}",
+                req.entity_id
+            ))
+        })?;
+
+        let historical = Self::fetch_historical_data(pool, tenant_id, entity_id).await?;
 
         let (inflow, outflow) = Self::apply_model(&historical, &model_type, horizon, &scenario);
 
         let predicted_net = inflow - outflow;
         let confidence = Self::calculate_confidence(&historical, &model_type);
         let (ci_lower, ci_upper) = Self::calculate_confidence_interval(predicted_net, confidence);
+
+        let predicted_inflow = decimal_from_f64(inflow);
+        let predicted_outflow = decimal_from_f64(outflow);
+        let predicted_net_dec = decimal_from_f64(predicted_net);
+        let confidence_dec = decimal_from_f64(confidence);
 
         let prediction_id = Uuid::new_v4();
         let model_version = format!("v53.0-{}", model_type.as_str());
@@ -271,12 +290,12 @@ impl CashFlowPredictor {
             ON CONFLICT DO NOTHING"#),
         )
         .bind(prediction_id)
-        .bind(&req.entity_id)
+        .bind(entity_id)
         .bind(&req.period)
-        .bind(inflow)
-        .bind(outflow)
-        .bind(predicted_net)
-        .bind(confidence)
+        .bind(predicted_inflow)
+        .bind(predicted_outflow)
+        .bind(predicted_net_dec)
+        .bind(confidence_dec)
         .bind(scenario.as_str())
         .bind(&model_version)
         .bind(now)
@@ -291,12 +310,12 @@ impl CashFlowPredictor {
         Ok(PredictionResult {
             prediction: CashFlowPrediction {
                 id: prediction_id,
-                entity_id: req.entity_id,
+                entity_id,
                 period: req.period,
-                predicted_inflow: inflow,
-                predicted_outflow: outflow,
-                predicted_net,
-                confidence,
+                predicted_inflow,
+                predicted_outflow,
+                predicted_net: predicted_net_dec,
+                confidence: confidence_dec,
                 scenario: scenario.as_str().to_string(),
                 model_version,
                 created_at: now,
@@ -312,10 +331,8 @@ impl CashFlowPredictor {
     async fn fetch_historical_data(
         pool: &PgPool,
         tenant_id: Uuid,
-        entity_id: &str,
+        entity_uuid: Uuid,
     ) -> Result<Vec<(f64, f64)>, sqlx::Error> {
-        let entity_uuid = Uuid::parse_str(entity_id).unwrap_or_else(|_| Uuid::new_v4());
-
         let rows: Vec<(f64, f64)> = sqlx::query_as(
             only_own_schema_query!("finance", r#"SELECT
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0) as inflow,
@@ -616,7 +633,8 @@ impl CashFlowPredictor {
         let now = Utc::now();
         let model_str = model_type.as_str();
 
-        let accuracy = Self::compute_retrain_accuracy(pool, tenant_id, &model_type).await;
+        let accuracy =
+            decimal_from_f64(Self::compute_retrain_accuracy(pool, tenant_id, &model_type).await);
 
         let record = sqlx::query_as::<_, PredictionModelRecord>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
@@ -630,7 +648,8 @@ impl CashFlowPredictor {
         )
         .bind(Uuid::new_v4())
         .bind(model_str)
-        .bind("default")
+        // entity_id 在 DDL 中可空：全租户模型不绑定具体实体，不写占位字符串。
+        .bind(None::<Uuid>)
         .bind(serde_json::json!({
             "window_size": 6,
             "alpha": 0.3,
@@ -692,12 +711,13 @@ impl CashFlowPredictor {
 
         let mut accuracies = Vec::new();
         for record in &records {
+            let accuracy = record.accuracy.to_f64().unwrap_or(0.0);
             accuracies.push(PredictionAccuracy {
                 model_type: record.model_type.clone(),
-                overall_accuracy: record.accuracy,
-                inflow_accuracy: record.accuracy * 1.05,
-                outflow_accuracy: record.accuracy * 0.95,
-                mean_absolute_error: (1.0 - record.accuracy) * 100.0,
+                overall_accuracy: accuracy,
+                inflow_accuracy: accuracy * 1.05,
+                outflow_accuracy: accuracy * 0.95,
+                mean_absolute_error: (1.0 - accuracy) * 100.0,
                 sample_count: 120,
                 last_trained: Some(record.trained_at),
             });
@@ -801,20 +821,26 @@ impl BudgetAnalyzer {
 
         for item in &req.budget_items {
             let variance_amount = item.actual_amount - item.budget_amount;
-            // 比率字段（百分比）最后一步才转 f64，金额本身不经过 f64。
+            // finance_budget_variances_v53.variance_percentage 为 numeric(18,2)，全程 Decimal。
             let variance_percentage = if item.budget_amount != Decimal::ZERO {
-                (variance_amount / item.budget_amount * Decimal::from(100))
-                    .to_f64()
-                    .unwrap_or(0.0)
+                (variance_amount / item.budget_amount * Decimal::from(100)).round_dp(2)
             } else {
-                0.0
+                Decimal::ZERO
             };
+
+            // budget_item_id 为 uuid（DDL 2026-10-15），非法值直接拒绝。
+            let budget_item_id = Uuid::parse_str(&item.item_id).map_err(|_| {
+                sqlx::Error::Protocol(format!(
+                    "budget_item_id 必须是 UUID（finance_budget_variances_v53.budget_item_id 为 uuid）: {}",
+                    item.item_id
+                ))
+            })?;
 
             let classification = Self::classify_variance(
                 variance_amount.to_f64().unwrap_or(0.0),
                 item.budget_amount.to_f64().unwrap_or(0.0),
             );
-            let trend = Self::detect_trend(variance_percentage);
+            let trend = Self::detect_trend(variance_percentage.to_f64().unwrap_or(0.0));
 
             *classification_summary
                 .entry(classification.as_str().to_string())
@@ -822,7 +848,7 @@ impl BudgetAnalyzer {
 
             let variance = BudgetVariance {
                 id: Uuid::new_v4(),
-                budget_item_id: item.item_id.clone(),
+                budget_item_id,
                 period: req.period.clone(),
                 budget_amount: item.budget_amount,
                 actual_amount: item.actual_amount,
@@ -860,7 +886,7 @@ impl BudgetAnalyzer {
                 ON CONFLICT DO NOTHING"#),
             )
             .bind(v.id)
-            .bind(&v.budget_item_id)
+            .bind(v.budget_item_id)
             .bind(&v.period)
             .bind(v.budget_amount)
             .bind(v.actual_amount)
@@ -938,7 +964,7 @@ impl BudgetAnalyzer {
 
             let high_impact: Vec<&&BudgetVariance> = unfavorable
                 .iter()
-                .filter(|v| v.variance_percentage.abs() > 15.0)
+                .filter(|v| v.variance_percentage.abs() > Decimal::from(15))
                 .collect();
             if !high_impact.is_empty() {
                 causes.push(format!(
@@ -976,7 +1002,7 @@ impl BudgetAnalyzer {
 
         let high_severity: Vec<&BudgetVariance> = variances
             .iter()
-            .filter(|v| v.variance_percentage.abs() > 20.0)
+            .filter(|v| v.variance_percentage.abs() > Decimal::from(20))
             .collect();
 
         if !high_severity.is_empty() {
@@ -988,7 +1014,10 @@ impl BudgetAnalyzer {
 
         let medium_severity: Vec<&BudgetVariance> = variances
             .iter()
-            .filter(|v| v.variance_percentage.abs() > 10.0 && v.variance_percentage.abs() <= 20.0)
+            .filter(|v| {
+                v.variance_percentage.abs() > Decimal::from(10)
+                    && v.variance_percentage.abs() <= Decimal::from(20)
+            })
             .collect();
 
         if !medium_severity.is_empty() {
@@ -1014,45 +1043,47 @@ impl BudgetAnalyzer {
 
         for v in variances {
             let abs_pct = v.variance_percentage.abs();
+            let item_id = v.budget_item_id.to_string();
+            let actual_value = v.variance_percentage.to_f64().unwrap_or(0.0);
 
-            if abs_pct > 30.0 {
+            if abs_pct > Decimal::from(30) {
                 anomalies.push(AnomalyDetection {
-                    item_id: v.budget_item_id.clone(),
-                    item_name: v.budget_item_id.clone(),
+                    item_id: item_id.clone(),
+                    item_name: item_id.clone(),
                     anomaly_type: "extreme_deviation".to_string(),
                     severity: "critical".to_string(),
                     description: format!(
                         "项目 {} 差异率达 {:.1}%，属于极端偏差",
-                        v.budget_item_id, v.variance_percentage
+                        item_id, v.variance_percentage
                     ),
                     expected_range: "±10%".to_string(),
-                    actual_value: v.variance_percentage,
+                    actual_value,
                 });
-            } else if abs_pct > 20.0 {
+            } else if abs_pct > Decimal::from(20) {
                 anomalies.push(AnomalyDetection {
-                    item_id: v.budget_item_id.clone(),
-                    item_name: v.budget_item_id.clone(),
+                    item_id: item_id.clone(),
+                    item_name: item_id.clone(),
                     anomaly_type: "significant_deviation".to_string(),
                     severity: "high".to_string(),
                     description: format!(
                         "项目 {} 差异率达 {:.1}%，需要关注",
-                        v.budget_item_id, v.variance_percentage
+                        item_id, v.variance_percentage
                     ),
                     expected_range: "±10%".to_string(),
-                    actual_value: v.variance_percentage,
+                    actual_value,
                 });
-            } else if abs_pct > 15.0 {
+            } else if abs_pct > Decimal::from(15) {
                 anomalies.push(AnomalyDetection {
-                    item_id: v.budget_item_id.clone(),
-                    item_name: v.budget_item_id.clone(),
+                    item_id: item_id.clone(),
+                    item_name: item_id.clone(),
                     anomaly_type: "moderate_deviation".to_string(),
                     severity: "medium".to_string(),
                     description: format!(
                         "项目 {} 差异率达 {:.1}%，建议审查",
-                        v.budget_item_id, v.variance_percentage
+                        item_id, v.variance_percentage
                     ),
                     expected_range: "±10%".to_string(),
-                    actual_value: v.variance_percentage,
+                    actual_value,
                 });
             }
         }
@@ -1087,6 +1118,13 @@ impl BudgetAnalyzer {
 
         let mut q = sqlx::query_as::<_, BudgetVariance>(sqlx::AssertSqlSafe(query));
         if let Some(ref eid) = entity_id {
+            // budget_item_id 为 uuid，参数必须以 uuid 绑定，否则 uuid = text 无运算符。
+            let eid = Uuid::parse_str(eid).map_err(|_| {
+                sqlx::Error::Protocol(format!(
+                    "entity_id 必须是 UUID（finance_budget_variances_v53.budget_item_id 为 uuid）: {}",
+                    eid
+                ))
+            })?;
             q = q.bind(eid);
         }
         if let Some(ref p) = period {
@@ -1578,12 +1616,12 @@ mod tests {
     fn struct_cash_flow_prediction() {
         let v = CashFlowPrediction {
             id: Uuid::new_v4(),
-            entity_id: "ENT-001".into(),
+            entity_id: Uuid::new_v4(),
             period: "2024-Q1".into(),
-            predicted_inflow: 100000.0,
-            predicted_outflow: 80000.0,
-            predicted_net: 20000.0,
-            confidence: 0.85,
+            predicted_inflow: Decimal::from(100_000),
+            predicted_outflow: Decimal::from(80_000),
+            predicted_net: Decimal::from(20_000),
+            confidence: Decimal::new(85, 2),
             scenario: "realistic".into(),
             model_version: "v53.0-exp".into(),
             created_at: Utc::now(),
@@ -1597,9 +1635,9 @@ mod tests {
         let v = PredictionModelRecord {
             id: Uuid::new_v4(),
             model_type: "exponential_smoothing".into(),
-            entity_id: "default".into(),
+            entity_id: Some(Uuid::new_v4()),
             parameters: serde_json::json!({"alpha":0.3}),
-            accuracy: 0.88,
+            accuracy: Decimal::new(88, 2),
             is_active: true,
             trained_at: Utc::now(),
             created_at: Utc::now(),
@@ -1612,12 +1650,12 @@ mod tests {
     fn struct_budget_variance() {
         let v = BudgetVariance {
             id: Uuid::new_v4(),
-            budget_item_id: "item-1".into(),
+            budget_item_id: Uuid::new_v4(),
             period: "2024-Q1".into(),
             budget_amount: Decimal::from(1000),
             actual_amount: Decimal::from(1200),
             variance_amount: Decimal::from(200),
-            variance_percentage: 20.0,
+            variance_percentage: Decimal::from(20),
             classification: "unfavorable".into(),
             trend: "increasing".into(),
             created_at: Utc::now(),
@@ -1660,12 +1698,12 @@ mod tests {
         let v = PredictionResult {
             prediction: CashFlowPrediction {
                 id: Uuid::new_v4(),
-                entity_id: "ENT-001".into(),
+                entity_id: Uuid::new_v4(),
                 period: "2024-Q2".into(),
-                predicted_inflow: 50000.0,
-                predicted_outflow: 40000.0,
-                predicted_net: 10000.0,
-                confidence: 0.9,
+                predicted_inflow: Decimal::from(50_000),
+                predicted_outflow: Decimal::from(40_000),
+                predicted_net: Decimal::from(10_000),
+                confidence: Decimal::new(9, 1),
                 scenario: "optimistic".into(),
                 model_version: "v53.0-ma".into(),
                 created_at: Utc::now(),
@@ -1709,12 +1747,12 @@ mod tests {
         let v = VarianceAnalysisResult {
             variances: vec![BudgetVariance {
                 id: Uuid::new_v4(),
-                budget_item_id: "it-1".into(),
+                budget_item_id: Uuid::new_v4(),
                 period: "2024-Q1".into(),
                 budget_amount: Decimal::from(1000),
                 actual_amount: Decimal::from(1200),
                 variance_amount: Decimal::from(200),
-                variance_percentage: 20.0,
+                variance_percentage: Decimal::from(20),
                 classification: "unfavorable".into(),
                 trend: "stable".into(),
                 created_at: Utc::now(),

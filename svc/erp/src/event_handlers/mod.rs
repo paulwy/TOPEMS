@@ -8,15 +8,16 @@
 //! - `WorkOrderCompleted` → 触发成本核算（V20.1 真实实现，写入 erp_cost_allocations）
 //! - `StockInbound` → 自动生成库存凭证
 //! - `StockOutbound` → 自动生成库存凭证
-//! - `EmployeeOnboarded` → 自动创建资产分配记录
-//! - `PmProjectCompleted` → 触发项目财务结算（占位实现）
-//! - `PmProjectSettled` → 触发项目成本结算（占位实现）
+//! - `EmployeeOnboarded` → 按租户配置的入职成本创建应付账款（未配置则跳过）
+//! - `PmProjectCompleted` → 仅记录完成，不确认收入（金额在结算时确定）
+//! - `PmProjectSettled` → 按真实结算金额创建项目应收账款
 //! - `OpportunityWon` → CRM 商机赢单自动创建销售订单
 //! - `InventoryUpdated` → 库存更新事件（V20.1 真实实现，更新 account_balances）
 //! - `ReturnCompleted` → 退款凭证自动生成（V19.6 真实实现）
 //! - `PaymentReceived` → 自动核销应收账款（V20.1 新增）
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
+use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_core::cache::{
@@ -28,10 +29,10 @@ use topems_shared_event::event::{
     CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
     EventType, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
     MesWorkReportSubmittedPayload, OpportunityWonPayload, PaymentMadePayload,
-    PaymentReceivedPayload, PmProjectCompletedPayload, PurchaseOrderApprovedPayload,
-    ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
-    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
-    WorkOrderCompletedPayload,
+    PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
+    PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
+    ReconciliationUpdatedPayload, SalesOrderApprovedPayload, StockInboundPayload,
+    StockOutboundPayload, WorkOrderCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -60,6 +61,7 @@ impl ErpEventHandlers {
         let h5 = self.clone();
         let h6 = self.clone();
         let h7 = self.clone();
+        let h8 = self.clone();
         let h9 = self.clone();
         let h10 = self.clone();
         let h12 = self.clone();
@@ -153,6 +155,18 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_pm_project_completed 失败: {}", e);
+                            Err(e)
+                        }
+                    }
+                })
+            })
+            .subscribe_handler(vec![EventType::PmProjectSettled], move |event| {
+                let h = h8.clone();
+                Box::pin(async move {
+                    match h.handle_pm_project_settled(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_pm_project_settled 失败: {}", e);
                             Err(e)
                         }
                     }
@@ -560,10 +574,38 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
         let onboard_date = payload.onboard_date.unwrap_or(now);
+        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
 
-        let onboarding_cost = 500.0;
+        // 入职成本是租户级固定规则，落到配置而不是写死：读取
+        // public.core_tenant_settings('erp.employee_onboarding_cost')。
+        // 未配置则不生成应付账款，避免继续写入 500.0 这类占位金额。
+        let configured_cost: Option<Option<Decimal>> = sqlx::query_scalar(
+            r#"SELECT NULLIF(setting_value, '')::numeric
+               FROM public.core_tenant_settings
+               WHERE tenant_id = $1
+                 AND setting_key = 'erp.employee_onboarding_cost'
+                 AND deleted_at IS NULL
+               LIMIT 1"#,
+        )
+        .bind(tenant_id)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("读取入职成本配置失败: {}", e)))?;
+
+        let onboarding_cost = match configured_cost.flatten() {
+            Some(cost) => cost,
+            None => {
+                tracing::info!(
+                    "[erp] 租户 {} 未配置 erp.employee_onboarding_cost，跳过入职应付账款（employee_id={}）",
+                    tenant_id,
+                    payload.employee_id
+                );
+                return Ok(());
+            }
+        };
+
         let payable_no = format!("PAY-ONBOARD-{}", payload.employee_id);
-        let supplier_name = "入职福利供应商".to_string();
+        let supplier_name = "员工入职福利（内部计提）".to_string();
 
         let mut tx = match self.db.begin().await {
             Ok(tx) => tx,
@@ -587,7 +629,7 @@ impl ErpEventHandlers {
         .bind(onboarding_cost)
         .bind(onboard_date)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(tenant_id)
         .execute(&mut *tx)
         .await;
 
@@ -641,22 +683,44 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        let now = chrono::Utc::now();
-        let completed_at = payload.completed_at.unwrap_or(now);
+        // 项目完成时没有可确认的真实金额：pm.projects 只有 budget，没有合同额/结算额，
+        // 原先写死 10000.0 属占位假数据。现在不再在完成时确认应收，
+        // 改由 PmProjectSettled 按 settled_amount 生成。
+        tracing::info!(
+            "[erp] PmProjectCompleted 处理 - project_name={}, project_id={}, 等待 PmProjectSettled 生成应收账款, trace_id={:?}",
+            payload.project_name,
+            payload.project_id,
+            event.trace_id
+        );
 
-        let receivable_no = format!("REC-PROJ-{}", payload.project_id);
-        let project_amount = 10000.0;
+        Ok(())
+    }
 
-        let mut tx = match self.db.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
+    /// PmProjectSettled → 按真实结算金额创建项目应收账款
+    ///
+    /// 结算金额来自 PmProjectSettledPayload.settled_amount（真实业务来源）。
+    /// 缺失结算金额时跳过并告警，不再写入占位金额。
+    async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
+        let payload: PmProjectSettledPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e))
+            })?;
+
+        let project_amount = match payload.settled_amount {
+            Some(amount) => amount,
+            None => {
                 tracing::warn!(
-                    "[erp] PmProjectCompleted 开启事务失败（graceful fallback）: {}",
-                    e
+                    "[erp] PmProjectSettled 缺少 settled_amount，跳过项目应收账款（project_id={}）",
+                    payload.project_id
                 );
                 return Ok(());
             }
         };
+
+        let now = chrono::Utc::now();
+        let settled_at = payload.settled_at.unwrap_or(now);
+        let receivable_no = format!("REC-PROJ-{}", payload.project_id);
+        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
 
         let receivable_result = sqlx::query(
             r#"INSERT INTO erp.receivables
@@ -665,13 +729,14 @@ impl ErpEventHandlers {
                ON CONFLICT (invoice_number) DO NOTHING"#,
         )
         .bind(&receivable_no)
-        .bind("项目客户")
+        // payload 不含客户名称，留空而不是编造"项目客户"。
+        .bind(None::<String>)
         .bind(&payload.project_name)
         .bind(project_amount)
-        .bind(completed_at)
+        .bind(settled_at)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&mut *tx)
+        .bind(tenant_id)
+        .execute(&self.db)
         .await;
 
         match receivable_result {
@@ -685,18 +750,6 @@ impl ErpEventHandlers {
             }
             Err(e) => {
                 tracing::warn!("[erp] 创建项目应收账款失败（graceful fallback）: {}", e);
-            }
-        }
-
-        // 凭证写入已收敛至 finance（finance 订阅 PmProjectCompleted 写完整分录），
-        // ERP 侧只保留业务应收记录。
-        match tx.commit().await {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(
-                    "[erp] PmProjectCompleted 提交事务失败（graceful fallback）: {}",
-                    e
-                );
             }
         }
 

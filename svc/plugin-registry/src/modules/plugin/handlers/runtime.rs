@@ -489,7 +489,7 @@ pub async fn get_navigation_config(
                    COALESCE(tp.is_active, false) AS is_active,
                    COALESCE(tp.is_active, false) AS is_installed
             FROM core.core_plugins p
-            LEFT JOIN core.core_tenant_plugins tp
+            LEFT JOIN iam.core_tenant_plugins tp
                    ON tp.plugin_id = p.id AND tp.tenant_id = $1 AND tp.deleted_at IS NULL
             WHERE p.is_published = true
               AND (tp.id IS NOT NULL)
