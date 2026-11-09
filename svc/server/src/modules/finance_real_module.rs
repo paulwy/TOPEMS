@@ -22,6 +22,14 @@ use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig}
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
+/// 进程内守卫：单体形态下 Finance 事件消费循环只启动一次。
+///
+/// 独立二进制 `svc/finance/src/main.rs` 与单体 `FinanceRealModule::build()` 共用
+/// `event_handlers::start_event_subscribers`，后者内部 pin 了消费组 `finance-group`；
+/// 两形态同跑时 Streams 组内分摊投递，不会重复消费。本守卫只防同进程重复 spawn。
+static FINANCE_SUBSCRIBERS_STARTED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 /// 真实财务模块：持有数据库连接池 + 完整业务路由
 pub struct FinanceRealModule {
     /// 完整业务路由（已注入 AppState）
@@ -64,7 +72,34 @@ impl FinanceRealModule {
             return Err(TopemsError::internal("finance schema 防御检查失败", e));
         }
 
-        // 2b. 初始化 CQRS PostgreSQL 事件存储与异步投影器（对齐独立 finance 部署 main.rs）
+        // 2c. 事件订阅者：与独立部署 main.rs 同源
+        //     （此前单体形态缺失，导致 SettlementApproved / PmProjectSettled 等
+        //      自动应收、自动凭证链路在单机部署下从未运行）
+        if FINANCE_SUBSCRIBERS_STARTED
+            .compare_exchange(
+                false,
+                true,
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::SeqCst,
+            )
+            .is_ok()
+        {
+            if let Err(e) = topems_finance::event_handlers::start_event_subscribers(
+                ctx.db.clone(),
+                ctx.event_publisher.clone(),
+            )
+            .await
+            {
+                FINANCE_SUBSCRIBERS_STARTED.store(false, std::sync::atomic::Ordering::SeqCst);
+                tracing::error!("⚠️ finance 事件订阅者启动失败: {}", e);
+            } else {
+                tracing::info!("✅ finance 事件订阅者已挂载（消费组 finance-group）");
+            }
+        } else {
+            tracing::warn!("finance 事件订阅者已在当前进程启动，跳过重复启动");
+        }
+
+        // 2d. 初始化 CQRS PostgreSQL 事件存储与异步投影器（对齐独立 finance 部署 main.rs）
         let pg_cqrs_ctx = topems_finance::domain::cqrs::init_pg_cqrs_context(ctx.db.clone());
         pg_cqrs_ctx.start_async_projection().await;
         tracing::info!("✅ [embedded] CQRS 事件存储与异步投影器已启动");

@@ -25,6 +25,15 @@ use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
 };
 
+/// 进程内守卫：单体形态下 ERP 事件消费循环只启动一次。
+///
+/// 独立二进制 `svc/erp/src/main.rs` 与单体 `ErpRealModule::build()` 共用
+/// `event_handlers::start_event_subscribers`；后者内部 pin 了消费组 `erp-group`。
+/// 即便两个形态同时运行，Redis Streams 也只在组内分摊投递（一条消息只给一个消费者），
+/// 不会重复消费；本守卫只防同进程内 build 被重复调用时重复 spawn。
+static ERP_SUBSCRIBERS_STARTED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 /// 真实 ERP 模块：持有数据库连接池 + 完整业务路由
 pub struct ErpRealModule {
     routes: Router,
@@ -139,7 +148,33 @@ impl ErpRealModule {
                 }),
         };
 
-        // 5. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
+        // 5. 事件订阅者：与独立部署 main.rs 同源，挂载消费循环
+        //    （此前单体形态缺失，导致 PmProjectSettled 等事件在单机部署下永不被消费）
+        if ERP_SUBSCRIBERS_STARTED
+            .compare_exchange(
+                false,
+                true,
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::SeqCst,
+            )
+            .is_ok()
+        {
+            if let Err(e) = topems_erp::event_handlers::start_event_subscribers(
+                ctx.db.clone(),
+                api_state.dict_cache.clone(),
+            )
+            .await
+            {
+                ERP_SUBSCRIBERS_STARTED.store(false, std::sync::atomic::Ordering::SeqCst);
+                tracing::error!("⚠️ erp 事件订阅者启动失败: {}", e);
+            } else {
+                tracing::info!("✅ erp 事件订阅者已挂载（消费组 erp-group）");
+            }
+        } else {
+            tracing::warn!("erp 事件订阅者已在当前进程启动，跳过重复启动");
+        }
+
+        // 6. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
         let protected_routes = topems_erp::modules::create_routes()
             .layer(axum::middleware::from_fn_with_state(
                 api_state.db.clone(),

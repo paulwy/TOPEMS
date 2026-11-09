@@ -84,7 +84,7 @@ impl FinanceEventHandlers {
     }
 
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
-        let subscriber = EventSubscriber::new("finance")?;
+        let subscriber = EventSubscriber::new("finance")?.with_consumer_group("finance-group");
 
         let h1 = self.clone();
         let h2 = self.clone();

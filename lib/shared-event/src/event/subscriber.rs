@@ -53,6 +53,10 @@ pub struct EventSubscriber {
     mdm_result_handlers: Vec<(Vec<MasterDataDomain>, MasterDataResultEventHandler)>,
     schema_registry: Option<Arc<SchemaRegistry>>,
     event_versions: Option<Arc<EventVersionRegistry>>,
+    /// 显式消费组名（None 时由 StreamEventSubscriber 按 EVENT_CONSUMER_GROUP
+    /// 或 `{service}-group` 推导）。单体与独立二进制共用同一组名时，
+    /// Redis Streams 按消费组分发，一条消息只会投递给组内一个消费者。
+    consumer_group: Option<String>,
 }
 
 impl EventSubscriber {
@@ -83,7 +87,18 @@ impl EventSubscriber {
             mdm_result_handlers: Vec::new(),
             schema_registry: None,
             event_versions: None,
+            consumer_group: None,
         })
+    }
+
+    /// 显式指定消费组名（覆盖 `EVENT_CONSUMER_GROUP` 环境变量）
+    ///
+    /// 用于杜绝两类双消费：①单体进程与独立二进制必须落在同一组（组内分摊，不重复投递）；
+    /// ②进程级 `EVENT_CONSUMER_GROUP` 是全局变量，多模块共用一个进程时会把 ERP/Finance
+    /// 折叠进同一组、互相抢走对方订阅的流事件。显式钉住各组名可同时规避。
+    pub fn with_consumer_group(mut self, group_name: impl Into<String>) -> Self {
+        self.consumer_group = Some(group_name.into());
+        self
     }
 
     /// 启用事件 Schema 校验（消费回调前校验 payload，校验失败进入重试/DLQ 流程）
@@ -160,6 +175,9 @@ impl EventSubscriber {
 
             match stream_sub_result {
                 Ok(mut stream_sub) => {
+                    if let Some(group) = &self.consumer_group {
+                        stream_sub = stream_sub.with_consumer_group(group.clone());
+                    }
                     // 透传 Schema / 版本注册表（Stream 模式消费校验）
                     if let Some(registry) = &self.schema_registry {
                         stream_sub = stream_sub.with_schema_registry(registry.clone());

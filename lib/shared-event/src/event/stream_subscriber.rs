@@ -135,6 +135,15 @@ impl StreamEventSubscriber {
         self
     }
 
+    /// 显式指定消费组名（覆盖 `EVENT_CONSUMER_GROUP` 环境变量）
+    ///
+    /// 同一组名的多个进程/消费者按 Streams 语义分摊消息，不会重复投递；
+    /// 组创建本身幂等（已存在返回 BUSYGROUP，按正常分支忽略）。
+    pub fn with_consumer_group(mut self, group_name: impl Into<String>) -> Self {
+        self.config.group_name = group_name.into();
+        self
+    }
+
     /// 启用死信队列
     pub fn with_dlq(&mut self) -> EventResult<()> {
         self.dlq = Some(DeadLetterQueue::new()?);

@@ -340,17 +340,16 @@ async fn approve_settlement(
     match settlement {
         Ok(s) => {
             // 项目名称用于事件与下游应收/凭证显示；取不到就留空，不编造。
-            let project: Option<(String, Option<chrono::DateTime<Utc>>)> = sqlx::query_as(
-                only_own_schema_query!(
+            let project: Option<(String, Option<chrono::DateTime<Utc>>)> =
+                sqlx::query_as(only_own_schema_query!(
                     "pm",
                     "SELECT name, settled_at FROM pm.projects WHERE id = $1 AND deleted_at IS NULL"
-                ),
-            )
-            .bind(s.project_id)
-            .fetch_optional(&mut scope)
-            .await
-            .ok()
-            .flatten();
+                ))
+                .bind(s.project_id)
+                .fetch_optional(&mut scope)
+                .await
+                .ok()
+                .flatten();
 
             let (project_name, already_settled) = match project {
                 Some((name, settled_at)) => (name, settled_at.is_some()),

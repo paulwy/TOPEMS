@@ -51,7 +51,7 @@ impl ErpEventHandlers {
 
     /// 构建 ERP 服务的事件订阅者，注册所有业务事件 handler
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
-        let subscriber = EventSubscriber::new("erp")?;
+        let subscriber = EventSubscriber::new("erp")?.with_consumer_group("erp-group");
 
         // 每个闭包前 clone 一份，避免 moved value 错误
         let h1 = self.clone();
@@ -1548,6 +1548,7 @@ pub async fn start_event_subscribers(
     // 保持 .subscribe() 不入 DLQ——避免良性缓存失效失败制造死信噪音。
     let cache_subscriber = EventSubscriber::new("erp-cache-invalidation")
         .map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?
+        .with_consumer_group("erp-cache-invalidation-group")
         .subscribe(vec![EventType::CacheInvalidated], move |event| {
             let listener = cache_listener.clone();
             Box::pin(async move {
