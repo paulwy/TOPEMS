@@ -542,6 +542,10 @@ impl StreamEventSubscriber {
         }
 
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        // XAUTOCLAIM 使用独立连接：XREADGROUP 是 BLOCK 读取，若与回收命令共用同一条
+        // 多路复用连接，回收命令会排在阻塞读之后，等到响应时客户端已超时（Err），
+        // 表现为 PEL 消息反复投递（delivery-count 飙升）却始终不 ACK、不处理。
+        let mut claim_con = self.redis_client.get_multiplexed_async_connection().await?;
 
         // 持续监听
         loop {
@@ -592,6 +596,16 @@ impl StreamEventSubscriber {
                                     redis::from_redis_value_ref::<String>(v).unwrap_or_default()
                                 })
                                 .unwrap_or_default();
+
+                            if payload_json.is_empty() {
+                                // 静默跳过会让消息永久滞留 PEL（lag=0 但 pending 只增不减），
+                                // 必须显式告警以便人工定位生产端字段缺失。
+                                warn!(
+                                    "事件消息缺少 payload 字段，跳过（保持 pending 待排查）- Stream: {}, 消息ID: {}",
+                                    stream_key, message_id
+                                );
+                                continue;
+                            }
 
                             if is_mdm {
                                 match serde_json::from_str::<MasterDataEvent>(&payload_json) {
@@ -652,7 +666,7 @@ impl StreamEventSubscriber {
                                 error!("重建消费者组失败 {}: {}", k, e2);
                             }
                         }
-                    } else if !err_msg.contains("timeout") {
+                    } else if !err_msg.contains("timeout") && !err_msg.contains("timed out") {
                         error!("XREADGROUP 错误: {}", e);
                         tokio::time::sleep(Duration::from_secs(1)).await;
                     }
@@ -676,13 +690,20 @@ impl StreamEventSubscriber {
                     .arg("0")
                     .arg("COUNT")
                     .arg(self.config.count)
-                    .query_async(&mut con)
+                    .query_async(&mut claim_con)
                     .await;
 
                 if let Ok(redis::Value::Array(items)) = claim_result {
                     // items = [cursor, entries_array, deleted_array]
                     if items.len() >= 2 {
                         if let redis::Value::Array(entries) = &items[1] {
+                            if !entries.is_empty() {
+                                debug!(
+                                    "PEL 回收 {} 条待重投消息 - Stream: {}",
+                                    entries.len(),
+                                    stream_key
+                                );
+                            }
                             for entry in entries {
                                 // 每个 entry = Bulk([id, fields_array])
                                 let (message_id, payload_json) = match entry {
@@ -691,7 +712,13 @@ impl StreamEventSubscriber {
                                             redis::Value::BulkString(b) => {
                                                 String::from_utf8_lossy(b).to_string()
                                             }
-                                            _ => continue,
+                                            other => {
+                                                warn!(
+                                                    "PEL 重投消息 ID 类型异常，跳过 - Stream: {}, id: {:?}",
+                                                    stream_key, other
+                                                );
+                                                continue;
+                                            }
                                         };
                                         let mut payload = String::new();
                                         if let redis::Value::Array(fields) = &pair[1] {
@@ -720,10 +747,22 @@ impl StreamEventSubscriber {
                                         }
                                         (id, payload)
                                     }
-                                    _ => continue,
+                                    other => {
+                                        // 结构不符合 [id, fields] 时不能静默丢弃：
+                                        // 消息会一直留在 PEL，表现为 pending 只增不减。
+                                        warn!(
+                                            "PEL 重投消息结构无法解析，跳过 - Stream: {}, entry: {:?}",
+                                            stream_key, other
+                                        );
+                                        continue;
+                                    }
                                 };
 
                                 if payload_json.is_empty() {
+                                    warn!(
+                                        "PEL 重投消息缺少 payload 字段，跳过（保持 pending 待排查）- Stream: {}, 消息ID: {}",
+                                        stream_key, message_id
+                                    );
                                     continue;
                                 }
 
@@ -771,6 +810,9 @@ impl StreamEventSubscriber {
                             }
                         }
                     }
+                } else if let Err(e) = claim_result {
+                    // 回收失败不能静默：否则 PEL 消息永远不处理也不 ACK。
+                    warn!("XAUTOCLAIM 失败 - Stream: {}: {}", stream_key, e);
                 }
             }
         }
