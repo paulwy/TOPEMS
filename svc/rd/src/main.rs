@@ -1,7 +1,9 @@
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
-use topems_shared_auth::middleware::{require_module_access, require_module_write};
+use topems_shared_auth::middleware::{
+    require_module_access, require_module_write, require_permission,
+};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, build_detailed_service_health,
     build_simple_status_response, prometheus_metrics_handler, run, Application, ServiceConfig,
@@ -109,7 +111,8 @@ async fn main() -> anyhow::Result<()> {
 
     // ── protected_routes（业务路由 + State<ApiState>） ────────────────────
     // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
-    // 模块门只负责「能进 rd + 读」；写仍要求 rd:admin（避免 rd:read 提权）。
+    // 模块门只负责「能进 rd + 读」；其余写仍要求 rd:admin（避免 rd:read 提权），
+    // 配方写单独走细粒度码 rd:formula:write（见下方 merge）。
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn(require_module_write("rd")))
         .layer(axum::middleware::from_fn(require_module_access("rd")))
@@ -117,7 +120,21 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
-        ));
+        ))
+        // 配方写路由：细粒度码 rd:formula:write，不再要求模块伞码 rd:admin。
+        // 该 Router 在 protected_routes 层化之后 merge，只带自己的守卫。
+        .merge(
+            modules::formula::create_write_routes()
+                .layer(axum::middleware::from_fn(require_module_access("rd")))
+                .layer(axum::middleware::from_fn(require_permission(
+                    "rd:formula:write",
+                )))
+                .with_state(api_state.clone())
+                .layer(axum::middleware::from_fn_with_state(
+                    ctx.db.clone(),
+                    topems_shared_auth::tenant_middleware(),
+                )),
+        );
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

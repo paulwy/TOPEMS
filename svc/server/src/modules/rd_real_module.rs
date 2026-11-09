@@ -11,7 +11,9 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_rd::modules::{create_routes, ApiState};
-use topems_shared_auth::middleware::{require_module_access, require_module_write};
+use topems_shared_auth::middleware::{
+    require_module_access, require_module_write, require_permission,
+};
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_event::event::EventPublisher;
@@ -66,14 +68,29 @@ impl RdRealModule {
         };
 
         // 4. 业务路由（权限中间件 + 开发验证模拟认证）
+        // 模块门只负责「能进 rd + 读」；其余写仍要求 rd:admin。
+        // 配方写单独拆出，改判细粒度码 rd:formula:write（与 svc/rd 独立入口一致）。
         let protected_routes = create_routes()
+            .layer(axum::middleware::from_fn(require_module_access("rd")))
+            .layer(axum::middleware::from_fn(require_module_write("rd")))
+            .with_state(api_state.clone())
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_module_write("rd")))
-            .layer(axum::middleware::from_fn(require_module_access("rd")))
-            .with_state(api_state);
+            // 该 Router 在 protected_routes 层化之后 merge，只带自己的守卫。
+            .merge(
+                topems_rd::modules::formula::create_write_routes()
+                    .layer(axum::middleware::from_fn(require_module_access("rd")))
+                    .layer(axum::middleware::from_fn(require_permission(
+                        "rd:formula:write",
+                    )))
+                    .with_state(api_state)
+                    .layer(axum::middleware::from_fn_with_state(
+                        ctx.db.clone(),
+                        topems_shared_auth::tenant_middleware(),
+                    )),
+            );
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn_with_state(

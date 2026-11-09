@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
@@ -68,15 +68,21 @@ impl ListParams {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/formulas", get(list_formulas).post(create_formula))
+        .route("/formulas", get(list_formulas))
+        .route("/formulas/{id}", get(get_formula))
+        .route("/formulas/{id}/versions", get(get_formula_versions))
+}
+
+/// 配方写路由：由 main 在模块门之外再叠加细粒度码 rd:formula:write
+/// （不再依赖模块伞码 rd:admin；字典中 rd:formula:write 已存在）。
+pub fn create_write_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
+        .route("/formulas", post(create_formula))
         .route(
             "/formulas/{id}",
-            get(get_formula).put(update_formula).delete(delete_formula),
+            put(update_formula).delete(delete_formula),
         )
-        .route(
-            "/formulas/{id}/versions",
-            get(get_formula_versions).post(create_formula_version),
-        )
+        .route("/formulas/{id}/versions", post(create_formula_version))
         .route("/formulas/{id}/review", post(review_formula))
 }
 
@@ -640,8 +646,9 @@ pub async fn get_formula_versions(
     // （列漂移），用 NULL 别名补齐 FormulaVersion 的 Option 字段。
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
-        SELECT id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
-               properties, changes,
+        SELECT id, tenant_id, formula_id, version, ingredients,
+               process_steps #>> '{}' AS process_steps, process_params,
+               properties, changes #>> '{}' AS changes,
                NULL::text AS approval_status, NULL::text AS approved_by,
                NULL::timestamptz AS approved_at,
                created_by, created_at, updated_at
@@ -721,8 +728,9 @@ pub async fn create_formula_version(
             id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
             properties, changes, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
-                  properties, changes,
+        RETURNING id, tenant_id, formula_id, version, ingredients,
+                  process_steps #>> '{}' AS process_steps, process_params,
+                  properties, changes #>> '{}' AS changes,
                   NULL::text AS approval_status, NULL::text AS approved_by,
                   NULL::timestamptz AS approved_at,
                   created_by, created_at, updated_at
@@ -733,10 +741,10 @@ pub async fn create_formula_version(
     .bind(id)
     .bind(&req.version)
     .bind(serde_json::to_value(&ingredients).unwrap_or_default())
-    .bind(&req.process_steps)
+    .bind(serde_json::to_value(&req.process_steps).unwrap_or(serde_json::Value::Null))
     .bind(serde_json::json!({}))
     .bind(serde_json::json!({}))
-    .bind(&req.changes)
+    .bind(serde_json::to_value(&req.changes).unwrap_or(serde_json::Value::Null))
     .bind(&existing_formula.created_by)
     .bind(now)
     .bind(now)

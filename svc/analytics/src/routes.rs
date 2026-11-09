@@ -11,7 +11,9 @@ use axum::{
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims;
-use topems_shared_auth::middleware::{require_module_access, require_module_write};
+use topems_shared_auth::middleware::{
+    require_module_access, require_module_write, require_permission,
+};
 use topems_shared_core::response::ApiResponse;
 
 use crate::modules;
@@ -151,34 +153,14 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
             "/widget/dashboard/{dashboard_id}",
             get(modules::bi::widget::get_widgets_by_dashboard),
         )
-        // Data Source
+        // Data Source - 读路由；写路由见下方 datasource_write_routes（细粒度码）
         .route(
             "/data-sources",
             get(modules::bi::datasource::list_datasources),
         )
         .route(
-            "/data-sources",
-            post(modules::bi::datasource::create_datasource),
-        )
-        .route(
             "/data-sources/{id}",
             get(modules::bi::datasource::get_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            put(modules::bi::datasource::update_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            delete(modules::bi::datasource::delete_datasource),
-        )
-        .route(
-            "/data-sources/{id}/test",
-            post(modules::bi::datasource::test_datasource),
-        )
-        .route(
-            "/data-sources/{id}/refresh",
-            post(modules::bi::datasource::refresh_datasource),
         )
         // Dataset
         .merge(modules::bi::dataset::create_routes())
@@ -636,12 +618,41 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
         //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
         //       无鉴权的 /health（服务级健康检查）区分开）
         .route("/health/detailed", get(detailed_health))
-        // 模块门只负责「能进 BI + 读」；报表/数据源/导出等写仍要求 bi:admin。
+        // 模块门只负责「能进 BI + 读」；其余写路由仍要求模块伞码 bi:admin。
         // 路由前缀与前端菜单均为 /api/bi、业务权限码均为 bi:*，故模块门对齐 bi。
         .layer(axum::middleware::from_fn(require_module_write("bi")))
         .layer(axum::middleware::from_fn(require_module_access("bi")))
+        .with_state(app_state.clone());
+
+    // 数据源写路由：数据源是本域独立资源，按细粒度码 bi:data_source:write 判定，
+    // 不再挂在 bi:admin 模块伞码下（否则租户域角色被 403 挡住，见
+    // docs/quality/prod-schema-drift-2026-11-09.md 权限码专项）。
+    // 注意：本 Router 在 protected_routes 层化之后 merge，故只带自己的两层守卫。
+    let datasource_write_routes = Router::new()
+        .route(
+            "/data-sources",
+            post(modules::bi::datasource::create_datasource),
+        )
+        .route(
+            "/data-sources/{id}",
+            put(modules::bi::datasource::update_datasource)
+                .delete(modules::bi::datasource::delete_datasource),
+        )
+        .route(
+            "/data-sources/{id}/test",
+            post(modules::bi::datasource::test_datasource),
+        )
+        .route(
+            "/data-sources/{id}/refresh",
+            post(modules::bi::datasource::refresh_datasource),
+        )
+        .layer(axum::middleware::from_fn(require_module_access("bi")))
+        .layer(axum::middleware::from_fn(require_permission(
+            "bi:data_source:write",
+        )))
         .with_state(app_state);
-    protected_routes
+
+    protected_routes.merge(datasource_write_routes)
 }
 
 #[utoipa::path(
