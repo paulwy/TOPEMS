@@ -1,6 +1,5 @@
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
-use sqlx::Row;
 use std::fmt;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -9,7 +8,39 @@ use super::super::super::models::*;
 use topems_shared_core::error::TopemsError;
 
 use super::company::resolve_tenant_company;
+use super::voucher::parse_period_str;
 use super::FinanceService;
+
+/// 结转分录（一笔凭证内的一行），借/贷单边。
+struct ClosingEntry {
+    account_id: Uuid,
+    account_code: String,
+    account_name: String,
+    aux_type: Option<String>,
+    aux_id: Option<Uuid>,
+    debit: Decimal,
+    credit: Decimal,
+}
+
+/// 某科目（含辅助核算维度）在结转期间内的净额，`balance` 口径统一为「贷 - 借」。
+struct ProfitBalanceRow {
+    account_id: Uuid,
+    account_code: String,
+    account_name: String,
+    account_type: String,
+    aux_type: Option<String>,
+    aux_id: Option<Uuid>,
+    balance: Decimal,
+}
+
+/// 损益结转计划：分录 + 收入/费用合计，供月结与年结复用。
+struct ProfitClosePlan {
+    entries: Vec<ClosingEntry>,
+    total_income: Decimal,
+    total_expense: Decimal,
+    income_accounts: i32,
+    expense_accounts: i32,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PeriodValidationError {
@@ -301,184 +332,492 @@ impl FinanceService {
         description: Option<String>,
         locale: &str,
     ) -> Result<YearEndCloseResult, TopemsError> {
-        let period_pattern = format!("{:04}%", year);
+        let period = format!("{:04}{:02}", year, 12);
+        let year_pattern = format!("{:04}%", year);
+        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+        let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
 
-        let income_rows = sqlx::query(only_own_schema_query!(
-            "finance",
-            "SELECT a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS name, COALESCE(SUM(l.credit - l.debit), 0) as balance
-             FROM finance.core_finance_accounts a
-             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
-             WHERE a.tenant_id = $1 AND a.account_type = 'income'
-             GROUP BY a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
-             HAVING COALESCE(SUM(l.credit - l.debit), 0) > 0"
-        ))
-        .bind(tenant_id)
-        .bind(AccountType::Income)
-        .bind(&period_pattern)
-        .bind(locale)
-        .fetch_all(&self.db_pool)
-        .await?;
+        // 第一步：全年未结转损益（含此前月结遗留净额）结转到 4103 本年利润。
+        // 若损益已按月结平，这一步自然没有分录，只做第二步的利润分配结转。
+        let plan = self
+            .build_profit_close_plan(
+                tenant_id,
+                company_id,
+                &year_pattern,
+                &profit_account,
+                locale,
+            )
+            .await?;
+        let mut profit_voucher: Option<Voucher> = None;
+        let mut profit_ledger_rows = 0_i32;
+        if !plan.entries.is_empty() {
+            let (v, rows) = self
+                .post_closing_voucher(
+                    tenant_id,
+                    company_id,
+                    &period,
+                    description.unwrap_or_else(|| format!("{year}年度损益结转")),
+                    created_by,
+                    &plan.entries,
+                )
+                .await?;
+            profit_voucher = Some(v);
+            profit_ledger_rows = rows;
+        }
 
-        let expense_rows = sqlx::query(only_own_schema_query!(
-            "finance",
-            "SELECT a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS name, COALESCE(SUM(l.debit - l.credit), 0) as balance
-             FROM finance.core_finance_accounts a
-             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
-             WHERE a.tenant_id = $1 AND a.account_type = 'expense'
-             GROUP BY a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
-             HAVING COALESCE(SUM(l.debit - l.credit), 0) > 0"
-        ))
-        .bind(tenant_id)
-        .bind(AccountType::Expense)
-        .bind(&period_pattern)
-        .bind(locale)
-        .fetch_all(&self.db_pool)
-        .await?;
+        // 第二步：4103 本年利润结转到 4104 利润分配（年结专属）
+        let mut transfer_voucher: Option<Voucher> = None;
+        let mut transfer_ledger_rows = 0_i32;
+        if profit_account.code.starts_with("4103") {
+            let balance = self
+                .account_credit_balance(tenant_id, company_id, profit_account.id, &period)
+                .await?;
+            if balance != Decimal::ZERO {
+                let distribution = self
+                    .get_account_by_code(tenant_id, "4104", locale)
+                    .await
+                    .map_err(|_| {
+                        TopemsError::ValidationFailed("未找到利润分配科目(4104)".to_string())
+                    })?;
+                // 本年利润为贷方余额（盈利）时借记 4103，亏损时反向
+                let (debit_account, credit_account, amount) = if balance > Decimal::ZERO {
+                    (&profit_account, &distribution, balance)
+                } else {
+                    (&distribution, &profit_account, -balance)
+                };
+                let transfer_entries = vec![
+                    ClosingEntry {
+                        account_id: debit_account.id,
+                        account_code: debit_account.code.clone(),
+                        account_name: debit_account.name.clone(),
+                        aux_type: None,
+                        aux_id: None,
+                        debit: amount,
+                        credit: Decimal::ZERO,
+                    },
+                    ClosingEntry {
+                        account_id: credit_account.id,
+                        account_code: credit_account.code.clone(),
+                        account_name: credit_account.name.clone(),
+                        aux_type: None,
+                        aux_id: None,
+                        debit: Decimal::ZERO,
+                        credit: amount,
+                    },
+                ];
+                let (tv, rows) = self
+                    .post_closing_voucher(
+                        tenant_id,
+                        company_id,
+                        &period,
+                        format!("{year}年度利润分配结转"),
+                        created_by,
+                        &transfer_entries,
+                    )
+                    .await?;
+                transfer_voucher = Some(tv);
+                transfer_ledger_rows = rows;
+            }
+        }
 
-        let total_income: Decimal = income_rows
-            .iter()
-            .map(|r| {
-                let balance: Decimal = r.get("balance");
-                balance
-            })
-            .sum();
-
-        let total_expense: Decimal = expense_rows
-            .iter()
-            .map(|r| {
-                let balance: Decimal = r.get("balance");
-                balance
-            })
-            .sum();
-
-        validate_trial_balance(total_income + total_expense, total_income + total_expense)
-            .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
-
-        let net_profit = total_income - total_expense;
-
-        if total_income == Decimal::ZERO && total_expense == Decimal::ZERO {
+        if profit_voucher.is_none() && transfer_voucher.is_none() {
             return Err(TopemsError::ValidationFailed(
                 "没有可结转的损益数据".to_string(),
             ));
         }
 
-        // 种子科目（20261108135000_p2a_single_ledger_convergence.sql）使用企业会计准则编码：
-        // 4103 本年利润 / 4104 利润分配。年结损益先归集到本年利润，缺失时退回利润分配。
-        let profit_account = match self.get_account_by_code(tenant_id, "4103", locale).await {
-            Ok(account) => account,
+        Ok(YearEndCloseResult {
+            year,
+            period,
+            profit_voucher_id: profit_voucher.as_ref().map(|v| v.id),
+            profit_voucher_no: profit_voucher.as_ref().map(|v| v.voucher_no.clone()),
+            profit_total_debit: profit_voucher
+                .as_ref()
+                .map_or(Decimal::ZERO, |v| v.total_debit),
+            profit_total_credit: profit_voucher
+                .as_ref()
+                .map_or(Decimal::ZERO, |v| v.total_credit),
+            transfer_voucher_id: transfer_voucher.as_ref().map(|v| v.id),
+            transfer_voucher_no: transfer_voucher.as_ref().map(|v| v.voucher_no.clone()),
+            transfer_total_debit: transfer_voucher
+                .as_ref()
+                .map_or(Decimal::ZERO, |v| v.total_debit),
+            transfer_total_credit: transfer_voucher
+                .as_ref()
+                .map_or(Decimal::ZERO, |v| v.total_credit),
+            total_income: plan.total_income,
+            total_expense: plan.total_expense,
+            net_profit: plan.total_income - plan.total_expense,
+            income_accounts_closed: plan.income_accounts,
+            expense_accounts_closed: plan.expense_accounts,
+            ledger_rows: profit_ledger_rows + transfer_ledger_rows,
+        })
+    }
+
+    /// 损益结转计划：按「科目 + 辅助核算」汇总净额，收入借方/费用贷方，
+    /// 另一端统一归集到本年利润，保证凭证借贷恒等。
+    async fn build_profit_close_plan(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        period_like: &str,
+        profit_account: &Account,
+        locale: &str,
+    ) -> Result<ProfitClosePlan, TopemsError> {
+        let rows = self
+            .profit_balances(tenant_id, company_id, period_like, locale)
+            .await?;
+
+        let mut entries: Vec<ClosingEntry> = Vec::with_capacity(rows.len() + 1);
+        let mut total_income = Decimal::ZERO;
+        let mut total_expense = Decimal::ZERO;
+        let mut income_accounts = 0_i32;
+        let mut expense_accounts = 0_i32;
+        let mut pl_debit = Decimal::ZERO;
+        let mut pl_credit = Decimal::ZERO;
+
+        for row in &rows {
+            if row.account_type == "income" {
+                total_income += row.balance;
+                income_accounts += 1;
+            } else {
+                total_expense += -row.balance;
+                expense_accounts += 1;
+            }
+            if row.aux_id.is_some() && row.aux_type.is_none() {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "科目 {} 存在辅助核算余额但缺少辅助类型，拒绝结转",
+                    row.account_code
+                )));
+            }
+            let (debit, credit) = if row.balance > Decimal::ZERO {
+                (row.balance, Decimal::ZERO)
+            } else {
+                (Decimal::ZERO, -row.balance)
+            };
+            pl_debit += debit;
+            pl_credit += credit;
+            entries.push(ClosingEntry {
+                account_id: row.account_id,
+                account_code: row.account_code.clone(),
+                account_name: row.account_name.clone(),
+                aux_type: row.aux_type.clone(),
+                aux_id: row.aux_id,
+                debit,
+                credit,
+            });
+        }
+
+        if !entries.is_empty() {
+            // 本年利润一侧：贷记损益借方合计、借记损益贷方合计
+            entries.push(ClosingEntry {
+                account_id: profit_account.id,
+                account_code: profit_account.code.clone(),
+                account_name: profit_account.name.clone(),
+                aux_type: None,
+                aux_id: None,
+                debit: pl_credit,
+                credit: pl_debit,
+            });
+        }
+
+        Ok(ProfitClosePlan {
+            entries,
+            total_income,
+            total_expense,
+            income_accounts,
+            expense_accounts,
+        })
+    }
+
+    async fn resolve_profit_account(
+        &self,
+        tenant_id: Uuid,
+        locale: &str,
+    ) -> Result<Account, TopemsError> {
+        match self.get_account_by_code(tenant_id, "4103", locale).await {
+            Ok(account) => Ok(account),
             Err(_) => self
                 .get_account_by_code(tenant_id, "4104", locale)
                 .await
                 .map_err(|_| {
                     TopemsError::ValidationFailed("未找到本年利润科目(4103或4104)".to_string())
-                })?,
-        };
+                }),
+        }
+    }
 
-        let voucher_type = VoucherType::General;
-        let voucher_no = self
-            .generate_voucher_no(tenant_id, voucher_type.clone())
+    /// 期间内损益科目净额（贷 - 借），按科目 + 辅助核算维度分组，跳过净额为零的组合。
+    async fn profit_balances(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        period_like: &str,
+        locale: &str,
+    ) -> Result<Vec<ProfitBalanceRow>, TopemsError> {
+        let rows: Vec<(Uuid, String, String, String, Option<String>, Option<Uuid>, Decimal)> =
+            sqlx::query_as(only_own_schema_query!(
+                "finance",
+                "SELECT a.id, a.code,
+                        CASE WHEN $4 = 'en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS name,
+                        a.account_type::text AS account_type,
+                        ab.aux_type::text AS aux_type,
+                        l.aux_id,
+                        COALESCE(SUM(l.credit - l.debit), 0) AS balance
+                 FROM finance.core_finance_ledger l
+                 JOIN finance.core_finance_accounts a ON a.id = l.account_id
+                 LEFT JOIN LATERAL (
+                     SELECT x.aux_type FROM finance.core_finance_aux_balances x
+                     WHERE x.tenant_id = l.tenant_id AND x.company_id = l.company_id
+                       AND x.account_id = l.account_id AND x.aux_id = l.aux_id
+                       AND x.period LIKE $3
+                     LIMIT 1
+                 ) ab ON TRUE
+                 WHERE l.tenant_id = $1 AND l.company_id = $2 AND l.period LIKE $3
+                   AND l.deleted_at IS NULL AND a.account_type::text IN ('income', 'expense')
+                 GROUP BY a.id, a.code, name, a.account_type::text, ab.aux_type, l.aux_id
+                 HAVING COALESCE(SUM(l.credit - l.debit), 0) <> 0
+                 ORDER BY a.code, l.aux_id"
+            ))
+            .bind(tenant_id)
+            .bind(company_id)
+            .bind(period_like)
+            .bind(locale)
+            .fetch_all(&self.db_pool)
             .await?;
-        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
-        let voucher_date = Utc::now();
-        let period = format!("{:04}12", year);
 
-        let voucher = sqlx::query_as::<_, Voucher>(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, source_module)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, 'finance_period_close')
-             RETURNING *"),
-        )
+        Ok(rows
+            .into_iter()
+            .map(
+                |(
+                    account_id,
+                    account_code,
+                    account_name,
+                    account_type,
+                    aux_type,
+                    aux_id,
+                    balance,
+                )| {
+                    ProfitBalanceRow {
+                        account_id,
+                        account_code,
+                        account_name,
+                        account_type,
+                        aux_type,
+                        aux_id,
+                        balance,
+                    }
+                },
+            )
+            .collect())
+    }
+
+    /// 科目到指定期间为止的贷方净余额（贷 - 借）。
+    async fn account_credit_balance(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        account_id: Uuid,
+        period: &str,
+    ) -> Result<Decimal, TopemsError> {
+        let (balance,): (Decimal,) = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT COALESCE(SUM(credit - debit), 0) FROM finance.core_finance_ledger
+             WHERE tenant_id = $1 AND company_id = $2 AND account_id = $3
+               AND period <= $4 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(company_id)
+        .bind(account_id)
+        .bind(period)
+        .fetch_one(&self.db_pool)
+        .await?;
+        Ok(balance)
+    }
+
+    /// 结转凭证号：按凭证所属期间（而非当前日期）编号，避免 12 月结转凭证
+    /// 在 11 月执行时与本期内另一张结转凭证取得相同编号。
+    async fn generate_period_voucher_no(
+        &self,
+        tenant_id: Uuid,
+        period: &str,
+    ) -> Result<String, TopemsError> {
+        let prefix = format!("记{}", period);
+        let count: (i64,) = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT COUNT(*) FROM finance.core_finance_vouchers
+             WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_no LIKE $2"
+        ))
+        .bind(tenant_id)
+        .bind(format!("{}%", prefix))
+        .fetch_one(&self.db_pool)
+        .await?;
+        Ok(format!("{}{:04}", prefix, count.0 + 1))
+    }
+
+    /// 结转凭证落库：借贷平衡校验 → 凭证 + 分录 + 总账 + 辅助核算余额，单事务原子化。
+    /// 状态直接置为 posted（结转是期末动作，不再走审批），字段口径与普通凭证过账一致。
+    async fn post_closing_voucher(
+        &self,
+        tenant_id: Uuid,
+        company_id: Uuid,
+        period: &str,
+        description: String,
+        created_by: &str,
+        entries: &[ClosingEntry],
+    ) -> Result<(Voucher, i32), TopemsError> {
+        let total_debit: Decimal = entries.iter().map(|e| e.debit).sum();
+        let total_credit: Decimal = entries.iter().map(|e| e.credit).sum();
+        validate_trial_balance(total_debit, total_credit)
+            .map_err(|e| TopemsError::ValidationFailed(format!("结转凭证借贷不平：{}", e)))?;
+        if entries.is_empty() || total_debit == Decimal::ZERO {
+            return Err(TopemsError::ValidationFailed(
+                "没有可结转的损益数据".to_string(),
+            ));
+        }
+
+        let voucher_no = self.generate_period_voucher_no(tenant_id, period).await?;
+        let voucher_date = Utc::now();
+
+        let mut tx = self.db_pool.begin().await?;
+        let voucher: Voucher = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, source_module)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'posted', $9, $10, $10, $10, 'finance_period_close')
+             RETURNING *"
+        ))
         .bind(tenant_id)
         .bind(company_id)
         .bind(&voucher_no)
         .bind(voucher_date)
-        .bind(&period)
-        .bind(voucher_type)
-        .bind(total_income + total_expense)
-        .bind(total_income + total_expense)
-        .bind(description.unwrap_or_else(|| format!("{}年度结转", year)))
+        .bind(period)
+        .bind(VoucherType::General)
+        .bind(total_debit)
+        .bind(total_credit)
+        .bind(&description)
         .bind(created_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut *tx)
         .await?;
 
-        let mut line_no = 0;
+        for (idx, entry) in entries.iter().enumerate() {
+            let line_no = i32::try_from(idx + 1).unwrap_or(i32::MAX);
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id, company_id, aux_type, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+            ))
+            .bind(voucher.id)
+            .bind(line_no)
+            .bind(entry.account_id)
+            .bind(&entry.account_code)
+            .bind(&entry.account_name)
+            .bind(&description)
+            .bind(entry.debit)
+            .bind(entry.credit)
+            .bind(tenant_id)
+            .bind(company_id)
+            .bind(entry.aux_type.as_deref())
+            .bind(entry.aux_id)
+            .execute(&mut *tx)
+            .await?;
 
-        for row in &income_rows {
-            let balance: Decimal = row.get("balance");
-            if balance > Decimal::ZERO {
-                line_no += 1;
-                let account_id: Uuid = row.get("id");
-                let account_code: String = row.get("code");
-                let account_name: String = row.get("name");
+            let balance = self
+                .calculate_account_balance(&mut *tx, tenant_id, entry.account_id)
+                .await?;
+            let new_balance = balance + entry.debit - entry.credit;
 
-                sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id, company_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9)"),
-                )
-                .bind(voucher.id)
-                .bind(line_no)
-                .bind(account_id)
-                .bind(&account_code)
-                .bind(&account_name)
-                .bind("结转年度收入")
-                .bind(balance)
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "INSERT INTO finance.core_finance_ledger (tenant_id, company_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
+            ))
+            .bind(tenant_id)
+            .bind(company_id)
+            .bind(entry.account_id)
+            .bind(&entry.account_code)
+            .bind(&entry.account_name)
+            .bind(voucher.id)
+            .bind(&voucher_no)
+            .bind(voucher_date)
+            .bind(period)
+            .bind(&description)
+            .bind(entry.debit)
+            .bind(entry.credit)
+            .bind(new_balance)
+            .bind(entry.aux_id)
+            .execute(&mut *tx)
+            .await?;
+
+            if let (Some(aux_type), Some(aux_id)) = (entry.aux_type.as_deref(), entry.aux_id) {
+                sqlx::query(only_own_schema_query!(
+                    "finance",
+                    "INSERT INTO finance.core_finance_aux_balances (tenant_id, company_id, account_id, aux_type, aux_id, period, debit_balance, credit_balance)
+                     VALUES ($1, $2, $3, $4::public.aux_type, $5, $6, $7, $8)
+                     ON CONFLICT (tenant_id, company_id, account_id, aux_type, aux_id, period)
+                     DO UPDATE SET debit_balance = finance.core_finance_aux_balances.debit_balance + EXCLUDED.debit_balance,
+                                   credit_balance = finance.core_finance_aux_balances.credit_balance + EXCLUDED.credit_balance,
+                                   updated_at = CURRENT_TIMESTAMP"
+                ))
                 .bind(tenant_id)
                 .bind(company_id)
-                .execute(&self.db_pool)
+                .bind(entry.account_id)
+                .bind(aux_type)
+                .bind(aux_id)
+                .bind(period)
+                .bind(entry.debit)
+                .bind(entry.credit)
+                .execute(&mut *tx)
                 .await?;
             }
         }
 
-        for row in &expense_rows {
-            let balance: Decimal = row.get("balance");
-            if balance > Decimal::ZERO {
-                line_no += 1;
-                let account_id: Uuid = row.get("id");
-                let account_code: String = row.get("code");
-                let account_name: String = row.get("name");
+        tx.commit().await?;
+        Ok((voucher, i32::try_from(entries.len()).unwrap_or(i32::MAX)))
+    }
 
-                sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id, company_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9)"),
-                )
-                .bind(voucher.id)
-                .bind(line_no)
-                .bind(profit_account.id)
-                .bind(&profit_account.code)
-                .bind(&profit_account.name)
-                .bind("结转年度费用")
-                .bind(balance)
-                .bind(tenant_id)
-                .bind(company_id)
-                .execute(&self.db_pool)
-                .await?;
-
-                line_no += 1;
-                sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id, company_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9)"),
-                )
-                .bind(voucher.id)
-                .bind(line_no)
-                .bind(account_id)
-                .bind(&account_code)
-                .bind(&account_name)
-                .bind("结转年度费用")
-                .bind(balance)
-                .bind(tenant_id)
-                .bind(company_id)
-                .execute(&self.db_pool)
-                .await?;
-            }
+    /// 月结：当月损益结转到 4103 本年利润（只结转到本年利润，不做利润分配结转）。
+    pub async fn close_income_period(
+        &self,
+        tenant_id: Uuid,
+        period: &str,
+        created_by: &str,
+        description: Option<String>,
+        locale: &str,
+    ) -> Result<IncomeCloseResult, TopemsError> {
+        let (year, month) = parse_period_str(period)?;
+        let period_code = format!("{:04}{:02}", year, month);
+        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+        let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
+        let plan = self
+            .build_profit_close_plan(tenant_id, company_id, &period_code, &profit_account, locale)
+            .await?;
+        if plan.entries.is_empty() {
+            return Err(TopemsError::ValidationFailed(
+                "没有可结转的损益数据".to_string(),
+            ));
         }
+        let (voucher, ledger_rows) = self
+            .post_closing_voucher(
+                tenant_id,
+                company_id,
+                &period_code,
+                description.unwrap_or_else(|| format!("{year}年{month}月损益结转")),
+                created_by,
+                &plan.entries,
+            )
+            .await?;
 
-        Ok(YearEndCloseResult {
+        Ok(IncomeCloseResult {
+            period: period_code,
             voucher_id: voucher.id,
             voucher_no: voucher.voucher_no,
-            total_income,
-            total_expense,
-            net_profit,
-            income_accounts_closed: income_rows.len() as i32,
-            expense_accounts_closed: expense_rows.len() as i32,
+            total_income: plan.total_income,
+            total_expense: plan.total_expense,
+            net_profit: plan.total_income - plan.total_expense,
+            total_debit: voucher.total_debit,
+            total_credit: voucher.total_credit,
+            income_accounts: plan.income_accounts,
+            expense_accounts: plan.expense_accounts,
+            ledger_rows,
         })
     }
 }

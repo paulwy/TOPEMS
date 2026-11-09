@@ -10,7 +10,7 @@ use topems_shared_core::error::TopemsError;
 use super::company::resolve_tenant_company;
 use super::FinanceService;
 
-fn parse_period_str(s: &str) -> Result<(i32, i32), TopemsError> {
+pub(super) fn parse_period_str(s: &str) -> Result<(i32, i32), TopemsError> {
     let chars: Vec<char> = s.chars().collect();
     if chars.len() == 6 {
         let year_str: String = chars[0..4].iter().collect();
@@ -420,7 +420,7 @@ impl FinanceService {
     /// 随后在同一事务内汇总 ledger（本事务内已插入的分录对自身可见），
     /// 替代原先走 `self.db_pool` 独立连接、事务外读余额的并发丢更新模式。
     /// 账户主行不存在时跳过加锁，退化为普通汇总（不阻断既有流程）。
-    async fn calculate_account_balance(
+    pub(super) async fn calculate_account_balance(
         &self,
         tx: &mut sqlx::PgConnection,
         tenant_id: Uuid,

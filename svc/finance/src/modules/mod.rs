@@ -3946,16 +3946,25 @@ pub async fn close_period_v2(
 }
 
 pub async fn close_income_period(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let period = req.period.unwrap_or_default();
-    let voucher_id = Uuid::new_v4();
-    ApiResponse::success(
-        serde_json::json!({"voucher_id": voucher_id, "period": period, "type": "income_close"}),
-        "损益结转成功",
-    )
+    if period.is_empty() {
+        return ApiResponse::bad_request("period 不能为空（YYYY-MM 或 YYYYMM）");
+    }
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service
+        .close_income_period(tenant_id, &period, &claims.username, None, locale)
+        .await
+    {
+        Ok(result) => ApiResponse::success(serde_json::json!(result), "损益结转成功"),
+        Err(e) => crate::shared::err_resp(e),
+    }
 }
 
 #[utoipa::path(
@@ -3970,19 +3979,22 @@ pub async fn close_income_period(
     ),
 )]
 pub async fn year_end_close_v2(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let year = req.year.unwrap_or(Utc::now().year());
-    ApiResponse::success(
-        serde_json::json!({
-            "year": year,
-            "vouchers": [],
-            "status": "completed",
-        }),
-        "年结成功",
-    )
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let year = req.year.unwrap_or_else(|| Utc::now().year());
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service
+        .year_end_close(tenant_id, year, &claims.username, None, locale)
+        .await
+    {
+        Ok(result) => ApiResponse::success(serde_json::json!(result), "年结成功"),
+        Err(e) => crate::shared::err_resp(e),
+    }
 }
 
 // ========== RC4a 补齐: AR/AP 别名与对账接口 ==========

@@ -649,6 +649,7 @@ impl FinanceService {
         let mut unclosed_pl = Decimal::ZERO;
         let mut unclosed_pl_delta = Decimal::ZERO;
         let mut current_year_profit_delta = Decimal::ZERO;
+        let mut distribution_profit_delta = Decimal::ZERO;
         let mut equity_delta = Decimal::ZERO;
 
         for row in &bs_rows {
@@ -663,6 +664,11 @@ impl FinanceService {
             }
             if account_code.starts_with("4103") {
                 current_year_profit_delta += -period_net;
+            }
+            // 年结把 4103 结转到 4104 后，本年利润归零、净利润留在利润分配，
+            // 勾稽 2 的「本年利润科目变动」需覆盖 4103 + 4104 才能保持恒等。
+            if account_code.starts_with("4104") {
+                distribution_profit_delta += -period_net;
             }
 
             let section: Option<String> = row.try_get("section").unwrap_or(None);
@@ -797,13 +803,15 @@ impl FinanceService {
             });
         }
 
-        let profit_diff = net_income - (current_year_profit_delta + unclosed_pl_delta);
+        let profit_delta =
+            current_year_profit_delta + distribution_profit_delta + unclosed_pl_delta;
+        let profit_diff = net_income - profit_delta;
         if profit_diff != Decimal::ZERO {
             checks.push(BalanceCheckIssue {
                 code: "profit_vs_current_year_profit".to_string(),
-                message: "净利润 != 本年利润科目变动（含未结转损益）".to_string(),
+                message: "净利润 != 本年利润及利润分配变动（含未结转损益）".to_string(),
                 expected: net_income,
-                actual: current_year_profit_delta + unclosed_pl_delta,
+                actual: profit_delta,
                 difference: profit_diff,
             });
         }

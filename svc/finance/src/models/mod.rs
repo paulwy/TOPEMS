@@ -664,13 +664,49 @@ pub struct YearEndCloseRequest {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct YearEndCloseResult {
-    pub voucher_id: Uuid,
-    pub voucher_no: String,
+    pub year: i32,
+    pub period: String,
+    pub profit_voucher_id: Option<Uuid>,
+    pub profit_voucher_no: Option<String>,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub profit_total_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub profit_total_credit: Decimal,
+    pub transfer_voucher_id: Option<Uuid>,
+    pub transfer_voucher_no: Option<String>,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub transfer_total_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub transfer_total_credit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
     pub total_income: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
     pub total_expense: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
     pub net_profit: Decimal,
     pub income_accounts_closed: i32,
     pub expense_accounts_closed: i32,
+    pub ledger_rows: i32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct IncomeCloseResult {
+    pub period: String,
+    pub voucher_id: Uuid,
+    pub voucher_no: String,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_income: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_expense: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub net_profit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_debit: Decimal,
+    #[serde(serialize_with = "money_str::serialize")]
+    pub total_credit: Decimal,
+    pub income_accounts: i32,
+    pub expense_accounts: i32,
+    pub ledger_rows: i32,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
