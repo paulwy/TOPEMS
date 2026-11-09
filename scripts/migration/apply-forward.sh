@@ -29,6 +29,8 @@
 #   PROD_CHANGE_TICKET 显式列出（逗号列表）；未列出的票据仍被拒绝。
 #   执行前在只读事务（ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
 #   超过 destructive-max-rows（DROP 必须为 0）→ 拒绝执行；
+#   预演在同一事务内先执行该语句之前的 DDL（保证同文件“先加列、后回填”可见），整段仍 ROLLBACK；
+#   计数用 `WITH __dg AS (<DML> RETURNING 1) SELECT count(*)`（子查询不允许直接放 UPDATE）；
 #   TRUNCATE 不提供任何开关。
 #
 # 锚点下移拦截：
@@ -320,23 +322,43 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
     exit 1
   fi
   preflight_sql="/tmp/topems_dg_preflight_${v}.sql"
-  node -e '
-    const fs = require("fs");
-    const p = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-    const q = (s) => String(s).replace(/\x27/g, "\x27\x27");
-    for (const s of p.statements) {
+  mig_file="$(ls "$MIG_DIR"/"${v}"_*.sql 2>/dev/null | head -1)"
+  if [[ -z "$mig_file" ]]; then
+    echo "== 拒绝：版本 $v 找不到迁移文件，无法构造预演" >&2
+    exit 1
+  fi
+  # 预演要点（2026-11-09）：
+  #   1) DML 必须用 `WITH __dg AS (<DML> RETURNING 1) SELECT count(*)`；
+  #      原先写成 `SELECT ... FROM (<UPDATE ...>)`，PostgreSQL 不允子查询里出现 UPDATE，
+  #      任何带标记的 DML 都会在预演阶段语法报错（已实测）。
+  #   2) 预演需在同一只读事务内先执行「该语句之前的 DDL」，
+  #      否则「先 ADD COLUMN、后 UPDATE」的迁移会因列不存在而误判失败。
+  #      每段用独立 BEGIN/ROLLBACK 包裹，整段仍是只读（不落任何写入）。
+  node_gen_js="/tmp/topems_dg_gen_${v}.mjs"
+  cat > "$node_gen_js" <<'DG_GEN_JS'
+    import fs from "node:fs";
+    const plan = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+    const src = fs.readFileSync(process.argv[3], "utf8").split("\n");
+    const q = (s) => String(s).replace(/'/g, "''");
+    for (const s of plan.statements) {
+      const prefix = src.slice(0, Math.max(0, s.line - 1)).join("\n");
+      console.log("BEGIN;");
+      if (prefix.trim()) console.log(prefix);
       if (s.kind === "DELETE" || s.kind === "UPDATE") {
         const sql = s.sql.replace(/;\s*$/, "");
-        console.log(`SELECT ${s.line} AS line, \x27${s.kind}\x27 AS kind, ${Number(s.maxRows)} AS max_rows, count(*)::bigint AS n FROM (${sql} RETURNING 1) AS __dg;`);
+        console.log(`WITH __dg AS (${sql} RETURNING 1) SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, count(*)::bigint AS n FROM __dg;`);
       } else if (s.kind === "DROP TABLE") {
         const t = q(s.table);
-        console.log(`SELECT ${s.line} AS line, \x27DROP TABLE\x27 AS kind, 0 AS max_rows, CASE WHEN to_regclass(\x27${t}\x27) IS NULL THEN 0 ELSE (xpath(\x27/row/c/text()\x27, query_to_xml(\x27SELECT count(*) AS c FROM ${t}\x27, false, true, \x27\x27)))[1]::text::bigint END AS n;`);
+        console.log(`SELECT ${s.line} AS line, 'DROP TABLE' AS kind, 0 AS max_rows, CASE WHEN to_regclass('${t}') IS NULL THEN 0 ELSE (xpath('/row/c/text()', query_to_xml('SELECT count(*) AS c FROM ${t}', false, true, '')))[1]::text::bigint END AS n;`);
       } else {
-        console.log(`SELECT ${s.line} AS line, \x27${s.kind}\x27 AS kind, ${Number(s.maxRows)} AS max_rows, 0::bigint AS n;`);
+        console.log(`SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, 0::bigint AS n;`);
       }
+      console.log("ROLLBACK;");
     }
-  ' "$dg_plan" > "$preflight_sql"
-  dg_rows="$({ printf 'BEGIN;\n'; cat "$preflight_sql"; printf '\nROLLBACK;\n'; } | psql_stdin)" || {
+DG_GEN_JS
+  node "$node_gen_js" "$dg_plan" "$mig_file" > "$preflight_sql"
+  rm -f "$node_gen_js"
+  dg_rows="$(psql_stdin < "$preflight_sql")" || {
     echo "== 拒绝：版本 $v 破坏性预演失败（未产生任何写入）" >&2
     exit 1
   }
