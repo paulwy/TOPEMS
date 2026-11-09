@@ -919,11 +919,12 @@ impl FinanceEventHandlers {
         Ok(())
     }
 
-    /// PmProjectSettled：按结算金额确认收入 + 结转成本（借贷平衡）
+    /// PmProjectSettled：按结算金额确认收入（借贷平衡）
     ///
-    /// 收入：借 1122 / 贷 6001（settled_amount）；
-    /// 成本：借 6401 / 贷 1405（settled_amount × 70%）。
-    /// 金额全部来自真实结算额，不再使用完成时的固定 10,000 元。
+    /// 收入：借 1122 应收账款 / 贷 6001 主营业务收入（settled_amount）。
+    /// 金额全部来自真实结算额，不再使用完成时的固定 10,000 元；
+    /// 也不再按写死的 70% 结转成本——项目实际成本未在事件中提供，
+    /// 凭空生成成本分录同样是假数据，成本结转待成本归集接入后单独处理。
     async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
         let payload: PmProjectSettledPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e))
@@ -938,10 +939,9 @@ impl FinanceEventHandlers {
             return Ok(());
         }
 
-        let cost_amount = settled_amount * Decimal::new(7, 1);
         self.create_auto_voucher(
             "general",
-            &format!("项目{}结算收入与成本", payload.project_name),
+            &format!("项目{}结算收入", payload.project_name),
             "pm_project_settled",
             payload.project_id,
             payload.settled_by.as_deref(),
@@ -956,16 +956,6 @@ impl FinanceEventHandlers {
                     "6001",
                     settled_amount,
                     format!("项目{}结算收入", payload.project_name),
-                ),
-                AutoVoucherLine::debit(
-                    "6401",
-                    cost_amount,
-                    format!("项目{}结算成本", payload.project_name),
-                ),
-                AutoVoucherLine::credit(
-                    "1405",
-                    cost_amount,
-                    format!("项目{}库存商品结转", payload.project_name),
                 ),
             ],
         )
