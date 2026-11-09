@@ -41,6 +41,14 @@ export type {
   VoucherQueryParams,
   ReportQueryParams,
   VoucherOperationResult,
+  // P3 法定报表（映射驱动，新契约）
+  ReportLineItem,
+  UnpostedInfo,
+  BalanceCheckIssue,
+  StatutoryBalanceSheet,
+  StatutoryIncomeStatement,
+  AccountBalanceReportItem,
+  AccountBalanceReport,
 } from '@topems/shared-types';
 
 // === B1 API迁移: 从@/api/erp/types.ts迁移的14个类型定义 ===

@@ -22,5 +22,8 @@ export const FINANCE_PATHS = {
   consolidation: '/finance/consolidation',
   consolidationReports: '/finance/consolidation-reports',
   reports: '/finance/reports',
+  accountBalanceReport: '/finance/account-balance',
+  balanceSheetReport: '/finance/balance-sheet',
+  incomeStatementReport: '/finance/income-statement',
   expenseApproval: '/finance/expense-approval',
 } as const;

@@ -21,7 +21,38 @@ import type {
   ExpenseAnalysis,
   ProfitAnalysis,
   FinancialOverview,
+  StatutoryBalanceSheet,
+  StatutoryIncomeStatement,
+  AccountBalanceReport,
 } from '../../types/finance';
+
+/** 法定报表生成入参（company_id 必传，单公司租户也不省略） */
+export interface GenerateStatutoryReportParams {
+  company_id: string;
+  period: string;
+  currency_code?: string;
+}
+
+/** 生成接口成功时 data 的外层结构：报表正文在 data.data */
+export interface GeneratedReportEnvelope<T> {
+  id: string;
+  report_type: string;
+  company_id: string;
+  period: string;
+  currency_code: string;
+  status: string;
+  approval_status: string;
+  data: T;
+  generated_at?: string;
+}
+
+/**
+ * 期间统一成后端账套口径 YYYYMM。
+ * UI 的 month 控件是 YYYY-MM，而 generate 接口按原样匹配 ledger.period（202611）。
+ */
+export function toBackendPeriod(period: string): string {
+  return period.replace(/-/g, '');
+}
 
 export const reportApi = {
   getBalanceSheet: (params: ReportQueryParams): Promise<ApiResponse<BalanceSheet>> => {
@@ -177,6 +208,34 @@ export const reportApi = {
   getFinancialOverview: (params?: { period?: string }): Promise<ApiResponse<FinancialOverview>> => {
     return apiClient.finance.get('/reports/financial-overview', {
       params,
+    });
+  },
+
+  // === P3 法定报表（映射驱动，新契约） ===
+  generateBalanceSheet: (
+    params: GenerateStatutoryReportParams
+  ): Promise<ApiResponse<GeneratedReportEnvelope<StatutoryBalanceSheet>>> => {
+    return apiClient.finance.post('/reports/balance-sheet/generate', {
+      ...params,
+      period: toBackendPeriod(params.period),
+    });
+  },
+
+  generateIncomeStatement: (
+    params: GenerateStatutoryReportParams
+  ): Promise<ApiResponse<GeneratedReportEnvelope<StatutoryIncomeStatement>>> => {
+    return apiClient.finance.post('/reports/income-statement/generate', {
+      ...params,
+      period: toBackendPeriod(params.period),
+    });
+  },
+
+  getAccountBalanceReportV2: (params: {
+    company_id: string;
+    period: string;
+  }): Promise<ApiResponse<AccountBalanceReport>> => {
+    return apiClient.finance.get('/reports/account-balance', {
+      params: { ...params, period: toBackendPeriod(params.period) },
     });
   },
 };

@@ -857,3 +857,90 @@ export interface FinancialOverview {
   debt_ratio: number;
   current_ratio: number;
 }
+
+// === P3 法定报表（映射驱动，新契约） ===
+// 金额统一由后端 Decimal 序列化为字符串，前端只做格式化，不做金额计算。
+
+/** 报表行：line_code / line_name / line_level / sort_no / amount */
+export interface ReportLineItem {
+  line_code: string;
+  line_name: string;
+  line_level: number;
+  sort_no: number;
+  amount: string;
+}
+
+/** 未过账凭证提示（只提示，不进表） */
+export interface UnpostedInfo {
+  count: number;
+  amount: string;
+}
+
+/** 勾稽差异明细（409 时返回） */
+export interface BalanceCheckIssue {
+  code: string;
+  message: string;
+  expected: string;
+  actual: string;
+  difference: string;
+}
+
+/** 法定资产负债表（POST /reports/balance-sheet/generate 的 data.data） */
+export interface StatutoryBalanceSheet {
+  company_id: string;
+  period: string;
+  assets: ReportLineItem[];
+  liabilities: ReportLineItem[];
+  equity: ReportLineItem[];
+  total_assets: string;
+  total_liabilities: string;
+  total_equity: string;
+  unposted: UnpostedInfo;
+  balanced: boolean;
+  checks: BalanceCheckIssue[];
+}
+
+/** 法定利润表（POST /reports/income-statement/generate 的 data.data） */
+export interface StatutoryIncomeStatement {
+  company_id: string;
+  period: string;
+  revenues: ReportLineItem[];
+  expenses: ReportLineItem[];
+  total_revenue: string;
+  total_expense: string;
+  net_income: string;
+  unposted: UnpostedInfo;
+  balanced: boolean;
+  checks: BalanceCheckIssue[];
+}
+
+/** 科目余额表行（GET /reports/account-balance 的 data.items） */
+export interface AccountBalanceReportItem {
+  account_id: string;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  opening_debit: string;
+  opening_credit: string;
+  period_debit: string;
+  period_credit: string;
+  ytd_debit: string;
+  ytd_credit: string;
+  closing_debit: string;
+  closing_credit: string;
+}
+
+/** 科目余额表 */
+export interface AccountBalanceReport {
+  company_id: string;
+  period: string;
+  items: AccountBalanceReportItem[];
+  total_opening_debit: string;
+  total_opening_credit: string;
+  total_period_debit: string;
+  total_period_credit: string;
+  total_closing_debit: string;
+  total_closing_credit: string;
+  balanced: boolean;
+  checks: BalanceCheckIssue[];
+}

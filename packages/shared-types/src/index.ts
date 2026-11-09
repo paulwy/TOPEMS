@@ -136,6 +136,14 @@ export type {
   MonthlyProfit,
   ProfitAnalysis,
   FinancialOverview,
+  // P3 法定报表（映射驱动，新契约）
+  ReportLineItem,
+  UnpostedInfo,
+  BalanceCheckIssue,
+  StatutoryBalanceSheet,
+  StatutoryIncomeStatement,
+  AccountBalanceReportItem,
+  AccountBalanceReport,
 } from './finance';
 
 // 字段适配函数（值导出）
