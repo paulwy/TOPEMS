@@ -139,15 +139,14 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         {
                             Ok(data) => {
-                                let cache_key =
-                                    crate::modules::material::materials_list_cache_key(
-                                        tid,
-                                        1,
-                                        20,
-                                        &None,
-                                        &None,
-                                        topems_shared_core::locale::Locale::Zh.as_sql(),
-                                    );
+                                let cache_key = crate::modules::material::materials_list_cache_key(
+                                    tid,
+                                    1,
+                                    20,
+                                    &None,
+                                    &None,
+                                    topems_shared_core::locale::Locale::Zh.as_sql(),
+                                );
                                 cache.set(cache_key, data).await;
                             }
                             Err(e) => {
