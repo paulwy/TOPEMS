@@ -171,11 +171,13 @@ impl EventPublisher {
     /// 发布 PM 项目创建事件
     pub async fn publish_pm_project_created(
         &self,
+        tenant_id: uuid::Uuid,
         project_id: uuid::Uuid,
         project_name: &str,
         owner_id: uuid::Uuid,
     ) -> EventResult<()> {
         let payload = PmProjectCreatedPayload {
+            tenant_id,
             project_id,
             project_name: project_name.to_string(),
             owner_id,
@@ -651,6 +653,7 @@ mod tests {
 
         let test_project_id = Uuid::new_v4();
         let test_owner_id = Uuid::new_v4();
+        let tenant_ctx = Uuid::new_v4();
         let expected_project_name = "集成测试项目".to_string();
         let channel_name = format!("topems:events:{}", EventType::PmProjectCreated);
 
@@ -677,7 +680,12 @@ mod tests {
         // ——— 阶段二：订阅就绪后发布 ———
         let publish_task = tokio::spawn(async move {
             publisher
-                .publish_pm_project_created(test_project_id, &publish_name, test_owner_id)
+                .publish_pm_project_created(
+                    tenant_ctx,
+                    test_project_id,
+                    &publish_name,
+                    test_owner_id,
+                )
                 .await
         });
 
@@ -743,8 +751,12 @@ mod tests {
                 tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms as u64)).await;
 
                 // —— 阶段三：发布并等待匹配 ——
-                let publish_fut =
-                    publisher.publish_pm_project_created(project_id, &project_name, owner_id);
+                let publish_fut = publisher.publish_pm_project_created(
+                    Uuid::new_v4(),
+                    project_id,
+                    &project_name,
+                    owner_id,
+                );
                 let (received, publish_res) =
                     tokio::join!(subscription.wait_for_match(), publish_fut,);
                 assert!(publish_res.is_ok(), "第{i}个 publish 失败: {publish_res:?}");
@@ -781,6 +793,7 @@ mod tests {
     fn test_event_payload_structs_serialize() {
         // 确保所有 Payload 类型都能正确序列化（不依赖 Redis 环境）
         let payload = PmProjectCreatedPayload {
+            tenant_id: Uuid::nil(),
             project_id: Uuid::nil(),
             project_name: "x".into(),
             owner_id: Uuid::nil(),
@@ -931,7 +944,7 @@ mod tests {
         }
         let publisher = EventPublisher::new("test-service").expect("lazy construction succeeds");
         let result = publisher
-            .publish_pm_project_created(Uuid::new_v4(), "项目", Uuid::new_v4())
+            .publish_pm_project_created(Uuid::new_v4(), Uuid::new_v4(), "项目", Uuid::new_v4())
             .await;
         assert!(
             result.is_err(),

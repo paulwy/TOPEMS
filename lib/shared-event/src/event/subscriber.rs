@@ -692,6 +692,7 @@ mod tests {
         // —— 准备：生成唯一的事件标识，防止并发测试串扰 ——
         let test_project_id = Uuid::new_v4();
         let test_owner_id = Uuid::new_v4();
+        let test_tenant_id = Uuid::new_v4();
         let project_name = "SubscriberEndToEnd-项目".to_string();
         let channel = format!("topems:events:{}", EventType::PmProjectCreated);
 
@@ -775,7 +776,12 @@ mod tests {
         // 并发下可能读到 stream 模式 → 发布进 Stream 而订阅在 Pub/Sub → 消息永不到达）
         let publisher = EventPublisher::new_with_mode("publisher-e2e-test", false).unwrap();
         let publish_res = publisher
-            .publish_pm_project_created(test_project_id, &project_name, test_owner_id)
+            .publish_pm_project_created(
+                test_tenant_id,
+                test_project_id,
+                &project_name,
+                test_owner_id,
+            )
             .await;
         assert!(
             publish_res.is_ok(),
@@ -803,7 +809,12 @@ mod tests {
                         "[warn] 30s 内未收到事件（第 {retry_count}/{MAX_RETRY} 轮），重发一次验证订阅链路"
                     );
                     let retry_res = publisher
-                        .publish_pm_project_created(test_project_id, &project_name, test_owner_id)
+                        .publish_pm_project_created(
+                            test_tenant_id,
+                            test_project_id,
+                            &project_name,
+                            test_owner_id,
+                        )
                         .await;
                     assert!(retry_res.is_ok(), "重发失败: {retry_res:?}");
                 }

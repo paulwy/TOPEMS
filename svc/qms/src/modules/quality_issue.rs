@@ -173,7 +173,22 @@ pub async fn create_issue(
 
     match issue {
         Ok(data) => {
-            if let Some(ref publisher) = state.event_publisher {
+            // 事件租户只认 claims / 显式 x-tenant-id；缺上下文就不发布，
+            // 不回退到 get_tenant_id 的随机 UUID（会产生永远不可见的租户事件）。
+            let event_tenant = claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| Uuid::parse_str(t).ok())
+                .or_else(|| {
+                    headers
+                        .get("x-tenant-id")
+                        .and_then(|v| v.to_str().ok())
+                        .and_then(|s| Uuid::parse_str(s).ok())
+                })
+                .filter(|t| !t.is_nil());
+            if let (Some(ref publisher), Some(event_tenant)) =
+                (&state.event_publisher, event_tenant)
+            {
                 let publisher = publisher.clone();
                 let issue_id_val = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
                 let issue_no_val = data.issue_no.clone();
@@ -187,6 +202,7 @@ pub async fn create_issue(
                     .and_then(|s| Uuid::parse_str(&s).ok());
                 tokio::spawn(async move {
                     let payload = QmsQualityIssueCreatedPayload {
+                        tenant_id: event_tenant,
                         issue_id: issue_id_val,
                         issue_no: issue_no_val,
                         title: title_val,

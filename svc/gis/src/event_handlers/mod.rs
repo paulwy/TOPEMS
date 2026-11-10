@@ -3,8 +3,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
-    ScmShipmentReceivedPayload, StockInboundPayload, StockOutboundPayload,
+    EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType, StockInboundPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -23,7 +22,6 @@ impl GisEventHandlers {
         let subscriber = EventSubscriber::new("gis")?;
 
         let h1 = self.clone();
-        let h2 = self.clone();
         let h3 = self.clone();
 
         Ok(subscriber
@@ -31,17 +29,10 @@ impl GisEventHandlers {
                 let h = h1.clone();
                 Box::pin(async move { h.handle_hazard_reported(event).await })
             })
-            .subscribe_handler(vec![EventType::ScmShipmentReceived], move |event| {
-                let h = h2.clone();
-                Box::pin(async move { h.handle_shipment_received(event).await })
-            })
-            .subscribe_handler(
-                vec![EventType::StockInbound, EventType::StockOutbound],
-                move |event| {
-                    let h = h3.clone();
-                    Box::pin(async move { h.handle_stock_change(event).await })
-                },
-            ))
+            .subscribe_handler(vec![EventType::StockInbound], move |event| {
+                let h = h3.clone();
+                Box::pin(async move { h.handle_stock_change(event).await })
+            }))
     }
 
     async fn update_map_marker(
@@ -139,47 +130,6 @@ impl GisEventHandlers {
         Ok(())
     }
 
-    async fn handle_shipment_received(&self, event: Event) -> HandlerResult {
-        tracing::info!(
-            "[gis] 收货事件 - event_type={:?}, trace_id={:?}",
-            event.event_type,
-            event.trace_id
-        );
-
-        let payload: ScmShipmentReceivedPayload = event.parse_payload().map_err(|e| {
-            TopemsError::ValidationFailed(format!("解析收货事件 payload 失败: {}", e))
-        })?;
-
-        tracing::info!(
-            "[gis] 收货: {} ({})，供应商: {:?}，数量: {:?}",
-            payload.shipment_no,
-            payload.shipment_id,
-            payload.supplier_name,
-            payload.quantity
-        );
-
-        let title = format!("物流收货 - {}", payload.shipment_no);
-        let description = format!(
-            "供应商: {}, 数量: {}",
-            payload.supplier_name.unwrap_or_else(|| "未知".to_string()),
-            payload.quantity.unwrap_or(0.0)
-        );
-
-        let _ = self
-            .update_map_marker(
-                "logistics",
-                "scm_shipment",
-                payload.shipment_id,
-                &title,
-                Some(&description),
-                Some("normal"),
-                None,
-            )
-            .await;
-
-        Ok(())
-    }
-
     async fn handle_stock_change(&self, event: Event) -> HandlerResult {
         tracing::info!(
             "[gis] 库存变更事件 - event_type={:?}, trace_id={:?}",
@@ -222,41 +172,9 @@ impl GisEventHandlers {
                     )
                     .await;
             }
-            EventType::StockOutbound => {
-                let payload: StockOutboundPayload = event.parse_payload().map_err(|e| {
-                    TopemsError::ValidationFailed(format!("解析出库事件 payload 失败: {}", e))
-                })?;
-
-                tracing::info!(
-                    "[gis] 库存出库: {} ({})，仓库: {:?}，物料: {:?}，数量: {}",
-                    payload.outbound_no,
-                    payload.outbound_id,
-                    payload.warehouse_name,
-                    payload.material_name,
-                    payload.quantity
-                );
-
-                let title = format!("仓库出库 - {}", payload.outbound_no);
-                let description = format!(
-                    "仓库: {}, 物料: {}, 数量: {}",
-                    payload.warehouse_name.unwrap_or_else(|| "未知".to_string()),
-                    payload.material_name.unwrap_or_else(|| "未知".to_string()),
-                    payload.quantity
-                );
-
-                let _ = self
-                    .update_map_marker(
-                        "warehouse_out",
-                        "stock_outbound",
-                        payload.outbound_id,
-                        &title,
-                        Some(&description),
-                        Some("normal"),
-                        None,
-                    )
-                    .await;
+            _ => {
+                // 订阅侧只登记了 StockInbound；其他类型不应到达，忽略即可。
             }
-            _ => {}
         }
 
         Ok(())

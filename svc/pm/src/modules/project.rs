@@ -270,6 +270,10 @@ async fn create_project(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = effective_tenant_id(&ctx, &claims);
+    // 事件里的租户必须真实可归属：nil 说明没有上下文，直接拒绝而不是落不可见行/发 nil 事件。
+    if tenant_id.is_nil() {
+        return ApiResponse::bad_request("缺少租户上下文，无法创建项目");
+    }
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(
         serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}),
@@ -359,6 +363,7 @@ async fn create_project(
                     .unwrap_or(Uuid::nil());
                 tokio::spawn(async move {
                     let payload = PmProjectCreatedPayload {
+                        tenant_id,
                         project_id,
                         project_name,
                         owner_id,

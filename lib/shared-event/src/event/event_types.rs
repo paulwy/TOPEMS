@@ -425,6 +425,10 @@ pub struct IamUserPreferencesUpdatedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmProjectCreatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// `serde(default)` 仅为兼容旧消息，nil 由消费端 `require_event_tenant` 拒绝。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub project_id: Uuid,
     pub project_name: String,
     pub owner_id: Uuid,
@@ -524,6 +528,10 @@ pub struct QmsCorrectiveActionCreatedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QmsQualityIssueCreatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// `serde(default)` 仅为兼容旧消息，nil 由消费端 `require_event_tenant` 拒绝。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub issue_id: Uuid,
     pub issue_no: String,
     pub title: String,
@@ -1363,6 +1371,10 @@ pub struct SrmSupplierStatusChangedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RdProjectCreatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// `serde(default)` 仅为兼容旧消息，nil 由消费端 `require_event_tenant` 拒绝。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub project_id: Uuid,
     pub project_name: String,
     pub project_code: Option<String>,

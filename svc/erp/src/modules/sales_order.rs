@@ -280,14 +280,16 @@ pub async fn create_sales_order(
                 }
             }
             // D6：commit 成功后发布 typed 事件；失败入重试队列。
-            if let Some(ref publisher) = state.event_publisher {
-                let tenant_id: Option<Uuid> =
-                    sqlx::query_scalar("SELECT tenant_id FROM erp.sales_orders WHERE id = $1")
-                        .bind(sales_order.id)
-                        .fetch_optional(&state.db)
-                        .await
-                        .ok()
-                        .flatten();
+            // 事件租户只认 claims（不再用裸池回查：RLS 收紧后该查询取不到行，
+            // 且裸池查询本身绕过了租户作用域）。
+            if let (Some(ref publisher), Some(tenant_id)) = (
+                &state.event_publisher,
+                claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok())
+                    .filter(|t| !t.is_nil()),
+            ) {
                 let payload = SalesOrderCreatedPayload {
                     order_id: sales_order.id,
                     order_no: sales_order.order_no.clone(),
@@ -297,7 +299,7 @@ pub async fn create_sales_order(
                     payable_amount: Some(sales_order.payable_amount),
                     status: Some(sales_order.status.clone()),
                     created_by: Some(claims.sub.clone()),
-                    tenant_id,
+                    tenant_id: Some(tenant_id),
                 };
                 match publisher.publish_sales_order_created(payload.clone()).await {
                     Ok(_) => tracing::info!(

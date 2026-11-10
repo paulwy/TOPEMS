@@ -589,3 +589,44 @@
 - **口径**：将来若决定整体下线 v5.2 审计模块，六张表**同批处置**，
   不做单体删除——单删一张会留下半拆模块与死引用，成本高于保留。
 - 决策记录：第六张 `finance_audit_rules_v52` 保留，不删除（2026-11-09）。
+
+---
+
+## 16. 事件订阅清理与生产者租户补齐（2026-11-11）
+
+### 16.1 已删除的 6 个死订阅（生产端从未接入）
+
+以下事件类型此前被 `ai` / `gis` / `mobile` 订阅，但仓库内**没有任何生产方**（无
+`publish_event` 调用点、无 `EventType` 使用方），属于「看着接上了其实空转」。
+本轮已删除订阅与 handler，将来接入时按下表从生产端重新对接：
+
+| 事件 | 原消费方 | 将来从哪接（生产端落点） |
+|---|---|---|
+| `LimsInspectionAbnormalDetected` | ai | LIMS 检验结果判定为异常处（`svc/lims/src/modules/inspection_task.rs`，当前只发 `LimsInspectionResultSubmitted`），或由 integration 在 `qms_lims_ehs.rs` 判定后补发 |
+| `ScmShipmentReceived` | gis | SCM 收货/到货确认动作（`svc/scm`，当前无 shipment 模块写入路径） |
+| `StockOutbound` | gis | WMS 出库单确认（当前只发 `WmsInventoryItemShipped`，语义不同，需先确定是否复用） |
+| `WorkflowApproved` / `WorkflowRejected` | mobile | 仓库内无 workflow 服务；接入时由外部审批引擎在状态流转处发事件 |
+| `AfterSalesTicketCreated` | mobile | CRM 售后工单创建（`svc/crm`，当前创建路径不发事件） |
+
+接入时要求：payload 携带 `#[serde(default)] tenant_id: Uuid`，生产端取不到真实租户则
+**不发布**，禁止发 nil 或随机 UUID。
+
+### 16.2 语义变化：超管创建不产生事件
+
+超管（或任何无租户上下文）创建的业务对象不再发布领域事件：`StockInbound` 的超管入库、
+`SalesOrderCreated` 的超管开单均不进入事件流。原因是没有租户归属的事件只会变成 nil 行或
+DLQ。若将来需要超管操作也产生事件，必须先定义「平台级事件」通道，不能复用租户事件。
+
+### 16.3 通知 WebSocket 从未接通（另开一轮，未处理）
+
+1. 前端 `apps/web/src/hooks/useWebSocket.ts` 连接 `/ws/core`，服务端真实路由是
+   `/ws/core/notifications`（unified-core）与 `/ws/{module}/{feature}`（BFF），`/ws/core`
+   两段路径无路由 → 404。
+2. 生产入口 BFF（`svc/server`）未启动 `spawn_event_bridge`，且模块白名单不含
+   `core`/`bi`/`gis`，前端 `useImWebSocket` 的 `/ws/core/im`、dashboard 的
+   `/ws/bi/dashboard`、`/ws/gis/map` 在 BFF 均为 426。
+3. 前端订阅帧为 `{type:'subscribe', payload:{...}}`（无签名），服务端只认 JSON-RPC
+   `method` + `signature`，即使路径对齐也订阅不上。
+
+以上三条合起来即「通知功能从未接通」：功能是死的，只是没人报障。优先级低于 RLS 收口，
+但需单独立项修复。

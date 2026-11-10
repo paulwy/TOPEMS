@@ -270,7 +270,8 @@ pub async fn create_inbound_order(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
-
+    // 事件只携带真实租户：超管/NULL 上下文不发布（发 nil 只会变成不可见行或 DLQ）。
+    let event_tenant = tenant_id.filter(|t| !t.is_nil());
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -315,13 +316,6 @@ pub async fn create_inbound_order(
 
     let (response, status, error_msg) = match &result {
         Ok(order) => {
-            let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-            )
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten();
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("入库订单事务提交失败: {}", e);
@@ -330,7 +324,7 @@ pub async fn create_inbound_order(
                     ));
                 }
             }
-            if let Some(ref publisher) = state.event_publisher {
+            if let (Some(ref publisher), Some(tenant_id)) = (&state.event_publisher, event_tenant) {
                 let publisher = publisher.clone();
                 let oid = order.id;
                 let ono = order.order_number.clone();
@@ -349,7 +343,7 @@ pub async fn create_inbound_order(
                         reference_order_id: None,
                         received_by: None,
                         received_at: Some(now_val),
-                        tenant_id,
+                        tenant_id: Some(tenant_id),
                     };
                     // D6：commit 已成功（上 guard.take().commit），此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher

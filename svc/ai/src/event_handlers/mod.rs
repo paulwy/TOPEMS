@@ -5,7 +5,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     EhsHazardReportedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
-    LimsInspectionAbnormalDetectedPayload, QmsQualityIssueCreatedPayload,
+    QmsQualityIssueCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -29,7 +29,6 @@ impl AiEventHandlers {
         let subscriber = EventSubscriber::new("ai")?;
 
         let h1 = self.clone();
-        let h2 = self.clone();
         let h3 = self.clone();
 
         Ok(subscriber
@@ -37,13 +36,6 @@ impl AiEventHandlers {
                 let h = h1.clone();
                 Box::pin(async move { h.handle_quality_issue_created(event).await })
             })
-            .subscribe_handler(
-                vec![EventType::LimsInspectionAbnormalDetected],
-                move |event| {
-                    let h = h2.clone();
-                    Box::pin(async move { h.handle_inspection_abnormal(event).await })
-                },
-            )
             .subscribe_handler(vec![EventType::EhsHazardReported], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_hazard_reported(event).await })
@@ -148,48 +140,6 @@ impl AiEventHandlers {
                 &label,
                 "qms_issue",
                 payload.issue_id,
-                Some(&features),
-            )
-            .await;
-
-        Ok(())
-    }
-
-    async fn handle_inspection_abnormal(&self, event: Event) -> HandlerResult {
-        tracing::info!(
-            "[ai] 检验异常事件 - event_type={:?}, trace_id={:?}",
-            event.event_type,
-            event.trace_id
-        );
-
-        let payload: LimsInspectionAbnormalDetectedPayload =
-            event.parse_payload().map_err(|e| {
-                TopemsError::ValidationFailed(format!("解析检验异常事件 payload 失败: {}", e))
-            })?;
-
-        tracing::info!(
-            "[ai] 检验异常: 任务 {}，样品 {}，检测项: {}，结论: {}",
-            payload.task_no,
-            payload.sample_no,
-            payload.test_item,
-            payload.conclusion
-        );
-
-        let features = format!(
-            "{{\"task_no\":\"{}\",\"sample_no\":\"{}\",\"test_item\":\"{}\",\"conclusion\":\"{}\"}}",
-            payload.task_no.replace('"', "\\\""),
-            payload.sample_no.replace('"', "\\\""),
-            payload.test_item.replace('"', "\\\""),
-            payload.conclusion.replace('"', "\\\"")
-        );
-
-        let _ = self
-            .add_training_sample(
-                "inspection_anomaly_detection",
-                "lims_abnormal",
-                &payload.conclusion,
-                "lims_task",
-                payload.task_id,
                 Some(&features),
             )
             .await;

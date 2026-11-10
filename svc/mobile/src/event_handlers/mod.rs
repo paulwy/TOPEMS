@@ -4,10 +4,9 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    AfterSalesTicketCreatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
-    EventPublisher, EventResult, EventSubscriber, EventType, PmProjectCreatedPayload,
-    QmsQualityIssueCreatedPayload, RdProjectCreatedPayload, SalesOrderCreatedPayload,
-    WorkflowApprovedPayload, WorkflowRejectedPayload,
+    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventPublisher, EventResult,
+    EventSubscriber, EventType, PmProjectCreatedPayload, QmsQualityIssueCreatedPayload,
+    RdProjectCreatedPayload, SalesOrderCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -29,8 +28,6 @@ impl MobileEventHandlers {
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
         let subscriber = EventSubscriber::new("mobile")?;
 
-        let h1 = self.clone();
-        let h2 = self.clone();
         let h3 = self.clone();
         let h4 = self.clone();
         let h5 = self.clone();
@@ -38,17 +35,6 @@ impl MobileEventHandlers {
         let h7 = self.clone();
 
         Ok(subscriber
-            .subscribe_handler(
-                vec![EventType::WorkflowApproved, EventType::WorkflowRejected],
-                move |event| {
-                    let h = h1.clone();
-                    Box::pin(async move { h.handle_workflow_event(event).await })
-                },
-            )
-            .subscribe_handler(vec![EventType::AfterSalesTicketCreated], move |event| {
-                let h = h2.clone();
-                Box::pin(async move { h.handle_after_sales_ticket(event).await })
-            })
             .subscribe_handler(vec![EventType::EhsHazardReported], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_hazard_reported(event).await })
@@ -144,121 +130,6 @@ impl MobileEventHandlers {
                 )))
             }
         }
-    }
-
-    async fn handle_workflow_event(&self, event: Event) -> HandlerResult {
-        tracing::info!(
-            "[mobile] 工作流事件 - event_type={:?}, trace_id={:?}",
-            event.event_type,
-            event.trace_id
-        );
-
-        match event.event_type {
-            EventType::WorkflowApproved => {
-                let payload: WorkflowApprovedPayload = event.parse_payload().map_err(|e| {
-                    TopemsError::ValidationFailed(format!("解析工作流审批事件 payload 失败: {}", e))
-                })?;
-
-                let title = format!("审批通过 - {}", payload.workflow_name);
-                let content = format!(
-                    "工作流 {} 已通过审批，审批人: {}",
-                    payload.workflow_name,
-                    payload.approved_by.as_deref().unwrap_or("系统")
-                );
-
-                let _ = self
-                    .create_push_notification(
-                        "workflow_approved",
-                        &title,
-                        &content,
-                        "normal",
-                        "workflow_instance",
-                        payload.instance_id,
-                        payload.approved_by.as_deref(),
-                    )
-                    .await;
-            }
-            EventType::WorkflowRejected => {
-                let payload: WorkflowRejectedPayload = event.parse_payload().map_err(|e| {
-                    TopemsError::ValidationFailed(format!("解析工作流拒绝事件 payload 失败: {}", e))
-                })?;
-
-                let title = format!("审批拒绝 - {}", payload.workflow_name);
-                let content = format!(
-                    "工作流 {} 被拒绝，拒绝人: {}，原因: {}",
-                    payload.workflow_name,
-                    payload.rejected_by.as_deref().unwrap_or("系统"),
-                    payload.reject_reason.as_deref().unwrap_or("无")
-                );
-
-                let _ = self
-                    .create_push_notification(
-                        "workflow_rejected",
-                        &title,
-                        &content,
-                        "high",
-                        "workflow_instance",
-                        payload.instance_id,
-                        payload.rejected_by.as_deref(),
-                    )
-                    .await;
-            }
-            _ => {}
-        }
-
-        Ok(())
-    }
-
-    async fn handle_after_sales_ticket(&self, event: Event) -> HandlerResult {
-        tracing::info!(
-            "[mobile] 售后工单事件 - event_type={:?}, trace_id={:?}",
-            event.event_type,
-            event.trace_id
-        );
-
-        let payload: AfterSalesTicketCreatedPayload = event.parse_payload().map_err(|e| {
-            TopemsError::ValidationFailed(format!("解析售后工单事件 payload 失败: {}", e))
-        })?;
-
-        tracing::info!(
-            "[mobile] 售后工单创建: {} ({})，优先级: {:?}，客户: {:?}",
-            payload.title,
-            payload.ticket_id,
-            payload.priority,
-            payload.customer_name
-        );
-
-        let priority = match payload.priority.as_deref() {
-            Some("urgent") | Some("high") => "high",
-            _ => "normal",
-        };
-
-        let title = format!("新售后工单 - {}", payload.title);
-        let content = format!(
-            "客户: {}，优先级: {}",
-            payload
-                .customer_name
-                .clone()
-                .unwrap_or_else(|| "未知客户".to_string()),
-            payload
-                .priority
-                .clone()
-                .unwrap_or_else(|| "normal".to_string())
-        );
-
-        let _ = self
-            .create_push_notification(
-                "after_sales_ticket",
-                &title,
-                &content,
-                priority,
-                "after_sales_ticket",
-                payload.ticket_id,
-                None,
-            )
-            .await;
-
-        Ok(())
     }
 
     async fn handle_hazard_reported(&self, event: Event) -> HandlerResult {

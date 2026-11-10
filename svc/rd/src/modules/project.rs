@@ -201,11 +201,17 @@ pub async fn create_project(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_id = claims
+    // 租户必须来自已验签的 claims：缺失/非法/nil 一律拒绝写入，
+    // 不再回退到硬编码租户（会把数据写进不属于当前用户的租户空间）。
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::bad_request("缺少租户上下文，无法创建项目"),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -320,6 +326,7 @@ pub async fn create_project(
                 let pcreated_at = project.created_at;
                 tokio::spawn(async move {
                     let payload = topems_shared_event::event::RdProjectCreatedPayload {
+                        tenant_id,
                         project_id: pid,
                         project_name: pname,
                         project_code: Some(pcode),
@@ -719,11 +726,15 @@ pub async fn batch_create_projects(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_id = claims
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::bad_request("缺少租户上下文，无法批量创建项目"),
+    };
     let mut success = 0;
     let mut errors = Vec::new();
 
@@ -1240,11 +1251,15 @@ pub async fn import_projects(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_id = claims
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::bad_request("缺少租户上下文，无法导入项目"),
+    };
     let mut rdr = csv::Reader::from_reader(&bytes[..]);
     let _ = match rdr.headers() {
         Ok(h) => h.clone(),
