@@ -85,7 +85,7 @@ impl FinanceRealModule {
             .is_ok()
         {
             if let Err(e) = topems_finance::event_handlers::start_event_subscribers(
-                ctx.db.clone(),
+                topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),
                 ctx.event_publisher.clone(),
             )
             .await
@@ -114,6 +114,7 @@ impl FinanceRealModule {
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
+            db: topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),
             workflow_client,
             event_publisher: ctx.event_publisher.clone(),
         };
