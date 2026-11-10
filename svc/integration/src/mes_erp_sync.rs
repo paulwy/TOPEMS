@@ -8,10 +8,11 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, PgPool};
+use sqlx::types::Uuid;
 use std::time::Duration;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
@@ -95,14 +96,14 @@ pub struct SyncLog {
 // ==================== 同步服务 ====================
 
 pub struct MesErpSyncService {
-    pool: PgPool,
+    db: Db,
     mes_url: String,
     erp_url: String,
     retry_executor: RetryExecutor,
 }
 
 impl MesErpSyncService {
-    pub fn new(pool: PgPool, mes_url: String, erp_url: String) -> Self {
+    pub fn new(db: Db, mes_url: String, erp_url: String) -> Self {
         let retry_config = RetryConfig {
             max_retries: 5,
             base_delay_ms: 1000,
@@ -120,7 +121,7 @@ impl MesErpSyncService {
         };
 
         Self {
-            pool,
+            db,
             mes_url,
             erp_url,
             retry_executor: RetryExecutor::new(retry_config),
@@ -165,10 +166,18 @@ impl MesErpSyncService {
 
         match result {
             RetryResult::Success(mes_order) => {
-                self.update_sync_success(sync_id, Some(mes_order.id))
+                self.update_sync_success(sync_id, tenant_id, Some(mes_order.id))
                     .await?;
-                self.add_sync_log(sync_id, "erp_to_mes", "create", "success", None, 1)
-                    .await?;
+                self.add_sync_log(
+                    sync_id,
+                    tenant_id,
+                    "erp_to_mes",
+                    "create",
+                    "success",
+                    None,
+                    1,
+                )
+                .await?;
 
                 Ok(SyncResult {
                     success: true,
@@ -181,10 +190,11 @@ impl MesErpSyncService {
             }
             RetryResult::Failed { error, attempts }
             | RetryResult::MaxRetriesExceeded { error, attempts } => {
-                self.update_sync_failed(sync_id, &error, attempts as i32)
+                self.update_sync_failed(sync_id, tenant_id, &error, attempts as i32)
                     .await?;
                 self.add_sync_log(
                     sync_id,
+                    tenant_id,
                     "erp_to_mes",
                     "create",
                     "failed",
@@ -323,9 +333,17 @@ impl MesErpSyncService {
 
         match result {
             RetryResult::Success(_) => {
-                self.update_sync_success(sync_id, None).await?;
-                self.add_sync_log(sync_id, "mes_to_erp", "progress_update", "success", None, 1)
-                    .await?;
+                self.update_sync_success(sync_id, tenant_id, None).await?;
+                self.add_sync_log(
+                    sync_id,
+                    tenant_id,
+                    "mes_to_erp",
+                    "progress_update",
+                    "success",
+                    None,
+                    1,
+                )
+                .await?;
 
                 Ok(SyncResult {
                     success: true,
@@ -336,10 +354,11 @@ impl MesErpSyncService {
             }
             RetryResult::Failed { error, attempts }
             | RetryResult::MaxRetriesExceeded { error, attempts } => {
-                self.update_sync_failed(sync_id, &error, attempts as i32)
+                self.update_sync_failed(sync_id, tenant_id, &error, attempts as i32)
                     .await?;
                 self.add_sync_log(
                     sync_id,
+                    tenant_id,
                     "mes_to_erp",
                     "progress_update",
                     "failed",
@@ -559,6 +578,12 @@ impl MesErpSyncService {
         tenant_id: Uuid,
         mes_order_id: Uuid,
     ) -> Result<Option<Uuid>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
+
         let result = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
             "integration",
             "SELECT erp_order_id FROM integration.mes_erp_sync 
@@ -567,9 +592,14 @@ impl MesErpSyncService {
         ))
         .bind(tenant_id)
         .bind(mes_order_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询ERP订单ID失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
 
         Ok(result.flatten())
     }
@@ -588,6 +618,12 @@ impl MesErpSyncService {
         payload: Option<serde_json::Value>,
     ) -> Result<(), TopemsError> {
         let now = Utc::now();
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
 
         sqlx::query(only_own_schema_query!(
             "integration",
@@ -608,9 +644,14 @@ impl MesErpSyncService {
         .bind(sync_type)
         .bind(payload)
         .bind(now.naive_utc())
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交写作用域失败: {}", e)))?;
 
         Ok(())
     }
@@ -618,9 +659,16 @@ impl MesErpSyncService {
     async fn update_sync_success(
         &self,
         sync_id: Uuid,
+        tenant_id: Uuid,
         mes_order_id: Option<Uuid>,
     ) -> Result<(), TopemsError> {
         let now = Utc::now();
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
 
         if let Some(mes_id) = mes_order_id {
             sqlx::query(only_own_schema_query!(
@@ -638,7 +686,7 @@ impl MesErpSyncService {
             .bind(sync_id)
             .bind(mes_id)
             .bind(now.naive_utc())
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
         } else {
@@ -655,10 +703,15 @@ impl MesErpSyncService {
             ))
             .bind(sync_id)
             .bind(now.naive_utc())
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
         }
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交写作用域失败: {}", e)))?;
 
         Ok(())
     }
@@ -666,10 +719,17 @@ impl MesErpSyncService {
     async fn update_sync_failed(
         &self,
         sync_id: Uuid,
+        tenant_id: Uuid,
         error: &str,
         retry_count: i32,
     ) -> Result<(), TopemsError> {
         let now = Utc::now();
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
 
         sqlx::query(only_own_schema_query!(
             "integration",
@@ -686,9 +746,14 @@ impl MesErpSyncService {
         .bind(error)
         .bind(retry_count)
         .bind(now.naive_utc())
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交写作用域失败: {}", e)))?;
 
         Ok(())
     }
@@ -696,6 +761,7 @@ impl MesErpSyncService {
     async fn add_sync_log(
         &self,
         sync_record_id: Uuid,
+        tenant_id: Uuid,
         direction: &str,
         sync_type: &str,
         status: &str,
@@ -704,6 +770,12 @@ impl MesErpSyncService {
     ) -> Result<(), TopemsError> {
         let id = Uuid::new_v4();
         let now = Utc::now();
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
 
         sqlx::query(only_own_schema_query!(
             "integration",
@@ -722,9 +794,14 @@ impl MesErpSyncService {
         .bind(error_message)
         .bind(attempt)
         .bind(now.naive_utc())
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("添加同步日志失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交写作用域失败: {}", e)))?;
 
         Ok(())
     }
@@ -732,6 +809,14 @@ impl MesErpSyncService {
     // ==================== 重试失败同步 ====================
 
     pub async fn retry_failed_sync(&self, sync_id: Uuid) -> Result<SyncResult, TopemsError> {
+        // HTTP 入口：请求租户上下文由 scope_read 内部的 task-local 提供，
+        // 无上下文直接返回 Protocol，不再静默读全表。
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+
         let sync_record = sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
@@ -743,9 +828,14 @@ impl MesErpSyncService {
             "#
         ))
         .bind(sync_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
 
         let sync_record = match sync_record {
             Some(r) => r,
@@ -795,7 +885,13 @@ impl MesErpSyncService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<MesErpSyncRecord>, TopemsError> {
-        sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+
+        let rows = sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
             SELECT id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
@@ -812,16 +908,29 @@ impl MesErpSyncService {
         .bind(status)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
+
+        Ok(rows)
     }
 
     pub async fn get_sync_record(
         &self,
         sync_id: Uuid,
     ) -> Result<Option<MesErpSyncRecord>, TopemsError> {
-        sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+
+        let row = sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
             SELECT id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
@@ -832,13 +941,26 @@ impl MesErpSyncService {
             "#
         ))
         .bind(sync_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut scope)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
+
+        Ok(row)
     }
 
     pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, TopemsError> {
-        sqlx::query_as::<_, SyncLog>(only_own_schema_query!(
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+
+        let rows = sqlx::query_as::<_, SyncLog>(only_own_schema_query!(
             "integration",
             r#"
             SELECT id, sync_record_id, sync_direction, sync_type,
@@ -849,9 +971,16 @@ impl MesErpSyncService {
             "#
         ))
         .bind(sync_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步日志失败: {}", e)))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步日志失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
+
+        Ok(rows)
     }
 }
 

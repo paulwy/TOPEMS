@@ -75,6 +75,12 @@ pub async fn sync_records(
     let mut success: Vec<String> = Vec::new();
     let mut failed: Vec<MobileSyncFailedItem> = Vec::new();
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
+    let tenant_id = tenant_ctx.tenant;
+
     for record in req.records {
         let user_id = Uuid::nil();
 
@@ -83,13 +89,12 @@ pub async fn sync_records(
             r#"
             INSERT INTO mobile.core_mobile_offline_records
             (id, tenant_id, user_id, module, action, data, status)
-            VALUES ($1, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                                '00000000-0000-0000-0000-000000000000'::uuid),
-                    $2, $3, $4, $5, 'pending')
-            ON CONFLICT (id) DO UPDATE SET data = $5, status = 'pending', updated_at = NOW()
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+            ON CONFLICT (id) DO UPDATE SET data = $6, status = 'pending', updated_at = NOW()
             "#
         ))
         .bind(Uuid::parse_str(&record.id).unwrap_or_else(|_| Uuid::new_v4()))
+        .bind(tenant_id)
         .bind(user_id)
         .bind(&record.module)
         .bind(&record.action)
@@ -212,32 +217,30 @@ pub async fn mark_synced(
 
     let __mobile_response = {
         match Uuid::parse_str(&record_id) {
-        Ok(id) => {
-            match sqlx::query(only_own_schema_query!(
-                "mobile",
-                r#"
+            Ok(id) => {
+                match sqlx::query(only_own_schema_query!(
+                    "mobile",
+                    r#"
                 UPDATE mobile.core_mobile_offline_records
                 SET status = 'synced', updated_at = NOW()
-                WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                WHERE id = $1 
                 "#
-            ))
-            .bind(id)
-            .execute(&mut scope)
-            .await
-            {
-                Ok(_) => ApiResponse::success((), "标记同步成功"),
-                Err(e) => {
-                    tracing::error!("更新离线记录状态失败: {}", e);
-                    ApiResponse::from(TopemsError::Internal(
-                        "更新状态失败".to_string(),
-                    ))
+                ))
+                .bind(id)
+                .execute(&mut scope)
+                .await
+                {
+                    Ok(_) => ApiResponse::success((), "标记同步成功"),
+                    Err(e) => {
+                        tracing::error!("更新离线记录状态失败: {}", e);
+                        ApiResponse::from(TopemsError::Internal("更新状态失败".to_string()))
+                    }
                 }
             }
+            Err(_) => {
+                ApiResponse::from(TopemsError::ValidationFailed("记录ID格式错误".to_string()))
+            }
         }
-        Err(_) => ApiResponse::from(TopemsError::ValidationFailed(
-            "记录ID格式错误".to_string(),
-        )),
-    }
     };
     let _ = scope.commit().await;
     __mobile_response

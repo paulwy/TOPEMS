@@ -282,7 +282,7 @@ async fn update_phase(
             status = COALESCE($7, status),
             predecessor_ids = COALESCE($8, predecessor_ids),
             updated_at = $9
-        WHERE project_id = $10 AND id = $11 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE project_id = $10 AND id = $11 
         RETURNING *
         "#
     ))
@@ -345,7 +345,7 @@ async fn delete_phase(
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2 "
     ))
     .bind(project_id)
     .bind(id)

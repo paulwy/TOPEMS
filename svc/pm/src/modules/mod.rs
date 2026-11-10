@@ -70,20 +70,15 @@ pub fn create_routes(
 }
 
 // ── 业务层写操作有效租户 ──────────────────────────────────────────────
-// superuser 会话无业务租户（Claims.tenant_id=None，TenantContext=nil 供 RLS
-// 豁免）→ 回退默认租户 00000000-0000-0000-0000-000000000001（与 create_project
-// 历史行为一致）；普通用户 → 会话租户 ctx.tenant_id。
-// 历史缺陷：pm 各模块 INSERT 直接绑定 Uuid::nil()，RLS 策略仅对 nil 会话或
-// SQL NULL 行放行，nil UUID 行对普通租户会话不可见——用户创建的数据自己看不到。
+// 唯一来源是请求上下文里的真实租户；不再为超管回退 `…0001` 常量租户。
+// 超管的跨租户能力由 RLS 系统通道（`app.rls_system='on'`，见
+// `shared_db::Db::scope_system/scope_read_system`）承担，把常量租户写进业务列
+// 会让数据归属错误、并对普通租户会话不可见。
 pub fn effective_tenant_id(
     ctx: &topems_shared_auth::middleware::tenant::TenantContext,
-    claims: &topems_shared_auth::auth::Claims,
+    _claims: &topems_shared_auth::auth::Claims,
 ) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_default()
-    } else {
-        ctx.tenant_id
-    }
+    ctx.tenant_id
 }
 
 #[cfg(test)]

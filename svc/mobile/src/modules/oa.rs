@@ -2,32 +2,14 @@
 //! 移动端 OA 办公协同（缺口#14）
 //! meetings / calendar/events / tasks / announcements / oa/stats
 
-use axum::extract::{Extension, Path, Query, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
-use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
-
-/// 默认租户：mobile.oa_* 的 tenant_id 列已是 uuid，绑 String 会报
-/// `operator does not exist: uuid = text`，故统一用默认租户 UUID。
-fn tenant_id() -> Uuid {
-    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or(Uuid::nil())
-}
-
-fn tenant_filter(claims: &Claims) -> Option<Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    }
-}
 
 // ===== 模型 =====
 
@@ -195,18 +177,15 @@ pub async fn list_meetings(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let __mobile_response = {
         match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
             "mobile",
-            "SELECT * FROM mobile.oa_meetings WHERE tenant_id = $1 \
-         AND ($2::text IS NULL OR status = $2) \
-         ORDER BY start_time DESC LIMIT $3 OFFSET $4"
+            "SELECT * FROM mobile.oa_meetings WHERE ($1::text IS NULL OR status = $1) \
+         ORDER BY start_time DESC LIMIT $2 OFFSET $3"
         ))
-        .bind(tid)
         .bind(q.status)
         .bind(page_size)
         .bind(offset)
@@ -214,14 +193,16 @@ pub async fn list_meetings(
         .await
         {
             Ok(rows) => {
-                let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                let total = match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                     "mobile",
-                    "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1"
+                    "SELECT COUNT(*) FROM mobile.oa_meetings"
                 ))
-                .bind(tid)
                 .fetch_one(&mut scope)
                 .await
-                .unwrap_or(0);
+                {
+                    Ok(total) => total,
+                    Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+                };
                 ApiResponse::success(
                     serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
                     "ok",
@@ -247,11 +228,7 @@ pub async fn list_meetings(
     ),
     tag = "meetings"
 )]
-pub async fn get_meeting(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<OaMeeting> {
+pub async fn get_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope_read().await {
         Ok(scope) => scope,
@@ -262,19 +239,17 @@ pub async fn get_meeting(
     };
     let __mobile_response = {
         match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .fetch_optional(&mut scope)
-
-    .await
-    {
-        Ok(Some(m)) => ApiResponse::success(m, "ok"),
-        Ok(None) => ApiResponse::not_found("会议不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+            "mobile",
+            "SELECT * FROM mobile.oa_meetings WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(Some(m)) => ApiResponse::success(m, "ok"),
+            Ok(None) => ApiResponse::not_found("会议不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
     };
     let _ = scope.commit().await;
     __mobile_response
@@ -292,7 +267,9 @@ pub async fn create_meeting(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
         .unwrap_or_else(|_| Utc::now().into())
@@ -311,7 +288,7 @@ pub async fn create_meeting(
          VALUES ($1,$2,$3,$4,$5,'scheduled',$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(tid)
+    .bind(tenant_ctx.tenant)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.r#type.unwrap_or_else(|| "internal".to_string()))
@@ -333,7 +310,6 @@ pub async fn create_meeting(
 }
 
 pub async fn update_meeting(
-    Extension(claims): Extension<Claims>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -357,12 +333,15 @@ pub async fn update_meeting(
     let video_url = req
         .get("video_url")
         .and_then(|v| v.as_str().map(String::from));
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), location = COALESCE($4, location), video_url = COALESCE($5, video_url), \
-         updated_at = NOW() WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7::uuid) RETURNING *"
+         updated_at = NOW() WHERE id = $6 AND tenant_id = $7 RETURNING *"
     ))
     .bind(title)
     .bind(description)
@@ -370,7 +349,7 @@ pub async fn update_meeting(
     .bind(location)
     .bind(video_url)
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -384,11 +363,7 @@ pub async fn update_meeting(
     __mobile_response
 }
 
-pub async fn delete_meeting(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<()> {
+pub async fn delete_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -397,21 +372,23 @@ pub async fn delete_meeting(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query(only_own_schema_query!(
-        "mobile",
-        "DELETE FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .execute(&mut scope)
-
-    .await
-    {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
-        Ok(_) => ApiResponse::not_found("会议不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
-    }
+            "mobile",
+            "DELETE FROM mobile.oa_meetings WHERE id = $1 AND tenant_id = $2"
+        ))
+        .bind(id)
+        .bind(tenant_ctx.tenant)
+        .execute(&mut scope)
+        .await
+        {
+            Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+            Ok(_) => ApiResponse::not_found("会议不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
+        }
     };
     let _ = scope.commit().await;
     __mobile_response
@@ -430,11 +407,7 @@ pub async fn delete_meeting(
     ),
     tag = "meetings"
 )]
-pub async fn join_meeting(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<OaMeeting> {
+pub async fn join_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -443,13 +416,16 @@ pub async fn join_meeting(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"
     ))
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -476,11 +452,7 @@ pub async fn join_meeting(
     ),
     tag = "meetings"
 )]
-pub async fn leave_meeting(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<OaMeeting> {
+pub async fn leave_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -489,13 +461,16 @@ pub async fn leave_meeting(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"
     ))
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -533,20 +508,17 @@ pub async fn list_calendar_events(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let __mobile_response = {
         match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 ORDER BY start_time DESC LIMIT 100"
-    ))
-    .bind(tid)
-    .fetch_all(&mut scope)
-
-    .await
-    {
-        Ok(rows) => ApiResponse::success(rows, "ok"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+            "mobile",
+            "SELECT * FROM mobile.oa_calendar_events ORDER BY start_time DESC LIMIT 100"
+        ))
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => ApiResponse::success(rows, "ok"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
     };
     let _ = scope.commit().await;
     __mobile_response
@@ -559,12 +531,10 @@ async fn fetch_events_in_range(
     start: DateTime<Utc>,
     end: DateTime<Utc>,
 ) -> Result<Vec<OaCalendarEvent>, sqlx::Error> {
-    let tid = tenant_id();
     sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND start_time >= $2 AND start_time < $3 ORDER BY start_time ASC"
+        "SELECT * FROM mobile.oa_calendar_events WHERE start_time >= $1 AND start_time < $2 ORDER BY start_time ASC"
     ))
-    .bind(tid)
     .bind(start)
     .bind(end)
     .fetch_all(&mut *scope)
@@ -584,13 +554,11 @@ pub async fn get_schedule_event(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let __mobile_response = {
         match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
             "mobile",
-            "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM mobile.oa_calendar_events WHERE id = $1"
         ))
-        .bind(tid)
         .bind(id)
         .fetch_optional(&mut scope)
         .await
@@ -744,7 +712,6 @@ pub async fn list_my_events(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -754,12 +721,10 @@ pub async fn list_my_events(
     let events: Vec<OaCalendarEvent> =
         match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
             "mobile",
-            "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1
-             AND ($2::text = '' OR start_time::date >= $2::date)
-             AND ($3::text = '' OR start_time::date <= $3::date)
-             ORDER BY start_time DESC LIMIT $4 OFFSET $5"
+            "SELECT * FROM mobile.oa_calendar_events WHERE ($1::text = '' OR start_time::date >= $1::date)
+             AND ($2::text = '' OR start_time::date <= $2::date)
+             ORDER BY start_time DESC LIMIT $3 OFFSET $4"
         ))
-        .bind(tid)
         .bind(&start_filter)
         .bind(&end_filter)
         .bind(page_size)
@@ -802,7 +767,9 @@ pub async fn update_event_status(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let status = payload
         .get("status")
         .and_then(|v| v.as_str())
@@ -812,7 +779,7 @@ pub async fn update_event_status(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-        .bind(tid)
+        .bind(tenant_ctx.tenant)
         .bind(id)
         .execute(&mut scope)
         .await
@@ -842,13 +809,15 @@ pub async fn add_event_attendee(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-        .bind(tid)
+        .bind(tenant_ctx.tenant)
         .bind(id)
         .execute(&mut scope)
         .await
@@ -874,13 +843,15 @@ pub async fn remove_event_attendee(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-        .bind(tid)
+        .bind(tenant_ctx.tenant)
         .bind(id)
         .execute(&mut scope)
         .await
@@ -905,7 +876,9 @@ pub async fn create_calendar_event(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
         .unwrap_or_else(|_| Utc::now().into())
@@ -920,7 +893,7 @@ pub async fn create_calendar_event(
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(tid)
+    .bind(tenant_ctx.tenant)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.r#type.unwrap_or_else(|| "reminder".to_string()))
@@ -957,7 +930,6 @@ pub async fn create_calendar_event(
     tag = "calendar"
 )]
 pub async fn update_calendar_event(
-    Extension(claims): Extension<Claims>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -978,18 +950,21 @@ pub async fn update_calendar_event(
         .get("location")
         .and_then(|v| v.as_str().map(String::from));
     let color = req.get("color").and_then(|v| v.as_str().map(String::from));
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET title = COALESCE($1, title), description = COALESCE($2, description), \
-         location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid) RETURNING *"
+         location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 AND tenant_id = $6 RETURNING *"
     ))
     .bind(title)
     .bind(description)
     .bind(location)
     .bind(color)
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -1003,11 +978,7 @@ pub async fn update_calendar_event(
     __mobile_response
 }
 
-pub async fn delete_calendar_event(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<()> {
+pub async fn delete_calendar_event(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -1016,21 +987,23 @@ pub async fn delete_calendar_event(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query(only_own_schema_query!(
-        "mobile",
-        "DELETE FROM mobile.oa_calendar_events WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .execute(&mut scope)
-
-    .await
-    {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
-        Ok(_) => ApiResponse::not_found("事件不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
-    }
+            "mobile",
+            "DELETE FROM mobile.oa_calendar_events WHERE id = $1 AND tenant_id = $2"
+        ))
+        .bind(id)
+        .bind(tenant_ctx.tenant)
+        .execute(&mut scope)
+        .await
+        {
+            Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+            Ok(_) => ApiResponse::not_found("事件不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
+        }
     };
     let _ = scope.commit().await;
     __mobile_response
@@ -1060,19 +1033,16 @@ pub async fn list_oa_tasks(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let __mobile_response = {
         match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
             "mobile",
-            "SELECT * FROM mobile.oa_tasks WHERE tenant_id = $1 \
-         AND ($2::text IS NULL OR status = $2) \
-         AND ($3::text IS NULL OR priority = $3) \
-         ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+            "SELECT * FROM mobile.oa_tasks WHERE ($1::text IS NULL OR status = $1) \
+         AND ($2::text IS NULL OR priority = $2) \
+         ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         ))
-        .bind(tid)
         .bind(q.status)
         .bind(q.priority)
         .bind(page_size)
@@ -1083,9 +1053,8 @@ pub async fn list_oa_tasks(
             Ok(rows) => {
                 let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                     "mobile",
-                    "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1"
+                    "SELECT COUNT(*) FROM mobile.oa_tasks"
                 ))
-                .bind(tid)
                 .fetch_one(&mut scope)
                 .await
                 .unwrap_or(0);
@@ -1114,11 +1083,7 @@ pub async fn list_oa_tasks(
     ),
     tag = "tasks"
 )]
-pub async fn get_oa_task(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<OaTask> {
+pub async fn get_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope_read().await {
         Ok(scope) => scope,
@@ -1129,11 +1094,10 @@ pub async fn get_oa_task(
     };
     let __mobile_response = {
         match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
+            "mobile",
+            "SELECT * FROM mobile.oa_tasks WHERE id = $1"
+        ))
         .bind(id)
-        .bind(tenant_filter(&claims))
         .fetch_optional(&mut scope)
         .await
         {
@@ -1158,7 +1122,9 @@ pub async fn create_oa_task(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let id = Uuid::new_v4();
     let due = req.due_date.and_then(|d| {
         DateTime::parse_from_rfc3339(&d)
@@ -1176,7 +1142,7 @@ pub async fn create_oa_task(
          VALUES ($1,$2,$3,$4,$5,'todo',$6,$7,$8,$9,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(tid)
+    .bind(tenant_ctx.tenant)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.priority.unwrap_or_else(|| "medium".to_string()))
@@ -1197,7 +1163,6 @@ pub async fn create_oa_task(
 }
 
 pub async fn update_oa_task(
-    Extension(claims): Extension<Claims>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -1221,12 +1186,15 @@ pub async fn update_oa_task(
     let assignee = req
         .get("assignee")
         .and_then(|v| v.as_str().map(String::from));
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), priority = COALESCE($4, priority), assignee = COALESCE($5, assignee), \
-         updated_at = NOW() WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7::uuid) RETURNING *"
+         updated_at = NOW() WHERE id = $6 AND tenant_id = $7 RETURNING *"
     ))
     .bind(title)
     .bind(description)
@@ -1234,7 +1202,7 @@ pub async fn update_oa_task(
     .bind(priority)
     .bind(assignee)
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -1248,11 +1216,7 @@ pub async fn update_oa_task(
     __mobile_response
 }
 
-pub async fn delete_oa_task(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<()> {
+pub async fn delete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -1261,13 +1225,16 @@ pub async fn delete_oa_task(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query(only_own_schema_query!(
-        "mobile",
-        "DELETE FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
+            "mobile",
+            "DELETE FROM mobile.oa_tasks WHERE id = $1 AND tenant_id = $2"
+        ))
         .bind(id)
-        .bind(tenant_filter(&claims))
+        .bind(tenant_ctx.tenant)
         .execute(&mut scope)
         .await
         {
@@ -1293,11 +1260,7 @@ pub async fn delete_oa_task(
     ),
     tag = "tasks"
 )]
-pub async fn complete_oa_task(
-    Extension(claims): Extension<Claims>,
-    State(db): State<Db>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<OaTask> {
+pub async fn complete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
     let mut scope = match db.scope().await {
         Ok(scope) => scope,
@@ -1306,13 +1269,16 @@ pub async fn complete_oa_task(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
     let __mobile_response = {
         match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
+        "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"
     ))
     .bind(id)
-    .bind(tenant_filter(&claims))
+    .bind(tenant_ctx.tenant)
     .fetch_optional(&mut scope)
 
     .await
@@ -1350,18 +1316,15 @@ pub async fn list_announcements(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let __mobile_response = {
         match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
             "mobile",
-            "SELECT * FROM mobile.oa_announcements WHERE tenant_id = $1 \
-         AND ($2::text IS NULL OR priority = $2) \
-         ORDER BY published_at DESC LIMIT $3 OFFSET $4"
+            "SELECT * FROM mobile.oa_announcements WHERE ($1::text IS NULL OR priority = $1) \
+         ORDER BY published_at DESC LIMIT $2 OFFSET $3"
         ))
-        .bind(tid)
         .bind(q.priority)
         .bind(page_size)
         .bind(offset)
@@ -1371,9 +1334,8 @@ pub async fn list_announcements(
             Ok(rows) => {
                 let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                     "mobile",
-                    "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
+                    "SELECT COUNT(*) FROM mobile.oa_announcements"
                 ))
-                .bind(tid)
                 .fetch_one(&mut scope)
                 .await
                 .unwrap_or(0);
@@ -1403,7 +1365,6 @@ pub async fn list_announcements(
     tag = "announcements"
 )]
 pub async fn get_announcement(
-    Extension(claims): Extension<Claims>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaAnnouncement> {
@@ -1417,19 +1378,17 @@ pub async fn get_announcement(
     };
     let __mobile_response = {
         match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_announcements WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .fetch_optional(&mut scope)
-
-    .await
-    {
-        Ok(Some(a)) => ApiResponse::success(a, "ok"),
-        Ok(None) => ApiResponse::not_found("公告不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+            "mobile",
+            "SELECT * FROM mobile.oa_announcements WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(Some(a)) => ApiResponse::success(a, "ok"),
+            Ok(None) => ApiResponse::not_found("公告不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
     };
     let _ = scope.commit().await;
     __mobile_response
@@ -1493,28 +1452,24 @@ pub async fn get_oa_stats(State(db): State<Db>) -> ApiResponse<serde_json::Value
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1 AND start_time::date = CURRENT_DATE"
+        "SELECT COUNT(*) FROM mobile.oa_meetings WHERE start_time::date = CURRENT_DATE"
     ))
-    .bind(tid)
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let pending_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1 AND status != 'completed'"
+        "SELECT COUNT(*) FROM mobile.oa_tasks WHERE status != 'completed'"
     ))
-    .bind(tid)
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_announcements = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
+        "SELECT COUNT(*) FROM mobile.oa_announcements"
     ))
-    .bind(tid)
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);

@@ -109,14 +109,19 @@ pub async fn create_mes_erp_sync(
         }
     };
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "RLS context missing: 无租户上下文".to_string(),
+        ));
+    };
+
     match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
         "INSERT INTO integration.mes_erp_sync (
             id, mes_order_id, order_number, product_name, quantity,
             synced, sync_status, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                           '00000000-0000-0000-0000-000000000000'::uuid))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -129,6 +134,7 @@ pub async fn create_mes_erp_sync(
     .bind("pending")
     .bind(now)
     .bind(now)
+    .bind(tenant_ctx.tenant)
     .fetch_one(&mut scope)
     .await
     {

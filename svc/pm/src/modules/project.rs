@@ -201,10 +201,7 @@ async fn list_projects(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects
-        WHERE (current_setting('app.tenant_id', true) IS NULL
-               OR current_setting('app.tenant_id', true) = ''
-               OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
-               OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+        
         ORDER BY created_at DESC
         "#
     ))
@@ -458,10 +455,7 @@ async fn get_project(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects WHERE deleted_at IS NULL AND id = $1
-        AND (current_setting('app.tenant_id', true) IS NULL
-             OR current_setting('app.tenant_id', true) = ''
-             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
-             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+        
         "#
     ))
     .bind(id)

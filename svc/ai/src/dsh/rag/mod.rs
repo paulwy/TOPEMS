@@ -580,7 +580,7 @@ pub struct RagEngine {
     /// 检索统计
     stats: Arc<Mutex<RagStats>>,
     /// P2-c：真实 RAG 检索连接池（None 时 perform_retrieval 返回空，兼容旧调用）
-    pool: Option<sqlx::PgPool>,
+    db: Option<topems_shared_db::scope::Db>,
     /// P2-c：真实 RAG 检索 AI 客户端（用于生成 embedding）
     ai_client: Option<Arc<topems_shared_ai::ai_client::UnifiedAIClient>>,
 }
@@ -610,7 +610,7 @@ impl RagEngine {
             reranker: Arc::new(Reranker::new(config.clone())),
             config,
             stats: Arc::new(Mutex::new(RagStats::default())),
-            pool: None,
+            db: None,
             ai_client: None,
         }
     }
@@ -618,10 +618,10 @@ impl RagEngine {
     /// P2-c：注入真实 RAG 检索依赖（pgvector 检索走 ai_knowledge/rag.rs 同构 SQL）
     pub fn with_pool(
         mut self,
-        pool: sqlx::PgPool,
+        db: topems_shared_db::scope::Db,
         ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     ) -> Self {
-        self.pool = Some(pool);
+        self.db = Some(db);
         self.ai_client = Some(ai_client);
         self
     }
@@ -745,7 +745,7 @@ impl RagEngine {
     ) -> Vec<RetrievedDocument> {
         // P2-c：若已注入 pool + ai_client，走真实 pgvector 检索（复用 ai_knowledge 同构 SQL）；
         // 否则返回空（兼容旧 with_defaults 调用，如 main.rs 测试态）。
-        let (Some(pool), Some(ai_client)) = (&self.pool, &self.ai_client) else {
+        let (Some(db), Some(ai_client)) = (&self.db, &self.ai_client) else {
             return Vec::new();
         };
 
@@ -753,7 +753,7 @@ impl RagEngine {
         let mut seen_doc_ids = std::collections::HashSet::new();
 
         for q in expanded_queries.iter() {
-            match Self::vector_search(pool, ai_client, q, 20).await {
+            match Self::vector_search(db, ai_client, q, 20).await {
                 Ok(docs) => {
                     for doc in docs {
                         if !seen_doc_ids.contains(&doc.doc_id) {
@@ -777,7 +777,7 @@ impl RagEngine {
 
     /// P2-c：真实 pgvector 检索（对齐 ai_knowledge/rag.rs 的 SQL 与 embedding 生成）。
     async fn vector_search(
-        pool: &sqlx::PgPool,
+        db: &topems_shared_db::scope::Db,
         ai_client: &Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
         query: &str,
         limit: i32,
@@ -790,6 +790,8 @@ impl RagEngine {
             crate::modules::ai_knowledge::document_processor::vector_to_pgvector_string(
                 &query_vector,
             );
+
+        let mut scope = db.scope_read().await?;
 
         let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> =
             sqlx::query_as(only_own_schema_query!(
@@ -805,8 +807,10 @@ impl RagEngine {
             ))
             .bind(&vector_str)
             .bind(limit)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
+
+        scope.commit().await?;
 
         Ok(rows
             .into_iter()

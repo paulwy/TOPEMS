@@ -56,17 +56,11 @@ pub async fn create_factory_map(
         return e.0;
     }
 
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    // 写租户表必须显式带租户：缺失即报错，不兜底 …0001 常量。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
-    let service = TenantService::new(db, Some(tenant_id));
+    let service = TenantService::new(db, Some(tenant_ctx.tenant));
 
     match service
         .create_factory_map(

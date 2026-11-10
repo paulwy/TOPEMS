@@ -264,7 +264,7 @@ async fn update_setting(
             notify_before_days = COALESCE($2, notify_before_days),
             preferred_channel = COALESCE($3, preferred_channel),
             updated_at = $4
-        WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $5  RETURNING *"
     ))
     .bind(req.enabled)
     .bind(req.notify_before_days)

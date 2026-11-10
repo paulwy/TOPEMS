@@ -83,7 +83,7 @@ pub fn create_routes(
 
     // 初始化 RAG 引擎（P2-c：注入 pool + ai_client，接真实 pgvector 检索）
     let rag_engine = crate::dsh::rag::RagEngine::with_defaults().with_pool(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "ai, public"),
         std::sync::Arc::new(crate::modules::ai_knowledge::service::create_ai_client()),
     );
 

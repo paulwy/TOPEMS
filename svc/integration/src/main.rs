@@ -78,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
         scm_url,
         auth_state: ctx.auth_state.clone(),
         mes_erp_sync_service: std::sync::Arc::new(MesErpSyncService::new(
-            ctx.db.clone(),
+            db.clone(),
             mes_url,
             erp_url,
         )),
@@ -116,9 +116,9 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // 启动增量同步定时调度器
-    let sync_pool = ctx.db.clone();
+    let sync_db = db.clone();
     tokio::spawn(async move {
-        sync_scheduler::start_sync_scheduler(sync_pool).await;
+        sync_scheduler::start_sync_scheduler(sync_db).await;
     });
 
     run(app).await?;

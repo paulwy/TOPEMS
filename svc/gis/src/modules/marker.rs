@@ -211,7 +211,7 @@ pub async fn update_map_marker(
         only_own_schema_query!("gis", r#"
         UPDATE gis.map_markers 
         SET marker_type = $1, name = $2, marker_style = $3, position = $4, icon_svg = $5, color = $6, size = $7, popup_content = $8, click_action = $9, action_data = $10, visible = $11, z_index = $12, updated_at = NOW()
-        WHERE id = $13 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $13 
         RETURNING *
         "#),
     )

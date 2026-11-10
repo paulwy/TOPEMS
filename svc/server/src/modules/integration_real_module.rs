@@ -60,7 +60,7 @@ impl IntegrationRealModule {
 
         // 构建 MesErpSyncService
         let mes_erp_sync_service = Arc::new(MesErpSyncService::new(
-            ctx.db.clone(),
+            db.clone(),
             mes_url.clone(),
             erp_url.clone(),
         ));

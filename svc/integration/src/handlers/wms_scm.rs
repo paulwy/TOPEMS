@@ -94,14 +94,19 @@ pub async fn create_wms_scm_sync(
         }
     };
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "RLS context missing: 无租户上下文".to_string(),
+        ));
+    };
+
     match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "INSERT INTO integration.wms_scm_sync (
             id, wms_inventory_id, item_name, quantity, unit,
             synced, sync_status, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                           '00000000-0000-0000-0000-000000000000'::uuid))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -114,6 +119,7 @@ pub async fn create_wms_scm_sync(
     .bind("pending")
     .bind(now)
     .bind(now)
+    .bind(tenant_ctx.tenant)
     .fetch_one(&mut scope)
     .await
     {
@@ -216,7 +222,7 @@ pub async fn sync_wms_scm(
         "UPDATE integration.wms_scm_sync SET
             scm_supply_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 
          RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -233,10 +239,7 @@ pub async fn sync_wms_scm(
         Ok(None) => return ApiResponse::not_found("Sync not found"),
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return ApiResponse::from(TopemsError::internal(
-                "Failed to update sync",
-                e,
-            ));
+            return ApiResponse::from(TopemsError::internal("Failed to update sync", e));
         }
     };
 

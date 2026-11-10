@@ -287,7 +287,7 @@ async fn update_risk(
             owner = COALESCE($13, owner),
             response_due_date = COALESCE($14, response_due_date),
             updated_at = $15
-        WHERE id = $16 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $16  RETURNING *"
     ))
     .bind(req.risk_name)
     .bind(req.risk_description)

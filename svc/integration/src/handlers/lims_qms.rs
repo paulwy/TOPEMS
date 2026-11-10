@@ -95,14 +95,19 @@ pub async fn create_lims_qms_sync(
         }
     };
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "RLS context missing: 无租户上下文".to_string(),
+        ));
+    };
+
     match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
         "integration",
         "INSERT INTO integration.lims_qms_sync (
             id, lims_sample_id, sample_name, inspection_result, inspection_notes,
             synced, sync_status, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                           '00000000-0000-0000-0000-000000000000'::uuid))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                   inspection_notes, synced, sync_status, sync_error, last_synced_at,
                   created_at, updated_at"
@@ -116,6 +121,7 @@ pub async fn create_lims_qms_sync(
     .bind("pending")
     .bind(now)
     .bind(now)
+    .bind(tenant_ctx.tenant)
     .fetch_one(&mut scope)
     .await
     {
@@ -239,7 +245,7 @@ pub async fn sync_lims_qms(
         "UPDATE integration.lims_qms_sync SET
             qms_inspection_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 
          RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                   inspection_notes, synced, sync_status, sync_error, last_synced_at,
                   created_at, updated_at"
@@ -256,10 +262,7 @@ pub async fn sync_lims_qms(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return ApiResponse::from(TopemsError::internal(
-                "Failed to update sync",
-                e,
-            ));
+            return ApiResponse::from(TopemsError::internal("Failed to update sync", e));
         }
     };
 

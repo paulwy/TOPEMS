@@ -78,7 +78,7 @@ async fn list_expenses(
         }
     };
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ORDER BY expense_date DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1  ORDER BY expense_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&mut scope)
@@ -211,7 +211,7 @@ async fn get_expense(
         }
     };
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
+        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2 "),
     )
     .bind(project_id)
     .bind(id)
@@ -277,7 +277,7 @@ async fn update_expense(
             status = COALESCE($5, status),
             approver = COALESCE($6, approver),
             updated_at = $7
-        WHERE project_id = $8 AND id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE project_id = $8 AND id = $9 
         RETURNING *
         "#
     ))
@@ -338,7 +338,7 @@ async fn remove_expense(
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2 "
     ))
     .bind(project_id)
     .bind(id)

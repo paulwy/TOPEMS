@@ -243,7 +243,7 @@ async fn update_quality_check(
             corrective_actions = COALESCE($10, corrective_actions),
             follow_up_date = COALESCE($11, follow_up_date),
             updated_at = $12
-        WHERE id = $13 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $13  RETURNING *"
     ))
     .bind(req.check_name)
     .bind(req.check_type)
@@ -447,7 +447,7 @@ async fn update_defect(
             resolution = COALESCE($8, resolution),
             resolved_at = CASE WHEN COALESCE($5, status) = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END,
             updated_at = $9
-        WHERE id = $10 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *")
+        WHERE id = $10  RETURNING *")
     )
     .bind(req.defect_name)
     .bind(req.defect_description)

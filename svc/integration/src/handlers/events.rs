@@ -201,13 +201,18 @@ pub async fn create_event(
         }
     };
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "RLS context missing: 无租户上下文".to_string(),
+        ));
+    };
+
     match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
         "integration",
         "INSERT INTO integration.integration_events (
             id, source_system, target_system, event_type, source_record_id, payload, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6,
-                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                           '00000000-0000-0000-0000-000000000000'::uuid))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, source_system, target_system, event_type, source_record_id,
                   target_record_id, payload, status, error_message, synced_at, created_at"
     ))
@@ -217,6 +222,7 @@ pub async fn create_event(
     .bind(req.event_type)
     .bind(source_uuid)
     .bind(req.payload)
+    .bind(tenant_ctx.tenant)
     .fetch_one(&mut scope)
     .await
     {

@@ -118,7 +118,7 @@ pub async fn list_tasks(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE deleted_at IS NULL
-           AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+           
            AND ($1::uuid IS NULL OR project_id = $1)
            AND ($2::text IS NULL OR status = $2)
            AND ($3::text IS NULL OR priority = $3)
@@ -135,11 +135,10 @@ pub async fn list_tasks(
     .fetch_all(&mut scope)
     .await;
 
-    let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
-    )
-    .fetch_one(&mut scope)
-    .await;
+    let total: Result<i64, sqlx::Error> =
+        sqlx::query_scalar("SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL ")
+            .fetch_one(&mut scope)
+            .await;
 
     match (result, total) {
         (Ok(items), Ok(total)) => ApiResponse::success(
@@ -199,7 +198,7 @@ pub async fn list_tasks_by_project(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE project_id = $1 AND deleted_at IS NULL
-           AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+           
            AND ($2::text IS NULL OR status = $2)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
     )))
@@ -212,7 +211,7 @@ pub async fn list_tasks_by_project(
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL ",
     )
     .bind(project_id)
     .fetch_one(&mut scope)
@@ -339,7 +338,7 @@ pub async fn get_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$2");
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
+        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL "
     )))
     .bind(id)
     .bind(locale)
@@ -376,12 +375,11 @@ pub async fn update_task(
     let now = Utc::now();
     // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
     if let Some(to) = &req.status {
-        let from: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
-            "SELECT status FROM pm.pm_tasks WHERE id = $1 AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
-        )
-        .bind(id)
-        .fetch_optional(&mut scope)
-        .await;
+        let from: Result<Option<String>, sqlx::Error> =
+            sqlx::query_scalar("SELECT status FROM pm.pm_tasks WHERE id = $1 ")
+                .bind(id)
+                .fetch_optional(&mut scope)
+                .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
                 return ApiResponse::bad_request(&format!("非法任务状态流转: {} -> {}", from, to));
@@ -408,7 +406,7 @@ pub async fn update_task(
                            ELSE COALESCE($9, progress) END,
            updated_at = $10,
            title_en = COALESCE($11, title_en)
-           WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+           WHERE id = $1 AND deleted_at IS NULL 
            RETURNING {return_cols}"#
     )))
     .bind(id)

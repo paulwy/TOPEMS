@@ -5,9 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -104,7 +105,7 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn list_hrm_finance_sync(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
@@ -152,28 +153,36 @@ pub async fn list_hrm_finance_sync(
     }
     query = query.bind(limit);
 
-    query.fetch_all(pool).await
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let rows = query.fetch_all(&mut scope).await?;
+    scope.commit().await?;
+    Ok(rows)
 }
 
 pub async fn get_hrm_finance_sync(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
 ) -> Result<Option<HrmFinanceSync>, sqlx::Error> {
-    sqlx::query_as::<_, HrmFinanceSync>(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let row = sqlx::query_as::<_, HrmFinanceSync>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, sync_type, direction, hrm_employee_id, hrm_payroll_id,
                 finance_payroll_id, employee_code, employee_name, pay_period,
                 synced, sync_status, sync_error, retry_count, max_retries,
                 payload, result_payload, last_synced_at, created_at, updated_at
-           FROM integration.hrm_finance_sync WHERE id = $1"
+           FROM integration.hrm_finance_sync WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .fetch_optional(pool)
-    .await
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 pub async fn create_sync_record(
-    pool: &PgPool,
+    db: &Db,
     req: &CreateHrmFinanceSyncRequest,
 ) -> Result<HrmFinanceSync, sqlx::Error> {
     let id = Uuid::new_v4();
@@ -191,6 +200,8 @@ pub async fn create_sync_record(
         .finance_payroll_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+
+    let mut scope = db.scope_for_tenant(req.tenant_id).await?;
 
     let result = sqlx::query_as::<_, HrmFinanceSync>(
         only_own_schema_query!("integration", "INSERT INTO integration.hrm_finance_sync (
@@ -223,14 +234,17 @@ pub async fn create_sync_record(
     .bind(None::<DateTime<Utc>>)
     .bind(now)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     Ok(result)
 }
 
 pub async fn update_sync_status(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     status: &str,
     synced: bool,
@@ -240,7 +254,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, HrmFinanceSync>(only_own_schema_query!(
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
+    let row = sqlx::query_as::<_, HrmFinanceSync>(only_own_schema_query!(
         "integration",
         "UPDATE integration.hrm_finance_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
@@ -260,15 +276,22 @@ pub async fn update_sync_status(
     .bind(result_payload)
     .bind(last_synced)
     .bind(now)
-    .fetch_one(pool)
-    .await
+    .fetch_one(&mut scope)
+    .await?;
+
+    scope.commit().await?;
+
+    Ok(row)
 }
 
 pub async fn increment_retry_count(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
     sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.hrm_finance_sync SET 
@@ -278,13 +301,15 @@ pub async fn increment_retry_count(
     ))
     .bind(id)
     .bind(error)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
+
+    scope.commit().await?;
     Ok(())
 }
 
 pub async fn sync_payroll(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -298,7 +323,7 @@ pub async fn sync_payroll(
     let payroll_id = Uuid::parse_str(&req.payroll_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的薪资ID: {}", e)))?;
 
-    let payroll_data = fetch_hrm_payroll(pool, hrm_url, payroll_id).await?;
+    let payroll_data = fetch_hrm_payroll(hrm_url, payroll_id).await?;
 
     let finance_payroll_id =
         create_finance_payroll(finance_url, &payroll_data, &req.pay_period).await?;
@@ -326,7 +351,7 @@ pub async fn sync_payroll(
         payload: Some(payroll_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -337,7 +362,8 @@ pub async fn sync_payroll(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -355,7 +381,7 @@ pub async fn sync_payroll(
 }
 
 pub async fn sync_employee(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -371,11 +397,11 @@ pub async fn sync_employee(
 
     let (employee_data, direction) = match req.source_system.as_str() {
         "hrm" => {
-            let data = fetch_hrm_employee(pool, hrm_url, employee_id).await?;
+            let data = fetch_hrm_employee(hrm_url, employee_id).await?;
             (data, DIRECTION_HRM_TO_FINANCE)
         }
         "finance" => {
-            let data = fetch_finance_employee(pool, finance_url, employee_id).await?;
+            let data = fetch_finance_employee(finance_url, employee_id).await?;
             (data, DIRECTION_FINANCE_TO_HRM)
         }
         _ => {
@@ -409,7 +435,7 @@ pub async fn sync_employee(
                 payload: Some(employee_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -419,7 +445,8 @@ pub async fn sync_employee(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -454,7 +481,7 @@ pub async fn sync_employee(
                 payload: Some(employee_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -464,7 +491,8 @@ pub async fn sync_employee(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -482,7 +510,7 @@ pub async fn sync_employee(
 }
 
 pub async fn sync_social_insurance(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -496,8 +524,7 @@ pub async fn sync_social_insurance(
     let employee_id = Uuid::parse_str(&req.employee_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
-    let insurance_data =
-        fetch_hrm_social_insurance(pool, hrm_url, employee_id, &req.pay_period).await?;
+    let insurance_data = fetch_hrm_social_insurance(hrm_url, employee_id, &req.pay_period).await?;
 
     let finance_insurance_id =
         create_finance_social_insurance(finance_url, &insurance_data, &req.pay_period).await?;
@@ -524,7 +551,7 @@ pub async fn sync_social_insurance(
         payload: Some(insurance_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -535,7 +562,8 @@ pub async fn sync_social_insurance(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -550,7 +578,7 @@ pub async fn sync_social_insurance(
 }
 
 pub async fn sync_housing_fund(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -564,7 +592,7 @@ pub async fn sync_housing_fund(
     let employee_id = Uuid::parse_str(&req.employee_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
-    let fund_data = fetch_hrm_housing_fund(pool, hrm_url, employee_id, &req.pay_period).await?;
+    let fund_data = fetch_hrm_housing_fund(hrm_url, employee_id, &req.pay_period).await?;
 
     let finance_fund_id =
         create_finance_housing_fund(finance_url, &fund_data, &req.pay_period).await?;
@@ -591,7 +619,7 @@ pub async fn sync_housing_fund(
         payload: Some(fund_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -602,7 +630,8 @@ pub async fn sync_housing_fund(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -617,7 +646,6 @@ pub async fn sync_housing_fund(
 }
 
 async fn fetch_hrm_payroll(
-    _pool: &PgPool,
     _hrm_url: &str,
     payroll_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -668,7 +696,6 @@ async fn create_finance_payroll(
 }
 
 async fn fetch_hrm_employee(
-    _pool: &PgPool,
     _hrm_url: &str,
     employee_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -697,7 +724,6 @@ async fn fetch_hrm_employee(
 }
 
 async fn fetch_finance_employee(
-    _pool: &PgPool,
     _finance_url: &str,
     employee_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -748,7 +774,6 @@ async fn create_hrm_employee(
 }
 
 async fn fetch_hrm_social_insurance(
-    _pool: &PgPool,
     _hrm_url: &str,
     employee_id: Uuid,
     pay_period: &str,
@@ -798,7 +823,6 @@ async fn create_finance_social_insurance(
 }
 
 async fn fetch_hrm_housing_fund(
-    _pool: &PgPool,
     _hrm_url: &str,
     employee_id: Uuid,
     pay_period: &str,
@@ -843,91 +867,90 @@ async fn create_finance_housing_fund(
     Ok(finance_id.to_string())
 }
 
-pub async fn get_hrm_finance_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let payroll_result = sqlx::query(only_own_schema_query!(
+pub async fn get_hrm_finance_sync_stats(
+    db: &Db,
+    tenant_id: Uuid,
+) -> Result<SyncStats, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let payroll_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.hrm_finance_sync 
-          WHERE sync_type = 'payroll'"
+          WHERE tenant_id = $1 AND sync_type = 'payroll'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let payroll_total: i64 = payroll_row.try_get("total")?;
+    let payroll_synced: i64 = payroll_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    let payroll_failed: i64 = payroll_row
+        .try_get::<Option<i64>, _>("failed")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (payroll_total, payroll_synced, payroll_failed) = match payroll_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let employee_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let employee_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.hrm_finance_sync 
-          WHERE sync_type = 'employee'"
+          WHERE tenant_id = $1 AND sync_type = 'employee'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let employee_total: i64 = employee_row.try_get("total")?;
+    let employee_synced: i64 = employee_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (employee_total, employee_synced) = match employee_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let insurance_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let insurance_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.hrm_finance_sync 
-          WHERE sync_type = 'social_insurance'"
+          WHERE tenant_id = $1 AND sync_type = 'social_insurance'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let insurance_total: i64 = insurance_row.try_get("total")?;
+    let insurance_synced: i64 = insurance_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (insurance_total, insurance_synced) = match insurance_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let fund_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let fund_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.hrm_finance_sync 
-          WHERE sync_type = 'housing_fund'"
+          WHERE tenant_id = $1 AND sync_type = 'housing_fund'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let fund_total: i64 = fund_row.try_get("total")?;
+    let fund_synced: i64 = fund_row.try_get::<Option<i64>, _>("synced")?.unwrap_or(0);
+    scope.commit().await?;
 
-    let (fund_total, fund_synced) = match fund_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let last_sync_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let last_sync_row = sqlx::query(only_own_schema_query!(
         "integration",
-        "SELECT MAX(last_synced_at) as last_sync FROM integration.hrm_finance_sync"
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.hrm_finance_sync WHERE tenant_id = $1"
     ))
-    .fetch_one(pool)
-    .await;
-
-    let last_sync = last_sync_result
-        .ok()
-        .and_then(|row| row.try_get("last_sync").ok());
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let last_sync = last_sync_row.try_get("last_sync").ok().flatten();
+    scope.commit().await?;
 
     Ok(SyncStats {
         hrm_to_finance_payroll_total: payroll_total,
@@ -944,14 +967,15 @@ pub async fn get_hrm_finance_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx
 }
 
 pub async fn retry_failed_sync(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
     sync_id: Uuid,
 ) -> Result<HrmFinanceSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_hrm_finance_sync(pool, sync_id)
+    let sync = get_hrm_finance_sync(db, tenant_id, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
@@ -985,7 +1009,7 @@ pub async fn retry_failed_sync(
     let result = executor
         .execute(|| async {
             execute_sync_by_type(
-                pool,
+                db,
                 sync.tenant_id,
                 hrm_url,
                 finance_url,
@@ -999,13 +1023,14 @@ pub async fn retry_failed_sync(
     match result {
         RetryResult::Success(_) => {
             let updated =
-                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
+                update_sync_status(db, sync.tenant_id, sync_id, STATUS_SYNCED, true, None, None)
+                    .await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await?;
+            increment_retry_count(db, sync.tenant_id, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1016,7 +1041,7 @@ pub async fn retry_failed_sync(
 }
 
 async fn execute_sync_by_type(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -1034,7 +1059,7 @@ async fn execute_sync_by_type(
                 payroll_id: payroll_id.to_string(),
                 pay_period: pay_period.to_string(),
             };
-            sync_payroll(pool, tenant_id, hrm_url, finance_url, &req).await?;
+            sync_payroll(db, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_EMPLOYEE => {
@@ -1043,7 +1068,7 @@ async fn execute_sync_by_type(
                 employee_id: employee_id.to_string(),
                 source_system: "hrm".to_string(),
             };
-            sync_employee(pool, tenant_id, hrm_url, finance_url, &req).await?;
+            sync_employee(db, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_SOCIAL_INSURANCE => {
@@ -1059,7 +1084,7 @@ async fn execute_sync_by_type(
                 employee_id: employee_id.to_string(),
                 pay_period: pay_period.to_string(),
             };
-            sync_social_insurance(pool, tenant_id, hrm_url, finance_url, &req).await?;
+            sync_social_insurance(db, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_HOUSING_FUND => {
@@ -1075,7 +1100,7 @@ async fn execute_sync_by_type(
                 employee_id: employee_id.to_string(),
                 pay_period: pay_period.to_string(),
             };
-            sync_housing_fund(pool, tenant_id, hrm_url, finance_url, &req).await?;
+            sync_housing_fund(db, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
         _ => Err(TopemsError::ValidationFailed(format!(
@@ -1086,7 +1111,7 @@ async fn execute_sync_by_type(
 }
 
 pub async fn handle_hrm_payroll_calculated(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -1113,7 +1138,7 @@ pub async fn handle_hrm_payroll_calculated(
         pay_period: pay_period.to_string(),
     };
 
-    match sync_payroll(pool, tenant_id, hrm_url, finance_url, &req).await {
+    match sync_payroll(db, tenant_id, hrm_url, finance_url, &req).await {
         Ok(_) => info!("薪资自动同步成功 - 薪资ID: {}", payroll_id),
         Err(e) => error!("薪资自动同步失败 - 薪资ID: {}, 错误: {}", payroll_id, e),
     }
@@ -1122,7 +1147,7 @@ pub async fn handle_hrm_payroll_calculated(
 }
 
 pub async fn handle_hrm_employee_created(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     hrm_url: &str,
     finance_url: &str,
@@ -1145,7 +1170,7 @@ pub async fn handle_hrm_employee_created(
         source_system: "hrm".to_string(),
     };
 
-    match sync_employee(pool, tenant_id, hrm_url, finance_url, &req).await {
+    match sync_employee(db, tenant_id, hrm_url, finance_url, &req).await {
         Ok(_) => info!("员工自动同步成功 - 员工ID: {}", employee_id),
         Err(e) => error!("员工自动同步失败 - 员工ID: {}, 错误: {}", employee_id, e),
     }

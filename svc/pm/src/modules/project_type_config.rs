@@ -61,8 +61,6 @@ pub struct UpdateTypeRequest {
     pub is_active: Option<bool>,
 }
 
-const TENANT_SQL: &str = "COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')";
-
 pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route("/project-types", get(list_types).post(create_type))
@@ -175,17 +173,21 @@ async fn create_type(
         return ApiResponse::bad_request("类型编码与名称不能为空");
     }
 
+    // 写租户表必须显式带租户：缺失即报错，不兜底 nil/…0001。
+    let Some(tenant_ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+        return ApiResponse::server_error("RLS context missing: 无租户上下文");
+    };
+
     let sql = format!(
         r#"
         INSERT INTO pm.project_type_configs
             (type_code, type_name, name_en, description, default_phases, default_milestones, default_workflow, tenant_id)
         VALUES
-            ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, {TENANT_SQL})
+            ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)
         RETURNING id, type_code, type_name, name_en, description,
                   default_phases::text, default_milestones::text, default_workflow,
                   is_active, created_at, updated_at
-        "#,
-        TENANT_SQL = TENANT_SQL,
+        "#
     );
 
     let result = sqlx::query_as::<_, ProjectTypeConfig>(sqlx::AssertSqlSafe(sql))
@@ -196,6 +198,7 @@ async fn create_type(
         .bind(&req.default_phases)
         .bind(&req.default_milestones)
         .bind(req.default_workflow)
+        .bind(tenant_ctx.tenant)
         .fetch_one(&mut scope)
         .await;
 

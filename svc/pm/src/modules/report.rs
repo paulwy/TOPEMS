@@ -530,7 +530,7 @@ async fn update_template(
             template_name = COALESCE($1, template_name),
             content = COALESCE($2, content),
             updated_at = $3
-        WHERE id = $4 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $4  RETURNING *"
     ))
     .bind(req.template_name)
     .bind(req.content)
@@ -568,7 +568,7 @@ async fn delete_template(
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "UPDATE pm.report_templates SET is_active = false WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "UPDATE pm.report_templates SET is_active = false WHERE id = $1 "
     ))
     .bind(id)
     .execute(&mut scope)

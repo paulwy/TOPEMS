@@ -5,9 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -103,7 +104,7 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn list_crm_erp_sync(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
@@ -146,26 +147,37 @@ pub async fn list_crm_erp_sync(
     }
     query = query.bind(limit);
 
-    query.fetch_all(pool).await
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let rows = query.fetch_all(&mut scope).await?;
+    scope.commit().await?;
+    Ok(rows)
 }
 
-pub async fn get_crm_erp_sync(pool: &PgPool, id: Uuid) -> Result<Option<CrmErpSync>, sqlx::Error> {
-    sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
+pub async fn get_crm_erp_sync(
+    db: &Db,
+    tenant_id: Uuid,
+    id: Uuid,
+) -> Result<Option<CrmErpSync>, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let row = sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, sync_type, direction, crm_customer_id, crm_contact_id,
                 crm_opportunity_id, erp_customer_id, erp_contact_id, erp_order_id,
                 customer_code, customer_name, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM integration.crm_erp_sync WHERE id = $1"
+           FROM integration.crm_erp_sync WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .fetch_optional(pool)
-    .await
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 pub async fn create_sync_record(
-    pool: &PgPool,
+    db: &Db,
     req: &CreateCrmErpSyncRequest,
 ) -> Result<CrmErpSync, sqlx::Error> {
     let id = Uuid::new_v4();
@@ -195,6 +207,8 @@ pub async fn create_sync_record(
         .erp_order_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+
+    let mut scope = db.scope_for_tenant(req.tenant_id).await?;
 
     let result = sqlx::query_as::<_, CrmErpSync>(
         only_own_schema_query!("integration", "INSERT INTO integration.crm_erp_sync (
@@ -231,14 +245,17 @@ pub async fn create_sync_record(
     .bind(None::<DateTime<Utc>>)
     .bind(now)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     Ok(result)
 }
 
 pub async fn update_sync_status(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     status: &str,
     synced: bool,
@@ -248,7 +265,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
+    let row = sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
         "integration",
         "UPDATE integration.crm_erp_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
@@ -269,15 +288,22 @@ pub async fn update_sync_status(
     .bind(result_payload)
     .bind(last_synced)
     .bind(now)
-    .fetch_one(pool)
-    .await
+    .fetch_one(&mut scope)
+    .await?;
+
+    scope.commit().await?;
+
+    Ok(row)
 }
 
 pub async fn increment_retry_count(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
     sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.crm_erp_sync SET 
@@ -287,13 +313,15 @@ pub async fn increment_retry_count(
     ))
     .bind(id)
     .bind(error)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
+
+    scope.commit().await?;
     Ok(())
 }
 
 pub async fn sync_customer(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -309,11 +337,11 @@ pub async fn sync_customer(
 
     let (customer_data, direction) = match req.source_system.as_str() {
         "crm" => {
-            let data = fetch_crm_customer(pool, crm_url, customer_id).await?;
+            let data = fetch_crm_customer(crm_url, customer_id).await?;
             (data, DIRECTION_CRM_TO_ERP)
         }
         "erp" => {
-            let data = fetch_erp_customer(pool, erp_url, customer_id).await?;
+            let data = fetch_erp_customer(erp_url, customer_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
         _ => {
@@ -350,7 +378,7 @@ pub async fn sync_customer(
                 payload: Some(customer_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -360,7 +388,8 @@ pub async fn sync_customer(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -400,7 +429,7 @@ pub async fn sync_customer(
                 payload: Some(customer_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -410,7 +439,8 @@ pub async fn sync_customer(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -431,7 +461,7 @@ pub async fn sync_customer(
 }
 
 pub async fn sync_contact(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -447,11 +477,11 @@ pub async fn sync_contact(
 
     let (contact_data, direction) = match req.source_system.as_str() {
         "crm" => {
-            let data = fetch_crm_contact(pool, crm_url, contact_id).await?;
+            let data = fetch_crm_contact(crm_url, contact_id).await?;
             (data, DIRECTION_CRM_TO_ERP)
         }
         "erp" => {
-            let data = fetch_erp_contact(pool, erp_url, contact_id).await?;
+            let data = fetch_erp_contact(erp_url, contact_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
         _ => {
@@ -481,7 +511,7 @@ pub async fn sync_contact(
                 payload: Some(contact_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -491,7 +521,8 @@ pub async fn sync_contact(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -522,7 +553,7 @@ pub async fn sync_contact(
                 payload: Some(contact_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -532,7 +563,8 @@ pub async fn sync_contact(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -550,7 +582,7 @@ pub async fn sync_contact(
 }
 
 pub async fn convert_opportunity_to_order(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -561,7 +593,7 @@ pub async fn convert_opportunity_to_order(
     let opportunity_id = Uuid::parse_str(&req.opportunity_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
 
-    let opportunity_data = fetch_crm_opportunity(pool, crm_url, opportunity_id).await?;
+    let opportunity_data = fetch_crm_opportunity(crm_url, opportunity_id).await?;
 
     let order_type = req
         .order_type
@@ -595,7 +627,7 @@ pub async fn convert_opportunity_to_order(
         payload: Some(opportunity_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -606,7 +638,8 @@ pub async fn convert_opportunity_to_order(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -624,7 +657,6 @@ pub async fn convert_opportunity_to_order(
 }
 
 async fn fetch_crm_customer(
-    _pool: &PgPool,
     _crm_url: &str,
     customer_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -648,7 +680,6 @@ async fn fetch_crm_customer(
 }
 
 async fn fetch_erp_customer(
-    _pool: &PgPool,
     _erp_url: &str,
     customer_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -702,7 +733,6 @@ async fn create_crm_customer(
 }
 
 async fn fetch_crm_contact(
-    _pool: &PgPool,
     _crm_url: &str,
     contact_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -723,7 +753,6 @@ async fn fetch_crm_contact(
 }
 
 async fn fetch_erp_contact(
-    _pool: &PgPool,
     _erp_url: &str,
     contact_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -774,7 +803,6 @@ async fn create_crm_contact(
 }
 
 async fn fetch_crm_opportunity(
-    _pool: &PgPool,
     _crm_url: &str,
     opportunity_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -817,93 +845,93 @@ async fn create_erp_order_from_opportunity(
     Ok(order_id.to_string())
 }
 
-pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let crm_to_erp_result = sqlx::query(only_own_schema_query!(
+pub async fn get_crm_erp_sync_stats(db: &Db, tenant_id: Uuid) -> Result<SyncStats, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let crm_to_erp_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.crm_erp_sync 
-          WHERE direction = 'crm_to_erp' AND sync_type = 'customer'"
+          WHERE tenant_id = $1 AND direction = 'crm_to_erp' AND sync_type = 'customer'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let crm_to_erp_total: i64 = crm_to_erp_row.try_get("total")?;
+    let crm_to_erp_synced: i64 = crm_to_erp_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    let crm_to_erp_failed: i64 = crm_to_erp_row
+        .try_get::<Option<i64>, _>("failed")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (crm_to_erp_total, crm_to_erp_synced, crm_to_erp_failed) = match crm_to_erp_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let erp_to_crm_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let erp_to_crm_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.crm_erp_sync 
-          WHERE direction = 'erp_to_crm' AND sync_type = 'customer'"
+          WHERE tenant_id = $1 AND direction = 'erp_to_crm' AND sync_type = 'customer'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let erp_to_crm_total: i64 = erp_to_crm_row.try_get("total")?;
+    let erp_to_crm_synced: i64 = erp_to_crm_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    let erp_to_crm_failed: i64 = erp_to_crm_row
+        .try_get::<Option<i64>, _>("failed")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (erp_to_crm_total, erp_to_crm_synced, erp_to_crm_failed) = match erp_to_crm_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let contact_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let contact_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.crm_erp_sync 
-          WHERE sync_type = 'contact'"
+          WHERE tenant_id = $1 AND sync_type = 'contact'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let contact_total: i64 = contact_row.try_get("total")?;
+    let contact_synced: i64 = contact_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (contact_total, contact_synced) = match contact_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let opportunity_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let opportunity_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed
            FROM integration.crm_erp_sync 
-          WHERE sync_type = 'opportunity_to_order'"
+          WHERE tenant_id = $1 AND sync_type = 'opportunity_to_order'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let opportunity_total: i64 = opportunity_row.try_get("total")?;
+    let opportunity_completed: i64 = opportunity_row
+        .try_get::<Option<i64>, _>("completed")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (opportunity_total, opportunity_completed) = match opportunity_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("completed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let last_sync_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let last_sync_row = sqlx::query(only_own_schema_query!(
         "integration",
-        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_erp_sync"
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_erp_sync WHERE tenant_id = $1"
     ))
-    .fetch_one(pool)
-    .await;
-
-    let last_sync = last_sync_result
-        .ok()
-        .and_then(|row| row.try_get("last_sync").ok());
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let last_sync = last_sync_row.try_get("last_sync").ok().flatten();
+    scope.commit().await?;
 
     Ok(SyncStats {
         crm_to_erp_customer_total: crm_to_erp_total,
@@ -921,14 +949,15 @@ pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
 }
 
 pub async fn retry_failed_sync(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
     sync_id: Uuid,
 ) -> Result<CrmErpSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_crm_erp_sync(pool, sync_id)
+    let sync = get_crm_erp_sync(db, tenant_id, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
@@ -961,20 +990,21 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, crm_url, erp_url, &sync_type, &payload).await
+            execute_sync_by_type(db, sync.tenant_id, crm_url, erp_url, &sync_type, &payload).await
         })
         .await;
 
     match result {
         RetryResult::Success(_) => {
             let updated =
-                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
+                update_sync_status(db, sync.tenant_id, sync_id, STATUS_SYNCED, true, None, None)
+                    .await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await?;
+            increment_retry_count(db, sync.tenant_id, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -985,7 +1015,7 @@ pub async fn retry_failed_sync(
 }
 
 async fn execute_sync_by_type(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -999,7 +1029,7 @@ async fn execute_sync_by_type(
                 customer_id: customer_id.to_string(),
                 source_system: "crm".to_string(),
             };
-            sync_customer(pool, tenant_id, crm_url, erp_url, &req).await?;
+            sync_customer(db, tenant_id, crm_url, erp_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_CONTACT => {
@@ -1009,7 +1039,7 @@ async fn execute_sync_by_type(
                 customer_id: None,
                 source_system: "crm".to_string(),
             };
-            sync_contact(pool, tenant_id, crm_url, erp_url, &req).await?;
+            sync_contact(db, tenant_id, crm_url, erp_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_OPPORTUNITY_TO_ORDER => {
@@ -1018,7 +1048,7 @@ async fn execute_sync_by_type(
                 opportunity_id: opportunity_id.to_string(),
                 order_type: Some("sales_order".to_string()),
             };
-            convert_opportunity_to_order(pool, tenant_id, crm_url, erp_url, &req).await?;
+            convert_opportunity_to_order(db, tenant_id, crm_url, erp_url, &req).await?;
             Ok(())
         }
         _ => Err(TopemsError::ValidationFailed(format!(
@@ -1029,7 +1059,7 @@ async fn execute_sync_by_type(
 }
 
 pub async fn handle_crm_customer_created(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -1052,7 +1082,7 @@ pub async fn handle_crm_customer_created(
         source_system: "crm".to_string(),
     };
 
-    match sync_customer(pool, tenant_id, crm_url, erp_url, &req).await {
+    match sync_customer(db, tenant_id, crm_url, erp_url, &req).await {
         Ok(_) => info!("客户自动同步成功 - 客户ID: {}", customer_id),
         Err(e) => error!("客户自动同步失败 - 客户ID: {}, 错误: {}", customer_id, e),
     }
@@ -1061,7 +1091,7 @@ pub async fn handle_crm_customer_created(
 }
 
 pub async fn handle_erp_customer_created(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -1084,7 +1114,7 @@ pub async fn handle_erp_customer_created(
         source_system: "erp".to_string(),
     };
 
-    match sync_customer(pool, tenant_id, crm_url, erp_url, &req).await {
+    match sync_customer(db, tenant_id, crm_url, erp_url, &req).await {
         Ok(_) => info!("ERP客户自动同步成功 - 客户ID: {}", customer_id),
         Err(e) => error!("ERP客户自动同步失败 - 客户ID: {}, 错误: {}", customer_id, e),
     }
@@ -1093,7 +1123,7 @@ pub async fn handle_erp_customer_created(
 }
 
 pub async fn handle_crm_opportunity_won(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     erp_url: &str,
@@ -1116,7 +1146,7 @@ pub async fn handle_crm_opportunity_won(
         order_type: Some("sales_order".to_string()),
     };
 
-    match convert_opportunity_to_order(pool, tenant_id, crm_url, erp_url, &req).await {
+    match convert_opportunity_to_order(db, tenant_id, crm_url, erp_url, &req).await {
         Ok(_) => info!("商机转订单成功 - 商机ID: {}", opportunity_id),
         Err(e) => error!("商机转订单失败 - 商机ID: {}, 错误: {}", opportunity_id, e),
     }

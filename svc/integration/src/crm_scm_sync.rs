@@ -5,9 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -103,7 +104,7 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn list_crm_scm_sync(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
@@ -146,26 +147,37 @@ pub async fn list_crm_scm_sync(
     }
     query = query.bind(limit);
 
-    query.fetch_all(pool).await
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let rows = query.fetch_all(&mut scope).await?;
+    scope.commit().await?;
+    Ok(rows)
 }
 
-pub async fn get_crm_scm_sync(pool: &PgPool, id: Uuid) -> Result<Option<CrmScmSync>, sqlx::Error> {
-    sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
+pub async fn get_crm_scm_sync(
+    db: &Db,
+    tenant_id: Uuid,
+    id: Uuid,
+) -> Result<Option<CrmScmSync>, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let row = sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, sync_type, direction, crm_opportunity_id, crm_product_id,
                 scm_purchase_order_id, scm_supplier_id, opportunity_no, purchase_order_no,
                 product_code, product_name, supplier_code, supplier_name,
                 synced, sync_status, sync_error, retry_count, max_retries,
                 payload, result_payload, last_synced_at, created_at, updated_at
-           FROM integration.crm_scm_sync WHERE id = $1"
+           FROM integration.crm_scm_sync WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .fetch_optional(pool)
-    .await
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 pub async fn create_sync_record(
-    pool: &PgPool,
+    db: &Db,
     req: &CreateCrmScmSyncRequest,
 ) -> Result<CrmScmSync, sqlx::Error> {
     let id = Uuid::new_v4();
@@ -187,6 +199,8 @@ pub async fn create_sync_record(
         .scm_supplier_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+
+    let mut scope = db.scope_for_tenant(req.tenant_id).await?;
 
     let result = sqlx::query_as::<_, CrmScmSync>(
         only_own_schema_query!("integration", "INSERT INTO integration.crm_scm_sync (
@@ -225,14 +239,17 @@ pub async fn create_sync_record(
     .bind(None::<DateTime<Utc>>)
     .bind(now)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     Ok(result)
 }
 
 pub async fn update_sync_status(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     status: &str,
     synced: bool,
@@ -242,7 +259,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
+    let row = sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
         "integration",
         "UPDATE integration.crm_scm_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
@@ -263,15 +282,22 @@ pub async fn update_sync_status(
     .bind(result_payload)
     .bind(last_synced)
     .bind(now)
-    .fetch_one(pool)
-    .await
+    .fetch_one(&mut scope)
+    .await?;
+
+    scope.commit().await?;
+
+    Ok(row)
 }
 
 pub async fn increment_retry_count(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
     sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.crm_scm_sync SET 
@@ -281,13 +307,15 @@ pub async fn increment_retry_count(
     ))
     .bind(id)
     .bind(error)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
+
+    scope.commit().await?;
     Ok(())
 }
 
 pub async fn convert_opportunity_to_purchase(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -298,7 +326,7 @@ pub async fn convert_opportunity_to_purchase(
     let opportunity_id = Uuid::parse_str(&req.opportunity_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
 
-    let opportunity_data = fetch_crm_opportunity(pool, crm_url, opportunity_id).await?;
+    let opportunity_data = fetch_crm_opportunity(crm_url, opportunity_id).await?;
 
     let scm_purchase_order_id =
         create_scm_purchase_order(scm_url, &opportunity_data, req.supplier_id.as_deref()).await?;
@@ -333,7 +361,7 @@ pub async fn convert_opportunity_to_purchase(
         payload: Some(opportunity_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -343,7 +371,8 @@ pub async fn convert_opportunity_to_purchase(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -361,7 +390,7 @@ pub async fn convert_opportunity_to_purchase(
 }
 
 pub async fn sync_supplier(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -377,11 +406,11 @@ pub async fn sync_supplier(
 
     let (supplier_data, direction) = match req.source_system.as_str() {
         "crm" => {
-            let data = fetch_crm_supplier(pool, crm_url, supplier_id).await?;
+            let data = fetch_crm_supplier(crm_url, supplier_id).await?;
             (data, DIRECTION_CRM_TO_SCM)
         }
         "scm" => {
-            let data = fetch_scm_supplier(pool, scm_url, supplier_id).await?;
+            let data = fetch_scm_supplier(scm_url, supplier_id).await?;
             (data, DIRECTION_SCM_TO_CRM)
         }
         _ => {
@@ -419,7 +448,7 @@ pub async fn sync_supplier(
                 payload: Some(supplier_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -429,7 +458,8 @@ pub async fn sync_supplier(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -468,7 +498,7 @@ pub async fn sync_supplier(
                 payload: Some(supplier_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -478,7 +508,8 @@ pub async fn sync_supplier(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -496,7 +527,7 @@ pub async fn sync_supplier(
 }
 
 pub async fn sync_product(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -512,11 +543,11 @@ pub async fn sync_product(
 
     let (product_data, direction) = match req.source_system.as_str() {
         "crm" => {
-            let data = fetch_crm_product(pool, crm_url, product_id).await?;
+            let data = fetch_crm_product(crm_url, product_id).await?;
             (data, DIRECTION_CRM_TO_SCM)
         }
         "scm" => {
-            let data = fetch_scm_product(pool, scm_url, product_id).await?;
+            let data = fetch_scm_product(scm_url, product_id).await?;
             (data, DIRECTION_SCM_TO_CRM)
         }
         _ => {
@@ -554,7 +585,7 @@ pub async fn sync_product(
                 payload: Some(product_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -564,7 +595,8 @@ pub async fn sync_product(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -603,7 +635,7 @@ pub async fn sync_product(
                 payload: Some(product_data),
             };
 
-            let sync_record = create_sync_record(pool, &sync_req)
+            let sync_record = create_sync_record(db, &sync_req)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -613,7 +645,8 @@ pub async fn sync_product(
             });
 
             let updated = update_sync_status(
-                pool,
+                db,
+                tenant_id,
                 sync_record.id,
                 STATUS_SYNCED,
                 true,
@@ -631,7 +664,6 @@ pub async fn sync_product(
 }
 
 async fn fetch_crm_opportunity(
-    _pool: &PgPool,
     _crm_url: &str,
     opportunity_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -678,7 +710,6 @@ async fn create_scm_purchase_order(
 }
 
 async fn fetch_crm_supplier(
-    _pool: &PgPool,
     _crm_url: &str,
     supplier_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -702,7 +733,6 @@ async fn fetch_crm_supplier(
 }
 
 async fn fetch_scm_supplier(
-    _pool: &PgPool,
     _scm_url: &str,
     supplier_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -756,7 +786,6 @@ async fn create_crm_supplier(
 }
 
 async fn fetch_crm_product(
-    _pool: &PgPool,
     _crm_url: &str,
     product_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -776,7 +805,6 @@ async fn fetch_crm_product(
 }
 
 async fn fetch_scm_product(
-    _pool: &PgPool,
     _scm_url: &str,
     product_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -827,73 +855,72 @@ async fn create_crm_product(
     Ok(crm_id.to_string())
 }
 
-pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let purchase_result = sqlx::query(only_own_schema_query!(
+pub async fn get_crm_scm_sync_stats(db: &Db, tenant_id: Uuid) -> Result<SyncStats, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let purchase_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.crm_scm_sync 
-          WHERE sync_type = 'opportunity_to_purchase'"
+          WHERE tenant_id = $1 AND sync_type = 'opportunity_to_purchase'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let purchase_total: i64 = purchase_row.try_get("total")?;
+    let purchase_completed: i64 = purchase_row
+        .try_get::<Option<i64>, _>("completed")?
+        .unwrap_or(0);
+    let purchase_failed: i64 = purchase_row
+        .try_get::<Option<i64>, _>("failed")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (purchase_total, purchase_completed, purchase_failed) = match purchase_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("completed").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let supplier_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let supplier_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.crm_scm_sync 
-          WHERE sync_type = 'supplier'"
+          WHERE tenant_id = $1 AND sync_type = 'supplier'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let supplier_total: i64 = supplier_row.try_get("total")?;
+    let supplier_synced: i64 = supplier_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (supplier_total, supplier_synced) = match supplier_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let product_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let product_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.crm_scm_sync 
-          WHERE sync_type = 'product'"
+          WHERE tenant_id = $1 AND sync_type = 'product'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let product_total: i64 = product_row.try_get("total")?;
+    let product_synced: i64 = product_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (product_total, product_synced) = match product_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let last_sync_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let last_sync_row = sqlx::query(only_own_schema_query!(
         "integration",
-        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_scm_sync"
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_scm_sync WHERE tenant_id = $1"
     ))
-    .fetch_one(pool)
-    .await;
-
-    let last_sync = last_sync_result
-        .ok()
-        .and_then(|row| row.try_get("last_sync").ok());
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let last_sync = last_sync_row.try_get("last_sync").ok().flatten();
+    scope.commit().await?;
 
     Ok(SyncStats {
         opportunity_to_purchase_total: purchase_total,
@@ -908,14 +935,15 @@ pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
 }
 
 pub async fn retry_failed_sync(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
     sync_id: Uuid,
 ) -> Result<CrmScmSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_crm_scm_sync(pool, sync_id)
+    let sync = get_crm_scm_sync(db, tenant_id, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
@@ -948,20 +976,21 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await
+            execute_sync_by_type(db, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await
         })
         .await;
 
     match result {
         RetryResult::Success(_) => {
             let updated =
-                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
+                update_sync_status(db, sync.tenant_id, sync_id, STATUS_SYNCED, true, None, None)
+                    .await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await?;
+            increment_retry_count(db, sync.tenant_id, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -972,7 +1001,7 @@ pub async fn retry_failed_sync(
 }
 
 async fn execute_sync_by_type(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -986,7 +1015,7 @@ async fn execute_sync_by_type(
                 opportunity_id: opportunity_id.to_string(),
                 supplier_id: None,
             };
-            convert_opportunity_to_purchase(pool, tenant_id, crm_url, scm_url, &req).await?;
+            convert_opportunity_to_purchase(db, tenant_id, crm_url, scm_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_SUPPLIER => {
@@ -995,7 +1024,7 @@ async fn execute_sync_by_type(
                 supplier_id: supplier_id.to_string(),
                 source_system: "crm".to_string(),
             };
-            sync_supplier(pool, tenant_id, crm_url, scm_url, &req).await?;
+            sync_supplier(db, tenant_id, crm_url, scm_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_PRODUCT => {
@@ -1004,7 +1033,7 @@ async fn execute_sync_by_type(
                 product_id: product_id.to_string(),
                 source_system: "crm".to_string(),
             };
-            sync_product(pool, tenant_id, crm_url, scm_url, &req).await?;
+            sync_product(db, tenant_id, crm_url, scm_url, &req).await?;
             Ok(())
         }
         _ => Err(TopemsError::ValidationFailed(format!(
@@ -1015,7 +1044,7 @@ async fn execute_sync_by_type(
 }
 
 pub async fn handle_crm_opportunity_won(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -1043,7 +1072,7 @@ pub async fn handle_crm_opportunity_won(
         supplier_id,
     };
 
-    match convert_opportunity_to_purchase(pool, tenant_id, crm_url, scm_url, &req).await {
+    match convert_opportunity_to_purchase(db, tenant_id, crm_url, scm_url, &req).await {
         Ok(_) => info!("商机转采购订单成功 - 商机ID: {}", opportunity_id),
         Err(e) => error!(
             "商机转采购订单失败 - 商机ID: {}, 错误: {}",
@@ -1055,7 +1084,7 @@ pub async fn handle_crm_opportunity_won(
 }
 
 pub async fn handle_scm_supplier_created(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     crm_url: &str,
     scm_url: &str,
@@ -1078,7 +1107,7 @@ pub async fn handle_scm_supplier_created(
         source_system: "scm".to_string(),
     };
 
-    match sync_supplier(pool, tenant_id, crm_url, scm_url, &req).await {
+    match sync_supplier(db, tenant_id, crm_url, scm_url, &req).await {
         Ok(_) => info!("供应商自动同步成功 - 供应商ID: {}", supplier_id),
         Err(e) => error!(
             "供应商自动同步失败 - 供应商ID: {}, 错误: {}",

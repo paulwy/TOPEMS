@@ -9,11 +9,11 @@
 //! - 并发控制：全局互斥锁，避免多个同步周期重叠
 
 use chrono::{DateTime, Duration, Utc};
-use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::{interval, timeout, MissedTickBehavior};
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::erp_wms_sync::sync_incremental_all;
@@ -72,16 +72,16 @@ struct SyncResult {
 // ===== 调度器 =====
 
 pub struct SyncScheduler {
-    pool: PgPool,
+    db: Db,
     check_interval_secs: u64,
     /// 全局互斥锁，避免多个同步周期重叠
     sync_lock: Mutex<()>,
 }
 
 impl SyncScheduler {
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self {
-            pool,
+            db,
             check_interval_secs: DEFAULT_CHECK_INTERVAL_SECS,
             sync_lock: Mutex::new(()),
         }
@@ -179,7 +179,7 @@ impl SyncScheduler {
                             result.total_failed
                         );
                         // 更新 last_sync_at 和成功状态
-                        if let Err(e) = self.update_sync_success(conn.id).await {
+                        if let Err(e) = self.update_sync_success(&conn).await {
                             tracing::warn!(
                                 "[sync-scheduler] 更新连接 '{}' 同步状态失败: {}",
                                 conn.name,
@@ -198,7 +198,7 @@ impl SyncScheduler {
                                 .unwrap_or_else(|| "未知错误".to_string())
                         );
                         // 更新失败状态
-                        if let Err(e) = self.update_sync_failure(conn.id, result.error).await {
+                        if let Err(e) = self.update_sync_failure(&conn, result.error).await {
                             tracing::warn!(
                                 "[sync-scheduler] 更新连接 '{}' 失败状态失败: {}",
                                 conn.name,
@@ -216,7 +216,7 @@ impl SyncScheduler {
                     );
                     // 更新失败状态
                     if let Err(update_err) =
-                        self.update_sync_failure(conn.id, Some(e.to_string())).await
+                        self.update_sync_failure(&conn, Some(e.to_string())).await
                     {
                         tracing::warn!(
                             "[sync-scheduler] 更新连接 '{}' 失败状态失败: {}",
@@ -321,9 +321,10 @@ impl SyncScheduler {
         let wms_url =
             std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8081".to_string());
 
-        // 执行增量同步（带超时）
+        // 执行增量同步（带超时）：连接行自身的 tenant_id 即该连接的租户，
+        // 后台链路没有请求上下文，必须显式按租户取作用域。
         let sync_future = sync_incremental_all(
-            &self.pool,
+            &self.db,
             tenant_id,
             &conn.api_url,
             &wms_url,
@@ -380,7 +381,18 @@ impl SyncScheduler {
     }
 
     /// 查询所有激活的 ERP 连接
+    ///
+    /// **运维视图，有意跨租户**：调度器必须先看到全体租户已启用的连接，
+    /// 才能逐个连接解析其 `tenant_id` 再按租户执行同步。这不是租户视图，
+    /// 因此走 `scope_read_system()`（显式 nil 租户 + `app.rls_system='on'`），
+    /// 而不是请求作用域；后者没有请求上下文时会直接报错。
     async fn get_active_connections(&self) -> Result<Vec<ErpConnection>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read_system()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立系统作用域失败: {}", e)))?;
+
         let rows: Vec<(
             Uuid,
             String,
@@ -400,9 +412,14 @@ impl SyncScheduler {
              WHERE isactive = true AND status = 'active'
              ORDER BY name",
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询 ERP 连接失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交系统读作用域失败: {}", e)))?;
 
         let connections: Vec<ErpConnection> = rows
             .into_iter()
@@ -458,7 +475,16 @@ impl SyncScheduler {
     }
 
     /// 更新同步成功状态
-    async fn update_sync_success(&self, conn_id: Uuid) -> Result<(), TopemsError> {
+    async fn update_sync_success(&self, conn: &ErpConnection) -> Result<(), TopemsError> {
+        let tenant_id = Uuid::parse_str(&conn.tenant_id)
+            .map_err(|e| TopemsError::DatabaseQuery(format!("解析 tenant_id 失败: {}", e)))?;
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
+
         sqlx::query(
             "UPDATE integration.erp_connections
              SET last_sync_at = NOW(),
@@ -468,10 +494,15 @@ impl SyncScheduler {
                  consecutive_failures = 0
              WHERE id = $1",
         )
-        .bind(conn_id)
-        .execute(&self.pool)
+        .bind(conn.id)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步成功状态失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交租户写作用域失败: {}", e)))?;
 
         Ok(())
     }
@@ -479,9 +510,12 @@ impl SyncScheduler {
     /// 更新同步失败状态
     async fn update_sync_failure(
         &self,
-        conn_id: Uuid,
+        conn: &ErpConnection,
         error: Option<String>,
     ) -> Result<(), TopemsError> {
+        let tenant_id = Uuid::parse_str(&conn.tenant_id)
+            .map_err(|e| TopemsError::DatabaseQuery(format!("解析 tenant_id 失败: {}", e)))?;
+
         let error_msg = error.unwrap_or_else(|| "未知错误".to_string());
         // 截断错误信息，避免过长
         let truncated_error = if error_msg.len() > 500 {
@@ -489,6 +523,12 @@ impl SyncScheduler {
         } else {
             error_msg
         };
+
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
 
         sqlx::query(
             "UPDATE integration.erp_connections
@@ -500,17 +540,22 @@ impl SyncScheduler {
              WHERE id = $2",
         )
         .bind(truncated_error)
-        .bind(conn_id)
-        .execute(&self.pool)
+        .bind(conn.id)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步失败状态失败: {}", e)))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交租户写作用域失败: {}", e)))?;
 
         Ok(())
     }
 }
 
 /// 启动同步调度器（便捷函数）
-pub async fn start_sync_scheduler(pool: PgPool) {
-    let scheduler = Arc::new(SyncScheduler::new(pool));
+pub async fn start_sync_scheduler(db: Db) {
+    let scheduler = Arc::new(SyncScheduler::new(db));
     scheduler.start().await;
 }

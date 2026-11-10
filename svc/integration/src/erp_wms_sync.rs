@@ -5,9 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -104,7 +105,7 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn list_erp_wms_sync(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
@@ -147,11 +148,19 @@ pub async fn list_erp_wms_sync(
     }
     query = query.bind(limit);
 
-    query.fetch_all(pool).await
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let rows = query.fetch_all(&mut scope).await?;
+    scope.commit().await?;
+    Ok(rows)
 }
 
-pub async fn get_erp_wms_sync(pool: &PgPool, id: Uuid) -> Result<Option<ErpWmsSync>, sqlx::Error> {
-    sqlx::query_as::<_, ErpWmsSync>(only_own_schema_query!(
+pub async fn get_erp_wms_sync(
+    db: &Db,
+    tenant_id: Uuid,
+    id: Uuid,
+) -> Result<Option<ErpWmsSync>, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let row = sqlx::query_as::<_, ErpWmsSync>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, sync_type, direction, erp_order_id, erp_inventory_id,
                 wms_transaction_id, wms_location_id, order_no, product_code,
@@ -161,12 +170,14 @@ pub async fn get_erp_wms_sync(pool: &PgPool, id: Uuid) -> Result<Option<ErpWmsSy
            FROM integration.erp_wms_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(pool)
-    .await
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 pub async fn create_sync_record(
-    pool: &PgPool,
+    db: &Db,
     req: &CreateErpWmsSyncRequest,
 ) -> Result<ErpWmsSync, sqlx::Error> {
     let id = Uuid::new_v4();
@@ -188,6 +199,8 @@ pub async fn create_sync_record(
         .wms_location_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+
+    let mut scope = db.scope_for_tenant(req.tenant_id).await?;
 
     let result = sqlx::query_as::<_, ErpWmsSync>(
         only_own_schema_query!("integration", "INSERT INTO integration.erp_wms_sync (
@@ -226,14 +239,17 @@ pub async fn create_sync_record(
     .bind(None::<DateTime<Utc>>)
     .bind(now)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     Ok(result)
 }
 
 pub async fn update_sync_status(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     status: &str,
     synced: bool,
@@ -243,7 +259,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, ErpWmsSync>(only_own_schema_query!(
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
+    let row = sqlx::query_as::<_, ErpWmsSync>(only_own_schema_query!(
         "integration",
         "UPDATE integration.erp_wms_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
@@ -264,15 +282,22 @@ pub async fn update_sync_status(
     .bind(result_payload)
     .bind(last_synced)
     .bind(now)
-    .fetch_one(pool)
-    .await
+    .fetch_one(&mut scope)
+    .await?;
+
+    scope.commit().await?;
+
+    Ok(row)
 }
 
 pub async fn increment_retry_count(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
+
     sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.erp_wms_sync SET 
@@ -282,13 +307,15 @@ pub async fn increment_retry_count(
     ))
     .bind(id)
     .bind(error)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
+
+    scope.commit().await?;
     Ok(())
 }
 
 pub async fn sync_order_to_wms(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -302,7 +329,7 @@ pub async fn sync_order_to_wms(
     let order_id = Uuid::parse_str(&req.order_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的订单ID: {}", e)))?;
 
-    let order_data = fetch_erp_order(pool, erp_url, order_id).await?;
+    let order_data = fetch_erp_order(erp_url, order_id).await?;
 
     let wms_transaction_id = create_wms_transaction(wms_url, &order_data, &req.order_type).await?;
 
@@ -337,7 +364,7 @@ pub async fn sync_order_to_wms(
         payload: Some(order_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -348,7 +375,8 @@ pub async fn sync_order_to_wms(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -366,7 +394,7 @@ pub async fn sync_order_to_wms(
 }
 
 pub async fn sync_stock_to_erp(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -377,8 +405,7 @@ pub async fn sync_stock_to_erp(
     let product_id = Uuid::parse_str(&req.product_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的产品ID: {}", e)))?;
 
-    let stock_data =
-        fetch_wms_stock(pool, wms_url, product_id, req.warehouse_code.as_deref()).await?;
+    let stock_data = fetch_wms_stock(wms_url, product_id, req.warehouse_code.as_deref()).await?;
 
     let erp_inventory_id = update_erp_inventory(erp_url, &stock_data).await?;
 
@@ -413,7 +440,7 @@ pub async fn sync_stock_to_erp(
         payload: Some(stock_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -423,7 +450,8 @@ pub async fn sync_stock_to_erp(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -438,7 +466,7 @@ pub async fn sync_stock_to_erp(
 }
 
 pub async fn sync_inventory_adjustment(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -453,8 +481,8 @@ pub async fn sync_inventory_adjustment(
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的调整ID: {}", e)))?;
 
     let adjustment_data = match req.adjustment_type.as_str() {
-        "erp" => fetch_erp_inventory_adjustment(pool, erp_url, adjustment_id).await?,
-        "wms" => fetch_wms_inventory_adjustment(pool, wms_url, adjustment_id).await?,
+        "erp" => fetch_erp_inventory_adjustment(erp_url, adjustment_id).await?,
+        "wms" => fetch_wms_inventory_adjustment(wms_url, adjustment_id).await?,
         _ => {
             return Err(TopemsError::ValidationFailed(format!(
                 "未知的调整类型: {}",
@@ -522,7 +550,7 @@ pub async fn sync_inventory_adjustment(
         payload: Some(adjustment_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(db, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -533,7 +561,8 @@ pub async fn sync_inventory_adjustment(
     });
 
     let updated = update_sync_status(
-        pool,
+        db,
+        tenant_id,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -547,11 +576,7 @@ pub async fn sync_inventory_adjustment(
     Ok(updated)
 }
 
-async fn fetch_erp_order(
-    _pool: &PgPool,
-    _erp_url: &str,
-    order_id: Uuid,
-) -> Result<serde_json::Value, TopemsError> {
+async fn fetch_erp_order(_erp_url: &str, order_id: Uuid) -> Result<serde_json::Value, TopemsError> {
     info!("获取ERP订单记录 - ID: {}", order_id);
 
     Ok(serde_json::json!({
@@ -594,7 +619,6 @@ async fn create_wms_transaction(
 }
 
 async fn fetch_wms_stock(
-    _pool: &PgPool,
     _wms_url: &str,
     product_id: Uuid,
     warehouse_code: Option<&str>,
@@ -639,7 +663,6 @@ async fn update_erp_inventory(
 }
 
 async fn fetch_erp_inventory_adjustment(
-    _pool: &PgPool,
     _erp_url: &str,
     adjustment_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -664,7 +687,6 @@ async fn fetch_erp_inventory_adjustment(
 }
 
 async fn fetch_wms_inventory_adjustment(
-    _pool: &PgPool,
     _wms_url: &str,
     adjustment_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -727,75 +749,73 @@ async fn apply_erp_inventory_adjustment(
     Ok(erp_id.to_string())
 }
 
-pub async fn get_erp_wms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let order_result = sqlx::query(only_own_schema_query!(
+pub async fn get_erp_wms_sync_stats(db: &Db, tenant_id: Uuid) -> Result<SyncStats, sqlx::Error> {
+    // 语义修正：改造前是无租户条件的全表聚合（跨租户串号）；
+    // 现在按连接/调用方自身的 tenant_id 统计本租户数据。
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let order_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.erp_wms_sync 
-          WHERE direction = 'erp_to_wms' AND sync_type = 'order'"
+          WHERE tenant_id = $1
+            AND direction = 'erp_to_wms' AND sync_type = 'order'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let order_total: i64 = order_row.try_get("total")?;
+    let order_synced: i64 = order_row.try_get::<Option<i64>, _>("synced")?.unwrap_or(0);
+    let order_failed: i64 = order_row.try_get::<Option<i64>, _>("failed")?.unwrap_or(0);
+    scope.commit().await?;
 
-    let (order_total, order_synced, order_failed) = match order_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let stock_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let stock_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.erp_wms_sync 
-          WHERE direction = 'wms_to_erp' AND sync_type = 'stock'"
+          WHERE tenant_id = $1
+            AND direction = 'wms_to_erp' AND sync_type = 'stock'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let stock_total: i64 = stock_row.try_get("total")?;
+    let stock_synced: i64 = stock_row.try_get::<Option<i64>, _>("synced")?.unwrap_or(0);
+    let stock_failed: i64 = stock_row.try_get::<Option<i64>, _>("failed")?.unwrap_or(0);
+    scope.commit().await?;
 
-    let (stock_total, stock_synced, stock_failed) = match stock_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let adjustment_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let adjustment_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM integration.erp_wms_sync 
-          WHERE sync_type = 'inventory_adjustment'"
+          WHERE tenant_id = $1 AND sync_type = 'inventory_adjustment'"
     ))
-    .fetch_one(pool)
-    .await;
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let adjustment_total: i64 = adjustment_row.try_get("total")?;
+    let adjustment_synced: i64 = adjustment_row
+        .try_get::<Option<i64>, _>("synced")?
+        .unwrap_or(0);
+    scope.commit().await?;
 
-    let (adjustment_total, adjustment_synced) = match adjustment_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let last_sync_result = sqlx::query(only_own_schema_query!(
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let last_sync_row = sqlx::query(only_own_schema_query!(
         "integration",
-        "SELECT MAX(last_synced_at) as last_sync FROM integration.erp_wms_sync"
+        "SELECT MAX(last_synced_at) as last_sync
+           FROM integration.erp_wms_sync WHERE tenant_id = $1"
     ))
-    .fetch_one(pool)
-    .await;
-
-    let last_sync = last_sync_result
-        .ok()
-        .and_then(|row| row.try_get("last_sync").ok());
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await?;
+    let last_sync = last_sync_row.try_get("last_sync").ok().flatten();
+    scope.commit().await?;
 
     Ok(SyncStats {
         erp_to_wms_order_total: order_total,
@@ -811,14 +831,15 @@ pub async fn get_erp_wms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
 }
 
 pub async fn retry_failed_sync(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
     sync_id: Uuid,
 ) -> Result<ErpWmsSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_erp_wms_sync(pool, sync_id)
+    let sync = get_erp_wms_sync(db, tenant_id, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
@@ -851,20 +872,21 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await
+            execute_sync_by_type(db, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await
         })
         .await;
 
     match result {
         RetryResult::Success(_) => {
             let updated =
-                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
+                update_sync_status(db, sync.tenant_id, sync_id, STATUS_SYNCED, true, None, None)
+                    .await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await?;
+            increment_retry_count(db, sync.tenant_id, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -875,7 +897,7 @@ pub async fn retry_failed_sync(
 }
 
 async fn execute_sync_by_type(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -893,7 +915,7 @@ async fn execute_sync_by_type(
                 order_id: order_id.to_string(),
                 order_type: order_type.to_string(),
             };
-            sync_order_to_wms(pool, tenant_id, erp_url, wms_url, &req).await?;
+            sync_order_to_wms(db, tenant_id, erp_url, wms_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_STOCK => {
@@ -905,7 +927,7 @@ async fn execute_sync_by_type(
                 product_id: product_id.to_string(),
                 warehouse_code: None,
             };
-            sync_stock_to_erp(pool, tenant_id, erp_url, wms_url, &req).await?;
+            sync_stock_to_erp(db, tenant_id, erp_url, wms_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_INVENTORY_ADJUSTMENT => {
@@ -918,7 +940,7 @@ async fn execute_sync_by_type(
                 adjustment_id: adjustment_id.to_string(),
                 adjustment_type: adjustment_type.to_string(),
             };
-            sync_inventory_adjustment(pool, tenant_id, erp_url, wms_url, &req).await?;
+            sync_inventory_adjustment(db, tenant_id, erp_url, wms_url, &req).await?;
             Ok(())
         }
         _ => Err(TopemsError::ValidationFailed(format!(
@@ -929,7 +951,7 @@ async fn execute_sync_by_type(
 }
 
 pub async fn handle_erp_order_confirmed(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -956,7 +978,7 @@ pub async fn handle_erp_order_confirmed(
         order_type: order_type.to_string(),
     };
 
-    match sync_order_to_wms(pool, tenant_id, erp_url, wms_url, &req).await {
+    match sync_order_to_wms(db, tenant_id, erp_url, wms_url, &req).await {
         Ok(_) => info!("订单自动同步成功 - 订单ID: {}", order_id),
         Err(e) => error!("订单自动同步失败 - 订单ID: {}, 错误: {}", order_id, e),
     }
@@ -965,7 +987,7 @@ pub async fn handle_erp_order_confirmed(
 }
 
 pub async fn handle_wms_stock_updated(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -993,7 +1015,7 @@ pub async fn handle_wms_stock_updated(
         warehouse_code,
     };
 
-    match sync_stock_to_erp(pool, tenant_id, erp_url, wms_url, &req).await {
+    match sync_stock_to_erp(db, tenant_id, erp_url, wms_url, &req).await {
         Ok(_) => info!("库存自动同步成功 - 产品ID: {}", product_id),
         Err(e) => error!("库存自动同步失败 - 产品ID: {}, 错误: {}", product_id, e),
     }
@@ -1034,21 +1056,33 @@ pub struct IncrementalSyncRequest {
 
 /// 获取指定类型/方向的上次同步时间
 pub async fn get_last_sync_time(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     sync_type: &str,
     direction: &str,
 ) -> Result<Option<DateTime<Utc>>, TopemsError> {
+    let mut scope = db
+        .scope_read_for_tenant(tenant_id)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
+
     let row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT MAX(last_synced_at) as last_sync
          FROM integration.erp_wms_sync
-         WHERE sync_type = $1 AND direction = $2 AND synced = true"
+         WHERE tenant_id = $3 AND sync_type = $1 AND direction = $2 AND synced = true"
     ))
     .bind(sync_type)
     .bind(direction)
-    .fetch_one(pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取上次同步时间失败: {}", e)))?;
+
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
 
     Ok(row.try_get("last_sync").ok())
 }
@@ -1057,12 +1091,18 @@ pub async fn get_last_sync_time(
 ///
 /// 根据上次同步时间，查询新增或更新的待同步记录
 pub async fn get_pending_syncs(
-    pool: &PgPool,
+    db: &Db,
+    tenant_id: Uuid,
     sync_type: &str,
     direction: &str,
     since: Option<DateTime<Utc>>,
     limit: i64,
 ) -> Result<Vec<ErpWmsSync>, TopemsError> {
+    let mut scope = db
+        .scope_read_for_tenant(tenant_id)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立租户作用域失败: {}", e)))?;
+
     let rows = sqlx::query(only_own_schema_query!(
         "integration",
         r#"
@@ -1074,6 +1114,7 @@ pub async fn get_pending_syncs(
         FROM integration.erp_wms_sync
         WHERE sync_type = $1
           AND direction = $2
+          AND tenant_id = $5
           AND synced = false
           AND sync_status IN ('pending', 'failed', 'retrying')
           AND retry_count < max_retries
@@ -1086,9 +1127,15 @@ pub async fn get_pending_syncs(
     .bind(direction)
     .bind(limit)
     .bind(since)
-    .fetch_all(pool)
+    .bind(tenant_id)
+    .fetch_all(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取待同步记录失败: {}", e)))?;
+
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交读作用域失败: {}", e)))?;
 
     let mut results = Vec::with_capacity(rows.len());
     for row in rows {
@@ -1126,7 +1173,7 @@ pub async fn get_pending_syncs(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 执行增量同步（订单 ERP → WMS）
 pub async fn sync_incremental_orders(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -1139,12 +1186,13 @@ pub async fn sync_incremental_orders(
     // 获取上次同步时间（如果未指定）
     let last_sync_time = match since {
         Some(s) => Some(s),
-        None => get_last_sync_time(pool, SYNC_TYPE_ORDER, DIRECTION_ERP_TO_WMS).await?,
+        None => get_last_sync_time(db, tenant_id, SYNC_TYPE_ORDER, DIRECTION_ERP_TO_WMS).await?,
     };
 
     // 获取待同步记录
     let pending = get_pending_syncs(
-        pool,
+        db,
+        tenant_id,
         SYNC_TYPE_ORDER,
         DIRECTION_ERP_TO_WMS,
         last_sync_time,
@@ -1193,7 +1241,7 @@ pub async fn sync_incremental_orders(
             order_type: "sales_order".to_string(),
         };
 
-        match sync_order_to_wms(pool, tenant_id, erp_url, wms_url, &req).await {
+        match sync_order_to_wms(db, tenant_id, erp_url, wms_url, &req).await {
             Ok(_) => {
                 total_success += 1;
             }
@@ -1205,7 +1253,7 @@ pub async fn sync_incremental_orders(
                     e
                 ));
                 // 增加重试次数
-                let _ = increment_retry_count(pool, record.id, &e.to_string()).await;
+                let _ = increment_retry_count(db, tenant_id, record.id, &e.to_string()).await;
             }
         }
     }
@@ -1234,7 +1282,7 @@ pub async fn sync_incremental_orders(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 执行增量同步（库存 WMS → ERP）
 pub async fn sync_incremental_stock(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -1247,12 +1295,13 @@ pub async fn sync_incremental_stock(
     // 获取上次同步时间
     let last_sync_time = match since {
         Some(s) => Some(s),
-        None => get_last_sync_time(pool, SYNC_TYPE_STOCK, DIRECTION_WMS_TO_ERP).await?,
+        None => get_last_sync_time(db, tenant_id, SYNC_TYPE_STOCK, DIRECTION_WMS_TO_ERP).await?,
     };
 
     // 获取待同步记录
     let pending = get_pending_syncs(
-        pool,
+        db,
+        tenant_id,
         SYNC_TYPE_STOCK,
         DIRECTION_WMS_TO_ERP,
         last_sync_time,
@@ -1301,7 +1350,7 @@ pub async fn sync_incremental_stock(
             warehouse_code: record.warehouse_code.clone(),
         };
 
-        match sync_stock_to_erp(pool, tenant_id, erp_url, wms_url, &req).await {
+        match sync_stock_to_erp(db, tenant_id, erp_url, wms_url, &req).await {
             Ok(_) => {
                 total_success += 1;
             }
@@ -1312,7 +1361,7 @@ pub async fn sync_incremental_stock(
                     record.product_code.clone().unwrap_or_default(),
                     e
                 ));
-                let _ = increment_retry_count(pool, record.id, &e.to_string()).await;
+                let _ = increment_retry_count(db, tenant_id, record.id, &e.to_string()).await;
             }
         }
     }
@@ -1340,7 +1389,7 @@ pub async fn sync_incremental_stock(
 
 /// 执行全量增量同步（订单 + 库存）
 pub async fn sync_incremental_all(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     erp_url: &str,
     wms_url: &str,
@@ -1351,7 +1400,7 @@ pub async fn sync_incremental_all(
     let mut results = Vec::new();
 
     // 同步订单（ERP → WMS）
-    match sync_incremental_orders(pool, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
+    match sync_incremental_orders(db, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
         Ok(r) => results.push(r),
         Err(e) => {
             error!("订单增量同步失败: {}", e);
@@ -1372,7 +1421,7 @@ pub async fn sync_incremental_all(
     }
 
     // 同步库存（WMS → ERP）
-    match sync_incremental_stock(pool, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
+    match sync_incremental_stock(db, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
         Ok(r) => results.push(r),
         Err(e) => {
             error!("库存增量同步失败: {}", e);

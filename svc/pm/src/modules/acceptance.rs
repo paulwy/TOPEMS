@@ -264,7 +264,7 @@ async fn update_plan(
             participants = COALESCE($6, participants),
             documents_required = COALESCE($7, documents_required),
             updated_at = $8
-        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $9  RETURNING *"
     ))
     .bind(req.plan_name)
     .bind(req.acceptance_type)
@@ -463,7 +463,7 @@ async fn update_plan_item(
             is_passed = COALESCE($2, is_passed),
             comments = COALESCE($3, comments),
             updated_at = $4
-        WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $5  RETURNING *"
     ))
     .bind(req.actual_result)
     .bind(req.is_passed)
@@ -502,7 +502,7 @@ async fn delete_plan_item(
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.acceptance_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.acceptance_items WHERE id = $1 "
     ))
     .bind(id)
     .execute(&mut scope)
@@ -725,7 +725,7 @@ async fn update_record(
             findings = COALESCE($5::jsonb, findings),
             recommendations = COALESCE($6::jsonb, recommendations),
             updated_at = $7
-        WHERE id = $8 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $8  RETURNING *"
     ))
     .bind(req.status)
     .bind(req.conclusion)
