@@ -70,7 +70,10 @@ fn reversed_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
 #[sqlx::test(migrations = false)]
 async fn voucher_created_inserts_summary_row(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let view = PgVoucherSummaryView::new(pool.clone());
+    let view = PgVoucherSummaryView::new(topems_shared_db::scope::Db::new(
+        pool.clone(),
+        "finance, public, shared",
+    ));
 
     view.handle_event(&created_event("v-1", "VN-1"))
         .await
@@ -88,7 +91,10 @@ async fn voucher_created_inserts_summary_row(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn voucher_posted_updates_status_and_posted_at(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let view = PgVoucherSummaryView::new(pool.clone());
+    let view = PgVoucherSummaryView::new(topems_shared_db::scope::Db::new(
+        pool.clone(),
+        "finance, public, shared",
+    ));
 
     view.handle_event(&created_event("v-2", "VN-2"))
         .await
@@ -106,7 +112,10 @@ async fn voucher_posted_updates_status_and_posted_at(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn voucher_reversed_updates_status(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let view = PgVoucherSummaryView::new(pool.clone());
+    let view = PgVoucherSummaryView::new(topems_shared_db::scope::Db::new(
+        pool.clone(),
+        "finance, public, shared",
+    ));
 
     view.handle_event(&created_event("v-3", "VN-3"))
         .await
@@ -123,7 +132,10 @@ async fn voucher_reversed_updates_status(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn rebuild_clears_summary_table(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let view = PgVoucherSummaryView::new(pool.clone());
+    let view = PgVoucherSummaryView::new(topems_shared_db::scope::Db::new(
+        pool.clone(),
+        "finance, public, shared",
+    ));
 
     view.handle_event(&created_event("v-4", "VN-4"))
         .await
@@ -137,7 +149,10 @@ async fn rebuild_clears_summary_table(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn get_by_no_returns_matching_summary(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let view = PgVoucherSummaryView::new(pool.clone());
+    let view = PgVoucherSummaryView::new(topems_shared_db::scope::Db::new(
+        pool.clone(),
+        "finance, public, shared",
+    ));
 
     view.handle_event(&created_event("v-5", "VN-5"))
         .await

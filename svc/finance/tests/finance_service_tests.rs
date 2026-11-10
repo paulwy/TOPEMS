@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use topems_finance::models::*;
 use topems_finance::services::FinanceService;
+use topems_shared_core::error::TopemsError;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 async fn create_test_pool() -> PgPool {
@@ -49,7 +50,7 @@ async fn test_create_account() {
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -84,7 +85,7 @@ async fn test_get_account() {
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -122,7 +123,7 @@ async fn test_voucher_lifecycle() {
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -222,7 +223,7 @@ async fn test_period_management() {
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -253,7 +254,7 @@ async fn test_auxiliary_account() {
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -288,7 +289,7 @@ async fn test_account_balance_report_unposted_not_in_totals() {
     let tenant_id = create_test_tenant(&pool).await;
     let company_id = Uuid::new_v4();
     let service = FinanceService::new(
-        pool.clone(),
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
         TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
@@ -396,5 +397,40 @@ async fn test_account_balance_report_unposted_not_in_totals() {
         report.total_period_credit,
         Decimal::from(1000),
         "本期贷方只含已过账金额"
+    );
+}
+
+/// §2.1.2 A 类判定：业务读写端点收到 nil 租户必须显式报「缺少租户上下文」，
+/// 不允许降级为全租户视角或静默 0 行。
+#[tokio::test]
+#[ignore = "requires PostgreSQL"]
+async fn test_nil_tenant_rejected_on_business_reads() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
+    let pool = create_test_pool().await;
+    let service = FinanceService::new(
+        topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
+            .expect("Failed to create workflow client"),
+    );
+
+    let err = service
+        .list_receivables(Uuid::nil(), 1, 20, None, None)
+        .await
+        .expect_err("nil 租户必须被拒绝");
+    assert!(
+        matches!(err, TopemsError::ValidationFailed(ref m) if m == "缺少租户上下文"),
+        "应报「缺少租户上下文」，实际: {err:?}"
+    );
+
+    let err = service
+        .get_trial_balance(Uuid::nil(), "202611")
+        .await
+        .expect_err("nil 租户必须被拒绝");
+    assert!(
+        matches!(err, TopemsError::ValidationFailed(ref m) if m == "缺少租户上下文"),
+        "应报「缺少租户上下文」，实际: {err:?}"
     );
 }
