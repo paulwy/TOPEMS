@@ -662,3 +662,86 @@ JWT 内的 `permissions`，因此必须用真实 `sub`，随机 `sub` 会 403。
 - `async_task_queue` 未改（`lib.rs` 已注释、不参与编译）。
 - 本地缺 23 条迁移、8 张表 `tenant_id` 漂移，与本批无关，单列待办。
 
+---
+
+# 11. 窗口执行记录（2026-11-10 08:20–08:40）
+
+## 11.1 时间线与停写时长
+
+| 时刻 | 动作 |
+|---|---|
+| 08:24 | 迁移文件 / 校验脚本上传生产 `/tmp`，sha384 与本地逐一比对一致 |
+| 08:33 | `cargo build --release -p topems-server` 完成（9m23s，HEAD `020cf68f`） |
+| 08:33 | 新二进制上传 `/tmp/topems-server.w7b2`，sha256 校验一致 |
+| 08:34:23 | `launchctl bootout` 停 `com.topems.server` + `com.topems.backup`（T0） |
+| 08:34:23–08:34:5x | 停写确认：8099 无监听、`pg_stat_activity` 0 应用连接 |
+| 08:34:5x | 单连接 `psql -1` 执行 6 笔迁移 + 校验（`topems_prod` 非超户身份） |
+| 08:34:55 | 新二进制落到 `~/topems/bin/topems-server`，`launchctl bootstrap` |
+| 08:34:58 | `/health` 200（T1） |
+| 08:35+ | 恢复 `com.topems.backup`，冒烟探测 |
+
+**停写时长 ≈ 35 秒**（08:34:23 → 08:34:58）。
+
+## 11.2 六笔各自结果
+
+| 迁移 | 结果 |
+|---|---|
+| `…110000` pm | 收敛 38 张、跳过 0；结构断言通过 |
+| `…110100` mobile | 收敛 27 张、跳过 0；结构断言通过 |
+| `…110200` integration | 收敛 18 张、跳过 0；结构断言通过 |
+| `…110300` gis | 收敛 15 张、跳过 0；结构断言通过 |
+| `…110400` ai | 收敛 10 张、跳过 0；结构断言通过 |
+| `…110500` 全局行归一 | 3 张表更新 0 行；`project_type_configs` `DROP NOT NULL` 生效、1 行 `…0000→NULL`；收尾断言通过 |
+
+账本：`_sqlx_migrations` **642 → 648**，6 条 checksum 与文件 sha384 完全一致。
+
+## 11.3 实际数字（非超户 `topems_prod` 身份验证）
+
+| 指标 | 期望 | 实际 |
+|---|---|---|
+| `_sqlx_migrations` | 648 | **648** |
+| `pg_policies` 总数 | 1070 | **1070** |
+| 本批 108 表策略数 | 112 | **112**（108 isolation + 4 global_read） |
+| 同表同 cmd 多条 permissive（本批表内） | 0 | **0** |
+| FORCE 表（本批 5 schema） | 117 | **117**（全库 871，其余为 B1 及更早批次） |
+| 4 张全局表 `…0000` 行 | 0 | **0 / 0 / 0 / 0** |
+| `pm.project_type_configs.tenant_id` | 可空 | **YES** |
+| 每表恰 1 条 `rls_tenant_isolation` | 108 表 | **108** |
+
+`w7_b2_verify.sql` 以 `-U topems_prod`（`rolsuper=false`）执行：
+A1/A2 结构、B1（`…0001` 逐表可见）、B2（`…0002` 跨租户 0 行）、B3（无上下文
+fail-closed）、C3（本租户写 probe 回滚）**全部通过**，禁止超级用户。
+
+## 11.4 二进制
+
+| 项 | 值 |
+|---|---|
+| 构建来源 | `020cf68fdb2ff2c0d580304182e47bc4f97eb14e`（已推 origin/main） |
+| 新二进制 sha256 | `0af3d8bd3da87ef0b8634ff48306c3855e8b793b4f1b834ecafa77e63e75c939` |
+| 旧二进制 sha256 | `a93de973a7861b54948d129a2ae1d3e1bd3f6ad11e10c62422a000fa9604f03c` |
+| 旧二进制备份 | `~/topems/backups/w7b2_20261110/topems-server.pre-w7b2` |
+| 数据库备份 | `~/topems/backups/w7b2_20261110/topems_prod_full.dump` |
+| 快照 | `pg_policies_pre.csv`、`_sqlx_migrations_pre.csv`、4 张全局表 CSV |
+
+## 11.5 冒烟
+
+- `/health` 200；`/api/erp/health`、`/api/finance/health`、`/api/hrm/health` 均 200。
+- 未带令牌访问 `/api/pm/projects`、`/api/mobile/inventory` 均 **401**（鉴权未被绕过）。
+- 新进程建立 **34** 条 `topems_prod` 连接；`server.err` 无新增错误，`server.out` 启动完成。
+- **未执行**：带生产用户凭据的逐租户 HTTP 冒烟（本环境无生产账号，且不对生产伪造令牌）。
+  租户隔离改由 §11.3 的 B1/B2/B3 用真实租户 ID 在 SQL 层验证。
+
+## 11.6 回滚路径
+
+1. 数据/DDL：`scripts/ops/w7_b2_rollback.sql`；或回放 `pg_policies_pre.csv` +
+   `topems_prod_full.dump`。
+2. 二进制：`cp ~/topems/backups/w7b2_20261110/topems-server.pre-w7b2
+   ~/topems/bin/topems-server` 后 `launchctl bootout/bootstrap`。
+3. 账本：回滚 DDL 后删除 6 条对应 `_sqlx_migrations` 行，避免 sqlx 误判。
+
+## 11.7 已知未覆盖（原样保留，不计入通过项）
+
+见 §10.8.3 的 7 条（`pm/project-types` 接口未在生产复现、mobile smoke 排除而非通过、
+B1 残留 180 组重复 permissive、`mobile_push_notifications` nil 写入、三个 sync 模块无调用方、
+`async_task_queue` 未改、本地 23 条缺迁移/8 张漂移表）。
+
