@@ -145,16 +145,16 @@ pub async fn list_documents(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
@@ -166,7 +166,7 @@ pub async fn list_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -186,7 +186,7 @@ pub async fn list_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -246,16 +246,16 @@ pub async fn search_documents(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
@@ -267,7 +267,7 @@ pub async fn search_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR document_type = $3)
           AND ($4::text IS NULL OR status = $4)
@@ -293,7 +293,7 @@ pub async fn search_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE tenant_id = $1
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR document_type = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -367,8 +367,13 @@ pub async fn create_document(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.document_no.is_empty() {
         return ApiResponse::bad_request("文档编号不能为空");
@@ -455,23 +460,23 @@ pub async fn get_document(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, Document>(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -533,8 +538,13 @@ pub async fn update_document(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let existing = sqlx::query_as::<_, Document>(
         r#"
@@ -651,8 +661,13 @@ pub async fn update_document_status(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.status.trim().is_empty() {
         return ApiResponse::bad_request("文档状态不能为空");
     }
@@ -724,8 +739,13 @@ pub async fn delete_document(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result =
         sqlx::query("UPDATE pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -794,8 +814,13 @@ pub async fn start_document_approval(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let document_result = sqlx::query_as::<_, Document>(
         "SELECT id, tenant_id, name, status FROM pdm_documents WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
@@ -967,15 +992,20 @@ pub async fn get_document_approval_history(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query(
         r#"
         SELECT id, workflow_id, workflow_name, current_step, status, 
                assignees, history, created_by, created_at, updated_at
         FROM pdm_workflow_instances 
-        WHERE target_type = 'document' AND target_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE target_type = 'document' AND target_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#,
     )
@@ -1057,8 +1087,13 @@ pub async fn list_pending_documents(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query(
         r#"
@@ -1067,8 +1102,8 @@ pub async fn list_pending_documents(
                i.current_step, i.assignees
         FROM pdm_documents d
         LEFT JOIN pdm_workflow_instances i 
-            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND ($1::uuid IS NULL OR i.tenant_id = $1)
-        WHERE d.status = 'pending_approval' AND ($1::uuid IS NULL OR d.tenant_id = $1)
+            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND i.tenant_id = $1
+        WHERE d.status = 'pending_approval' AND d.tenant_id = $1
         ORDER BY d.updated_at DESC
         "#,
     )

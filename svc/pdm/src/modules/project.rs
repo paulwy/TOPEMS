@@ -209,16 +209,16 @@ pub async fn list_projects(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
@@ -226,7 +226,7 @@ pub async fn list_projects(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND ($1::uuid IS NULL OR p.tenant_id = $1)
+        WHERE p.deleted_at IS NULL AND p.tenant_id = $1
           AND ($2::text IS NULL OR p.project_no ILIKE $2 OR p.name ILIKE $2 OR p.description ILIKE $2)
           AND ($3::text IS NULL OR p.status = $3)
           AND ($4::text IS NULL OR p.phase = $4)
@@ -281,8 +281,13 @@ pub async fn create_project(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.project_no.trim().is_empty() {
         return ApiResponse::bad_request("项目编号不能为空");
     }
@@ -355,22 +360,22 @@ pub async fn get_project(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND p.id = $1 AND ($2::uuid IS NULL OR p.tenant_id = $2)
+        WHERE p.deleted_at IS NULL AND p.id = $1 AND p.tenant_id = $2
         "#
     )))
     .bind(id)
@@ -421,8 +426,13 @@ pub async fn update_project(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let progress = req.progress.map(|p| p.clamp(0, 100));
     let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
@@ -503,8 +513,13 @@ pub async fn delete_project(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query(
         "UPDATE pdm_projects SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
@@ -557,8 +572,13 @@ pub async fn update_project_status(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.status.trim().is_empty() {
         return ApiResponse::bad_request("项目状态不能为空");
     }
@@ -613,8 +633,13 @@ pub async fn update_project_phase(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.phase.trim().is_empty() {
         return ApiResponse::bad_request("项目阶段不能为空");
     }
@@ -660,22 +685,22 @@ pub async fn list_members(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         SELECT id, tenant_id, project_id, user_id, user_name, user_email, role, joined_at, updated_at
         FROM pdm_project_members
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
+        WHERE tenant_id = $1 AND project_id = $2
         ORDER BY joined_at DESC
         "#,
     )
@@ -726,8 +751,13 @@ pub async fn add_member(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.user_id.trim().is_empty() || req.role.trim().is_empty() {
         return ApiResponse::bad_request("成员用户和角色不能为空");
     }
@@ -794,8 +824,13 @@ pub async fn update_member(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         UPDATE pdm_project_members
@@ -858,8 +893,13 @@ pub async fn remove_member(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query(
         "DELETE FROM pdm_project_members WHERE tenant_id = $1 AND project_id = $2 AND user_id = $3",
     )
@@ -910,14 +950,19 @@ pub async fn list_phases(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
         SELECT id, tenant_id, project_id, phase, name, description, start_date, end_date,
                status, deliverables, created_at, updated_at
         FROM pdm_project_phases
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
+        WHERE tenant_id = $1 AND project_id = $2
         ORDER BY created_at ASC
         "#,
     )
@@ -967,8 +1012,13 @@ pub async fn create_phase(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.phase.trim().is_empty() || req.name.trim().is_empty() {
         return ApiResponse::bad_request("阶段标识和名称不能为空");
     }
@@ -1035,8 +1085,13 @@ pub async fn update_phase(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
         UPDATE pdm_project_phases
@@ -1107,8 +1162,13 @@ pub async fn delete_phase(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query(
         "DELETE FROM pdm_project_phases WHERE tenant_id = $1 AND project_id = $2 AND id = $3",
     )

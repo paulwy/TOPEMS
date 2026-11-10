@@ -88,16 +88,16 @@ pub async fn list_products(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -111,7 +111,7 @@ pub async fn list_products(
                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_products
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -132,7 +132,7 @@ pub async fn list_products(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_products
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -201,8 +201,13 @@ pub async fn create_product(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.product_no.is_empty() {
         return ApiResponse::bad_request("产品编号不能为空");
@@ -272,16 +277,16 @@ pub async fn get_product(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -290,7 +295,7 @@ pub async fn get_product(
         SELECT id, tenant_id, product_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_products WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_products WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -353,8 +358,13 @@ pub async fn update_product(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Product>(
@@ -433,8 +443,13 @@ pub async fn delete_product(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result =
         sqlx::query("UPDATE pdm_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")

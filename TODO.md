@@ -467,6 +467,28 @@
 > 括号内为 grep 粗口径的裸池引用数，含合法用法，**不可当缺陷数**；权威基线仍为 1620
 > （`artifacts/batch43/b43_nosql_recheck.csv`）。
 
+### 12.4 qms 3 张 test 迁移表待处置（2026-11-10 立项，本轮不动）
+
+来源迁移 `20261105235000_test_baseline_20_reverse_tables.sql`（description：`test baseline 20 reverse tables`）。
+该文件命名带 `test_`，按 `scripts/migration/apply-forward.sh` 的 `DENY_RE`
+（`(^|_)(db[0-9]+_(test|5433)|5433_|test_)`）本应在生产被拒绝，但实测它在 `_sqlx_migrations`
+里 `success = true` —— 说明历史上存在绕过白名单的入口。三表建表即**未接入 RLS**
+（35 张无 RLS 表中的 3 张），且**全部 0 行**。
+
+| 表名 | 行数 | 来源迁移号 | 处置方向 | 负责人 |
+|---|---:|---|---|---|
+| `qms.qa_inspection_items` | 0 | `20261105235000` | 待定（转正 / 下线） | 待定 |
+| `qms.qa_inspection_plans` | 0 | `20261105235000` | 待定（转正 / 下线） | 待定 |
+| `qms.qa_sampling_plans` | 0 | `20261105235000` | 待定（转正 / 下线） | 待定 |
+
+处置口径（二选一，拍板后另开批次）：
+- **转正**：按正常业务表补齐 `tenant_id` + `ENABLE/FORCE RLS` + 收敛策略，并把建表语句迁到
+  正式迁移号；同步补进 qms 模块的代码与文档。
+- **下线**：确认无代码/无报表/无外部依赖后 `DROP TABLE`，并从 `_sqlx_migrations` 移除该
+  test 迁移记录（需单独评审，**不得顺手删**）。
+
+本轮**不改结构、不删表、不动迁移账本**，仅登记待办。
+
 ---
 
 ## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）

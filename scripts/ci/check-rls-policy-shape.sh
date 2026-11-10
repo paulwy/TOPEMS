@@ -163,6 +163,14 @@ def _static_rls_tables(kind):
 
 _en_static = _static_rls_tables('ENABLE')
 _fo_static = _static_rls_tables('FORCE')
+
+# schema_defense_ledger 是各服务启动期写的 schema 指纹（无请求上下文、无 tenant_id），
+# 已决策「排除出 RLS」（见 docs/quality/w7-b4-module-comparison-2026-11-10.md §2.5）。
+_ledger = sorted(t for t in (_en_static | _fo_static) if t.endswith('.schema_defense_ledger'))
+if _ledger:
+    viol.append('schema_defense_ledger 已排除出 RLS，不得对其 ENABLE/FORCE：%s'
+                % ', '.join(_ledger))
+
 _missing = sorted(_en_static - _fo_static)
 if _missing:
     viol.append('ENABLE ROW LEVEL SECURITY 缺少同表 FORCE ROW LEVEL SECURITY：%s'

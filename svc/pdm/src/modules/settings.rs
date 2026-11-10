@@ -53,20 +53,20 @@ pub async fn get_settings(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query(
-        "SELECT key, value FROM pdm.module_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND category = $2",
+        "SELECT key, value FROM pdm.module_settings WHERE tenant_id = $1 AND category = $2",
     )
     .bind(tenant_id)
     .bind(&category)
@@ -128,8 +128,13 @@ pub async fn update_settings(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let now = chrono::Utc::now().naive_utc();
 
     let mut updated = 0;

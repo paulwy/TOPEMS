@@ -123,16 +123,16 @@ pub async fn list_workflows(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
@@ -140,7 +140,7 @@ pub async fn list_workflows(
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
         FROM pdm_workflows
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
     )
@@ -202,8 +202,13 @@ pub async fn create_workflow(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.name.is_empty() {
         return ApiResponse::bad_request("工作流名称不能为空");
@@ -286,23 +291,23 @@ pub async fn get_workflow(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_workflows WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -364,8 +369,13 @@ pub async fn update_workflow(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let name = req.get("name").and_then(|v| v.as_str()).unwrap_or("");
     let description = req.get("description").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("");
@@ -444,8 +454,13 @@ pub async fn delete_workflow(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result =
         sqlx::query("UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -503,8 +518,13 @@ pub async fn start_workflow(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
         "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND status = 'active' AND tenant_id = $2",
@@ -630,8 +650,13 @@ pub async fn list_workflow_instances(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
@@ -639,7 +664,7 @@ pub async fn list_workflow_instances(
                current_step, status, assignees, history, created_by,
                created_at, updated_at
         FROM pdm_workflow_instances
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
     )
@@ -696,16 +721,16 @@ pub async fn get_workflow_instance(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
@@ -713,7 +738,7 @@ pub async fn get_workflow_instance(
         SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -775,8 +800,13 @@ pub async fn advance_workflow(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let action = req
         .get("action")
         .and_then(|v| v.as_str())

@@ -93,16 +93,16 @@ pub async fn list_steps(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -112,7 +112,7 @@ pub async fn list_steps(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         FROM pdm_production_steps
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR process_id = $2)
         ORDER BY process_id, step_no
         LIMIT $3 OFFSET $4
@@ -130,7 +130,7 @@ pub async fn list_steps(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_steps
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::uuid IS NULL OR process_id = $2)
                 "#,
             )
@@ -197,8 +197,13 @@ pub async fn create_step(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.name.is_empty() {
         return ApiResponse::bad_request("工步名称不能为空");
@@ -268,22 +273,22 @@ pub async fn get_step(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -345,8 +350,13 @@ pub async fn update_step(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
@@ -428,8 +438,13 @@ pub async fn delete_step(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query(
         "UPDATE pdm_production_steps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",

@@ -106,34 +106,56 @@ async fn main() -> anyhow::Result<()> {
                 }
             };
 
-            // 预热物料列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                r#"
-                SELECT json_build_object(
-                    'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM pdm_materials WHERE deleted_at IS NULL),
-                    'page', 1,
-                    'page_size', 20
-                ) as data
-                FROM (
-                    SELECT m.* FROM pdm_materials m
-                    WHERE m.deleted_at IS NULL
-                    ORDER BY m.created_at DESC
-                    LIMIT 20 OFFSET 0
-                ) t
-                "#,
+            // 预热物料列表：按租户分别预热。缓存键必须带租户维度，
+            // 禁止把跨租户聚合写进 default / all 这类共享桶（否则会串租户）。
+            match sqlx::query_scalar::<_, uuid::Uuid>(
+                "SELECT DISTINCT tenant_id FROM pdm_materials \
+                 WHERE deleted_at IS NULL AND tenant_id IS NOT NULL",
             )
-            .fetch_optional(&mut scope)
+            .fetch_all(&mut scope)
             .await
             {
-                Ok(Some(data)) => {
-                    let cache_key =
-                        "pdm:material:list:default:page:1:page_size:20:search:None:status:None";
-                    cache.set(cache_key.to_string(), data).await;
+                Ok(tenants) => {
+                    for tid in tenants {
+                        match sqlx::query_scalar::<_, serde_json::Value>(
+                            r#"
+                            SELECT json_build_object(
+                                'items', COALESCE(json_agg(t), '[]'::json),
+                                'total', (SELECT COUNT(*) FROM pdm_materials
+                                          WHERE deleted_at IS NULL AND tenant_id = $1),
+                                'page', 1,
+                                'page_size', 20
+                            ) as data
+                            FROM (
+                                SELECT m.* FROM pdm_materials m
+                                WHERE m.deleted_at IS NULL AND m.tenant_id = $1
+                                ORDER BY m.created_at DESC
+                                LIMIT 20 OFFSET 0
+                            ) t
+                            "#,
+                        )
+                        .bind(tid)
+                        .fetch_one(&mut scope)
+                        .await
+                        {
+                            Ok(data) => {
+                                let cache_key =
+                                    crate::modules::material::materials_list_cache_key(
+                                        tid,
+                                        1,
+                                        20,
+                                        &None,
+                                        &None,
+                                        topems_shared_core::locale::Locale::Zh.as_sql(),
+                                    );
+                                cache.set(cache_key, data).await;
+                            }
+                            Err(e) => {
+                                tracing::warn!("[pdm] 租户 {} 物料列表预热失败: {}", tid, e)
+                            }
+                        }
+                    }
                     tracing::info!("[pdm] 物料列表缓存预热完成");
-                }
-                Ok(None) => {
-                    tracing::info!("[pdm] 物料列表为空，跳过预热");
                 }
                 Err(e) => {
                     tracing::warn!("[pdm] 物料列表缓存预热失败: {}", e);

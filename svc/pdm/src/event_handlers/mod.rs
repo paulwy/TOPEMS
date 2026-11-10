@@ -249,7 +249,17 @@ impl PdmEventHandlers {
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
-        let result = match self.db.scope().await {
+        // 事件载荷缺租户直接报错，禁止降级为 nil（nil 租户是系统通道，不属于业务事件）。
+        if event.tenant_id.is_nil() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "[pdm-mdm] 事件载荷缺少租户：master_data_id={} domain={}",
+                event.master_data_id, domain_str
+            )));
+        }
+
+        // pdm_master_data_refs 无 tenant_id，按「全局只读 + 系统通道写」处理：
+        // 写入必须走 scope_system（app.rls_system='on'），不能用请求租户上下文借道。
+        let result = match self.db.scope_system().await {
             Ok(mut scope) => {
                 let result = sqlx::query(
                     r#"INSERT INTO pdm_master_data_refs

@@ -118,16 +118,16 @@ pub async fn list_change_notices(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -140,7 +140,7 @@ pub async fn list_change_notices(
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
         FROM pdm_change_notices
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR change_type = $4)
@@ -164,7 +164,7 @@ pub async fn list_change_notices(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_change_notices
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR change_type = $4)
@@ -238,8 +238,13 @@ pub async fn create_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.title.is_empty() {
         return ApiResponse::bad_request("变更通知标题不能为空");
@@ -332,16 +337,16 @@ pub async fn get_change_notice(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let result = sqlx::query_as::<_, ChangeNotice>(
@@ -349,7 +354,7 @@ pub async fn get_change_notice(
         SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -411,8 +416,13 @@ pub async fn update_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let existing = sqlx::query_as::<_, ChangeNotice>(
         r#"
@@ -535,8 +545,13 @@ pub async fn delete_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query(
         "UPDATE pdm_change_notices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -599,8 +614,13 @@ pub async fn submit_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ChangeNotice>(
@@ -673,8 +693,13 @@ pub async fn approve_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let approver = req
         .get("approver")
         .and_then(|v| v.as_str())
@@ -754,8 +779,13 @@ pub async fn reject_change_notice(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let approver = req
         .get("approver")
         .and_then(|v| v.as_str())

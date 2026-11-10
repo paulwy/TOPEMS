@@ -111,7 +111,10 @@ pub async fn list_drawings(
             ));
         }
     };
-    let tenant_id = tenant_opt_from_claims(&claims);
+    let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -124,7 +127,7 @@ pub async fn list_drawings(
                created_at, updated_at
         FROM pdm.pdm_drawings
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1)
+          AND tenant_id = $1
           AND ($2::text IS NULL OR drawing_no ILIKE $2 OR name ILIKE $2 OR COALESCE(name_en, '') ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR drawing_type = $4)
@@ -147,7 +150,7 @@ pub async fn list_drawings(
                 r#"
                 SELECT COUNT(*) FROM pdm.pdm_drawings
                 WHERE deleted_at IS NULL
-                  AND ($1::uuid IS NULL OR tenant_id = $1)
+                  AND tenant_id = $1
                   AND ($2::text IS NULL OR drawing_no ILIKE $2 OR name ILIKE $2 OR COALESCE(name_en, '') ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR drawing_type = $4)
@@ -197,8 +200,10 @@ pub async fn create_drawing(
     if req.drawing_no.trim().is_empty() || req.name.trim().is_empty() {
         return ApiResponse::bad_request("图纸编号与名称不能为空");
     }
-    let tenant_id = tenant_opt_from_claims(&claims)
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let now = Utc::now();
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -265,14 +270,17 @@ pub async fn get_drawing(
             ));
         }
     };
-    let tenant_id = tenant_opt_from_claims(&claims);
+    let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, Drawing>(
         r#"
         SELECT id, tenant_id, drawing_no, name, name_en, description, drawing_type,
                product_id, version, status, file_path, file_size, created_by,
                created_at, updated_at
         FROM pdm.pdm_drawings
-        WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -313,7 +321,10 @@ pub async fn update_drawing(
             ));
         }
     };
-    let tenant_id = tenant_opt_from_claims(&claims);
+    let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, Drawing>(
         r#"
         UPDATE pdm.pdm_drawings SET
@@ -327,7 +338,7 @@ pub async fn update_drawing(
             file_path = COALESCE($10, file_path),
             file_size = COALESCE($11, file_size),
             updated_at = now()
-        WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2
         RETURNING id, tenant_id, drawing_no, name, name_en, description, drawing_type,
                   product_id, version, status, file_path, file_size, created_by,
                   created_at, updated_at
@@ -379,11 +390,14 @@ pub async fn delete_drawing(
             ));
         }
     };
-    let tenant_id = tenant_opt_from_claims(&claims);
+    let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query(
         r#"
         UPDATE pdm.pdm_drawings SET deleted_at = now(), updated_at = now()
-        WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2
         "#,
     )
     .bind(id)

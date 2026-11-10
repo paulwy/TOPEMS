@@ -17,9 +17,9 @@ use topems_shared_event::event::{
     commit_retry, EventType, MasterDataAction, PdmMaterialCreatedPayload,
 };
 
-/// 物料列表缓存 Key
-fn materials_list_cache_key(
-    tenant_id: &Option<Uuid>,
+/// 物料列表缓存 Key —— 必须带租户维度，禁止 `all`/`default` 这类跨租户共享桶。
+pub(crate) fn materials_list_cache_key(
+    tenant_id: Uuid,
     page: i64,
     page_size: i64,
     search: &Option<String>,
@@ -28,12 +28,7 @@ fn materials_list_cache_key(
 ) -> String {
     format!(
         "pdm:material:list:{}:page:{}:page_size:{}:search:{:?}:status:{:?}:locale:{}",
-        tenant_id.map_or("all".to_string(), |t| t.to_string()),
-        page,
-        page_size,
-        search,
-        status,
-        locale
+        tenant_id, page, page_size, search, status, locale
     )
 }
 
@@ -117,16 +112,16 @@ pub async fn list_materials(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户缓存桶（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -136,7 +131,7 @@ pub async fn list_materials(
 
     // 构建缓存 Key 并检查缓存
     let cache_key = materials_list_cache_key(
-        &tenant_id,
+        tenant_id,
         page,
         page_size,
         &query.search,
@@ -165,7 +160,7 @@ pub async fn list_materials(
                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_materials
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -186,7 +181,7 @@ pub async fn list_materials(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_materials
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -266,8 +261,11 @@ pub async fn create_material(
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
-    // MDM 事件载荷需要 Uuid 类型，公共行（超管）沿用 nil 仅用于事件，不落库
-    let tenant_id = tenant_opt.unwrap_or(uuid::Uuid::nil());
+    // 缺失租户直接 400，禁止再用 nil 兜底（nil 行在 FORCE RLS 下对任何租户都不可见）
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!("缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.material_no.is_empty() {
         return ApiResponse::bad_request("物料编号不能为空");
@@ -422,16 +420,16 @@ pub async fn get_material(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
+    let Some(tenant_id) = (if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }) else {
+        tracing::warn!("缺少租户上下文：拒绝跨租户读取物料（is_superuser={}）", claims.is_superuser);
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -440,7 +438,7 @@ pub async fn get_material(
         SELECT id, tenant_id, material_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_materials WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_materials WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -503,8 +501,13 @@ pub async fn update_material(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let existing = sqlx::query_as::<_, Material>(
         r#"
@@ -651,8 +654,13 @@ pub async fn delete_material(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = tenant_opt else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result =
         sqlx::query("UPDATE pdm_materials SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
