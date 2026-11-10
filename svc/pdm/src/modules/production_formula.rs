@@ -376,16 +376,13 @@ pub async fn list_formulas(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -400,7 +397,7 @@ pub async fn list_formulas(
                product_id, description, formula_items,
                status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_production_formulas
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -423,7 +420,7 @@ pub async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_formulas
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -486,14 +483,10 @@ pub async fn create_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
@@ -569,16 +562,13 @@ pub async fn get_formula(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -588,7 +578,7 @@ pub async fn get_formula(
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                product_id, description, formula_items,
                status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_production_formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -643,14 +633,10 @@ pub async fn update_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = Utc::now();
@@ -726,14 +712,10 @@ pub async fn delete_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 

@@ -489,6 +489,39 @@
 
 本轮**不改结构、不删表、不动迁移账本**，仅登记待办。
 
+### 12.5 `pdm.pdm_master_data_refs` 补列（2026-11-10 立项，试点窗口之后动手）
+
+生产实测该表只有 `id`、`deleted_at` 两列（桩表），而代码 INSERT 契约有 12 列 ——
+事件处理器 `svc/pdm/src/event_handlers/mod.rs` 的写入自上线起从未成功过
+（`column "master_data_id" of relation "pdm_master_data_refs" does not exist`）。
+表为空，补列零数据风险，但**不塞进本轮 RLS 试点窗口**。
+
+| 补列 | 类型（按代码用法推定） | 来源 |
+|---|---|---|
+| `master_data_id` | `text NOT NULL` + `UNIQUE`（`ON CONFLICT (master_data_id)` 依赖唯一约束） | INSERT |
+| `tenant_id` | `uuid NOT NULL` | INSERT + RLS 策略谓词 |
+| `domain` | `text NOT NULL` | INSERT |
+| `code` | `text NOT NULL` | INSERT / UPDATE |
+| `name` | `text NOT NULL` | INSERT / UPDATE |
+| `status` | `text NOT NULL` | INSERT / UPDATE |
+| `source_service` | `text NOT NULL` | INSERT |
+| `local_entity_type` | `text`（可为 NULL，代码 `Option`） | INSERT |
+| `payload_snapshot` | `jsonb` | INSERT |
+| `last_synced_at` | `timestamptz NOT NULL` | INSERT |
+| `created_at` / `updated_at` | `timestamptz NOT NULL DEFAULT now()` | INSERT |
+
+配套动作（一笔独立迁移，单独评审）：
+1. 补列 + 唯一约束 + `tenant_id` 索引。
+2. 补列后该表**必须**进租户隔离：`tenant_id` 就绪即按普通租户表加 `ENABLE/FORCE RLS`，
+   同时保留「全局只读」策略（当前口径：全局只读 + 系统通道写），两者冲突时以
+   `docs/quality/w7-b4-module-comparison-2026-11-10.md §2.5` 例外清单为准并同步更新。
+3. 失败路径**实测不是显式报错**：`event_handlers/mod.rs` 的写入 `Err` 只走
+   `tracing::warn!("本地 ref 同步失败（graceful fallback）")` 后继续返回 `Ok`，
+   调用方/上游拿不到失败信号。补列迁移评审时须一并拍板：是改用显式错误向上返回，
+   还是维持 graceful fallback（若维持，需在文档写明「ref 表可丢」的业务前提）。
+
+负责人待定。
+
 ---
 
 ## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）

@@ -79,14 +79,10 @@ pub struct UpdateDrawingRequest {
 }
 
 fn tenant_opt_from_claims(claims: &Claims) -> Option<Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    }
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
 }
 
 pub async fn list_drawings(
@@ -112,7 +108,10 @@ pub async fn list_drawings(
         }
     };
     let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
@@ -201,7 +200,10 @@ pub async fn create_drawing(
         return ApiResponse::bad_request("图纸编号与名称不能为空");
     }
     let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）", claims.is_superuser);
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let now = Utc::now();
@@ -271,7 +273,10 @@ pub async fn get_drawing(
         }
     };
     let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, Drawing>(
@@ -322,7 +327,10 @@ pub async fn update_drawing(
         }
     };
     let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, Drawing>(
@@ -391,7 +399,10 @@ pub async fn delete_drawing(
         }
     };
     let Some(tenant_id) = tenant_opt_from_claims(&claims) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query(

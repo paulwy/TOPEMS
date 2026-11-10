@@ -53,15 +53,15 @@ pub async fn get_settings(
             ));
         }
     };
-    let Some(tenant_id) = (if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    }) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
@@ -120,14 +120,10 @@ pub async fn update_settings(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let Some(tenant_id) = tenant_opt else {
         tracing::warn!(
             "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",

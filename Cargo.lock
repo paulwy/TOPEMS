@@ -6019,6 +6019,7 @@ dependencies = [
  "topems-shared-core",
  "topems-shared-db",
  "topems-shared-event",
+ "tower",
  "tracing",
  "utoipa",
  "uuid",

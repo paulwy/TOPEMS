@@ -449,6 +449,49 @@ ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topem
 | 校验 | 结构断言 + P4 零残留 | 结构断言 + §3.4 生产只读探针 + 起服务冒烟 |
 | 回滚 | 自动（ROLLBACK） | 用 P1 快照重建旧策略；`DELETE` 2 行账本 |
 
+#### 3.6.1 预演实测（2026-11-10，生产 `topems_prod`，未提交、未登账）
+
+| 项 | 结果 |
+|---|---|
+| P0 角色/权限 | `topems_prod`，`rolsuper = f`，PG 18.4 |
+| P0 账本 | 652 行，`max(version)=20261110120300`（< 本笔 20261110204000） |
+| P1 前快照 | 策略 **40** 条；21 张表 ENABLE+FORCE；`schema_defense_ledger` 无 RLS |
+| P2 备份 | `pg_dump --schema=pdm --schema-only` → `/tmp/pdm_before_w7b4_schema.dump`；全表 `n_live_tup=0`（无数据可备；带数据 dump 被 FORCE RLS 拒，属预期） |
+| P3 迁移应用 | 两笔均通过自带断言；`20 张收敛 / 跳过 0`、refs `2 条策略`；耗时 **23.2ms + 6.2ms**（断言 51.9ms） |
+| P3 断言 A/B/B2/C/D | ENABLE+FORCE 表数 21 ✔；无 `IS NULL`/nil-UUID 放行分支 ✔；20 张租户表策略均含 `app.rls_system` ✔；`schema_defense_ledger` 未开 RLS ✔；refs = `SELECT/true` + `ALL/app.rls_system` ✔ |
+| P3 事务内策略 | 总数 **22** = 20×1（`rls_tenant_isolation`）+ refs×2（`pdm_master_data_refs_read` / `_write`） |
+| P4 零残留 | 策略快照 `diff` 空；RLS 标志 `diff` 空；账本仍 **652**，两笔版本 0 行 |
+| 停手条件 | 无一命中 |
+
+> 预演首轮失败过一次：追加断言把 `::text` 当作 fail-open 特征，但策略反解析后 `current_setting('app.tenant_id'::text, …)` 天然带 `::text`，误报 21 条。改为只认 `IS NULL` / nil-UUID 字面量后重跑通过。迁移本身首轮即通过，未做任何修改。
+
+### 3.7 超管租户口径（本轮拍板并落地）
+
+**口径：** 超管允许显式选租户，不允许隐式跨租户。
+
+| 情形 | 行为 |
+|---|---|
+| 超管 + `x-tenant-id: <uuid>` | `tenant_middleware` 把该租户写入 `Claims.tenant_id`，按租户作用域读写（系统通道关闭） |
+| 超管 + 无租户头 | 中间件直接 `400`，`message="缺少租户上下文"` |
+| 超管 + 非法租户头 | `400`，`message="无效的租户ID格式"` |
+| 普通用户 + 任意 `x-tenant-id` | 忽略该头，恒按 `Claims.tenant_id` 解析 |
+
+**代码落点：**
+- `lib/shared-auth/src/middleware/tenant.rs`：新增超管分支（显式头 → 写入 `Claims`；无头 → `bad_request("缺少租户上下文")`）；`rls_request_tenant` 改为「有显式租户即租户作用域」，系统通道只留给 service 身份；`resolve_create_tenant` 去掉超管 `→ None`，改为返回显式租户。
+- `svc/pdm/src/modules/*.rs`：删除 125+9 处 `if claims.is_superuser { None }` 抹租户逻辑，统一直接读 `Claims.tenant_id`，缺失即 400；补齐 `bom.rs` / `document_version.rs` / `production_formula.rs` 三处漏改（原为 `unwrap_or_default()` 落 nil UUID + `($N IS NULL OR tenant_id = $N)` fail-open SQL）。
+
+**实测（本地 `w7_b4_fresh`，真实 `tenant_middleware` + 真实 `pdm` 表与策略）：**
+
+| 用例 | 状态码 | 返回 |
+|---|---|---|
+| 超管 + `x-tenant-id: A` | **200** | `tenants=["1111…"]`（只见 A） |
+| 超管 + 无租户头 | **400** | `{"code":400,"message":"缺少租户上下文"}` |
+| 普通用户(租户 A) + `x-tenant-id: B` | **200** | `tenants=["1111…"]`（仍按 A，头无效） |
+| 超管 + 租户 A 调 PDM 列表（handler 级） | **200** | 仅 A 的 1 行 |
+| 超管无租户调 PDM 列表（handler 级） | **400** | `code=400` |
+
+> 生产实例仍运行改动前二进制，故 200/400 只能在本地同构库取证；生产 HTTP 三例要等窗口部署后再补。
+
 ---
 
 ## 4. D. 阻断项（必须先决才能开工）

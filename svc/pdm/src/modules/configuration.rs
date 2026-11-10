@@ -98,15 +98,15 @@ pub async fn list_configurations(
             ));
         }
     };
-    let Some(tenant_id) = (if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    }) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
@@ -204,14 +204,10 @@ pub async fn create_configuration(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let Some(tenant_id) = tenant_opt else {
         tracing::warn!(
             "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
@@ -304,15 +300,15 @@ pub async fn get_configuration(
             ));
         }
     };
-    let Some(tenant_id) = (if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    }) else {
-        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）", claims.is_superuser);
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝降级到跨租户查询（is_superuser={}）",
+            claims.is_superuser
+        );
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
@@ -374,14 +370,10 @@ pub async fn update_configuration(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let Some(tenant_id) = tenant_opt else {
         tracing::warn!(
             "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
@@ -467,14 +459,10 @@ pub async fn delete_configuration(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let Some(tenant_id) = tenant_opt else {
         tracing::warn!(
             "缺少租户上下文：拒绝降级到 nil 租户（is_superuser={}）",
@@ -529,14 +517,10 @@ mod tests {
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let _headers = axum::http::HeaderMap::new();
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-            None
-        } else {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        };
+        let tenant_opt: Option<uuid::Uuid> = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok());
         let tid = tenant_opt.unwrap_or_else(|| {
             uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
         });
@@ -554,14 +538,10 @@ mod tests {
             "x-tenant-id",
             "550e8400-e29b-41d4-a716-446655440060".parse().unwrap(),
         );
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-            None
-        } else {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        };
+        let tenant_opt: Option<uuid::Uuid> = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok());
         let tid = tenant_opt.unwrap_or_else(|| {
             uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
         });
@@ -575,14 +555,10 @@ mod tests {
     fn test_get_tenant_id_fallback_v4() {
         let claims = make_claims(None);
         let _headers = axum::http::HeaderMap::new();
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-            None
-        } else {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        };
+        let tenant_opt: Option<uuid::Uuid> = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok());
         let tid = tenant_opt.unwrap_or_else(|| {
             uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
         });

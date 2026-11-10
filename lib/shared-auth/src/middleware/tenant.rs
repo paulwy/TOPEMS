@@ -47,20 +47,26 @@ where
     RLS_REQUEST_TENANT.scope(ctx, fut).await
 }
 
-/// 由认证后的 Claims 推导 RLS 上下文：超管与 service 身份走系统通道（nil），
-/// 普通租户取 `tenant_id`；缺失/非法一律 nil（fail-closed，由策略/内联谓词拦截）。
+/// 由认证后的 Claims 推导 RLS 上下文：
+/// - Claims 携带可解析的 `tenant_id`（普通用户，或超管显式选择了租户）→ 租户作用域；
+/// - 否则仅 service 身份走系统通道（nil + `app.rls_system='on'`）；
+/// - 其余一律 nil 且不开系统通道（fail-closed，由策略/内联谓词拦截）。
 pub fn rls_request_tenant(claims: &crate::auth::Claims) -> RlsRequestTenant {
-    let system = claims.is_superuser || is_service_claims(claims);
-    let tenant = if system {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .unwrap_or(Uuid::nil())
-    };
-    RlsRequestTenant { tenant, system }
+    let service = is_service_claims(claims);
+    let explicit = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    match (explicit, service) {
+        (Some(tenant), false) => RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        _ => RlsRequestTenant {
+            tenant: Uuid::nil(),
+            system: service,
+        },
+    }
 }
 
 /// 事务/租户上下文初始化失败统一返回 500（fail-closed）。
@@ -72,6 +78,15 @@ fn internal_error(message: &str) -> Response {
         StatusCode::INTERNAL_SERVER_ERROR,
         [(header::CONTENT_TYPE, "application/json")],
         format!(r#"{{"success":false,"message":"{message}","code":500}}"#),
+    )
+        .into_response()
+}
+
+fn bad_request(message: &str) -> Response {
+    (
+        StatusCode::BAD_REQUEST,
+        [(header::CONTENT_TYPE, "application/json")],
+        format!(r#"{{"success":false,"message":"{message}","code":400}}"#),
     )
         .into_response()
 }
@@ -150,20 +165,20 @@ pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
 }
 
 /// 解析创建行要落库的 tenant_id：
-/// - 超管（`is_superuser`）→ `Ok(None)`，落公共行（`tenant_id = NULL`）；
-/// - 服务身份（service token，无租户维度）→ `Ok(None)` 同超管语义：
-///   服务间调用是全局基础设施，落 nil 租户配合 RLS `current = nil` 豁免全量可见
-///   （与 tenant_middleware 对 service claims 固定 nil 上下文一致）；否则 mobile
-///   等模块以 service token 调 CRM/HRM/WMS 写路径会 400「缺少租户ID」→ 冒烟 500。
-/// - 普通用户 → 必须携带可解析的 `claims.tenant_id`，缺失或非法返回
-///   `Err((400, 说明))`，由调用方直接回 400，禁止静默落全零 UUID
-///   （全零行在 RLS 租户过滤下对本租户不可见）。
+/// - 服务身份（service token，无租户维度）→ `Ok(None)` 落公共行：服务间调用是
+///   全局基础设施，落 nil 租户配合 RLS 系统通道全量可见（与 tenant_middleware
+///   对 service claims 固定 nil 上下文一致）；否则 mobile 等模块以 service token
+///   调 CRM/HRM/WMS 写路径会 400「缺少租户ID」→ 冒烟 500。
+/// - 其余身份（含超管）→ 必须携带可解析的 `claims.tenant_id`，缺失或非法返回
+///   `Err((400, 说明))`，由调用方直接回 400，禁止静默落全零 UUID。
+///   超管的租户由 tenant_middleware 从显式 `x-tenant-id` 解析后写入 Claims；
+///   未携带租户头的超管请求在中间件即 400，到不了这里。
 pub fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)> {
-    if claims.is_superuser || is_service_claims(claims) {
+    if is_service_claims(claims) {
         return Ok(None);
     }
     match claims.tenant_id.as_deref() {
-        None => Err((400, "缺少租户ID".to_string())),
+        None => Err((400, "缺少租户上下文".to_string())),
         Some(raw) => Uuid::parse_str(raw)
             .map(Some)
             .map_err(|_| (400, "无效的租户ID".to_string())),
@@ -208,8 +223,8 @@ pub fn tenant_middleware() -> impl Fn(
             if is_public_path(req.uri().path()) {
                 return next.run(req).await;
             }
-            let claims = match req.extensions().get::<Claims>() {
-                Some(c) => c,
+            let mut claims = match req.extensions().get::<Claims>() {
+                Some(c) => c.clone(),
                 None => {
                     return (
                         StatusCode::UNAUTHORIZED,
@@ -220,12 +235,34 @@ pub fn tenant_middleware() -> impl Fn(
                 }
             };
 
-            // 服务身份（service token）与超管会话豁免租户上下文：服务间调用是全局
-            // 基础设施，无租户维度（service token 不携带 tenant_id）；超管亦无
-            // tenant_id。两者都将租户上下文固定为 nil UUID，并打开显式系统通道
-            // `app.rls_system='on'` —— 新策略只认这一开关做全量放行，不再把
-            // NULL/空/`0` 的租户 GUC 当作放行条件；普通租户请求维持租户隔离。
-            if is_service_claims(claims) || claims.is_superuser {
+            let mut req = req;
+
+            // 超管必须显式选择租户（`x-tenant-id`）：显式选择即按该租户身份读写，
+            // 不做隐式跨租户。未携带租户头直接 400，不再抹成 None 走系统通道。
+            // 普通用户的租户恒取自 Claims，忽略该头（防止伪造头越权）。
+            if claims.is_superuser && !is_service_claims(&claims) {
+                let header_tenant = req
+                    .headers()
+                    .get("x-tenant-id")
+                    .and_then(|v| v.to_str().ok())
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty());
+                let tenant_id = match header_tenant {
+                    None => return bad_request("缺少租户上下文"),
+                    Some(raw) => match Uuid::parse_str(raw) {
+                        Ok(id) => id,
+                        Err(_) => return bad_request("无效的租户ID格式"),
+                    },
+                };
+                claims.tenant_id = Some(tenant_id.to_string());
+                req.extensions_mut().insert(claims.clone());
+            }
+
+            // 服务身份（service token）豁免租户上下文：服务间调用是全局
+            // 基础设施，无租户维度（service token 不携带 tenant_id）。
+            // 其事务固定 nil 租户并打开显式系统通道 `app.rls_system='on'` ——
+            // 新策略只认这一开关做全量放行；普通租户请求维持租户隔离。
+            if is_service_claims(&claims) {
                 tracing::debug!(
                     "service claims: set nil tenant context for {}",
                     claims.username
@@ -254,7 +291,6 @@ pub fn tenant_middleware() -> impl Fn(
                     let _ = txn.rollback().await;
                     return internal_error("系统通道设置失败");
                 }
-                let mut req = req;
                 let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
                 req.extensions_mut().insert(txn_cell.clone());
                 req.extensions_mut().insert(TenantContext {
@@ -338,7 +374,6 @@ pub fn tenant_middleware() -> impl Fn(
                 }
             };
 
-            let mut req = req;
             let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
             req.extensions_mut().insert(txn_cell.clone());
             req.extensions_mut()

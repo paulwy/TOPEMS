@@ -28,6 +28,7 @@ bigdecimal = { workspace = true, features = ["serde"] }
 [dev-dependencies]
 topems-shared-event = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+tower = { workspace = true }
 
 [[bin]]
 name = "topems-pdm"

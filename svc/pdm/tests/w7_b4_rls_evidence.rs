@@ -57,10 +57,9 @@ fn test_claims(tenant: Option<&str>, superuser: bool) -> Claims {
 }
 
 async fn connect() -> Option<PgPool> {
-    let url = std::env::var("PDM_RLS_TEST_DB")
-        .unwrap_or_else(|_| {
-            "postgres://pdm_app:pdm_app_local_only@127.0.0.1:5432/w7_b4_fresh".to_string()
-        });
+    let url = std::env::var("PDM_RLS_TEST_DB").unwrap_or_else(|_| {
+        "postgres://pdm_app:pdm_app_local_only@127.0.0.1:5432/w7_b4_fresh".to_string()
+    });
     PgPoolOptions::new()
         .max_connections(4)
         .connect(&url)
@@ -159,6 +158,32 @@ async fn evidence2_cache_does_not_bleed_across_tenants() {
     assert_eq!(ids_a1, ids_a2, "A 的缓存被 B 覆盖了");
 }
 
+/// 口径 1：超管显式选定租户后，PDM 业务入口按该租户返回数据（不再 400 / 不再全量）。
+#[tokio::test]
+#[ignore = "requires local w7_b4_fresh with A/B seed"]
+async fn evidence4_superadmin_explicit_tenant_reads_pdm_list() {
+    let Some(pool) = connect().await else {
+        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
+        return;
+    };
+    let state = build_state(pool.clone());
+
+    let su_a = test_claims(Some(TENANT_A), true);
+    let ra = list_materials(&state, &pool, &su_a).await;
+    assert_eq!(ra.code, 200, "超管显式选租户应放行: {}", ra.message);
+    let ids_a = material_ids(ra.data.as_ref().unwrap()).await;
+    assert_eq!(
+        ids_a.len(),
+        1,
+        "超管选定 A 后应只见 A 的 1 行，实际 {:?}",
+        ids_a
+    );
+
+    let su_nil = test_claims(None, true);
+    let rn = list_materials(&state, &pool, &su_nil).await;
+    assert_eq!(rn.code, 400, "超管缺租户上下文必须 400，实际 {}", rn.code);
+}
+
 /// 证据 3：nil 租户在业务入口必须 400，而不是返回空数组。
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
@@ -179,7 +204,11 @@ async fn evidence3_nil_tenant_returns_400() {
     let nil_claims = test_claims(None, false);
 
     let r1 = list_materials(&state, &pool, &nil_claims).await;
-    assert_eq!(r1.code, 400, "list_materials 缺租户应 400，实际 {}", r1.code);
+    assert_eq!(
+        r1.code, 400,
+        "list_materials 缺租户应 400，实际 {}",
+        r1.code
+    );
 
     let r2 = {
         let cell = txn_cell(&pool).await;
@@ -246,5 +275,9 @@ async fn evidence3_nil_tenant_returns_400() {
         })
         .await
     };
-    assert_eq!(r4.code, 400, "list_documents 缺租户应 400，实际 {}", r4.code);
+    assert_eq!(
+        r4.code, 400,
+        "list_documents 缺租户应 400，实际 {}",
+        r4.code
+    );
 }

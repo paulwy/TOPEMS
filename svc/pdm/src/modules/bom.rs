@@ -611,16 +611,13 @@ pub async fn list_bom_versions(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(100);
@@ -632,7 +629,7 @@ pub async fn list_bom_versions(
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::text IS NULL OR bom_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -687,23 +684,20 @@ pub async fn get_bom_version(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, BomVersion>(
         r#"
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -751,14 +745,10 @@ pub async fn create_bom_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let product_id = match parse_optional_uuid(&payload.product_id) {
@@ -826,14 +816,10 @@ pub async fn update_bom_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let product_id = match parse_optional_uuid(&payload.product_id) {
@@ -908,14 +894,10 @@ pub async fn delete_bom_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = sqlx::query("DELETE FROM pdm_boms WHERE id = $1 AND tenant_id = $2")
@@ -944,14 +926,10 @@ async fn update_bom_status(
     status: &'static str,
     message: &'static str,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = sqlx::query_as::<_, BomVersion>(
@@ -1095,16 +1073,13 @@ pub async fn list_bom_items(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query_as::<_, BomItem>(
         r#"
@@ -1112,7 +1087,7 @@ pub async fn list_bom_items(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
+        WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR bom_id = $2)
         ORDER BY sequence ASC, material_code ASC
         "#,
@@ -1162,14 +1137,10 @@ pub async fn get_bom_item(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = sqlx::query_as::<_, BomItem>(
@@ -1178,7 +1149,7 @@ pub async fn get_bom_item(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -1226,14 +1197,10 @@ pub async fn create_bom_item(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = insert_bom_item(&mut scope, tenant_id, &payload).await;
@@ -1306,14 +1273,10 @@ pub async fn update_bom_item(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = sqlx::query_as::<_, BomItem>(
@@ -1383,14 +1346,10 @@ pub async fn delete_bom_item(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let result = sqlx::query("DELETE FROM pdm_bom_items WHERE id = $1 AND tenant_id = $2")
@@ -1443,14 +1402,10 @@ pub async fn batch_create_bom_items(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_opt: Option<uuid::Uuid> = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok());
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let mut created = Vec::new();
@@ -1499,16 +1454,13 @@ pub async fn compare_bom_versions(
             ));
         }
     };
-    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_default(),
-        )
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    else {
+        tracing::warn!("缺少租户上下文：拒绝降级到跨租户查询");
+        return ApiResponse::bad_request("缺少租户上下文");
     };
     let items_a = fetch_items_by_bom(&mut scope, tenant_id, payload.bom_version_a_id).await;
     let items_b = fetch_items_by_bom(&mut scope, tenant_id, payload.bom_version_b_id).await;
@@ -1584,7 +1536,7 @@ pub async fn compare_bom_versions(
 
 async fn fetch_items_by_bom(
     scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
-    tenant_id: Option<Uuid>,
+    tenant_id: Uuid,
     bom_id: Uuid,
 ) -> Result<Vec<BomItem>, sqlx::Error> {
     sqlx::query_as::<_, BomItem>(
@@ -1593,7 +1545,7 @@ async fn fetch_items_by_bom(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND bom_id = $2
+        WHERE tenant_id = $1 AND bom_id = $2
         ORDER BY sequence ASC, material_code ASC
         "#,
     )
