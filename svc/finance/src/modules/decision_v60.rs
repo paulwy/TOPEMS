@@ -28,8 +28,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -274,7 +274,8 @@ impl ScheduleExecutionStatus {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_decision_v60_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+// 系统通道：无请求上下文（启动/后台），登记 §2.1
+pub async fn init_decision_v60_tables(db: &Db) -> Result<(), sqlx::Error> {
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v60_decision_scenarios (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -390,10 +391,13 @@ pub async fn init_decision_v60_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
         "CREATE INDEX IF NOT EXISTS idx_v60_dependencies_task ON finance_v60_schedule_dependencies(task_id)",
     ];
 
+    let mut scope = db.scope_system().await?;
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
-    Ok(())
+    scope.commit().await
 }
 
 // ==================== 1. 多场景决策引擎 ====================
@@ -472,10 +476,11 @@ pub struct SensitivityAnalysisRequest {
 
 impl DecisionEngine {
     pub async fn create_scenario(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateScenarioRequest,
     ) -> Result<DecisionScenario, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let scenario_type = req
             .scenario_type
@@ -484,7 +489,7 @@ impl DecisionEngine {
             .unwrap_or(DecisionScenarioType::Investment);
         let now = Utc::now();
 
-        sqlx::query_as::<_, DecisionScenario>(
+        let result = sqlx::query_as::<_, DecisionScenario>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_decision_scenarios
                 (id, tenant_id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
@@ -499,23 +504,26 @@ impl DecisionEngine {
         .bind(&req.constraints)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn evaluate_scenario(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_id: Uuid,
         _req: Option<EvaluateScenarioRequest>,
     ) -> Result<DecisionResult, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let scenario = sqlx::query_as::<_, DecisionScenario>(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let objectives = scenario
@@ -583,7 +591,7 @@ impl DecisionEngine {
         .bind(risk_level)
         .bind(confidence)
         .bind(now)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         sqlx::query(
@@ -592,9 +600,10 @@ impl DecisionEngine {
         .bind(now)
         .bind(scenario_id)
         .bind(tenant_id)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(result)
     }
 
@@ -663,44 +672,64 @@ impl DecisionEngine {
     }
 
     pub async fn get_decision(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<DecisionResult, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let row = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        row
     }
 
     pub async fn list_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<DecisionScenario>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn get_alternatives(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let result = sqlx::query_as::<_, DecisionResult>(
             only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_optional(pool)
+        .fetch_optional(&mut scope)
         .await?;
 
+        let _ = scope.commit().await;
         if let Some(r) = result {
             Ok(r.alternatives.unwrap_or_else(|| serde_json::json!([])))
         } else {
@@ -709,10 +738,11 @@ impl DecisionEngine {
     }
 
     pub async fn compare_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let mut comparisons = Vec::new();
 
         for sid in &scenario_ids {
@@ -721,7 +751,7 @@ impl DecisionEngine {
             )
             .bind(sid)
             .bind(tenant_id)
-            .fetch_optional(pool)
+            .fetch_optional(&mut scope)
             .await;
 
             if let Ok(Some(s)) = scenario {
@@ -730,7 +760,7 @@ impl DecisionEngine {
                 )
                 .bind(sid)
                 .bind(tenant_id)
-                .fetch_optional(pool)
+                .fetch_optional(&mut scope)
                 .await
                 .unwrap_or(None);
 
@@ -746,6 +776,7 @@ impl DecisionEngine {
             }
         }
 
+        let _ = scope.commit().await;
         Ok(serde_json::json!({
             "scenarios": comparisons,
             "comparison_count": scenario_ids.len(),
@@ -753,29 +784,37 @@ impl DecisionEngine {
     }
 
     pub async fn get_decision_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<DecisionResult>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY decided_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn sensitivity_analysis(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_id: Uuid,
         req: SensitivityAnalysisRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let scenario = sqlx::query_as::<_, DecisionScenario>(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let base_result = sqlx::query_as::<_, DecisionResult>(
@@ -783,9 +822,10 @@ impl DecisionEngine {
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_optional(pool)
+        .fetch_optional(&mut scope)
         .await?;
 
+        let _ = scope.commit().await;
         let base_confidence = base_result.as_ref().map(|r| r.confidence).unwrap_or(0.5);
 
         let variation = req.variation.unwrap_or(0.1);
@@ -895,10 +935,11 @@ pub struct AlertQueryParams {
 
 impl AlertEngine {
     pub async fn create_alert_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateAlertRuleRequest,
     ) -> Result<AlertRule, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let condition = req
             .condition
@@ -909,7 +950,7 @@ impl AlertEngine {
         let severity = req.severity.unwrap_or_else(|| "medium".to_string());
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, AlertRule>(only_own_schema_query!(
+        let result = sqlx::query_as::<_, AlertRule>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v60_alert_rules
                 (id, tenant_id, name, metric_name, condition, threshold, severity, enabled)
@@ -924,27 +965,37 @@ impl AlertEngine {
         .bind(threshold)
         .bind(&severity)
         .bind(enabled)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_alert_rules(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertRule>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY metric_name, name"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn evaluate_alerts(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: EvaluateAlertsRequest,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
         let mut triggered = Vec::new();
 
@@ -952,7 +1003,7 @@ impl AlertEngine {
             only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE tenant_id = $1 AND enabled = true"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         for rule in &rules {
@@ -977,7 +1028,7 @@ impl AlertEngine {
                         .bind(rule.threshold)
                         .bind(&rule.severity)
                         .bind(now)
-                        .fetch_one(pool)
+                        .fetch_one(&mut scope)
                         .await?;
                         triggered.push(alert);
                     }
@@ -985,6 +1036,7 @@ impl AlertEngine {
             }
         }
 
+        scope.commit().await?;
         Ok(triggered)
     }
 
@@ -999,10 +1051,15 @@ impl AlertEngine {
     }
 
     pub async fn get_active_alerts(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         params: AlertQueryParams,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut query = String::from(
             "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
         );
@@ -1030,16 +1087,19 @@ impl AlertEngine {
             q = q.bind(metric);
         }
 
-        q.fetch_all(pool).await
+        let result = q.fetch_all(&mut scope).await;
+        let _ = scope.commit().await;
+        result
     }
 
     pub async fn acknowledge_alert(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<AlertV60, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'acknowledged', acknowledged_at = $1
             WHERE id = $2 AND tenant_id = $3
@@ -1048,17 +1108,20 @@ impl AlertEngine {
         .bind(now)
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn resolve_alert(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<AlertV60, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'resolved', resolved_at = $1
             WHERE id = $2 AND tenant_id = $3
@@ -1067,27 +1130,37 @@ impl AlertEngine {
         .bind(now)
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_alert_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn configure_channel(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ConfigureChannelRequest,
     ) -> Result<AlertChannel, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let channel_type = req
             .channel_type
@@ -1096,7 +1169,7 @@ impl AlertEngine {
             .unwrap_or(AlertChannelType::Email);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, AlertChannel>(only_own_schema_query!(
+        let result = sqlx::query_as::<_, AlertChannel>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v60_alert_channels
                 (id, tenant_id, name, channel_type, config, enabled)
@@ -1109,8 +1182,10 @@ impl AlertEngine {
         .bind(channel_type.as_str())
         .bind(&req.config)
         .bind(enabled)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 }
 
@@ -1181,10 +1256,11 @@ pub struct TaskQueryParams {
 
 impl IntelligentScheduler {
     pub async fn create_task(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateTaskRequest,
     ) -> Result<ScheduleTask, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let task_type = req
             .task_type
@@ -1194,7 +1270,7 @@ impl IntelligentScheduler {
         let priority = req.priority.unwrap_or(5);
         let now = Utc::now();
 
-        sqlx::query_as::<_, ScheduleTask>(
+        let result = sqlx::query_as::<_, ScheduleTask>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_schedule_tasks
                 (id, tenant_id, name, task_type, cron_expression, action, priority, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
@@ -1209,15 +1285,22 @@ impl IntelligentScheduler {
         .bind(priority)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_tasks(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         params: TaskQueryParams,
     ) -> Result<Vec<ScheduleTask>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut query = String::from(
             "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
@@ -1245,16 +1328,19 @@ impl IntelligentScheduler {
             q = q.bind(status);
         }
 
-        q.fetch_all(pool).await
+        let result = q.fetch_all(&mut scope).await;
+        let _ = scope.commit().await;
+        result
     }
 
     pub async fn schedule_task(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         task_id: Uuid,
     ) -> Result<ScheduleTask, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'pending', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
@@ -1263,22 +1349,25 @@ impl IntelligentScheduler {
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_task(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         task_id: Uuid,
     ) -> Result<ScheduleExecution, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let task = sqlx::query_as::<_, ScheduleTask>(
             only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let now = Utc::now();
@@ -1309,7 +1398,7 @@ impl IntelligentScheduler {
         .bind(completed_at)
         .bind(duration_ms)
         .bind(output)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         sqlx::query(
@@ -1318,31 +1407,44 @@ impl IntelligentScheduler {
         .bind(completed_at)
         .bind(task_id)
         .bind(tenant_id)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(execution)
     }
 
     pub async fn get_execution(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         execution_id: Uuid,
     ) -> Result<ScheduleExecution, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let row = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(execution_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        row
     }
 
     pub async fn list_executions(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         task_id: Option<Uuid>,
     ) -> Result<Vec<ScheduleExecution>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut query = String::from(
             "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
@@ -1359,21 +1461,24 @@ impl IntelligentScheduler {
             q = q.bind(tid);
         }
 
-        q.fetch_all(pool).await
+        let result = q.fetch_all(&mut scope).await;
+        let _ = scope.commit().await;
+        result
     }
 
     pub async fn update_schedule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         task_id: Uuid,
         req: UpdateTaskRequest,
     ) -> Result<ScheduleTask, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let current: ScheduleTask = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let name = req.name.unwrap_or(current.name);
@@ -1383,7 +1488,7 @@ impl IntelligentScheduler {
         let status = req.status.unwrap_or(current.status);
         let now = Utc::now();
 
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET name = $1, cron_expression = $2, action = $3, priority = $4, status = $5, updated_at = $6
             WHERE id = $7 AND tenant_id = $8
@@ -1397,17 +1502,20 @@ impl IntelligentScheduler {
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn pause_task(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         task_id: Uuid,
     ) -> Result<ScheduleTask, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'paused', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
@@ -1416,17 +1524,20 @@ impl IntelligentScheduler {
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn resume_task(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         task_id: Uuid,
     ) -> Result<ScheduleTask, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let now = Utc::now();
-        sqlx::query_as(
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'pending', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
@@ -1435,8 +1546,10 @@ impl IntelligentScheduler {
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 }
 
@@ -1449,9 +1562,8 @@ async fn create_scenario_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
 ) -> ApiResponse<DecisionScenario> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match DecisionEngine::create_scenario(&pool, tenant_id, req).await {
+    match DecisionEngine::create_scenario(&state.db, tenant_id, req).await {
         Ok(scenario) => ApiResponse::success(scenario, "场景创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1463,9 +1575,8 @@ pub async fn evaluate_scenario_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<Option<EvaluateScenarioRequest>>,
 ) -> ApiResponse<DecisionResult> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match DecisionEngine::evaluate_scenario(&pool, tenant_id, id, req).await {
+    match DecisionEngine::evaluate_scenario(&state.db, tenant_id, id, req).await {
         Ok(result) => ApiResponse::success(result, "决策评估完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1476,13 +1587,12 @@ pub async fn get_decision_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DecisionResult> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match DecisionEngine::get_decision(&pool, tenant_id, id).await {
+    match DecisionEngine::get_decision(&state.db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1492,13 +1602,12 @@ async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<DecisionScenario>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match DecisionEngine::list_scenarios(&pool, tenant_id).await {
+    match DecisionEngine::list_scenarios(&state.db, tenant_id).await {
         Ok(scenarios) => ApiResponse::success(scenarios, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1509,13 +1618,12 @@ pub async fn get_alternatives_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match DecisionEngine::get_alternatives(&pool, tenant_id, id).await {
+    match DecisionEngine::get_alternatives(&state.db, tenant_id, id).await {
         Ok(alts) => ApiResponse::success(alts, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1526,9 +1634,8 @@ async fn compare_scenarios_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match DecisionEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
+    match DecisionEngine::compare_scenarios(&state.db, tenant_id, req.scenario_ids).await {
         Ok(result) => ApiResponse::success(result, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1538,13 +1645,12 @@ pub async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<DecisionResult>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match DecisionEngine::get_decision_history(&pool, tenant_id).await {
+    match DecisionEngine::get_decision_history(&state.db, tenant_id).await {
         Ok(history) => ApiResponse::success(history, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1556,9 +1662,8 @@ pub async fn sensitivity_analysis_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<SensitivityAnalysisRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match DecisionEngine::sensitivity_analysis(&pool, tenant_id, id, req).await {
+    match DecisionEngine::sensitivity_analysis(&state.db, tenant_id, id, req).await {
         Ok(result) => ApiResponse::success(result, "敏感性分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1586,9 +1691,8 @@ pub async fn create_alert_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertRuleRequest>,
 ) -> ApiResponse<AlertRule> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertEngine::create_alert_rule(&pool, tenant_id, req).await {
+    match AlertEngine::create_alert_rule(&state.db, tenant_id, req).await {
         Ok(rule) => ApiResponse::success(rule, "预警规则创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1598,13 +1702,12 @@ pub async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AlertRule>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AlertEngine::get_alert_rules(&pool, tenant_id).await {
+    match AlertEngine::get_alert_rules(&state.db, tenant_id).await {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1615,9 +1718,8 @@ pub async fn evaluate_alerts_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<EvaluateAlertsRequest>,
 ) -> ApiResponse<Vec<AlertV60>> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertEngine::evaluate_alerts(&pool, tenant_id, req).await {
+    match AlertEngine::evaluate_alerts(&state.db, tenant_id, req).await {
         Ok(alerts) => ApiResponse::success(alerts, "预警评估完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1628,13 +1730,12 @@ pub async fn get_active_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
 ) -> ApiResponse<Vec<AlertV60>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AlertEngine::get_active_alerts(&pool, tenant_id, params).await {
+    match AlertEngine::get_active_alerts(&state.db, tenant_id, params).await {
         Ok(alerts) => ApiResponse::success(alerts, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1663,9 +1764,8 @@ async fn acknowledge_alert_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AlertV60> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertEngine::acknowledge_alert(&pool, tenant_id, id).await {
+    match AlertEngine::acknowledge_alert(&state.db, tenant_id, id).await {
         Ok(alert) => ApiResponse::success(alert, "预警已确认"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1676,9 +1776,8 @@ pub async fn resolve_alert_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AlertV60> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertEngine::resolve_alert(&pool, tenant_id, id).await {
+    match AlertEngine::resolve_alert(&state.db, tenant_id, id).await {
         Ok(alert) => ApiResponse::success(alert, "预警已解决"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1688,13 +1787,12 @@ pub async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AlertV60>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AlertEngine::get_alert_history(&pool, tenant_id).await {
+    match AlertEngine::get_alert_history(&state.db, tenant_id).await {
         Ok(history) => ApiResponse::success(history, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1705,9 +1803,8 @@ pub async fn configure_channel_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConfigureChannelRequest>,
 ) -> ApiResponse<AlertChannel> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertEngine::configure_channel(&pool, tenant_id, req).await {
+    match AlertEngine::configure_channel(&state.db, tenant_id, req).await {
         Ok(channel) => ApiResponse::success(channel, "渠道配置成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1720,9 +1817,8 @@ pub async fn create_task_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
 ) -> ApiResponse<ScheduleTask> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::create_task(&pool, tenant_id, req).await {
+    match IntelligentScheduler::create_task(&state.db, tenant_id, req).await {
         Ok(task) => ApiResponse::success(task, "任务创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1733,13 +1829,12 @@ pub async fn get_tasks_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<Vec<ScheduleTask>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match IntelligentScheduler::get_tasks(&pool, tenant_id, params).await {
+    match IntelligentScheduler::get_tasks(&state.db, tenant_id, params).await {
         Ok(tasks) => ApiResponse::success(tasks, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1750,9 +1845,8 @@ async fn schedule_task_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ScheduleTask> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::schedule_task(&pool, tenant_id, id).await {
+    match IntelligentScheduler::schedule_task(&state.db, tenant_id, id).await {
         Ok(task) => ApiResponse::success(task, "调度成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1763,9 +1857,8 @@ pub async fn execute_task_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ScheduleExecution> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::execute_task(&pool, tenant_id, id).await {
+    match IntelligentScheduler::execute_task(&state.db, tenant_id, id).await {
         Ok(execution) => ApiResponse::success(execution, "任务执行成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1776,13 +1869,12 @@ pub async fn get_execution_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ScheduleExecution> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match IntelligentScheduler::get_execution(&pool, tenant_id, id).await {
+    match IntelligentScheduler::get_execution(&state.db, tenant_id, id).await {
         Ok(execution) => ApiResponse::success(execution, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1798,13 +1890,12 @@ pub async fn list_executions_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ExecutionQueryParams>,
 ) -> ApiResponse<Vec<ScheduleExecution>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match IntelligentScheduler::list_executions(&pool, tenant_id, params.task_id).await {
+    match IntelligentScheduler::list_executions(&state.db, tenant_id, params.task_id).await {
         Ok(executions) => ApiResponse::success(executions, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1816,9 +1907,8 @@ pub async fn update_task_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTaskRequest>,
 ) -> ApiResponse<ScheduleTask> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::update_schedule(&pool, tenant_id, id, req).await {
+    match IntelligentScheduler::update_schedule(&state.db, tenant_id, id, req).await {
         Ok(task) => ApiResponse::success(task, "更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1829,9 +1919,8 @@ pub async fn pause_task_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ScheduleTask> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::pause_task(&pool, tenant_id, id).await {
+    match IntelligentScheduler::pause_task(&state.db, tenant_id, id).await {
         Ok(task) => ApiResponse::success(task, "任务已暂停"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1842,9 +1931,8 @@ pub async fn resume_task_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ScheduleTask> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match IntelligentScheduler::resume_task(&pool, tenant_id, id).await {
+    match IntelligentScheduler::resume_task(&state.db, tenant_id, id).await {
         Ok(task) => ApiResponse::success(task, "任务已恢复"),
         Err(e) => crate::shared::err_resp(e),
     }

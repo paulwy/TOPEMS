@@ -97,8 +97,11 @@ impl FinanceService {
         voucher_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<VoucherTemplateResponse>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let mut query =
-            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let _params: Vec<&(dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync)> = Vec::new();
 
@@ -120,7 +123,7 @@ impl FinanceService {
             query_builder = query_builder.bind(s);
         }
 
-        let templates = query_builder.fetch_all(&self.db_pool).await?;
+        let templates = query_builder.fetch_all(&mut scope).await?;
 
         let mut result = Vec::new();
         for template in templates {
@@ -148,12 +151,15 @@ impl FinanceService {
         tenant_id: Uuid,
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let template: VoucherTemplate = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let lines = self.get_template_lines(template.id).await?;
@@ -177,11 +183,13 @@ impl FinanceService {
         &self,
         template_id: Uuid,
     ) -> Result<Vec<VoucherTemplateLine>, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
         )
         .bind(template_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(lines)
@@ -200,6 +208,7 @@ impl FinanceService {
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let id = Uuid::new_v4();
         let now = Utc::now();
+        let mut scope = self.write_scope().await?;
 
         let template: VoucherTemplate = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -221,7 +230,7 @@ impl FinanceService {
         .bind(&req.default_credit_account)
         .bind(now)
         .bind(created_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let mut lines = Vec::new();
@@ -246,12 +255,13 @@ impl FinanceService {
             .bind(sort_order)
             .bind(now)
             .bind(tenant_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
 
             lines.push(line);
         }
 
+        scope.commit().await?;
         Ok(VoucherTemplateResponse {
             id: template.id,
             name: template.name,
@@ -278,12 +288,14 @@ impl FinanceService {
         template_id: Uuid,
         req: UpdateVoucherTemplateRequest,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing: VoucherTemplate = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let name = req.name.unwrap_or(existing.name);
@@ -318,7 +330,7 @@ impl FinanceService {
         .bind(&status)
         .bind(now)
         .bind(template_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         if let Some(lines_req) = req.lines {
@@ -327,7 +339,7 @@ impl FinanceService {
                 "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
             ))
             .bind(template_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
             for (i, line_req) in lines_req.iter().enumerate() {
@@ -350,11 +362,14 @@ impl FinanceService {
                 .bind(sort_order)
                 .bind(now)
                 .bind(tenant_id)
-                .execute(&self.db_pool)
+                .execute(&mut scope)
                 .await?;
             }
         }
 
+        // 先提交写入：后续 get_template_lines 走独立的只读作用域（另一条连接），
+        // 不提交则读不到本事务内新插入的模板行。
+        scope.commit().await?;
         let lines = self.get_template_lines(template_id).await?;
 
         Ok(VoucherTemplateResponse {
@@ -377,12 +392,14 @@ impl FinanceService {
         tenant_id: Uuid,
         template_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing = sqlx::query_as::<_, VoucherTemplate>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         if existing.is_none() {
@@ -394,15 +411,16 @@ impl FinanceService {
             "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
         ))
         .bind(template_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"))
             .bind(tenant_id)
             .bind(template_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
+        scope.commit().await?;
         Ok(())
     }
 
@@ -411,12 +429,14 @@ impl FinanceService {
         tenant_id: Uuid,
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let template: VoucherTemplate = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         sqlx::query(
@@ -424,7 +444,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(&template.voucher_type)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         sqlx::query(
@@ -432,9 +452,11 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(template_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
+        // 先提交写入：get_voucher_template 走独立的只读作用域（另一条连接）。
+        scope.commit().await?;
         self.get_voucher_template(tenant_id, template_id).await
     }
 

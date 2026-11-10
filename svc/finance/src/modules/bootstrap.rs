@@ -54,21 +54,36 @@ pub async fn bootstrap_defaults(
                 Ok(u) => u,
                 Err(_) => return ApiResponse::bad_request("tenant_id 格式无效"),
             };
-            match sqlx::query_scalar("SELECT finance.bootstrap_defaults($1)")
+            let mut scope = match state.db.scope_for_tenant(uuid).await {
+                Ok(s) => s,
+                Err(e) => return err_resp(e),
+            };
+            let result = sqlx::query_scalar("SELECT finance.bootstrap_defaults($1)")
                 .bind(uuid)
-                .fetch_one(&state.pool)
-                .await
-            {
+                .fetch_one(&mut scope)
+                .await;
+            if let Err(e) = scope.commit().await {
+                return err_resp(e);
+            }
+            match result {
                 Ok(n) => n,
                 Err(e) => return err_resp(e),
             }
         }
         None => {
+            // 系统通道：超管全局补播无租户上下文（启动/后台例外，登记 §2.1）
+            let mut scope = match state.db.scope_system().await {
+                Ok(s) => s,
+                Err(e) => return err_resp(e),
+            };
             // 无会话租户且未显式指定：回退补播全部既有租户
-            match sqlx::query_scalar("SELECT finance.bootstrap_defaults(NULL)")
-                .fetch_one(&state.pool)
-                .await
-            {
+            let result = sqlx::query_scalar("SELECT finance.bootstrap_defaults(NULL)")
+                .fetch_one(&mut scope)
+                .await;
+            if let Err(e) = scope.commit().await {
+                return err_resp(e);
+            }
+            match result {
                 Ok(n) => n,
                 Err(e) => return err_resp(e),
             }

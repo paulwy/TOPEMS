@@ -31,9 +31,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -409,7 +409,7 @@ pub struct ComplianceReport {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_risk_v54_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_risk_v54_tables(db: &Db) -> Result<(), sqlx::Error> {
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v54_risk_indicators (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -498,10 +498,14 @@ pub async fn init_risk_v54_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         "CREATE INDEX IF NOT EXISTS idx_v54_review_workflows_status ON finance_v54_review_workflows(status)",
     ];
 
+    // 系统通道：无请求上下文（启动/后台），登记 §2.1
+    let mut scope = db.scope_system().await?;
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
-    Ok(())
+    scope.commit().await
 }
 
 // ==================== 1. 实时风险监测 ====================
@@ -521,11 +525,17 @@ impl RealTimeRiskMonitor {
         clippy::cast_precision_loss
     )]
     pub async fn evaluate_risk(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         req: EvaluateRiskRequest,
     ) -> Result<RiskDashboard, sqlx::Error> {
         let now = Utc::now();
+
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
 
         let mut query = String::from(
             "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators WHERE ($1::uuid IS NULL OR tenant_id = $1)",
@@ -539,8 +549,9 @@ impl RealTimeRiskMonitor {
 
         let indicators: Vec<RiskIndicator> = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
+        let _ = scope.commit().await;
 
         let mut category_map: HashMap<String, i64> = HashMap::new();
         let mut total_score = 0.0f64;
@@ -571,7 +582,7 @@ impl RealTimeRiskMonitor {
 
             if indicator.current_value > indicator.threshold {
                 if let Some(tid) = tenant_id {
-                    Self::auto_escalate(pool, tid, indicator, &level, &now).await?;
+                    Self::auto_escalate(db, tid, indicator, &level, &now).await?;
                 }
             }
         }
@@ -582,12 +593,18 @@ impl RealTimeRiskMonitor {
             0.0
         };
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let open_alerts: i64 = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND acknowledged = false AND resolved = false"),
         )
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        let _ = scope.commit().await;
 
         Ok(RiskDashboard {
             total_indicators: indicators.len() as i64,
@@ -602,7 +619,7 @@ impl RealTimeRiskMonitor {
     }
 
     async fn auto_escalate(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         indicator: &RiskIndicator,
         level: &RiskLevel,
@@ -613,6 +630,7 @@ impl RealTimeRiskMonitor {
             indicator.category, indicator.current_value, indicator.threshold
         );
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_risk_alerts
                 (id, tenant_id, indicator_id, level, message, entity, created_at, acknowledged, resolved)
@@ -626,18 +644,19 @@ impl RealTimeRiskMonitor {
         .bind(&message)
         .bind(&indicator.category)
         .bind(*now)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(())
     }
 
     pub async fn get_dashboard(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<RiskDashboard, sqlx::Error> {
         Self::evaluate_risk(
-            pool,
+            db,
             tenant_id,
             EvaluateRiskRequest {
                 category: None,
@@ -648,7 +667,7 @@ impl RealTimeRiskMonitor {
     }
 
     pub async fn create_alert(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         indicator_id: Uuid,
         level: String,
@@ -658,7 +677,8 @@ impl RealTimeRiskMonitor {
         let now = Utc::now();
         let id = Uuid::new_v4();
 
-        sqlx::query_as::<_, RiskAlert>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let alert = sqlx::query_as::<_, RiskAlert>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_risk_alerts
                 (id, tenant_id, indicator_id, level, message, entity, created_at, acknowledged, resolved)
             VALUES ($1, $2, $3, $4, $5, $6, $7, false, false)
@@ -671,16 +691,19 @@ impl RealTimeRiskMonitor {
         .bind(&message)
         .bind(&entity)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(alert)
     }
 
     pub async fn acknowledge_alert(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<RiskAlert, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let alert = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v54_risk_alerts
             SET acknowledged = true
@@ -689,16 +712,19 @@ impl RealTimeRiskMonitor {
         ))
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(alert)
     }
 
     pub async fn resolve_alert(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<RiskAlert, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let alert = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v54_risk_alerts
             SET resolved = true, acknowledged = true
@@ -707,16 +733,23 @@ impl RealTimeRiskMonitor {
         ))
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(alert)
     }
 
     pub async fn get_alerts_by_category(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         category: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let alerts = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
             FROM finance.finance_v54_risk_alerts
@@ -726,16 +759,23 @@ impl RealTimeRiskMonitor {
         ))
         .bind(tenant_id)
         .bind(&category)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        alerts
     }
 
     pub async fn get_alerts_by_entity(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         entity: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let alerts = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
             FROM finance.finance_v54_risk_alerts
@@ -745,8 +785,10 @@ impl RealTimeRiskMonitor {
         ))
         .bind(tenant_id)
         .bind(&entity)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        alerts
     }
 }
 
@@ -761,12 +803,12 @@ pub struct ScoreTransactionRequest {
 
 impl AntiFraudEngine {
     pub async fn score_transaction(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ScoreTransactionRequest,
     ) -> Result<FraudScore, sqlx::Error> {
         let tx = &req.transaction;
-        let rules = Self::get_fraud_rules(pool, Some(tenant_id)).await?;
+        let rules = Self::get_fraud_rules(db, Some(tenant_id)).await?;
 
         let mut triggered_rules: Vec<String> = Vec::new();
         let mut score = 0.0f64;
@@ -778,22 +820,21 @@ impl AntiFraudEngine {
 
             let rule_score = match FraudRuleType::from_str(&rule.rule_type) {
                 FraudRuleType::Velocity => {
-                    Self::check_velocity(pool, tenant_id, &tx.account_id, rule.threshold).await
+                    Self::check_velocity(db, tenant_id, &tx.account_id, rule.threshold).await
                 }
                 FraudRuleType::Amount => {
-                    Self::check_amount_anomaly(pool, tenant_id, tx.amount, rule.threshold).await
+                    Self::check_amount_anomaly(db, tenant_id, tx.amount, rule.threshold).await
                 }
                 FraudRuleType::Location => {
-                    Self::check_location_anomaly(pool, tenant_id, &tx.location, rule.threshold)
-                        .await
+                    Self::check_location_anomaly(db, tenant_id, &tx.location, rule.threshold).await
                 }
                 FraudRuleType::Device => {
-                    Self::check_device_fingerprint(pool, tenant_id, &tx.device_id, rule.threshold)
+                    Self::check_device_fingerprint(db, tenant_id, &tx.device_id, rule.threshold)
                         .await
                 }
                 FraudRuleType::Behavior => {
                     Self::check_behavior_internal(
-                        pool,
+                        db,
                         tenant_id,
                         &tx.account_id,
                         tx.amount,
@@ -839,7 +880,8 @@ impl AntiFraudEngine {
                 .collect(),
         );
 
-        sqlx::query_as::<_, FraudScore>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let fraud_score = sqlx::query_as::<_, FraudScore>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_fraud_scores
                 (id, tenant_id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -853,26 +895,28 @@ impl AntiFraudEngine {
         .bind(risk_level)
         .bind(recommendation.as_str())
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(fraud_score)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn check_velocity(
-        pool: &PgPool,
-        tenant_id: Uuid,
-        account_id: &str,
-        threshold: f64,
-    ) -> f64 {
+    async fn check_velocity(db: &Db, tenant_id: Uuid, account_id: &str, threshold: f64) -> f64 {
         let _account_uuid = Uuid::parse_str(account_id).unwrap_or_else(|_| Uuid::new_v4());
+        let mut scope = match db.scope_read_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(_) => return 0.0,
+        };
         let count: i64 = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id LIKE $2 || '%' AND scored_at > NOW() - INTERVAL '1 hour'"),
         )
         .bind(tenant_id)
         .bind(account_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
+        let _ = scope.commit().await;
 
         if count as f64 > threshold {
             ((count as f64 - threshold) / threshold * 50.0).min(100.0)
@@ -881,12 +925,7 @@ impl AntiFraudEngine {
         }
     }
 
-    async fn check_amount_anomaly(
-        _pool: &PgPool,
-        _tenant_id: Uuid,
-        amount: f64,
-        threshold: f64,
-    ) -> f64 {
+    async fn check_amount_anomaly(_db: &Db, _tenant_id: Uuid, amount: f64, threshold: f64) -> f64 {
         if amount > threshold {
             ((amount - threshold) / threshold * 50.0).min(100.0)
         } else {
@@ -895,7 +934,7 @@ impl AntiFraudEngine {
     }
 
     async fn check_location_anomaly(
-        _pool: &PgPool,
+        _db: &Db,
         _tenant_id: Uuid,
         location: &str,
         _threshold: f64,
@@ -908,7 +947,7 @@ impl AntiFraudEngine {
     }
 
     async fn check_device_fingerprint(
-        _pool: &PgPool,
+        _db: &Db,
         _tenant_id: Uuid,
         device_id: &str,
         _threshold: f64,
@@ -921,7 +960,7 @@ impl AntiFraudEngine {
     }
 
     async fn check_behavior_internal(
-        _pool: &PgPool,
+        _db: &Db,
         _tenant_id: Uuid,
         _account_id: &str,
         _amount: f64,
@@ -931,19 +970,26 @@ impl AntiFraudEngine {
     }
 
     pub async fn get_fraud_rules(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rules = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY rule_type, name"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rules
     }
 
     pub async fn update_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule_id: Uuid,
         name: Option<String>,
@@ -951,12 +997,13 @@ impl AntiFraudEngine {
         threshold: Option<f64>,
         enabled: Option<bool>,
     ) -> Result<FraudRule, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let current: FraudRule = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(rule_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let name = name.unwrap_or(current.name);
@@ -964,7 +1011,7 @@ impl AntiFraudEngine {
         let threshold = threshold.unwrap_or(current.threshold);
         let enabled = enabled.unwrap_or(current.enabled);
 
-        sqlx::query_as(only_own_schema_query!(
+        let rule = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v54_fraud_rules
             SET name = $1, condition = $2, threshold = $3, enabled = $4
@@ -977,22 +1024,27 @@ impl AntiFraudEngine {
         .bind(enabled)
         .bind(rule_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
     pub async fn get_score(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         transaction_id: String,
     ) -> Result<FraudScore, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let score = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id = $2 ORDER BY scored_at DESC LIMIT 1"),
         )
         .bind(tenant_id)
         .bind(&transaction_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        score
     }
 }
 
@@ -1016,16 +1068,17 @@ pub struct CreateWorkflowRequest {
 
 impl AutoComplianceReviewer {
     pub async fn review_entity(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ReviewEntityRequest,
         reviewer: String,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let rules: Vec<ReviewRule> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, regulation, category, severity, action FROM finance.finance_v54_review_rules WHERE tenant_id = $1 ORDER BY severity DESC"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut results = Vec::new();
@@ -1064,11 +1117,12 @@ impl AutoComplianceReviewer {
             .bind(&result.details)
             .bind(result.reviewed_at)
             .bind(&result.reviewer)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
 
             results.push(result);
         }
+        scope.commit().await?;
 
         Ok(results)
     }
@@ -1079,11 +1133,16 @@ impl AutoComplianceReviewer {
     }
 
     pub async fn get_review_results(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut query = String::from(
             "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
@@ -1107,11 +1166,13 @@ impl AutoComplianceReviewer {
             q = q.bind(eid);
         }
 
-        q.fetch_all(pool).await
+        let results = q.fetch_all(&mut scope).await;
+        let _ = scope.commit().await;
+        results
     }
 
     pub async fn create_review_workflow(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateWorkflowRequest,
     ) -> Result<ReviewWorkflow, sqlx::Error> {
@@ -1124,7 +1185,8 @@ impl AutoComplianceReviewer {
                 .collect(),
         );
 
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let workflow = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_review_workflows
                 (id, tenant_id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
@@ -1138,21 +1200,24 @@ impl AutoComplianceReviewer {
         .bind(steps_json)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(workflow)
     }
 
     pub async fn advance_workflow(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         workflow_id: Uuid,
     ) -> Result<ReviewWorkflow, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let workflow: ReviewWorkflow = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(workflow_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let mut steps: Vec<serde_json::Value> =
@@ -1172,7 +1237,7 @@ impl AutoComplianceReviewer {
         let new_status = if all_done { "completed" } else { "in_progress" };
 
         let now = Utc::now();
-        sqlx::query_as(
+        let workflow = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v54_review_workflows
             SET status = $1, steps = $2, updated_at = $3
             WHERE id = $4 AND tenant_id = $5
@@ -1183,24 +1248,33 @@ impl AutoComplianceReviewer {
         .bind(now)
         .bind(workflow_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(workflow)
     }
 
     pub async fn get_compliance_status(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         entity_type: String,
         entity_id: String,
     ) -> Result<Vec<ReviewWorkflow>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let workflows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
         .bind(&entity_type)
         .bind(&entity_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        workflows
     }
 
     #[allow(
@@ -1209,18 +1283,14 @@ impl AutoComplianceReviewer {
         clippy::cast_precision_loss
     )]
     pub async fn generate_compliance_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<ComplianceReport, sqlx::Error> {
-        let results = Self::get_review_results(
-            pool,
-            Some(tenant_id),
-            entity_type.clone(),
-            entity_id.clone(),
-        )
-        .await?;
+        let results =
+            Self::get_review_results(db, Some(tenant_id), entity_type.clone(), entity_id.clone())
+                .await?;
 
         let total_rules = results.len() as i64;
         let passed_rules = results.iter().filter(|r| r.passed).count() as i64;
@@ -1236,13 +1306,14 @@ impl AutoComplianceReviewer {
         let mut medium_issues = Vec::new();
         let mut low_issues = Vec::new();
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         for result in &results {
             if !result.passed {
                 let rule: ReviewRule = match sqlx::query_as(
                     only_own_schema_query!("finance", "SELECT id, regulation, category, severity, action FROM finance.finance_v54_review_rules WHERE id = $1"),
                 )
                 .bind(result.rule_id)
-                .fetch_one(pool)
+                .fetch_one(&mut scope)
                 .await
                 {
                     Ok(r) => r,
@@ -1262,6 +1333,7 @@ impl AutoComplianceReviewer {
                 }
             }
         }
+        let _ = scope.commit().await;
 
         Ok(ComplianceReport {
             entity_type: entity_type.unwrap_or_else(|| "all".to_string()),
@@ -1287,14 +1359,14 @@ pub async fn get_risk_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<RiskDashboard> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
+    match RealTimeRiskMonitor::get_dashboard(&db, tenant_id).await {
         Ok(dashboard) => ApiResponse::success(dashboard, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1311,7 +1383,7 @@ pub async fn get_risk_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
 ) -> ApiResponse<Vec<RiskAlert>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1319,20 +1391,20 @@ pub async fn get_risk_alerts_handler(
     };
 
     if let Some(ref cat) = params.category {
-        match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
+        match RealTimeRiskMonitor::get_alerts_by_category(&db, tenant_id, cat.clone()).await {
             Ok(alerts) => return ApiResponse::success(alerts, "查询成功"),
             Err(e) => return crate::shared::err_resp(e),
         }
     }
 
     if let Some(ref ent) = params.entity {
-        match RealTimeRiskMonitor::get_alerts_by_entity(&pool, tenant_id, ent.clone()).await {
+        match RealTimeRiskMonitor::get_alerts_by_entity(&db, tenant_id, ent.clone()).await {
             Ok(alerts) => return ApiResponse::success(alerts, "查询成功"),
             Err(e) => return crate::shared::err_resp(e),
         }
     }
 
-    match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, String::new()).await {
+    match RealTimeRiskMonitor::get_alerts_by_category(&db, tenant_id, String::new()).await {
         Ok(alerts) => ApiResponse::success(alerts, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1343,10 +1415,10 @@ async fn acknowledge_alert_handler(
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResponse<RiskAlert> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match RealTimeRiskMonitor::acknowledge_alert(&pool, tenant_id, alert_id).await {
+    match RealTimeRiskMonitor::acknowledge_alert(&db, tenant_id, alert_id).await {
         Ok(alert) => ApiResponse::success(alert, "已确认"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1374,10 +1446,10 @@ async fn resolve_alert_handler(
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResponse<RiskAlert> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match RealTimeRiskMonitor::resolve_alert(&pool, tenant_id, alert_id).await {
+    match RealTimeRiskMonitor::resolve_alert(&db, tenant_id, alert_id).await {
         Ok(alert) => ApiResponse::success(alert, "已解决"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1390,10 +1462,10 @@ pub async fn score_transaction_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScoreTransactionRequest>,
 ) -> ApiResponse<FraudScore> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match AntiFraudEngine::score_transaction(&pool, tenant_id, req).await {
+    match AntiFraudEngine::score_transaction(&db, tenant_id, req).await {
         Ok(score) => ApiResponse::success(score, "评分完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1403,14 +1475,14 @@ pub async fn get_fraud_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<FraudRule>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
+    match AntiFraudEngine::get_fraud_rules(&db, tenant_id).await {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1430,11 +1502,11 @@ pub async fn update_fraud_rule_handler(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateFraudRuleRequest>,
 ) -> ApiResponse<FraudRule> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::update_rule(
-        &pool,
+        &db,
         tenant_id,
         rule_id,
         req.name,
@@ -1454,10 +1526,10 @@ pub async fn get_fraud_score_handler(
     Extension(claims): Extension<Claims>,
     Path(transaction_id): Path<String>,
 ) -> ApiResponse<FraudScore> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match AntiFraudEngine::get_score(&pool, tenant_id, transaction_id).await {
+    match AntiFraudEngine::get_score(&db, tenant_id, transaction_id).await {
         Ok(score) => ApiResponse::success(score, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1470,11 +1542,11 @@ pub async fn review_entity_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReviewEntityRequest>,
 ) -> ApiResponse<Vec<ReviewResult>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
 
-    match AutoComplianceReviewer::review_entity(&pool, tenant_id, req, reviewer).await {
+    match AutoComplianceReviewer::review_entity(&db, tenant_id, req, reviewer).await {
         Ok(results) => ApiResponse::success(results, "审查完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1491,7 +1563,7 @@ pub async fn get_review_results_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReviewResultQueryParams>,
 ) -> ApiResponse<Vec<ReviewResult>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1499,7 +1571,7 @@ pub async fn get_review_results_handler(
     };
 
     match AutoComplianceReviewer::get_review_results(
-        &pool,
+        &db,
         tenant_id,
         params.entity_type,
         params.entity_id,
@@ -1516,14 +1588,14 @@ pub async fn get_compliance_status_handler(
     Extension(claims): Extension<Claims>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ReviewWorkflow>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
+    match AutoComplianceReviewer::get_compliance_status(&db, tenant_id, entity_type, entity_id)
         .await
     {
         Ok(workflows) => ApiResponse::success(workflows, "查询成功"),
@@ -1536,10 +1608,10 @@ pub async fn create_workflow_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> ApiResponse<ReviewWorkflow> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match AutoComplianceReviewer::create_review_workflow(&pool, tenant_id, req).await {
+    match AutoComplianceReviewer::create_review_workflow(&db, tenant_id, req).await {
         Ok(workflow) => ApiResponse::success(workflow, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1550,10 +1622,10 @@ pub async fn advance_workflow_handler(
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<ReviewWorkflow> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match AutoComplianceReviewer::advance_workflow(&pool, tenant_id, workflow_id).await {
+    match AutoComplianceReviewer::advance_workflow(&db, tenant_id, workflow_id).await {
         Ok(workflow) => ApiResponse::success(workflow, "推进成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1570,11 +1642,11 @@ pub async fn generate_compliance_report_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,
 ) -> ApiResponse<ComplianceReport> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::generate_compliance_report(
-        &pool,
+        &db,
         tenant_id,
         params.entity_type,
         params.entity_id,

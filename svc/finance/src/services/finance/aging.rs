@@ -44,6 +44,7 @@ impl FinanceService {
         direction: &str,
         bucket: Option<String>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
             "receivable" => "erp_receivables",
             "payable" => "erp_payables",
@@ -51,7 +52,7 @@ impl FinanceService {
         };
 
         let mut sql = format!(
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND status = 'unpaid'",
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE (tenant_id = $1::uuid) AND status = 'unpaid'",
             table
         );
 
@@ -73,9 +74,11 @@ impl FinanceService {
 
         sql.push_str(" ORDER BY due_date ASC LIMIT 100");
 
+        let mut scope = self.read_scope().await?;
+
         let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
 
         let items: Vec<Value> = rows
@@ -113,6 +116,7 @@ impl FinanceService {
         direction: &str,
         months: i32,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
             "receivable" => "erp_receivables",
             "payable" => "erp_payables",
@@ -120,6 +124,8 @@ impl FinanceService {
         };
 
         let mut trend_data = Vec::new();
+
+        let mut scope = self.read_scope().await?;
 
         for i in 0..months {
             let month_offset = months - i - 1;
@@ -135,7 +141,7 @@ impl FinanceService {
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '30 days' AND due_date >= {} - INTERVAL '60 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_31_60,
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '60 days' AND due_date >= {} - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_61_90,
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_90_plus
-                 FROM {} WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND created_at <= {}",
+                 FROM {} WHERE (tenant_id = $1::uuid) AND created_at <= {}",
                 month_end, month_end, month_end,
                 month_end, month_end,
                 month_end,
@@ -144,7 +150,7 @@ impl FinanceService {
 
             let row = sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
             let bucket_0_30: f64 = sqlx::Row::try_get(&row, "bucket_0_30").unwrap_or(0.0);

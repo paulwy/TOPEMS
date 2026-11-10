@@ -11,9 +11,9 @@
 
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::{EventPublisher, EventType};
 use uuid::Uuid;
@@ -22,7 +22,7 @@ use super::models::*;
 
 /// 从本地快照查询对账列表（替代跨 schema 直查 erp.fin_reconciliations）
 pub async fn list_reconciliations(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     query: &ReconciliationListQuery,
 ) -> Result<Vec<UnifiedReconciliation>, sqlx::Error> {
@@ -30,6 +30,8 @@ pub async fn list_reconciliations(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
+
+    let mut scope = db.scope_read().await?;
 
     let items: Vec<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -53,18 +55,20 @@ pub async fn list_reconciliations(
     .bind(&search_like)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(items)
 }
 
 /// 查询单个对账详情（含关联结算列表，从本地快照读取）
 pub async fn get_reconciliation_detail(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     recon_id: Uuid,
 ) -> Result<Option<ReconciliationDetail>, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let recon: Option<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT id, recon_code, recon_name, recon_type, status, period,
@@ -76,7 +80,7 @@ pub async fn get_reconciliation_detail(
     ))
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
 
     let Some(reconciliation) = recon else {
@@ -98,9 +102,10 @@ pub async fn get_reconciliation_detail(
     ))
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(Some(ReconciliationDetail {
         reconciliation,
         linked_settlements: linked,
@@ -109,7 +114,7 @@ pub async fn get_reconciliation_detail(
 
 /// 创建对账单：写本地快照 + 发布事件（ERP 通过事件订阅接收数据）
 pub async fn create_reconciliation(
-    pool: &PgPool,
+    db: &Db,
     event_publisher: Option<&Arc<EventPublisher>>,
     tenant_id: Uuid,
     req: &CreateReconciliationRequest,
@@ -117,6 +122,7 @@ pub async fn create_reconciliation(
 ) -> Result<UnifiedReconciliation, sqlx::Error> {
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
 
     sqlx::query(only_own_schema_query!(
         "finance",
@@ -137,7 +143,7 @@ pub async fn create_reconciliation(
     .bind(&req.description)
     .bind(&creator)
     .bind(now)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
     let item = sqlx::query_as(only_own_schema_query!(
@@ -151,8 +157,10 @@ pub async fn create_reconciliation(
     ))
     .bind(id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     if let Some(publisher) = event_publisher {
         let payload = topems_shared_event::ReconciliationCreatedPayload {
@@ -169,7 +177,7 @@ pub async fn create_reconciliation(
             created_by: Some(creator),
             created_at: now,
         };
-        // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
+        // D6：写快照已落库（scope.commit 已提交），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
             .publish_event(EventType::ReconciliationCreated, payload.clone())
             .await
@@ -189,13 +197,13 @@ pub async fn create_reconciliation(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 手工对账：标记对账单明细为已匹配（操作 Finance 本地明细快照 + 发布事件）
 pub async fn manual_reconcile(
-    pool: &PgPool,
+    db: &Db,
     event_publisher: Option<&Arc<EventPublisher>>,
     tenant_id: Uuid,
     recon_id: Uuid,
     req: &ReconcileRequest,
 ) -> Result<i64, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+    let mut scope = db.scope().await?;
 
     let affected: i64 = if req.record_ids.is_empty() {
         0
@@ -208,7 +216,7 @@ pub async fn manual_reconcile(
         ))
         .bind(recon_id)
         .bind(&req.record_ids)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await?;
         result.rows_affected() as i64
     };
@@ -225,7 +233,7 @@ pub async fn manual_reconcile(
            WHERE recon_id = $1"#
         ))
         .bind(recon_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut scope)
         .await?;
 
     let difference = stats.2.unwrap_or(0.0) - stats.3.unwrap_or(0.0);
@@ -245,10 +253,10 @@ pub async fn manual_reconcile(
     .bind(difference)
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await?;
 
-    tx.commit().await?;
+    scope.commit().await?;
 
     if let Some(publisher) = event_publisher {
         let now = chrono::Utc::now();
@@ -267,7 +275,7 @@ pub async fn manual_reconcile(
             unmatched_count: stats.1,
             updated_at: now,
         };
-        // D6：tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
+        // D6：scope.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
             .publish_event(EventType::ReconciliationUpdated, payload.clone())
             .await
@@ -287,11 +295,11 @@ pub async fn manual_reconcile(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 自动对账：按金额相等原则匹配对账单明细（操作 Finance 本地明细快照）
 pub async fn auto_reconcile(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     req: &AutoReconcileRequest,
 ) -> Result<i64, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+    let mut scope = db.scope().await?;
 
     // 在 Finance 本地明细快照上匹配
     let result = sqlx::query(only_own_schema_query!(
@@ -316,7 +324,7 @@ pub async fn auto_reconcile(
     .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
     .bind(req.entity_id)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await?;
 
     let affected = result.rows_affected() as i64;
@@ -354,16 +362,16 @@ pub async fn auto_reconcile(
     .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
     .bind(req.entity_id)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await?;
 
-    tx.commit().await?;
+    scope.commit().await?;
     Ok(affected)
 }
 
 /// 从本地快照查询结算列表（替代跨 schema 直查 pm.settlements）
 pub async fn list_settlements(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     query: &SettlementListQuery,
 ) -> Result<Vec<UnifiedSettlement>, sqlx::Error> {
@@ -371,6 +379,8 @@ pub async fn list_settlements(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
+
+    let mut scope = db.scope_read().await?;
 
     let items: Vec<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -404,18 +414,20 @@ pub async fn list_settlements(
     .bind(&search_like)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(items)
 }
 
 /// 查询单个结算详情（含关联对账列表，从本地快照读取）
 pub async fn get_settlement_detail(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     settlement_id: Uuid,
 ) -> Result<Option<SettlementDetail>, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let settlement: Option<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
@@ -437,7 +449,7 @@ pub async fn get_settlement_detail(
     ))
     .bind(settlement_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
 
     let Some(settlement) = settlement else {
@@ -456,9 +468,10 @@ pub async fn get_settlement_detail(
     )
     .bind(settlement_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(Some(SettlementDetail {
         settlement,
         linked_reconciliations: linked,
@@ -467,7 +480,7 @@ pub async fn get_settlement_detail(
 
 /// 创建结算单：写本地快照 + 发布事件（PM 通过事件订阅接收数据）
 pub async fn create_settlement(
-    pool: &PgPool,
+    db: &Db,
     event_publisher: Option<&Arc<EventPublisher>>,
     tenant_id: Uuid,
     req: &CreateSettlementRequest,
@@ -475,6 +488,7 @@ pub async fn create_settlement(
 ) -> Result<UnifiedSettlement, sqlx::Error> {
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
     let period_start = req
         .settlement_period_start
         .as_ref()
@@ -502,7 +516,7 @@ pub async fn create_settlement(
     .bind(&req.description)
     .bind(&creator)
     .bind(now)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
     let item: UnifiedSettlement = sqlx::query_as(only_own_schema_query!(
@@ -526,8 +540,10 @@ pub async fn create_settlement(
     ))
     .bind(id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     if let Some(publisher) = event_publisher {
         let payload = topems_shared_event::SettlementCreatedPayload {
@@ -543,7 +559,7 @@ pub async fn create_settlement(
             created_by: Some(creator),
             created_at: now,
         };
-        // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
+        // D6：写快照已落库（scope.commit 已提交），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
             .publish_event(EventType::SettlementCreated, payload.clone())
             .await
@@ -561,13 +577,14 @@ pub async fn create_settlement(
 
 /// 审批对账单：更新本地快照 + 发布事件（ERP 通过事件订阅接收审批状态）
 pub async fn approve_reconciliation(
-    pool: &PgPool,
+    db: &Db,
     event_publisher: Option<&Arc<EventPublisher>>,
     tenant_id: Uuid,
     recon_id: Uuid,
     approver: String,
 ) -> Result<Option<UnifiedReconciliation>, sqlx::Error> {
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
 
     sqlx::query(only_own_schema_query!(
         "finance",
@@ -580,7 +597,7 @@ pub async fn approve_reconciliation(
     .bind(now)
     .bind(recon_id)
     .bind(tenant_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
     let item: Option<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
@@ -594,12 +611,14 @@ pub async fn approve_reconciliation(
     ))
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     if item.is_some() {
         if let Some(publisher) = event_publisher {
-            // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
+            // D6：写快照已落库（scope.commit 已提交），此处仅发布；失败入 ZSET 重试队列。
             let approved_payload = topems_shared_event::ReconciliationApprovedPayload {
                 id: recon_id,
                 tenant_id,
@@ -656,13 +675,14 @@ pub async fn approve_reconciliation(
 
 /// 审批结算单：更新本地快照 + 发布事件（PM 通过事件订阅接收审批状态）
 pub async fn approve_settlement(
-    pool: &PgPool,
+    db: &Db,
     event_publisher: Option<&Arc<EventPublisher>>,
     tenant_id: Uuid,
     settlement_id: Uuid,
     approver: String,
 ) -> Result<Option<UnifiedSettlement>, sqlx::Error> {
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
 
     sqlx::query(only_own_schema_query!(
         "finance",
@@ -675,7 +695,7 @@ pub async fn approve_settlement(
     .bind(now)
     .bind(settlement_id)
     .bind(tenant_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
     let item: Option<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
@@ -699,12 +719,14 @@ pub async fn approve_settlement(
     ))
     .bind(settlement_id)
     .bind(tenant_id_opt(tenant_id))
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
+
+    scope.commit().await?;
 
     if item.is_some() {
         if let Some(publisher) = event_publisher {
-            // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
+            // D6：写快照已落库（scope.commit 已提交），此处仅发布；失败入 ZSET 重试队列。
             let payload = topems_shared_event::SettlementApprovedPayload {
                 id: settlement_id,
                 tenant_id,
@@ -734,13 +756,14 @@ pub async fn approve_settlement(
 
 /// 创建对账-结算关联
 pub async fn create_link(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     req: &CreateLinkRequest,
     creator: Uuid,
 ) -> Result<ReconciliationSettlementLink, sqlx::Error> {
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
 
     let link: ReconciliationSettlementLink = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -760,18 +783,16 @@ pub async fn create_link(
     .bind(&req.remark)
     .bind(creator)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(link)
 }
 
 /// 解除关联（设置为 cancelled 状态，保留审计记录）
-pub async fn cancel_link(
-    pool: &PgPool,
-    tenant_id: Uuid,
-    link_id: Uuid,
-) -> Result<bool, sqlx::Error> {
+pub async fn cancel_link(db: &Db, tenant_id: Uuid, link_id: Uuid) -> Result<bool, sqlx::Error> {
+    let mut scope = db.scope().await?;
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.reconciliation_settlement_links
@@ -780,21 +801,24 @@ pub async fn cancel_link(
     ))
     .bind(link_id)
     .bind(tenant_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(result.rows_affected() > 0)
 }
 
 /// 查询关联列表
 pub async fn list_links(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     query: &LinkListQuery,
 ) -> Result<Vec<ReconciliationSettlementLink>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
+
+    let mut scope = db.scope_read().await?;
 
     let items: Vec<ReconciliationSettlementLink> = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -816,9 +840,10 @@ pub async fn list_links(
     .bind(&query.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(items)
 }
 
@@ -828,13 +853,14 @@ pub async fn list_links(
 
 /// 创建差异调整
 pub async fn create_difference(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     req: &CreateDifferenceRequest,
     creator: Uuid,
 ) -> Result<DifferenceAdjustment, sqlx::Error> {
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+    let mut scope = db.scope().await?;
 
     let item: DifferenceAdjustment = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -860,19 +886,21 @@ pub async fn create_difference(
     .bind(&req.remark)
     .bind(creator)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(item)
 }
 
 /// 审批差异调整
 pub async fn approve_difference(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     diff_id: Uuid,
     approver: Uuid,
 ) -> Result<Option<DifferenceAdjustment>, sqlx::Error> {
+    let mut scope = db.scope().await?;
     let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.difference_adjustments
@@ -886,19 +914,21 @@ pub async fn approve_difference(
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(item)
 }
 
 /// 拒绝差异调整
 pub async fn reject_difference(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     diff_id: Uuid,
     approver: Uuid,
 ) -> Result<Option<DifferenceAdjustment>, sqlx::Error> {
+    let mut scope = db.scope().await?;
     let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.difference_adjustments
@@ -912,21 +942,24 @@ pub async fn reject_difference(
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(item)
 }
 
 /// 查询差异调整列表
 pub async fn list_differences(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     query: &DifferenceListQuery,
 ) -> Result<Vec<DifferenceAdjustment>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
+
+    let mut scope = db.scope_read().await?;
 
     let items: Vec<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -950,9 +983,10 @@ pub async fn list_differences(
     .bind(&query.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(items)
 }
 
@@ -961,14 +995,11 @@ pub async fn list_differences(
 // ============================================================
 
 /// 获取统一统计（跨 schema 聚合对账、结算、差异、关联）
-pub async fn get_statistics(
-    pool: &PgPool,
-    tenant_id: Uuid,
-) -> Result<CenterStatistics, sqlx::Error> {
-    let recon_stats = get_reconciliation_statistics(pool, tenant_id).await?;
-    let settlement_stats = get_settlement_statistics(pool, tenant_id).await?;
-    let difference_stats = get_difference_statistics(pool, tenant_id).await?;
-    let link_stats = get_link_statistics(pool, tenant_id).await?;
+pub async fn get_statistics(db: &Db, tenant_id: Uuid) -> Result<CenterStatistics, sqlx::Error> {
+    let recon_stats = get_reconciliation_statistics(db, tenant_id).await?;
+    let settlement_stats = get_settlement_statistics(db, tenant_id).await?;
+    let difference_stats = get_difference_statistics(db, tenant_id).await?;
+    let link_stats = get_link_statistics(db, tenant_id).await?;
 
     Ok(CenterStatistics {
         reconciliation: recon_stats,
@@ -979,9 +1010,10 @@ pub async fn get_statistics(
 }
 
 async fn get_reconciliation_statistics(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
 ) -> Result<ReconciliationStatistics, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let row: (i64, i64, i64, Decimal, Decimal, Decimal, i64, i64) =
         sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -998,9 +1030,10 @@ async fn get_reconciliation_statistics(
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
         ))
         .bind(tenant_id_opt(tenant_id))
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
+    scope.commit().await?;
     Ok(ReconciliationStatistics {
         total_count: row.0,
         pending_count: row.1,
@@ -1014,9 +1047,10 @@ async fn get_reconciliation_statistics(
 }
 
 async fn get_settlement_statistics(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
 ) -> Result<SettlementStatistics, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let row: (i64, i64, i64, i64, Decimal, Decimal, Decimal) =
         sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -1032,9 +1066,10 @@ async fn get_settlement_statistics(
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
         ))
         .bind(tenant_id_opt(tenant_id))
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
+    scope.commit().await?;
     Ok(SettlementStatistics {
         total_count: row.0,
         draft_count: row.1,
@@ -1047,9 +1082,10 @@ async fn get_settlement_statistics(
 }
 
 async fn get_difference_statistics(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
 ) -> Result<DifferenceStatistics, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let row: (i64, i64, i64, i64, Decimal, Decimal) = sqlx::query_as(
         only_own_schema_query!("finance", r#"SELECT
              COUNT(*)::bigint AS total_count,
@@ -1062,9 +1098,10 @@ async fn get_difference_statistics(
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#),
     )
     .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(DifferenceStatistics {
         total_count: row.0,
         pending_count: row.1,
@@ -1075,10 +1112,8 @@ async fn get_difference_statistics(
     })
 }
 
-async fn get_link_statistics(
-    pool: &PgPool,
-    tenant_id: Uuid,
-) -> Result<LinkStatistics, sqlx::Error> {
+async fn get_link_statistics(db: &Db, tenant_id: Uuid) -> Result<LinkStatistics, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let row: (i64, i64, i64, Decimal) = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT
@@ -1090,9 +1125,10 @@ async fn get_link_statistics(
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
     ))
     .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(LinkStatistics {
         total_count: row.0,
         active_count: row.1,
@@ -1103,10 +1139,12 @@ async fn get_link_statistics(
 
 /// 获取仪表盘汇总（统计 + 最近对账 + 最近结算 + 待处理差异）
 pub async fn get_dashboard_summary(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
 ) -> Result<DashboardSummary, sqlx::Error> {
-    let statistics = get_statistics(pool, tenant_id).await?;
+    let statistics = get_statistics(db, tenant_id).await?;
+
+    let mut scope = db.scope_read().await?;
 
     let recent_reconciliations: Vec<UnifiedReconciliation> =
         sqlx::query_as(only_own_schema_query!(
@@ -1121,7 +1159,7 @@ pub async fn get_dashboard_summary(
            LIMIT 5"#
         ))
         .bind(tenant_id_opt(tenant_id))
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
     let recent_settlements: Vec<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
@@ -1146,7 +1184,7 @@ pub async fn get_dashboard_summary(
            LIMIT 5"#
     ))
     .bind(tenant_id_opt(tenant_id))
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
     let pending_differences: Vec<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
@@ -1161,9 +1199,10 @@ pub async fn get_dashboard_summary(
            LIMIT 5"#
     ))
     .bind(tenant_id_opt(tenant_id))
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
+    scope.commit().await?;
     Ok(DashboardSummary {
         statistics,
         recent_reconciliations,

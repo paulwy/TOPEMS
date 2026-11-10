@@ -192,6 +192,11 @@ impl AuditLogService {
         }
     }
 
+    /// 由已注入的 [`Db`] 构造，避免服务层为了审计再暴露裸池。
+    pub fn from_db(db: Db) -> Self {
+        Self { db }
+    }
+
     /// 有请求上下文用租户作用域，否则用显式系统作用域（nil + system=on）。
     async fn write_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
         if current_request_tenant().is_some() {

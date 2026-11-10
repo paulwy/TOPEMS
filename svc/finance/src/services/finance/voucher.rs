@@ -60,8 +60,10 @@ impl FinanceService {
 
         self.check_period_open(tenant_id, period.clone()).await?;
 
+        let mut scope = self.write_scope().await?;
+
         // 记账主体：凭证必须归属确定公司，多主体/无主体 fail-closed
-        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+        let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
 
         let total_debit: Decimal = req.lines.iter().map(|l| l.debit).sum();
         let total_credit: Decimal = req.lines.iter().map(|l| l.credit).sum();
@@ -89,7 +91,7 @@ impl FinanceService {
         .bind(total_credit)
         .bind(req.description)
         .bind(created_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let mut lines = Vec::new();
@@ -117,11 +119,13 @@ impl FinanceService {
             .bind(line.aux_id)
                 .bind(tenant_id)
             .bind(company_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
 
             lines.push(voucher_line);
         }
+
+        scope.commit().await?;
 
         Ok(VoucherResponse {
             id: voucher.id,
@@ -153,6 +157,8 @@ impl FinanceService {
         let year = today.year();
         let month = today.month();
 
+        let mut scope = self.read_scope().await?;
+
         let period_prefix = format!("{:04}{:02}", year, month);
         let count: (i64,) = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -162,7 +168,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_type)
         .bind(format!("{}%", period_prefix))
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
@@ -173,12 +179,14 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'draft'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         before.status.validate_submit().map_err(|e| {
@@ -193,8 +201,10 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(voucher)
     }
@@ -205,12 +215,14 @@ impl FinanceService {
         voucher_id: Uuid,
         approved_by: &str,
     ) -> Result<Voucher, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         before.status.validate_approve().map_err(|e| {
@@ -226,8 +238,10 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(approved_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(voucher)
     }
@@ -238,12 +252,14 @@ impl FinanceService {
         voucher_id: Uuid,
         _rejected_by: &str,
     ) -> Result<Voucher, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         before.status.validate_reject().map_err(|e| {
@@ -258,8 +274,10 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(voucher)
     }
@@ -270,12 +288,14 @@ impl FinanceService {
         voucher_id: Uuid,
         posted_by: &str,
     ) -> Result<Voucher, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let voucher: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         voucher.status.validate_post().map_err(|e| {
@@ -289,7 +309,7 @@ impl FinanceService {
             "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
         ))
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?
         .ok_or_else(|| TopemsError::ValidationFailed("凭证缺少公司归属，拒绝过账".to_string()))?;
 
@@ -308,7 +328,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(p_year)
         .bind(p_month)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
         if let Some(status_str) = period_status {
             let status = match status_str.as_str() {
@@ -326,19 +346,17 @@ impl FinanceService {
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         // 事务包裹：过账全链路（ledger 写入 + aux_balances upsert + 状态更新）原子化，
         // 中途失败整体回滚，杜绝部分写入导致的重复过账（幂等靠状态原子门保证）
-        let mut tx = self.db_pool.begin().await?;
-
         for line in &lines {
             // 余额读取必须落在本事务内：calculate_account_balance 先对账户主行
             // SELECT ... FOR UPDATE 加行锁，将同一账户的并发过账串行化，再在本事务内
             // 汇总 ledger（可见本事务已插入的分录），杜绝事务外独立连接读余额导致的并发丢更新
             let balance = self
-                .calculate_account_balance(&mut *tx, tenant_id, line.account_id)
+                .calculate_account_balance(&mut scope, tenant_id, line.account_id)
                 .await?;
             let new_balance = if line.debit > Decimal::ZERO {
                 balance + line.debit - line.credit
@@ -364,7 +382,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(new_balance)
             .bind(line.aux_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await?;
 
             // 辅助核算余额：凭证行带 aux 时同步 upsert aux_balances（按 租户+科目+aux+期间 累加）
@@ -385,7 +403,7 @@ impl FinanceService {
                 .bind(voucher.period.clone())
                 .bind(line.debit)
                 .bind(line.credit)
-                .execute(&mut *tx)
+                .execute(&mut scope)
                 .await?;
             }
         }
@@ -399,7 +417,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(posted_by)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut scope)
         .await?;
 
         let updated_voucher = updated_voucher.ok_or_else(|| {
@@ -408,7 +426,7 @@ impl FinanceService {
             )
         })?;
 
-        tx.commit().await?;
+        scope.commit().await?;
 
         Ok(updated_voucher)
     }
@@ -418,11 +436,11 @@ impl FinanceService {
     /// 先对 `core_finance_accounts` 账户主行 `SELECT ... FOR UPDATE` 加行锁：
     /// 同一账户的并发过账事务在此串行排队，后者待前者提交后再读余额，保证累计链正确；
     /// 随后在同一事务内汇总 ledger（本事务内已插入的分录对自身可见），
-    /// 替代原先走 `self.db_pool` 独立连接、事务外读余额的并发丢更新模式。
+    /// 替代原先走独立连接、事务外读余额的并发丢更新模式。
     /// 账户主行不存在时跳过加锁，退化为普通汇总（不阻断既有流程）。
     pub(super) async fn calculate_account_balance(
         &self,
-        tx: &mut sqlx::PgConnection,
+        tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         account_id: Uuid,
     ) -> Result<Decimal, TopemsError> {
@@ -454,18 +472,21 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<VoucherResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let voucher: Voucher =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(VoucherResponse {
@@ -488,8 +509,11 @@ impl FinanceService {
         status: Option<VoucherStatus>,
         period: Option<String>,
     ) -> Result<Vec<Voucher>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let mut query =
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let status_provided = status.is_some();
         let period_provided = period.is_some();
@@ -512,7 +536,7 @@ impl FinanceService {
             query_builder = query_builder.bind(p);
         }
 
-        let vouchers = query_builder.fetch_all(&self.db_pool).await?;
+        let vouchers = query_builder.fetch_all(&mut scope).await?;
 
         Ok(vouchers)
     }
@@ -644,7 +668,10 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ExportVoucherRequest,
     ) -> Result<ExportVoucherResponse, TopemsError> {
-        let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR v.tenant_id = $1::uuid)".to_string();
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
+        let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE (v.tenant_id = $1::uuid)".to_string();
         let mut param_idx = 2i32;
         let status_param = req.status.map(|s| s.to_string());
         let period_param = req.period.clone();
@@ -677,7 +704,7 @@ impl FinanceService {
             qb = qb.bind(ids);
         }
 
-        let rows = qb.fetch_all(&self.db_pool).await?;
+        let rows = qb.fetch_all(&mut scope).await?;
 
         let mut total_debit = Decimal::ZERO;
         let mut total_credit = Decimal::ZERO;
@@ -747,11 +774,13 @@ impl FinanceService {
         _updated_by: &str,
         locale: &str,
     ) -> Result<VoucherResponse, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         if existing.status == VoucherStatus::Posted {
@@ -785,7 +814,7 @@ impl FinanceService {
             .bind(total_credit)
             .bind(tenant_id)
             .bind(voucher_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
             sqlx::query(only_own_schema_query!(
@@ -794,7 +823,7 @@ impl FinanceService {
             ))
             .bind(voucher_id)
             .bind(tenant_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
             let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
@@ -802,7 +831,7 @@ impl FinanceService {
                 "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
             ))
             .bind(voucher_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?
             .ok_or_else(|| {
                 TopemsError::ValidationFailed("凭证缺少公司归属，拒绝更新分录".to_string())
@@ -831,7 +860,7 @@ impl FinanceService {
                 .bind(line.department_id)
                 .bind(tenant_id)
                 .bind(company_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
                 new_lines.push(voucher_line);
@@ -842,8 +871,10 @@ impl FinanceService {
             )
             .bind(tenant_id)
             .bind(voucher_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
+
+            scope.commit().await?;
 
             Ok(VoucherResponse {
                 id: updated.id,
@@ -867,15 +898,17 @@ impl FinanceService {
             .bind(&description)
             .bind(tenant_id)
             .bind(voucher_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
 
             let existing_lines: Vec<VoucherLine> = sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
             )
             .bind(voucher_id)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
+
+            scope.commit().await?;
 
             Ok(VoucherResponse {
                 id: updated.id,
@@ -898,11 +931,13 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
-                .fetch_optional(&self.db_pool)
+                .fetch_optional(&mut scope)
                 .await?
                 .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
@@ -917,7 +952,7 @@ impl FinanceService {
             "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1"
         ))
         .bind(voucher_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         sqlx::query(
@@ -925,8 +960,10 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -937,11 +974,13 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
-                .fetch_optional(&self.db_pool)
+                .fetch_optional(&mut scope)
                 .await?
                 .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
@@ -953,7 +992,7 @@ impl FinanceService {
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2"))
             .bind(tenant_id)
             .bind(voucher_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
         // 辅助核算余额回滚：按该凭证的 aux 行减回 aux_balances（软删 ledger 的同时）
@@ -962,7 +1001,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
         for (company_id, account_id, aux_type, aux_id, debit, credit) in aux_lines {
             sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_aux_balances
@@ -976,7 +1015,7 @@ impl FinanceService {
                 .bind(aux_type)
                 .bind(aux_id)
                 .bind(&existing.period)
-                .execute(&self.db_pool)
+                .execute(&mut scope)
                 .await?;
         }
 
@@ -985,8 +1024,10 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(voucher)
     }
@@ -998,7 +1039,7 @@ impl FinanceService {
     )]
     pub(super) async fn create_voucher_with_tx(
         &self,
-        tx: &mut sqlx::PgConnection,
+        tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         req: CreateVoucherRequest,
         created_by: &str,
@@ -1087,7 +1128,7 @@ impl FinanceService {
 
     pub(super) async fn generate_voucher_no_with_tx(
         &self,
-        tx: &mut sqlx::PgConnection,
+        tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         voucher_type: VoucherType,
     ) -> Result<String, TopemsError> {
@@ -1121,7 +1162,7 @@ impl FinanceService {
     )]
     pub(super) async fn update_voucher_lines_with_tx(
         &self,
-        tx: &mut sqlx::PgConnection,
+        tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         voucher_id: Uuid,
         lines: Vec<VoucherLineRequest>,

@@ -12,8 +12,8 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_db::scope::Db;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -159,10 +159,18 @@ pub async fn list_accounting_subjects(
 
     let where_clause = conditions.join(" AND ");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目查询作用域失败: {}", e);
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+
     // 总数查询
     let count_sql = format!("SELECT COUNT(*) FROM {} WHERE {}", TABLE, where_clause);
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => rows.first().copied().unwrap_or(0),
@@ -187,18 +195,23 @@ pub async fn list_accounting_subjects(
     }
     query_builder = query_builder.bind(page_size).bind(offset);
 
-    match query_builder.fetch_all(&state.pool).await {
-        Ok(items) => Json(ApiResponse::success(PaginatedAccountingSubjects {
-            items,
-            total,
-            page,
-            page_size,
-        })),
+    let items = match query_builder.fetch_all(&mut scope).await {
+        Ok(items) => items,
         Err(e) => {
             tracing::error!("查询会计科目列表失败: {}", e);
-            Json(ApiResponse::error("查询失败"))
+            return Json(ApiResponse::error("查询失败"));
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交会计科目查询作用域失败: {}", e);
+        return Json(ApiResponse::error("查询失败"));
     }
+    Json(ApiResponse::success(PaginatedAccountingSubjects {
+        items,
+        total,
+        page,
+        page_size,
+    }))
 }
 
 /// 根据 ID 获取单个会计科目
@@ -222,11 +235,22 @@ pub async fn get_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目查询作用域失败: {}", e);
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let result = sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .fetch_optional(&state.pool)
-        .await
-    {
+        .fetch_optional(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交会计科目查询作用域失败: {}", e);
+        return Json(ApiResponse::error("查询失败"));
+    }
+    match result {
         Ok(Some(subject)) => Json(ApiResponse::success(subject)),
         Ok(None) => Json(ApiResponse::error("会计科目不存在")),
         Err(e) => {
@@ -266,7 +290,14 @@ pub async fn create_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目写入作用域失败: {}", e);
+            return Json(ApiResponse::error("创建失败"));
+        }
+    };
+    let result = sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(org_id)
         .bind(&req.code)
         .bind(&req.name)
@@ -277,9 +308,13 @@ pub async fn create_accounting_subject(
         .bind(is_cash_flow)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交创建会计科目作用域失败: {}", e);
+        return Json(ApiResponse::error("创建失败"));
+    }
+    match result {
         Ok(subject) => Json(ApiResponse::success(subject)),
         Err(e) => {
             tracing::error!("创建会计科目失败: {}", e);
@@ -310,10 +345,17 @@ pub async fn update_accounting_subject(
         "SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL",
         TABLE
     );
+    let mut read_scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目查询作用域失败: {}", e);
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
     let existing: Option<AccountingSubject> =
         match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(existing_sql))
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut read_scope)
             .await
         {
             Ok(s) => s,
@@ -322,6 +364,10 @@ pub async fn update_accounting_subject(
                 return Json(ApiResponse::error("查询失败"));
             }
         };
+    if let Err(e) = read_scope.commit().await {
+        tracing::error!("提交会计科目查询作用域失败: {}", e);
+        return Json(ApiResponse::error("查询失败"));
+    }
 
     let Some(existing) = existing else {
         return Json(ApiResponse::error("会计科目不存在"));
@@ -342,7 +388,14 @@ pub async fn update_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目写入作用域失败: {}", e);
+            return Json(ApiResponse::error("更新失败"));
+        }
+    };
+    let result = sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(&name)
         .bind(&category)
         .bind(level)
@@ -351,9 +404,13 @@ pub async fn update_accounting_subject(
         .bind(is_cash_flow)
         .bind(&status)
         .bind(id)
-        .fetch_one(&state.pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交更新会计科目作用域失败: {}", e);
+        return Json(ApiResponse::error("更新失败"));
+    }
+    match result {
         Ok(subject) => Json(ApiResponse::success(subject)),
         Err(e) => {
             tracing::error!("更新会计科目失败: {}", e);
@@ -382,11 +439,22 @@ pub async fn delete_accounting_subject(
         TABLE
     );
 
-    match sqlx::query(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建会计科目写入作用域失败: {}", e);
+            return Json(ApiResponse::error("删除失败"));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .execute(&state.pool)
-        .await
-    {
+        .execute(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交删除会计科目作用域失败: {}", e);
+        return Json(ApiResponse::error("删除失败"));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(
@@ -431,18 +499,21 @@ pub fn create_routes() -> axum::Router<AppState> {
 // 工具函数：根据 code 查询科目名称（供 ERP opening_balance 等跨服务调用）
 // ============================================================================
 
-pub async fn get_subject_name_by_code(pool: &PgPool, code: &str) -> Option<String> {
+pub async fn get_subject_name_by_code(db: &Db, code: &str) -> Option<String> {
     let sql = format!(
         "SELECT name FROM {} WHERE code = $1 AND deleted_at IS NULL LIMIT 1",
         TABLE
     );
 
-    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+    let mut scope = db.scope_read().await.ok()?;
+    let name = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
         .bind(code)
-        .fetch_optional(pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
-        .flatten()
+        .flatten();
+    let _ = scope.commit().await;
+    name
 }
 
 #[cfg(test)]

@@ -38,6 +38,7 @@ use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -232,10 +233,15 @@ fn days_overdue(due: Option<chrono::NaiveDate>, now: chrono::NaiveDate) -> i64 {
 // ========== 发票 ==========
 
 async fn fetch_invoice(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<SalesInvoiceOut>, sqlx::Error> {
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await?,
+        None => db.scope_read_system().await?,
+    };
     let row = sqlx::query(
         "SELECT id, invoice_number, customer_id, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
@@ -246,9 +252,9 @@ async fn fetch_invoice(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
-    Ok(row.map(|r| SalesInvoiceOut {
+    let invoice = row.map(|r| SalesInvoiceOut {
         id: r.get("id"),
         invoice_number: r.get("invoice_number"),
         customer_id: r.get("customer_id"),
@@ -263,7 +269,9 @@ async fn fetch_invoice(
         invoice_type: r.get("invoice_type"),
         cancel_reason: r.get("cancel_reason"),
         red_flush_of: r.get("red_flush_of"),
-    }))
+    });
+    scope.commit().await?;
+    Ok(invoice)
 }
 
 /// GET /sales-invoices
@@ -291,6 +299,15 @@ pub async fn list_sales_invoices(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let where_sql = "($1::uuid IS NULL OR tenant_id = $1)
         AND ($2::uuid IS NULL OR customer_id = $2)
         AND ($3::text IS NULL OR status = $3)
@@ -307,7 +324,7 @@ pub async fn list_sales_invoices(
     .bind(&params.invoice_type)
     .bind(&params.start_date)
     .bind(&params.end_date)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(r) => r.get(0),
@@ -336,7 +353,7 @@ pub async fn list_sales_invoices(
     .bind(&params.end_date)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows
@@ -360,6 +377,10 @@ pub async fn list_sales_invoices(
             .collect(),
         Err(e) => return crate::shared::err_resp(e),
     };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     ApiResponse::success(
         Paginated {
@@ -407,7 +428,7 @@ pub async fn get_sales_invoice(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match fetch_invoice(&state.pool, tenant_id, id).await {
+    match fetch_invoice(&state.db, tenant_id, id).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         Ok(None) => ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
         Err(e) => crate::shared::err_resp(e),
@@ -444,7 +465,12 @@ pub async fn create_sales_invoice(
     let inv_date = payload.invoice_date.unwrap_or_else(|| today().to_string());
     let due = payload.due_date.clone();
 
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    let created = match sqlx::query(
         "INSERT INTO finance.sales_invoices
             (tenant_id, invoice_number, customer_id, customer_name, invoice_date, due_date,
              amount, tax_amount, total_amount, invoice_type)
@@ -461,22 +487,25 @@ pub async fn create_sales_invoice(
     .bind(payload.tax_amount)
     .bind(total)
     .bind(&inv_type)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
-        Ok(row) => {
-            let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => ApiResponse::success(inv, "Created"),
-                _ => ApiResponse::<SalesInvoiceOut>::server_error("创建后读取失败"),
-            }
-        }
+        Ok(row) => row.get::<Uuid, _>("id"),
         Err(e) => {
             if e.as_database_error().and_then(|db| db.code()).as_deref() == Some("23505") {
                 return ApiResponse::<SalesInvoiceOut>::conflict("发票编号已存在，请勿重复创建");
             }
-            crate::shared::err_resp(e)
+            return crate::shared::err_resp(e);
         }
+    };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    match fetch_invoice(&state.db, Some(tenant_id), created).await {
+        Ok(Some(inv)) => ApiResponse::success(inv, "Created"),
+        _ => ApiResponse::<SalesInvoiceOut>::server_error("创建后读取失败"),
     }
 }
 
@@ -495,7 +524,12 @@ pub async fn update_sales_invoice(
             );
         }
     }
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    let updated = match sqlx::query(
         "UPDATE finance.sales_invoices SET
             customer_name = COALESCE($3, customer_name),
             due_date = COALESCE($4::date, due_date),
@@ -514,18 +548,21 @@ pub async fn update_sales_invoice(
     .bind(payload.amount)
     .bind(payload.tax_amount)
     .bind(&payload.invoice_type)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(row)) => {
-            let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
-                _ => ApiResponse::<SalesInvoiceOut>::server_error("更新后读取失败"),
-            }
-        }
-        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可编辑或发票不存在"),
-        Err(e) => crate::shared::err_resp(e),
+        Ok(Some(row)) => row.get::<Uuid, _>("id"),
+        Ok(None) => return ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可编辑或发票不存在"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    match fetch_invoice(&state.db, Some(tenant_id), updated).await {
+        Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+        _ => ApiResponse::<SalesInvoiceOut>::server_error("更新后读取失败"),
     }
 }
 
@@ -536,17 +573,28 @@ pub async fn delete_sales_invoice(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let result = match sqlx::query(
         "DELETE FROM finance.sales_invoices WHERE id = $1 AND tenant_id = $2 AND status = 'draft'",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(id.to_string(), "Success"),
-        Ok(_) => ApiResponse::<String>::conflict("仅草稿可删除或发票不存在"),
-        Err(e) => crate::shared::err_resp(e),
+        Ok(r) => r,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if result.rows_affected() > 0 {
+        ApiResponse::success(id.to_string(), "Success")
+    } else {
+        ApiResponse::<String>::conflict("仅草稿可删除或发票不存在")
     }
 }
 
@@ -570,25 +618,32 @@ pub async fn issue_sales_invoice(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let issued = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'issued', issued_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status = 'draft'
          RETURNING id",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(row)) => {
-            let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
-                _ => ApiResponse::<SalesInvoiceOut>::server_error("开具后读取失败"),
-            }
-        }
-        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可开具"),
-        Err(e) => crate::shared::err_resp(e),
+        Ok(Some(row)) => row.get::<Uuid, _>("id"),
+        Ok(None) => return ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可开具"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    match fetch_invoice(&state.db, Some(tenant_id), issued).await {
+        Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+        _ => ApiResponse::<SalesInvoiceOut>::server_error("开具后读取失败"),
     }
 }
 
@@ -613,7 +668,11 @@ pub async fn cancel_sales_invoice(
     Json(payload): Json<CancelPayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let cancelled = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status IN ('draft', 'issued')
@@ -622,18 +681,21 @@ pub async fn cancel_sales_invoice(
     .bind(id)
     .bind(tenant_id)
     .bind(&payload.reason)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(row)) => {
-            let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
-                _ => ApiResponse::<SalesInvoiceOut>::server_error("取消后读取失败"),
-            }
-        }
-        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("该状态不可取消"),
-        Err(e) => crate::shared::err_resp(e),
+        Ok(Some(row)) => row.get::<Uuid, _>("id"),
+        Ok(None) => return ApiResponse::<SalesInvoiceOut>::conflict("该状态不可取消"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    match fetch_invoice(&state.db, Some(tenant_id), cancelled).await {
+        Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+        _ => ApiResponse::<SalesInvoiceOut>::server_error("取消后读取失败"),
     }
 }
 
@@ -660,13 +722,18 @@ pub async fn red_flush_sales_invoice(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = today();
 
-    let original = match fetch_invoice(&state.pool, Some(tenant_id), id).await {
+    let original = match fetch_invoice(&state.db, Some(tenant_id), id).await {
         Ok(Some(inv)) => inv,
         _ => return ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
     };
     if original.status != "issued" {
         return ApiResponse::<SalesInvoiceOut>::conflict("仅已开具发票可红冲");
     }
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
 
     // 取消原票
     if let Err(e) = sqlx::query(
@@ -677,7 +744,7 @@ pub async fn red_flush_sales_invoice(
     .bind(id)
     .bind(tenant_id)
     .bind(payload.reason.clone().unwrap_or_else(|| "红冲".to_string()))
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         return crate::shared::err_resp(e);
@@ -685,7 +752,7 @@ pub async fn red_flush_sales_invoice(
 
     // 生成负数发票（金额取负）
     let red_number = format!("RF-{}-{}", original.invoice_number, now.format("%Y%m%d"));
-    match sqlx::query(
+    let red_id = match sqlx::query(
         "INSERT INTO finance.sales_invoices
             (tenant_id, invoice_number, customer_id, customer_name, invoice_date, due_date,
              amount, tax_amount, total_amount, status, invoice_type, cancel_reason, red_flush_of)
@@ -704,17 +771,20 @@ pub async fn red_flush_sales_invoice(
     .bind(&original.invoice_type)
     .bind(payload.reason.clone().unwrap_or_else(|| "红冲".to_string()))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
-        Ok(row) => {
-            let red_id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, Some(tenant_id), red_id).await {
-                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
-                _ => ApiResponse::<SalesInvoiceOut>::server_error("红冲后读取失败"),
-            }
-        }
-        Err(e) => crate::shared::err_resp(e),
+        Ok(row) => row.get::<Uuid, _>("id"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    match fetch_invoice(&state.db, Some(tenant_id), red_id).await {
+        Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+        _ => ApiResponse::<SalesInvoiceOut>::server_error("红冲后读取失败"),
     }
 }
 
@@ -786,6 +856,15 @@ pub async fn list_collections(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let where_sql = "($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
         AND ($2::uuid IS NULL OR customer_id = $2)
         AND ($3::date IS NULL OR collection_date >= $3::date)
@@ -800,7 +879,7 @@ pub async fn list_collections(
     .bind(&params.start_date)
     .bind(&params.end_date)
     .bind(&params.payment_method)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(r) => r.get(0),
@@ -831,7 +910,7 @@ pub async fn list_collections(
     .bind(&params.payment_method)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows
@@ -854,6 +933,10 @@ pub async fn list_collections(
             .collect(),
         Err(e) => return crate::shared::err_resp(e),
     };
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     ApiResponse::success(
         Paginated {
@@ -901,10 +984,24 @@ pub async fn get_collection(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match fetch_collection(&state.pool, tenant_id, id).await {
-        Ok(Some(c)) => ApiResponse::success(c, "Success"),
-        Ok(None) => ApiResponse::<CollectionOut>::not_found("回款记录不存在"),
-        Err(e) => crate::shared::err_resp(e),
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let fetched = match fetch_collection(&mut scope, tenant_id, id).await {
+        Ok(v) => v,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match fetched {
+        Some(c) => ApiResponse::success(c, "Success"),
+        None => ApiResponse::<CollectionOut>::not_found("回款记录不存在"),
     }
 }
 
@@ -918,7 +1015,7 @@ pub async fn create_collection(
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     // 写入后必须在本事务内读回，否则中间件提交前用池读不到新行。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -1008,13 +1105,12 @@ pub async fn confirm_collection(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<CollectionOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let pool = &state.pool;
 
     // 整段在单事务内完成：FOR UPDATE 锁定回款记录 + 关联发票余额，
     // 消除先读后写的 TOCTOU 窗口；并在 UPDATE 上叠加原子谓词防并发重复确认，
     // 回写发票前校验确认额不得超过应收余额（超收封顶）。
-    let mut tx = match pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
 
@@ -1027,7 +1123,7 @@ pub async fn confirm_collection(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -1050,7 +1146,7 @@ pub async fn confirm_collection(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
@@ -1068,7 +1164,7 @@ pub async fn confirm_collection(
         )
         .bind(inv_id)
         .bind(tenant_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut scope)
         .await
         {
             Ok(Some(r)) => r,
@@ -1094,19 +1190,30 @@ pub async fn confirm_collection(
         .bind(inv_id)
         .bind(tenant_id)
         .bind(amount)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
         {
             return crate::shared::err_resp(e);
         }
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         return crate::shared::err_resp(e);
     }
 
-    match fetch_collection(pool, Some(tenant_id), id).await {
-        Ok(Some(c)) => ApiResponse::success(c, "Success"),
+    let mut read_scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let fetched = match fetch_collection(&mut read_scope, Some(tenant_id), id).await {
+        Ok(v) => v,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = read_scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match fetched {
+        Some(c) => ApiResponse::success(c, "Success"),
         _ => ApiResponse::<CollectionOut>::server_error("确认后读取失败"),
     }
 }
@@ -1134,8 +1241,8 @@ pub async fn batch_confirm_collections(
     // 整批单事务：与单条 confirm_collection 同一口径——确认回款 + 回写发票
     // paid_amount/状态（原子增量 paid_amount = paid_amount + $amount，按余额翻 'paid'）。
     // 同一张发票多笔回款在同一事务内逐笔累加，自身写入对自身可见；任一笔 DB 错误整体回滚。
-    let mut tx = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
 
@@ -1147,7 +1254,7 @@ pub async fn batch_confirm_collections(
         )
         .bind(rid)
         .bind(tenant_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut scope)
         .await
         {
             Ok(r) => r,
@@ -1178,7 +1285,7 @@ pub async fn batch_confirm_collections(
             )
             .bind(inv_id)
             .bind(tenant_id)
-            .fetch_optional(&mut *tx)
+            .fetch_optional(&mut scope)
             .await
             {
                 Ok(Some(r)) => r,
@@ -1203,7 +1310,7 @@ pub async fn batch_confirm_collections(
         )
         .bind(rid)
         .bind(tenant_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
         {
             Ok(r) => r.rows_affected(),
@@ -1227,7 +1334,7 @@ pub async fn batch_confirm_collections(
             .bind(inv_id)
             .bind(tenant_id)
             .bind(amount)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await
             {
                 return crate::shared::err_resp(e);
@@ -1236,7 +1343,7 @@ pub async fn batch_confirm_collections(
         success += 1;
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         return crate::shared::err_resp(e);
     }
 
@@ -1278,18 +1385,29 @@ pub async fn get_receivable_aging(
         Some(get_tenant_id_from_claims(&claims))
     };
     let now = today();
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT id, due_date, total_amount::float8, paid_amount::float8, status
          FROM finance.sales_invoices
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     use std::collections::HashMap;
     let mut buckets: HashMap<&'static str, (f64, i64)> = HashMap::new();
@@ -1341,17 +1459,28 @@ pub async fn get_receivable_summary(
     let now = today();
     // 口径：draft 未开票计入应收总额（前端应收概览口径），cancelled 红冲/取消票剔除；
     // 账龄/逾期报表只统计 issued/overdue 生效应收（见 get_receivable_aging / get_overdue_receivables）
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT total_amount::float8, paid_amount::float8, due_date, status
          FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status <> 'cancelled'",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     let mut total_receivable = 0.0;
     let mut total_paid = 0.0;
@@ -1402,6 +1531,14 @@ pub async fn get_overdue_receivables(
         Some(get_tenant_id_from_claims(&claims))
     };
     let now = today();
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT id, invoice_number, customer_name,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
@@ -1410,12 +1547,15 @@ pub async fn get_overdue_receivables(
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     let mut items = Vec::new();
     for r in rows {
@@ -1476,6 +1616,14 @@ pub async fn export_sales_invoices(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
@@ -1483,12 +1631,15 @@ pub async fn export_sales_invoices(
          FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(r) => r,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     let mut csv = String::from("发票号,客户,开票日期,总额,已收,状态\n");
     for r in rows {
@@ -1525,6 +1676,14 @@ pub async fn export_collections(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT COALESCE(collection_no, '') AS no, COALESCE(customer_name, '') AS cname,
                 CASE WHEN collection_date IS NULL THEN '' ELSE to_char(collection_date, 'YYYY-MM-DD') END AS d,
@@ -1533,12 +1692,15 @@ pub async fn export_collections(
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL ORDER BY created_at",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(r) => r,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     let mut csv = String::from("回款单号,客户,回款日期,金额,支付方式,状态\n");
     for r in rows {
@@ -1575,6 +1737,14 @@ pub async fn export_receivable_aging(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let mut scope = match match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    } {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
@@ -1583,12 +1753,15 @@ pub async fn export_receivable_aging(
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(r) => r,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
 
     let now = today();
     let mut csv = String::from("发票号,客户,到期日,总额,已收,未收,账龄\n");

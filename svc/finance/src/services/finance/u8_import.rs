@@ -85,6 +85,7 @@ impl FinanceService {
         let source_system = req.source_system.unwrap_or_else(|| "U8".to_string());
         let total_count = req.vouchers.len() as i32;
 
+        let mut scope = self.write_scope().await?;
         let _record: U8ImportRecord = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"
@@ -104,7 +105,7 @@ impl FinanceService {
         .bind(total_count)
         .bind(imported_by)
         .bind(now)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let mut success_count = 0;
@@ -153,8 +154,10 @@ impl FinanceService {
         .bind(&error_log)
         .bind(Utc::now())
         .bind(import_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(ImportVouchersResponse {
             import_id,
@@ -181,12 +184,14 @@ impl FinanceService {
         tenant_id: Uuid,
         import_id: Uuid,
     ) -> Result<ImportStatusResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(ImportStatusResponse {
@@ -205,7 +210,8 @@ impl FinanceService {
         tenant_id: Uuid,
         query: ImportRecordQuery,
     ) -> Result<Vec<U8ImportRecord>, TopemsError> {
-        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid)".to_string();
         let mut param_idx = 2;
 
         if query.status.is_some() {
@@ -228,7 +234,8 @@ impl FinanceService {
             query_builder = query_builder.bind(sys);
         }
 
-        let records = query_builder.fetch_all(&self.db_pool).await?;
+        let mut scope = self.read_scope().await?;
+        let records = query_builder.fetch_all(&mut scope).await?;
         Ok(records)
     }
 
@@ -237,12 +244,14 @@ impl FinanceService {
         tenant_id: Uuid,
         import_id: Uuid,
     ) -> Result<U8ImportRecord, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(record)
@@ -259,6 +268,7 @@ impl FinanceService {
             return Err(TopemsError::ValidationFailed("该导入已回滚".to_string()));
         }
 
+        let mut scope = self.write_scope().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
@@ -269,8 +279,10 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(import_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(())
     }

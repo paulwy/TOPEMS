@@ -95,7 +95,7 @@ pub async fn create_session_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconciliationSessionRequest>,
 ) -> ApiResponse<ReconciliationSession> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
@@ -110,7 +110,7 @@ pub async fn get_session_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSession> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_session(tenant_id, session_id).await {
@@ -124,7 +124,7 @@ pub async fn list_sessions_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconciliationSessionListQuery>,
 ) -> ApiResponse<ReconciliationSessionListResponse> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -170,7 +170,7 @@ pub async fn import_items_handler(
     Path(session_id): Path<Uuid>,
     Json(mut req): Json<ImportReconciliationItemsRequest>,
 ) -> ApiResponse<i32> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     req.session_id = session_id;
 
@@ -185,7 +185,7 @@ pub async fn auto_match_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<MatchResult> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.auto_match(tenant_id, session_id).await {
@@ -199,7 +199,7 @@ pub async fn complete_session_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSession> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.complete_session(tenant_id, session_id).await {
@@ -232,7 +232,7 @@ pub async fn get_items_handler(
     Path(session_id): Path<Uuid>,
     Query(params): Query<ItemsQueryParams>,
 ) -> ApiResponse<Vec<ReconciliationItem>> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let source_type = params.source_type.as_ref().and_then(|s| match s.as_str() {
@@ -262,7 +262,7 @@ pub async fn get_summary_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSummary> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_summary(tenant_id, session_id).await {
@@ -294,7 +294,7 @@ pub async fn update_diff_handler(
     Path(item_id): Path<Uuid>,
     Json(req): Json<UpdateDiffRequest>,
 ) -> ApiResponse<ReconciliationItem> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service
@@ -323,7 +323,7 @@ pub async fn get_report_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationReport> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_report(tenant_id, session_id).await {
@@ -444,7 +444,7 @@ pub async fn batch_update_diff_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDiffRequest>,
 ) -> ApiResponse<BatchDiffResponse> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.batch_update_diff(tenant_id, req).await {
@@ -458,7 +458,7 @@ pub async fn get_diff_statistics_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<DiffStatistics> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_diff_statistics(tenant_id, session_id).await {
@@ -472,7 +472,7 @@ pub async fn get_aging_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<AgingReport> {
-    let service = ReconciliationService::new(state.pool.clone());
+    let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let as_of_date = match params.as_of_date {

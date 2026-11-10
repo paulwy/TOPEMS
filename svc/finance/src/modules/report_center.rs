@@ -809,7 +809,7 @@ pub async fn get_enhanced_balance_sheet_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<BalanceSheetEnhanced> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let current = service
@@ -834,7 +834,7 @@ pub async fn get_enhanced_income_statement_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<IncomeStatementEnhanced> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let current = service
@@ -866,7 +866,7 @@ pub async fn get_financial_analysis_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<FinancialAnalysisReport> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let balance_cur = service

@@ -12,13 +12,15 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateAccountRequest,
     ) -> Result<Account, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let level = if let Some(parent_id) = req.parent_id {
             let parent: (i32,) = sqlx::query_as(only_own_schema_query!(
                 "finance",
                 "SELECT level FROM finance.core_finance_accounts WHERE id = $1"
             ))
             .bind(parent_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
             parent.0 + 1
         } else {
@@ -39,8 +41,10 @@ impl FinanceService {
         .bind(req.currency)
         .bind(req.description)
         .bind(req.name_en)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(account)
     }
@@ -51,12 +55,15 @@ impl FinanceService {
         account_id: Uuid,
         locale: &str,
     ) -> Result<Account, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let account =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(account_id)
                 .bind(locale)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         Ok(account)
@@ -68,13 +75,16 @@ impl FinanceService {
         code: &str,
         locale: &str,
     ) -> Result<Account, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let account = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND code = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE (tenant_id = $1::uuid) AND code = $2"),
         )
         .bind(tenant_id)
         .bind(code)
         .bind(locale)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(account)
@@ -85,12 +95,15 @@ impl FinanceService {
         tenant_id: Uuid,
         locale: &str,
     ) -> Result<Vec<Account>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let accounts = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) ORDER BY code"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE (tenant_id = $1::uuid) ORDER BY code"),
         )
         .bind(tenant_id)
         .bind(locale)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(accounts)

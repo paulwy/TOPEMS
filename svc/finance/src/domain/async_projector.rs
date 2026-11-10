@@ -4,6 +4,7 @@ use std::sync::Arc;
 use tokio::time::{self, Duration};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::event_store::EventRecord;
@@ -41,6 +42,8 @@ pub struct ProjectionProgress {
 
 pub struct AsyncProjector {
     pool: PgPool,
+    /// 投影进度表（`tenant_id = …0000` 系统行）走显式系统作用域。
+    db: Db,
     views: Vec<Arc<dyn MaterializedView>>,
     config: AsyncProjectorConfig,
     running: AtomicBool,
@@ -48,8 +51,10 @@ pub struct AsyncProjector {
 
 impl AsyncProjector {
     pub fn new(pool: PgPool, config: AsyncProjectorConfig) -> Self {
+        let db = Db::new(pool.clone(), "finance, public");
         Self {
             pool,
+            db,
             views: Vec::new(),
             config,
             running: AtomicBool::new(false),
@@ -70,11 +75,14 @@ impl AsyncProjector {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, TopemsError> {
+        // 系统表 tenant_id = …0000，无请求上下文，显式系统通道（登记 §2.1）。
+        let mut scope = self.db.scope_read_system().await?;
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT view_name, last_event_id, last_event_time, processed_count, error_count, last_error, updated_at FROM finance.cqrs_projection_progress WHERE view_name = $1"))
             .bind(view_name)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await
             ?;
+        scope.commit().await?;
 
         match result {
             Some(row) => {
@@ -97,17 +105,13 @@ impl AsyncProjector {
                 })
             }
             None => {
-                let mut tx = self.pool.begin().await?;
-                sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                    .bind(Uuid::nil().to_string())
-                    .execute(&mut *tx)
-                    .await?;
+                let mut tx = self.db.scope_system().await?;
                 sqlx::query(
                     only_own_schema_query!("finance", "INSERT INTO finance.cqrs_projection_progress (view_name, processed_count, error_count, tenant_id) VALUES ($1, 0, 0, $2)"),
                 )
                 .bind(view_name)
                 .bind(Uuid::nil())
-                .execute(&mut *tx)
+                .execute(&mut tx)
                 .await
                 ?;
                 tx.commit().await?;
@@ -142,6 +146,8 @@ impl AsyncProjector {
             None => None,
         };
 
+        // 系统表 tenant_id = …0000，无请求上下文，显式系统通道（登记 §2.1）。
+        let mut scope = self.db.scope_system().await?;
         if let Some(err) = error {
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -154,7 +160,7 @@ impl AsyncProjector {
             .bind(last_event_time)
             .bind(err)
             .bind(view_name)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
         } else {
             sqlx::query(only_own_schema_query!(
@@ -168,9 +174,10 @@ impl AsyncProjector {
             .bind(last_event_time)
             .bind(processed_increment as i64)
             .bind(view_name)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
         }
+        scope.commit().await?;
 
         Ok(())
     }

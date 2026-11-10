@@ -43,7 +43,7 @@ pub async fn list_reconciliations(
     Query(query): Query<ReconciliationListQuery>,
 ) -> ApiResponse<Vec<UnifiedReconciliation>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_reconciliations(&state.pool, tenant_id, &query).await {
+    match service::list_reconciliations(&state.db, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_reconciliations 失败: {}", e);
@@ -78,7 +78,7 @@ pub async fn create_reconciliation(
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
     match service::create_reconciliation(
-        &state.pool,
+        &state.db,
         state.event_publisher.as_ref(),
         tenant_id,
         &req,
@@ -101,7 +101,7 @@ pub async fn get_reconciliation(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationDetail> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_reconciliation_detail(&state.pool, tenant_id, id).await {
+    match service::get_reconciliation_detail(&state.db, tenant_id, id).await {
         Ok(Some(detail)) => api_success(detail),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("对账单不存在".to_string())),
         Err(e) => {
@@ -120,7 +120,7 @@ pub async fn reconcile(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = current_tenant_id(&claims);
     match service::manual_reconcile(
-        &state.pool,
+        &state.db,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -146,7 +146,7 @@ pub async fn auto_reconcile(
         return ApiResponse::from(TopemsError::ValidationFailed("期间不能为空".to_string()));
     }
     let tenant_id = current_tenant_id(&claims);
-    match service::auto_reconcile(&state.pool, tenant_id, &req).await {
+    match service::auto_reconcile(&state.db, tenant_id, &req).await {
         Ok(affected) => api_success(json!({ "matched_count": affected })),
         Err(e) => {
             tracing::error!("[SettlementCenter] auto_reconcile 失败: {}", e);
@@ -166,7 +166,7 @@ pub async fn list_settlements(
     Query(query): Query<SettlementListQuery>,
 ) -> ApiResponse<Vec<UnifiedSettlement>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_settlements(&state.pool, tenant_id, &query).await {
+    match service::list_settlements(&state.db, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_settlements 失败: {}", e);
@@ -196,7 +196,7 @@ pub async fn create_settlement(
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
     match service::create_settlement(
-        &state.pool,
+        &state.db,
         state.event_publisher.as_ref(),
         tenant_id,
         &req,
@@ -219,7 +219,7 @@ pub async fn get_settlement(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SettlementDetail> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_settlement_detail(&state.pool, tenant_id, id).await {
+    match service::get_settlement_detail(&state.db, tenant_id, id).await {
         Ok(Some(detail)) => api_success(detail),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("结算单不存在".to_string())),
         Err(e) => {
@@ -238,7 +238,7 @@ pub async fn approve_reconciliation(
     let tenant_id = current_tenant_id(&claims);
     let approver = claims.sub.clone();
     match service::approve_reconciliation(
-        &state.pool,
+        &state.db,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -266,7 +266,7 @@ pub async fn approve_settlement(
     let tenant_id = current_tenant_id(&claims);
     let approver = claims.sub.clone();
     match service::approve_settlement(
-        &state.pool,
+        &state.db,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -303,7 +303,7 @@ pub async fn create_link(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::create_link(&state.pool, tenant_id, &req, creator).await {
+    match service::create_link(&state.db, tenant_id, &req, creator).await {
         Ok(link) => api_success(link),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_link 失败: {}", e);
@@ -319,7 +319,7 @@ pub async fn delete_link(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = current_tenant_id(&claims);
-    match service::cancel_link(&state.pool, tenant_id, id).await {
+    match service::cancel_link(&state.db, tenant_id, id).await {
         Ok(true) => api_success(json!({ "cancelled": true })),
         Ok(false) => ApiResponse::from(TopemsError::ResourceNotFound(
             "关联不存在或已解除".to_string(),
@@ -338,7 +338,7 @@ pub async fn list_links(
     Query(query): Query<LinkListQuery>,
 ) -> ApiResponse<Vec<ReconciliationSettlementLink>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_links(&state.pool, tenant_id, &query).await {
+    match service::list_links(&state.db, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_links 失败: {}", e);
@@ -358,7 +358,7 @@ pub async fn list_differences(
     Query(query): Query<DifferenceListQuery>,
 ) -> ApiResponse<Vec<DifferenceAdjustment>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_differences(&state.pool, tenant_id, &query).await {
+    match service::list_differences(&state.db, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_differences 失败: {}", e);
@@ -395,7 +395,7 @@ pub async fn create_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::create_difference(&state.pool, tenant_id, &req, creator).await {
+    match service::create_difference(&state.db, tenant_id, &req, creator).await {
         Ok(item) => api_success(item),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_difference 失败: {}", e);
@@ -415,7 +415,7 @@ pub async fn approve_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::approve_difference(&state.pool, tenant_id, id, approver).await {
+    match service::approve_difference(&state.db, tenant_id, id, approver).await {
         Ok(Some(item)) => api_success(item),
         Ok(None) => ApiResponse::from(TopemsError::ValidationFailed(
             "差异调整不存在或当前状态不允许审批".to_string(),
@@ -438,7 +438,7 @@ pub async fn reject_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::reject_difference(&state.pool, tenant_id, id, approver).await {
+    match service::reject_difference(&state.db, tenant_id, id, approver).await {
         Ok(Some(item)) => api_success(item),
         Ok(None) => ApiResponse::from(TopemsError::ValidationFailed(
             "差异调整不存在或当前状态不允许拒绝".to_string(),
@@ -460,7 +460,7 @@ pub async fn get_dashboard(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<DashboardSummary> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_dashboard_summary(&state.pool, tenant_id).await {
+    match service::get_dashboard_summary(&state.db, tenant_id).await {
         Ok(summary) => api_success(summary),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_dashboard 失败: {}", e);
@@ -475,7 +475,7 @@ pub async fn get_statistics(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<CenterStatistics> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_statistics(&state.pool, tenant_id).await {
+    match service::get_statistics(&state.db, tenant_id).await {
         Ok(stats) => api_success(stats),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_statistics 失败: {}", e);

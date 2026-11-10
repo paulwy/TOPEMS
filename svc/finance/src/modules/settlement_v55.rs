@@ -35,9 +35,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::fmt;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -758,7 +758,7 @@ impl PaymentResult {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_settlement_v55_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_settlement_v55_tables(db: &Db) -> Result<(), sqlx::Error> {
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v55_reconciliation_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -843,9 +843,14 @@ pub async fn init_settlement_v55_tables(pool: &PgPool) -> Result<(), sqlx::Error
         "CREATE INDEX IF NOT EXISTS idx_v55_payment_results_request ON finance_v55_payment_results(request_id)",
     ];
 
+    // 系统通道：无请求上下文（启动/后台），登记 §2.1
+    let mut scope = db.scope_system().await?;
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
+    scope.commit().await?;
     Ok(())
 }
 
@@ -886,7 +891,7 @@ pub struct ReconciliationResponse {
 
 impl AutoReconciler {
     pub async fn create_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateRuleRequest,
     ) -> Result<ReconciliationRule, sqlx::Error> {
@@ -895,7 +900,8 @@ impl AutoReconciler {
         let tolerance = req.tolerance.unwrap_or(0.0);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, ReconciliationRule>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let rule = sqlx::query_as::<_, ReconciliationRule>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v55_reconciliation_rules
                 (id, tenant_id, name, match_type, tolerance, enabled)
@@ -908,32 +914,42 @@ impl AutoReconciler {
         .bind(&match_type)
         .bind(tolerance)
         .bind(enabled)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
     pub async fn list_rules(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReconciliationRule>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rules = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rules)
     }
 
     pub async fn reconcile_batch(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ReconcileBatchRequest,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate_reconciliation(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(pool, Some(tenant_id)).await?;
+        let rules = Self::list_rules(db, Some(tenant_id)).await?;
         let mut results = Vec::new();
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
 
         for bank_tx in &req.bank_transactions {
             for sys_rec in &req.system_records {
@@ -953,7 +969,7 @@ impl AutoReconciler {
                 .bind(result.confidence)
                 .bind(result.difference_amount)
                 .bind(result.notes.as_deref())
-                .execute(pool)
+                .execute(&mut scope)
                 .await?;
 
                 results.push(ReconciliationResult {
@@ -967,22 +983,24 @@ impl AutoReconciler {
                 });
             }
         }
+        scope.commit().await?;
 
         Ok(results)
     }
 
     pub async fn reconcile_single(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ReconcileSingleRequest,
     ) -> Result<ReconciliationResult, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(pool, Some(tenant_id)).await?;
+        let rules = Self::list_rules(db, Some(tenant_id)).await?;
         let result = Self::try_match(&req.bank_transaction, &req.system_record, &rules);
 
         let id = Uuid::new_v4();
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_reconciliation_results
                 (id, tenant_id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes)
@@ -996,8 +1014,9 @@ impl AutoReconciler {
         .bind(result.confidence)
         .bind(result.difference_amount)
         .bind(result.notes.as_deref())
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(ReconciliationResult {
             id,
@@ -1191,7 +1210,7 @@ impl AutoReconciler {
     }
 
     pub async fn get_results(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
@@ -1203,20 +1222,28 @@ impl AutoReconciler {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, ReconciliationResult>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
     pub async fn approve_match(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET approved = true
             WHERE id = $1 AND tenant_id = $2
@@ -1224,16 +1251,19 @@ impl AutoReconciler {
         )
         .bind(result_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn dispute_match(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET disputed = true, match_status = 'discrepancy'
             WHERE id = $1 AND tenant_id = $2
@@ -1241,8 +1271,10 @@ impl AutoReconciler {
         )
         .bind(result_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 }
 
@@ -1278,7 +1310,7 @@ pub struct RecognizedInvoice {
 
 impl InvoiceRecognizer {
     pub async fn recognize_invoice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: RecognizeInvoiceRequest,
     ) -> Result<RecognizedInvoice, sqlx::Error> {
@@ -1327,6 +1359,7 @@ impl InvoiceRecognizer {
             Self::extract_items(&req.raw_text)
         };
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_invoices
                 (id, tenant_id, number, vendor, invoice_date, total_amount, tax_amount, status, recognized_at)
@@ -1340,7 +1373,7 @@ impl InvoiceRecognizer {
         .bind(total_amount)
         .bind(tax_amount)
         .bind(now)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
 
         for item in &items {
@@ -1358,9 +1391,10 @@ impl InvoiceRecognizer {
             .bind(item.unit_price)
             .bind(item.amount)
             .bind(item.tax_rate)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
         }
+        scope.commit().await?;
 
         Ok(RecognizedInvoice {
             invoice: Invoice {
@@ -1448,7 +1482,7 @@ impl InvoiceRecognizer {
     }
 
     pub async fn extract_fields(
-        _pool: &PgPool,
+        _db: &Db,
         req: RecognizeInvoiceRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut fields = serde_json::json!({});
@@ -1476,16 +1510,17 @@ impl InvoiceRecognizer {
     }
 
     pub async fn validate_invoice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
@@ -1493,7 +1528,7 @@ impl InvoiceRecognizer {
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let with_items = InvoiceWithItems {
@@ -1505,7 +1540,7 @@ impl InvoiceRecognizer {
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
 
         let now = Utc::now();
-        sqlx::query_as(only_own_schema_query!(
+        let updated = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
             SET status = 'verified', validated_at = $1
@@ -1515,21 +1550,28 @@ impl InvoiceRecognizer {
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(updated)
     }
 
     pub async fn get_invoice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
@@ -1537,14 +1579,15 @@ impl InvoiceRecognizer {
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(InvoiceWithItems { invoice, items })
     }
 
     pub async fn list_invoices(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
@@ -1556,25 +1599,33 @@ impl InvoiceRecognizer {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, Invoice>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
     pub async fn post_invoice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
@@ -1582,7 +1633,7 @@ impl InvoiceRecognizer {
         )
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let with_items = InvoiceWithItems {
@@ -1593,7 +1644,7 @@ impl InvoiceRecognizer {
         with_items
             .prevalidate_post(now, false)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        sqlx::query_as(only_own_schema_query!(
+        let updated = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
             SET status = 'posted', posted_at = $1
@@ -1603,17 +1654,20 @@ impl InvoiceRecognizer {
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(updated)
     }
 
     pub async fn match_invoice_to_purchase(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         invoice_id: Uuid,
         purchase_order_id: String,
     ) -> Result<Invoice, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let invoice = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
             SET purchase_order_id = $1
@@ -1623,8 +1677,10 @@ impl InvoiceRecognizer {
         .bind(&purchase_order_id)
         .bind(invoice_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(invoice)
     }
 }
 
@@ -1713,7 +1769,7 @@ pub struct PaymentInitiationResult {
 
 impl ElectronicPaymentProcessor {
     pub async fn initiate_payment(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
     ) -> Result<PaymentInitiationResult, sqlx::Error> {
@@ -1728,6 +1784,7 @@ impl ElectronicPaymentProcessor {
         let request_id = Uuid::new_v4();
         let result_id = Uuid::new_v4();
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v55_payment_requests
@@ -1742,7 +1799,7 @@ impl ElectronicPaymentProcessor {
         .bind(&req.to_account)
         .bind(method.as_str())
         .bind(&req.reference)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
 
         let transaction_ref = format!("TXN-{}", result_id);
@@ -1758,8 +1815,9 @@ impl ElectronicPaymentProcessor {
         .bind(&transaction_ref)
         .bind(fee)
         .bind(now)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(PaymentInitiationResult {
             request: PaymentRequest {
@@ -1784,31 +1842,39 @@ impl ElectronicPaymentProcessor {
     }
 
     pub async fn get_payment_status(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn reverse_payment(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         let now = Utc::now();
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let original: PaymentResult = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         original
@@ -1820,7 +1886,7 @@ impl ElectronicPaymentProcessor {
             "REV-{}",
             original.transaction_ref.as_deref().unwrap_or("unknown")
         );
-        sqlx::query_as(only_own_schema_query!(
+        let reversed = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
@@ -1833,12 +1899,14 @@ impl ElectronicPaymentProcessor {
         .bind(&reversed_ref)
         .bind(0.0)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(reversed)
     }
 
     pub async fn list_payments(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
@@ -1852,16 +1920,23 @@ impl ElectronicPaymentProcessor {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, PaymentRequest>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
     pub async fn schedule_payment(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
         scheduled_at: DateTime<Utc>,
@@ -1875,7 +1950,8 @@ impl ElectronicPaymentProcessor {
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let request_id = Uuid::new_v4();
 
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let payment = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_payment_requests
                 (id, tenant_id, amount, currency, from_account, to_account, method, reference, scheduled_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -1890,12 +1966,14 @@ impl ElectronicPaymentProcessor {
         .bind(&method_str)
         .bind(&req.reference)
         .bind(Some(scheduled_at))
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(payment)
     }
 
     pub async fn calculate_fee(
-        _pool: &PgPool,
+        _db: &Db,
         amount: f64,
         method: &PaymentMethod,
     ) -> Result<f64, sqlx::Error> {
@@ -1920,12 +1998,12 @@ impl ElectronicPaymentProcessor {
 }
 
 // ==================== [V232-P0.1 NEW] Pre-validate async pure-fn wrappers ====================
-// 等价重构纪律：仅只读 pool（不开启事务）；校验通过后 clone 原请求作为 validated 视图
+// 等价重构纪律：仅只读 db（不开启作用域）；校验通过后 clone 原请求作为 validated 视图
 // validate fn 名按 task 要求 grep 实际导出名后命名：post_settlement / unsettlement / reverse_settlement
 
 pub async fn validate_settlement_prepare(
     req: &InitiatePaymentRequest,
-    _pool: &PgPool,
+    _db: &Db,
 ) -> Result<InitiatePaymentRequest, ValidationError> {
     req.prevalidate_payment(Some(1_000_000.00), true)?;
     Ok(req.clone())
@@ -1933,7 +2011,7 @@ pub async fn validate_settlement_prepare(
 
 pub async fn validate_unsettlement_prepare(
     req: &SchedulePaymentRequest,
-    _pool: &PgPool,
+    _db: &Db,
 ) -> Result<SchedulePaymentRequest, ValidationError> {
     let init_req = InitiatePaymentRequest {
         amount: req.amount,
@@ -1951,7 +2029,7 @@ pub async fn validate_unsettlement_prepare(
 
 pub async fn validate_reverse_settlement_prepare(
     req: &ReconcileBatchRequest,
-    _pool: &PgPool,
+    _db: &Db,
 ) -> Result<ReconcileBatchRequest, ValidationError> {
     let now = Utc::now();
     req.prevalidate_reconciliation(now, Some(180), true)?;
@@ -1977,8 +2055,8 @@ pub async fn reconcile_batch_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
 ) -> ApiResponse<Vec<ReconciliationResult>> {
-    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
-    let validated = match validate_reverse_settlement_prepare(&req, &state.pool).await {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
+    let validated = match validate_reverse_settlement_prepare(&req, &state.db).await {
         Ok(v) => v,
         Err(e) => return e.into_api_response(),
     };
@@ -2000,9 +2078,9 @@ pub async fn reconcile_batch_handler(
     if let Err(ve) = req.prevalidate_reconciliation(now, Some(180), true) {
         return ve.into_api_response();
     }
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
+    match AutoReconciler::reconcile_batch(&db, tenant_id, req).await {
         Ok(results) => ApiResponse::success(results, "批量对账完成"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2018,9 +2096,9 @@ pub async fn reconcile_single_handler(
     if let Err(ve) = req.prevalidate(now, Some(180), true) {
         return ve.into_api_response();
     }
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
+    match AutoReconciler::reconcile_single(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "对账完成"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2032,13 +2110,13 @@ pub async fn get_recon_results_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconResultQueryParams>,
 ) -> ApiResponse<Vec<ReconciliationResult>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
+    match AutoReconciler::get_results(&db, tenant_id, params.status).await {
         Ok(results) => ApiResponse::success(results, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2049,9 +2127,9 @@ pub async fn create_recon_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRuleRequest>,
 ) -> ApiResponse<ReconciliationRule> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::create_rule(&pool, tenant_id, req).await {
+    match AutoReconciler::create_rule(&db, tenant_id, req).await {
         Ok(rule) => ApiResponse::success(rule, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2061,13 +2139,13 @@ pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ReconciliationRule>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoReconciler::list_rules(&pool, tenant_id).await {
+    match AutoReconciler::list_rules(&db, tenant_id).await {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2078,9 +2156,9 @@ pub async fn approve_match_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::approve_match(&pool, tenant_id, id).await {
+    match AutoReconciler::approve_match(&db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "审批通过"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2091,9 +2169,9 @@ pub async fn dispute_match_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::dispute_match(&pool, tenant_id, id).await {
+    match AutoReconciler::dispute_match(&db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "已标记争议"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2116,7 +2194,7 @@ pub async fn recognize_invoice_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecognizeInvoiceRequest>,
 ) -> ApiResponse<RecognizedInvoice> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // OCR 识别层不强制校验未来日期（允许识别后走审批流修正），只在 prevalidate_recognize 之前先兜底：
     // 如果用户显式输入 number / vendor，就要求非空（其他字段由内部 prevalidate_recognize 守护）。
@@ -2130,7 +2208,7 @@ pub async fn recognize_invoice_handler(
             return ValidationError::EmptyField("invoice.vendor".into()).into_api_response();
         }
     }
-    match InvoiceRecognizer::recognize_invoice(&pool, tenant_id, req).await {
+    match InvoiceRecognizer::recognize_invoice(&db, tenant_id, req).await {
         Ok(invoice) => ApiResponse::success(invoice, "识别完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2141,13 +2219,13 @@ pub async fn get_invoice_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<InvoiceWithItems> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
+    match InvoiceRecognizer::get_invoice(&db, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2158,13 +2236,13 @@ pub async fn list_invoices_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InvoiceListQueryParams>,
 ) -> ApiResponse<Vec<Invoice>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
+    match InvoiceRecognizer::list_invoices(&db, tenant_id, params.status).await {
         Ok(invoices) => ApiResponse::success(invoices, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2175,11 +2253,11 @@ pub async fn validate_invoice_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Invoice> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
     // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/409）。
-    match InvoiceRecognizer::validate_invoice(&pool, tenant_id, id).await {
+    match InvoiceRecognizer::validate_invoice(&db, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "验证通过"),
         Err(sqlx::Error::Decode(msg)) => {
             // 保守：无法从 Box<dyn Error> 直接下钻时，以 400 抛出完整消息（已包含 ValidationError Display）
@@ -2194,11 +2272,11 @@ pub async fn post_invoice_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Invoice> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 默认 strict：不允许未来日期发票直接过账（allow_future_date=false）；
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
-    match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
+    match InvoiceRecognizer::post_invoice(&db, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "过账成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2211,9 +2289,9 @@ pub async fn match_invoice_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<MatchInvoiceRequest>,
 ) -> ApiResponse<Invoice> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match InvoiceRecognizer::match_invoice_to_purchase(&pool, tenant_id, id, req.purchase_order_id)
+    match InvoiceRecognizer::match_invoice_to_purchase(&db, tenant_id, id, req.purchase_order_id)
         .await
     {
         Ok(invoice) => ApiResponse::success(invoice, "匹配成功"),
@@ -2252,8 +2330,8 @@ pub async fn initiate_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
 ) -> ApiResponse<PaymentInitiationResult> {
-    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
-    let validated = match validate_settlement_prepare(&req, &state.pool).await {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
+    let validated = match validate_settlement_prepare(&req, &state.db).await {
         Ok(v) => v,
         Err(e) => return e.into_api_response(),
     };
@@ -2266,9 +2344,9 @@ pub async fn initiate_payment_handler(
     if let Err(ve) = req.prevalidate_payment(Some(1_000_000.00), true) {
         return ve.into_api_response();
     }
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
+    match ElectronicPaymentProcessor::initiate_payment(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "支付发起成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2280,13 +2358,13 @@ pub async fn get_payment_status_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<PaymentResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
+    match ElectronicPaymentProcessor::get_payment_status(&db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2297,10 +2375,10 @@ pub async fn reverse_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<PaymentResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 400 返回精确语义错误。
-    match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
+    match ElectronicPaymentProcessor::reverse_payment(&db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "冲正成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2312,13 +2390,13 @@ pub async fn list_payments_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListQueryParams>,
 ) -> ApiResponse<Vec<PaymentRequest>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
+    match ElectronicPaymentProcessor::list_payments(&db, tenant_id, params.status).await {
         Ok(payments) => ApiResponse::success(payments, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2330,8 +2408,8 @@ pub async fn schedule_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
 ) -> ApiResponse<PaymentRequest> {
-    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
-    let validated = match validate_unsettlement_prepare(&req, &state.pool).await {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
+    let validated = match validate_unsettlement_prepare(&req, &state.db).await {
         Ok(v) => v,
         Err(e) => return e.into_api_response(),
     };
@@ -2356,9 +2434,9 @@ pub async fn schedule_payment_handler(
     if let Err(ve) = req.prevalidate_schedule(now) {
         return ve.into_api_response();
     }
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at)
+    match ElectronicPaymentProcessor::schedule_payment(&db, tenant_id, init_req, req.scheduled_at)
         .await
     {
         Ok(request) => ApiResponse::success(request, "调度成功"),

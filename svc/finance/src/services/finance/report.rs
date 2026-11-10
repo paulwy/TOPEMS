@@ -15,7 +15,8 @@ impl FinanceService {
         tenant_id: Uuid,
         params: LedgerQueryParams,
     ) -> Result<Vec<LedgerEntry>, TopemsError> {
-        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE (tenant_id = $1::uuid)".to_string();
 
         let account_id_provided = params.account_id.is_some();
         let account_code_provided = params.account_code.is_some();
@@ -39,6 +40,8 @@ impl FinanceService {
 
         query.push_str(" ORDER BY voucher_date, id");
 
+        let mut scope = self.read_scope().await?;
+
         let mut query_builder = sqlx::query_as(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(account_id) = params.account_id {
             query_builder = query_builder.bind(account_id);
@@ -50,7 +53,7 @@ impl FinanceService {
             query_builder = query_builder.bind(period);
         }
 
-        let entries = query_builder.fetch_all(&self.db_pool).await?;
+        let entries = query_builder.fetch_all(&mut scope).await?;
 
         Ok(entries)
     }
@@ -60,6 +63,9 @@ impl FinanceService {
         tenant_id: Uuid,
         period: &str,
     ) -> Result<Vec<TrialBalance>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let balances = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT 
                 a.id as account_id,
@@ -70,13 +76,13 @@ impl FinanceService {
                 COALESCE(SUM(CASE WHEN l.credit > l.debit THEN l.credit - l.debit ELSE 0 END), 0) as credit_balance
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
-             WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1::uuid)
+             WHERE (a.tenant_id = $1::uuid)
              GROUP BY a.id, a.code, a.name, a.account_type
              ORDER BY a.code"),
         )
         .bind(tenant_id)
         .bind(period)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(balances)
@@ -118,6 +124,7 @@ impl FinanceService {
         period: &str,
         account_type: AccountType,
     ) -> Result<Vec<BalanceItem>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = account_type.to_string();
 
         let amount_expr = match account_type {
@@ -133,17 +140,19 @@ impl FinanceService {
                 {} as amount
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
-             WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1::uuid) AND a.account_type::text = $2
+             WHERE (a.tenant_id = $1::uuid) AND a.account_type::text = $2
              GROUP BY a.code, a.name
              ORDER BY a.code",
             amount_expr
         );
 
+        let mut scope = self.read_scope().await?;
+
         let rows = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .bind(type_str)
             .bind(period)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
 
         let items = rows
@@ -198,6 +207,7 @@ impl FinanceService {
         period: &str,
         account_type: AccountType,
     ) -> Result<Vec<IncomeItem>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = account_type.to_string();
         // 损益类科目不能统一取 debit - credit：收入类余额在贷方，费用类余额在借方。
         // 取数方向与科目类别一致，否则利润表收入会整体为负、净利润符号相反。
@@ -212,16 +222,18 @@ impl FinanceService {
                 {} as amount
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
-             WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1::uuid) AND a.account_type::text = $2
+             WHERE (a.tenant_id = $1::uuid) AND a.account_type::text = $2
              GROUP BY a.code, a.name
              ORDER BY a.code",
             amount_expr
         );
+        let mut scope = self.read_scope().await?;
+
         let rows = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .bind(type_str)
             .bind(period)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
 
         let items = rows
@@ -241,6 +253,9 @@ impl FinanceService {
         tenant_id: Uuid,
         period: &str,
     ) -> Result<CashFlowStatement, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let rows = sqlx::query(only_own_schema_query!(
             "finance",
             r#"
@@ -251,7 +266,7 @@ impl FinanceService {
                 COALESCE(SUM(l.credit), 0) as total_credit
             FROM finance.core_finance_accounts a
             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
-            WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1::uuid)
+            WHERE (a.tenant_id = $1::uuid)
               AND a.account_type::text = 'asset'
               AND a.code LIKE '1___'
             GROUP BY a.code, a.name
@@ -260,7 +275,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(period)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut items = Vec::new();
@@ -326,6 +341,8 @@ impl FinanceService {
         period: &str,
     ) -> Result<AccountBalanceReport, TopemsError> {
         let year_start = format!("{}01", &period[..4]);
+
+        let mut scope = self.read_scope().await?;
 
         let rows = sqlx::query(only_own_schema_query!(
             "finance",
@@ -398,7 +415,7 @@ impl FinanceService {
         .bind(company_id)
         .bind(period)
         .bind(&year_start)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut items = Vec::with_capacity(rows.len());
@@ -454,7 +471,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(company_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
         if unlinked > 0 {
             checks.push(BalanceCheckIssue {
@@ -589,6 +606,8 @@ impl FinanceService {
         company_id: Uuid,
         period: &str,
     ) -> Result<(StatutoryBalanceSheet, StatutoryIncomeStatement), TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let bs_rows = sqlx::query(only_own_schema_query!(
             "finance",
             r#"
@@ -652,7 +671,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(company_id)
         .bind(period)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut asset_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
@@ -763,7 +782,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(company_id)
         .bind(period)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut revenue_map: BTreeMap<(i32, String), LineAcc> = BTreeMap::new();
@@ -877,6 +896,8 @@ impl FinanceService {
         company_id: Uuid,
         period: &str,
     ) -> Result<UnpostedInfo, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let row = sqlx::query(
             r#"SELECT COUNT(*) AS cnt, COALESCE(SUM(total_debit), 0) AS amount
                FROM finance.core_finance_vouchers
@@ -886,7 +907,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(company_id)
         .bind(period)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(UnpostedInfo {

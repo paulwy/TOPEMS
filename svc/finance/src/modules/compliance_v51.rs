@@ -30,8 +30,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -301,7 +301,7 @@ pub struct ExportedComplianceReport {
 
 impl ControlPoint {
     pub async fn create(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateControlPointRequest,
         created_by: &str,
@@ -309,7 +309,8 @@ impl ControlPoint {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let created = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_control_points
                 (id, tenant_id, code, name, description, category, risk_level,
@@ -331,12 +332,14 @@ impl ControlPoint {
         .bind(created_by)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(created)
     }
 
     pub async fn list(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
@@ -367,6 +370,11 @@ impl ControlPoint {
 
         query.push_str(" ORDER BY code, created_at DESC");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref cat) = category {
@@ -379,34 +387,40 @@ impl ControlPoint {
             q = q.bind(rl);
         }
 
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Option<Uuid>,
-    ) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(
+    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let control = sqlx::query_as::<_, Self>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
              FROM finance.finance_control_points WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"),
         )
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(control)
     }
 
     pub async fn update(
-        pool: &PgPool,
+        db: &Db,
         id: Uuid,
         tenant_id: Uuid,
         req: UpdateControlPointRequest,
     ) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let updated = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_control_points
             SET name = COALESCE($1, name),
@@ -431,18 +445,22 @@ impl ControlPoint {
         .bind(now)
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(updated)
     }
 
-    pub async fn delete(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn delete(db: &Db, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(id)
         .bind(tenant_id)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 }
@@ -454,18 +472,19 @@ impl ControlMatrix {
         clippy::cast_precision_loss
     )]
     pub async fn generate(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: GenerateControlMatrixRequest,
         created_by: &str,
     ) -> Result<Self, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let active_controls = sqlx::query_as::<_, ControlPoint>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
              FROM finance.finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let total = active_controls.len() as i64;
@@ -496,7 +515,7 @@ impl ControlMatrix {
 
         let id = Uuid::new_v4();
 
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+        let matrix = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_control_matrices
                 (id, tenant_id, name, period, controls, total_controls,
@@ -515,16 +534,19 @@ impl ControlMatrix {
         .bind(rate)
         .bind(created_by)
         .bind(Utc::now())
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(matrix)
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Option<Uuid>,
-    ) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let matrix = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, name, period, controls, total_controls, \
              effective_controls, compliance_rate, created_by, created_at \
@@ -532,16 +554,23 @@ impl ControlMatrix {
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(matrix)
     }
 
     pub async fn list(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         period: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        if let Some(ref p) = period {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let items = if let Some(ref p) = period {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
                 "SELECT id, tenant_id, name, period, controls, total_controls, \
@@ -551,8 +580,8 @@ impl ControlMatrix {
             ))
             .bind(tenant_id)
             .bind(p)
-            .fetch_all(pool)
-            .await
+            .fetch_all(&mut scope)
+            .await?
         } else {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
@@ -562,9 +591,11 @@ impl ControlMatrix {
                  ORDER BY created_at DESC"
             ))
             .bind(tenant_id)
-            .fetch_all(pool)
-            .await
-        }
+            .fetch_all(&mut scope)
+            .await?
+        };
+        scope.commit().await?;
+        Ok(items)
     }
 }
 
@@ -600,7 +631,7 @@ impl RiskAssessment {
     }
 
     pub async fn assess(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateRiskAssessmentRequest,
         assessed_by: &str,
@@ -610,7 +641,8 @@ impl RiskAssessment {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let assessment = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_risk_assessments
                 (id, tenant_id, control_point_id, likelihood, impact, risk_score,
@@ -633,16 +665,19 @@ impl RiskAssessment {
         .bind(assessed_by)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(assessment)
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Option<Uuid>,
-    ) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let assessment = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
@@ -651,12 +686,14 @@ impl RiskAssessment {
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(assessment)
     }
 
     pub async fn list(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         control_point_id: Option<Uuid>,
         risk_level: Option<String>,
@@ -677,6 +714,11 @@ impl RiskAssessment {
         }
         query.push_str(" ORDER BY created_at DESC");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(cp_id) = control_point_id {
@@ -685,7 +727,9 @@ impl RiskAssessment {
         if let Some(ref rl) = risk_level {
             q = q.bind(rl);
         }
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
     #[allow(
@@ -693,10 +737,12 @@ impl RiskAssessment {
         clippy::cast_possible_wrap,
         clippy::cast_precision_loss
     )]
-    pub async fn get_summary(
-        pool: &PgPool,
-        tenant_id: Option<Uuid>,
-    ) -> Result<RiskSummary, sqlx::Error> {
+    pub async fn get_summary(db: &Db, tenant_id: Option<Uuid>) -> Result<RiskSummary, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let assessments = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
@@ -705,8 +751,9 @@ impl RiskAssessment {
              FROM finance.finance_risk_assessments WHERE ($1::uuid IS NULL OR tenant_id = $1)"
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let total = assessments.len() as i64;
         let critical = assessments
@@ -742,18 +789,19 @@ impl RiskAssessment {
 impl ComplianceReportV51 {
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn generate(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: GenerateComplianceReportRequest,
         created_by: &str,
     ) -> Result<(Self, Vec<ComplianceIssueV51>), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let controls = sqlx::query_as::<_, ControlPoint>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
              FROM finance.finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let risk_assessments = sqlx::query_as::<_, RiskAssessment>(only_own_schema_query!(
@@ -765,7 +813,7 @@ impl ComplianceReportV51 {
              ORDER BY created_at DESC"
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let risk_json = serde_json::json!(risk_assessments
@@ -876,7 +924,7 @@ impl ComplianceReportV51 {
         .bind(&summary)
         .bind(serde_json::json!(recommendations))
         .bind(created_by)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let mut saved_issues = Vec::new();
@@ -899,20 +947,22 @@ impl ComplianceReportV51 {
             .bind(&issue.evidence)
             .bind(&issue.impact_assessment)
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
             saved_issues.push(saved);
         }
+        scope.commit().await?;
 
         Ok((report, saved_issues))
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Option<Uuid>,
-    ) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(only_own_schema_query!(
+    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let report = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
              controls_checked, issues_found, risk_assessments, executive_summary, \
@@ -921,16 +971,23 @@ impl ComplianceReportV51 {
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(report)
     }
 
     pub async fn list(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         report_type: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        if let Some(ref rt) = report_type {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let items = if let Some(ref rt) = report_type {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
                 "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
@@ -941,8 +998,8 @@ impl ComplianceReportV51 {
             ))
             .bind(tenant_id)
             .bind(rt)
-            .fetch_all(pool)
-            .await
+            .fetch_all(&mut scope)
+            .await?
         } else {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
@@ -953,17 +1010,20 @@ impl ComplianceReportV51 {
                  ORDER BY generated_at DESC"
             ))
             .bind(tenant_id)
-            .fetch_all(pool)
-            .await
-        }
+            .fetch_all(&mut scope)
+            .await?
+        };
+        scope.commit().await?;
+        Ok(items)
     }
 
     pub async fn export(
-        pool: &PgPool,
+        db: &Db,
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<ExportedComplianceReport, sqlx::Error> {
-        let report = Self::get(pool, id, Some(tenant_id)).await?;
+        let report = Self::get(db, id, Some(tenant_id)).await?;
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let issues = sqlx::query_as::<_, ComplianceIssueV51>(only_own_schema_query!(
             "finance",
             "SELECT id, report_id, severity, category, control_point_code, \
@@ -972,8 +1032,9 @@ impl ComplianceReportV51 {
              ORDER BY severity, control_point_code"
         ))
         .bind(id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(ExportedComplianceReport { report, issues })
     }
@@ -996,7 +1057,7 @@ pub async fn create_control_point_handler(
 ) -> ApiResponse<ControlPoint> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ControlPoint::create(&state.pool, tenant_id, req, &created_by).await {
+    match ControlPoint::create(&state.db, tenant_id, req, &created_by).await {
         Ok(cp) => ApiResponse::success(cp, "控制点创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1013,7 +1074,7 @@ pub async fn list_control_points_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match ControlPoint::list(
-        &state.pool,
+        &state.db,
         tenant_id,
         params.category,
         params.is_active,
@@ -1036,7 +1097,7 @@ pub async fn get_control_point_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlPoint::get(&state.pool, id, tenant_id).await {
+    match ControlPoint::get(&state.db, id, tenant_id).await {
         Ok(cp) => ApiResponse::success(cp, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1049,7 +1110,7 @@ pub async fn update_control_point_handler(
     Json(req): Json<UpdateControlPointRequest>,
 ) -> ApiResponse<ControlPoint> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ControlPoint::update(&state.pool, id, tenant_id, req).await {
+    match ControlPoint::update(&state.db, id, tenant_id, req).await {
         Ok(cp) => ApiResponse::success(cp, "更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1061,7 +1122,7 @@ pub async fn delete_control_point_handler(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ControlPoint::delete(&state.pool, id, tenant_id).await {
+    match ControlPoint::delete(&state.db, id, tenant_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1082,7 +1143,7 @@ pub async fn generate_control_matrix_handler(
 ) -> ApiResponse<ControlMatrix> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ControlMatrix::generate(&state.pool, tenant_id, req, &created_by).await {
+    match ControlMatrix::generate(&state.db, tenant_id, req, &created_by).await {
         Ok(cm) => ApiResponse::success(cm, "内控矩阵生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1098,7 +1159,7 @@ pub async fn get_control_matrix_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlMatrix::get(&state.pool, id, tenant_id).await {
+    match ControlMatrix::get(&state.db, id, tenant_id).await {
         Ok(cm) => ApiResponse::success(cm, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1114,7 +1175,7 @@ pub async fn list_control_matrices_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlMatrix::list(&state.pool, tenant_id, params.period).await {
+    match ControlMatrix::list(&state.db, tenant_id, params.period).await {
         Ok(cms) => ApiResponse::success(cms, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1127,7 +1188,7 @@ pub async fn assess_risk_handler(
 ) -> ApiResponse<RiskAssessment> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let assessed_by = claims.username.clone();
-    match RiskAssessment::assess(&state.pool, tenant_id, req, &assessed_by).await {
+    match RiskAssessment::assess(&state.db, tenant_id, req, &assessed_by).await {
         Ok(ra) => ApiResponse::success(ra, "风险评估创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1143,7 +1204,7 @@ pub async fn get_risk_assessment_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match RiskAssessment::get(&state.pool, id, tenant_id).await {
+    match RiskAssessment::get(&state.db, id, tenant_id).await {
         Ok(ra) => ApiResponse::success(ra, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1177,7 +1238,7 @@ pub async fn list_risk_assessments_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match RiskAssessment::list(
-        &state.pool,
+        &state.db,
         tenant_id,
         params.control_point_id,
         params.risk_level,
@@ -1198,7 +1259,7 @@ pub async fn get_risk_summary_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match RiskAssessment::get_summary(&state.pool, tenant_id).await {
+    match RiskAssessment::get_summary(&state.db, tenant_id).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1211,7 +1272,7 @@ async fn generate_compliance_report_handler(
 ) -> ApiResponse<(ComplianceReportV51, Vec<ComplianceIssueV51>)> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ComplianceReportV51::generate(&state.pool, tenant_id, req, &created_by).await {
+    match ComplianceReportV51::generate(&state.db, tenant_id, req, &created_by).await {
         Ok((report, issues)) => ApiResponse::success((report, issues), "合规报告生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1227,7 +1288,7 @@ pub async fn get_compliance_report_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ComplianceReportV51::get(&state.pool, id, tenant_id).await {
+    match ComplianceReportV51::get(&state.db, id, tenant_id).await {
         Ok(report) => ApiResponse::success(report, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1260,7 +1321,7 @@ pub async fn list_compliance_reports_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ComplianceReportV51::list(&state.pool, tenant_id, params.report_type).await {
+    match ComplianceReportV51::list(&state.db, tenant_id, params.report_type).await {
         Ok(reports) => ApiResponse::success(reports, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1272,7 +1333,7 @@ pub async fn export_compliance_report_handler(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ExportedComplianceReport> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ComplianceReportV51::export(&state.pool, id, tenant_id).await {
+    match ComplianceReportV51::export(&state.db, id, tenant_id).await {
         Ok(exported) => ApiResponse::success(exported, "导出成功"),
         Err(e) => crate::shared::err_resp(e),
     }

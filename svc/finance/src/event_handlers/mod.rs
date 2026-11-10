@@ -1,9 +1,9 @@
 use chrono::{Datelike, Utc};
 use rust_decimal::Decimal;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     EmployeeOnboardedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
     HrmPayrollPostedPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
@@ -71,16 +71,25 @@ impl AutoVoucherLine {
 
 #[derive(Clone)]
 pub struct FinanceEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl FinanceEventHandlers {
-    pub fn new(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
+    pub fn new(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         Self {
             db,
             event_publisher,
         }
+    }
+
+    /// 事件 payload 必须携带租户：缺失即拒绝写入，不兜底 nil/0001。
+    fn require_tenant(tenant: Option<uuid::Uuid>) -> Result<uuid::Uuid, TopemsError> {
+        tenant.ok_or_else(|| {
+            TopemsError::ValidationFailed(
+                "事件缺少 tenant_id，拒绝写入 finance（不兜底 nil 租户）".to_string(),
+            )
+        })
     }
 
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
@@ -216,14 +225,14 @@ impl FinanceEventHandlers {
         let period = format!("{:04}{:02}", now.year(), now.month());
         let voucher_no = Self::generate_voucher_no(voucher_type, now);
         let created_by = created_by.unwrap_or("system");
-        // 记账主体：事件不带公司，单主体租户解析唯一公司，多主体/无主体 fail-closed
-        let company_id = resolve_tenant_company(&self.db, tenant_id).await?;
-
+        // 记账主体：事件不带公司，单主体租户解析唯一公司，多主体/无主体 fail-closed。
+        // 事务同时承担租户作用域：写路径必须带租户上下文，缺上下文直接报错。
         let mut tx = self
             .db
-            .begin()
+            .scope_for_tenant(tenant_id)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("开启自动凭证事务失败: {}", e)))?;
+        let company_id = resolve_tenant_company(&mut tx, tenant_id).await?;
 
         // 幂等键落点：finance.uq_finance_voucher_tenant_source（部分唯一索引）
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
@@ -244,7 +253,7 @@ impl FinanceEventHandlers {
         .bind(source_type)
         .bind(source_id.to_string())
         .bind(created_by)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut tx)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证失败: {}", e)))?;
 
@@ -266,7 +275,7 @@ impl FinanceEventHandlers {
             )
             .bind(tenant_id)
             .bind(&line.account_code)
-            .fetch_optional(&mut *tx)
+            .fetch_optional(&mut tx)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("解析会计科目 {} 失败: {}", line.account_code, e)))?;
 
@@ -294,7 +303,7 @@ impl FinanceEventHandlers {
             .bind(line.credit)
             .bind(line.aux_type)
             .bind(line.aux_id)
-            .execute(&mut *tx)
+            .execute(&mut tx)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细失败: {}", e)))?;
         }
@@ -350,7 +359,7 @@ impl FinanceEventHandlers {
                 "sales_order",
                 payload.order_id,
                 payable_amount,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
             )
             .await;
         }
@@ -391,7 +400,7 @@ impl FinanceEventHandlers {
                 "sales_order",
                 payload.order_id,
                 payable_amount,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
             )
             .await;
         }
@@ -417,7 +426,7 @@ impl FinanceEventHandlers {
                 "sales_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
                 vec![
                     AutoVoucherLine::debit(
                         "1122",
@@ -478,7 +487,7 @@ impl FinanceEventHandlers {
                 "purchase_order",
                 payload.order_id,
                 payable_amount,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
             )
             .await;
         }
@@ -504,7 +513,7 @@ impl FinanceEventHandlers {
                 "purchase_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
                 vec![
                     AutoVoucherLine::debit(
                         "1403",
@@ -579,7 +588,7 @@ impl FinanceEventHandlers {
                 "payment_received",
                 payload.payment_id,
                 None,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
                 vec![
                     AutoVoucherLine::debit(
                         "1002",
@@ -653,7 +662,7 @@ impl FinanceEventHandlers {
                 "payment_made",
                 payload.payment_id,
                 None,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
                 vec![
                     AutoVoucherLine::debit(
                         "2202",
@@ -698,6 +707,19 @@ impl FinanceEventHandlers {
         tenant_id: uuid::Uuid,
     ) {
         let now = Utc::now();
+        // 写路径走租户作用域：裸池无 GUC 在 fail-closed 下会 42501。
+        let mut scope = match self.db.scope_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::warn!(
+                    "[finance] 本地金额快照存储失败（graceful）- 租户作用域开启失败, source_type={}, source_id={}: {}",
+                    source_type,
+                    source_id,
+                    e
+                );
+                return;
+            }
+        };
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.source_amount_snapshots
@@ -712,11 +734,20 @@ impl FinanceEventHandlers {
         .bind(payable_amount)
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         match result {
             Ok(_) => {
+                if let Err(e) = scope.commit().await {
+                    tracing::warn!(
+                        "[finance] 本地金额快照提交失败（graceful）- source_type={}, source_id={}: {}",
+                        source_type,
+                        source_id,
+                        e
+                    );
+                    return;
+                }
                 tracing::debug!(
                     "[finance] 本地金额快照已存储 - source_type={}, source_id={}, payable_amount={}",
                     source_type, source_id, payable_amount
@@ -749,7 +780,7 @@ impl FinanceEventHandlers {
                 "purchase_order",
                 payload.order_id,
                 payable_amount,
-                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+                Self::require_tenant(payload.tenant_id)?,
             )
             .await;
         }
@@ -854,7 +885,12 @@ impl FinanceEventHandlers {
             TopemsError::ValidationFailed(format!("解析 EmployeeOnboarded payload 失败: {}", e))
         })?;
 
-        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
+        let tenant_id = Self::require_tenant(payload.tenant_id)?;
+        let mut scope = self
+            .db
+            .scope_read_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户只读作用域失败: {e}")))?;
         let configured_cost: Option<Option<Decimal>> = sqlx::query_scalar(
             r#"SELECT NULLIF(setting_value, '')::numeric
                FROM public.core_tenant_settings
@@ -864,9 +900,10 @@ impl FinanceEventHandlers {
                LIMIT 1"#,
         )
         .bind(tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("读取入职成本配置失败: {}", e)))?;
+        let _ = scope.commit().await;
 
         let amount = match configured_cost.flatten() {
             Some(cost) => cost,
@@ -945,7 +982,7 @@ impl FinanceEventHandlers {
             "pm_project_settled",
             payload.project_id,
             payload.settled_by.as_deref(),
-            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            Self::require_tenant(payload.tenant_id)?,
             vec![
                 AutoVoucherLine::debit(
                     "1122",
@@ -988,7 +1025,7 @@ impl FinanceEventHandlers {
             "return_order",
             payload.return_id,
             None,
-            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            Self::require_tenant(payload.tenant_id)?,
             vec![
                 AutoVoucherLine::debit(
                     "6001",
@@ -1044,7 +1081,7 @@ impl FinanceEventHandlers {
             "hrm_payroll",
             payload.payroll_run_id,
             Some(payload.maker_name.as_str()),
-            payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            Self::require_tenant(payload.tenant_id)?,
             lines,
         )
         .await?;
@@ -1060,6 +1097,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &ReconciliationCreatedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -1091,9 +1134,13 @@ impl FinanceEventHandlers {
         .bind(&payload.description)
         .bind(&payload.created_by)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("存储对账快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 
@@ -1101,6 +1148,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &ReconciliationUpdatedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
@@ -1121,9 +1174,13 @@ impl FinanceEventHandlers {
         .bind(payload.matched_count)
         .bind(payload.unmatched_count)
         .bind(payload.id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新对账快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 
@@ -1131,6 +1188,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &ReconciliationApprovedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
@@ -1145,9 +1208,13 @@ impl FinanceEventHandlers {
         .bind(payload.approved_at)
         .bind(payload.id)
         .bind(payload.tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("审批对账快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 
@@ -1155,6 +1222,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &SettlementCreatedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -1184,9 +1257,13 @@ impl FinanceEventHandlers {
         .bind(&payload.remarks)
         .bind(&payload.created_by)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("存储结算快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 
@@ -1194,6 +1271,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &SettlementApprovedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
@@ -1208,9 +1291,13 @@ impl FinanceEventHandlers {
         .bind(payload.approved_at)
         .bind(payload.id)
         .bind(payload.tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("审批结算快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 
@@ -1218,6 +1305,12 @@ impl FinanceEventHandlers {
         &self,
         payload: &SettlementRejectedPayload,
     ) -> Result<(), TopemsError> {
+        // 写路径必须带租户上下文；裸池无 GUC 在 fail-closed 下会 42501/0 行。
+        let mut scope = self
+            .db
+            .scope_for_tenant(payload.tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
@@ -1228,15 +1321,19 @@ impl FinanceEventHandlers {
         ))
         .bind(payload.id)
         .bind(payload.tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("拒绝结算快照失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交失败: {e}")))?;
         Ok(())
     }
 }
 
 pub async fn start_event_subscribers(
-    db: PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<(), TopemsError> {
     let handlers = FinanceEventHandlers::new(db, event_publisher);
@@ -1326,7 +1423,7 @@ mod p2a_e2e_tests {
             .expect("播种默认科目失败");
 
         let handlers = FinanceEventHandlers {
-            db: pool.clone(),
+            db: topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
             event_publisher: None,
         };
 
@@ -1392,7 +1489,7 @@ mod p2a_e2e_tests {
 
         // 3) 过账 → ledger / aux_balances 有行
         let service = FinanceService::new(
-            pool.clone(),
+            topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
             TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
                 .expect("构造 workflow 客户端失败"),
         );

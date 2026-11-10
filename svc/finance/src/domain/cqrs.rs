@@ -237,8 +237,12 @@ impl PgCqrsContext {
     #[allow(clippy::as_conversions)]
     pub fn with_config(pool: sqlx::PgPool, projector_config: AsyncProjectorConfig) -> Self {
         let event_store = Arc::new(PgEventStore::new(pool.clone()));
-        let voucher_summary_view = Arc::new(PgVoucherSummaryView::new(pool.clone()));
-        let receivable_aging_view = Arc::new(PgReceivableAgingView::new(pool.clone()));
+        let voucher_summary_view = Arc::new(PgVoucherSummaryView::new(
+            topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
+        ));
+        let receivable_aging_view = Arc::new(PgReceivableAgingView::new(
+            topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),
+        ));
 
         let mut sync_projector = EventProjector::new();
         sync_projector

@@ -35,9 +35,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -345,7 +345,9 @@ pub struct ComplianceCheckResult {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_tax_v56_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_tax_v56_tables(db: &Db) -> Result<(), sqlx::Error> {
+    // 系统通道：无请求上下文（启动/后台），登记 §2.1
+    let mut scope = db.scope_system().await?;
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v56_tax_forms (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -435,8 +437,11 @@ pub async fn init_tax_v56_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
+    scope.commit().await?;
     Ok(())
 }
 
@@ -469,7 +474,7 @@ pub struct TaxLineInput {
 
 impl AutoTaxFiler {
     pub async fn generate_tax_form(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: GenerateTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
@@ -479,6 +484,7 @@ impl AutoTaxFiler {
             .unwrap_or_else(|| TaxFormType::VAT.as_str().to_string());
         let jurisdiction = req.jurisdiction.unwrap_or_else(|| "CN".to_string());
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_forms
                 (id, tenant_id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount)
@@ -491,8 +497,9 @@ impl AutoTaxFiler {
         .bind(&jurisdiction)
         .bind(req.period_start)
         .bind(req.period_end)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let form = TaxForm {
             id,
@@ -513,7 +520,7 @@ impl AutoTaxFiler {
     }
 
     pub async fn calculate_tax(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         form_id: Uuid,
         lines: Vec<TaxLineInput>,
@@ -521,6 +528,7 @@ impl AutoTaxFiler {
         let mut total_tax: f64 = 0.0;
         let mut saved_lines: Vec<TaxLine> = Vec::new();
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         for line_input in &lines {
             let tax_amount =
                 (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
@@ -540,7 +548,7 @@ impl AutoTaxFiler {
             .bind(line_input.taxable_amount)
             .bind(line_input.tax_rate)
             .bind(tax_amount)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
 
             saved_lines.push(TaxLine {
@@ -563,8 +571,9 @@ impl AutoTaxFiler {
         .bind(total_tax)
         .bind(form_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(TaxFormWithLines {
             form: updated_form,
@@ -573,11 +582,12 @@ impl AutoTaxFiler {
     }
 
     pub async fn submit_form(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         form_id: Uuid,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
         let now = Utc::now();
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let updated_form: TaxForm = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
             SET status = 'submitted', filed_at = $1, updated_at = CURRENT_TIMESTAMP
@@ -587,10 +597,11 @@ impl AutoTaxFiler {
         .bind(now)
         .bind(form_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
-        let lines = Self::get_form_lines(pool, Some(tenant_id), form_id).await?;
+        let lines = Self::get_form_lines(db, Some(tenant_id), form_id).await?;
 
         Ok(TaxFormWithLines {
             form: updated_form,
@@ -599,7 +610,7 @@ impl AutoTaxFiler {
     }
 
     pub async fn get_forms(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         form_type: Option<String>,
         status: Option<String>,
@@ -619,6 +630,11 @@ impl AutoTaxFiler {
         }
         query.push_str(" ORDER BY period_end DESC LIMIT 500");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, TaxForm>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref ft) = form_type {
@@ -627,37 +643,46 @@ impl AutoTaxFiler {
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let forms = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(forms)
     }
 
     pub async fn get_form_by_id(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         form_id: Uuid,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let form: TaxForm = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(form_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
-        let lines = Self::get_form_lines(pool, tenant_id, form_id).await?;
+        let lines = Self::get_form_lines(db, tenant_id, form_id).await?;
 
         Ok(TaxFormWithLines { form, lines })
     }
 
     pub async fn amend_form(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         form_id: Uuid,
         req: AmendTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2"))
             .bind(form_id)
             .bind(tenant_id)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
 
         let mut total_tax: f64 = 0.0;
@@ -682,7 +707,7 @@ impl AutoTaxFiler {
             .bind(line_input.taxable_amount)
             .bind(line_input.tax_rate)
             .bind(tax_amount)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
 
             saved_lines.push(TaxLine {
@@ -705,8 +730,9 @@ impl AutoTaxFiler {
         .bind(total_tax)
         .bind(form_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(TaxFormWithLines {
             form: updated_form,
@@ -715,9 +741,10 @@ impl AutoTaxFiler {
     }
 
     pub async fn get_filing_schedule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
     ) -> Result<Vec<serde_json::Value>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let upcoming_forms: Vec<TaxForm> = sqlx::query_as(
             only_own_schema_query!("finance", r#"SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at
                FROM finance.finance_v56_tax_forms
@@ -725,8 +752,9 @@ impl AutoTaxFiler {
                ORDER BY period_end ASC LIMIT 50"#),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let schedule: Vec<serde_json::Value> = upcoming_forms
             .iter()
@@ -748,7 +776,7 @@ impl AutoTaxFiler {
     }
 
     pub async fn get_tax_summary(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         year: Option<i32>,
     ) -> Result<serde_json::Value, sqlx::Error> {
@@ -760,10 +788,16 @@ impl AutoTaxFiler {
         }
         sql.push_str(" GROUP BY form_type");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let rows: Vec<(String, f64, i64)> = sqlx::query_as(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
+        scope.commit().await?;
 
         let mut summary = serde_json::json!({
             "total_tax_amount": 0.0,
@@ -795,17 +829,24 @@ impl AutoTaxFiler {
     }
 
     async fn get_form_lines(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         form_id: Uuid,
     ) -> Result<Vec<TaxLine>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let lines = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY line_no"),
         )
         .bind(form_id)
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(lines)
     }
 
     fn calculate_due_date(form_type: &str, period_end: &DateTime<Utc>) -> DateTime<Utc> {
@@ -855,13 +896,13 @@ pub struct ValidateRateParams {
 
 impl TaxRateCalculator {
     pub async fn calculate_vat(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         amount: f64,
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let rate = Self::lookup_rate_impl(pool, Some(tenant_id), "vat", &jur, None).await?;
+        let rate = Self::lookup_rate_impl(db, Some(tenant_id), "vat", &jur, None).await?;
         let tax_amount = (amount * rate * 100.0).round() / 100.0;
 
         Ok(TaxResult {
@@ -880,13 +921,13 @@ impl TaxRateCalculator {
     }
 
     pub async fn calculate_cit(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         amount: f64,
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let brackets = Self::get_brackets_impl(pool, Some(tenant_id), "cit", &jur).await?;
+        let brackets = Self::get_brackets_impl(db, Some(tenant_id), "cit", &jur).await?;
         let (tax, breakdown) = Self::apply_progressive_brackets(amount, &brackets);
 
         Ok(TaxResult {
@@ -898,13 +939,13 @@ impl TaxRateCalculator {
     }
 
     pub async fn calculate_pit(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         amount: f64,
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let brackets = Self::get_brackets_impl(pool, Some(tenant_id), "pit", &jur).await?;
+        let brackets = Self::get_brackets_impl(db, Some(tenant_id), "pit", &jur).await?;
         let (tax, breakdown) = Self::apply_progressive_brackets(amount, &brackets);
 
         Ok(TaxResult {
@@ -916,13 +957,13 @@ impl TaxRateCalculator {
     }
 
     pub async fn calculate_withholding(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         amount: f64,
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let rate = Self::lookup_rate_impl(pool, Some(tenant_id), "withholding", &jur, None).await?;
+        let rate = Self::lookup_rate_impl(db, Some(tenant_id), "withholding", &jur, None).await?;
         let tax_amount = (amount * rate * 100.0).round() / 100.0;
 
         Ok(TaxResult {
@@ -941,7 +982,7 @@ impl TaxRateCalculator {
     }
 
     pub async fn get_rate_schedule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         tax_type: Option<String>,
         jurisdiction: Option<String>,
@@ -961,6 +1002,11 @@ impl TaxRateCalculator {
         }
         query.push_str(" ORDER BY effective_from DESC LIMIT 200");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, TaxRate>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref tt) = tax_type {
@@ -969,35 +1015,37 @@ impl TaxRateCalculator {
         if let Some(ref jur) = jurisdiction {
             q = q.bind(jur);
         }
-        q.fetch_all(pool).await
+        let rates = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(rates)
     }
 
     pub async fn lookup_rate(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         tax_type: String,
         jurisdiction: Option<String>,
         date: Option<DateTime<Utc>>,
     ) -> Result<f64, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        Self::lookup_rate_impl(pool, tenant_id, &tax_type, &jur, date).await
+        Self::lookup_rate_impl(db, tenant_id, &tax_type, &jur, date).await
     }
 
     pub async fn get_tax_breakdown(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         amount: f64,
         tax_type: String,
         jurisdiction: Option<String>,
     ) -> Result<Vec<TaxBreakdown>, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let brackets = Self::get_brackets_impl(pool, tenant_id, &tax_type, &jur).await?;
+        let brackets = Self::get_brackets_impl(db, tenant_id, &tax_type, &jur).await?;
         let (_, breakdown) = Self::apply_progressive_brackets(amount, &brackets);
         Ok(breakdown)
     }
 
     pub async fn validate_rate(
-        _pool: &PgPool,
+        _db: &Db,
         rate: f64,
         tax_type: String,
     ) -> Result<serde_json::Value, sqlx::Error> {
@@ -1034,7 +1082,7 @@ impl TaxRateCalculator {
     }
 
     async fn lookup_rate_impl(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
@@ -1042,6 +1090,11 @@ impl TaxRateCalculator {
     ) -> Result<f64, sqlx::Error> {
         let effective_date = date.unwrap_or_else(Utc::now);
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let rate: Option<f64> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             r#"SELECT rate FROM finance.finance_v56_tax_rates
@@ -1053,8 +1106,9 @@ impl TaxRateCalculator {
         .bind(tax_type)
         .bind(jurisdiction)
         .bind(effective_date)
-        .fetch_optional(pool)
+        .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(rate.unwrap_or(match tax_type {
             "vat" => 0.13,
@@ -1067,11 +1121,16 @@ impl TaxRateCalculator {
     }
 
     async fn get_brackets_impl(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
     ) -> Result<Vec<TaxBracket>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let brackets: Vec<TaxBracket> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT b.id, b.rate_id, b.bracket_order, b.threshold_from, b.threshold_to, b.rate
@@ -1083,8 +1142,9 @@ impl TaxRateCalculator {
         .bind(tenant_id)
         .bind(tax_type)
         .bind(jurisdiction)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         if !brackets.is_empty() {
             Ok(brackets)
@@ -1262,7 +1322,7 @@ pub struct ScenarioAnalysis {
 
 impl TaxPlanner {
     pub async fn create_plan(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreatePlanRequest,
     ) -> Result<TaxPlan, sqlx::Error> {
@@ -1271,7 +1331,8 @@ impl TaxPlanner {
             .strategy
             .unwrap_or_else(|| TaxPlanStrategy::LegalOptimization.as_str().to_string());
 
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let plan = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_plans
                 (id, tenant_id, entity, period, strategy, projected_savings, risk_level, status)
             VALUES ($1, $2, $3, $4, $5, 0, 'low', 'draft')
@@ -1282,12 +1343,14 @@ impl TaxPlanner {
         .bind(&req.entity)
         .bind(&req.period)
         .bind(&strategy)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(plan)
     }
 
     pub async fn analyze_scenario(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AnalyzeScenarioRequest,
     ) -> Result<ScenarioAnalysis, sqlx::Error> {
@@ -1295,10 +1358,10 @@ impl TaxPlanner {
             .strategy
             .unwrap_or_else(|| TaxPlanStrategy::LegalOptimization.as_str().to_string());
 
-        let base_tax = Self::estimate_tax(pool, tenant_id, req.income).await?;
+        let base_tax = Self::estimate_tax(db, tenant_id, req.income).await?;
         let deductions = req.deductions.unwrap_or(0.0);
         let taxable_after_deductions = (req.income - deductions).max(0.0);
-        let reduced_tax = Self::estimate_tax(pool, tenant_id, taxable_after_deductions).await?;
+        let reduced_tax = Self::estimate_tax(db, tenant_id, taxable_after_deductions).await?;
         let savings = (base_tax - reduced_tax).max(0.0);
 
         let risk_level = Self::assess_risk(&strategy);
@@ -1314,48 +1377,58 @@ impl TaxPlanner {
     }
 
     pub async fn get_suggestions(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         plan_id: Uuid,
     ) -> Result<Vec<TaxSuggestion>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let suggestions = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY estimated_savings DESC"),
         )
         .bind(plan_id)
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(suggestions)
     }
 
     pub async fn compare_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenarios: Vec<AnalyzeScenarioRequest>,
     ) -> Result<Vec<ScenarioAnalysis>, sqlx::Error> {
         let mut results = Vec::new();
         for scenario in scenarios {
-            let analysis = Self::analyze_scenario(pool, tenant_id, scenario).await?;
+            let analysis = Self::analyze_scenario(db, tenant_id, scenario).await?;
             results.push(analysis);
         }
         Ok(results)
     }
 
     pub async fn get_plan_status(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         plan_id: Uuid,
     ) -> Result<TaxPlan, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let plan = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(plan_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(plan)
     }
 
     pub async fn list_plans(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<TaxPlan>, sqlx::Error> {
@@ -1367,21 +1440,29 @@ impl TaxPlanner {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, TaxPlan>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let plans = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(plans)
     }
 
     pub async fn approve_plan(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         plan_id: Uuid,
     ) -> Result<TaxPlan, sqlx::Error> {
         let now = Utc::now();
-        sqlx::query_as(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let plan = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_plans
             SET status = 'approved', approved_at = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
@@ -1390,12 +1471,14 @@ impl TaxPlanner {
         .bind(now)
         .bind(plan_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(plan)
     }
 
     pub async fn get_compliance_check(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         entity: Option<String>,
     ) -> Result<ComplianceCheckResult, sqlx::Error> {
@@ -1411,9 +1494,14 @@ impl TaxPlanner {
         }
         query.push_str(" ORDER BY period_end ASC LIMIT 100");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let draft_forms: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
 
         if !draft_forms.is_empty() {
@@ -1427,7 +1515,7 @@ impl TaxPlanner {
             only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         if !submitted_forms.is_empty() {
@@ -1441,7 +1529,7 @@ impl TaxPlanner {
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'accepted'"),
         )
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -1453,8 +1541,9 @@ impl TaxPlanner {
             only_own_schema_query!("finance", "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'rejected'"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         if !rejected_forms.is_empty() {
             issues.push(format!(
@@ -1477,13 +1566,13 @@ impl TaxPlanner {
         })
     }
 
-    async fn estimate_tax(pool: &PgPool, tenant_id: Uuid, income: f64) -> Result<f64, sqlx::Error> {
+    async fn estimate_tax(db: &Db, tenant_id: Uuid, income: f64) -> Result<f64, sqlx::Error> {
         if income <= 0.0 {
             return Ok(0.0);
         }
 
         let brackets =
-            TaxRateCalculator::get_brackets_impl(pool, Some(tenant_id), "pit", "CN").await?;
+            TaxRateCalculator::get_brackets_impl(db, Some(tenant_id), "pit", "CN").await?;
         let (tax, _) = TaxRateCalculator::apply_progressive_brackets(income, &brackets);
         Ok(tax)
     }
@@ -1551,9 +1640,9 @@ pub async fn generate_tax_form_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateTaxFormRequest>,
 ) -> ApiResponse<TaxFormWithLines> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoTaxFiler::generate_tax_form(&pool, tenant_id, req).await {
+    match AutoTaxFiler::generate_tax_form(&db, tenant_id, req).await {
         Ok(form) => ApiResponse::success(form, "税务表单生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1564,13 +1653,13 @@ pub async fn get_tax_forms_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxFormsQueryParams>,
 ) -> ApiResponse<Vec<TaxForm>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
+    match AutoTaxFiler::get_forms(&db, tenant_id, params.form_type, params.status).await {
         Ok(forms) => ApiResponse::success(forms, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1581,13 +1670,13 @@ pub async fn get_tax_form_by_id_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TaxFormWithLines> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
+    match AutoTaxFiler::get_form_by_id(&db, tenant_id, id).await {
         Ok(form) => ApiResponse::success(form, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1598,9 +1687,9 @@ pub async fn submit_tax_form_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TaxFormWithLines> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoTaxFiler::submit_form(&pool, tenant_id, id).await {
+    match AutoTaxFiler::submit_form(&db, tenant_id, id).await {
         Ok(form) => ApiResponse::success(form, "提交成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1612,9 +1701,9 @@ pub async fn amend_tax_form_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<AmendTaxFormRequest>,
 ) -> ApiResponse<TaxFormWithLines> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoTaxFiler::amend_form(&pool, tenant_id, id, req).await {
+    match AutoTaxFiler::amend_form(&db, tenant_id, id, req).await {
         Ok(form) => ApiResponse::success(form, "修改成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1625,13 +1714,13 @@ pub async fn get_tax_summary_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxSummaryQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
+    match AutoTaxFiler::get_tax_summary(&db, tenant_id, params.year).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1641,9 +1730,9 @@ pub async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoTaxFiler::get_filing_schedule(&pool, tenant_id).await {
+    match AutoTaxFiler::get_filing_schedule(&db, tenant_id).await {
         Ok(schedule) => ApiResponse::success(schedule, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1662,12 +1751,12 @@ pub async fn calculate_tax_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateTaxRequest>,
 ) -> ApiResponse<TaxResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tax_type = req.tax_type.unwrap_or_else(|| "vat".to_string());
     match tax_type.as_str() {
         "vat" => {
-            match TaxRateCalculator::calculate_vat(&pool, tenant_id, req.amount, req.jurisdiction)
+            match TaxRateCalculator::calculate_vat(&db, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
                 Ok(result) => ApiResponse::success(result, "计算成功"),
@@ -1675,7 +1764,7 @@ pub async fn calculate_tax_handler(
             }
         }
         "cit" => {
-            match TaxRateCalculator::calculate_cit(&pool, tenant_id, req.amount, req.jurisdiction)
+            match TaxRateCalculator::calculate_cit(&db, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
                 Ok(result) => ApiResponse::success(result, "计算成功"),
@@ -1683,7 +1772,7 @@ pub async fn calculate_tax_handler(
             }
         }
         "pit" => {
-            match TaxRateCalculator::calculate_pit(&pool, tenant_id, req.amount, req.jurisdiction)
+            match TaxRateCalculator::calculate_pit(&db, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
                 Ok(result) => ApiResponse::success(result, "计算成功"),
@@ -1692,7 +1781,7 @@ pub async fn calculate_tax_handler(
         }
         "withholding" => {
             match TaxRateCalculator::calculate_withholding(
-                &pool,
+                &db,
                 tenant_id,
                 req.amount,
                 req.jurisdiction,
@@ -1712,19 +1801,14 @@ pub async fn get_rate_schedule_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<RateScheduleQueryParams>,
 ) -> ApiResponse<Vec<TaxRate>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match TaxRateCalculator::get_rate_schedule(
-        &pool,
-        tenant_id,
-        params.tax_type,
-        params.jurisdiction,
-    )
-    .await
+    match TaxRateCalculator::get_rate_schedule(&db, tenant_id, params.tax_type, params.jurisdiction)
+        .await
     {
         Ok(rates) => ApiResponse::success(rates, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1736,21 +1820,15 @@ pub async fn lookup_rate_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LookupRateParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     let tax_type = params.tax_type.unwrap_or_else(|| "vat".to_string());
-    match TaxRateCalculator::lookup_rate(
-        &pool,
-        tenant_id,
-        tax_type,
-        params.jurisdiction,
-        params.date,
-    )
-    .await
+    match TaxRateCalculator::lookup_rate(&db, tenant_id, tax_type, params.jurisdiction, params.date)
+        .await
     {
         Ok(rate) => ApiResponse::success(serde_json::json!({ "rate": rate }), "查询成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1762,14 +1840,14 @@ pub async fn get_tax_breakdown_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<BreakdownParams>,
 ) -> ApiResponse<Vec<TaxBreakdown>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     match TaxRateCalculator::get_tax_breakdown(
-        &pool,
+        &db,
         tenant_id,
         params.amount,
         params.tax_type,
@@ -1787,8 +1865,8 @@ pub async fn validate_rate_handler(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ValidateRateParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
-    match TaxRateCalculator::validate_rate(&pool, params.rate, params.tax_type).await {
+    let db = state.db.clone();
+    match TaxRateCalculator::validate_rate(&db, params.rate, params.tax_type).await {
         Ok(result) => ApiResponse::success(result, "验证完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1816,9 +1894,9 @@ pub async fn create_plan_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePlanRequest>,
 ) -> ApiResponse<TaxPlan> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match TaxPlanner::create_plan(&pool, tenant_id, req).await {
+    match TaxPlanner::create_plan(&db, tenant_id, req).await {
         Ok(plan) => ApiResponse::success(plan, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1829,9 +1907,9 @@ pub async fn analyze_scenario_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeScenarioRequest>,
 ) -> ApiResponse<ScenarioAnalysis> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match TaxPlanner::analyze_scenario(&pool, tenant_id, req).await {
+    match TaxPlanner::analyze_scenario(&db, tenant_id, req).await {
         Ok(analysis) => ApiResponse::success(analysis, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1842,7 +1920,7 @@ pub async fn get_suggestions_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SuggestionsQueryParams>,
 ) -> ApiResponse<Vec<TaxSuggestion>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1852,7 +1930,7 @@ pub async fn get_suggestions_handler(
         Some(id) => id,
         None => return ApiResponse::bad_request("plan_id 参数必填"),
     };
-    match TaxPlanner::get_suggestions(&pool, tenant_id, plan_id).await {
+    match TaxPlanner::get_suggestions(&db, tenant_id, plan_id).await {
         Ok(suggestions) => ApiResponse::success(suggestions, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1863,9 +1941,9 @@ async fn compare_scenarios_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenarioRequest>,
 ) -> ApiResponse<Vec<ScenarioAnalysis>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match TaxPlanner::compare_scenarios(&pool, tenant_id, req.scenarios).await {
+    match TaxPlanner::compare_scenarios(&db, tenant_id, req.scenarios).await {
         Ok(results) => ApiResponse::success(results, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1876,13 +1954,13 @@ pub async fn list_plans_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PlansQueryParams>,
 ) -> ApiResponse<Vec<TaxPlan>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
+    match TaxPlanner::list_plans(&db, tenant_id, params.status).await {
         Ok(plans) => ApiResponse::success(plans, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1893,9 +1971,9 @@ pub async fn approve_plan_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TaxPlan> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match TaxPlanner::approve_plan(&pool, tenant_id, id).await {
+    match TaxPlanner::approve_plan(&db, tenant_id, id).await {
         Ok(plan) => ApiResponse::success(plan, "审批成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1906,13 +1984,13 @@ pub async fn get_compliance_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceQueryParams>,
 ) -> ApiResponse<ComplianceCheckResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
+    match TaxPlanner::get_compliance_check(&db, tenant_id, params.entity).await {
         Ok(result) => ApiResponse::success(result, "合规检查完成"),
         Err(e) => crate::shared::err_resp(e),
     }

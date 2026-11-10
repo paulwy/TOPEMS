@@ -1,8 +1,8 @@
-use sqlx::postgres::PgPool;
-
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 
-pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError> {
+pub async fn init_reconciliation_tables(db: &Db) -> Result<(), TopemsError> {
+    let mut scope = db.scope_system().await?;
     // NOTE: pg_type existence check MUST be scoped to current_schema() — otherwise a stale
     // type created in another schema (e.g. 'rs' from a misconfigured prior run) causes the
     // DO block to skip creation here, and the subsequent CREATE TABLE referencing the type
@@ -46,7 +46,7 @@ pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError
             END IF;
         END $$;
     "#;
-    sqlx::raw_sql(create_types).execute(pool).await?;
+    sqlx::raw_sql(create_types).execute(&mut scope).await?;
 
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS core_finance_reconciliation_sessions (
@@ -102,7 +102,12 @@ pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError
     ];
 
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
+
+    scope.commit().await?;
+
     Ok(())
 }

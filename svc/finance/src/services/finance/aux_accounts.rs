@@ -14,13 +14,15 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateAuxiliaryAccountRequest,
     ) -> Result<AuxiliaryAccount, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let level = if let Some(parent_id) = req.parent_id {
             let parent: (i32,) = sqlx::query_as(only_own_schema_query!(
                 "finance",
                 "SELECT level FROM finance.core_finance_aux_accounts WHERE id = $1"
             ))
             .bind(parent_id)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
             parent.0 + 1
         } else {
@@ -39,8 +41,10 @@ impl FinanceService {
         .bind(req.parent_id)
         .bind(level)
         .bind(req.description)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(aux_account)
     }
@@ -51,23 +55,26 @@ impl FinanceService {
         aux_type: Option<AuxType>,
         locale: &str,
     ) -> Result<Vec<AuxiliaryAccount>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND aux_type::text = $2 ORDER BY code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE (tenant_id = $1::uuid) AND aux_type::text = $2 ORDER BY code"),
             )
             .bind(tenant_id)
             .bind(type_str)
             .bind(locale)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?
         } else {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) ORDER BY aux_type, code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE (tenant_id = $1::uuid) ORDER BY aux_type, code"),
             )
             .bind(tenant_id)
             .bind(locale)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?
         };
 
@@ -80,13 +87,16 @@ impl FinanceService {
         aux_id: Uuid,
         locale: &str,
     ) -> Result<AuxiliaryAccount, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let account = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(aux_id)
         .bind(locale)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(account)
@@ -98,12 +108,15 @@ impl FinanceService {
         query: AuxLedgerQuery,
         locale: &str,
     ) -> Result<Vec<AuxLedgerEntry>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = query.aux_type.to_string();
         let aux_id = query.aux_id;
         let account_id = query.account_id;
         let period = query.period;
         let start_date = query.start_date;
         let end_date = query.end_date;
+
+        let mut scope = self.read_scope().await?;
 
         let entries = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -125,7 +138,7 @@ impl FinanceService {
                 l.balance
             FROM finance.core_finance_ledger l
             JOIN finance.core_finance_aux_accounts la ON la.id = l.aux_id
-            WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR l.tenant_id = $1::uuid)
+            WHERE (l.tenant_id = $1::uuid)
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR l.aux_id = $3)
               AND ($4::uuid IS NULL OR l.account_id = $4)
@@ -143,7 +156,7 @@ impl FinanceService {
         .bind(start_date)
         .bind(end_date)
         .bind(locale)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(entries)
@@ -155,10 +168,13 @@ impl FinanceService {
         query: AuxLedgerQuery,
         locale: &str,
     ) -> Result<Vec<AuxBalanceReport>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = query.aux_type.to_string();
         let aux_id = query.aux_id;
         let account_id = query.account_id;
         let period = query.period;
+
+        let mut scope = self.read_scope().await?;
 
         let rows = sqlx::query(only_own_schema_query!(
             "finance",
@@ -176,8 +192,8 @@ impl FinanceService {
             CROSS JOIN finance.core_finance_accounts a
             LEFT JOIN finance.core_finance_ledger l ON l.account_id = a.id AND l.aux_id = la.id
                 AND ($4::text IS NULL OR l.period = $4)
-            WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR la.tenant_id = $1::uuid)
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1::uuid)
+            WHERE (la.tenant_id = $1::uuid)
+              AND (a.tenant_id = $1::uuid)
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR la.id = $3)
               AND ($5::uuid IS NULL OR a.id = $5)
@@ -191,7 +207,7 @@ impl FinanceService {
         .bind(period)
         .bind(account_id)
         .bind(locale)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut acc: std::collections::HashMap<Uuid, AuxBalanceReport> =

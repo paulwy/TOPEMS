@@ -27,9 +27,9 @@ use chrono::{DateTime, Utc};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -241,7 +241,7 @@ pub struct PredictionResult {
 impl CashFlowPredictor {
     #[allow(clippy::as_conversions)]
     pub async fn predict(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: PredictCashFlowRequest,
     ) -> Result<PredictionResult, sqlx::Error> {
@@ -267,7 +267,7 @@ impl CashFlowPredictor {
             ))
         })?;
 
-        let historical = Self::fetch_historical_data(pool, tenant_id, entity_id).await?;
+        let historical = Self::fetch_historical_data(db, tenant_id, entity_id).await?;
 
         let (inflow, outflow) = Self::apply_model(&historical, &model_type, horizon, &scenario);
 
@@ -283,6 +283,7 @@ impl CashFlowPredictor {
         let prediction_id = Uuid::new_v4();
         let model_version = format!("v53.0-{}", model_type.as_str());
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
                 (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id)
@@ -301,8 +302,9 @@ impl CashFlowPredictor {
         .bind(now)
         .bind(now)
         .bind(tenant_id)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let seasonal_factors = Self::detect_seasonal_patterns(&historical);
         let trend_slope = Self::calculate_trend_slope(&historical);
@@ -329,10 +331,11 @@ impl CashFlowPredictor {
     }
 
     async fn fetch_historical_data(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         entity_uuid: Uuid,
     ) -> Result<Vec<(f64, f64)>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(f64, f64)> = sqlx::query_as(
             only_own_schema_query!("finance", r#"SELECT
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0) as inflow,
@@ -348,8 +351,9 @@ impl CashFlowPredictor {
         )
         .bind(tenant_id)
         .bind(entity_uuid)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         if rows.is_empty() {
             Ok(Self::generate_synthetic_history())
@@ -571,7 +575,7 @@ impl CashFlowPredictor {
     }
 
     pub async fn get_predictions(
-        pool: &PgPool,
+        db: &Db,
         entity_id: Option<String>,
         period: Option<String>,
         scenario: Option<String>,
@@ -579,6 +583,7 @@ impl CashFlowPredictor {
         page_size: i64,
     ) -> Result<(Vec<CashFlowPrediction>, i64), sqlx::Error> {
         let offset = (page - 1) * page_size;
+        let mut scope = db.scope_read().await?;
 
         let mut count_query =
             String::from("SELECT COUNT(*) FROM finance_cash_flow_predictions_v53 WHERE 1=1");
@@ -603,7 +608,7 @@ impl CashFlowPredictor {
         }
 
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
         data_query.push_str(" ORDER BY created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
@@ -620,13 +625,14 @@ impl CashFlowPredictor {
         if let Some(ref s) = scenario {
             q = q.bind(s);
         }
-        let items = q.fetch_all(pool).await?;
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
 
         Ok((items, total))
     }
 
     pub async fn retrain_model(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         model_type: PredictionModel,
     ) -> Result<PredictionModelRecord, sqlx::Error> {
@@ -634,8 +640,9 @@ impl CashFlowPredictor {
         let model_str = model_type.as_str();
 
         let accuracy =
-            decimal_from_f64(Self::compute_retrain_accuracy(pool, tenant_id, &model_type).await);
+            decimal_from_f64(Self::compute_retrain_accuracy(db, tenant_id, &model_type).await);
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let record = sqlx::query_as::<_, PredictionModelRecord>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
                 (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id)
@@ -661,18 +668,15 @@ impl CashFlowPredictor {
         .bind(now)
         .bind(now)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(record)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn compute_retrain_accuracy(
-        _pool: &PgPool,
-        _tenant_id: Uuid,
-        model: &PredictionModel,
-    ) -> f64 {
+    async fn compute_retrain_accuracy(_db: &Db, _tenant_id: Uuid, model: &PredictionModel) -> f64 {
         let sample = Self::generate_synthetic_history();
         let (errors_inflow, errors_outflow) = Self::compute_prediction_errors(&sample, model);
 
@@ -691,23 +695,25 @@ impl CashFlowPredictor {
     }
 
     pub async fn get_accuracy(
-        pool: &PgPool,
+        db: &Db,
         model_type: Option<String>,
     ) -> Result<Vec<PredictionAccuracy>, sqlx::Error> {
+        let mut scope = db.scope_read().await?;
         let records: Vec<PredictionModelRecord> = if let Some(ref mt) = model_type {
             sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE model_type = $1 ORDER BY trained_at DESC"),
             )
             .bind(mt)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?
         } else {
             sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 ORDER BY trained_at DESC"),
             )
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?
         };
+        scope.commit().await?;
 
         let mut accuracies = Vec::new();
         for record in &records {
@@ -808,7 +814,7 @@ pub struct VarianceTrendAnalysis {
 
 impl BudgetAnalyzer {
     pub async fn analyze(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AnalyzeBudgetRequest,
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
@@ -878,6 +884,7 @@ impl BudgetAnalyzer {
         let recommendations = Self::generate_recommendations(&variances, &root_causes);
         let anomalies = Self::detect_anomalies_internal(&variances);
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         for v in &variances {
             sqlx::query(
                 only_own_schema_query!("finance", r#"INSERT INTO finance_budget_variances_v53
@@ -897,9 +904,10 @@ impl BudgetAnalyzer {
             .bind(v.created_at)
             .bind(v.updated_at)
             .bind(tenant_id)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
         }
+        scope.commit().await?;
 
         Ok(VarianceAnalysisResult {
             variances,
@@ -1092,7 +1100,7 @@ impl BudgetAnalyzer {
     }
 
     pub async fn get_variance(
-        pool: &PgPool,
+        db: &Db,
         entity_id: Option<String>,
         period: Option<String>,
         classification: Option<String>,
@@ -1134,15 +1142,18 @@ impl BudgetAnalyzer {
             q = q.bind(c);
         }
 
-        q.fetch_all(pool).await
+        let mut scope = db.scope_read().await?;
+        let variances = q.fetch_all(&mut scope).await;
+        scope.commit().await?;
+        variances
     }
 
     pub async fn get_report(
-        pool: &PgPool,
+        db: &Db,
         entity_id: Option<String>,
         period: Option<String>,
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
-        let variances = Self::get_variance(pool, entity_id, period, None).await?;
+        let variances = Self::get_variance(db, entity_id, period, None).await?;
 
         // 金额聚合在 Decimal 域完成（v.*_amount 来自 numeric(18,2) 列）。
         let total_budget: Decimal = variances.iter().map(|v| v.budget_amount).sum();
@@ -1181,20 +1192,20 @@ impl BudgetAnalyzer {
     }
 
     pub async fn detect_anomalies(
-        pool: &PgPool,
+        db: &Db,
         entity_id: Option<String>,
         period: Option<String>,
     ) -> Result<Vec<AnomalyDetection>, sqlx::Error> {
-        let variances = Self::get_variance(pool, entity_id, period, None).await?;
+        let variances = Self::get_variance(db, entity_id, period, None).await?;
         Ok(Self::detect_anomalies_internal(&variances))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_trends(
-        pool: &PgPool,
+        db: &Db,
         entity_id: Option<String>,
     ) -> Result<VarianceTrendAnalysis, sqlx::Error> {
-        let variances = Self::get_variance(pool, entity_id, None, None).await?;
+        let variances = Self::get_variance(db, entity_id, None, None).await?;
 
         let mut period_data: HashMap<String, Vec<&BudgetVariance>> = HashMap::new();
         for v in &variances {
@@ -1324,10 +1335,10 @@ pub async fn predict_cash_flow_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<PredictCashFlowRequest>,
 ) -> ApiResponse<PredictionResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match CashFlowPredictor::predict(&pool, tenant_id, req).await {
+    match CashFlowPredictor::predict(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "预测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1338,13 +1349,13 @@ pub async fn get_predictions_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PredictionsQueryParams>,
 ) -> ApiResponse<Vec<CashFlowPrediction>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
     match CashFlowPredictor::get_predictions(
-        &pool,
+        &db,
         params.entity_id,
         params.period,
         params.scenario,
@@ -1363,7 +1374,7 @@ pub async fn retrain_model_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<PredictionModelRecord> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let model_str = req
@@ -1372,7 +1383,7 @@ pub async fn retrain_model_handler(
         .unwrap_or("exponential_smoothing");
     let model = PredictionModel::from_str(model_str);
 
-    match CashFlowPredictor::retrain_model(&pool, tenant_id, model).await {
+    match CashFlowPredictor::retrain_model(&db, tenant_id, model).await {
         Ok(record) => ApiResponse::success(record, "模型重训练完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1397,7 +1408,7 @@ pub async fn get_accuracy_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<Vec<PredictionAccuracy>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let model_type = params
@@ -1405,7 +1416,7 @@ pub async fn get_accuracy_handler(
         .and_then(|v| v.as_str())
         .map(String::from);
 
-    match CashFlowPredictor::get_accuracy(&pool, model_type).await {
+    match CashFlowPredictor::get_accuracy(&db, model_type).await {
         Ok(accuracies) => ApiResponse::success(accuracies, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1418,10 +1429,10 @@ pub async fn analyze_budget_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeBudgetRequest>,
 ) -> ApiResponse<VarianceAnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::analyze(&pool, tenant_id, req).await {
+    match BudgetAnalyzer::analyze(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1432,16 +1443,11 @@ pub async fn get_variance_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
 ) -> ApiResponse<Vec<BudgetVariance>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::get_variance(
-        &pool,
-        params.entity_id,
-        params.period,
-        params.classification,
-    )
-    .await
+    match BudgetAnalyzer::get_variance(&db, params.entity_id, params.period, params.classification)
+        .await
     {
         Ok(variances) => ApiResponse::success(variances, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1470,10 +1476,10 @@ pub async fn get_variance_report_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
 ) -> ApiResponse<VarianceAnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::get_report(&pool, params.entity_id, params.period).await {
+    match BudgetAnalyzer::get_report(&db, params.entity_id, params.period).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1484,7 +1490,7 @@ pub async fn detect_anomalies_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Vec<AnomalyDetection>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let entity_id = req
@@ -1493,7 +1499,7 @@ pub async fn detect_anomalies_handler(
         .map(String::from);
     let period = req.get("period").and_then(|v| v.as_str()).map(String::from);
 
-    match BudgetAnalyzer::detect_anomalies(&pool, entity_id, period).await {
+    match BudgetAnalyzer::detect_anomalies(&db, entity_id, period).await {
         Ok(anomalies) => ApiResponse::success(anomalies, "异常检测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1504,7 +1510,7 @@ pub async fn get_variance_trends_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<VarianceTrendAnalysis> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let entity_id = params
@@ -1512,7 +1518,7 @@ pub async fn get_variance_trends_handler(
         .and_then(|v| v.as_str())
         .map(String::from);
 
-    match BudgetAnalyzer::get_trends(&pool, entity_id).await {
+    match BudgetAnalyzer::get_trends(&db, entity_id).await {
         Ok(trends) => ApiResponse::success(trends, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }

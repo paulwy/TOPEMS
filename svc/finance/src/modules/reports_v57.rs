@@ -19,9 +19,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -321,7 +321,9 @@ pub struct Insight {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_reports_v57_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_reports_v57_tables(db: &Db) -> Result<(), sqlx::Error> {
+    // 系统通道：无请求上下文（启动/后台），登记 §2.1
+    let mut scope = db.scope_system().await?;
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v57_report_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -398,8 +400,11 @@ pub async fn init_reports_v57_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
+    scope.commit().await?;
     Ok(())
 }
 
@@ -433,7 +438,7 @@ pub struct ScheduleReportRequest {
 
 impl AutomatedReportEngine {
     pub async fn create_template(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateTemplateRequest,
     ) -> Result<ReportTemplate, sqlx::Error> {
@@ -445,7 +450,8 @@ impl AutomatedReportEngine {
             .layout
             .unwrap_or_else(|| ReportLayout::JSON.as_str().to_string());
 
-        sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_report_templates
                 (id, tenant_id, name, report_type, layout, parameters, schedule)
@@ -459,24 +465,33 @@ impl AutomatedReportEngine {
         .bind(&layout)
         .bind(&req.parameters)
         .bind(&req.schedule)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(template)
     }
 
     pub async fn get_templates(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReportTemplate>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let templates = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(templates)
     }
 
     pub async fn generate_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: GenerateReportRequest,
     ) -> Result<GeneratedReport, sqlx::Error> {
@@ -488,7 +503,8 @@ impl AutomatedReportEngine {
 
         let data = Self::build_report_data(&req.report_type, req.period_start, req.period_end);
 
-        sqlx::query_as::<_, GeneratedReport>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let report = sqlx::query_as::<_, GeneratedReport>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v57_generated_reports
                 (id, tenant_id, template_id, period_start, period_end, data, generated_at, status, format)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
@@ -502,12 +518,14 @@ impl AutomatedReportEngine {
         .bind(&data)
         .bind(now)
         .bind(&format)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(report)
     }
 
     pub async fn list_reports(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
@@ -519,55 +537,72 @@ impl AutomatedReportEngine {
         }
         query.push_str(" ORDER BY generated_at DESC LIMIT 500");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, GeneratedReport>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
-        q.fetch_all(pool).await
+        let reports = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(reports)
     }
 
     pub async fn get_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let report = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(report_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(report)
     }
 
     pub async fn download_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
-        Self::get_report(pool, tenant_id, report_id).await
+        Self::get_report(db, tenant_id, report_id).await
     }
 
     pub async fn delete_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         report_id: Uuid,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(report_id)
             .bind(tenant_id)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(())
     }
 
     pub async fn schedule_report(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ScheduleReportRequest,
     ) -> Result<ReportTemplate, sqlx::Error> {
-        sqlx::query_as(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let template = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v57_report_templates
             SET schedule = $1, updated_at = CURRENT_TIMESTAMP
@@ -577,8 +612,10 @@ impl AutomatedReportEngine {
         .bind(&req.schedule)
         .bind(req.template_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(template)
     }
 
     fn build_report_data(
@@ -644,7 +681,7 @@ pub struct DiceRequest {
 
 impl MultiDimensionalAnalyzer {
     pub async fn analyze(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AnalyzeRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
@@ -654,7 +691,8 @@ impl MultiDimensionalAnalyzer {
         let data = Self::build_pivot_data(&req.dimensions, &req.measures);
         let aggregations = Self::compute_aggregations(&data, &req.measures);
 
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -667,12 +705,14 @@ impl MultiDimensionalAnalyzer {
         .bind(&req.measures)
         .bind(&data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn pivot(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: PivotRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
@@ -683,7 +723,8 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&data, &[req.measure.clone()]);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -696,16 +737,18 @@ impl MultiDimensionalAnalyzer {
         .bind(&[req.measure])
         .bind(&data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn drill_down(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: DrillDownRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
         let new_data = Self::apply_drill_down(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -714,7 +757,8 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -727,16 +771,18 @@ impl MultiDimensionalAnalyzer {
         .bind(&parent.measures)
         .bind(&new_data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn roll_up(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: RollUpRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
         let new_data = Self::apply_roll_up(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -744,7 +790,8 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -757,16 +804,18 @@ impl MultiDimensionalAnalyzer {
         .bind(&parent.measures)
         .bind(&new_data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn slice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: SliceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
         let new_data = Self::apply_slice(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -775,7 +824,8 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -788,16 +838,18 @@ impl MultiDimensionalAnalyzer {
         .bind(&parent.measures)
         .bind(&new_data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn dice(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: DiceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
         let new_data = Self::apply_dice(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.filters,
@@ -805,7 +857,8 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
@@ -818,27 +871,37 @@ impl MultiDimensionalAnalyzer {
         .bind(&parent.measures)
         .bind(&new_data)
         .bind(&aggregations)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_analysis_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<AnalysisResult>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let results = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(results)
     }
 
     pub async fn save_analysis(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         result: &AnalysisResult,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -852,23 +915,27 @@ impl MultiDimensionalAnalyzer {
         .bind(&result.measures)
         .bind(&result.data)
         .bind(&result.aggregations)
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 
     async fn get_result(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(result_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     fn build_pivot_data(dimensions: &[String], measures: &[String]) -> serde_json::Value {
@@ -1040,7 +1107,7 @@ pub struct TrainModelRequest {
 
 impl PredictiveInsightEngine {
     pub async fn generate_forecast(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: GenerateForecastRequest,
     ) -> Result<Insight, sqlx::Error> {
@@ -1050,7 +1117,8 @@ impl PredictiveInsightEngine {
 
         let forecast_data = Self::compute_forecast(&req.target_metric, periods);
 
-        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
@@ -1062,12 +1130,14 @@ impl PredictiveInsightEngine {
         .bind(format!("{} 未来 {} 期预测", req.target_metric, periods))
         .bind(Some(0.85))
         .bind(&forecast_data)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(insight)
     }
 
     pub async fn detect_anomalies(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: DetectAnomaliesRequest,
     ) -> Result<Insight, sqlx::Error> {
@@ -1077,7 +1147,8 @@ impl PredictiveInsightEngine {
 
         let anomaly_data = Self::detect_outliers(&req.metric, threshold);
 
-        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
@@ -1089,12 +1160,14 @@ impl PredictiveInsightEngine {
         .bind(format!("{} 异常检测 (阈值: {})", req.metric, threshold))
         .bind(Some(0.90))
         .bind(&anomaly_data)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(insight)
     }
 
     pub async fn get_insights(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         insight_type: Option<String>,
     ) -> Result<Vec<Insight>, sqlx::Error> {
@@ -1106,16 +1179,23 @@ impl PredictiveInsightEngine {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, Insight>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref t) = insight_type {
             q = q.bind(t);
         }
-        q.fetch_all(pool).await
+        let insights = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(insights)
     }
 
     pub async fn train_model(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: TrainModelRequest,
     ) -> Result<ForecastModel, sqlx::Error> {
@@ -1126,7 +1206,8 @@ impl PredictiveInsightEngine {
             .unwrap_or_else(|| ForecastModelType::LinearRegression.as_str().to_string());
         let accuracy = Self::estimate_accuracy(&model_type);
 
-        sqlx::query_as::<_, ForecastModel>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let model = sqlx::query_as::<_, ForecastModel>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_forecast_models
                 (id, tenant_id, model_type, target_metric, features, accuracy, trained_at)
@@ -1140,38 +1221,50 @@ impl PredictiveInsightEngine {
         .bind(&req.features)
         .bind(accuracy)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(model)
     }
 
     pub async fn list_models(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastModel>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let models = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(models)
     }
 
     pub async fn get_model_accuracy(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         model_id: Uuid,
     ) -> Result<ForecastModel, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let model = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(model_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(model)
     }
 
     pub async fn get_trend_analysis(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         metric: Option<String>,
     ) -> Result<Insight, sqlx::Error> {
@@ -1181,7 +1274,8 @@ impl PredictiveInsightEngine {
 
         let trend_data = Self::analyze_trend(&target);
 
-        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
@@ -1193,8 +1287,10 @@ impl PredictiveInsightEngine {
         .bind(format!("{} 趋势分析", target))
         .bind(Some(0.80))
         .bind(&trend_data)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(insight)
     }
 
     fn compute_forecast(metric: &str, periods: i32) -> serde_json::Value {
@@ -1313,9 +1409,9 @@ pub async fn create_template_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
 ) -> ApiResponse<ReportTemplate> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::create_template(&pool, tenant_id, req).await {
+    match AutomatedReportEngine::create_template(&db, tenant_id, req).await {
         Ok(template) => ApiResponse::success(template, "模板创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1325,13 +1421,13 @@ pub async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ReportTemplate>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
+    match AutomatedReportEngine::get_templates(&db, tenant_id).await {
         Ok(templates) => ApiResponse::success(templates, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1344,9 +1440,9 @@ pub async fn generate_report_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResponse<GeneratedReport> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::generate_report(&pool, tenant_id, req).await {
+    match AutomatedReportEngine::generate_report(&db, tenant_id, req).await {
         Ok(report) => ApiResponse::success(report, "报表生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1357,13 +1453,13 @@ pub async fn list_reports_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportListQueryParams>,
 ) -> ApiResponse<Vec<GeneratedReport>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
+    match AutomatedReportEngine::list_reports(&db, tenant_id, params.status).await {
         Ok(reports) => ApiResponse::success(reports, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1374,13 +1470,13 @@ async fn get_report_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeneratedReport> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
+    match AutomatedReportEngine::get_report(&db, tenant_id, id).await {
         Ok(report) => ApiResponse::success(report, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1391,13 +1487,13 @@ pub async fn download_report_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeneratedReport> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
+    match AutomatedReportEngine::download_report(&db, tenant_id, id).await {
         Ok(report) => ApiResponse::success(report, "下载成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1408,9 +1504,9 @@ pub async fn delete_report_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::delete_report(&pool, tenant_id, id).await {
+    match AutomatedReportEngine::delete_report(&db, tenant_id, id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1421,9 +1517,9 @@ pub async fn schedule_report_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScheduleReportRequest>,
 ) -> ApiResponse<ReportTemplate> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::schedule_report(&pool, tenant_id, req).await {
+    match AutomatedReportEngine::schedule_report(&db, tenant_id, req).await {
         Ok(template) => ApiResponse::success(template, "调度设置成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1441,9 +1537,9 @@ pub async fn analyze_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::analyze(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::analyze(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1454,9 +1550,9 @@ pub async fn pivot_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<PivotRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::pivot(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::pivot(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Pivot 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1467,9 +1563,9 @@ pub async fn drill_down_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<DrillDownRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::drill_down(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::drill_down(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Drill-down 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1480,9 +1576,9 @@ pub async fn roll_up_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<RollUpRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::roll_up(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::roll_up(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Roll-up 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1493,9 +1589,9 @@ pub async fn slice_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SliceRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::slice(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::slice(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Slice 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1506,9 +1602,9 @@ pub async fn dice_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<DiceRequest>,
 ) -> ApiResponse<AnalysisResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::dice(&pool, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::dice(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Dice 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1518,13 +1614,13 @@ pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AnalysisResult>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
+    match MultiDimensionalAnalyzer::get_analysis_history(&db, tenant_id).await {
         Ok(results) => ApiResponse::success(results, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1547,9 +1643,9 @@ pub async fn generate_forecast_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateForecastRequest>,
 ) -> ApiResponse<Insight> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::generate_forecast(&pool, tenant_id, req).await {
+    match PredictiveInsightEngine::generate_forecast(&db, tenant_id, req).await {
         Ok(insight) => ApiResponse::success(insight, "预测生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1560,9 +1656,9 @@ async fn detect_anomalies_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<DetectAnomaliesRequest>,
 ) -> ApiResponse<Insight> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::detect_anomalies(&pool, tenant_id, req).await {
+    match PredictiveInsightEngine::detect_anomalies(&db, tenant_id, req).await {
         Ok(insight) => ApiResponse::success(insight, "异常检测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1573,13 +1669,13 @@ pub async fn get_insights_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InsightsQueryParams>,
 ) -> ApiResponse<Vec<Insight>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
+    match PredictiveInsightEngine::get_insights(&db, tenant_id, params.insight_type).await {
         Ok(insights) => ApiResponse::success(insights, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1590,9 +1686,9 @@ pub async fn train_model_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<TrainModelRequest>,
 ) -> ApiResponse<ForecastModel> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::train_model(&pool, tenant_id, req).await {
+    match PredictiveInsightEngine::train_model(&db, tenant_id, req).await {
         Ok(model) => ApiResponse::success(model, "模型训练成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1602,13 +1698,13 @@ pub async fn list_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ForecastModel>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
+    match PredictiveInsightEngine::list_models(&db, tenant_id).await {
         Ok(models) => ApiResponse::success(models, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1619,9 +1715,9 @@ pub async fn get_trend_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQueryParams>,
 ) -> ApiResponse<Insight> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::get_trend_analysis(&pool, tenant_id, params.metric).await {
+    match PredictiveInsightEngine::get_trend_analysis(&db, tenant_id, params.metric).await {
         Ok(insight) => ApiResponse::success(insight, "趋势分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }

@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 
 use super::events::FinanceDomainEvent;
 use super::materialized_view::MaterializedView;
@@ -24,12 +25,12 @@ pub struct PgVoucherSummary {
 }
 
 pub struct PgVoucherSummaryView {
-    pool: PgPool,
+    db: Db,
 }
 
 impl PgVoucherSummaryView {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
     }
 
     pub async fn list(
@@ -40,20 +41,22 @@ impl PgVoucherSummaryView {
     ) -> Result<(Vec<PgVoucherSummary>, i64), TopemsError> {
         let offset = ((page - 1) * page_size).max(0);
 
+        let mut scope = self.db.scope_system().await?;
+
         let count_row = if let Some(s) = &status {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_voucher_summary WHERE status = $1"
             ))
             .bind(s)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_voucher_summary"
             ))
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?
         };
         let total: i64 = count_row.try_get("count")?;
@@ -65,7 +68,7 @@ impl PgVoucherSummaryView {
             .bind(s)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await
             ?
         } else {
@@ -74,7 +77,7 @@ impl PgVoucherSummaryView {
             )
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await
             ?
         };
@@ -87,9 +90,10 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await
             ?;
 
@@ -100,9 +104,10 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
             .bind(no)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await
             ?;
 
@@ -136,6 +141,7 @@ impl MaterializedView for PgVoucherSummaryView {
     }
 
     async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         match event {
             FinanceDomainEvent::VoucherCreated(e) => {
                 let total = rust_decimal::Decimal::from_f64(e.total_amount)
@@ -163,7 +169,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind(total)
                 .bind(&e.created_by)
                 .bind(e.occurred_at)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await
                 ?;
             }
@@ -177,7 +183,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind("Posted")
                 .bind(e.occurred_at)
                 .bind(&e.voucher_id)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
             FinanceDomainEvent::VoucherReversed(e) => {
@@ -189,21 +195,24 @@ impl MaterializedView for PgVoucherSummaryView {
                 ))
                 .bind("Reversed")
                 .bind(&e.voucher_id)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
             _ => {}
         }
+        scope.commit().await?;
         Ok(())
     }
 
     async fn rebuild(&self) -> Result<(), TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             "DELETE FROM mv_voucher_summary"
         ))
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 }
@@ -226,12 +235,12 @@ pub struct PgReceivableAging {
 }
 
 pub struct PgReceivableAgingView {
-    pool: PgPool,
+    db: Db,
 }
 
 impl PgReceivableAgingView {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
     }
 
     pub async fn list(
@@ -242,20 +251,22 @@ impl PgReceivableAgingView {
     ) -> Result<(Vec<PgReceivableAging>, i64), TopemsError> {
         let offset = ((page - 1) * page_size).max(0);
 
+        let mut scope = self.db.scope_system().await?;
+
         let count_row = if let Some(s) = &status {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_receivable_aging WHERE status = $1"
             ))
             .bind(s)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_receivable_aging"
             ))
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?
         };
         let total: i64 = count_row.try_get("count")?;
@@ -267,7 +278,7 @@ impl PgReceivableAgingView {
             .bind(s)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await
             ?
         } else {
@@ -276,7 +287,7 @@ impl PgReceivableAgingView {
             )
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut scope)
             .await
             ?
         };
@@ -289,9 +300,10 @@ impl PgReceivableAgingView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM mv_receivable_aging WHERE id = $1"))
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut scope)
             .await
             ?;
 
@@ -322,6 +334,7 @@ impl PgReceivableAgingView {
     pub async fn total_by_bucket(
         &self,
     ) -> Result<Vec<super::value_objects::AgingBucket>, TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT SUM(current_amount) as current, 
@@ -332,7 +345,7 @@ impl PgReceivableAgingView {
                     SUM(over_180_amount) as over180
              FROM mv_receivable_aging"
         ))
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let current: Option<rust_decimal::Decimal> = row.try_get("current")?;
@@ -397,6 +410,7 @@ impl MaterializedView for PgReceivableAgingView {
     }
 
     async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         match event {
             FinanceDomainEvent::ReceivableCreated(e) => {
                 let amount = rust_decimal::Decimal::from_f64(e.amount)
@@ -421,7 +435,7 @@ impl MaterializedView for PgReceivableAgingView {
                 .bind(amount)
                 .bind(amount)
                 .bind("Unsettled")
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await
                 ?;
             }
@@ -442,7 +456,7 @@ impl MaterializedView for PgReceivableAgingView {
                 .bind(remaining)
                 .bind(status)
                 .bind(&e.receivable_id)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
             FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
@@ -464,22 +478,25 @@ impl MaterializedView for PgReceivableAgingView {
                         );
                     sqlx::query(sqlx::AssertSqlSafe(query))
                         .bind(amount)
-                        .execute(&self.pool)
+                        .execute(&mut scope)
                         .await?;
                 }
             }
             _ => {}
         }
+        scope.commit().await?;
         Ok(())
     }
 
     async fn rebuild(&self) -> Result<(), TopemsError> {
+        let mut scope = self.db.scope_system().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             "DELETE FROM mv_receivable_aging"
         ))
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 }

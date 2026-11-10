@@ -4,6 +4,7 @@ use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -11,6 +12,8 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
+    /// 租户作用域数据库句柄（service 层唯一入口）。
+    pub db: Db,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }

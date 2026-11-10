@@ -15,6 +15,7 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_core::fsm::{FsmDef, FsmError};
 use uuid::Uuid;
 
+use crate::scope::Db;
 use crate::AuditLogService;
 
 /// 审批操作结果
@@ -268,6 +269,106 @@ pub async fn reject_and_log(
         None,
     )
     .await?;
+    Ok(())
+}
+
+/// [`create_approval_and_log`] 的 Db 作用域版本：审计写入走 `AuditLogService` 的
+/// 租户/系统作用域，服务层无需再传裸池。
+pub async fn create_approval_and_log_db(
+    db: &Db,
+    entity_type: &str,
+    record_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+    approver_id: Uuid,
+) -> Result<Uuid, sqlx::Error> {
+    let approval_id = Uuid::new_v4();
+    let approver_str = approver_id.to_string();
+    AuditLogService::from_db(db.clone())
+        .log_operation(
+            "approval_start",
+            entity_type,
+            Some(record_id),
+            Some(&approver_str),
+            Some(json!({
+                "approval_id": approval_id,
+                "from_status": from_status,
+                "to_status": to_status,
+            })),
+            "success",
+            None,
+        )
+        .await?;
+    Ok(approval_id)
+}
+
+/// [`execute_transition_and_log`] 的 Db 作用域版本：状态转换与审计都在
+/// 租户作用域内执行，避免裸池在 fail-closed RLS 下静默 0 行。
+pub async fn execute_transition_and_log_db(
+    db: &Db,
+    table: Option<&str>,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+) -> Result<(), sqlx::Error> {
+    if let Some(table) = table {
+        let sql = format!(
+            "UPDATE {} SET status = $1, updated_at = NOW() \
+             WHERE id = $2 AND status = $3 AND deleted_at IS NULL",
+            table
+        );
+        let mut scope = db.scope().await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(to_status)
+            .bind(record_id)
+            .bind(from_status)
+            .execute(&mut scope)
+            .await?;
+        scope.commit().await?;
+    }
+
+    AuditLogService::from_db(db.clone())
+        .log_operation(
+            "approval_approve",
+            entity_type,
+            Some(record_id),
+            None,
+            Some(json!({
+                "approval_id": approval_id,
+                "from_status": from_status,
+                "to_status": to_status,
+            })),
+            "success",
+            None,
+        )
+        .await?;
+    Ok(())
+}
+
+/// [`reject_and_log`] 的 Db 作用域版本。
+pub async fn reject_and_log_db(
+    db: &Db,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    reason: &str,
+) -> Result<(), sqlx::Error> {
+    AuditLogService::from_db(db.clone())
+        .log_operation(
+            "approval_reject",
+            entity_type,
+            Some(record_id),
+            None,
+            Some(json!({
+                "approval_id": approval_id,
+                "reason": reason,
+            })),
+            "success",
+            None,
+        )
+        .await?;
     Ok(())
 }
 

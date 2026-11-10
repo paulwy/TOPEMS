@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tokio;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -115,60 +116,96 @@ pub struct AuxQueryParams {
     pub end_date: Option<DateTime<Utc>>,
 }
 
-async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+async fn count_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let Ok(mut scope) = scope else {
+        return 0;
+    };
+    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     )))
     .bind(tenant_id)
-    .fetch_one(pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(v) => v,
         Err(_) => 0,
     }
 }
 
 async fn count_table_with_tenant_and_status(
-    pool: &sqlx::PgPool,
+    db: &Db,
     table: &str,
     tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let Ok(mut scope) = scope else {
+        return 0;
+    };
+    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
     )))
     .bind(tenant_id)
     .bind(status)
-    .fetch_one(pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(v) => v,
         Err(_) => 0,
     }
 }
 
-async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+async fn sum_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let Ok(mut scope) = scope else {
+        return 0;
+    };
+    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     )))
     .bind(tenant_id)
-    .fetch_one(pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(v) => v,
         Err(_) => 0,
     }
 }
 
-async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table)))
+async fn sum_overdue_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let Ok(mut scope) = scope else {
+        return 0;
+    };
+    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table)))
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(v) => v,
         Err(_) => 0,
     }
@@ -190,7 +227,7 @@ pub async fn create_account(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAccountRequest>,
 ) -> ApiResponse<Account> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_account(tenant_id, req).await {
         Ok(account) => ApiResponse::success(account, "创建成功"),
@@ -204,7 +241,7 @@ pub async fn get_account(
     Path(account_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<Account> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account(tenant_id, account_id, locale).await {
@@ -219,7 +256,7 @@ pub async fn get_account_by_code(
     Path(code): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<Account> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account_by_code(tenant_id, &code, locale).await {
@@ -243,7 +280,7 @@ pub async fn get_account_balances(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountBalanceQueryParams>,
 ) -> ApiResponse<Vec<TrialBalance>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &params.period).await {
         Ok(balances) => {
@@ -267,7 +304,7 @@ pub async fn list_accounts(
     Query(_params): Query<AccountQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<Account>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.list_accounts(tenant_id, locale).await {
@@ -282,7 +319,7 @@ pub async fn create_voucher(
     headers: HeaderMap,
     Json(req): Json<CreateVoucherRequest>,
 ) -> ApiResponse<VoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
@@ -300,7 +337,7 @@ pub async fn get_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<VoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => ApiResponse::success(voucher, "查询成功"),
@@ -324,7 +361,7 @@ async fn list_vouchers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherQueryParams>,
 ) -> ApiResponse<Vec<Voucher>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let status = params.status.map(|s| match s.as_str() {
         "draft" => VoucherStatus::Draft,
@@ -350,7 +387,7 @@ pub async fn submit_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.submit_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => ApiResponse::success(voucher, "提交成功"),
@@ -363,7 +400,7 @@ pub async fn approve_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
@@ -380,7 +417,7 @@ pub async fn post_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
@@ -400,7 +437,7 @@ async fn update_voucher(
     headers: HeaderMap,
     Json(req): Json<UpdateVoucherRequest>,
 ) -> ApiResponse<VoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
@@ -419,7 +456,7 @@ pub async fn delete_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_voucher(tenant_id, voucher_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -433,7 +470,7 @@ pub async fn unpost_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.unpost_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => ApiResponse::success(voucher, "反过账成功"),
@@ -446,7 +483,7 @@ pub async fn get_ledger(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LedgerQueryParams>,
 ) -> ApiResponse<Vec<LedgerEntry>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let ledger_params = crate::models::LedgerQueryParams {
         account_id: params.account_id,
@@ -480,7 +517,7 @@ pub async fn get_trial_balance(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<Vec<TrialBalance>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &period).await {
         Ok(balance) => ApiResponse::success(balance, "查询成功"),
@@ -503,7 +540,7 @@ async fn get_balance_sheet(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<BalanceSheet> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_balance_sheet(tenant_id, &period).await {
         Ok(sheet) => ApiResponse::success(sheet, "查询成功"),
@@ -526,7 +563,7 @@ async fn get_income_statement(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<IncomeStatement> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_income_statement(tenant_id, &period).await {
         Ok(statement) => ApiResponse::success(statement, "查询成功"),
@@ -539,7 +576,7 @@ pub async fn close_period(
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
 ) -> ApiResponse<Period> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let closed_by = claims.username.clone();
     match service
@@ -575,7 +612,7 @@ pub async fn open_period(
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
 ) -> ApiResponse<Period> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.open_period(tenant_id, year, month).await {
         Ok(period) => ApiResponse::success(period, "期间已打开"),
@@ -588,7 +625,7 @@ pub async fn create_aux_account(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuxiliaryAccountRequest>,
 ) -> ApiResponse<AuxiliaryAccount> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_aux_account(tenant_id, req).await {
         Ok(account) => ApiResponse::success(account, "辅助科目创建成功"),
@@ -602,7 +639,7 @@ async fn list_aux_accounts(
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxiliaryAccount>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => Some(AuxType::Project),
@@ -645,7 +682,7 @@ pub async fn get_aux_ledger(
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxLedgerEntry>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => AuxType::Project,
@@ -679,7 +716,7 @@ pub async fn get_aux_balance(
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxBalanceReport>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => AuxType::Project,
@@ -725,7 +762,7 @@ async fn get_cash_flow(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> ApiResponse<CashFlowStatement> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_cash_flow_statement(tenant_id, &period).await {
         Ok(statement) => ApiResponse::success(statement, "查询成功"),
@@ -738,7 +775,7 @@ pub async fn batch_submit_vouchers(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .batch_submit_vouchers(tenant_id, req.voucher_ids)
@@ -754,7 +791,7 @@ pub async fn batch_approve_vouchers(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
@@ -771,7 +808,7 @@ pub async fn batch_post_vouchers(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
@@ -799,7 +836,7 @@ pub async fn export_vouchers(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportVoucherRequest>,
 ) -> ApiResponse<ExportVoucherResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.export_vouchers(tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "导出成功"),
@@ -813,7 +850,7 @@ pub async fn year_end_close(
     headers: HeaderMap,
     Json(req): Json<YearEndCloseRequest>,
 ) -> ApiResponse<YearEndCloseResult> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
@@ -833,7 +870,7 @@ pub async fn create_payment_handler(
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let supplier_id = req.supplier_id;
@@ -890,7 +927,7 @@ pub async fn get_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment(tenant_id, payment_id).await {
         Ok(payment) => ApiResponse::success(payment, "查询成功"),
@@ -919,7 +956,7 @@ pub async fn list_payments_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListParams>,
 ) -> ApiResponse<PaymentListResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -953,7 +990,7 @@ pub async fn update_payment_handler(
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
@@ -971,7 +1008,7 @@ pub async fn delete_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment(tenant_id, payment_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -985,7 +1022,7 @@ pub async fn submit_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let _submitted_by = claims.username.clone();
 
@@ -1017,7 +1054,7 @@ pub async fn approve_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
 
@@ -1052,7 +1089,7 @@ pub async fn reject_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rejected_by = claims.username.clone();
 
@@ -1089,7 +1126,7 @@ pub async fn execute_payment_handler(
     Path(payment_id): Path<Uuid>,
     Json(req): Json<crate::models::ExecutePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     // executed_by 列为 uuid，按 JWT sub 绑定；用户名仅供日志/文本列使用。
     let executed_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
@@ -1115,7 +1152,7 @@ pub async fn write_off_payment_item_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<WriteOffRequest>,
 ) -> ApiResponse<PaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let write_off_by = claims.username.clone();
 
@@ -1145,7 +1182,7 @@ pub async fn export_payments_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportPaymentRequest>,
 ) -> ApiResponse<ExportPaymentResponse> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.export_payments(tenant_id, req).await {
@@ -1163,7 +1200,7 @@ pub async fn list_approval_configs_handler(
         return ApiResponse::forbidden("没有权限访问审批配置");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.list_approval_configs(tenant_id).await {
@@ -1182,7 +1219,7 @@ pub async fn create_approval_config_handler(
         return ApiResponse::forbidden("没有权限创建审批配置");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
@@ -1205,7 +1242,7 @@ pub async fn get_approval_config_handler(
         return ApiResponse::forbidden("没有权限访问审批配置");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_approval_config(tenant_id, config_id).await {
@@ -1225,7 +1262,7 @@ pub async fn update_approval_config_handler(
         return ApiResponse::forbidden("没有权限更新审批配置");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
 
@@ -1248,7 +1285,7 @@ pub async fn delete_approval_config_handler(
         return ApiResponse::forbidden("没有权限删除审批配置");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.delete_approval_config(tenant_id, config_id).await {
@@ -1286,8 +1323,8 @@ pub async fn submit_approval(
     let approver_id = claims.user_id().ok().unwrap_or_else(Uuid::nil);
 
     if let Some(record_id) = record_id {
-        if let Err(e) = topems_shared_db::approval::create_approval_and_log(
-            &state.pool,
+        if let Err(e) = topems_shared_db::approval::create_approval_and_log_db(
+            &state.db,
             entity_type,
             record_id,
             from_status,
@@ -1350,8 +1387,8 @@ pub async fn approve_approval(
         .unwrap_or("approved");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        if let Err(e) = topems_shared_db::approval::execute_transition_and_log(
-            &state.pool,
+        if let Err(e) = topems_shared_db::approval::execute_transition_and_log_db(
+            &state.db,
             None,
             entity_type,
             record_id,
@@ -1398,8 +1435,8 @@ pub async fn reject_approval(
         .unwrap_or("");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        if let Err(e) = topems_shared_db::approval::reject_and_log(
-            &state.pool,
+        if let Err(e) = topems_shared_db::approval::reject_and_log_db(
+            &state.db,
             entity_type,
             record_id,
             approval_id,
@@ -1456,28 +1493,28 @@ pub async fn get_dashboard_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    let total_vouchers = count_table_with_tenant(&state.pool, "vouchers", tenant_id).await;
+    let total_vouchers = count_table_with_tenant(&state.db, "vouchers", tenant_id).await;
     let draft_vouchers =
-        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "draft").await;
+        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "draft").await;
     let submitted_vouchers =
-        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "submitted").await;
+        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "submitted").await;
     let approved_vouchers =
-        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "approved").await;
+        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "approved").await;
     let posted_vouchers =
-        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "posted").await;
+        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "posted").await;
 
-    let total_payments = count_table_with_tenant(&state.pool, "payments", tenant_id).await;
+    let total_payments = count_table_with_tenant(&state.db, "payments", tenant_id).await;
     let pending_payments =
-        count_table_with_tenant_and_status(&state.pool, "payments", tenant_id, "pending").await;
+        count_table_with_tenant_and_status(&state.db, "payments", tenant_id, "pending").await;
 
-    let total_receivables = sum_table_with_tenant(&state.pool, "receivables", tenant_id).await;
-    let overdue_receivables = sum_overdue_with_tenant(&state.pool, "receivables", tenant_id).await;
+    let total_receivables = sum_table_with_tenant(&state.db, "receivables", tenant_id).await;
+    let overdue_receivables = sum_overdue_with_tenant(&state.db, "receivables", tenant_id).await;
 
-    let total_payables = sum_table_with_tenant(&state.pool, "payables", tenant_id).await;
-    let overdue_payables = sum_overdue_with_tenant(&state.pool, "payables", tenant_id).await;
+    let total_payables = sum_table_with_tenant(&state.db, "payables", tenant_id).await;
+    let overdue_payables = sum_overdue_with_tenant(&state.db, "payables", tenant_id).await;
 
     let pending_approvals =
-        count_table_with_tenant_and_status(&state.pool, "approval_workflows", tenant_id, "pending")
+        count_table_with_tenant_and_status(&state.db, "approval_workflows", tenant_id, "pending")
             .await;
 
     let stats = FinanceDashboardStats {
@@ -1522,7 +1559,7 @@ pub async fn list_voucher_templates_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherTemplateQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .list_voucher_templates(tenant_id, params.voucher_type, params.status)
@@ -1544,7 +1581,7 @@ pub async fn get_voucher_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(template) => ApiResponse::success(
@@ -1560,7 +1597,7 @@ pub async fn create_voucher_template_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
@@ -1588,7 +1625,7 @@ async fn update_voucher_template_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
         match serde_json::from_value(req) {
@@ -1614,7 +1651,7 @@ pub async fn delete_voucher_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .delete_voucher_template(tenant_id, template_id)
@@ -1630,7 +1667,7 @@ pub async fn set_default_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.set_default_template(tenant_id, template_id).await {
         Ok(template) => ApiResponse::success(
@@ -1661,7 +1698,7 @@ pub async fn apply_template_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
         match serde_json::from_value(req) {
@@ -1690,7 +1727,7 @@ async fn copy_template_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<CopyTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
@@ -1758,6 +1795,10 @@ pub async fn toggle_template_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
@@ -1765,14 +1806,18 @@ pub async fn toggle_template_handler(
     .bind(now)
     .bind(tenant_id)
     .bind(template_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 return ApiResponse::not_found("凭证模板不存在");
             }
-            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
+            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service.get_voucher_template(tenant_id, template_id).await {
                 Ok(template) => {
                     let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
@@ -1784,7 +1829,10 @@ pub async fn toggle_template_handler(
                 Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -1817,17 +1865,25 @@ pub async fn match_template_handler(
         Some(s) => s,
         None => return ApiResponse::bad_request("source_type 为必填"),
     };
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
     .bind(tenant_id)
     .bind(&source_type)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            return crate::shared::err_resp(e);
+        }
     };
+    let _ = scope.commit().await;
     match rule {
         Some(r) => {
             let template_id_opt = r
@@ -1836,8 +1892,7 @@ pub async fn match_template_handler(
                 .and_then(|v| v.as_str())
                 .and_then(|s| Uuid::parse_str(s).ok());
             let template_val = if let Some(tid) = template_id_opt {
-                let service =
-                    FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+                let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
                 match service.get_voucher_template(tenant_id, tid).await {
                     Ok(t) => serde_json::to_value(t).unwrap_or(serde_json::json!(null)),
                     Err(_) => serde_json::json!(null),
@@ -1891,12 +1946,16 @@ pub async fn get_template_usage_stats_handler(
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rule_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let generated_voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -1905,7 +1964,7 @@ pub async fn get_template_usage_stats_handler(
     ))
     .bind(template_id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let last_used_at: Option<DateTime<Utc>> = sqlx::query_scalar(only_own_schema_query!(
@@ -1913,9 +1972,10 @@ pub async fn get_template_usage_stats_handler(
         "SELECT MAX(created_at) FROM finance.core_finance_vouchers WHERE template_id = $1"
     ))
     .bind(template_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(None);
+    let _ = scope.commit().await;
     ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
@@ -1945,16 +2005,21 @@ async fn add_template_entry_handler(
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     if count == 0 {
+        let _ = scope.commit().await;
         return ApiResponse::not_found("凭证模板不存在");
     }
     let sort_order: i32 = match req.sort_order {
@@ -1964,7 +2029,7 @@ async fn add_template_entry_handler(
                 only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
             max_order + 1
@@ -1990,8 +2055,15 @@ async fn add_template_entry_handler(
     .bind(sort_order)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+    if line.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
     match line {
         Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
@@ -2017,16 +2089,21 @@ async fn update_template_entry_handler(
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let owns: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
     .bind(entry_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     if owns == 0 {
+        let _ = scope.commit().await;
         return ApiResponse::not_found("模板分录不存在");
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
@@ -2036,11 +2113,14 @@ async fn update_template_entry_handler(
         ))
         .bind(entry_id)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(l) => l,
-            Err(e) => return crate::shared::err_resp(e),
+            Err(e) => {
+                let _ = scope.commit().await;
+                return crate::shared::err_resp(e);
+            }
         };
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
@@ -2062,8 +2142,15 @@ async fn update_template_entry_handler(
         .bind(amount_formula)
         .bind(sort_order)
         .bind(entry_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
+    if line.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
     match line {
         Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
@@ -2079,25 +2166,36 @@ async fn delete_template_entry_handler(
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(
         only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
     .bind(entry_id)
     .bind(template_id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 return ApiResponse::not_found("模板分录不存在");
+            }
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
             }
             ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
                 "删除分录成功",
             )
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -2131,16 +2229,21 @@ pub async fn reorder_template_entries_handler(
     Json(req): Json<ReorderEntriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     if count == 0 {
+        let _ = scope.commit().await;
         return ApiResponse::not_found("凭证模板不存在");
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
@@ -2151,9 +2254,10 @@ pub async fn reorder_template_entries_handler(
         .bind(sort_order)
         .bind(entry_id)
         .bind(template_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
+            let _ = scope.commit().await;
             return crate::shared::err_resp(e);
         }
     }
@@ -2165,8 +2269,15 @@ pub async fn reorder_template_entries_handler(
     )
     .bind(template_id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    if lines.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
     match lines {
         Ok(ls) => {
             let json_lines: Vec<serde_json::Value> = ls
@@ -2209,7 +2320,7 @@ pub async fn export_template_handler(
     Query(_params): Query<ExportQueryParams>,
 ) -> axum::response::Response {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
         Err(e) => return crate::shared::err_resp::<serde_json::Value, _>(e).into_response(),
@@ -2241,7 +2352,7 @@ pub async fn import_template_handler(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
@@ -2319,7 +2430,7 @@ pub async fn list_generation_rules_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<GenerationRuleQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .list_generation_rules(tenant_id, params.source_type, params.status)
@@ -2341,7 +2452,7 @@ pub async fn get_generation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_generation_rule(tenant_id, rule_id).await {
         Ok(rule) => ApiResponse::success(
@@ -2357,7 +2468,7 @@ pub async fn create_generation_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::CreateGenerationRuleRequest =
@@ -2385,7 +2496,7 @@ pub async fn update_generation_rule_handler(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
         match serde_json::from_value(req) {
@@ -2411,7 +2522,7 @@ pub async fn delete_generation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_generation_rule(tenant_id, rule_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -2433,6 +2544,10 @@ pub async fn toggle_generation_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
@@ -2440,11 +2555,12 @@ pub async fn toggle_generation_rule_handler(
     .bind(now)
     .bind(tenant_id)
     .bind(rule_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 return ApiResponse::not_found("生成规则不存在");
             }
             let rule: Result<
@@ -2456,8 +2572,15 @@ pub async fn toggle_generation_rule_handler(
             ))
             .bind(tenant_id)
             .bind(rule_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
+            if rule.is_ok() {
+                if let Err(e) = scope.commit().await {
+                    return crate::shared::err_resp(e);
+                }
+            } else {
+                let _ = scope.commit().await;
+            }
             match rule {
                 Ok(r) => {
                     let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
@@ -2469,7 +2592,10 @@ pub async fn toggle_generation_rule_handler(
                 Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 #[utoipa::path(
@@ -2493,7 +2619,7 @@ pub async fn test_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
         match serde_json::from_value(req) {
@@ -2516,7 +2642,7 @@ pub async fn generate_vouchers_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::GenerateVouchersRequest =
@@ -2566,7 +2692,7 @@ pub async fn import_vouchers_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let imported_by = claims.username.clone();
     let req: crate::services::finance::u8_import::ImportVouchersRequest =
@@ -2590,7 +2716,7 @@ pub async fn get_import_status_handler(
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_status(tenant_id, import_id).await {
         Ok(status) => ApiResponse::success(
@@ -2606,7 +2732,7 @@ pub async fn list_import_records_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<U8ImportQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let query = crate::services::finance::u8_import::ImportRecordQuery {
         status: params.status,
@@ -2648,7 +2774,7 @@ pub async fn get_import_record_handler(
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_record(tenant_id, import_id).await {
         Ok(record) => ApiResponse::success(
@@ -2664,7 +2790,7 @@ pub async fn rollback_import_handler(
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.rollback_import(tenant_id, import_id).await {
         Ok(_) => ApiResponse::success((), "回滚成功"),
@@ -2687,7 +2813,7 @@ pub async fn list_receivables_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReceivableQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -2709,7 +2835,7 @@ async fn get_receivable_handler(
     Extension(claims): Extension<Claims>,
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable(tenant_id, receivable_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2722,7 +2848,7 @@ async fn create_receivable_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_receivable(tenant_id, req, &created_by).await {
@@ -2737,7 +2863,7 @@ async fn update_receivable_handler(
     Path(receivable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_receivable(tenant_id, receivable_id, req)
@@ -2753,7 +2879,7 @@ async fn delete_receivable_handler(
     Extension(claims): Extension<Claims>,
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_receivable(tenant_id, receivable_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -2779,7 +2905,7 @@ pub async fn get_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable_aging(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2792,7 +2918,7 @@ pub async fn batch_create_receivables_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let items = req
@@ -2824,7 +2950,7 @@ pub async fn list_payables_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PayableQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -2846,7 +2972,7 @@ async fn get_payable_handler(
     Extension(claims): Extension<Claims>,
     Path(payable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable(tenant_id, payable_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2859,7 +2985,7 @@ async fn create_payable_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_payable(tenant_id, req, &created_by).await {
@@ -2874,7 +3000,7 @@ async fn update_payable_handler(
     Path(payable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.update_payable(tenant_id, payable_id, req).await {
         Ok(data) => ApiResponse::success(data, "更新成功"),
@@ -2887,7 +3013,7 @@ async fn delete_payable_handler(
     Extension(claims): Extension<Claims>,
     Path(payable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payable(tenant_id, payable_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -2913,7 +3039,7 @@ pub async fn get_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable_aging(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2936,7 +3062,7 @@ pub async fn batch_create_payables_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let items = req
@@ -2968,7 +3094,7 @@ pub async fn list_collections_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CollectionQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -3007,7 +3133,7 @@ pub async fn get_collection_handler(
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_collection(tenant_id, collection_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3021,11 +3147,11 @@ pub async fn create_collection_handler(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -3117,7 +3243,7 @@ async fn update_collection_handler(
     Path(collection_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_collection(tenant_id, collection_id, req)
@@ -3133,7 +3259,7 @@ async fn delete_collection_handler(
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_collection(tenant_id, collection_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -3161,7 +3287,7 @@ pub async fn write_off_collection_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let collection_id_str = req
         .get("collection_id")
@@ -3195,7 +3321,7 @@ pub async fn batch_write_off_collections_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
         .get("items")
@@ -3238,7 +3364,7 @@ pub async fn list_payment_records_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentRecordQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -3260,7 +3386,7 @@ pub async fn get_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment_record(tenant_id, payment_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3274,7 +3400,7 @@ pub async fn create_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service
@@ -3291,7 +3417,7 @@ pub async fn approve_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(
@@ -3311,7 +3437,7 @@ pub async fn reject_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(
@@ -3333,7 +3459,7 @@ async fn update_payment_record_handler(
     Path(payment_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(tenant_id, payment_id, req)
@@ -3350,7 +3476,7 @@ async fn delete_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment_record(tenant_id, payment_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -3364,7 +3490,7 @@ pub async fn write_off_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let payment_id_str = req.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
     let payable_id_str = req.get("payable_id").and_then(|v| v.as_str()).unwrap_or("");
@@ -3402,7 +3528,7 @@ pub async fn batch_write_off_payments_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
         .get("items")
@@ -3428,7 +3554,7 @@ pub async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_receivable_aging(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "计算成功"),
@@ -3440,7 +3566,7 @@ pub async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_payable_aging(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "计算成功"),
@@ -3452,7 +3578,7 @@ pub async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3482,7 +3608,7 @@ pub async fn get_aging_detail_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     match service
@@ -3499,7 +3625,7 @@ pub async fn get_aging_trend_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     let months = params.months.unwrap_or(6);
@@ -3562,13 +3688,18 @@ pub async fn get_voucher_entries(
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -3597,13 +3728,18 @@ pub async fn get_voucher_items(
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -3665,16 +3801,28 @@ pub async fn batch_delete_vouchers(
     let mut deleted = 0i64;
     for id_str in &req.ids {
         if let Ok(id) = Uuid::parse_str(id_str) {
+            let mut scope = match state.db.scope().await {
+                Ok(s) => s,
+                Err(e) => return crate::shared::err_resp(e),
+            };
             let res = sqlx::query(only_own_schema_query!(
                 "finance",
                 "DELETE FROM finance.core_finance_vouchers WHERE id = $1 AND tenant_id = $2"
             ))
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
-            if let Ok(r) = res {
-                deleted += r.rows_affected() as i64;
+            match res {
+                Ok(r) => {
+                    deleted += r.rows_affected() as i64;
+                    if let Err(e) = scope.commit().await {
+                        return crate::shared::err_resp(e);
+                    }
+                }
+                Err(_) => {
+                    let _ = scope.commit().await;
+                }
             }
         }
     }
@@ -3690,23 +3838,34 @@ pub async fn unapprove_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
         .bind(voucher_id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 ApiResponse::not_found("凭证不存在或状态不允许反审核")
             } else {
+                if let Err(e) = scope.commit().await {
+                    return crate::shared::err_resp(e);
+                }
                 ApiResponse::success(
                     serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
                     "反审核成功",
                 )
             }
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -3718,24 +3877,35 @@ pub async fn reverse_voucher(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, company_id, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
         .bind(reversal_id)
         .bind(tenant_id)
         .bind(voucher_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 ApiResponse::not_found("凭证不存在")
             } else {
+                if let Err(e) = scope.commit().await {
+                    return crate::shared::err_resp(e);
+                }
                 ApiResponse::success(
                     serde_json::json!({"reversal_voucher_id": reversal_id, "original_voucher_id": voucher_id, "reason": req.reason}),
                     "红冲成功",
                 )
             }
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -3749,14 +3919,19 @@ pub async fn get_next_voucher_no(
         "{}-",
         params.voucher_type.unwrap_or_else(|| "GEN".to_string())
     );
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+    let _ = scope.commit().await;
     let voucher_no = format!("{}{:06}", prefix, count + 1);
     ApiResponse::success(serde_json::json!({"voucher_no": voucher_no}), "查询成功")
 }
@@ -3770,7 +3945,7 @@ pub async fn generate_voucher_by_template(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的模板ID"),
     };
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(template) => {
@@ -3904,6 +4079,10 @@ pub async fn open_period_v2(
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；核心表以 (tenant_id, year, month) 为唯一键。
     let period = req.period.unwrap_or_default();
     let Some((year, month)) = parse_period_ym(&period) else {
@@ -3919,14 +4098,22 @@ pub async fn open_period_v2(
         .bind(&period_name)
         .bind(&start_date)
         .bind(&end_date)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     match res {
-        Ok(_) => ApiResponse::success(
-            serde_json::json!({"period": period_name, "status": "open"}),
-            "开启成功",
-        ),
-        Err(e) => crate::shared::err_resp(e),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
+            ApiResponse::success(
+                serde_json::json!({"period": period_name, "status": "open"}),
+                "开启成功",
+            )
+        }
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -3937,6 +4124,10 @@ pub async fn close_period_v2(
 ) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；target 表列为 year/month，按 (tenant_id, year, month) 定位。
     let Some((year, month)) = parse_period_ym(&period) else {
         return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
@@ -3946,20 +4137,27 @@ pub async fn close_period_v2(
         .bind(tenant_id)
         .bind(year)
         .bind(month)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
+                let _ = scope.commit().await;
                 ApiResponse::not_found("会计期间不存在")
             } else {
+                if let Err(e) = scope.commit().await {
+                    return crate::shared::err_resp(e);
+                }
                 ApiResponse::success(
                     serde_json::json!({"period": period_name, "status": "closed"}),
                     "关闭成功",
                 )
             }
         }
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => {
+            let _ = scope.commit().await;
+            crate::shared::err_resp(e)
+        }
     }
 }
 
@@ -3969,7 +4167,7 @@ pub async fn close_income_period(
     headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let period = req.period.unwrap_or_default();
     if period.is_empty() {
@@ -4002,7 +4200,7 @@ pub async fn year_end_close_v2(
     headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let year = req.year.unwrap_or_else(|| Utc::now().year());
     let locale = Locale::from_headers(&headers).as_sql();
@@ -4022,7 +4220,7 @@ pub async fn get_ar_aging(
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ArAgingQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -4046,7 +4244,7 @@ pub async fn get_ap_aging(
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ArAgingQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -4064,14 +4262,19 @@ pub async fn get_account_tree(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
     )
     .bind(tenant_id)
     .bind(category)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -4154,6 +4357,10 @@ pub async fn get_opening_balances(
         .unwrap_or(20);
     let offset = (page - 1).max(0) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Result<
         Vec<(
             Uuid,
@@ -4187,7 +4394,7 @@ pub async fn get_opening_balances(
     .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -4205,9 +4412,10 @@ pub async fn get_opening_balances(
             .bind(&period)
             .bind(&subject_code)
             .bind(tenant_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            let _ = scope.commit().await;
 
             let list: Vec<serde_json::Value> = items
                 .into_iter()
@@ -4243,6 +4451,10 @@ pub async fn get_opening_balance(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let row: Result<
         Option<(
             Uuid,
@@ -4267,8 +4479,9 @@ pub async fn get_opening_balance(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
@@ -4297,6 +4510,10 @@ pub async fn update_opening_balance(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let period = req
         .get("period")
         .and_then(|v| v.as_str())
@@ -4341,8 +4558,15 @@ pub async fn update_opening_balance(
     .bind(credit_balance)
     .bind(subject_name)
     .bind(period)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if row.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match row {
         Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
@@ -4370,6 +4594,10 @@ pub async fn delete_opening_balance(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"UPDATE erp.opening_balances SET deleted_at = NOW()
@@ -4378,8 +4606,15 @@ pub async fn delete_opening_balance(
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if res.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match res {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(String::new(), "删除成功"),
@@ -4434,12 +4669,16 @@ pub async fn import_opening_balances(
             .get("credit_balance")
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0);
+        let mut read_scope = match state.db.scope_read().await {
+            Ok(s) => s,
+            Err(e) => return crate::shared::err_resp(e),
+        };
         let subject_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true LIMIT 1"
         ))
         .bind(&subject_code)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut read_scope)
         .await
         .ok()
         .flatten();
@@ -4451,11 +4690,16 @@ pub async fn import_opening_balances(
         ))
         .bind(tenant_id)
         .bind(&subject_code)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut read_scope)
         .await
         .ok()
         .flatten();
+        let _ = read_scope.commit().await;
 
+        let mut write_scope = match state.db.scope().await {
+            Ok(s) => s,
+            Err(e) => return crate::shared::err_resp(e),
+        };
         let res = sqlx::query(only_own_schema_query!(
             "erp",
             r#"INSERT INTO erp.opening_balances
@@ -4471,8 +4715,9 @@ pub async fn import_opening_balances(
         .bind(credit_balance)
         .bind(account_id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut write_scope)
         .await;
+        let _ = write_scope.commit().await;
 
         match res {
             Ok(_) => success_count += 1,
@@ -4502,6 +4747,10 @@ pub async fn create_opening_balances(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let company_id = req
         .get("company_id")
         .and_then(|v| v.as_str())
@@ -4536,7 +4785,7 @@ pub async fn create_opening_balances(
         "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true LIMIT 1"
     ))
     .bind(&subject_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
@@ -4548,7 +4797,7 @@ pub async fn create_opening_balances(
     ))
     .bind(tenant_id)
     .bind(&subject_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
@@ -4572,8 +4821,15 @@ pub async fn create_opening_balances(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if res.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match res {
         Ok(_) => ApiResponse::success(
@@ -4600,6 +4856,10 @@ pub async fn set_opening_balance(
     else {
         return ApiResponse::bad_request("缺少租户上下文");
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // 由科目 id 解析 code/name
     let subject: Option<(String, Option<String>)> = sqlx::query_as(
         only_own_schema_query!(
@@ -4608,11 +4868,12 @@ pub async fn set_opening_balance(
         ),
     )
     .bind(account_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
     let Some((subject_code, subject_name)) = subject else {
+        let _ = scope.commit().await;
         return ApiResponse::not_found("科目不存在");
     };
     // 记账主体：显式传入优先；否则按租户解析唯一公司（多主体 fail-closed）
@@ -4623,11 +4884,14 @@ pub async fn set_opening_balance(
     {
         Some(v) => v,
         None => {
-            match crate::services::finance::company::resolve_tenant_company(&state.pool, tenant_id)
+            match crate::services::finance::company::resolve_tenant_company(&mut scope, tenant_id)
                 .await
             {
                 Ok(v) => v,
-                Err(e) => return ApiResponse::from(e),
+                Err(e) => {
+                    let _ = scope.commit().await;
+                    return ApiResponse::from(e);
+                }
             }
         }
     };
@@ -4655,7 +4919,7 @@ pub async fn set_opening_balance(
     .bind(&subject_code)
     .bind(&period)
     .bind(company_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let id = Uuid::new_v4();
@@ -4677,8 +4941,15 @@ pub async fn set_opening_balance(
     .bind(now)
     .bind(now)
     .bind(account_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if res.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match res {
         Ok(_) => ApiResponse::success(
@@ -4701,6 +4972,10 @@ pub async fn carry_forward_opening_balance(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let from_period = req
         .get("from_period")
         .and_then(|v| v.as_str())
@@ -4734,8 +5009,15 @@ pub async fn carry_forward_opening_balance(
     .bind(&from_period)
     .bind(company_id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if res.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match res {
         Ok(r) => ApiResponse::success(format!("结转成功，共 {} 条", r.rows_affected()), "结转成功"),
@@ -4868,6 +5150,10 @@ pub async fn list_expense_approvals(
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
@@ -4885,7 +5171,7 @@ pub async fn list_expense_approvals(
     .bind(tenant_id)
     .bind(i64::try_from(page_size).unwrap_or(i64::MAX))
     .bind(i64::try_from(offset).unwrap_or(i64::MAX))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -4913,9 +5199,10 @@ pub async fn list_expense_approvals(
                 "finance",
                 r#"SELECT COUNT(*) FROM finance.expense_approvals WHERE deleted_at IS NULL"#
             ))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            let _ = scope.commit().await;
             ApiResponse::success(
                 serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
                 "查询成功",
@@ -4975,6 +5262,10 @@ pub async fn create_expense_approval(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let description = req.description;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(
         only_own_schema_query!(
             "finance",
@@ -4994,8 +5285,15 @@ pub async fn create_expense_approval(
     .bind(&status)
     .bind(&description)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match result {
         Ok(row) => {
@@ -5023,6 +5321,10 @@ pub async fn get_expense_approval(
         Err(_) => return ApiResponse::from(TopemsError::NotFound("无效的ID".to_string())),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let row = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
@@ -5034,8 +5336,9 @@ pub async fn get_expense_approval(
     ))
     .bind(id_uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(row)) => ApiResponse::success(
@@ -5099,6 +5402,10 @@ pub async fn update_expense_approval(
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // 此前该 handler 是纯回显桩：返回 {id,data} 但不落库（GET 复核仍为 draft）。
     let row = sqlx::query(only_own_schema_query!(
         "finance",
@@ -5136,8 +5443,15 @@ pub async fn update_expense_approval(
     .bind(approver_id)
     .bind(req.approver_name)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if row.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match row {
         Ok(Some(row)) => ApiResponse::success(
@@ -5183,6 +5497,10 @@ pub async fn delete_expense_approval(
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // 此前是空桩：无论 ID 是否存在/已删都返回 200。
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -5192,8 +5510,15 @@ pub async fn delete_expense_approval(
     ))
     .bind(id_uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            return crate::shared::err_resp(e);
+        }
+    } else {
+        let _ = scope.commit().await;
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
@@ -5288,7 +5613,7 @@ pub async fn get_account_balance_report(
         return ApiResponse::error(400, "period 格式非法，应为 YYYYMM");
     }
 
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
         .get_account_balance_report(tenant_id, company_id, &period)
         .await

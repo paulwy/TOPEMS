@@ -21,12 +21,13 @@ impl FinanceService {
         status: Option<String>,
         supplier_id: Option<Uuid>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
 
         let mut cond = Vec::new();
@@ -73,8 +74,10 @@ impl FinanceService {
 
         query = query.bind(page_size).bind(offset);
 
-        let rows = query.fetch_all(&self.db_pool).await?;
-        let total = count_query.fetch_one(&self.db_pool).await.unwrap_or(0);
+        let mut scope = self.read_scope().await?;
+
+        let rows = query.fetch_all(&mut scope).await?;
+        let total = count_query.fetch_one(&mut scope).await.unwrap_or(0);
 
         let items: Vec<Value> = rows
             .iter()
@@ -108,12 +111,15 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let row = sqlx::query(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(payable_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?
         .ok_or_else(|| TopemsError::NotFound("应付账款不存在".to_string()))?;
 
@@ -142,6 +148,8 @@ impl FinanceService {
             .unwrap_or("");
         let amount = decimal_from_value(req.get("amount")).unwrap_or(Decimal::ZERO);
 
+        let mut scope = self.write_scope().await?;
+
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "INSERT INTO erp_payables (tenant_id, supplier_name, amount, status, created_by)
@@ -152,13 +160,15 @@ impl FinanceService {
         .bind(supplier_name)
         .bind(amount)
         .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),
@@ -178,6 +188,8 @@ impl FinanceService {
         let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
+        let mut scope = self.write_scope().await?;
+
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_payables
@@ -193,13 +205,15 @@ impl FinanceService {
         .bind(status)
         .bind(tenant_id)
         .bind(payable_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),
@@ -214,47 +228,54 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payable_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("应付账款不存在".to_string()));
         }
 
+        scope.commit().await?;
+
         Ok(())
     }
 
     pub async fn get_payable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let rows = sqlx::query(
             only_own_schema_query!("finance", "SELECT
                 '0-30天' as bucket,
                 COALESCE(SUM(CASE WHEN due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as amount,
                 COUNT(*) FILTER (WHERE due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid') as cnt
-             FROM erp_payables WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+             FROM erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '31-60天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid')
-             FROM erp_payables WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+             FROM erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '61-90天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+             FROM erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '90天以上',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"),
+             FROM erp_payables WHERE (tenant_id = $1::uuid)"),
         )
         .bind(tenant_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut aging_buckets = Vec::new();

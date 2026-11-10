@@ -1,19 +1,27 @@
 use chrono::Utc;
 use rust_decimal::Decimal;
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::*;
 use topems_shared_core::error::TopemsError;
 
 pub struct ReconciliationService {
-    db_pool: PgPool,
+    db: Db,
 }
 
 impl ReconciliationService {
-    pub fn new(db_pool: PgPool) -> Self {
-        Self { db_pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
+    }
+
+    async fn read_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
+        Ok(self.db.scope_read().await?)
+    }
+
+    async fn write_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
+        Ok(self.db.scope().await?)
     }
 
     pub async fn create_session(
@@ -33,6 +41,7 @@ impl ReconciliationService {
             .parse::<chrono::NaiveDate>()
             .map_err(|e| TopemsError::Validation(format!("Invalid period_end: {}", e)))?;
 
+        let mut scope = self.write_scope().await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
             only_own_schema_query!("finance", r#"
             INSERT INTO finance.core_finance_reconciliation_sessions
@@ -49,19 +58,23 @@ impl ReconciliationService {
         .bind(req.bank_account_id)
         .bind(req.entity_id)
         .bind(created_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        scope.commit().await?;
 
         Ok(session)
     }
 
     async fn generate_session_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)"),
         )
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -74,12 +87,14 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid)"),
         )
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -94,10 +109,11 @@ impl ReconciliationService {
         page: i64,
         page_size: i64,
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let mut query =
-            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)");
+            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)");
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)",
+            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)",
         );
 
         let reco_type_param = reco_type.clone();
@@ -134,8 +150,9 @@ impl ReconciliationService {
         }
         sessions_qb = sessions_qb.bind(page_size).bind((page - 1) * page_size);
 
+        let mut scope = self.read_scope().await?;
         let sessions = sessions_qb
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -147,7 +164,7 @@ impl ReconciliationService {
             count_qb = count_qb.bind(s);
         }
 
-        let total: i64 = count_qb.fetch_one(&self.db_pool).await.unwrap_or(0);
+        let total: i64 = count_qb.fetch_one(&mut scope).await.unwrap_or(0);
 
         Ok((sessions, total))
     }
@@ -166,6 +183,7 @@ impl ReconciliationService {
         }
 
         let mut imported = 0;
+        let mut scope = self.write_scope().await?;
         for item in req.items {
             let transaction_date = item
                 .transaction_date
@@ -191,7 +209,7 @@ impl ReconciliationService {
             .bind(&item.counterparty_account)
             .bind(&item.reference_no)
             .bind(&item.description)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -200,6 +218,8 @@ impl ReconciliationService {
 
         self.update_session_counts(tenant_id, req.session_id)
             .await?;
+
+        scope.commit().await?;
 
         Ok(imported)
     }
@@ -478,6 +498,7 @@ impl ReconciliationService {
         diff_reason: DiffReason,
         notes: Option<String>,
     ) -> Result<ReconciliationItem, TopemsError> {
+        let mut scope = self.write_scope().await?;
         let item = sqlx::query_as::<_, ReconciliationItem>(only_own_schema_query!(
             "finance",
             r#"
@@ -491,13 +512,15 @@ impl ReconciliationService {
         .bind(notes)
         .bind(item_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
         if let Some(session_id) = self.get_session_id_by_item(item_id).await? {
             self.update_session_counts(tenant_id, session_id).await?;
         }
+
+        scope.commit().await?;
 
         Ok(item)
     }
@@ -509,8 +532,9 @@ impl ReconciliationService {
         source_type: Option<ItemSource>,
         match_status: Option<MatchStatus>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let mut query = String::from(
-            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)",
+            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid)",
         );
 
         let source_type_param = source_type.clone();
@@ -537,8 +561,9 @@ impl ReconciliationService {
             qb = qb.bind(ms);
         }
 
+        let mut scope = self.read_scope().await?;
         let items = qb
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -575,6 +600,7 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
+        let mut scope = self.write_scope().await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(only_own_schema_query!(
             "finance",
             r#"
@@ -586,9 +612,11 @@ impl ReconciliationService {
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        scope.commit().await?;
 
         Ok(session)
     }
@@ -599,17 +627,19 @@ impl ReconciliationService {
         session_id: Uuid,
         source_type: ItemSource,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let items = sqlx::query_as::<_, ReconciliationItem>(
             only_own_schema_query!("finance", r#"
             SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = $3 AND match_status = 'unmatched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = $3 AND match_status = 'unmatched'
             ORDER BY amount, transaction_date
             "#),
         )
         .bind(session_id)
         .bind(tenant_id)
         .bind(source_type)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -622,18 +652,20 @@ impl ReconciliationService {
         bank_item_id: Uuid,
         erp_item_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.write_scope().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+            WHERE id = $2 AND (tenant_id = $3::uuid)
             "#
         ))
         .bind(erp_item_id)
         .bind(bank_item_id)
         .bind(tenant_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -642,15 +674,17 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+            WHERE id = $2 AND (tenant_id = $3::uuid)
             "#
         ))
         .bind(bank_item_id)
         .bind(erp_item_id)
         .bind(tenant_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -660,30 +694,32 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.write_scope().await?;
         let total: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid)"),
         )
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
         let matched: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'matched'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'matched'"),
         )
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
         let diff: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'"),
         )
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -702,9 +738,11 @@ impl ReconciliationService {
         .bind(diff)
         .bind(session_id)
         .bind(tenant_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -715,26 +753,30 @@ impl ReconciliationService {
         session_id: Uuid,
         status: ReconciliationStatus,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
         sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3"),
         )
         .bind(status)
         .bind(session_id)
         .bind(tenant_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        scope.commit().await?;
 
         Ok(())
     }
 
     async fn get_session_id_by_item(&self, item_id: Uuid) -> Result<Option<Uuid>, TopemsError> {
+        let mut scope = self.read_scope().await?;
         let session_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             "SELECT session_id FROM finance.core_finance_reconciliation_items WHERE id = $1"
         ))
         .bind(item_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -750,20 +792,22 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<ReconciliationReport, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let session = self.get_session(tenant_id, session_id).await?;
 
+        let mut scope = self.read_scope().await?;
         // 银行端总金额（所有银行流水）
         let bank_total: Decimal = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = 'bank'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = 'bank'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -773,12 +817,12 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = 'erp'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = 'erp'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -787,12 +831,12 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'matched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'matched'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -801,12 +845,12 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'unmatched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'unmatched'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -815,12 +859,12 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -860,6 +904,7 @@ impl ReconciliationService {
         as_of_date: chrono::NaiveDate,
         direction: &str,
     ) -> Result<AgingReport, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let buckets = vec![
             ("0-30", 0i64, 30i64),
             ("31-60", 31, 60),
@@ -873,6 +918,7 @@ impl ReconciliationService {
         let mut total_amount = Decimal::ZERO;
         let mut total_count: i64 = 0;
 
+        let mut scope = self.read_scope().await?;
         for (bucket_name, from_days, to_days) in buckets {
             // 仅统计未对账（unmatched/diff）的项目作为账龄对象
             let (amount, count): (Decimal, i64) = match direction {
@@ -883,7 +929,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+                        WHERE (tenant_id = $1::uuid)
                           AND source_type = 'erp'
                           AND direction = 'in'
                           AND match_status IN ('unmatched', 'diff')
@@ -894,7 +940,7 @@ impl ReconciliationService {
                     .bind(tenant_id)
                     .bind(from_days)
                     .bind(to_days)
-                    .fetch_one(&self.db_pool)
+                    .fetch_one(&mut scope)
                     .await
                     .map_err(|e| TopemsError::Database(e.to_string()))?;
                     (q.0.unwrap_or(Decimal::ZERO), q.1.unwrap_or(0))
@@ -906,7 +952,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+                        WHERE (tenant_id = $1::uuid)
                           AND source_type = 'erp'
                           AND direction = 'out'
                           AND match_status IN ('unmatched', 'diff')
@@ -917,7 +963,7 @@ impl ReconciliationService {
                     .bind(tenant_id)
                     .bind(from_days)
                     .bind(to_days)
-                    .fetch_one(&self.db_pool)
+                    .fetch_one(&mut scope)
                     .await
                     .map_err(|e| TopemsError::Database(e.to_string()))?;
                     (q.0.unwrap_or(Decimal::ZERO), q.1.unwrap_or(0))
@@ -963,6 +1009,7 @@ impl ReconciliationService {
         let mut failed_ids = Vec::new();
         let mut touched_sessions = std::collections::HashSet::new();
 
+        let mut scope = self.write_scope().await?;
         for item in req.items {
             let result = sqlx::query(only_own_schema_query!(
                 "finance",
@@ -976,7 +1023,7 @@ impl ReconciliationService {
             .bind(item.notes.clone())
             .bind(item.item_id)
             .bind(tenant_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await;
 
             match result {
@@ -998,6 +1045,8 @@ impl ReconciliationService {
             let _ = self.update_session_counts(tenant_id, sid).await;
         }
 
+        scope.commit().await?;
+
         Ok(BatchDiffResponse {
             success_count,
             failed_count,
@@ -1011,17 +1060,19 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<DiffStatistics, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         // 总差异项
         let total_diff_items: i32 = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             r#"
             SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -1030,12 +1081,12 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -1046,13 +1097,13 @@ impl ReconciliationService {
                 r#"
             SELECT diff_reason::text, COUNT(*)::INT, SUM(COALESCE(diff_amount, amount))
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
             GROUP BY diff_reason
             "#
             ))
             .bind(session_id)
             .bind(tenant_id)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
@@ -1071,13 +1122,13 @@ impl ReconciliationService {
             r#"
             SELECT match_status::text, COUNT(*)::INT
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+            WHERE session_id = $1 AND (tenant_id = $2::uuid)
             GROUP BY match_status
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 

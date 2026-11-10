@@ -9,6 +9,7 @@ use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -66,11 +67,12 @@ fn normalize_report_period(raw: &str) -> Result<String, ApiResponse<serde_json::
 /// 归一后的期间是否真的发生过总账业务：用于响应体区分
 /// “该期间确实无业务”（200 + has_data=false）与“期间参数无法解析”（400）。
 async fn period_has_business(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Uuid,
     company_id: Uuid,
     period: &str,
 ) -> Result<bool, sqlx::Error> {
+    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_ledger
@@ -79,8 +81,9 @@ async fn period_has_business(
     .bind(tenant_id)
     .bind(company_id)
     .bind(period)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+    let _ = scope.commit().await;
     Ok(count > 0)
 }
 
@@ -101,19 +104,31 @@ fn annotate_period_business(
 }
 
 /// 期间借贷/净额汇总，全程 Decimal（NUMERIC(18,4)），不经 f64，避免尾差。
+///
+/// 租户维度 `Some(tenant)` 走该租户只读作用域；超管全局视图 `None` 走显式
+/// [`Db::scope_read_system`]（系统通道例外，见 w7-b5 冻结文档 §2.1）。
+/// 不能再用裸池：裸池无 GUC 在 fail-closed 策略下是静默 0 行。
 async fn period_net_total(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Option<Uuid>,
     period: &str,
 ) -> (Decimal, Decimal, Decimal) {
+    let scope = match tenant_id {
+        Some(tenant) => db.scope_read_for_tenant(tenant).await,
+        None => db.scope_read_system().await,
+    };
+    let Ok(mut scope) = scope else {
+        return (Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+    };
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
          FROM finance.core_finance_ledger WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period = $2"),
     )
     .bind(tenant_id)
     .bind(period)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await;
+    let _ = scope.commit().await;
     match result {
         Ok((td, tc, net)) => (
             td.unwrap_or(Decimal::ZERO),
@@ -170,6 +185,15 @@ pub async fn get_report_item_details(
         Some(c) if !c.is_empty() => c,
         _ => return ApiResponse::bad_request("account_code 不能为空"),
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scoped = match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    };
+    let mut scope = match scoped {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         "SELECT account_code, account_name, period, debit, credit, balance
@@ -180,8 +204,9 @@ pub async fn get_report_item_details(
     .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rs) => {
@@ -232,6 +257,16 @@ pub async fn get_report_item_vouchers(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scoped = match tenant_id {
+        Some(t) => state.db.scope_read_for_tenant(t).await,
+        None => state.db.scope_read_system().await,
+    };
+    let mut scope = match scoped {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         "SELECT l.id, l.account_code, l.account_name, l.voucher_id, l.voucher_no, l.voucher_date,
@@ -246,7 +281,7 @@ pub async fn get_report_item_vouchers(
     .bind(params.period.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
@@ -257,12 +292,13 @@ pub async fn get_report_item_vouchers(
     .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
         Err(_) => 0,
     };
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rs) => {
@@ -342,8 +378,8 @@ pub async fn get_report_comparison(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("period_to 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, period_to).await;
-    let (prev_d, prev_c, prev_net) = period_net_total(&state.pool, tenant_id, period_from).await;
+    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, period_to).await;
+    let (prev_d, prev_c, prev_net) = period_net_total(&state.db, tenant_id, period_from).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -406,7 +442,7 @@ pub async fn get_report_trend(
     let mut cur = start;
     loop {
         let p_str = period_string(cur);
-        let (_, _, net) = period_net_total(&state.pool, tenant_id, &p_str).await;
+        let (_, _, net) = period_net_total(&state.db, tenant_id, &p_str).await;
         let growth_rate = match prev_net {
             Some(pv) => decimal_growth_rate(net, pv),
             None => 0.0,
@@ -469,9 +505,9 @@ pub async fn get_report_year_over_year(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("previous_year_period 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
+    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
-        period_net_total(&state.pool, tenant_id, previous_year_period).await;
+        period_net_total(&state.db, tenant_id, previous_year_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -526,9 +562,8 @@ pub async fn get_report_period_over_period(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("previous_period 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
-    let (prev_d, prev_c, prev_net) =
-        period_net_total(&state.pool, tenant_id, previous_period).await;
+    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, current_period).await;
+    let (prev_d, prev_c, prev_net) = period_net_total(&state.db, tenant_id, previous_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -1187,7 +1222,7 @@ pub struct HistoryReportQuery {
 }
 
 async fn upsert_report(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Uuid,
     company_id: Uuid,
     report_type: &str,
@@ -1196,6 +1231,7 @@ async fn upsert_report(
     data: serde_json::Value,
     generated_by: &str,
 ) -> Result<serde_json::Value, sqlx::Error> {
+    let mut scope = db.scope_for_tenant(tenant_id).await?;
     // org_id 承接公司维度（历史唯一键 (report_type, org_id, period, currency_code) 不重建），
     // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
@@ -1214,8 +1250,9 @@ async fn upsert_report(
     .bind(currency_code)
     .bind(data)
     .bind(generated_by)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+    scope.commit().await?;
 
     Ok(serde_json::json!({
         "id": row.get::<Uuid, _>("id"),
@@ -1232,13 +1269,19 @@ async fn upsert_report(
 }
 
 async fn fetch_report(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
     period: &str,
     currency_code: &str,
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scoped = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let mut scope = scoped?;
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
@@ -1250,8 +1293,9 @@ async fn fetch_report(
     .bind(period)
     .bind(currency_code)
     .bind(company_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await?;
+    let _ = scope.commit().await;
 
     Ok(row.map(|r| {
         serde_json::json!({
@@ -1271,7 +1315,7 @@ async fn fetch_report(
 }
 
 async fn fetch_history(
-    pool: &sqlx::PgPool,
+    db: &Db,
     tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
@@ -1282,6 +1326,12 @@ async fn fetch_history(
     page_size: i64,
 ) -> Result<(Vec<serde_json::Value>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scoped = match tenant_id {
+        Some(t) => db.scope_read_for_tenant(t).await,
+        None => db.scope_read_system().await,
+    };
+    let mut scope = scoped?;
     let rows = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
@@ -1299,7 +1349,7 @@ async fn fetch_history(
     .bind(page_size)
     .bind(offset)
     .bind(company_id)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await?;
 
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -1315,8 +1365,9 @@ async fn fetch_history(
     .bind(end_period)
     .bind(currency_code)
     .bind(company_id)
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await?;
+    let _ = scope.commit().await;
 
     let items: Vec<serde_json::Value> = rows
         .into_iter()
@@ -1372,14 +1423,14 @@ pub async fn generate_balance_sheet(
         Ok(v) => v,
         Err(resp) => return resp,
     };
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
         .get_statutory_reports(tenant_id, company_id, &period)
         .await
     {
         Ok((sheet, _)) if sheet.balanced => {
             let has_business =
-                match period_has_business(&state.pool, tenant_id, company_id, &period).await {
+                match period_has_business(&state.db, tenant_id, company_id, &period).await {
                     Ok(v) => v,
                     Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
                 };
@@ -1389,7 +1440,7 @@ pub async fn generate_balance_sheet(
                 has_business,
             );
             match upsert_report(
-                &state.pool,
+                &state.db,
                 tenant_id,
                 company_id,
                 "balance_sheet",
@@ -1481,7 +1532,7 @@ pub async fn get_balance_sheet(
         Err(resp) => return resp,
     };
     match fetch_report(
-        &state.pool,
+        &state.db,
         tenant_id_opt,
         company_id,
         "balance_sheet",
@@ -1495,7 +1546,7 @@ pub async fn get_balance_sheet(
             "查询成功",
         ),
         Ok(None) => {
-            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service.get_balance_sheet(tenant_id, &params.period).await {
                 Ok(sheet) => {
                     let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
@@ -1536,7 +1587,7 @@ pub async fn get_balance_sheet_history(
         Err(resp) => return resp,
     };
     match fetch_history(
-        &state.pool,
+        &state.db,
         tenant_id,
         company_id,
         "balance_sheet",
@@ -1572,14 +1623,14 @@ pub async fn generate_income_statement(
         Ok(v) => v,
         Err(resp) => return resp,
     };
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
         .get_statutory_reports(tenant_id, company_id, &period)
         .await
     {
         Ok((_, stmt)) if stmt.balanced => {
             let has_business =
-                match period_has_business(&state.pool, tenant_id, company_id, &period).await {
+                match period_has_business(&state.db, tenant_id, company_id, &period).await {
                     Ok(v) => v,
                     Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
                 };
@@ -1589,7 +1640,7 @@ pub async fn generate_income_statement(
                 has_business,
             );
             match upsert_report(
-                &state.pool,
+                &state.db,
                 tenant_id,
                 company_id,
                 "income_statement",
@@ -1644,7 +1695,7 @@ pub async fn get_income_statement(
         Err(resp) => return resp,
     };
     match fetch_report(
-        &state.pool,
+        &state.db,
         tenant_id_opt,
         company_id,
         "income_statement",
@@ -1657,7 +1708,7 @@ pub async fn get_income_statement(
             ApiResponse::success(report.get("data").cloned().unwrap_or(report), "查询成功")
         }
         Ok(None) => {
-            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service
                 .get_income_statement(tenant_id, &params.period)
                 .await
@@ -1701,7 +1752,7 @@ pub async fn get_income_statement_history(
         Err(resp) => return resp,
     };
     match fetch_history(
-        &state.pool,
+        &state.db,
         tenant_id,
         company_id,
         "income_statement",
@@ -1732,7 +1783,7 @@ pub async fn generate_cash_flow(
         Ok(v) => v,
         Err(resp) => return resp,
     };
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
         .get_cash_flow_statement(tenant_id, &req.period)
         .await
@@ -1740,7 +1791,7 @@ pub async fn generate_cash_flow(
         Ok(stmt) => {
             let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
             match upsert_report(
-                &state.pool,
+                &state.db,
                 tenant_id,
                 company_id,
                 "cash_flow",
@@ -1787,7 +1838,7 @@ pub async fn get_cash_flow(
         Err(resp) => return resp,
     };
     match fetch_report(
-        &state.pool,
+        &state.db,
         tenant_id_opt,
         company_id,
         "cash_flow",
@@ -1800,7 +1851,7 @@ pub async fn get_cash_flow(
             ApiResponse::success(report.get("data").cloned().unwrap_or(report), "查询成功")
         }
         Ok(None) => {
-            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service
                 .get_cash_flow_statement(tenant_id, &params.period)
                 .await
@@ -1833,7 +1884,7 @@ pub async fn get_cash_flow_history(
         Err(resp) => return resp,
     };
     match fetch_history(
-        &state.pool,
+        &state.db,
         tenant_id,
         company_id,
         "cash_flow",
@@ -1885,12 +1936,19 @@ pub async fn submit_report_for_approval(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
             if result.rows_affected() == 0 {
                 ApiResponse::not_found("报表不存在")
             } else {
@@ -1910,14 +1968,21 @@ pub async fn approve_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.comment)
         .bind(&claims.username)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("审批失败", e));
+            }
             if result.rows_affected() == 0 {
                 ApiResponse::not_found("报表不存在")
             } else {
@@ -1937,13 +2002,20 @@ pub async fn reject_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.reason)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("驳回失败", e));
+            }
             if result.rows_affected() == 0 {
                 ApiResponse::not_found("报表不存在")
             } else {
@@ -1976,12 +2048,19 @@ pub async fn lock_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("锁定失败", e));
+            }
             if result.rows_affected() == 0 {
                 ApiResponse::not_found("报表不存在")
             } else {
@@ -2001,12 +2080,19 @@ pub async fn unlock_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("解锁失败", e));
+            }
             if result.rows_affected() == 0 {
                 ApiResponse::not_found("报表不存在")
             } else {
@@ -2092,12 +2178,16 @@ pub async fn get_business_overview(
     });
     let period: String = period_raw.chars().filter(|c| c.is_ascii_digit()).collect();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"
     ))
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -2115,9 +2205,10 @@ pub async fn get_business_overview(
            GROUP BY a.account_type"#
     ))
     .bind(&period)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let mut total_revenue = Decimal::ZERO;
     let mut total_expenses = Decimal::ZERO;
@@ -2161,6 +2252,10 @@ pub async fn get_project_summary(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Vec<(Option<Uuid>, Option<String>, Decimal, Decimal)> =
         sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -2174,9 +2269,10 @@ pub async fn get_project_summary(
            ORDER BY total_debit DESC"#
         ))
         .bind(&period)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let projects: Vec<serde_json::Value> = rows
         .into_iter()
@@ -2212,6 +2308,10 @@ pub async fn get_project_summary(
     tag = "FinancialReports"
 )]
 pub async fn get_monthly_trend(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Vec<(String, Decimal, i64)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT period,
@@ -2222,9 +2322,10 @@ pub async fn get_monthly_trend(State(state): State<AppState>) -> ApiResponse<ser
            GROUP BY period
            ORDER BY period ASC"#
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let trend: Vec<serde_json::Value> = rows
         .into_iter()
@@ -2263,6 +2364,10 @@ pub async fn get_department_summary(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Vec<(Option<Uuid>, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT vi.department_id,
@@ -2275,9 +2380,10 @@ pub async fn get_department_summary(
            ORDER BY total_debit DESC"#
     ))
     .bind(&period)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let departments: Vec<serde_json::Value> = rows
         .into_iter()
@@ -2316,6 +2422,10 @@ pub async fn get_aging_analysis(
 ) -> ApiResponse<serde_json::Value> {
     let _period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // 简化版账龄分析：按凭证日期距今天数分组
     let rows: Vec<(i32, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
@@ -2333,9 +2443,10 @@ pub async fn get_aging_analysis(
            GROUP BY aging_bucket
            ORDER BY aging_bucket ASC"#
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let buckets = ["0-30天", "31-60天", "61-90天", "91-180天", "180天以上"];
     let aging: Vec<serde_json::Value> = rows
@@ -2365,6 +2476,10 @@ pub async fn get_voucher_statistics(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Vec<(String, i64, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT status,
@@ -2376,9 +2491,10 @@ pub async fn get_voucher_statistics(
            ORDER BY count DESC"#
     ))
     .bind(&period)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let stats: Vec<serde_json::Value> = rows
         .into_iter()
@@ -2415,6 +2531,10 @@ pub async fn get_cash_flow_analysis(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     // 金额聚合在 Decimal 域完成：DB 侧 SUM(numeric) 直接解码为 Decimal，
     // 不经过 f64（避免 0.1+0.2 类尾差）；总额在 JSON 序列化前由 Decimal 求和。
     let rows: Vec<(String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
@@ -2431,9 +2551,10 @@ pub async fn get_cash_flow_analysis(
            ORDER BY inflow DESC"#
     ))
     .bind(&period)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     let total_inflow: Decimal = rows.iter().map(|r| r.1).sum();
     let total_outflow: Decimal = rows.iter().map(|r| r.2).sum();
@@ -2468,6 +2589,10 @@ pub async fn get_expense_analysis(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rows: Vec<(String, Option<String>, Decimal)> = sqlx::query_as(
         only_own_schema_query!("finance", r#"SELECT vi.account_code, vi.account_name,
                   COALESCE(SUM(vi.debit), 0) as expense_amount
@@ -2481,9 +2606,10 @@ pub async fn get_expense_analysis(
            ORDER BY expense_amount DESC"#),
     )
     .bind(&period)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
 
     // 金额聚合在 Decimal 域完成：总额在 JSON 序列化前由 Decimal 求和，不经 f64。
     let total_expense: Decimal = rows.iter().map(|r| r.2).sum();
@@ -2523,6 +2649,10 @@ pub async fn get_profit_analysis(
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let total_revenue: Decimal = sqlx::query_scalar(
         only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
            FROM finance.core_finance_voucher_lines vi
@@ -2533,7 +2663,7 @@ pub async fn get_profit_analysis(
               "#),
     )
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(Decimal::ZERO);
 
@@ -2548,7 +2678,7 @@ pub async fn get_profit_analysis(
               "#
     ))
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(Decimal::ZERO);
 
@@ -2563,9 +2693,10 @@ pub async fn get_profit_analysis(
               "#
     ))
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(Decimal::ZERO);
+    let _ = scope.commit().await;
 
     // 金额加减在 Decimal 域完成；margin 为比率，最后一步才转 f64 用于展示。
     let gross_profit = total_revenue - total_cost;
@@ -2617,12 +2748,16 @@ pub async fn get_financial_overview(
         now.format("%Y-%m").to_string()
     });
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND deleted_at IS NULL"
     ))
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -2630,7 +2765,7 @@ pub async fn get_financial_overview(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -2638,7 +2773,7 @@ pub async fn get_financial_overview(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(Decimal::ZERO);
 
@@ -2646,9 +2781,10 @@ pub async fn get_financial_overview(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"
     ))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         serde_json::json!({

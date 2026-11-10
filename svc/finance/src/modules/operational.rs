@@ -64,6 +64,11 @@ pub async fn list_expenses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
@@ -86,7 +91,7 @@ pub async fn list_expenses(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -101,9 +106,12 @@ pub async fn list_expenses(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取费用报销列表成功",
@@ -148,6 +156,11 @@ pub async fn create_expense(
         return ApiResponse::bad_request("申请人不能为空");
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
@@ -187,16 +200,20 @@ pub async fn create_expense(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_expense_json(&row), "费用报销创建成功"),
+    let row = match result {
+        Ok(row) => row,
         Err(e) => {
             tracing::error!("创建费用报销失败: {}", e);
-            ApiResponse::server_error("费用报销创建失败")
+            return ApiResponse::server_error("费用报销创建失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_expense_json(&row), "费用报销创建成功")
 }
 
 #[utoipa::path(
@@ -216,6 +233,11 @@ pub async fn get_expense(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
@@ -230,16 +252,22 @@ pub async fn get_expense(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match result {
-        Ok(Some(row)) => ApiResponse::success(row_to_expense_json(&row), "获取费用报销成功"),
-        Ok(None) => ApiResponse::not_found("费用报销不存在"),
+    let result = match result {
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("获取费用报销失败: {}", e);
-            ApiResponse::server_error("获取费用报销失败")
+            return ApiResponse::server_error("获取费用报销失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match result {
+        Some(row) => ApiResponse::success(row_to_expense_json(&row), "获取费用报销成功"),
+        None => ApiResponse::not_found("费用报销不存在"),
     }
 }
 
@@ -251,6 +279,10 @@ pub async fn update_expense(
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE expenses SET
@@ -316,13 +348,17 @@ pub async fn update_expense(
             }),
     )
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功"),
-        Err(e) => crate::shared::err_resp(e),
+    let row = match result {
+        Ok(row) => row,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功")
 }
 
 #[utoipa::path(
@@ -341,20 +377,31 @@ pub async fn delete_expense(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE expenses SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "费用报销删除成功"),
-        Ok(_) => ApiResponse::not_found("费用报销不存在"),
+    let r = match result {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("删除费用报销失败: {}", e);
-            ApiResponse::server_error("费用报销删除失败")
+            return ApiResponse::server_error("删除费用报销失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if r.rows_affected() > 0 {
+        ApiResponse::success("".to_string(), "费用报销删除成功")
+    } else {
+        ApiResponse::not_found("费用报销不存在")
     }
 }
 
@@ -385,6 +432,11 @@ pub async fn list_budgets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
@@ -401,7 +453,7 @@ pub async fn list_budgets(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -412,9 +464,12 @@ pub async fn list_budgets(
                 "SELECT COUNT(*) FROM finance.budgets WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
             ))
             .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取预算列表成功",
@@ -466,7 +521,7 @@ pub async fn create_budget(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -563,6 +618,10 @@ pub async fn get_budget(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
@@ -571,16 +630,22 @@ pub async fn get_budget(
            FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match result {
-        Ok(Some(row)) => ApiResponse::success(row_to_budget_json(&row), "获取预算成功"),
-        Ok(None) => ApiResponse::not_found("预算不存在"),
+    let result = match result {
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            ApiResponse::server_error("获取预算失败")
+            return ApiResponse::server_error("获取预算失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match result {
+        Some(row) => ApiResponse::success(row_to_budget_json(&row), "获取预算成功"),
+        None => ApiResponse::not_found("预算不存在"),
     }
 }
 
@@ -608,6 +673,10 @@ pub async fn update_budget(
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.budgets SET
@@ -641,13 +710,17 @@ pub async fn update_budget(
             .unwrap_or("active"),
     )
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_budget_json(&row), "预算更新成功"),
-        Err(e) => crate::shared::err_resp(e),
+    let row = match result {
+        Ok(row) => row,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_budget_json(&row), "预算更新成功")
 }
 
 #[utoipa::path(
@@ -667,21 +740,32 @@ pub async fn delete_budget(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
     .bind(now)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "预算删除成功"),
-        Ok(_) => ApiResponse::not_found("预算不存在"),
+    let r = match result {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("删除预算失败: {}", e);
-            ApiResponse::server_error("预算删除失败")
+            return ApiResponse::server_error("预算删除失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if r.rows_affected() > 0 {
+        ApiResponse::success("".to_string(), "预算删除成功")
+    } else {
+        ApiResponse::not_found("预算不存在")
     }
 }
 
@@ -714,6 +798,11 @@ pub async fn list_receivables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
@@ -735,7 +824,7 @@ pub async fn list_receivables(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -750,9 +839,12 @@ pub async fn list_receivables(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应收列表成功",
@@ -785,6 +877,10 @@ pub async fn create_receivable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
@@ -827,16 +923,20 @@ pub async fn create_receivable(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_receivable_json(&row), "应收创建成功"),
+    let row = match result {
+        Ok(row) => row,
         Err(e) => {
             tracing::error!("创建应收失败: {}", e);
-            ApiResponse::server_error("创建应收失败")
+            return ApiResponse::server_error("创建应收失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_receivable_json(&row), "应收创建成功")
 }
 
 #[utoipa::path(
@@ -856,6 +956,10 @@ pub async fn get_receivable(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
@@ -870,16 +974,22 @@ pub async fn get_receivable(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match result {
-        Ok(Some(row)) => ApiResponse::success(row_to_receivable_json(&row), "获取应收成功"),
-        Ok(None) => ApiResponse::not_found("应收不存在"),
+    let result = match result {
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("获取应收失败: {}", e);
-            ApiResponse::server_error("获取应收失败")
+            return ApiResponse::server_error("获取应收失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match result {
+        Some(row) => ApiResponse::success(row_to_receivable_json(&row), "获取应收成功"),
+        None => ApiResponse::not_found("应收不存在"),
     }
 }
 
@@ -890,6 +1000,10 @@ pub async fn update_receivable(
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE receivables SET
@@ -927,13 +1041,17 @@ pub async fn update_receivable(
     .bind(amount_decimal(&req, "received_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_receivable_json(&row), "应收更新成功"),
-        Err(e) => crate::shared::err_resp(e),
+    let row = match result {
+        Ok(row) => row,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_receivable_json(&row), "应收更新成功")
 }
 
 #[utoipa::path(
@@ -953,20 +1071,31 @@ pub async fn delete_receivable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE receivables SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "应收删除成功"),
-        Ok(_) => ApiResponse::not_found("应收不存在"),
+    let r = match result {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("删除应收失败: {}", e);
-            ApiResponse::server_error("删除应收失败")
+            return ApiResponse::server_error("删除应收失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if r.rows_affected() > 0 {
+        ApiResponse::success("".to_string(), "应收删除成功")
+    } else {
+        ApiResponse::not_found("应收不存在")
     }
 }
 
@@ -999,6 +1128,11 @@ pub async fn list_payables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
@@ -1020,7 +1154,7 @@ pub async fn list_payables(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -1035,9 +1169,12 @@ pub async fn list_payables(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应付列表成功",
@@ -1072,6 +1209,10 @@ pub async fn create_payable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
@@ -1114,16 +1255,20 @@ pub async fn create_payable(
     .bind(now)
     .bind(now)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_payable_json(&row), "应付创建成功"),
+    let row = match result {
+        Ok(row) => row,
         Err(e) => {
             tracing::error!("创建应付失败: {}", e);
-            ApiResponse::server_error("创建应付失败")
+            return ApiResponse::server_error("创建应付失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_payable_json(&row), "应付创建成功")
 }
 
 #[utoipa::path(
@@ -1143,6 +1288,10 @@ pub async fn get_payable(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
@@ -1157,16 +1306,22 @@ pub async fn get_payable(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match result {
-        Ok(Some(row)) => ApiResponse::success(row_to_payable_json(&row), "获取应付成功"),
-        Ok(None) => ApiResponse::not_found("应付不存在"),
+    let result = match result {
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("获取应付失败: {}", e);
-            ApiResponse::server_error("获取应付失败")
+            return ApiResponse::server_error("获取应付失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    match result {
+        Some(row) => ApiResponse::success(row_to_payable_json(&row), "获取应付成功"),
+        None => ApiResponse::not_found("应付不存在"),
     }
 }
 
@@ -1177,6 +1332,10 @@ pub async fn update_payable(
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE payables SET
@@ -1214,13 +1373,17 @@ pub async fn update_payable(
     .bind(amount_decimal(&req, "paid_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match result {
-        Ok(row) => ApiResponse::success(row_to_payable_json(&row), "应付更新成功"),
-        Err(e) => crate::shared::err_resp(e),
+    let row = match result {
+        Ok(row) => row,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    ApiResponse::success(row_to_payable_json(&row), "应付更新成功")
 }
 
 #[utoipa::path(
@@ -1240,20 +1403,31 @@ pub async fn delete_payable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE payables SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "应付删除成功"),
-        Ok(_) => ApiResponse::not_found("应付不存在"),
+    let r = match result {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("删除应付失败: {}", e);
-            ApiResponse::server_error("删除应付失败")
+            return ApiResponse::server_error("删除应付失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if r.rows_affected() > 0 {
+        ApiResponse::success("".to_string(), "应付删除成功")
+    } else {
+        ApiResponse::not_found("应付不存在")
     }
 }
 

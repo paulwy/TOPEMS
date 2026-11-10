@@ -83,8 +83,11 @@ impl FinanceService {
         source_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let mut query =
-            "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+            "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -104,7 +107,7 @@ impl FinanceService {
             query_builder = query_builder.bind(s);
         }
 
-        let rules = query_builder.fetch_all(&self.db_pool).await?;
+        let rules = query_builder.fetch_all(&mut scope).await?;
         Ok(rules)
     }
 
@@ -113,12 +116,15 @@ impl FinanceService {
         tenant_id: Uuid,
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let rule: VoucherGenerationRule = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(rule)
@@ -133,6 +139,7 @@ impl FinanceService {
         let id = Uuid::new_v4();
         let now = Utc::now();
         let priority = req.priority.unwrap_or(100);
+        let mut scope = self.write_scope().await?;
 
         let rule: VoucherGenerationRule = sqlx::query_as(
             only_own_schema_query!("finance", r#"
@@ -157,9 +164,10 @@ impl FinanceService {
         .bind(&req.description)
         .bind(now)
         .bind(created_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(rule)
     }
 
@@ -169,12 +177,14 @@ impl FinanceService {
         rule_id: Uuid,
         req: UpdateGenerationRuleRequest,
     ) -> Result<VoucherGenerationRule, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing: VoucherGenerationRule = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let name = req.name.unwrap_or(existing.name);
@@ -212,9 +222,10 @@ impl FinanceService {
         .bind(&description)
         .bind(now)
         .bind(rule_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(rule)
     }
 
@@ -223,12 +234,14 @@ impl FinanceService {
         tenant_id: Uuid,
         rule_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         if existing.is_none() {
@@ -240,9 +253,10 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(rule_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(())
     }
 
@@ -335,6 +349,7 @@ impl FinanceService {
 
         // Query source records based on source_type
         // Currently supports "payment" source type
+        let mut scope = self.write_scope().await?;
         let source_rows: Vec<(Uuid, String, f64)> = match rule.source_type.as_str() {
             "payment" => {
                 let mut query = String::from(
@@ -362,7 +377,7 @@ impl FinanceService {
                 if source_ids_bound {
                     q = q.bind(&ids);
                 }
-                q.fetch_all(&self.db_pool).await?
+                q.fetch_all(&mut scope).await?
             }
             other => {
                 return Err(TopemsError::ValidationFailed(format!(
@@ -373,6 +388,7 @@ impl FinanceService {
         };
 
         if source_rows.is_empty() {
+            scope.commit().await?;
             return Ok(GenerationResult {
                 success_count: 0,
                 failed_count: 0,
@@ -395,7 +411,7 @@ impl FinanceService {
             let description = format!("自动生成凭证 - {} (源: {})", rule.name, source_no);
 
             let voucher_type = rule.output_voucher_type.as_str();
-            let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+            let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
 
             let insert_result = sqlx::query(only_own_schema_query!(
                 "finance",
@@ -415,7 +431,7 @@ impl FinanceService {
             .bind(amount)
             .bind(&description)
             .bind(generated_by)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await;
 
             if let Err(e) = insert_result {
@@ -444,7 +460,7 @@ impl FinanceService {
                 )
                 .bind(tenant_id)
                 .bind(account_code)
-                .fetch_optional(&self.db_pool)
+                .fetch_optional(&mut scope)
                 .await
                 .ok()
                 .flatten();
@@ -484,7 +500,7 @@ impl FinanceService {
                 .bind(credit)
                 .bind(tenant_id)
                 .bind(company_id)
-                .execute(&self.db_pool)
+                .execute(&mut scope)
                 .await;
 
                 if let Err(e) = line_result {
@@ -507,7 +523,7 @@ impl FinanceService {
                 .bind(voucher_id)
                 .bind(source_id)
                 .bind(tenant_id)
-                .execute(&self.db_pool)
+                .execute(&mut scope)
                 .await;
 
                 voucher_ids.push(voucher_id);
@@ -520,12 +536,13 @@ impl FinanceService {
                 ))
                 .bind(voucher_id)
                 .bind(tenant_id)
-                .execute(&self.db_pool)
+                .execute(&mut scope)
                 .await;
                 failed_count += 1;
             }
         }
 
+        scope.commit().await?;
         Ok(GenerationResult {
             success_count,
             failed_count,

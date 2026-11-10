@@ -51,7 +51,7 @@ pub async fn list_entries(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<Vec<VoucherTemplateLine>> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -60,14 +60,24 @@ pub async fn list_entries(
     };
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(_) => {
+            // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+            let scope_result = match tenant_id_opt {
+                Some(tenant) => state.db.scope_read_for_tenant(tenant).await,
+                None => state.db.scope_read_system().await,
+            };
+            let mut scope = match scope_result {
+                Ok(s) => s,
+                Err(e) => return crate::shared::err_resp(e),
+            };
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)  ORDER BY sort_order, created_at"),
             )
             .bind(template_id)
             .bind(tenant_id_opt)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
+            let _ = scope.commit().await;
             ApiResponse::success(lines, "查询成功")
         }
         Err(e) => crate::shared::err_resp(e),
@@ -84,15 +94,25 @@ pub async fn get_entry(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope_result = match tenant_id {
+        Some(tenant) => state.db.scope_read_for_tenant(tenant).await,
+        None => state.db.scope_read_system().await,
+    };
+    let mut scope = match scope_result {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
     .bind(entry_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+    let _ = scope.commit().await;
     match line {
         Some(l) => ApiResponse::success(l, "查询成功"),
         None => ApiResponse::not_found("模板分录不存在"),
@@ -106,13 +126,17 @@ pub async fn create_entry(
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> ApiResponse<VoucherTemplateLine> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut read_scope)
     .await
     .unwrap_or(0);
     if count == 0 {
@@ -125,14 +149,19 @@ pub async fn create_entry(
                 only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut read_scope)
             .await
             .unwrap_or(0);
             max_order + 1
         }
     };
+    let _ = read_scope.commit().await;
     let line_id = Uuid::new_v4();
     let now = Utc::now();
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let line: Result<VoucherTemplateLine, sqlx::Error> = sqlx::query_as(
         only_own_schema_query!("finance", r#"INSERT INTO finance_voucher_template_lines
             (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
@@ -148,10 +177,15 @@ pub async fn create_entry(
     .bind(sort_order)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
     match line {
-        Ok(l) => ApiResponse::success(l, "新增分录成功"),
+        Ok(l) => {
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
+            ApiResponse::success(l, "新增分录成功")
+        }
         Err(e) => crate::shared::err_resp(e),
     }
 }
@@ -163,13 +197,17 @@ pub async fn update_entry(
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> ApiResponse<VoucherTemplateLine> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let owns: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
     .bind(entry_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut read_scope)
     .await
     .unwrap_or(0);
     if owns == 0 {
@@ -178,17 +216,22 @@ pub async fn update_entry(
     let existing: VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1"))
             .bind(entry_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut read_scope)
             .await
         {
             Ok(l) => l,
             Err(e) => return crate::shared::err_resp(e),
         };
+    let _ = read_scope.commit().await;
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
     let direction = req.direction.unwrap_or(existing.direction);
     let amount_formula = req.amount_formula.or(existing.amount_formula);
     let sort_order = req.sort_order.unwrap_or(existing.sort_order);
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let line: Result<VoucherTemplateLine, sqlx::Error> = sqlx::query_as(
         only_own_schema_query!("finance", r#"UPDATE finance_voucher_template_lines
               SET description = $1, account_code = $2, direction = $3,
@@ -202,10 +245,15 @@ pub async fn update_entry(
     .bind(amount_formula)
     .bind(sort_order)
     .bind(entry_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
     match line {
-        Ok(l) => ApiResponse::success(l, "更新分录成功"),
+        Ok(l) => {
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
+            ApiResponse::success(l, "更新分录成功")
+        }
         Err(e) => crate::shared::err_resp(e),
     }
 }
@@ -216,26 +264,32 @@ pub async fn delete_entry(
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query(
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let res = match sqlx::query(
         only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
     .bind(entry_id)
     .bind(template_id)
     .bind(tenant_id)
-    .execute(&state.pool)
-    .await;
-    match res {
-        Ok(r) => {
-            if r.rows_affected() == 0 {
-                return ApiResponse::not_found("模板分录不存在");
-            }
-            ApiResponse::success(
-                serde_json::json!({"deleted": true, "entry_id": entry_id}),
-                "删除分录成功",
-            )
-        }
-        Err(e) => crate::shared::err_resp(e),
+    .execute(&mut scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
     }
+    if res.rows_affected() == 0 {
+        return ApiResponse::not_found("模板分录不存在");
+    }
+    ApiResponse::success(
+        serde_json::json!({"deleted": true, "entry_id": entry_id}),
+        "删除分录成功",
+    )
 }
 
 #[allow(
@@ -250,18 +304,27 @@ pub async fn reorder_entries(
     Json(req): Json<ReorderEntriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut read_scope)
     .await
     .unwrap_or(0);
     if count == 0 {
         return ApiResponse::not_found("凭证模板不存在");
     }
+    let _ = read_scope.commit().await;
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
         if let Err(e) = sqlx::query(
@@ -270,7 +333,7 @@ pub async fn reorder_entries(
         .bind(sort_order)
         .bind(entry_id)
         .bind(template_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
             return crate::shared::err_resp(e);
@@ -281,10 +344,13 @@ pub async fn reorder_entries(
     )
     .bind(template_id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match lines {
         Ok(ls) => {
+            if let Err(e) = scope.commit().await {
+                return crate::shared::err_resp(e);
+            }
             let json_lines: Vec<serde_json::Value> = ls
                 .iter()
                 .map(|l| serde_json::to_value(l).unwrap_or(serde_json::json!({})))

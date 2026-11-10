@@ -125,7 +125,17 @@ impl Db {
     ///
     /// 仅供**按租户遍历/批处理**（后台任务、数据修复、导出）使用；
     /// 请求链路请用 [`Db::scope_read`]，由 task-local 自动带上下文。
+    ///
+    /// `tenant` 为 nil 视为缺少租户上下文，直接报 `Protocol`，不降级为
+    /// nil 租户（否则超管/服务身份会静默读写公共行）。
     pub async fn scope_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        if tenant.is_nil() {
+            return Err(sqlx::Error::Protocol(
+                "RLS context missing: scope_read_for_tenant 收到 nil 租户；\
+                 缺租户上下文请改用 scope_read_system()"
+                    .into(),
+            ));
+        }
         let mut tx = self.pool.begin().await?;
         sqlx::query("SET TRANSACTION READ ONLY")
             .execute(&mut *tx)
@@ -142,7 +152,15 @@ impl Db {
     /// 显式租户写作用域（读写事务 + 指定租户，`app.rls_system='off'`）。
     ///
     /// 同 [`Db::scope_read_for_tenant`]，仅用于按租户遍历的后台/批处理路径。
+    /// `tenant` 为 nil 视为缺少租户上下文，直接报 `Protocol`。
     pub async fn scope_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        if tenant.is_nil() {
+            return Err(sqlx::Error::Protocol(
+                "RLS context missing: scope_for_tenant 收到 nil 租户；\
+                 缺租户上下文请改用 scope_system()"
+                    .into(),
+            ));
+        }
         let tx = self.pool.begin().await?;
         let mut scope = ScopedTxn {
             inner: TxRef::Owned(tx),

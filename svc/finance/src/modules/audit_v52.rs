@@ -27,9 +27,9 @@ use axum::{
 use chrono::{DateTime, Duration, Timelike, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -297,7 +297,7 @@ pub struct AutoAuditEngine;
 
 impl AutoAuditEngine {
     pub async fn create_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateAuditRuleRequest,
         created_by: &str,
@@ -306,7 +306,8 @@ impl AutoAuditEngine {
         let now = Utc::now();
         let is_active = req.is_active.unwrap_or(true);
 
-        sqlx::query_as::<_, AuditRule>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let rule = sqlx::query_as::<_, AuditRule>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_audit_rules_v52
                 (id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -323,12 +324,14 @@ impl AutoAuditEngine {
         .bind(created_by)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
     pub async fn list_rules(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
@@ -346,6 +349,11 @@ impl AutoAuditEngine {
         }
         query.push_str(" ORDER BY created_at DESC");
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut q = sqlx::query_as::<_, AuditRule>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref cat) = category {
@@ -354,11 +362,13 @@ impl AutoAuditEngine {
         if let Some(active) = is_active {
             q = q.bind(active);
         }
-        q.fetch_all(pool).await
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
+        Ok(items)
     }
 
     pub async fn update_rule(
-        pool: &PgPool,
+        db: &Db,
         id: Uuid,
         tenant_id: Uuid,
         req: UpdateAuditRuleRequest,
@@ -379,7 +389,7 @@ impl AutoAuditEngine {
             && !has_schedule
             && !has_is_active
         {
-            return Self::get_rule(pool, id, tenant_id).await;
+            return Self::get_rule(db, id, tenant_id).await;
         }
 
         let mut set_parts: Vec<String> = Vec::new();
@@ -419,6 +429,7 @@ impl AutoAuditEngine {
             arg_idx + 2
         );
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let mut q = sqlx::query_as::<_, AuditRule>(sqlx::AssertSqlSafe(query));
         q = q.bind(id);
         q = q.bind(tenant_id);
@@ -443,58 +454,63 @@ impl AutoAuditEngine {
         }
         q = q.bind(now);
 
-        q.fetch_one(pool).await
+        let rule = q.fetch_one(&mut scope).await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
-    pub async fn delete_rule(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn delete_rule(db: &Db, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
+        scope.commit().await?;
         Ok(())
     }
 
-    pub async fn get_rule(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Uuid,
-    ) -> Result<AuditRule, sqlx::Error> {
-        sqlx::query_as::<_, AuditRule>(
+    pub async fn get_rule(db: &Db, id: Uuid, tenant_id: Uuid) -> Result<AuditRule, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let rule = sqlx::query_as::<_, AuditRule>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
         )
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
     pub async fn run_audit(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule_ids: Option<Vec<Uuid>>,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rules = if let Some(ids) = rule_ids {
             sqlx::query_as::<_, AuditRule>(
                 only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE"),
             )
             .bind(tenant_id)
             .bind(ids)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?
         } else {
             sqlx::query_as::<_, AuditRule>(
                 only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
             )
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?
         };
+        scope.commit().await?;
 
         let mut findings = Vec::new();
 
         for rule in &rules {
-            let rule_findings = Self::evaluate_rule(pool, tenant_id, rule).await?;
+            let rule_findings = Self::evaluate_rule(db, tenant_id, rule).await?;
             findings.extend(rule_findings);
         }
 
@@ -502,7 +518,7 @@ impl AutoAuditEngine {
     }
 
     async fn evaluate_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -511,27 +527,27 @@ impl AutoAuditEngine {
         let category = rule.category.as_str();
         match category {
             "duplicate_voucher" => {
-                let dupes = Self::detect_duplicate_vouchers(pool, tenant_id, rule).await?;
+                let dupes = Self::detect_duplicate_vouchers(db, tenant_id, rule).await?;
                 findings.extend(dupes);
             }
             "amount_mismatch" => {
-                let mismatches = Self::detect_amount_mismatches(pool, tenant_id, rule).await?;
+                let mismatches = Self::detect_amount_mismatches(db, tenant_id, rule).await?;
                 findings.extend(mismatches);
             }
             "unauthorized_access" => {
-                let unauthorized = Self::detect_unauthorized_access(pool, tenant_id, rule).await?;
+                let unauthorized = Self::detect_unauthorized_access(db, tenant_id, rule).await?;
                 findings.extend(unauthorized);
             }
             "unusual_time" => {
-                let unusual = Self::detect_unusual_transactions(pool, tenant_id, rule).await?;
+                let unusual = Self::detect_unusual_transactions(db, tenant_id, rule).await?;
                 findings.extend(unusual);
             }
             "round_amount" => {
-                let round = Self::detect_round_amounts(pool, tenant_id, rule).await?;
+                let round = Self::detect_round_amounts(db, tenant_id, rule).await?;
                 findings.extend(round);
             }
             _ => {
-                let custom = Self::evaluate_custom_condition(pool, tenant_id, rule).await?;
+                let custom = Self::evaluate_custom_condition(db, tenant_id, rule).await?;
                 findings.extend(custom);
             }
         }
@@ -540,7 +556,7 @@ impl AutoAuditEngine {
     }
 
     async fn detect_duplicate_vouchers(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -550,6 +566,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_i64())
             .unwrap_or(2);
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, String, i64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT (array_agg(id))[1] as id, voucher_no, status, COUNT(*) as cnt FROM finance.core_finance_vouchers
@@ -560,8 +577,9 @@ impl AutoAuditEngine {
         ))
         .bind(tenant_id)
         .bind(threshold)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut findings = Vec::new();
         for (voucher_id, voucher_no, status, cnt) in &rows {
@@ -587,7 +605,7 @@ impl AutoAuditEngine {
     }
 
     async fn detect_amount_mismatches(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -597,6 +615,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(0.01);
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT v.id, v.voucher_no, v.total_amount,
@@ -610,8 +629,9 @@ impl AutoAuditEngine {
         ))
         .bind(tenant_id)
         .bind(tolerance)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut findings = Vec::new();
         for (voucher_id, voucher_no, total, line_total) in &rows {
@@ -639,7 +659,7 @@ impl AutoAuditEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn detect_unauthorized_access(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -649,6 +669,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_i64())
             .unwrap_or(7) as i32;
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, String, DateTime<Utc>)> =
             sqlx::query_as(only_own_schema_query!(
                 "finance",
@@ -661,8 +682,9 @@ impl AutoAuditEngine {
             ))
             .bind(tenant_id)
             .bind(days)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
+        scope.commit().await?;
 
         let mut findings = Vec::new();
         for (log_id, entity_type, action, created_at) in &rows {
@@ -691,7 +713,7 @@ impl AutoAuditEngine {
         clippy::cast_sign_loss
     )]
     async fn detect_unusual_transactions(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -709,6 +731,7 @@ impl AutoAuditEngine {
         let cutoff = Utc::now() - Duration::days(30);
 
         let mut findings = Vec::new();
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, created_at
@@ -719,8 +742,9 @@ impl AutoAuditEngine {
         ))
         .bind(tenant_id)
         .bind(cutoff)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         for (voucher_id, voucher_no, created_at) in &rows {
             let hour = created_at.hour();
@@ -750,7 +774,7 @@ impl AutoAuditEngine {
     }
 
     async fn detect_round_amounts(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -760,6 +784,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(10000.0);
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, Decimal)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, total_amount
@@ -771,8 +796,9 @@ impl AutoAuditEngine {
         ))
         .bind(tenant_id)
         .bind(min_amount)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut findings = Vec::new();
         for (voucher_id, voucher_no, amount) in &rows {
@@ -797,7 +823,7 @@ impl AutoAuditEngine {
     }
 
     async fn evaluate_custom_condition(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
@@ -805,12 +831,14 @@ impl AutoAuditEngine {
 
         if let Some(sql) = query {
             let sql_with_tenant = format!("{} AND tenant_id = ${}", sql, 1);
+            let mut scope = db.scope_read_for_tenant(tenant_id).await?;
             let rows: Vec<(Uuid, String, String)> =
                 sqlx::query_as(sqlx::AssertSqlSafe(sql_with_tenant))
                     .bind(tenant_id)
-                    .fetch_all(pool)
+                    .fetch_all(&mut scope)
                     .await
                     .unwrap_or_default();
+            let _ = scope.commit().await;
 
             let mut findings = Vec::new();
             for (id, entity_type, description) in &rows {
@@ -861,7 +889,7 @@ impl AutoAuditEngine {
     }
 
     pub async fn get_findings(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         status: Option<String>,
         severity: Option<String>,
@@ -893,9 +921,14 @@ impl AutoAuditEngine {
             data_query.push_str(&format!(" AND entity_type = ${}", base_idx));
         }
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
         data_query.push_str(" ORDER BY detected_at DESC LIMIT $LIMIT OFFSET $OFFSET");
@@ -914,13 +947,14 @@ impl AutoAuditEngine {
         if let Some(ref et) = entity_type {
             q = q.bind(et);
         }
-        let items = q.fetch_all(pool).await?;
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
 
         Ok((items, total))
     }
 
     pub async fn resolve_finding(
-        pool: &PgPool,
+        db: &Db,
         id: Uuid,
         tenant_id: Uuid,
         resolution: &str,
@@ -928,7 +962,8 @@ impl AutoAuditEngine {
     ) -> Result<AuditFinding, sqlx::Error> {
         let now = Utc::now();
 
-        sqlx::query_as::<_, AuditFinding>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let finding = sqlx::query_as::<_, AuditFinding>(
             only_own_schema_query!("finance", r#"UPDATE finance_audit_findings_v52
                SET status = 'resolved', resolved_at = $1, resolved_by = $2,
                    evidence = jsonb_set(COALESCE(evidence, '{}')::jsonb, '{resolution}', to_jsonb($3::text))::text
@@ -940,8 +975,10 @@ impl AutoAuditEngine {
         .bind(resolution)
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(finding)
     }
 }
 
@@ -951,7 +988,7 @@ pub struct AnomalyDetector;
 
 impl AnomalyDetector {
     pub async fn detect(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: DetectAnomalyRequest,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
@@ -960,7 +997,7 @@ impl AnomalyDetector {
 
         match detection_type {
             Some("z_score") | None => {
-                let z_score_alerts = Self::z_score_detection(pool, tenant_id).await?;
+                let z_score_alerts = Self::z_score_detection(db, tenant_id).await?;
                 alerts.extend(z_score_alerts);
             }
             _ => {}
@@ -968,7 +1005,7 @@ impl AnomalyDetector {
 
         match detection_type {
             Some("benford") | None => {
-                let benford_alerts = Self::benford_detection(pool, tenant_id).await?;
+                let benford_alerts = Self::benford_detection(db, tenant_id).await?;
                 alerts.extend(benford_alerts);
             }
             _ => {}
@@ -976,7 +1013,7 @@ impl AnomalyDetector {
 
         match detection_type {
             Some("time_based") | None => {
-                let time_alerts = Self::time_based_detection(pool, tenant_id).await?;
+                let time_alerts = Self::time_based_detection(db, tenant_id).await?;
                 alerts.extend(time_alerts);
             }
             _ => {}
@@ -984,7 +1021,7 @@ impl AnomalyDetector {
 
         match detection_type {
             Some("frequency") | None => {
-                let freq_alerts = Self::frequency_detection(pool, tenant_id).await?;
+                let freq_alerts = Self::frequency_detection(db, tenant_id).await?;
                 alerts.extend(freq_alerts);
             }
             _ => {}
@@ -992,12 +1029,13 @@ impl AnomalyDetector {
 
         match detection_type {
             Some("amount_velocity") | None => {
-                let velocity_alerts = Self::amount_velocity_detection(pool, tenant_id).await?;
+                let velocity_alerts = Self::amount_velocity_detection(db, tenant_id).await?;
                 alerts.extend(velocity_alerts);
             }
             _ => {}
         }
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         for alert in &alerts {
             sqlx::query_as::<_, AnomalyAlert>(
                 only_own_schema_query!("finance", r#"INSERT INTO finance_anomaly_alerts_v52
@@ -1017,18 +1055,17 @@ impl AnomalyDetector {
             .bind(&alert.description)
             .bind(false)
             .bind(alert.created_at)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
         }
+        scope.commit().await?;
 
         Ok(alerts)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn z_score_detection(
-        pool: &PgPool,
-        tenant_id: Uuid,
-    ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+    async fn z_score_detection(db: &Db, tenant_id: Uuid) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, f64, f64, f64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, total_amount,
@@ -1041,8 +1078,9 @@ impl AnomalyDetector {
                LIMIT 500"#
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut alerts = Vec::new();
         let mut amounts: Vec<f64> = Vec::new();
@@ -1087,10 +1125,8 @@ impl AnomalyDetector {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn benford_detection(
-        pool: &PgPool,
-        tenant_id: Uuid,
-    ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+    async fn benford_detection(db: &Db, tenant_id: Uuid) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, ABS(total_amount) as amount
@@ -1101,8 +1137,9 @@ impl AnomalyDetector {
                LIMIT 1000"#
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut digit_counts = [0i64; 10];
         let total = rows.len() as f64;
@@ -1150,9 +1187,10 @@ impl AnomalyDetector {
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn time_based_detection(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, created_at
@@ -1163,8 +1201,9 @@ impl AnomalyDetector {
                LIMIT 500"#
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut hour_counts = HashMap::new();
         for (_, _, created_at) in &rows {
@@ -1201,9 +1240,10 @@ impl AnomalyDetector {
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn frequency_detection(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT created_by, COUNT(*) as cnt
@@ -1215,8 +1255,9 @@ impl AnomalyDetector {
                LIMIT 20"#
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut alerts = Vec::new();
         if !rows.is_empty() {
@@ -1249,9 +1290,10 @@ impl AnomalyDetector {
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn amount_velocity_detection(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(String, f64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT DATE_TRUNC('day', created_at) as day,
@@ -1264,8 +1306,9 @@ impl AnomalyDetector {
                LIMIT 30"#
         ))
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let mut alerts = Vec::new();
         if rows.len() >= 7 {
@@ -1344,7 +1387,7 @@ impl AnomalyDetector {
     }
 
     pub async fn get_alerts(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         detection_type: Option<String>,
         severity: Option<String>,
@@ -1377,9 +1420,14 @@ impl AnomalyDetector {
             data_query.push_str(&format!(" AND is_resolved = ${}", base));
         }
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
         data_query.push_str(" ORDER BY created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
@@ -1397,18 +1445,20 @@ impl AnomalyDetector {
         if let Some(resolved) = is_resolved {
             q = q.bind(resolved);
         }
-        let items = q.fetch_all(pool).await?;
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
 
         Ok((items, total))
     }
 
     pub async fn configure(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         detection_type: &str,
         enabled: bool,
         parameters: serde_json::Value,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance_detection_configs_v52
@@ -1424,22 +1474,29 @@ impl AnomalyDetector {
         .bind(enabled)
         .bind(parameters)
         .bind(Utc::now())
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_summary(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<DetectionSummary, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let alerts: Vec<AnomalyAlert> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let total = alerts.len() as i64;
         let critical = alerts.iter().filter(|a| a.severity == "critical").count() as i64;
@@ -1471,7 +1528,7 @@ pub struct AlertManager;
 
 impl AlertManager {
     pub async fn create_config(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateAlertConfigRequest,
     ) -> Result<AlertConfig, sqlx::Error> {
@@ -1480,7 +1537,8 @@ impl AlertManager {
         let cooldown = req.cooldown.unwrap_or(300);
         let is_active = req.is_active.unwrap_or(true);
 
-        sqlx::query_as::<_, AlertConfig>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let config = sqlx::query_as::<_, AlertConfig>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_alert_configs_v52
                 (id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -1495,24 +1553,33 @@ impl AlertManager {
         .bind(is_active)
         .bind(now)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(config)
     }
 
     pub async fn list_configs(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertConfig>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
+        let configs = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(configs)
     }
 
     pub async fn send(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         channel: &str,
         alert_type: &str,
@@ -1520,12 +1587,13 @@ impl AlertManager {
         severity: &str,
         message: &str,
     ) -> Result<AlertHistory, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let configs = sqlx::query_as::<_, AlertConfig>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 AND channel = $2 AND is_active = TRUE"),
         )
         .bind(tenant_id)
         .bind(channel)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut delivered = false;
@@ -1536,7 +1604,7 @@ impl AlertManager {
         let history_id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query_as::<_, AlertHistory>(
+        let history = sqlx::query_as::<_, AlertHistory>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_alert_history_v52
                 (id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -1553,8 +1621,10 @@ impl AlertManager {
         .bind(false)
         .bind(None::<String>)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(history)
     }
 
     async fn deliver_alert(channel: &str, message: &str, configs: &[AlertConfig]) -> bool {
@@ -1566,7 +1636,7 @@ impl AlertManager {
     }
 
     pub async fn get_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         channel: Option<String>,
         is_delivered: Option<bool>,
@@ -1599,9 +1669,14 @@ impl AlertManager {
             data_query.push_str(&format!(" AND is_acknowledged = ${}", base));
         }
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(t) => db.scope_read_for_tenant(t).await?,
+            None => db.scope_read_system().await?,
+        };
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
         data_query.push_str(" ORDER BY created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
@@ -1619,18 +1694,20 @@ impl AlertManager {
         if let Some(ack) = is_acknowledged {
             q = q.bind(ack);
         }
-        let items = q.fetch_all(pool).await?;
+        let items = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
 
         Ok((items, total))
     }
 
     pub async fn acknowledge(
-        pool: &PgPool,
+        db: &Db,
         id: Uuid,
         tenant_id: Uuid,
         acknowledged_by: &str,
     ) -> Result<AlertHistory, sqlx::Error> {
-        sqlx::query_as::<_, AlertHistory>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let history = sqlx::query_as::<_, AlertHistory>(
             only_own_schema_query!("finance", r#"UPDATE finance_alert_history_v52
                SET is_acknowledged = TRUE, acknowledged_by = $1
                WHERE id = $2 AND tenant_id = $3
@@ -1639,28 +1716,41 @@ impl AlertManager {
         .bind(acknowledged_by)
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(history)
     }
 }
 
 // ==================== 自动审计调度器 ====================
 
-pub async fn auto_audit_scheduler(pool: PgPool) {
+pub async fn auto_audit_scheduler(db: Db) {
     let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(3600));
 
     loop {
         interval.tick().await;
 
-        let tenants = sqlx::query_scalar::<_, Uuid>(
-            only_own_schema_query!("finance", "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE"),
-        )
-        .fetch_all(&pool)
-        .await
-        .unwrap_or_default();
+        // 系统通道：无请求上下文（启动/后台），登记 §2.1
+        let tenants = match db.scope_read_system().await {
+            Ok(mut scope) => {
+                let rows = sqlx::query_scalar::<_, Uuid>(
+                    only_own_schema_query!("finance", "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE"),
+                )
+                .fetch_all(&mut scope)
+                .await
+                .unwrap_or_default();
+                let _ = scope.commit().await;
+                rows
+            }
+            Err(e) => {
+                tracing::error!("[audit_v52] 系统通道创建失败: {}", e);
+                Vec::new()
+            }
+        };
 
         for tenant_id in tenants {
-            match AutoAuditEngine::run_audit(&pool, tenant_id, None).await {
+            match AutoAuditEngine::run_audit(&db, tenant_id, None).await {
                 Ok(findings) => {
                     if !findings.is_empty() {
                         tracing::debug!(
@@ -1695,7 +1785,7 @@ pub async fn create_audit_rule_handler(
 ) -> ApiResponse<AuditRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match AutoAuditEngine::create_rule(&state.pool, tenant_id, req, &created_by).await {
+    match AutoAuditEngine::create_rule(&state.db, tenant_id, req, &created_by).await {
         Ok(rule) => ApiResponse::success(rule, "审计规则创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1711,8 +1801,7 @@ pub async fn list_audit_rules_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
-        .await
+    match AutoAuditEngine::list_rules(&state.db, tenant_id, params.category, params.is_active).await
     {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1726,7 +1815,7 @@ pub async fn update_audit_rule_handler(
     Json(req): Json<UpdateAuditRuleRequest>,
 ) -> ApiResponse<AuditRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoAuditEngine::update_rule(&state.pool, id, tenant_id, req).await {
+    match AutoAuditEngine::update_rule(&state.db, id, tenant_id, req).await {
         Ok(rule) => ApiResponse::success(rule, "更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1738,7 +1827,7 @@ pub async fn delete_audit_rule_handler(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoAuditEngine::delete_rule(&state.pool, id, tenant_id).await {
+    match AutoAuditEngine::delete_rule(&state.db, id, tenant_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1757,7 +1846,7 @@ pub async fn get_audit_findings_handler(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AutoAuditEngine::get_findings(
-        &state.pool,
+        &state.db,
         tenant_id,
         params.status,
         params.severity,
@@ -1796,14 +1885,8 @@ pub async fn resolve_finding_handler(
 ) -> ApiResponse<AuditFinding> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let resolved_by = claims.username.clone();
-    match AutoAuditEngine::resolve_finding(
-        &state.pool,
-        id,
-        tenant_id,
-        &req.resolution,
-        &resolved_by,
-    )
-    .await
+    match AutoAuditEngine::resolve_finding(&state.db, id, tenant_id, &req.resolution, &resolved_by)
+        .await
     {
         Ok(finding) => ApiResponse::success(finding, "问题已处理"),
         Err(e) => crate::shared::err_resp(e),
@@ -1816,7 +1899,7 @@ pub async fn run_audit_handler(
     Json(req): Json<RunAuditRequest>,
 ) -> ApiResponse<Vec<AuditFinding>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoAuditEngine::run_audit(&state.pool, tenant_id, req.rule_ids).await {
+    match AutoAuditEngine::run_audit(&state.db, tenant_id, req.rule_ids).await {
         Ok(findings) => ApiResponse::success(findings, "审计执行完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1828,7 +1911,7 @@ async fn detect_anomalies_handler(
     Json(req): Json<DetectAnomalyRequest>,
 ) -> ApiResponse<Vec<AnomalyAlert>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AnomalyDetector::detect(&state.pool, tenant_id, req).await {
+    match AnomalyDetector::detect(&state.db, tenant_id, req).await {
         Ok(alerts) => ApiResponse::success(alerts, "异常检测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1847,7 +1930,7 @@ pub async fn get_anomaly_alerts_handler(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AnomalyDetector::get_alerts(
-        &state.pool,
+        &state.db,
         tenant_id,
         params.detection_type,
         params.severity,
@@ -1887,7 +1970,7 @@ pub async fn get_detection_summary_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
+    match AnomalyDetector::get_summary(&state.db, tenant_id).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1912,7 +1995,7 @@ pub async fn configure_detection_handler(
         .cloned()
         .unwrap_or(serde_json::json!({}));
 
-    match AnomalyDetector::configure(&state.pool, tenant_id, detection_type, enabled, parameters)
+    match AnomalyDetector::configure(&state.db, tenant_id, detection_type, enabled, parameters)
         .await
     {
         Ok(_) => ApiResponse::success((), "配置更新成功"),
@@ -1933,7 +2016,7 @@ pub async fn get_alerts_handler(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AlertManager::get_history(
-        &state.pool,
+        &state.db,
         tenant_id,
         params.channel,
         params.is_delivered,
@@ -1970,7 +2053,7 @@ pub async fn create_alert_config_handler(
     Json(req): Json<CreateAlertConfigRequest>,
 ) -> ApiResponse<AlertConfig> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertManager::create_config(&state.pool, tenant_id, req).await {
+    match AlertManager::create_config(&state.db, tenant_id, req).await {
         Ok(config) => ApiResponse::success(config, "预警配置创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1985,7 +2068,7 @@ pub async fn list_alert_configs_handler(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AlertManager::list_configs(&state.pool, tenant_id).await {
+    match AlertManager::list_configs(&state.db, tenant_id).await {
         Ok(configs) => ApiResponse::success(configs, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1998,7 +2081,7 @@ pub async fn acknowledge_alert_handler(
     Json(req): Json<AcknowledgeAlertRequest>,
 ) -> ApiResponse<AlertHistory> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AlertManager::acknowledge(&state.pool, id, tenant_id, &req.acknowledged_by).await {
+    match AlertManager::acknowledge(&state.db, id, tenant_id, &req.acknowledged_by).await {
         Ok(history) => ApiResponse::success(history, "预警已确认"),
         Err(e) => crate::shared::err_resp(e),
     }

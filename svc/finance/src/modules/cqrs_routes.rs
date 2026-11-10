@@ -3,7 +3,6 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use utoipa::ToSchema;
 
 use crate::domain::async_projector::ProjectionProgress;
@@ -279,7 +278,7 @@ pub async fn get_stats() -> ApiResponse<CqrsStatsResponse> {
 )]
 
 pub async fn get_projection_progress(
-    State(_pool): State<PgPool>,
+    State(_state): State<AppState>,
 ) -> ApiResponse<Vec<ProjectionProgress>> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.get_progress().await {

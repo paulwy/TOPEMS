@@ -121,12 +121,14 @@ impl FinanceService {
         tenant_id: Uuid,
         period: String,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let period_status: Option<(PeriodStatus,)> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND period_name = $2"),
         )
         .bind(tenant_id)
         .bind(&period)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         if let Some((status,)) = period_status {
@@ -146,6 +148,7 @@ impl FinanceService {
         month: i32,
     ) -> Result<Period, TopemsError> {
         let period_name = format!("{:04}{:02}", year, month);
+        let mut scope = self.write_scope().await?;
 
         let existing: Option<Period> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
@@ -153,7 +156,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(year)
         .bind(month)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         if let Some(period) = existing {
@@ -171,10 +174,12 @@ impl FinanceService {
                 .bind(tenant_id)
                 .bind(year)
                 .bind(month)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
+                scope.commit().await?;
                 return Ok(updated);
             }
+            scope.commit().await?;
             return Ok(period);
         }
 
@@ -210,9 +215,10 @@ impl FinanceService {
         .bind(&period_name)
         .bind(start_date)
         .bind(end_date)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(period)
     }
 
@@ -247,13 +253,15 @@ impl FinanceService {
         .and_hms_opt(23, 59, 59)
         .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
 
+        let mut scope = self.write_scope().await?;
+
         let existing: Option<Period> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
         )
         .bind(tenant_id)
         .bind(year)
         .bind(month)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         if let Some(period) = existing {
@@ -272,7 +280,7 @@ impl FinanceService {
             .bind(tenant_id)
             .bind(year)
             .bind(month)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?
             .into_iter()
             .map(|s| match s.as_str() {
@@ -296,8 +304,9 @@ impl FinanceService {
             .bind(year)
             .bind(month)
             .bind(closed_by)
-            .fetch_one(&self.db_pool)
+            .fetch_one(&mut scope)
             .await?;
+            scope.commit().await?;
             return Ok(updated);
         }
 
@@ -313,9 +322,10 @@ impl FinanceService {
         .bind(start_date)
         .bind(end_date)
         .bind(closed_by)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(period)
     }
 
@@ -334,7 +344,8 @@ impl FinanceService {
     ) -> Result<YearEndCloseResult, TopemsError> {
         let period = format!("{:04}{:02}", year, 12);
         let year_pattern = format!("{:04}%", year);
-        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+        let mut scope = self.write_scope().await?;
+        let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
         let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
 
         // 第一步：全年未结转损益（含此前月结遗留净额）结转到 4103 本年利润。
@@ -426,6 +437,7 @@ impl FinanceService {
             ));
         }
 
+        scope.commit().await?;
         Ok(YearEndCloseResult {
             year,
             period,
@@ -554,6 +566,8 @@ impl FinanceService {
         period_like: &str,
         locale: &str,
     ) -> Result<Vec<ProfitBalanceRow>, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let rows: Vec<(Uuid, String, String, String, Option<String>, Option<Uuid>, Decimal)> =
             sqlx::query_as(only_own_schema_query!(
                 "finance",
@@ -582,7 +596,7 @@ impl FinanceService {
             .bind(company_id)
             .bind(period_like)
             .bind(locale)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
 
         Ok(rows
@@ -619,6 +633,8 @@ impl FinanceService {
         account_id: Uuid,
         period: &str,
     ) -> Result<Decimal, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let (balance,): (Decimal,) = sqlx::query_as(only_own_schema_query!(
             "finance",
             "SELECT COALESCE(SUM(credit - debit), 0) FROM finance.core_finance_ledger
@@ -629,7 +645,7 @@ impl FinanceService {
         .bind(company_id)
         .bind(account_id)
         .bind(period)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
         Ok(balance)
     }
@@ -642,6 +658,8 @@ impl FinanceService {
         period: &str,
     ) -> Result<String, TopemsError> {
         let prefix = format!("记{}", period);
+        let mut scope = self.read_scope().await?;
+
         let count: (i64,) = sqlx::query_as(only_own_schema_query!(
             "finance",
             "SELECT COUNT(*) FROM finance.core_finance_vouchers
@@ -649,7 +667,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(format!("{}%", prefix))
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
         Ok(format!("{}{:04}", prefix, count.0 + 1))
     }
@@ -678,7 +696,7 @@ impl FinanceService {
         let voucher_no = self.generate_period_voucher_no(tenant_id, period).await?;
         let voucher_date = Utc::now();
 
-        let mut tx = self.db_pool.begin().await?;
+        let mut tx = self.write_scope().await?;
         let voucher: Voucher = sqlx::query_as(only_own_schema_query!(
             "finance",
             "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, source_module)
@@ -695,7 +713,7 @@ impl FinanceService {
         .bind(total_credit)
         .bind(&description)
         .bind(created_by)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut tx)
         .await?;
 
         for (idx, entry) in entries.iter().enumerate() {
@@ -717,11 +735,11 @@ impl FinanceService {
             .bind(company_id)
             .bind(entry.aux_type.as_deref())
             .bind(entry.aux_id)
-            .execute(&mut *tx)
+            .execute(&mut tx)
             .await?;
 
             let balance = self
-                .calculate_account_balance(&mut *tx, tenant_id, entry.account_id)
+                .calculate_account_balance(&mut tx, tenant_id, entry.account_id)
                 .await?;
             let new_balance = balance + entry.debit - entry.credit;
 
@@ -744,7 +762,7 @@ impl FinanceService {
             .bind(entry.credit)
             .bind(new_balance)
             .bind(entry.aux_id)
-            .execute(&mut *tx)
+            .execute(&mut tx)
             .await?;
 
             if let (Some(aux_type), Some(aux_id)) = (entry.aux_type.as_deref(), entry.aux_id) {
@@ -765,7 +783,7 @@ impl FinanceService {
                 .bind(period)
                 .bind(entry.debit)
                 .bind(entry.credit)
-                .execute(&mut *tx)
+                .execute(&mut tx)
                 .await?;
             }
         }
@@ -785,7 +803,8 @@ impl FinanceService {
     ) -> Result<IncomeCloseResult, TopemsError> {
         let (year, month) = parse_period_str(period)?;
         let period_code = format!("{:04}{:02}", year, month);
-        let company_id = resolve_tenant_company(&self.db_pool, tenant_id).await?;
+        let mut scope = self.write_scope().await?;
+        let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
         let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
         let plan = self
             .build_profit_close_plan(tenant_id, company_id, &period_code, &profit_account, locale)
@@ -806,6 +825,7 @@ impl FinanceService {
             )
             .await?;
 
+        scope.commit().await?;
         Ok(IncomeCloseResult {
             period: period_code,
             voucher_id: voucher.id,

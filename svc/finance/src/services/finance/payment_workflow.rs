@@ -22,13 +22,15 @@ impl FinanceService {
             submitted_by
         );
 
+        let mut scope = self.write_scope().await?;
+
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
             "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         tracing::info!(
@@ -108,7 +110,7 @@ impl FinanceService {
                     .bind(submitted_by)
                     .bind(1)
                     .bind("pending")
-                    .execute(&self.db_pool)
+                    .execute(&mut scope)
                     .await?;
 
                     tracing::info!(
@@ -160,6 +162,8 @@ impl FinanceService {
             payment.payment_no
         );
 
+        scope.commit().await?;
+
         result
     }
 
@@ -168,6 +172,8 @@ impl FinanceService {
         tenant_id: Uuid,
         amount: Decimal,
     ) -> Result<Option<Uuid>, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let workflow_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             "SELECT workflow_id FROM core_finance_payment_approval_config
@@ -177,7 +183,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(amount)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         Ok(workflow_id)
@@ -197,13 +203,15 @@ impl FinanceService {
             approved_by
         );
 
+        let mut scope = self.write_scope().await?;
+
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
             "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         tracing::info!(
@@ -238,7 +246,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         tracing::info!(
@@ -295,7 +303,7 @@ impl FinanceService {
                     .bind(instance_status.clone())
                     .bind(tenant_id)
                     .bind(payment_id)
-                    .execute(&self.db_pool)
+                    .execute(&mut scope)
                     .await?;
 
                     tracing::info!(
@@ -347,7 +355,7 @@ impl FinanceService {
             .bind(approver_id)
             .bind(tenant_id)
             .bind(payment_id)
-            .execute(&self.db_pool)
+            .execute(&mut scope)
             .await?;
 
             tracing::info!(
@@ -371,6 +379,8 @@ impl FinanceService {
             workflow_approved
         );
 
+        scope.commit().await?;
+
         result
     }
 
@@ -387,13 +397,15 @@ impl FinanceService {
             rejected_by
         );
 
+        let mut scope = self.write_scope().await?;
+
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
             "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         tracing::info!(
@@ -428,7 +440,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_optional(&self.db_pool)
+        .fetch_optional(&mut scope)
         .await?;
 
         tracing::info!(
@@ -467,7 +479,7 @@ impl FinanceService {
                     .bind(instance_status.clone())
                     .bind(tenant_id)
                     .bind(payment_id)
-                    .execute(&self.db_pool)
+                    .execute(&mut scope)
                     .await?;
 
                     tracing::info!(
@@ -513,6 +525,8 @@ impl FinanceService {
             payment.payment_no
         );
 
+        scope.commit().await?;
+
         result
     }
 
@@ -523,13 +537,15 @@ impl FinanceService {
         req: ExecutePaymentRequest,
         executed_by: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
             "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let voucher_id = payment
@@ -550,8 +566,10 @@ impl FinanceService {
         .bind(executed_by)
         .bind(tenant_id)
         .bind(payment_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         self.get_payment_response(tenant_id, payment_id).await
     }
@@ -563,13 +581,15 @@ impl FinanceService {
         write_off_amount: Decimal,
         write_off_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(only_own_schema_query!(
             "finance",
             "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(item_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         if write_off_amount > item.payment_amount {
@@ -588,8 +608,10 @@ impl FinanceService {
         .bind(item.payable_amount - write_off_amount)
         .bind(tenant_id)
         .bind(item_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         self.get_payment_response(tenant_id, payment_id).await
     }

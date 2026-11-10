@@ -98,6 +98,17 @@ fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     )
 }
 
+/// A 类业务端点守卫：nil 租户视为缺少上下文，显式报错，禁止降级为跨租户。
+fn require_tenant(tenant_id: Uuid) -> Result<Uuid, (StatusCode, ApiResponse<serde_json::Value>)> {
+    if tenant_id.is_nil() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            ApiResponse::bad_request("缺少租户上下文"),
+        ));
+    }
+    Ok(tenant_id)
+}
+
 fn not_found(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     // finance 统一信封契约：业务错误一律 HTTP 200，由 body.code 承载业务码。
     // （此前返回真实 HTTP 404，被 BFF 契约冒烟误判为"路由缺失 route_missing"。）
@@ -167,7 +178,14 @@ pub async fn list_reconcile_orders(
     let offset = (page - 1) * page_size;
 
     let keyword = params.keyword.clone();
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+
+    let mut scope = state.db.scope_read().await.map_err(|e| {
+        tracing::error!("创建对账订单查询作用域失败: {}", e);
+        internal_error("统计对账订单失败")
+    })?;
 
     let total: i64 = match sqlx::query(only_own_schema_query!(
         "finance",
@@ -177,14 +195,14 @@ pub async fn list_reconcile_orders(
            AND ($3::text IS NULL OR period = $3) \
            AND ($4::text IS NULL OR order_no ILIKE '%' || $4 || '%' \
              OR counterparty_name ILIKE '%' || $4 || '%') \
-           AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)"
+           AND (tenant_id = $5::uuid)"
     ))
     .bind(&params.status)
     .bind(params.counterparty_id)
     .bind(&params.period)
     .bind(&keyword)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(row) => row.get::<i64, _>(0),
@@ -204,7 +222,7 @@ pub async fn list_reconcile_orders(
            AND ($3::text IS NULL OR period = $3) \
            AND ($4::text IS NULL OR order_no ILIKE '%' || $4 || '%' \
              OR counterparty_name ILIKE '%' || $4 || '%') \
-           AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid) \
+           AND (tenant_id = $7::uuid) \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6"))
         .bind(&params.status)
         .bind(params.counterparty_id)
@@ -213,7 +231,7 @@ pub async fn list_reconcile_orders(
         .bind(page_size)
         .bind(offset)
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(rows) => rows,
@@ -222,6 +240,10 @@ pub async fn list_reconcile_orders(
                 return Err(internal_error("查询对账订单失败"));
             }
         };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交对账订单查询作用域失败: {}", e);
+        internal_error("查询对账订单失败")
+    })?;
 
     let items: Vec<serde_json::Value> = rows.iter().map(order_to_json).collect();
     Ok(ApiResponse::success(
@@ -248,17 +270,23 @@ pub async fn get_reconcile_order(
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+    let mut scope = state.db.scope_read().await.map_err(|e| {
+        tracing::error!("创建对账订单查询作用域失败: {}", e);
+        internal_error("查询对账订单失败")
+    })?;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                 total_amount, matched_amount, unmatched_amount, status, created_at, updated_at \
          FROM finance.reconcile_orders WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
+           AND (tenant_id = $2::uuid)"
     ))
     .bind(order_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -281,7 +309,7 @@ pub async fn get_reconcile_order(
                 matched, match_id, match_amount, difference, status, remark, created_at, updated_at \
          FROM finance.reconcile_items WHERE order_id = $1 ORDER BY created_at"))
         .bind(order_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => rows,
@@ -290,6 +318,10 @@ pub async fn get_reconcile_order(
             return Err(internal_error("查询对账明细失败"));
         }
     };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交对账订单查询作用域失败: {}", e);
+        internal_error("查询对账订单失败")
+    })?;
     data.insert(
         "items".to_string(),
         serde_json::Value::Array(items.iter().map(item_to_json).collect()),
@@ -319,17 +351,23 @@ pub async fn get_reconcile_items(
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+    let mut scope = state.db.scope_read().await.map_err(|e| {
+        tracing::error!("创建对账明细查询作用域失败: {}", e);
+        internal_error("查询对账明细失败")
+    })?;
     let rows = match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                 matched, match_id, match_amount, difference, status, remark, created_at, updated_at \
          FROM finance.reconcile_items WHERE order_id = $1 \
            AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
-             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)) \
+             AND (o.tenant_id = $2::uuid)) \
          ORDER BY created_at"))
         .bind(order_id)
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => rows,
@@ -338,6 +376,10 @@ pub async fn get_reconcile_items(
             return Err(internal_error("查询对账明细失败"));
         }
     };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交对账明细查询作用域失败: {}", e);
+        internal_error("查询对账明细失败")
+    })?;
 
     let items: Vec<serde_json::Value> = rows.iter().map(item_to_json).collect();
     Ok(ApiResponse::success(
@@ -374,6 +416,11 @@ pub async fn create_reconcile_order(
     let start_date = parse_date(&req.start_date);
     let end_date = parse_date(&req.end_date);
 
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("创建对账订单写入作用域失败: {}", e);
+        internal_error("创建对账订单失败")
+    })?;
+
     // 每个 counterparty 生成一个对账订单
     let mut orders = Vec::new();
     for cid in counterparty_ids {
@@ -394,7 +441,7 @@ pub async fn create_reconcile_order(
             .bind(start_date)
             .bind(end_date)
             .bind(tenant_opt)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
         {
             Ok(row) => row,
@@ -405,6 +452,10 @@ pub async fn create_reconcile_order(
         };
         orders.push(order_to_json(&row));
     }
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交创建对账订单作用域失败: {}", e);
+        internal_error("创建对账订单失败")
+    })?;
 
     Ok(ApiResponse::success(
         serde_json::json!({ "orders": orders }),
@@ -435,6 +486,11 @@ pub async fn auto_reconcile(
         ));
     }
 
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("自动对账写入作用域失败: {}", e);
+        internal_error("自动对账失败")
+    })?;
+
     let mut orders = Vec::new();
     for cid in counterparty_ids {
         let order_no = format!(
@@ -454,7 +510,7 @@ pub async fn auto_reconcile(
             .bind(start_date)
             .bind(end_date)
             .bind(tenant_opt)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
         {
             Ok(row) => row,
@@ -465,6 +521,10 @@ pub async fn auto_reconcile(
         };
         orders.push(order_to_json(&row));
     }
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交自动对账作用域失败: {}", e);
+        internal_error("自动对账失败")
+    })?;
 
     Ok(ApiResponse::success(
         serde_json::json!({
@@ -494,18 +554,24 @@ pub async fn confirm_reconcile_order(
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("确认对账订单写入作用域失败: {}", e);
+        internal_error("确认对账订单失败")
+    })?;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
          WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) \
+           AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -515,6 +581,10 @@ pub async fn confirm_reconcile_order(
             return Err(internal_error("确认对账订单失败"));
         }
     };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交确认对账订单作用域失败: {}", e);
+        internal_error("确认对账订单失败")
+    })?;
 
     Ok(ApiResponse::success(
         order_to_json(&row),
@@ -542,18 +612,24 @@ pub async fn dispute_reconcile_order(
     Json(req): Json<DisputeReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let _remark = req.reason;
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("争议对账订单写入作用域失败: {}", e);
+        internal_error("争议对账订单失败")
+    })?;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'disputed', updated_at = NOW() \
          WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) \
+           AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -563,6 +639,10 @@ pub async fn dispute_reconcile_order(
             return Err(internal_error("争议对账订单失败"));
         }
     };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交争议对账订单作用域失败: {}", e);
+        internal_error("争议对账订单失败")
+    })?;
 
     Ok(ApiResponse::success(
         order_to_json(&row),
@@ -588,17 +668,27 @@ pub async fn cancel_reconcile_order(
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("取消对账订单写入作用域失败: {}", e);
+        internal_error("取消对账订单失败")
+    })?;
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'cancelled', updated_at = NOW() \
          WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled') \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
+           AND (tenant_id = $2::uuid)"
     ))
     .bind(order_id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交取消对账订单作用域失败: {}", e);
+        internal_error("取消对账订单失败")
+    })?;
 
     match result {
         Ok(res) => {
@@ -637,11 +727,18 @@ pub async fn update_reconcile_item(
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateItemRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
+        &claims,
+    ))?;
     let source_date = parse_date(&req.source_date);
     let matched = req.matched;
     let match_amount = req.match_amount;
     let status = req.status.clone();
+
+    let mut scope = state.db.scope().await.map_err(|e| {
+        tracing::error!("更新对账明细写入作用域失败: {}", e);
+        internal_error("更新对账明细失败")
+    })?;
 
     let row = match sqlx::query(only_own_schema_query!("finance",
         "UPDATE finance.reconcile_items SET \
@@ -658,7 +755,7 @@ pub async fn update_reconcile_item(
          updated_at = NOW() \
          WHERE id = $2 AND order_id = $1 \
            AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
-             AND ($12::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $12::uuid)) \
+             AND (o.tenant_id = $12::uuid)) \
          RETURNING id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                    matched, match_id, match_amount, difference, status, remark, created_at, updated_at"))
         .bind(order_id)
@@ -673,7 +770,7 @@ pub async fn update_reconcile_item(
         .bind(&status)
         .bind(&req.remark)
         .bind(tenant_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(row)) => row,
@@ -683,8 +780,19 @@ pub async fn update_reconcile_item(
             return Err(internal_error("更新对账明细失败"));
         }
     };
+    scope.commit().await.map_err(|e| {
+        tracing::error!("提交更新对账明细作用域失败: {}", e);
+        internal_error("更新对账明细失败")
+    })?;
 
-    // 重算订单聚合金额
+    // 重算订单聚合金额（独立作用域：原实现忽略该步失败，不影响明细更新结果）
+    let mut agg_scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建对账订单聚合写入作用域失败: {}", e);
+            return Err(internal_error("更新对账明细失败"));
+        }
+    };
     let _ = sqlx::query(only_own_schema_query!("finance",
         "UPDATE finance.reconcile_orders SET \
          total_amount = COALESCE((SELECT SUM(source_amount) FROM finance.reconcile_items WHERE order_id = $1), 0), \
@@ -695,8 +803,9 @@ pub async fn update_reconcile_item(
          updated_at = NOW() \
          WHERE id = $1"))
         .bind(order_id)
-        .execute(&state.pool)
+        .execute(&mut agg_scope)
         .await;
+    let _ = agg_scope.commit().await;
 
     Ok(ApiResponse::success(item_to_json(&row), "更新对账明细成功"))
 }

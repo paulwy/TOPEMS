@@ -177,8 +177,11 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("⚠️ Finance schema 防御检查失败: {}", e);
     }
 
-    if let Err(e) =
-        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
+    if let Err(e) = event_handlers::start_event_subscribers(
+        topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),
+        ctx.event_publisher.clone(),
+    )
+    .await
     {
         tracing::warn!("⚠️ Finance 事件订阅者启动失败: {}", e);
     }
@@ -220,6 +223,7 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),
         workflow_client,
         event_publisher: ctx.event_publisher.clone(),
     };

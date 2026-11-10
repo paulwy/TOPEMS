@@ -21,13 +21,14 @@ impl FinanceService {
         status: Option<String>,
         supplier_id: Option<Uuid>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payment_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
 
         let mut cond = Vec::new();
@@ -74,8 +75,10 @@ impl FinanceService {
 
         query = query.bind(page_size).bind(offset);
 
-        let rows = query.fetch_all(&self.db_pool).await?;
-        let total = count_query.fetch_one(&self.db_pool).await.unwrap_or(0);
+        let mut scope = self.read_scope().await?;
+
+        let rows = query.fetch_all(&mut scope).await?;
+        let total = count_query.fetch_one(&mut scope).await.unwrap_or(0);
 
         let items: Vec<Value> = rows
             .iter()
@@ -111,10 +114,13 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
+        let row = sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
             .bind(tenant_id)
             .bind(payment_id)
-            .fetch_optional(&self.db_pool)
+            .fetch_optional(&mut scope)
             .await?
             .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
 
@@ -146,6 +152,8 @@ impl FinanceService {
         let amount = decimal_from_value(req.get("amount")).unwrap_or(Decimal::ZERO);
         let payment_no = req.get("payment_no").and_then(|v| v.as_str()).unwrap_or("");
 
+        let mut scope = self.write_scope().await?;
+
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, NULL, $5)
@@ -156,7 +164,7 @@ impl FinanceService {
         .bind(supplier_name)
         .bind(amount)
         .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
@@ -164,6 +172,8 @@ impl FinanceService {
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: Option<String> = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),
@@ -184,6 +194,8 @@ impl FinanceService {
         let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
+        let mut scope = self.write_scope().await?;
+
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_payment_records
@@ -199,7 +211,7 @@ impl FinanceService {
         .bind(status)
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
@@ -207,6 +219,8 @@ impl FinanceService {
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),
@@ -222,18 +236,22 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("付款记录不存在".to_string()));
         }
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -245,6 +263,8 @@ impl FinanceService {
         payable_id: Uuid,
         write_off_amount: f64,
     ) -> Result<Value, TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_payment_records
@@ -254,7 +274,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
@@ -262,6 +282,8 @@ impl FinanceService {
 
         let _ = payable_id;
         let _ = write_off_amount;
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),

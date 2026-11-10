@@ -11,7 +11,6 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
@@ -144,7 +143,14 @@ pub async fn list_currencies(
     for p in &params {
         count_qb = count_qb.bind(p);
     }
-    let total: i64 = match count_qb.fetch_one(&state.pool).await {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建币种查询作用域失败: {}", e);
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let total: i64 = match count_qb.fetch_one(&mut scope).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询币种总数失败: {}", e);
@@ -166,18 +172,23 @@ pub async fn list_currencies(
     }
     qb = qb.bind(page_size).bind(offset);
 
-    match qb.fetch_all(&state.pool).await {
-        Ok(items) => Json(ApiResponse::success(PaginatedCurrencies {
-            items,
-            total,
-            page,
-            page_size,
-        })),
+    let items = match qb.fetch_all(&mut scope).await {
+        Ok(items) => items,
         Err(e) => {
             tracing::error!("查询币种列表失败: {}", e);
-            Json(ApiResponse::error("查询失败"))
+            return Json(ApiResponse::error("查询失败"));
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交币种查询作用域失败: {}", e);
+        return Json(ApiResponse::error("查询失败"));
     }
+    Json(ApiResponse::success(PaginatedCurrencies {
+        items,
+        total,
+        page,
+        page_size,
+    }))
 }
 
 /// 新增币种
@@ -206,15 +217,26 @@ pub async fn create_currency(
          VALUES (NULL, $1, $2, $3, $4, $5) RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    match sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建币种写入作用域失败: {}", e);
+            return Json(ApiResponse::error("创建失败"));
+        }
+    };
+    let result = sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
         .bind(&code)
         .bind(&name)
         .bind(&req.symbol)
         .bind(req.exchange_rate)
         .bind(req.is_active)
-        .fetch_one(&state.pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交创建币种作用域失败: {}", e);
+        return Json(ApiResponse::error("创建失败"));
+    }
+    match result {
         Ok(c) => Json(ApiResponse::success(c)),
         Err(e) => {
             tracing::error!("创建币种失败: {}", e);
@@ -254,15 +276,26 @@ pub async fn update_currency(
          RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    match sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建币种写入作用域失败: {}", e);
+            return Json(ApiResponse::error("更新失败"));
+        }
+    };
+    let result = sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(&req.name)
         .bind(&req.symbol)
         .bind(req.exchange_rate)
         .bind(req.is_active)
-        .fetch_optional(&state.pool)
-        .await
-    {
+        .fetch_optional(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交更新币种作用域失败: {}", e);
+        return Json(ApiResponse::error("更新失败"));
+    }
+    match result {
         Ok(Some(c)) => Json(ApiResponse::success(c)),
         Ok(None) => Json(ApiResponse::error("币种不存在")),
         Err(e) => {
@@ -286,11 +319,22 @@ pub async fn delete_currency(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let sql = format!("DELETE FROM {} WHERE id = $1", TABLE);
-    match sqlx::query(sqlx::AssertSqlSafe(sql))
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("创建币种写入作用域失败: {}", e);
+            return Json(ApiResponse::error("删除失败"));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .execute(&state.pool)
-        .await
-    {
+        .execute(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交删除币种作用域失败: {}", e);
+        return Json(ApiResponse::error("删除失败"));
+    }
+    match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(())),
         Ok(_) => Json(ApiResponse::error("币种不存在")),
         Err(e) => {
@@ -315,7 +359,4 @@ pub fn create_routes() -> axum::Router<AppState> {
         ))
 }
 
-// 保持 PgPool 引用以避免未使用告警（后续租户过滤会用到）
-#[allow(dead_code)]
-fn _keep_pool(_pool: &PgPool) {}
 use utoipa::ToSchema;

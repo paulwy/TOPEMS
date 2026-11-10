@@ -21,13 +21,14 @@ impl FinanceService {
         status: Option<String>,
         customer_id: Option<Uuid>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_collection_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+            "SELECT COUNT(*) FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -73,8 +74,9 @@ impl FinanceService {
 
         query = query.bind(page_size).bind(offset);
 
-        let rows = query.fetch_all(&self.db_pool).await?;
-        let total = count_query.fetch_one(&self.db_pool).await.unwrap_or(0);
+        let mut scope = self.read_scope().await?;
+        let rows = query.fetch_all(&mut scope).await?;
+        let total = count_query.fetch_one(&mut scope).await.unwrap_or(0);
 
         let items: Vec<Value> = rows
             .iter()
@@ -110,11 +112,13 @@ impl FinanceService {
         tenant_id: Uuid,
         collection_id: Uuid,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
         let row =
-            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(collection_id)
-                .fetch_optional(&self.db_pool)
+                .fetch_optional(&mut scope)
                 .await?
                 .ok_or_else(|| TopemsError::NotFound("收款记录不存在".to_string()))?;
 
@@ -188,6 +192,7 @@ impl FinanceService {
         let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
+        let mut scope = self.write_scope().await?;
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_collection_records
@@ -203,7 +208,7 @@ impl FinanceService {
         .bind(status)
         .bind(tenant_id)
         .bind(collection_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
@@ -211,6 +216,8 @@ impl FinanceService {
         let customer_name: String = sqlx::Row::get(&row, "customer_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         Ok(json!({
             "id": id.to_string(),
@@ -226,18 +233,21 @@ impl FinanceService {
         tenant_id: Uuid,
         collection_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(collection_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("收款记录不存在".to_string()));
         }
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -249,6 +259,7 @@ impl FinanceService {
         receivable_id: Uuid,
         write_off_amount: f64,
     ) -> Result<Value, TopemsError> {
+        let mut scope = self.write_scope().await?;
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE erp_collection_records
@@ -258,11 +269,13 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(collection_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let status: String = sqlx::Row::get(&row, "status");
+
+        scope.commit().await?;
 
         // 核销当前对收款记录本身落账（status='written_off'）。
         // receivable_id / write_off_amount 为前端契约入参：finance 侧暂无应收

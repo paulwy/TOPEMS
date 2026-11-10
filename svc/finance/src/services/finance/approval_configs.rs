@@ -11,11 +11,14 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
     ) -> Result<Vec<ApprovalConfigResponse>, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let configs: Vec<PaymentApprovalConfig> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) ORDER BY priority DESC, amount_threshold ASC"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) ORDER BY priority DESC, amount_threshold ASC"),
         )
         .bind(tenant_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut results = Vec::new();
@@ -45,12 +48,15 @@ impl FinanceService {
         tenant_id: Uuid,
         config_id: Uuid,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let config: PaymentApprovalConfig = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(config_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let nodes = self.get_approval_nodes(config.id).await?;
@@ -77,7 +83,7 @@ impl FinanceService {
         req: CreateApprovalConfigRequest,
         created_by: &str,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
-        let mut tx = self.db_pool.begin().await?;
+        let mut tx = self.write_scope().await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
             only_own_schema_query!("finance", "INSERT INTO core_finance_payment_approval_config (tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, priority, is_active, created_by)
@@ -93,7 +99,7 @@ impl FinanceService {
         .bind(req.priority.unwrap_or(0))
         .bind(req.is_active.unwrap_or(true))
         .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut tx)
         .await?;
 
         if let Some(nodes) = req.nodes {
@@ -114,7 +120,7 @@ impl FinanceService {
                 .bind(node.notify_users)
                 .bind(node.conditions)
                 .bind(true)
-                .execute(&mut *tx)
+                .execute(&mut tx)
                 .await?;
             }
         }
@@ -146,7 +152,7 @@ impl FinanceService {
         req: CreateApprovalConfigRequest,
         _updated_by: &str,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
-        let mut tx = self.db_pool.begin().await?;
+        let mut tx = self.write_scope().await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE core_finance_payment_approval_config SET name = $1, description = $2, amount_threshold = $3, max_amount = $4, workflow_id = $5, approval_levels = $6, priority = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
@@ -162,7 +168,7 @@ impl FinanceService {
         .bind(req.is_active.unwrap_or(true))
         .bind(tenant_id)
         .bind(config_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut tx)
         .await?;
 
         if let Some(nodes) = req.nodes {
@@ -172,7 +178,7 @@ impl FinanceService {
             ))
             .bind(tenant_id)
             .bind(config_id)
-            .execute(&mut *tx)
+            .execute(&mut tx)
             .await?;
 
             for node in nodes {
@@ -192,7 +198,7 @@ impl FinanceService {
                 .bind(node.notify_users)
                 .bind(node.conditions)
                 .bind(true)
-                .execute(&mut *tx)
+                .execute(&mut tx)
                 .await?;
             }
         }
@@ -222,7 +228,7 @@ impl FinanceService {
         tenant_id: Uuid,
         config_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let mut tx = self.db_pool.begin().await?;
+        let mut tx = self.write_scope().await?;
 
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -230,7 +236,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(config_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await?;
 
         sqlx::query(
@@ -238,7 +244,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(config_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await?;
 
         tx.commit().await?;
@@ -250,11 +256,13 @@ impl FinanceService {
         &self,
         config_id: Uuid,
     ) -> Result<Vec<ApprovalNode>, TopemsError> {
+        let mut scope = self.read_scope().await?;
+
         let nodes: Vec<ApprovalNode> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active, created_at, updated_at FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC"),
         )
         .bind(config_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(nodes)

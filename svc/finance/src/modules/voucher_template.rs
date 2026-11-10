@@ -6,8 +6,8 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use tracing::warn;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -71,7 +71,7 @@ pub async fn copy_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<CopyTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
@@ -121,31 +121,37 @@ pub async fn toggle_template(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
-    let res = sqlx::query(
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let r = match sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
     .bind(tenant_id)
     .bind(template_id)
-    .execute(&state.pool)
-    .await;
-    match res {
-        Ok(r) => {
-            if r.rows_affected() == 0 {
-                return ApiResponse::not_found("凭证模板不存在");
+    .execute(&mut scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    if r.rows_affected() == 0 {
+        return ApiResponse::not_found("凭证模板不存在");
+    }
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
+    match service.get_voucher_template(tenant_id, template_id).await {
+        Ok(template) => {
+            let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
+            if let Some(obj) = val.as_object_mut() {
+                obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
             }
-            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-            match service.get_voucher_template(tenant_id, template_id).await {
-                Ok(template) => {
-                    let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
-                    if let Some(obj) = val.as_object_mut() {
-                        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
-                    }
-                    ApiResponse::success(val, "切换成功")
-                }
-                Err(e) => crate::shared::err_resp(e),
-            }
+            ApiResponse::success(val, "切换成功")
         }
         Err(e) => crate::shared::err_resp(e),
     }
@@ -173,17 +179,24 @@ pub async fn match_template(
         Some(s) => s,
         None => return ApiResponse::bad_request("source_type 为必填"),
     };
+    let mut scope = match state.db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rule: Option<VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
     .bind(tenant_id)
     .bind(&source_type)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
         Err(e) => return crate::shared::err_resp(e),
     };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
     match rule {
         Some(r) => {
             let template_id_opt = r
@@ -192,8 +205,7 @@ pub async fn match_template(
                 .and_then(|v| v.as_str())
                 .and_then(|s| Uuid::parse_str(s).ok());
             let template_val = if let Some(tid) = template_id_opt {
-                let service =
-                    FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+                let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
                 match service.get_voucher_template(tenant_id, tid).await {
                     Ok(t) => serde_json::to_value(t).unwrap_or(serde_json::json!(null)),
                     Err(_) => serde_json::json!(null),
@@ -232,14 +244,24 @@ pub async fn get_usage_stats(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope_result = match tenant_id {
+        Some(tenant) => state.db.scope_read_for_tenant(tenant).await,
+        None => state.db.scope_read_system().await,
+    };
+    let mut scope = match scope_result {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
     let rule_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
+    let _ = scope.commit().await;
     ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
@@ -258,7 +280,7 @@ pub async fn export_template(
     Query(_params): Query<ExportQueryParams>,
 ) -> axum::response::Response {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
         Err(e) => return crate::shared::err_resp::<serde_json::Value, _>(e).into_response(),
@@ -280,7 +302,7 @@ pub async fn import_template(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
@@ -342,43 +364,45 @@ pub async fn toggle_generate_rule(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
-    let res = sqlx::query(
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let r = match sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
     .bind(tenant_id)
     .bind(rule_id)
-    .execute(&state.pool)
-    .await;
-    match res {
-        Ok(r) => {
-            if r.rows_affected() == 0 {
-                return ApiResponse::not_found("生成规则不存在");
-            }
-            let rule: Result<
-                VoucherGenerationRule,
-                sqlx::Error,
-            > = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"),
-            )
-            .bind(tenant_id)
-            .bind(rule_id)
-            .fetch_one(&state.pool)
-            .await;
-            match rule {
-                Ok(r) => {
-                    let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
-                    if let Some(obj) = val.as_object_mut() {
-                        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
-                    }
-                    ApiResponse::success(val, "切换成功")
-                }
-                Err(e) => crate::shared::err_resp(e),
-            }
-        }
-        Err(e) => crate::shared::err_resp(e),
+    .execute(&mut scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if r.rows_affected() == 0 {
+        return ApiResponse::not_found("生成规则不存在");
     }
+    let r: VoucherGenerationRule = match sqlx::query_as(
+        only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"),
+    )
+    .bind(tenant_id)
+    .bind(rule_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+    let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
+    if let Some(obj) = val.as_object_mut() {
+        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
+    }
+    ApiResponse::success(val, "切换成功")
 }
 
 // ========== 从源单据查询金额：sale/purchase/payment 三类型 + 兜底默认 ==========
@@ -393,7 +417,7 @@ pub async fn toggle_generate_rule(
 /// | `payment` | `finance.core_finance_payments` 或 `finance.core_finance_payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
 /// | 其他 / 未知 | — | 1000.00 默认 | 兼容 legacy 调用（如 demo/preview） |
 async fn resolve_source_amounts(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     source_type: &str,
     source_ids: &[String],
@@ -450,57 +474,88 @@ async fn resolve_source_amounts(
     };
 
     // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
-    let snapshot_rows: Vec<(Uuid, Option<Decimal>)> = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(
-        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM finance.source_amount_snapshots
+    let snapshot_rows: Vec<(Uuid, Option<Decimal>)> = match db
+        .scope_read_for_tenant(tenant_id)
+        .await
+    {
+        Ok(mut scope) => {
+            let rows = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(
+                    only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM finance.source_amount_snapshots
            WHERE source_type = $1 AND source_id = ANY($2)"#),
-    )
-    .bind(snapshot_type)
-    .bind(&valid_uuids)
-    .fetch_all(pool)
-    .await
-    .map_err(|e| {
-        static LOGGED: std::sync::atomic::AtomicBool =
-            std::sync::atomic::AtomicBool::new(false);
-        if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                )
+                .bind(snapshot_type)
+                .bind(&valid_uuids)
+                .fetch_all(&mut scope)
+                .await
+                .map_err(|e| {
+                    static LOGGED: std::sync::atomic::AtomicBool =
+                        std::sync::atomic::AtomicBool::new(false);
+                    if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                        warn!(
+                            error = %e,
+                            source_type = snapshot_type,
+                            "查询 source_amount_snapshots 失败，使用默认金额 1000.00 兜底；请确认 ERP 事件已正确发布"
+                        );
+                    }
+                })
+                .unwrap_or_default();
+            let _ = scope.commit().await;
+            rows
+        }
+        Err(e) => {
             warn!(
                 error = %e,
                 source_type = snapshot_type,
-                "查询 source_amount_snapshots 失败，使用默认金额 1000.00 兜底；请确认 ERP 事件已正确发布"
+                "创建 source_amount_snapshots 查询作用域失败，使用默认金额 1000.00 兜底"
             );
+            Vec::new()
         }
-    })
-    .unwrap_or_default();
+    };
 
     // payment/pay 类型特殊处理：查 payment_records 表（同 Schema，安全）
     let amount_f64s: Vec<(Uuid, Option<Decimal>)> = if snapshot_type == "payment" {
-        let r1 = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
-            "finance",
-            r#"SELECT id, total_amount FROM finance.core_finance_payments
+        let r1 = match db.scope_read_for_tenant(tenant_id).await {
+            Ok(mut scope) => {
+                let r = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
+                    "finance",
+                    r#"SELECT id, total_amount FROM finance.core_finance_payments
                WHERE tenant_id = $1 AND id = ANY($2)"#
-        ))
-        .bind(tenant_id)
-        .bind(&valid_uuids)
-        .fetch_all(pool)
-        .await;
+                ))
+                .bind(tenant_id)
+                .bind(&valid_uuids)
+                .fetch_all(&mut scope)
+                .await;
+                let _ = scope.commit().await;
+                r
+            }
+            Err(e) => Err(e),
+        };
         match r1 {
             Ok(rows) if !rows.is_empty() => rows,
-            _ => sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
-                "finance",
-                r#"SELECT id, total_amount FROM finance.core_finance_payments
+            _ => match db.scope_read_for_tenant(tenant_id).await {
+                Ok(mut scope) => {
+                    let rows = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
+                        "finance",
+                        r#"SELECT id, total_amount FROM finance.core_finance_payments
                    WHERE tenant_id = $1 AND id = ANY($2)"#
-            ))
-            .bind(tenant_id)
-            .bind(&valid_uuids)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| {
-                static LOGGED: std::sync::atomic::AtomicBool =
-                    std::sync::atomic::AtomicBool::new(false);
-                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 finance.core_finance_payments 失败，使用默认金额 1000.00 兜底");
+                    ))
+                    .bind(tenant_id)
+                    .bind(&valid_uuids)
+                    .fetch_all(&mut scope)
+                    .await
+                    .map_err(|e| {
+                        static LOGGED: std::sync::atomic::AtomicBool =
+                            std::sync::atomic::AtomicBool::new(false);
+                        if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                            warn!(error = %e, "查询 finance.core_finance_payments 失败，使用默认金额 1000.00 兜底");
+                        }
+                    })
+                    .unwrap_or_default();
+                    let _ = scope.commit().await;
+                    rows
                 }
-            })
-            .unwrap_or_default(),
+                Err(_) => Vec::new(),
+            },
         }
     } else {
         snapshot_rows
@@ -553,7 +608,7 @@ pub async fn preview_generation(
     Extension(claims): Extension<Claims>,
     Json(req): Json<PreviewGenerationRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let template = match service
@@ -567,7 +622,7 @@ pub async fn preview_generation(
     let voucher_date = req.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
     // 从源单据查询金额：sale/purchase/payment → 对应业务表；DB 失败或未知类型时回退 1000.00 预览默认值
     let amounts =
-        resolve_source_amounts(&state.pool, tenant_id, &req.source_type, &req.source_ids).await;
+        resolve_source_amounts(&state.db, tenant_id, &req.source_type, &req.source_ids).await;
     let default = Decimal::from_i128_with_scale(1000_00, 2);
 
     let mut previews = Vec::new();
@@ -641,7 +696,7 @@ pub async fn generate_from_source(
     headers: HeaderMap,
     Json(req): Json<GenerateFromSourceRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
@@ -664,7 +719,7 @@ pub async fn generate_from_source(
     let voucher_date = chrono::Utc::now();
     // 从源单据查询金额：sale/purchase/payment → 对应业务表；DB 失败或未知类型时回退 1000.00 默认值
     let amounts =
-        resolve_source_amounts(&state.pool, tenant_id, &req.source_type, &req.source_ids).await;
+        resolve_source_amounts(&state.db, tenant_id, &req.source_type, &req.source_ids).await;
     let default = Decimal::from_i128_with_scale(1000_00, 2);
 
     let mut voucher_ids = Vec::new();
@@ -747,7 +802,7 @@ pub async fn batch_generate(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchGenerateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
 
@@ -792,7 +847,7 @@ pub async fn auto_generate(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AutoGenerateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
 
@@ -800,13 +855,18 @@ pub async fn auto_generate(
         vec![rule_id]
     } else {
         // 查询所有活跃规则
+        let mut scope = match state.db.scope_read_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => return crate::shared::err_resp(e),
+        };
         let rules: Vec<VoucherGenerationRule> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND status = 'active' ORDER BY priority ASC"),
         )
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default();
+        let _ = scope.commit().await;
         rules.iter().map(|r| r.id).collect()
     };
 
@@ -859,7 +919,7 @@ pub async fn regenerate(
     headers: HeaderMap,
     Path(original_voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();

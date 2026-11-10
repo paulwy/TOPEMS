@@ -28,8 +28,8 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -285,7 +285,8 @@ pub struct Action {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_treasury_v58_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+// 系统通道：无请求上下文（启动/后台），登记 §2.1
+pub async fn init_treasury_v58_tables(db: &Db) -> Result<(), sqlx::Error> {
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v58_cash_pools (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -375,10 +376,13 @@ pub async fn init_treasury_v58_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
         "CREATE INDEX IF NOT EXISTS idx_v58_optimization_created ON finance_v58_optimization_results(created_at)",
     ];
 
+    let mut scope = db.scope_system().await?;
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
-    Ok(())
+    scope.commit().await
 }
 
 // ==================== 1. 现金池管理 ====================
@@ -423,10 +427,11 @@ pub struct ConsolidateRequest {
 
 impl CashPoolManager {
     pub async fn create_pool(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreatePoolRequest,
     ) -> Result<CashPool, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let pool_type = req
             .pool_type
@@ -437,7 +442,7 @@ impl CashPoolManager {
         let entities = req.entities.unwrap_or_default();
         let entities_array: Vec<String> = entities;
 
-        sqlx::query_as::<_, CashPool>(only_own_schema_query!(
+        let result = sqlx::query_as::<_, CashPool>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v58_cash_pools
                 (id, tenant_id, name, pool_type, currency, balance, entities)
@@ -450,41 +455,58 @@ impl CashPoolManager {
         .bind(pool_type.as_str())
         .bind(&currency)
         .bind(&entities_array)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_pool(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let row = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(pool_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        row
     }
 
     pub async fn list_pools(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<CashPool>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn allocate_funds(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AllocateFundsRequest,
     ) -> Result<Vec<PoolAllocation>, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let mut allocations = Vec::new();
         let now = Utc::now();
 
@@ -508,17 +530,18 @@ impl CashPoolManager {
             .bind(item.amount)
             .bind(percentage)
             .bind(now)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
             allocations.push(allocation);
         }
 
+        scope.commit().await?;
         Ok(allocations)
     }
 
     pub async fn transfer_between_pools(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: TransferRequest,
     ) -> Result<PoolTransfer, sqlx::Error> {
@@ -526,11 +549,12 @@ impl CashPoolManager {
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let now = Utc::now();
 
-        let from_pool = Self::get_pool(pool, Some(tenant_id), req.from_pool).await?;
+        let from_pool = Self::get_pool(db, Some(tenant_id), req.from_pool).await?;
         if from_pool.balance < req.amount {
             return Err(sqlx::Error::PoolClosed);
         }
 
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let transfer = sqlx::query_as::<_, PoolTransfer>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v58_pool_transfers
@@ -546,42 +570,52 @@ impl CashPoolManager {
         .bind(&currency)
         .bind(&req.reference)
         .bind(now)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(transfer)
     }
 
     pub async fn get_pool_balance(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
-        Self::get_pool(pool, tenant_id, pool_id).await
+        Self::get_pool(db, tenant_id, pool_id).await
     }
 
     pub async fn get_pool_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<Vec<PoolTransfer>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance.finance_v58_pool_transfers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND (from_pool = $2 OR to_pool = $2) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .bind(pool_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn consolidate_cash(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: ConsolidateRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let pool_info = Self::get_pool(pool, Some(tenant_id), req.pool_id).await?;
+        let pool_info = Self::get_pool(db, Some(tenant_id), req.pool_id).await?;
 
         let entities = req.entity_ids.unwrap_or_else(|| pool_info.entities.clone());
+
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
 
         let mut total_consolidated = 0.0_f64;
         let mut entity_details = Vec::new();
@@ -593,7 +627,7 @@ impl CashPoolManager {
             .bind(req.pool_id)
             .bind(entity_id)
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?;
 
             let entity_total: f64 = allocations.iter().map(|a| a.amount).sum();
@@ -606,6 +640,7 @@ impl CashPoolManager {
             }));
         }
 
+        let _ = scope.commit().await;
         Ok(serde_json::json!({
             "pool_id": req.pool_id,
             "pool_name": pool_info.name,
@@ -648,10 +683,11 @@ pub struct UpdateAssumptionsRequest {
 
 impl CashFlowPredictor {
     pub async fn create_scenario(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateScenarioRequest,
     ) -> Result<ForecastScenario, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let id = Uuid::new_v4();
         let scenario_type = req
             .scenario_type
@@ -660,7 +696,7 @@ impl CashFlowPredictor {
             .unwrap_or(ForecastType::MediumTerm);
         let horizon = req.horizon_days.unwrap_or(90);
 
-        sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
+        let result = sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v58_forecast_scenarios
                 (id, tenant_id, name, scenario_type, horizon_days, assumptions, confidence)
@@ -673,22 +709,25 @@ impl CashFlowPredictor {
         .bind(scenario_type.as_str())
         .bind(horizon)
         .bind(&req.assumptions)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     #[allow(clippy::as_conversions)]
     pub async fn run_forecast(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: RunForecastRequest,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let scenario = sqlx::query_as::<_, ForecastScenario>(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(req.scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let horizon = scenario.horizon_days;
@@ -741,12 +780,13 @@ impl CashFlowPredictor {
             .bind(net)
             .bind(closing_balance)
             .bind(Some(ci))
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
             results.push(result);
         }
 
+        scope.commit().await?;
         Ok(results)
     }
 
@@ -792,53 +832,69 @@ impl CashFlowPredictor {
     }
 
     pub async fn get_forecast(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance.finance_v58_forecast_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY date ASC"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn list_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastScenario>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY horizon_days DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn compare_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut comparison = Vec::new();
 
         for sid in &scenario_ids {
+            let mut scope = db.scope_read_for_tenant(tenant_id).await?;
             let scenario = sqlx::query_as::<_, ForecastScenario>(
                 only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(sid)
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await;
+            let _ = scope.commit().await;
 
             let scenario = match scenario {
                 Ok(s) => s,
                 Err(_) => continue,
             };
 
-            let results = Self::get_forecast(pool, Some(tenant_id), scenario.id).await?;
+            let results = Self::get_forecast(db, Some(tenant_id), scenario.id).await?;
 
             let total_inflow: f64 = results.iter().map(|r| r.inflow).sum();
             let total_outflow: f64 = results.iter().map(|r| r.outflow).sum();
@@ -869,17 +925,17 @@ impl CashFlowPredictor {
     }
 
     pub async fn get_forecast_summary(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let scenarios = Self::list_scenarios(pool, tenant_id).await?;
+        let scenarios = Self::list_scenarios(db, tenant_id).await?;
 
         let mut summary_data = Vec::new();
         let mut total_inflow_all = 0.0_f64;
         let mut total_outflow_all = 0.0_f64;
 
         for scenario in &scenarios {
-            let results = Self::get_forecast(pool, tenant_id, scenario.id).await?;
+            let results = Self::get_forecast(db, tenant_id, scenario.id).await?;
             let inflow: f64 = results.iter().map(|r| r.inflow).sum();
             let outflow: f64 = results.iter().map(|r| r.outflow).sum();
             let net: f64 = results.iter().map(|r| r.net).sum();
@@ -909,11 +965,12 @@ impl CashFlowPredictor {
     }
 
     pub async fn update_assumptions(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_id: Uuid,
         req: UpdateAssumptionsRequest,
     ) -> Result<ForecastScenario, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let updated = sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v58_forecast_scenarios
@@ -924,13 +981,11 @@ impl CashFlowPredictor {
         .bind(&req.assumptions)
         .bind(scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await;
+        .fetch_one(&mut scope)
+        .await?;
 
-        match updated {
-            Ok(s) => Ok(s),
-            Err(e) => Err(e),
-        }
+        scope.commit().await?;
+        Ok(updated)
     }
 }
 
@@ -963,16 +1018,22 @@ pub struct SetTargetRequest {
 
 impl LiquidityOptimizer {
     pub async fn get_liquidity_snapshot(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let targets: Vec<LiquidityTarget> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
+        .fetch_all(&mut scope)
         .await?;
 
+        let _ = scope.commit().await;
         let mut entities = Vec::new();
         let mut total_target = 0.0_f64;
         let mut total_min = 0.0_f64;
@@ -980,7 +1041,7 @@ impl LiquidityOptimizer {
 
         for target in &targets {
             let current_balance =
-                Self::estimate_current_balance(pool, tenant_id, &target.entity_id).await;
+                Self::estimate_current_balance(db, tenant_id, &target.entity_id).await;
 
             let position = if current_balance < target.min_balance {
                 "below_minimum"
@@ -1016,19 +1077,16 @@ impl LiquidityOptimizer {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn estimate_current_balance(
-        _pool: &PgPool,
-        _tenant_id: Option<Uuid>,
-        _entity_id: &str,
-    ) -> f64 {
+    async fn estimate_current_balance(_db: &Db, _tenant_id: Option<Uuid>, _entity_id: &str) -> f64 {
         500_000.0 + (_entity_id.len() as f64 * 10_000.0)
     }
 
     pub async fn optimize_liquidity(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: OptimizeRequest,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let targets: Vec<LiquidityTarget> = if let Some(ref entity_ids) = req.entity_ids {
             let mut results = Vec::new();
             for eid in entity_ids {
@@ -1037,7 +1095,7 @@ impl LiquidityOptimizer {
                 )
                 .bind(eid)
                 .bind(tenant_id)
-                .fetch_optional(pool)
+                .fetch_optional(&mut scope)
                 .await?;
 
                 if let Some(t) = target {
@@ -1050,7 +1108,7 @@ impl LiquidityOptimizer {
                 only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE tenant_id = $1"),
             )
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await?
         };
 
@@ -1058,7 +1116,7 @@ impl LiquidityOptimizer {
 
         for target in &targets {
             let current =
-                Self::estimate_current_balance(pool, Some(tenant_id), &target.entity_id).await;
+                Self::estimate_current_balance(db, Some(tenant_id), &target.entity_id).await;
             let actions = Self::generate_actions(current, target);
             let projected_savings = Self::calculate_projected_savings(&actions, current, target);
             let risk_level = Self::assess_risk(&actions);
@@ -1079,12 +1137,13 @@ impl LiquidityOptimizer {
             .bind(actions_json)
             .bind(projected_savings)
             .bind(risk_level.as_str())
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
 
             results.push(result);
         }
 
+        scope.commit().await?;
         Ok(results)
     }
 
@@ -1172,19 +1231,26 @@ impl LiquidityOptimizer {
     }
 
     pub async fn get_recommendations(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn execute_action(
-        _pool: &PgPool,
+        _db: &Db,
         _tenant_id: Uuid,
         req: ExecuteActionRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
@@ -1204,23 +1270,31 @@ impl LiquidityOptimizer {
     }
 
     pub async fn get_targets(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<LiquidityTarget>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 
     pub async fn set_target(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         target_id: Uuid,
         req: SetTargetRequest,
     ) -> Result<LiquidityTarget, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
 
         let updated = sqlx::query_as::<_, LiquidityTarget>(only_own_schema_query!(
@@ -1243,25 +1317,30 @@ impl LiquidityOptimizer {
         .bind(req.max_balance)
         .bind(req.target_balance)
         .bind(&currency)
-        .fetch_one(pool)
-        .await;
+        .fetch_one(&mut scope)
+        .await?;
 
-        match updated {
-            Ok(t) => Ok(t),
-            Err(e) => Err(e),
-        }
+        scope.commit().await?;
+        Ok(updated)
     }
 
     pub async fn get_optimization_history(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rows
     }
 }
 
@@ -1274,9 +1353,8 @@ pub async fn create_pool_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePoolRequest>,
 ) -> ApiResponse<CashPool> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::create_pool(&pool, tenant_id, req).await {
+    match CashPoolManager::create_pool(&state.db, tenant_id, req).await {
         Ok(p) => ApiResponse::success(p, "现金池创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1287,13 +1365,12 @@ pub async fn get_pool_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<CashPool> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool(&pool, tenant_id, id).await {
+    match CashPoolManager::get_pool(&state.db, tenant_id, id).await {
         Ok(p) => ApiResponse::success(p, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1303,13 +1380,12 @@ pub async fn list_pools_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<CashPool>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::list_pools(&pool, tenant_id).await {
+    match CashPoolManager::list_pools(&state.db, tenant_id).await {
         Ok(pools) => ApiResponse::success(pools, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1320,9 +1396,8 @@ pub async fn allocate_funds_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AllocateFundsRequest>,
 ) -> ApiResponse<Vec<PoolAllocation>> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::allocate_funds(&pool, tenant_id, req).await {
+    match CashPoolManager::allocate_funds(&state.db, tenant_id, req).await {
         Ok(a) => ApiResponse::success(a, "资金分配成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1333,9 +1408,8 @@ pub async fn transfer_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<TransferRequest>,
 ) -> ApiResponse<PoolTransfer> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::transfer_between_pools(&pool, tenant_id, req).await {
+    match CashPoolManager::transfer_between_pools(&state.db, tenant_id, req).await {
         Ok(t) => ApiResponse::success(t, "资金调拨成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1346,13 +1420,12 @@ pub async fn get_pool_balance_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<CashPool> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool_balance(&pool, tenant_id, id).await {
+    match CashPoolManager::get_pool_balance(&state.db, tenant_id, id).await {
         Ok(b) => ApiResponse::success(b, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1363,13 +1436,12 @@ pub async fn get_pool_history_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<PoolTransfer>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool_history(&pool, tenant_id, id).await {
+    match CashPoolManager::get_pool_history(&state.db, tenant_id, id).await {
         Ok(h) => ApiResponse::success(h, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1380,9 +1452,8 @@ pub async fn consolidate_cash_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConsolidateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::consolidate_cash(&pool, tenant_id, req).await {
+    match CashPoolManager::consolidate_cash(&state.db, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "现金归集完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1395,9 +1466,8 @@ async fn create_scenario_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
 ) -> ApiResponse<ForecastScenario> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::create_scenario(&pool, tenant_id, req).await {
+    match CashFlowPredictor::create_scenario(&state.db, tenant_id, req).await {
         Ok(s) => ApiResponse::success(s, "场景创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1408,9 +1478,8 @@ pub async fn run_forecast_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunForecastRequest>,
 ) -> ApiResponse<Vec<ForecastResult>> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::run_forecast(&pool, tenant_id, req).await {
+    match CashFlowPredictor::run_forecast(&state.db, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "预测运行完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1421,13 +1490,12 @@ pub async fn get_forecast_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ForecastResult>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::get_forecast(&pool, tenant_id, id).await {
+    match CashFlowPredictor::get_forecast(&state.db, tenant_id, id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1437,13 +1505,12 @@ async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ForecastScenario>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::list_scenarios(&pool, tenant_id).await {
+    match CashFlowPredictor::list_scenarios(&state.db, tenant_id).await {
         Ok(s) => ApiResponse::success(s, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1469,9 +1536,8 @@ async fn compare_scenarios_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
+    match CashFlowPredictor::compare_scenarios(&state.db, tenant_id, req.scenario_ids).await {
         Ok(r) => ApiResponse::success(r, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1481,13 +1547,12 @@ pub async fn get_forecast_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::get_forecast_summary(&pool, tenant_id).await {
+    match CashFlowPredictor::get_forecast_summary(&state.db, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1499,9 +1564,8 @@ pub async fn update_assumptions_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAssumptionsRequest>,
 ) -> ApiResponse<ForecastScenario> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::update_assumptions(&pool, tenant_id, id, req).await {
+    match CashFlowPredictor::update_assumptions(&state.db, tenant_id, id, req).await {
         Ok(s) => ApiResponse::success(s, "假设更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1513,13 +1577,12 @@ pub async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_liquidity_snapshot(&pool, tenant_id).await {
+    match LiquidityOptimizer::get_liquidity_snapshot(&state.db, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1530,9 +1593,8 @@ pub async fn optimize_liquidity_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<OptimizeRequest>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match LiquidityOptimizer::optimize_liquidity(&pool, tenant_id, req).await {
+    match LiquidityOptimizer::optimize_liquidity(&state.db, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "优化完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1542,13 +1604,12 @@ pub async fn get_recommendations_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_recommendations(&pool, tenant_id).await {
+    match LiquidityOptimizer::get_recommendations(&state.db, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1559,9 +1620,8 @@ pub async fn execute_action_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExecuteActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match LiquidityOptimizer::execute_action(&pool, tenant_id, req).await {
+    match LiquidityOptimizer::execute_action(&state.db, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "操作执行成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1571,13 +1631,12 @@ pub async fn get_targets_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<LiquidityTarget>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_targets(&pool, tenant_id).await {
+    match LiquidityOptimizer::get_targets(&state.db, tenant_id).await {
         Ok(t) => ApiResponse::success(t, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1589,9 +1648,8 @@ pub async fn set_target_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<SetTargetRequest>,
 ) -> ApiResponse<LiquidityTarget> {
-    let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match LiquidityOptimizer::set_target(&pool, tenant_id, id, req).await {
+    match LiquidityOptimizer::set_target(&state.db, tenant_id, id, req).await {
         Ok(t) => ApiResponse::success(t, "目标设置成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1601,13 +1659,12 @@ pub async fn get_optimization_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
-    let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_optimization_history(&pool, tenant_id).await {
+    match LiquidityOptimizer::get_optimization_history(&state.db, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }

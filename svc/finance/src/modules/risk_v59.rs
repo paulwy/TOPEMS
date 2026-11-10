@@ -28,8 +28,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -304,7 +304,7 @@ pub struct ScenarioParameter {
 
 // ==================== 数据库初始化 ====================
 
-pub async fn init_risk_v59_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_risk_v59_tables(db: &Db) -> Result<(), sqlx::Error> {
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS finance_v59_fraud_signals (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -406,10 +406,14 @@ pub async fn init_risk_v59_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         "CREATE INDEX IF NOT EXISTS idx_v59_fraud_rules_type ON finance_v59_fraud_rules(signal_type)",
     ];
 
+    // 系统通道：无请求上下文（启动/后台），登记 §2.1
+    let mut scope = db.scope_system().await?;
     for sql in create_tables {
-        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut scope)
+            .await?;
     }
-    Ok(())
+    scope.commit().await
 }
 
 // ==================== 1. 实时反欺诈 ====================
@@ -453,7 +457,7 @@ pub struct FraudRule {
 impl AntiFraudEngine {
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn analyze_transaction(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AnalyzeTransactionRequest,
     ) -> Result<FraudDecision, sqlx::Error> {
@@ -462,12 +466,12 @@ impl AntiFraudEngine {
         let mut total_score = 0.0f64;
 
         if let Some(ref did) = req.device_id {
-            let trust = Self::get_device_trust(pool, tenant_id, did)
+            let trust = Self::get_device_trust(db, tenant_id, did)
                 .await
                 .unwrap_or(1.0);
             if trust < 0.5 {
                 let signal = Self::create_signal(
-                    pool,
+                    db,
                     tenant_id,
                     FraudSignalType::Device,
                     0.8,
@@ -484,7 +488,7 @@ impl AntiFraudEngine {
         if let Some(ref loc) = req.location {
             if loc.is_empty() {
                 let signal = Self::create_signal(
-                    pool,
+                    db,
                     tenant_id,
                     FraudSignalType::Geolocation,
                     0.5,
@@ -498,18 +502,20 @@ impl AntiFraudEngine {
             }
         }
 
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let recent_count: i64 = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v59_fraud_decisions WHERE tenant_id = $1 AND transaction_id LIKE $2 || '%' AND decided_at > NOW() - INTERVAL '10 minutes'"),
         )
         .bind(tenant_id)
         .bind(&req.transaction_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
+        let _ = scope.commit().await;
 
         if recent_count > 5 {
             let signal = Self::create_signal(
-                pool,
+                db,
                 tenant_id,
                 FraudSignalType::Velocity,
                 (recent_count as f64 / 10.0).min(1.0),
@@ -564,7 +570,8 @@ impl AntiFraudEngine {
         );
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, FraudDecision>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let decision = sqlx::query_as::<_, FraudDecision>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_fraud_decisions
                 (id, tenant_id, transaction_id, risk_level, action, reason, signals, decided_at)
@@ -579,12 +586,14 @@ impl AntiFraudEngine {
         .bind(&reason)
         .bind(signals_json)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(decision)
     }
 
     async fn create_signal(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         signal_type: FraudSignalType,
         score: f64,
@@ -593,7 +602,8 @@ impl AntiFraudEngine {
         detected_at: DateTime<Utc>,
     ) -> Result<FraudSignal, sqlx::Error> {
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, FraudSignal>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let signal = sqlx::query_as::<_, FraudSignal>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_fraud_signals
                 (id, tenant_id, signal_type, score, confidence, metadata, detected_at)
@@ -607,29 +617,43 @@ impl AntiFraudEngine {
         .bind(confidence)
         .bind(metadata)
         .bind(detected_at)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(signal)
     }
 
     pub async fn get_fraud_decision(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         decision_id: Uuid,
     ) -> Result<FraudDecision, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let decision = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(decision_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        decision
     }
 
     pub async fn get_signals(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         signal_type: Option<String>,
     ) -> Result<Vec<FraudSignal>, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut query = String::from(
             "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
@@ -646,11 +670,13 @@ impl AntiFraudEngine {
             q = q.bind(st);
         }
 
-        q.fetch_all(pool).await
+        let signals = q.fetch_all(&mut scope).await;
+        let _ = scope.commit().await;
+        signals
     }
 
     pub async fn update_device_profile(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateDeviceRequest,
     ) -> Result<DeviceProfile, sqlx::Error> {
@@ -658,7 +684,8 @@ impl AntiFraudEngine {
         let id = Uuid::new_v4();
         let trust_score = req.trust_score.unwrap_or(1.0);
 
-        sqlx::query_as::<_, DeviceProfile>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let profile = sqlx::query_as::<_, DeviceProfile>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_device_profiles
                 (id, tenant_id, device_id, fingerprint, trust_score, last_seen, ip_history)
@@ -677,40 +704,51 @@ impl AntiFraudEngine {
         .bind(trust_score)
         .bind(now)
         .bind(&req.ip_history)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(profile)
     }
 
     pub async fn get_device_trust(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         device_id: &str,
     ) -> Result<f64, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let result: Option<(f64,)> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT trust_score FROM finance.finance_v59_device_profiles WHERE tenant_id = $1 AND device_id = $2"),
         )
         .bind(tenant_id)
         .bind(device_id)
-        .fetch_optional(pool)
+        .fetch_optional(&mut scope)
         .await?;
+        let _ = scope.commit().await;
 
         Ok(result.map(|r| r.0).unwrap_or(1.0))
     }
 
     pub async fn list_blocked_devices(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<DeviceProfile>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let devices = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE ($1::uuid IS NULL OR tenant_id = $1) AND trust_score < 0.5 ORDER BY trust_score ASC"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        devices
     }
 
     pub async fn add_rule(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: AddRuleRequest,
     ) -> Result<FraudRule, sqlx::Error> {
@@ -718,7 +756,8 @@ impl AntiFraudEngine {
         let threshold = req.threshold.unwrap_or(0.5);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, FraudRule>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let rule = sqlx::query_as::<_, FraudRule>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_fraud_rules
                 (id, tenant_id, name, signal_type, threshold, enabled)
@@ -731,20 +770,29 @@ impl AntiFraudEngine {
         .bind(&req.signal_type)
         .bind(threshold)
         .bind(enabled)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(rule)
     }
 
     pub async fn get_rules(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let rules = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY signal_type, name"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        rules
     }
 }
 
@@ -791,7 +839,7 @@ pub struct BulkScoreRequest {
 impl CreditScoringEngine {
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn calculate_score(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CalculateScoreRequest,
     ) -> Result<CreditProfile, sqlx::Error> {
@@ -835,7 +883,8 @@ impl CreditScoringEngine {
         ]);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, CreditProfile>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let profile = sqlx::query_as::<_, CreditProfile>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_credit_profiles
                 (id, tenant_id, entity_id, score, grade, factors, updated_at)
@@ -854,38 +903,50 @@ impl CreditScoringEngine {
         .bind(grade.as_str())
         .bind(factors)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(profile)
     }
 
     pub async fn get_credit_profile(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         entity_id: String,
     ) -> Result<CreditProfile, sqlx::Error> {
-        sqlx::query_as(
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let profile = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, score, grade, factors, updated_at FROM finance.finance_v59_credit_profiles WHERE tenant_id = $1 AND entity_id = $2"),
         )
         .bind(tenant_id)
         .bind(&entity_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        profile
     }
 
     pub async fn get_scoring_models(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ScoringModel>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let models = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        models
     }
 
     pub async fn create_model(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateModelRequest,
     ) -> Result<ScoringModel, sqlx::Error> {
@@ -893,7 +954,8 @@ impl CreditScoringEngine {
         let version = req.version.unwrap_or_else(|| "1.0".to_string());
         let accuracy = req.accuracy.unwrap_or(0.5);
 
-        sqlx::query_as::<_, ScoringModel>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let model = sqlx::query_as::<_, ScoringModel>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_scoring_models
                 (id, tenant_id, name, version, features, weights, accuracy, status)
@@ -907,22 +969,25 @@ impl CreditScoringEngine {
         .bind(&req.features)
         .bind(&req.weights)
         .bind(accuracy)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(model)
     }
 
     pub async fn update_model(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         model_id: Uuid,
         req: UpdateModelRequest,
     ) -> Result<ScoringModel, sqlx::Error> {
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
         let current: ScoringModel = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(model_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let name = req.name.unwrap_or(current.name);
@@ -931,7 +996,7 @@ impl CreditScoringEngine {
         let accuracy = req.accuracy.unwrap_or(current.accuracy);
         let status = req.status.unwrap_or(current.status);
 
-        sqlx::query_as(only_own_schema_query!(
+        let model = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v59_scoring_models
             SET name = $1, features = $2, weights = $3, accuracy = $4, status = $5
@@ -945,17 +1010,19 @@ impl CreditScoringEngine {
         .bind(status)
         .bind(model_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(model)
     }
 
     pub async fn get_score_factors(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         entity_id: Option<String>,
     ) -> Result<Vec<ScoreFactor>, sqlx::Error> {
         if let Some(ref eid) = entity_id {
-            let profile = Self::get_credit_profile(pool, tenant_id, eid.clone()).await?;
+            let profile = Self::get_credit_profile(db, tenant_id, eid.clone()).await?;
             let factors_json = profile.factors.unwrap_or_else(|| serde_json::json!([]));
             let factors: Vec<ScoreFactor> =
                 serde_json::from_value(factors_json).unwrap_or_default();
@@ -991,10 +1058,15 @@ impl CreditScoringEngine {
     }
 
     pub async fn get_model_comparison(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         model_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut models = Vec::new();
 
         for mid in &model_ids {
@@ -1003,7 +1075,7 @@ impl CreditScoringEngine {
             )
             .bind(mid)
             .bind(tenant_id)
-            .fetch_optional(pool)
+            .fetch_optional(&mut scope)
             .await;
 
             if let Ok(Some(m)) = model {
@@ -1020,6 +1092,7 @@ impl CreditScoringEngine {
                 }));
             }
         }
+        let _ = scope.commit().await;
 
         Ok(serde_json::json!({
             "models": models,
@@ -1028,7 +1101,7 @@ impl CreditScoringEngine {
     }
 
     pub async fn bulk_score(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: BulkScoreRequest,
     ) -> Result<Vec<CreditProfile>, sqlx::Error> {
@@ -1041,7 +1114,7 @@ impl CreditScoringEngine {
                 model_id: req.model_id,
             };
 
-            match Self::calculate_score(pool, tenant_id, score_req).await {
+            match Self::calculate_score(db, tenant_id, score_req).await {
                 Ok(profile) => profiles.push(profile),
                 Err(_) => continue,
             }
@@ -1077,7 +1150,7 @@ pub struct CompareScenariosRequest {
 
 impl StressTestEngine {
     pub async fn create_scenario(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: CreateScenarioRequest,
     ) -> Result<StressScenario, sqlx::Error> {
@@ -1090,7 +1163,8 @@ impl StressTestEngine {
         let severity = req.severity.unwrap_or_else(|| "medium".to_string());
         let now = Utc::now();
 
-        sqlx::query_as::<_, StressScenario>(only_own_schema_query!(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let scenario = sqlx::query_as::<_, StressScenario>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v59_stress_scenarios
                 (id, tenant_id, name, scenario_type, severity, assumptions, created_at)
@@ -1104,22 +1178,26 @@ impl StressTestEngine {
         .bind(&severity)
         .bind(&req.assumptions)
         .bind(now)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(scenario)
     }
 
     pub async fn run_stress_test(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         req: RunStressTestRequest,
     ) -> Result<StressResult, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let scenario = sqlx::query_as::<_, StressScenario>(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(req.scenario_id)
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
+        let _ = scope.commit().await;
 
         let assumptions = scenario
             .assumptions
@@ -1154,7 +1232,8 @@ impl StressTestEngine {
         });
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, StressResult>(
+        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let result = sqlx::query_as::<_, StressResult>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v59_stress_results
                 (id, tenant_id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -1169,34 +1248,50 @@ impl StressTestEngine {
         .bind(liquidity_ratio)
         .bind(pass_fail)
         .bind(details)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+        scope.commit().await?;
+        Ok(result)
     }
 
     pub async fn get_test_result(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         result_id: Uuid,
     ) -> Result<StressResult, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let result = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(result_id)
         .bind(tenant_id)
-        .fetch_one(pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        result
     }
 
     pub async fn list_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<StressScenario>, sqlx::Error> {
-        sqlx::query_as(
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
+        let scenarios = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
-        .fetch_all(pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        let _ = scope.commit().await;
+        scenarios
     }
 
     #[allow(
@@ -1205,10 +1300,11 @@ impl StressTestEngine {
         clippy::cast_precision_loss
     )]
     pub async fn compare_scenarios(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Uuid,
         scenario_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
+        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let mut comparison = Vec::new();
 
         for sid in &scenario_ids {
@@ -1217,7 +1313,7 @@ impl StressTestEngine {
             )
             .bind(sid)
             .bind(tenant_id)
-            .fetch_optional(pool)
+            .fetch_optional(&mut scope)
             .await;
 
             if let Ok(Some(s)) = scenario {
@@ -1226,7 +1322,7 @@ impl StressTestEngine {
                 )
                 .bind(sid)
                 .bind(tenant_id)
-                .fetch_all(pool)
+                .fetch_all(&mut scope)
                 .await
                 .unwrap_or_default();
 
@@ -1252,6 +1348,7 @@ impl StressTestEngine {
                 }));
             }
         }
+        let _ = scope.commit().await;
 
         Ok(serde_json::json!({
             "scenarios": comparison,
@@ -1260,18 +1357,24 @@ impl StressTestEngine {
     }
 
     pub async fn get_scenario_parameters(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
         scenario_id: Option<Uuid>,
     ) -> Result<Vec<ScenarioParameter>, sqlx::Error> {
         if let Some(sid) = scenario_id {
+            // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+            let mut scope = match tenant_id {
+                Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+                None => db.scope_read_system().await?,
+            };
             let scenario = sqlx::query_as::<_, StressScenario>(
                 only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
             )
             .bind(sid)
             .bind(tenant_id)
-            .fetch_one(pool)
+            .fetch_one(&mut scope)
             .await?;
+            let _ = scope.commit().await;
 
             let assumptions = scenario
                 .assumptions
@@ -1344,11 +1447,16 @@ impl StressTestEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_test_summary(
-        pool: &PgPool,
+        db: &Db,
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let scenarios = Self::list_scenarios(pool, tenant_id).await?;
+        let scenarios = Self::list_scenarios(db, tenant_id).await?;
 
+        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+        let mut scope = match tenant_id {
+            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
+            None => db.scope_read_system().await?,
+        };
         let mut summary_data = Vec::new();
         let mut total_impact = 0.0f64;
         let mut pass_count = 0i64;
@@ -1360,7 +1468,7 @@ impl StressTestEngine {
             )
             .bind(scenario.id)
             .bind(tenant_id)
-            .fetch_all(pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
 
@@ -1379,6 +1487,7 @@ impl StressTestEngine {
                 "total_impact": scenario_impact,
             }));
         }
+        let _ = scope.commit().await;
 
         Ok(serde_json::json!({
             "total_scenarios": scenarios.len(),
@@ -1400,9 +1509,9 @@ pub async fn analyze_transaction_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeTransactionRequest>,
 ) -> ApiResponse<FraudDecision> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AntiFraudEngine::analyze_transaction(&pool, tenant_id, req).await {
+    match AntiFraudEngine::analyze_transaction(&db, tenant_id, req).await {
         Ok(decision) => ApiResponse::success(decision, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1413,13 +1522,13 @@ pub async fn get_fraud_decision_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<FraudDecision> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
+    match AntiFraudEngine::get_fraud_decision(&db, tenant_id, id).await {
         Ok(decision) => ApiResponse::success(decision, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1435,13 +1544,13 @@ pub async fn get_signals_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SignalQueryParams>,
 ) -> ApiResponse<Vec<FraudSignal>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
+    match AntiFraudEngine::get_signals(&db, tenant_id, params.signal_type).await {
         Ok(signals) => ApiResponse::success(signals, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1452,9 +1561,9 @@ pub async fn create_device_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDeviceRequest>,
 ) -> ApiResponse<DeviceProfile> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AntiFraudEngine::update_device_profile(&pool, tenant_id, req).await {
+    match AntiFraudEngine::update_device_profile(&db, tenant_id, req).await {
         Ok(profile) => ApiResponse::success(profile, "设备画像创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1465,19 +1574,29 @@ pub async fn get_device_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DeviceProfile> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
+    };
+    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
+    let scope = match tenant_id {
+        Some(tenant) => db.scope_read_for_tenant(tenant).await,
+        None => db.scope_read_system().await,
+    };
+    let mut scope = match scope {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
     };
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(profile) => ApiResponse::success(profile, "查询成功"),
@@ -1489,13 +1608,13 @@ pub async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<DeviceProfile>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
+    match AntiFraudEngine::list_blocked_devices(&db, tenant_id).await {
         Ok(devices) => ApiResponse::success(devices, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1506,9 +1625,9 @@ pub async fn add_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddRuleRequest>,
 ) -> ApiResponse<FraudRule> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AntiFraudEngine::add_rule(&pool, tenant_id, req).await {
+    match AntiFraudEngine::add_rule(&db, tenant_id, req).await {
         Ok(rule) => ApiResponse::success(rule, "规则添加成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1518,13 +1637,13 @@ pub async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<FraudRule>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AntiFraudEngine::get_rules(&pool, tenant_id).await {
+    match AntiFraudEngine::get_rules(&db, tenant_id).await {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1537,9 +1656,9 @@ pub async fn calculate_score_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateScoreRequest>,
 ) -> ApiResponse<CreditProfile> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::calculate_score(&pool, tenant_id, req).await {
+    match CreditScoringEngine::calculate_score(&db, tenant_id, req).await {
         Ok(profile) => ApiResponse::success(profile, "评分完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1550,9 +1669,9 @@ pub async fn get_credit_profile_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<CreditProfile> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::get_credit_profile(&pool, tenant_id, id).await {
+    match CreditScoringEngine::get_credit_profile(&db, tenant_id, id).await {
         Ok(profile) => ApiResponse::success(profile, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1562,13 +1681,13 @@ pub async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ScoringModel>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
+    match CreditScoringEngine::get_scoring_models(&db, tenant_id).await {
         Ok(models) => ApiResponse::success(models, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1579,9 +1698,9 @@ pub async fn create_model_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateModelRequest>,
 ) -> ApiResponse<ScoringModel> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::create_model(&pool, tenant_id, req).await {
+    match CreditScoringEngine::create_model(&db, tenant_id, req).await {
         Ok(model) => ApiResponse::success(model, "模型创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1593,9 +1712,9 @@ pub async fn update_model_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateModelRequest>,
 ) -> ApiResponse<ScoringModel> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::update_model(&pool, tenant_id, id, req).await {
+    match CreditScoringEngine::update_model(&db, tenant_id, id, req).await {
         Ok(model) => ApiResponse::success(model, "模型更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1611,9 +1730,9 @@ pub async fn get_score_factors_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<FactorQueryParams>,
 ) -> ApiResponse<Vec<ScoreFactor>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::get_score_factors(&pool, tenant_id, params.entity_id).await {
+    match CreditScoringEngine::get_score_factors(&db, tenant_id, params.entity_id).await {
         Ok(factors) => ApiResponse::success(factors, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1624,13 +1743,13 @@ pub async fn get_model_comparison_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareModelsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
+    match CreditScoringEngine::get_model_comparison(&db, tenant_id, params.model_ids).await {
         Ok(result) => ApiResponse::success(result, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1641,9 +1760,9 @@ pub async fn bulk_score_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkScoreRequest>,
 ) -> ApiResponse<Vec<CreditProfile>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CreditScoringEngine::bulk_score(&pool, tenant_id, req).await {
+    match CreditScoringEngine::bulk_score(&db, tenant_id, req).await {
         Ok(profiles) => ApiResponse::success(profiles, "批量评分完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1656,9 +1775,9 @@ pub async fn create_scenario_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
 ) -> ApiResponse<StressScenario> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match StressTestEngine::create_scenario(&pool, tenant_id, req).await {
+    match StressTestEngine::create_scenario(&db, tenant_id, req).await {
         Ok(scenario) => ApiResponse::success(scenario, "场景创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1669,9 +1788,9 @@ pub async fn run_stress_test_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunStressTestRequest>,
 ) -> ApiResponse<StressResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match StressTestEngine::run_stress_test(&pool, tenant_id, req).await {
+    match StressTestEngine::run_stress_test(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "压力测试完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1682,13 +1801,13 @@ pub async fn get_test_result_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<StressResult> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
+    match StressTestEngine::get_test_result(&db, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1698,13 +1817,13 @@ pub async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<StressScenario>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match StressTestEngine::list_scenarios(&pool, tenant_id).await {
+    match StressTestEngine::list_scenarios(&db, tenant_id).await {
         Ok(scenarios) => ApiResponse::success(scenarios, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1730,9 +1849,9 @@ pub async fn compare_scenarios_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match StressTestEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
+    match StressTestEngine::compare_scenarios(&db, tenant_id, req.scenario_ids).await {
         Ok(result) => ApiResponse::success(result, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1748,13 +1867,13 @@ pub async fn get_scenario_parameters_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetParamsQueryParams>,
 ) -> ApiResponse<Vec<ScenarioParameter>> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
+    match StressTestEngine::get_scenario_parameters(&db, tenant_id, params.scenario_id).await {
         Ok(params) => ApiResponse::success(params, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1764,13 +1883,13 @@ pub async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match StressTestEngine::get_test_summary(&pool, tenant_id).await {
+    match StressTestEngine::get_test_summary(&db, tenant_id).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }

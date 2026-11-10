@@ -39,7 +39,7 @@ impl FinanceService {
             ));
         }
 
-        let mut tx = self.db_pool.begin().await?;
+        let mut tx = self.write_scope().await?;
 
         let voucher_lines = vec![
             VoucherLineRequest {
@@ -103,7 +103,7 @@ impl FinanceService {
         .bind(payment_date)
         .bind(&req.remark)
         .bind(created_by)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut tx)
         .await?;
 
         let mut items = Vec::new();
@@ -123,7 +123,7 @@ impl FinanceService {
             .bind(item.payment_amount)
             .bind(&item.remark)
             .bind(item.payable_amount - item.payment_amount)
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut tx)
             .await?;
             items.push(payment_item);
         }
@@ -156,11 +156,14 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let voucher = match payment.voucher_id {
@@ -179,11 +182,11 @@ impl FinanceService {
             .unwrap_or(VoucherStatus::Draft);
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
         )
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(PaymentResponse {
@@ -212,23 +215,26 @@ impl FinanceService {
         tenant_id: Uuid,
         params: PaymentQueryParams,
     ) -> Result<(Vec<PaymentResponse>, i64), TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         let page = params.page.unwrap_or(1);
         let page_size = params.page_size.unwrap_or(20);
         let offset = (page - 1) * page_size;
 
+        let mut scope = self.read_scope().await?;
+
         let total: (i64,) =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"))
                 .bind(tenant_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let payments: Vec<Payment> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(tenant_id)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let mut results = Vec::new();
@@ -276,11 +282,14 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let mut scope = self.read_scope().await?;
+
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let voucher = match payment.voucher_id {
@@ -299,11 +308,11 @@ impl FinanceService {
             .unwrap_or(VoucherStatus::Draft);
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
         )
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_all(&self.db_pool)
+        .fetch_all(&mut scope)
         .await?;
 
         Ok(PaymentResponse {
@@ -340,11 +349,13 @@ impl FinanceService {
         updated_by: &str,
         locale: &str,
     ) -> Result<PaymentResponse, TopemsError> {
+        let mut tx = self.write_scope().await?;
+
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut tx)
                 .await?;
 
         let voucher_id = payment
@@ -357,15 +368,13 @@ impl FinanceService {
             ));
         }
 
-        let mut tx = self.db_pool.begin().await?;
-
         sqlx::query(only_own_schema_query!(
             "finance",
             "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2"
         ))
         .bind(voucher_id)
         .bind(tenant_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await?;
 
         let total_amount: Decimal = req.items.iter().map(|i| i.payment_amount).sum();
@@ -423,7 +432,7 @@ impl FinanceService {
         .bind(&req.remark)
         .bind(tenant_id)
         .bind(payment_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -431,7 +440,7 @@ impl FinanceService {
             "DELETE FROM core_finance_payment_items WHERE payment_id = $1"
         ))
         .bind(payment_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await?;
 
         let mut items = Vec::new();
@@ -449,7 +458,7 @@ impl FinanceService {
             .bind(item.payable_amount)
             .bind(item.payment_amount)
             .bind(&item.remark)
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut tx)
             .await?;
             items.push(payment_item);
         }
@@ -464,11 +473,13 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self.write_scope().await?;
+
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
-                .fetch_one(&self.db_pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let voucher_id = payment
@@ -486,8 +497,10 @@ impl FinanceService {
             "UPDATE finance.core_finance_payments SET deleted_at = NOW() WHERE id = $1"
         ))
         .bind(payment_id)
-        .execute(&self.db_pool)
+        .execute(&mut scope)
         .await?;
+
+        scope.commit().await?;
 
         Ok(())
     }
@@ -497,12 +510,14 @@ impl FinanceService {
         let date_str = format!("{}{:02}{:02}", today.year(), today.month(), today.day());
         let prefix = format!("FK{}", date_str);
 
+        let mut scope = self.read_scope().await?;
+
         let count: (i64,) = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND payment_no LIKE $2"),
         )
         .bind(tenant_id)
         .bind(format!("{}%", prefix))
-        .fetch_one(&self.db_pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(format!("{}{:04}", prefix, count.0 + 1))
@@ -513,6 +528,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ExportPaymentRequest,
     ) -> Result<ExportPaymentResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
         tracing::info!(
             "开始导出付款单, tenant_id={}, format={}, status={}, start_date={}, end_date={}",
             tenant_id,
@@ -522,8 +538,10 @@ impl FinanceService {
             req.end_date.as_deref().unwrap_or("None")
         );
 
+        let mut scope = self.read_scope().await?;
+
         let mut query =
-            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
 
         if let Some(status) = req.status {
@@ -544,7 +562,7 @@ impl FinanceService {
 
         let rows = sqlx::query_as::<_, Payment>(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
-            .fetch_all(&self.db_pool)
+            .fetch_all(&mut scope)
             .await?;
 
         tracing::info!("查询付款单数据成功, 共{}条记录", rows.len());
