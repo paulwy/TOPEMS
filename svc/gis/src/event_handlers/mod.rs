@@ -3,7 +3,8 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType, StockInboundPayload,
+    require_event_tenant, EhsHazardReportedPayload, Event, EventResult, EventSubscriber,
+    EventTenant, EventType, StockInboundPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -37,6 +38,7 @@ impl GisEventHandlers {
 
     async fn update_map_marker(
         &self,
+        tenant: EventTenant,
         marker_type: &str,
         source_type: &str,
         source_id: uuid::Uuid,
@@ -48,10 +50,10 @@ impl GisEventHandlers {
         let now = Utc::now();
         let marker_id = uuid::Uuid::new_v4();
 
-        let mut scope = self.db.scope().await?;
+        let mut scope = self.db.scope_for_tenant(tenant.get()).await?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("gis", "INSERT INTO gis_map_markers (id, marker_type, source_type, source_id, title, description, level, location, status, created_at, updated_at, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $9, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $9, $10)
              ON CONFLICT (source_type, source_id, tenant_id) DO UPDATE SET
                  title = EXCLUDED.title,
                  description = EXCLUDED.description,
@@ -69,14 +71,13 @@ impl GisEventHandlers {
         .bind(level.unwrap_or("normal"))
         .bind(location.unwrap_or(""))
         .bind(now)
+        .bind(tenant.get())
         .fetch_one(&mut scope)
         .await;
 
-        if result.is_ok() {
-            scope.commit().await?;
-        }
         match result {
             Ok(id) => {
+                scope.commit().await?;
                 tracing::info!(
                     "[gis] 地图标注更新成功: type={}, title={}, id={}",
                     marker_type,
@@ -86,6 +87,7 @@ impl GisEventHandlers {
                 Ok(id)
             }
             Err(e) => {
+                scope.rollback().await?;
                 tracing::error!("[gis] 地图标注更新失败: {}", e);
                 Err(TopemsError::BusinessLogic(format!(
                     "地图标注更新失败: {}",
@@ -102,6 +104,7 @@ impl GisEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: EhsHazardReportedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e))
         })?;
@@ -115,17 +118,17 @@ impl GisEventHandlers {
             payload.location
         );
 
-        let _ = self
-            .update_map_marker(
-                "hazard",
-                "ehs_hazard",
-                payload.hazard_id,
-                &payload.title,
-                payload.description.as_deref(),
-                Some(&payload.level),
-                payload.location.as_deref(),
-            )
-            .await;
+        self.update_map_marker(
+            tenant,
+            "hazard",
+            "ehs_hazard",
+            payload.hazard_id,
+            &payload.title,
+            payload.description.as_deref(),
+            Some(&payload.level),
+            payload.location.as_deref(),
+        )
+        .await?;
 
         Ok(())
     }
@@ -139,6 +142,7 @@ impl GisEventHandlers {
 
         match event.event_type {
             EventType::StockInbound => {
+                let tenant = require_event_tenant(&event)?;
                 let payload: StockInboundPayload = event.parse_payload().map_err(|e| {
                     TopemsError::ValidationFailed(format!("解析入库事件 payload 失败: {}", e))
                 })?;
@@ -160,17 +164,17 @@ impl GisEventHandlers {
                     payload.quantity
                 );
 
-                let _ = self
-                    .update_map_marker(
-                        "warehouse_in",
-                        "stock_inbound",
-                        payload.inbound_id,
-                        &title,
-                        Some(&description),
-                        Some("normal"),
-                        None,
-                    )
-                    .await;
+                self.update_map_marker(
+                    tenant,
+                    "warehouse_in",
+                    "stock_inbound",
+                    payload.inbound_id,
+                    &title,
+                    Some(&description),
+                    Some("normal"),
+                    None,
+                )
+                .await?;
             }
             _ => {
                 // 订阅侧只登记了 StockInbound；其他类型不应到达，忽略即可。

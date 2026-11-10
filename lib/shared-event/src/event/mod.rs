@@ -22,6 +22,7 @@ pub mod schema_registry;
 pub mod stream_publisher;
 pub mod stream_subscriber;
 pub mod subscriber;
+pub mod tenant_context;
 pub mod versioning;
 
 pub use dashboard::{
@@ -83,6 +84,9 @@ pub use stream_subscriber::{
     ConsumerConfig, StreamEventHandler, StreamEventSubscriber, StreamMdmEventHandler,
 };
 pub use subscriber::EventSubscriber;
+pub use tenant_context::{
+    require_event_tenant, EventTenant, TenantContextCode, TenantContextError,
+};
 pub use versioning::{
     EventVersion, EventVersionEntry, EventVersionRegistry, EventVersionRegistryStats,
 };

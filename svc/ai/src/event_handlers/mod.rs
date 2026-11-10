@@ -3,9 +3,10 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    EhsHazardReportedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
-    QmsQualityIssueCreatedPayload,
+    require_event_tenant, EhsHazardReportedPayload, Event, EventPublisher, EventResult,
+    EventSubscriber, EventTenant, EventType, QmsQualityIssueCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -13,12 +14,12 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 #[derive(Clone)]
 #[allow(dead_code)]
 pub struct AiEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl AiEventHandlers {
-    pub fn new(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
+    pub fn new(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         Self {
             db,
             event_publisher,
@@ -44,6 +45,7 @@ impl AiEventHandlers {
 
     async fn add_training_sample(
         &self,
+        tenant: EventTenant,
         model_type: &str,
         sample_type: &str,
         label: &str,
@@ -54,9 +56,10 @@ impl AiEventHandlers {
         let now = Utc::now();
         let sample_id = uuid::Uuid::new_v4();
 
+        let mut scope = self.db.scope_for_tenant(tenant.get()).await?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ai", "INSERT INTO ai.ai_training_samples (id, model_type, sample_type, label, source_type, source_id, features_json, quality_score, is_used, created_at, updated_at, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 1.0, false, $8, $8, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, 1.0, false, $8, $8, $9)
              ON CONFLICT (source_type, source_id) DO NOTHING
              RETURNING id", "plugin_ai"),
         )
@@ -68,11 +71,13 @@ impl AiEventHandlers {
         .bind(source_id)
         .bind(features_json.unwrap_or("{}"))
         .bind(now)
-        .fetch_optional(&self.db)
+        .bind(tenant.get())
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
             Ok(Some(id)) => {
+                scope.commit().await?;
                 tracing::info!(
                     "[ai] 训练样本入库成功: model={}, type={}, label={}, id={}",
                     model_type,
@@ -83,6 +88,7 @@ impl AiEventHandlers {
                 Ok(id)
             }
             Ok(None) => {
+                scope.commit().await?;
                 tracing::info!(
                     "[ai] 训练样本已存在（幂等跳过）: source_type={}, source_id={}",
                     source_type,
@@ -91,6 +97,7 @@ impl AiEventHandlers {
                 Ok(sample_id)
             }
             Err(e) => {
+                scope.rollback().await?;
                 tracing::error!("[ai] 训练样本入库失败: {}", e);
                 Err(TopemsError::BusinessLogic(format!(
                     "训练样本入库失败: {}",
@@ -107,6 +114,7 @@ impl AiEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: QmsQualityIssueCreatedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析质量问题事件 payload 失败: {}", e))
         })?;
@@ -133,16 +141,16 @@ impl AiEventHandlers {
                 .replace('"', "\\\"")
         );
 
-        let _ = self
-            .add_training_sample(
-                "quality_anomaly_detection",
-                "quality_issue",
-                &label,
-                "qms_issue",
-                payload.issue_id,
-                Some(&features),
-            )
-            .await;
+        self.add_training_sample(
+            tenant,
+            "quality_anomaly_detection",
+            "quality_issue",
+            &label,
+            "qms_issue",
+            payload.issue_id,
+            Some(&features),
+        )
+        .await?;
 
         Ok(())
     }
@@ -154,6 +162,7 @@ impl AiEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: EhsHazardReportedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e))
         })?;
@@ -178,16 +187,16 @@ impl AiEventHandlers {
                 .replace('"', "\\\"")
         );
 
-        let _ = self
-            .add_training_sample(
-                "hazard_identification",
-                "ehs_hazard",
-                &payload.level,
-                "ehs_hazard",
-                payload.hazard_id,
-                Some(&features),
-            )
-            .await;
+        self.add_training_sample(
+            tenant,
+            "hazard_identification",
+            "ehs_hazard",
+            &payload.level,
+            "ehs_hazard",
+            payload.hazard_id,
+            Some(&features),
+        )
+        .await?;
 
         Ok(())
     }
@@ -197,7 +206,7 @@ pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<(), TopemsError> {
-    let handlers = AiEventHandlers::new(db, event_publisher);
+    let handlers = AiEventHandlers::new(Db::new(db, "ai, public"), event_publisher);
     let subscriber = handlers
         .build_subscriber()
         .map_err(|e| TopemsError::Internal(format!("事件订阅者构建失败: {e}")))?;

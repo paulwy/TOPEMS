@@ -4,9 +4,9 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventPublisher, EventResult,
-    EventSubscriber, EventType, PmProjectCreatedPayload, QmsQualityIssueCreatedPayload,
-    RdProjectCreatedPayload, SalesOrderCreatedPayload,
+    require_event_tenant, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
+    EventPublisher, EventResult, EventSubscriber, EventTenant, EventType, PmProjectCreatedPayload,
+    QmsQualityIssueCreatedPayload, RdProjectCreatedPayload, SalesOrderCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -62,6 +62,7 @@ impl MobileEventHandlers {
 
     async fn create_push_notification(
         &self,
+        tenant: EventTenant,
         notification_type: &str,
         title: &str,
         content: &str,
@@ -72,20 +73,11 @@ impl MobileEventHandlers {
     ) -> Result<Option<uuid::Uuid>, TopemsError> {
         let now = Utc::now();
         let notification_id = uuid::Uuid::new_v4();
-        let mut scope = match self.db.scope().await {
-            Ok(scope) => scope,
-            Err(e) => {
-                tracing::error!("[mobile] 数据库作用域创建失败: {}", e);
-                return Err(TopemsError::BusinessLogic(format!(
-                    "推送通知创建失败: {}",
-                    e
-                )));
-            }
-        };
+        let mut scope = self.db.scope_for_tenant(tenant.get()).await?;
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_push_notifications (id, notification_type, title, content, priority, source_type, source_id, target_user, status, push_time, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
              ON CONFLICT (source_type, source_id) DO NOTHING
              RETURNING id"),
         )
@@ -98,12 +90,13 @@ impl MobileEventHandlers {
         .bind(source_id)
         .bind(target_user.unwrap_or("all"))
         .bind(now)
+        .bind(tenant.get())
         .fetch_optional(&mut scope)
         .await;
 
         match result {
             Ok(Some(id)) => {
-                let _ = scope.commit().await;
+                scope.commit().await?;
                 tracing::info!(
                     "[mobile] 推送通知创建成功: type={}, title={}, id={}",
                     notification_type,
@@ -113,7 +106,7 @@ impl MobileEventHandlers {
                 Ok(Some(id))
             }
             Ok(None) => {
-                let _ = scope.commit().await;
+                scope.commit().await?;
                 tracing::info!(
                     "[mobile] 推送通知已存在（幂等跳过）: source_type={}, source_id={}",
                     source_type,
@@ -122,7 +115,7 @@ impl MobileEventHandlers {
                 Ok(None)
             }
             Err(e) => {
-                let _ = scope.rollback().await;
+                scope.rollback().await?;
                 tracing::error!("[mobile] 推送通知创建失败: {}", e);
                 Err(TopemsError::BusinessLogic(format!(
                     "推送通知创建失败: {}",
@@ -139,6 +132,7 @@ impl MobileEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: EhsHazardReportedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e))
         })?;
@@ -168,17 +162,17 @@ impl MobileEventHandlers {
                 .unwrap_or_else(|| "未指定".to_string())
         );
 
-        let _ = self
-            .create_push_notification(
-                "safety_alert",
-                &title,
-                &content,
-                priority,
-                "ehs_hazard",
-                payload.hazard_id,
-                None,
-            )
-            .await;
+        self.create_push_notification(
+            tenant,
+            "safety_alert",
+            &title,
+            &content,
+            priority,
+            "ehs_hazard",
+            payload.hazard_id,
+            None,
+        )
+        .await?;
 
         Ok(())
     }
@@ -190,6 +184,7 @@ impl MobileEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: EhsAccidentReportedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 EHS 事故报告事件 payload 失败: {}", e))
         })?;
@@ -217,17 +212,17 @@ impl MobileEventHandlers {
                 .unwrap_or_else(|| "未指定".to_string())
         );
 
-        let _ = self
-            .create_push_notification(
-                "safety_accident",
-                &title,
-                &content,
-                priority,
-                "ehs_accident",
-                payload.accident_id,
-                None,
-            )
-            .await;
+        self.create_push_notification(
+            tenant,
+            "safety_accident",
+            &title,
+            &content,
+            priority,
+            "ehs_accident",
+            payload.accident_id,
+            None,
+        )
+        .await?;
 
         Ok(())
     }
@@ -239,6 +234,7 @@ impl MobileEventHandlers {
             event.trace_id
         );
 
+        let tenant = require_event_tenant(&event)?;
         let payload: QmsQualityIssueCreatedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 QMS 质量问题事件 payload 失败: {}", e))
         })?;
@@ -262,17 +258,17 @@ impl MobileEventHandlers {
             payload.severity.unwrap_or_else(|| "medium".to_string())
         );
 
-        let _ = self
-            .create_push_notification(
-                "quality_issue",
-                &title,
-                &content,
-                priority,
-                "qms_quality_issue",
-                payload.issue_id,
-                None,
-            )
-            .await;
+        self.create_push_notification(
+            tenant,
+            "quality_issue",
+            &title,
+            &content,
+            priority,
+            "qms_quality_issue",
+            payload.issue_id,
+            None,
+        )
+        .await?;
 
         Ok(())
     }
@@ -283,6 +279,8 @@ impl MobileEventHandlers {
             event.event_type,
             event.trace_id
         );
+
+        let tenant = require_event_tenant(&event)?;
 
         match event.event_type {
             EventType::RdProjectCreated => {
@@ -305,17 +303,17 @@ impl MobileEventHandlers {
                     payload.owner_name.unwrap_or_else(|| "未指定".to_string())
                 );
 
-                let _ = self
-                    .create_push_notification(
-                        "rd_project_created",
-                        &title,
-                        &content,
-                        "normal",
-                        "rd_project",
-                        payload.project_id,
-                        None,
-                    )
-                    .await;
+                self.create_push_notification(
+                    tenant,
+                    "rd_project_created",
+                    &title,
+                    &content,
+                    "normal",
+                    "rd_project",
+                    payload.project_id,
+                    None,
+                )
+                .await?;
             }
             EventType::PmProjectCreated => {
                 let payload: PmProjectCreatedPayload = event.parse_payload().map_err(|e| {
@@ -334,17 +332,17 @@ impl MobileEventHandlers {
                 let title = format!("PM 项目创建 - {}", payload.project_name);
                 let content = format!("项目负责人 ID: {}", payload.owner_id);
 
-                let _ = self
-                    .create_push_notification(
-                        "pm_project_created",
-                        &title,
-                        &content,
-                        "normal",
-                        "pm_project",
-                        payload.project_id,
-                        None,
-                    )
-                    .await;
+                self.create_push_notification(
+                    tenant,
+                    "pm_project_created",
+                    &title,
+                    &content,
+                    "normal",
+                    "pm_project",
+                    payload.project_id,
+                    None,
+                )
+                .await?;
             }
             _ => {}
         }
@@ -358,6 +356,8 @@ impl MobileEventHandlers {
             event.event_type,
             event.trace_id
         );
+
+        let tenant = require_event_tenant(&event)?;
 
         // v1.85 闭环：payload 解析失败属不可恢复消息（重试无法修复），记录日志后跳过 ACK，
         // 避免 UUID 解析失败等坏事件触发无限重试/ERROR 风暴（历史 79 条 retry 键残留根因）。
@@ -391,17 +391,17 @@ impl MobileEventHandlers {
                 .unwrap_or_else(|| "待确认".to_string())
         );
 
-        let _ = self
-            .create_push_notification(
-                "sales_order_created",
-                &title,
-                &content,
-                "normal",
-                "sales_order",
-                payload.order_id,
-                None,
-            )
-            .await;
+        self.create_push_notification(
+            tenant,
+            "sales_order_created",
+            &title,
+            &content,
+            "normal",
+            "sales_order",
+            payload.order_id,
+            None,
+        )
+        .await?;
 
         Ok(())
     }
