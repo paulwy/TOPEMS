@@ -14,7 +14,7 @@
 | 已 ENABLE+FORCE RLS | 107 |
 | 未启用 RLS | 2（`core_finance_currencies`、`reconcile_items`） |
 | 非空表 | 9，合计 **103 行** |
-| 表名清单 SHA256（按 `relname` 排序，119 行） | `2a314cb213b9631c07cf4bde3b5caf126b13b7874b2170e8353cad8064fdf750` |
+| 表名清单 SHA256（按 `relname` 排序，119 行） | `5091d7af6d06517326a8ead567ac969bbd6abf06aae32be5dad81a1972de6917`（重定口径，见 §1.1；旧值 `2a314cb2…fdf750` **作废**） |
 | 代码覆盖范围 | `services/finance/` 21 文件 205 处 + `modules/` 23 文件 687 处，裸池直接执行 SQL **全部清零**（B5-0 并入） |
 
 与 2026-11-09 设计文档的 104 张口径相比，两天内新增 5 张带 `tenant_id` 的表（A 类 84→89），漂移已在本清单固化。
@@ -141,6 +141,25 @@
 | settlement_snapshots | 是 | 是 | 1 | ALLOW_ALL | 0 | — |
 | source_amount_snapshots | 是 | 是 | 1 | UNSET+NIL+NULL+CAST | 0 | — |
 | vouchers | 是 | 是 | 1 | UNSET+NIL+NULL+CAST | 0 | — |
+
+### 1.1 表名清单 SHA256 复算（唯一口径，2026-11-10 重定）
+
+旧值 `2a314cb213b9631c07cf4bde3b5caf126b13b7874b2170e8353cad8064fdf750` **作废**：其序列化口径当时未留档，在 119 张表名单上无法复算（名单本身零漂移，已用逐行 diff 证明生产与本文档 §1+§3 完全一致），因此重定唯一口径，今后复核只用下面这一条命令。
+
+口径写死：库 `topems_prod`、模式 `finance`、`relkind='r'`、只取 `relname`、SQL 侧 `ORDER BY relname COLLATE "C"`、客户端编码 UTF8、`psql -At`（行分隔符 LF，末尾带一个 LF）、哈希 SHA-256。
+
+```sh
+PGHOST=/tmp PGCLIENTENCODING=UTF8 /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod \
+  -c "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='finance' AND c.relkind='r' ORDER BY c.relname COLLATE \"C\"" \
+  | shasum -a 256 | cut -d' ' -f1
+```
+
+2026-11-10 复算结果：
+
+| 项 | 值 |
+|---|---|
+| 行数 | 119 |
+| SHA256 | `5091d7af6d06517326a8ead567ac969bbd6abf06aae32be5dad81a1972de6917` |
 
 ## 2. 全局行 / 全局只读白名单（C）
 
