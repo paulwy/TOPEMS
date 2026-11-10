@@ -316,13 +316,13 @@ pub async fn report_accident(
     _headers: HeaderMap,
     Json(req): Json<CreateAccidentRequest>,
 ) -> ApiResponse<Accident> {
-    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
-    let tenant_opt = match resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    // 生产端契约：事故上报必须带租户；无租户的公共行无法产生可归属的 EhsAccidentReported，
+    // 直接拒绝，禁止落 nil 租户行或用 nil 发事件。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝上报事故"),
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    // 响应结构体需要 Uuid，公共行（超管）沿用 nil 仅用于序列化，不落库
-    let tenant_id = tenant_opt.unwrap_or(Uuid::nil());
     tracing::debug!("Reporting accident: {:?}", req);
     let accident_no = format!(
         "ACC-{}",
@@ -371,7 +371,7 @@ pub async fn report_accident(
     .bind(accident.economic_loss)
     .bind(&accident.status)
     .bind(&accident.reported_by)
-    .bind(tenant_opt);
+    .bind(tenant_id);
     if let Err(e) = insert.execute(&state.pool).await {
         tracing::error!("Failed to insert accident: {}", e);
         return ApiResponse::server_error("事故上报失败");
@@ -388,6 +388,7 @@ pub async fn report_accident(
         let occurred_at = accident.occurred_at.map(|d| d.to_rfc3339());
         tokio::spawn(async move {
             let payload = topems_shared_event::event::EhsAccidentReportedPayload {
+                tenant_id,
                 accident_id,
                 accident_no,
                 title,

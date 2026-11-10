@@ -8,8 +8,8 @@
 //! 调用归属服务的 `/api/internal/*` 集成端点（qms/ehs/lims 各自暴露），
 //! 由归属服务在自有 schema 内完成写入。失败由事件订阅框架按 DLQ 处理。
 //!
-//! 租户上下文：业务事件 payload 不携带 tenant_id，编排侧统一传 `Uuid::nil()`，
-//! 与各服务 internal 集成端点既有契约（ehs 端 Uuid::nil 落库）一致。
+//! 租户上下文：一律取事件 payload 的 `tenant_id` 原样透传给归属服务；payload 缺失或为
+//! nil 时直接返回 `[tenant_ctx:nil]` 错误（进 DLQ），禁止回退请求上下文、全局常量或 nil。
 
 use serde_json::Value;
 use sqlx::types::Uuid;
@@ -61,10 +61,22 @@ async fn post_json(url: &str, body: &Value) -> Result<(), TopemsError> {
     Ok(())
 }
 
+/// 事件 payload 必须携带非 nil 租户；缺失即拒绝下游编排。
+/// 禁止回退请求上下文、全局常量或 nil —— 下游 internal 端点会把该值直接写库。
+fn require_event_payload_tenant(tenant_id: Uuid, event: &str) -> Result<Uuid, TopemsError> {
+    if tenant_id.is_nil() {
+        return Err(TopemsError::ValidationFailed(format!(
+            "[tenant_ctx:nil] {event} 事件 payload.tenant_id 为 nil，拒绝下游编排"
+        )));
+    }
+    Ok(tenant_id)
+}
+
 /// QMS 检验完成 → LIMS 登记样品 + 检验任务（顺序：先样品后任务，任务按 sample_no 关联样品）。
 pub async fn handle_qms_inspection_completed(
     payload: &QmsInspectionCompletedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "QmsInspectionCompleted")?;
     info!(
         "处理QMS检验完成事件 - 编排到LIMS样品/任务: {}",
         payload.inspection_no
@@ -74,7 +86,7 @@ pub async fn handle_qms_inspection_completed(
     post_json(
         &format!("{}/api/internal/lims/samples/integration", lims_base_url()),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "sample_no": sample_no,
             "sample_name": payload.product_name.clone().unwrap_or_else(|| "未知产品".to_string()),
             "sample_type": "产品检验样品",
@@ -88,7 +100,7 @@ pub async fn handle_qms_inspection_completed(
     post_json(
         &format!("{}/api/internal/lims/tasks/integration", lims_base_url()),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "task_no": task_no,
             "sample_no": sample_no,
             "test_items": ["外观检查", "尺寸测量", "性能测试"],
@@ -141,6 +153,7 @@ pub async fn handle_qms_quality_issue_created(
 pub async fn handle_ehs_hazard_reported(
     payload: &EhsHazardReportedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "EhsHazardReported")?;
     info!(
         "处理EHS隐患上报事件 - 编排到QMS纠正措施: {}",
         payload.hazard_no
@@ -167,7 +180,7 @@ pub async fn handle_ehs_hazard_reported(
     post_json(
         &format!("{}/api/internal/qms/actions/integration", qms_base_url()),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "action_no": action_no,
             "title": action_title,
             "description": description,
@@ -187,6 +200,7 @@ pub async fn handle_ehs_hazard_reported(
 pub async fn handle_ehs_accident_reported(
     payload: &EhsAccidentReportedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "EhsAccidentReported")?;
     info!(
         "处理EHS事故上报事件 - 编排到LIMS检测任务: {}",
         payload.accident_no
@@ -196,7 +210,7 @@ pub async fn handle_ehs_accident_reported(
     post_json(
         &format!("{}/api/internal/lims/samples/integration", lims_base_url()),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "sample_no": sample_no,
             "sample_name": format!("事故检测样品: {}", payload.title),
             "sample_type": "事故分析",
@@ -211,7 +225,7 @@ pub async fn handle_ehs_accident_reported(
     post_json(
         &format!("{}/api/internal/lims/tasks/integration", lims_base_url()),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "task_no": task_no,
             "sample_no": sample_no,
             "test_items": ["环境检测", "化学品残留", "材料分析", "安全评估"],
@@ -270,6 +284,7 @@ pub async fn handle_lims_inspection_abnormal(
 pub async fn handle_lims_record_completed(
     payload: &LimsRecordCompletedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "LimsRecordCompleted")?;
     info!(
         "处理LIMS检测完成事件 - 编排回写QMS质检结果: {}",
         payload.record_no
@@ -292,7 +307,7 @@ pub async fn handle_lims_record_completed(
             inspection_no
         ),
         &serde_json::json!({
-            "tenant_id": Uuid::nil(),
+            "tenant_id": tenant_id,
             "inspection_no": inspection_no,
             "result": payload.conclusion,
             "memo": serde_json::to_string(&payload.test_data).unwrap_or_default(),

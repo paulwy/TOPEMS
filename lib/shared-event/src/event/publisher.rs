@@ -372,6 +372,7 @@ impl EventPublisher {
 
     pub async fn publish_ehs_accident_reported(
         &self,
+        tenant_id: uuid::Uuid,
         accident_id: uuid::Uuid,
         accident_no: &str,
         title: &str,
@@ -380,6 +381,7 @@ impl EventPublisher {
         occurred_at: Option<&str>,
     ) -> EventResult<()> {
         let payload = EhsAccidentReportedPayload {
+            tenant_id,
             accident_id,
             accident_no: accident_no.to_string(),
             title: title.to_string(),

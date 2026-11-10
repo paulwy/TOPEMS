@@ -416,7 +416,13 @@ pub async fn submit_result(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    // 生产端契约：事件租户只能来自请求上下文；缺上下文直接拒绝，禁止随机 UUID / nil 兜底。
+    // （原实现用 get_tenant_id，缺失时回退 Uuid::new_v4()，会把事件发到不存在的租户）
+    let tenant_id = match topems_shared_auth::resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝提交检验结果"),
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
@@ -495,6 +501,7 @@ pub async fn submit_result(
                                 return;
                             };
                             let payload = QmsInspectionCompletedPayload {
+                                tenant_id,
                                 inspection_id: eid_uuid,
                                 inspection_no: eno,
                                 product_id: pid,

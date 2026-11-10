@@ -328,16 +328,12 @@ pub async fn create_hazard(
     _headers: HeaderMap,
     Json(req): Json<CreateHazardRequest>,
 ) -> ApiResponse<Hazard> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // 生产端契约：隐患创建必须带租户；事件租户只来自请求上下文，超管也不允许回退 nil。
+    let tenant_id = match topems_shared_auth::resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝创建隐患"),
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating hazard: {:?}", req);
 
     let hazard_id = uuid::Uuid::new_v4();
@@ -402,6 +398,7 @@ pub async fn create_hazard(
         let hreported_by = req.reported_by.clone();
         tokio::spawn(async move {
             let payload = topems_shared_event::event::EhsHazardReportedPayload {
+                tenant_id,
                 hazard_id: hid,
                 hazard_no: hno,
                 title: htitle,
@@ -1316,7 +1313,12 @@ pub async fn create_safety_hazard(
     _headers: HeaderMap,
     Json(req): Json<CreateSafetyHazardRequest>,
 ) -> ApiResponse<SafetyHazard> {
-    let tenant_id = resolve_hazard_tenant(&claims);
+    // 生产端契约：危险源创建必须带租户；事件租户只来自请求上下文，超管也不允许回退 nil。
+    let tenant_id = match topems_shared_auth::resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝创建危险源"),
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let hazard_no = req
         .hazard_no
         .clone()
@@ -1362,6 +1364,45 @@ pub async fn create_safety_hazard(
         }
     };
     let record = safety_hazard_from_row(&row);
+
+    // 生产端：危险源创建成功后发布 EhsHazardReported，租户取请求上下文（上方已强校验非 nil）。
+    if let Some(publisher) = &state.event_publisher {
+        if let Ok(hazard_uuid) = Uuid::parse_str(&record.id) {
+            let payload = topems_shared_event::event::EhsHazardReportedPayload {
+                tenant_id,
+                hazard_id: hazard_uuid,
+                hazard_no: record.hazard_no.clone(),
+                title: record.name.clone(),
+                category: record.category.clone(),
+                level: record.level.clone(),
+                location: record.location.clone(),
+                description: record.description.clone(),
+                reported_by: record.created_by.clone(),
+            };
+            let et = topems_shared_event::event::EventType::EhsHazardReported;
+            let publisher = publisher.clone();
+            tokio::spawn(async move {
+                if let Err(e) = publisher.publish_event(et, &payload).await {
+                    tracing::warn!(
+                        "[ehs] EhsHazardReported 事件发布失败（graceful fallback）: {}，入重试队列",
+                        e
+                    );
+                    commit_retry::push_retry_typed("ehs", et, &payload).await;
+                } else {
+                    tracing::info!(
+                        "[ehs] EhsHazardReported 事件发布成功 - hazard_id={}",
+                        hazard_uuid
+                    );
+                }
+            });
+        } else {
+            tracing::error!(
+                "[tenant_ctx] 危险源 id 非 UUID，无法发布 EhsHazardReported - id={}",
+                record.id
+            );
+        }
+    }
+
     ApiResponse::success(record, "危险源创建成功")
 }
 

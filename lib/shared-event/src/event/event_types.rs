@@ -498,6 +498,12 @@ pub struct LimsInspectionAbnormalDetectedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QmsInspectionCompletedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    ///
+    /// `serde(default)` 只用于兼容改动前已在流/DLQ 里的旧消息（反序列化为 nil），
+    /// 消费端 `require_event_tenant` 必须把它判为 `Nil` 并拒绝，见 tenant_context 单测。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub inspection_id: Uuid,
     pub inspection_no: String,
     pub product_id: Option<Uuid>,
@@ -531,6 +537,10 @@ pub struct QmsQualityIssueCreatedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EhsHazardReportedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// `serde(default)` 仅为兼容旧消息，语义见 `QmsInspectionCompletedPayload::tenant_id`。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub hazard_id: Uuid,
     pub hazard_no: String,
     pub title: String,
@@ -543,6 +553,10 @@ pub struct EhsHazardReportedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EhsAccidentReportedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// `serde(default)` 仅为兼容旧消息，语义见 `QmsInspectionCompletedPayload::tenant_id`。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub accident_id: Uuid,
     pub accident_no: String,
     pub title: String,
@@ -555,6 +569,10 @@ pub struct EhsAccidentReportedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimsRecordCompletedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 该事件目前无生产端；`serde(default)` 保持旧消息可反序列化，nil 由消费端拒绝。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub record_id: Uuid,
     pub record_no: String,
     pub task_id: Uuid,

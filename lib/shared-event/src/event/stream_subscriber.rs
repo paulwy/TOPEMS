@@ -27,6 +27,29 @@ pub type StreamEventHandler = Arc<
     dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync,
 >;
 
+/// 失败原因分级（写入 DLQ 的 `last_error` 前缀）。
+///
+/// 四类口径：
+/// - `tenant_context`：事件缺少/为 nil/格式非法的租户上下文（`[tenant_ctx:*]`）
+/// - `schema_invalid`：payload 结构或 Schema 校验不通过（缺字段、类型错误等）
+/// - `downstream_5xx`：下游 HTTP 返回 5xx
+/// - `retry_exhausted`：重试耗尽但真因不属于以上三类（含超时/未知）
+pub(crate) fn classify_failure(detail: &str) -> &'static str {
+    if detail.contains("[tenant_ctx:") {
+        "tenant_context"
+    } else if detail.contains("schema 校验失败")
+        || detail.contains("payload 失败")
+        || detail.contains("missing field")
+        || detail.contains("invalid type")
+    {
+        "schema_invalid"
+    } else if detail.contains("返回 5") {
+        "downstream_5xx"
+    } else {
+        "retry_exhausted"
+    }
+}
+
 /// MDM 主数据事件处理器回调类型（返回 Result，失败时会触发重试）
 pub type StreamMdmEventHandler = Arc<
     dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>>
@@ -274,8 +297,9 @@ impl StreamEventSubscriber {
                         "事件 Schema 校验失败，进入重试/DLQ 流程 - 类型: {:?}, 消息ID: {}, 错误: {:?}",
                         event_type, message_id, result.errors
                     );
+                    let detail = format!("schema 校验失败: {:?}", result.errors);
                     // 与处理失败同路径：重试计数 / 超限进 DLQ
-                    self.settle_failed(event, message_id, stream_key, &event_type)
+                    self.settle_failed(event, message_id, stream_key, &event_type, Some(&detail))
                         .await?;
                     return Ok(());
                 }
@@ -297,6 +321,8 @@ impl StreamEventSubscriber {
 
         let handlers = handlers.unwrap_or_else(|| panic!("handlers guaranteed by is_none guard"));
         let mut all_succeeded = true;
+        // 记录本次投递的失败真因，超限进 DLQ 时写入 last_error（不再用固定字符串）
+        let mut last_error: Option<String> = None;
 
         for handler in handlers {
             let event_clone = event.clone();
@@ -320,6 +346,7 @@ impl StreamEventSubscriber {
                         "事件处理失败 - 类型: {:?}, 消息ID: {}, 错误: {}",
                         event_type, message_id, e
                     );
+                    last_error = Some(e.to_string());
                     all_succeeded = false;
                 }
                 Err(_) => {
@@ -327,6 +354,10 @@ impl StreamEventSubscriber {
                         "事件处理超时 - 类型: {:?}, 消息ID: {}",
                         event_type, message_id
                     );
+                    last_error = Some(format!(
+                        "handler 处理超时（{}s）",
+                        self.config.process_timeout_secs
+                    ));
                     all_succeeded = false;
                 }
             }
@@ -337,8 +368,14 @@ impl StreamEventSubscriber {
             self.ack_message(stream_key, message_id).await?;
         } else {
             // 处理失败，检查重试次数
-            self.settle_failed(event, message_id, stream_key, &event_type)
-                .await?;
+            self.settle_failed(
+                event,
+                message_id,
+                stream_key,
+                &event_type,
+                last_error.as_deref(),
+            )
+            .await?;
         }
 
         Ok(())
@@ -351,18 +388,29 @@ impl StreamEventSubscriber {
         message_id: &str,
         stream_key: &str,
         event_type: &EventType,
+        last_error: Option<&str>,
     ) -> EventResult<()> {
         let retry_count = self.get_retry_count(stream_key, message_id).await?;
 
         if retry_count >= self.config.max_retries {
             // 超过最大重试次数，进入死信队列
             error!(
-                "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}",
-                event_type, message_id, retry_count
+                "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}, 真因: {}",
+                event_type,
+                message_id,
+                retry_count,
+                last_error.unwrap_or("未知（无 handler 错误）")
             );
 
             if let Some(dlq) = &self.dlq {
-                if let Err(e) = dlq.push(event, "max retries exceeded").await {
+                let detail = last_error.unwrap_or("未知（无 handler 错误）");
+                let entry = format!(
+                    "[{}] {} (retries={})",
+                    classify_failure(detail),
+                    detail,
+                    retry_count
+                );
+                if let Err(e) = dlq.push(event, &entry).await {
                     error!("推入死信队列失败: {}", e);
                 }
             }
@@ -1264,5 +1312,30 @@ mod tests {
 
         let latest = registry.get_latest_version("SalesOrderCreated").unwrap();
         assert!(!latest.deprecated, "v1 应为活跃状态");
+    }
+
+    /// DLQ `last_error` 必须能区分四类真因，而不是统一写 "max retries exceeded"。
+    #[test]
+    fn test_classify_failure_four_kinds() {
+        assert_eq!(
+            classify_failure("[tenant_ctx:missing] event=X payload 缺少 tenant_id"),
+            "tenant_context"
+        );
+        assert_eq!(
+            classify_failure("[tenant_ctx:nil] EhsHazardReported 事件 payload.tenant_id 为 nil"),
+            "tenant_context"
+        );
+        assert_eq!(
+            classify_failure("解析事件 payload 失败: missing field `tenant_id`"),
+            "schema_invalid"
+        );
+        assert_eq!(
+            classify_failure("调用 http://qms/api/x 返回 503 Service Unavailable: upstream"),
+            "downstream_5xx"
+        );
+        assert_eq!(
+            classify_failure("handler 处理超时（30s）"),
+            "retry_exhausted"
+        );
     }
 }
