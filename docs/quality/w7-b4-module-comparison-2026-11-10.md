@@ -325,6 +325,130 @@ ROLLBACK;
 
 B5 参考：119 张表 + 4 笔迁移的窗口实测停写 **59 秒**；PDM 规模是 1/6，主要成本在验证不在 DDL。
 
+### 3.6 预演方案（事务内 ROLLBACK，待批准后开窗）
+
+**状态：未执行。** 本节只定义动作与判据，预演本身需要在用户点头后、正式窗口前单独跑一次。生产本轮不动。
+
+**预演只回答 4 个问题：**
+
+| # | 问题 | 判据 |
+|---:|---|---|
+| P-1 | 两笔迁移在生产 schema 上能否一次跑通 | `psql` 退出码 0，无 `RAISE EXCEPTION` |
+| P-2 | 21 张表的 `ACCESS EXCLUSIVE` 锁能否在 `lock_timeout=5s` 内拿到 | 无 `canceling statement due to lock timeout` |
+| P-3 | 迁移自带结构断言是否全过 | 20 张租户表各 1 条策略、refs 2 条、ledger 未开 RLS |
+| P-4 | 迁移应用耗时 | `< 3 分钟`（`\timing` 实测） |
+
+**预演不验证（各自已有出处）：** 业务功能与缓存隔离（§3.4 本地 `w7_b4_fresh` 三条证据）、生产数据可见性（现网 `pdm` 无业务数据，见 §3.4 探针预期）。
+
+**硬约束：**
+
+1. 单事务 + 显式 `ROLLBACK`，**不写** `_sqlx_migrations`（预演不登账）。
+2. 生产 server **不停**；`lock_timeout=5s` 拿不到锁即失败退出，绝不排队等锁。
+3. 预演前后各做一次 `pg_policies` / `relrowsecurity` 快照，diff 必须为空——这是"零残留"的唯一证据。
+4. 预演宿主、DSN、角色必须与正式窗口一致（owner/超户差异会改变断言结果）。
+5. 不改 launchd、不改 DSN、不动数据、不部署二进制。
+
+**步骤：**
+
+**P0 前置（只读）**
+
+```sh
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod \
+  -c "SELECT current_user, rolsuper, current_setting('"'"'server_version'"'"')" \
+  -c "SELECT coalesce(max(version),0) FROM _sqlx_migrations"'
+```
+
+判据：`rolsuper = f`；`max(version) < 20261110204000`（否则版本号冲突，停手）。
+
+**P1 快照（回滚对照物）**
+
+```sh
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod -c "
+  SELECT schemaname||'\''.'\''||tablename||'\''|'\''||policyname||'\''|'\''||cmd||'\''|'\''
+         ||coalesce(qual,'\'''\'')||'\''|'\''||coalesce(with_check,'\'''\'')
+  FROM pg_policies WHERE schemaname='\''pdm'\'' ORDER BY 1 COLLATE \"C\""' > /tmp/pdm_policies_before.txt
+
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod -c "
+  SELECT n.nspname||'\''.'\''||c.relname||'\''|'\''||c.relrowsecurity||'\''|'\''||c.relforcerowsecurity
+  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE n.nspname='\''pdm'\'' AND c.relkind='\''r'\'' ORDER BY 1 COLLATE \"C\""' > /tmp/pdm_rls_flags_before.txt
+```
+
+**P2 备份（保留到窗口结束）**
+
+```sh
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/pg_dump -U topems_prod -d topems_prod \
+  --schema=pdm --no-owner --no-privileges -Fc' > /tmp/pdm_before_w7b4.dump
+```
+
+**P3 预演（单事务，结尾 ROLLBACK）**
+
+```sh
+scp database/migrations/20261110204000_w7_b4_pdm_rls_policies.sql  xingzhai@192.168.110.115:/tmp/w7b4_1.sql
+scp database/migrations/20261110204100_w7_b4_pdm_master_data_refs.sql xingzhai@192.168.110.115:/tmp/w7b4_2.sql
+
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -v ON_ERROR_STOP=1 \
+  -U topems_prod -d topems_prod' <<'SQL'
+\timing on
+BEGIN;
+\i /tmp/w7b4_1.sql
+\i /tmp/w7b4_2.sql
+-- P-3 追加断言（迁移自带断言之外）
+DO $p$
+DECLARE v_on int; v_bad int; v_ledger boolean;
+BEGIN
+  SELECT count(*) INTO v_on FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+   WHERE n.nspname='pdm' AND c.relkind='r' AND c.relrowsecurity AND c.relforcerowsecurity;
+  IF v_on < 21 THEN RAISE EXCEPTION '预演断言：ENABLE+FORCE 表数=%（期望≥21）', v_on; END IF;
+
+  SELECT count(*) INTO v_bad FROM pg_policies
+   WHERE schemaname='pdm'
+     AND (coalesce(qual,'') LIKE '%IS NULL%' OR coalesce(with_check,'') LIKE '%IS NULL%'
+          OR coalesce(qual,'') LIKE '%::text%' OR coalesce(with_check,'') LIKE '%::text%');
+  IF v_bad > 0 THEN RAISE EXCEPTION '预演断言：仍有 % 条 fail-open 谓词', v_bad; END IF;
+
+  SELECT c.relrowsecurity OR c.relforcerowsecurity INTO v_ledger
+    FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+   WHERE n.nspname='pdm' AND c.relname='schema_defense_ledger';
+  IF coalesce(v_ledger,false) THEN RAISE EXCEPTION '预演断言：schema_defense_ledger 被开了 RLS'; END IF;
+END
+$p$;
+ROLLBACK;
+SQL
+```
+
+**P4 零残留验证（新会话，必须与 P1 完全一致）**
+
+```sh
+ssh xingzhai@192.168.110.115 '... 同 P1 两条查询 ...' > /tmp/pdm_policies_after.txt
+ssh xingzhai@192.168.110.115 '... 同 P1 两条查询 ...' > /tmp/pdm_rls_flags_after.txt
+diff /tmp/pdm_policies_before.txt /tmp/pdm_policies_after.txt && \
+diff /tmp/pdm_rls_flags_before.txt /tmp/pdm_rls_flags_after.txt && echo "ZERO-RESIDUE OK"
+ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod \
+  -c "SELECT count(*) FROM _sqlx_migrations WHERE version IN (20261110204000,20261110204100)"'
+# 期望 0
+```
+
+**P5 留档：** P3 的 `\timing` 输出、P4 的 `diff` 结果、P0 的角色/版本查询结果，写入本节下方"预演实测"。
+
+**停手条件（命中任一条立即停，不做后续步骤）：**
+
+1. `lock_timeout` 触发（记录被锁的表名）。
+2. 任一 `RAISE EXCEPTION`（迁移自带或 P-3 追加）。
+3. P4 的 `diff` 非空，或 `_sqlx_migrations` 出现 2 个版本号。
+4. P3 迁移部分耗时 > 3 分钟。
+5. P0 显示 `max(version) ≥ 20261110204000` 或 `rolsuper = t`。
+
+**正式开窗与预演的差异（批准后执行，届时单独出步骤单）：**
+
+| 项 | 预演 | 正式窗口 |
+|---|---|---|
+| 事务结尾 | `ROLLBACK` | `COMMIT` |
+| server | 不停 | 停写（同 B5 口径） |
+| `_sqlx_migrations` | 不写 | 事务内手工 INSERT 2 行（checksum = 文件字节 SHA-384） |
+| 校验 | 结构断言 + P4 零残留 | 结构断言 + §3.4 生产只读探针 + 起服务冒烟 |
+| 回滚 | 自动（ROLLBACK） | 用 P1 快照重建旧策略；`DELETE` 2 行账本 |
+
 ---
 
 ## 4. D. 阻断项（必须先决才能开工）
