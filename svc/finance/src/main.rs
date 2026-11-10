@@ -287,10 +287,20 @@ mod openapi_extract_tests {
 
     #[test]
     fn extract_openapi_spec() {
-        let spec = topems_finance::ApiDoc::openapi();
-        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
-        let out_path = std::env::temp_dir().join("topems-finance-openapi.json");
-        std::fs::write(&out_path, json).expect("Failed to write spec");
-        tracing::info!("OpenAPI spec written to {:?}", out_path);
+        // utoipa 递归生成 Schema 较深，主线程默认栈会溢出；放到 32MB 栈的独立线程执行，
+        // 逻辑本身不变，join 后由 panic 传播失败。
+        std::thread::Builder::new()
+            .stack_size(32 * 1024 * 1024)
+            .spawn(|| {
+                let spec = topems_finance::ApiDoc::openapi();
+                let json =
+                    serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+                let out_path = std::env::temp_dir().join("topems-finance-openapi.json");
+                std::fs::write(&out_path, json).expect("Failed to write spec");
+                tracing::info!("OpenAPI spec written to {:?}", out_path);
+            })
+            .expect("Failed to spawn OpenAPI extraction thread")
+            .join()
+            .expect("OpenAPI extraction thread panicked");
     }
 }

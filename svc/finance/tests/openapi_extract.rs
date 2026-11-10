@@ -5,8 +5,16 @@ use topems_finance::ApiDoc;
 
 #[test]
 fn extract_openapi_spec() {
-    topems_shared_core::testing::extract_openapi_spec_to_file::<ApiDoc>(
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_MANIFEST_DIR"),
-    );
+    // utoipa 递归生成 Schema 较深，主线程默认栈会溢出；放到 32MB 栈的独立线程执行。
+    std::thread::Builder::new()
+        .stack_size(32 * 1024 * 1024)
+        .spawn(|| {
+            topems_shared_core::testing::extract_openapi_spec_to_file::<ApiDoc>(
+                env!("CARGO_PKG_NAME"),
+                env!("CARGO_MANIFEST_DIR"),
+            );
+        })
+        .expect("Failed to spawn OpenAPI extraction thread")
+        .join()
+        .expect("OpenAPI extraction thread panicked");
 }

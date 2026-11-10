@@ -39,6 +39,8 @@ pub struct Account {
     pub haschildren: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(skip)]
+    /// 自引用层级字段：schema 生成必须用 $ref，否则 utoipa 会无限内联递归。
+    #[schema(no_recursion)]
     pub children: Option<Vec<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(skip)]
@@ -976,6 +978,8 @@ pub struct CashFlowItem {
     pub item_name: String,
     pub item_type: String,
     pub amount: Decimal,
+    /// 自引用层级字段：schema 生成必须用 $ref，否则 utoipa 会无限内联递归。
+    #[schema(no_recursion)]
     pub children: Vec<CashFlowItem>,
 }
 
