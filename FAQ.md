@@ -88,7 +88,7 @@ pnpm install
 # 4. 启动所有服务
 ./scripts/topems.sh start-all
 ```
-启动后访问 http://localhost:3000，默认账号 admin / admin123。
+启动后访问 http://localhost:3000。系统无内置默认口令：超级管理员初始密码由 `ADMIN_INITIAL_PASSWORD` 提供，租户账号口令由初始化落在 `~/topems/secret/`（600）。
 
 详见 [快速开始指南](README.md#快速开始)。
 
@@ -228,11 +228,11 @@ OLLAMA_MODEL=qwen2.5:7b-instruct
 
 ### Q21: 默认管理员账号是什么？
 
-A: 默认管理员账号：
-- 用户名：`admin`
-- 密码：`admin123`
+A: 系统不提供内置默认口令：
+- 超级管理员：用户名 `admin`，初始密码由部署时的 `ADMIN_INITIAL_PASSWORD` 指定；
+- 租户账号：口令由初始化写入 `~/topems/secret/`（权限 600）。
 
-**重要**：首次登录后请立即修改密码！
+**重要**：首次登录后请立即修改密码。
 
 ### Q22: 如何重置管理员密码？
 

@@ -272,7 +272,7 @@ createdb topems
 - **前端**: http://localhost:3000
 - **后端 API**: http://localhost:8000
 - **组件文档（Storybook）**: http://localhost:6006（`cd apps/web && pnpm storybook`；构建产物 `pnpm build-storybook`，CI 自动发布 GitHub Pages）
-- **默认账号**: admin / admin123
+- **默认口令**: 无内置默认口令；超级管理员初始密码由 `ADMIN_INITIAL_PASSWORD` 提供，租户账号口令由初始化落在 `~/topems/secret/`（600）
 
 > **V64+ 新能力**: build/start 命令支持分层和参数化
 > ```bash
@@ -697,7 +697,7 @@ python3 -m topems_cli db migrate
 ./scripts/topems.sh dev                      # 启动 macOS 开发环境
 
 # 用户管理
-./scripts/topems.sh reset-password [用户] [密码]  # 重置密码（默认 admin/admin123）
+./scripts/topems.sh reset-password [用户] [密码]  # 重置密码（用户名与密码必填，无默认口令）
 
 # 部署
 ./scripts/topems.sh deploy                   # 一键部署
