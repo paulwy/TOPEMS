@@ -14,8 +14,14 @@
 --      c. BACKFILL with default tenant_id (first from public.tenants, else zero-UUID)
 --      d. SET NOT NULL
 --      e. CREATE INDEX idx_{table}_tenant_id (IF NOT EXISTS)
---      f. ENABLE ROW LEVEL SECURITY
+--      f. ENABLE + FORCE ROW LEVEL SECURITY   ← 二者必须成对，缺 FORCE 等于没做隔离
 --      g. CREATE POLICY tenant_isolation (IF NOT EXISTS pattern — re-creates always)
+--
+-- ⚠️ FORCE 不可省略（W7-B4 根因修复）：表 owner 在未 FORCE 时会完全绕过 RLS，
+--    策略写得再严也形同不存在。`scripts/ci/check-rls-policy-shape.sh` 会对
+--    "出现 ENABLE ROW LEVEL SECURITY 但无对应 FORCE ROW LEVEL SECURITY" 的迁移直接判红。
+-- ⚠️ GUC 名必须是 app.tenant_id（全仓唯一真相源，见 lib/shared-db/src/rls.rs）；
+--    历史模板误用 app.current_tenant，导致谓词恒为 NULL、表对所有租户恒 0 行。
 --
 -- Design goals:
 --   * No hand-written table list → never out of sync with schema truth
@@ -93,13 +99,18 @@ BEGIN
                 schema_name, table_rec.table_name
             );
 
-            -- e) Row-level security
+            -- e) Row-level security —— ENABLE 与 FORCE 必须成对，缺 FORCE 等于没做隔离
             EXECUTE format(
                 'ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY',
                 schema_name, table_rec.table_name
             );
+            EXECUTE format(
+                'ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY',
+                schema_name, table_rec.table_name
+            );
 
             -- f) Policy (DROP + CREATE to ensure idempotency)
+            --    fail-closed：GUC 未设置 / 被 RESET 成空串 → NULLIF 为 NULL → 全拒。
             EXECUTE format(
                 'DROP POLICY IF EXISTS tenant_isolation ON %I.%I',
                 schema_name, table_rec.table_name
@@ -107,8 +118,8 @@ BEGIN
             EXECUTE format(
                 'CREATE POLICY tenant_isolation ON %I.%I
                      FOR ALL
-                     USING (tenant_id = current_setting(''app.current_tenant'', true)::uuid)
-                     WITH CHECK (tenant_id = current_setting(''app.current_tenant'', true)::uuid)',
+                     USING (tenant_id = NULLIF(current_setting(''app.tenant_id'', true), '''')::uuid)
+                     WITH CHECK (tenant_id = NULLIF(current_setting(''app.tenant_id'', true), '''')::uuid)',
                 schema_name, table_rec.table_name
             );
         END LOOP;

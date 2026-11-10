@@ -20,11 +20,14 @@
 #       c) 动态建策略（%I）的文件必须在头部声明
 #          `-- rls-global-read-tables: schema.table, ...`，且声明项全部在白名单内
 #   - 生成器缺少 FORCE ROW LEVEL SECURITY
+#   - 迁移里出现 ENABLE ROW LEVEL SECURITY，却没有同表的 FORCE ROW LEVEL SECURITY
+#     （W7-B4 根因：ENABLE 只挡非 owner，表 owner 仍全量绕过）
 #
 # 全局只读白名单（W7 B1 + B2 已登记；新增全局内容表时必须同步这里）：
 GLOBAL_READ_TABLES="public.core_menus public.core_menu_groups public.core_dict_types \
 public.core_dict_items public.core_roles public.core_tenants ai.ai_models \
-ai.ai_prompt_templates mobile.sync_policies pm.project_type_configs"
+ai.ai_prompt_templates mobile.sync_policies pm.project_type_configs \
+finance.core_finance_currencies finance.core_finance_report_line_map"
 STRICT_FROM="20261110100000"
 #
 # 用法：
@@ -88,6 +91,16 @@ sql = re.sub(r'--[^\n]*', '', sql)
 actual = {'%s.%s' % (a.lower(), b.lower())
           for a, b in re.findall(r"\('([a-z0-9_]+)',\s*'([a-z0-9_]+)',\s*true\)", sql, re.I)}
 
+# 动态建策略没有三元组时，退一步用「二元组 ('tbl', true) + 文件内唯一 schema 字面量」解析，
+# 典型形态：SELECT * FROM (VALUES ('tbl', true), ...) + format('finance.%I', ...)
+if not actual:
+    _sch = {s.lower() for s in re.findall(
+        r"format\(\s*'([A-Za-z_][A-Za-z0-9_]*)\.%I'", sql, re.I)}
+    if len(_sch) == 1:
+        _s = _sch.pop()
+        actual = {'%s.%s' % (_s, t.lower())
+                  for t in re.findall(r"\('([a-z0-9_]+)',\s*true\)", sql, re.I)}
+
 viol = []
 
 if re.search(r"current_setting\('app\.tenant_id'[^)]*\)\s*=\s*''", sql, re.I):
@@ -119,7 +132,10 @@ for m in re.finditer(r'OR\s+[a-z0-9_]*tenant[a-z0-9_]*\s+IS\s+NULL', sql, re.I):
         if tbl not in wl:
             viol.append('%s 不在全局只读白名单' % tbl)
     else:
-        if not has_decl:
+        if not has_decl and actual and actual <= wl:
+            # 动态表名已可静态还原，且全部在全局只读白名单内 → 与静态写法等价，放行
+            pass
+        elif not has_decl:
             viol.append('动态建策略含 %s，但文件未声明 rls-global-read-tables' % m.group(0))
         elif declared != actual:
             viol.append('头部声明与 VALUES 中 global_read=true 不一致：声明=%s 实际=%s'
@@ -128,6 +144,36 @@ for m in re.finditer(r'OR\s+[a-z0-9_]*tenant[a-z0-9_]*\s+IS\s+NULL', sql, re.I):
             bad = sorted(declared - wl)
             if bad:
                 viol.append('声明了不在白名单的全局表：%s' % ', '.join(bad))
+
+# ENABLE 必须与 FORCE 成对（W7-B4 根因修复）：未 FORCE 时表 owner 完全绕过 RLS。
+# 静态 ALTER TABLE 按 schema.table 精确配对；DO / EXECUTE format(%I) 这类动态形态无法静态
+# 解析表名，退化为次数校验（FORCE 次数 < ENABLE 次数即失败）。
+_IDENT = r'(?:"?[A-Za-z_][A-Za-z0-9_]*"?\s*\.\s*)?"?[A-Za-z_][A-Za-z0-9_]*"?'
+
+
+def _static_rls_tables(kind):
+    found = set()
+    pat = (r'ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(' + _IDENT + r')\s+' + kind +
+           r'\s+ROW\s+LEVEL\s+SECURITY')
+    for mm in re.finditer(pat, sql, re.I):
+        tbl = re.sub(r'[\s"]+', '', mm.group(1)).lower()
+        found.add(tbl if '.' in tbl else 'public.' + tbl)
+    return found
+
+
+_en_static = _static_rls_tables('ENABLE')
+_fo_static = _static_rls_tables('FORCE')
+_missing = sorted(_en_static - _fo_static)
+if _missing:
+    viol.append('ENABLE ROW LEVEL SECURITY 缺少同表 FORCE ROW LEVEL SECURITY：%s'
+                % ', '.join(_missing))
+
+_en_cnt = len(re.findall(r'\bENABLE\s+ROW\s+LEVEL\s+SECURITY\b', sql, re.I))
+_no_fo_cnt = len(re.findall(r'\bNO\s+FORCE\s+ROW\s+LEVEL\s+SECURITY\b', sql, re.I))
+_fo_cnt = len(re.findall(r'\bFORCE\s+ROW\s+LEVEL\s+SECURITY\b', sql, re.I)) - _no_fo_cnt
+if not _missing and _fo_cnt < _en_cnt:
+    viol.append('ENABLE(%d) 与 FORCE(%d) 次数不匹配（动态 ALTER/POLICY 无法静态配对表名）'
+                % (_en_cnt, _fo_cnt))
 
 for v in viol:
     print(v)

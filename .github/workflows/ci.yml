@@ -150,6 +150,8 @@ jobs:
               - 'lib/src/migration*/**'
               - 'scripts/check-migrat*'
               - 'scripts/ci/check-baseline-integrity.mjs'
+              - 'scripts/ci/check-rls-policy-shape.sh'
+              - 'docs/database/snippets/add_tenant_id_template.sql'
               - 'scripts/db/provision-env.sh'
             desktop:
               - 'apps/desktop/**'
@@ -1933,6 +1935,12 @@ jobs:
       # 基线完整性（2026-11-05）：资产 sha256 / 锚点合法且单调 / 新增迁移必须 > 锚点。
       - name: Static check — baseline integrity
         run: node scripts/ci/check-baseline-integrity.mjs
+
+      # W7-B4 根因修复（2026-11-10）：任何新迁移出现 ENABLE ROW LEVEL SECURITY
+      # 却没有同表 FORCE ROW LEVEL SECURITY 直接失败（未 FORCE 时表 owner 全量绕过策略）。
+      # 同时拦截 fail-open 退回（空串豁免 / NULLIF IS NULL / 硬编码 0001 / OR tenant IS NULL）。
+      - name: Static check — RLS policy shape
+        run: bash scripts/ci/check-rls-policy-shape.sh
 
       - uses: ./.github/actions/setup-rust
         with:
