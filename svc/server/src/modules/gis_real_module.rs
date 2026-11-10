@@ -71,6 +71,15 @@ impl GisRealModule {
             .nest(config.api_prefix, business_routes)
             .with_state(state);
 
+        // 事件订阅者：独立部署时由 svc/gis/src/main.rs 启动；单体拓扑里只有本进程，
+        // 必须在此挂载，否则 gis-group 无人消费、事件堆积在 Redis Stream。
+        // build() 在 main.rs 中每个进程仅调用一次，消费组 `gis-group` 只会有一个 consumer。
+        if let Err(e) = topems_gis::event_handlers::start_event_subscribers(db.clone()).await {
+            tracing::error!("⚠️ gis 事件订阅者启动失败: {}", e);
+        } else {
+            tracing::info!("✅ gis 事件订阅者已挂载");
+        }
+
         tracing::info!(
             "✅ 真实 gis 模块已接入统一入口（db={}，prefix={}）",
             db.stats().size,

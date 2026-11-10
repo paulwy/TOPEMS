@@ -94,6 +94,20 @@ impl MobileRealModule {
                 topems_shared_auth::auth::auth_middleware,
             ));
 
+        // 事件订阅者：独立部署时由 svc/mobile/src/main.rs 启动；单体拓扑里只有本进程，
+        // 必须在此挂载，否则 mobile-group 无人消费、事件堆积在 Redis Stream。
+        // build() 在 main.rs 中每个进程仅调用一次，消费组 `mobile-group` 只会有一个 consumer。
+        if let Err(e) = topems_mobile::event_handlers::start_event_subscribers(
+            db.clone(),
+            ctx.event_publisher.clone(),
+        )
+        .await
+        {
+            tracing::error!("⚠️ mobile 事件订阅者启动失败: {}", e);
+        } else {
+            tracing::info!("✅ mobile 事件订阅者已挂载");
+        }
+
         tracing::info!(
             "✅ 真实 mobile 模块已接入统一入口（db={}，prefix={}，业务路由 99 条）",
             db.stats().size,
