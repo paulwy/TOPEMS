@@ -532,7 +532,8 @@ JWT 内的 `permissions`，因此必须用真实 `sub`，随机 `sub` 会 403。
 | `_sqlx_migrations` 行数 | 642 | — | **642（未新增）** |
 | `pm.project_type_configs.tenant_id` | `NOT NULL` | **可空（nullable=YES）** | 回到 `NOT NULL` |
 | 该表 `…0000` / `NULL` 行 | 1 / 0 | **0 / 1（归一成功）** | 1 / 0 |
-| RLS 策略总数 | 386 | 470 | 386 |
+| RLS 策略总数（全量 `pg_policies`） | **1077** | 预期 **1070**（见 §10.4.1） | 1077 |
+| 本批 108 张表上的策略数 | **119** | **112** | 119 |
 | FORCE 表数 | 117 | 117 | 117 |
 | pm 收敛表 / 跳过 | — | 38 / 0 | — |
 | 0006 幂等复查 | — | 4 张表 `更新行数=0`，断言通过 | — |
@@ -542,6 +543,30 @@ JWT 内的 `permissions`，因此必须用真实 `sub`，随机 `sub` 会 403。
   `ai.ai_prompt_templates` 3 行、`mobile.sync_policies` 1 行），迁移只做幂等清 nil。
 - 生产快照 `tenant_id NOT NULL` 共 373 张（全库）；落在本批 108 张表集内的是 **44 张**，
   与 D2 口径一致。
+
+### 10.4.1 策略数逐文件对账（修正此前 386→470 的错误口径）
+
+此前报告写的「386 → 470、新增 112、清掉 155、净增 84」来自两次**过滤条件不同**的探针，
+互相不可比，**该组数字作废**。以全量 `pg_policies` 为唯一口径重新对账（只读查询，未执行 DDL）：
+
+| 迁移文件 | 目标表 | 新建 isolation | 新建 global_read | CREATE 合计 | DROP 实际 | 迁移后策略数 |
+|---|---|---|---|---|---|---|
+| `…110000` pm | 38 | 38 | 1 | 39 | 43 | 39 |
+| `…110100` mobile | 27 | 27 | 1 | 28 | 28 | 28 |
+| `…110200` integration | 18 | 18 | 0 | 18 | 23 | 18 |
+| `…110300` gis | 15 | 15 | 0 | 15 | 15 | 15 |
+| `…110400` ai | 10 | 10 | 2 | 12 | 10 | 12 |
+| **合计** | **108** | **108** | **4** | **112** | **119** | **112** |
+
+- DROP 的实际值 = 这 108 张表在 `pg_policies` 里的现有策略数（先按表把同名/旧名策略全部清掉再建），
+  不是「DROP 语句数」；`DROP POLICY IF EXISTS` 对不存在的策略不增不减。
+- 预期迁移后总数 = 1077 − 119 + 112 = **1070**（净 −7）。
+- 同名/重复策略：本批 108 张表预演前有 **11 张各含 2 条同表同 cmd 的 permissive 策略**
+  （`integration.*` 5 张、`mobile.core_mobile_offline_records`、`pm.documents/pm_tasks/
+  project_milestones/project_phases/projects`），B2 先清后建后每张表恰好 1 条
+  （4 张全局只读表为 1×ALL + 1×SELECT，cmd 不同，不构成叠加）。
+- **B1 残留（不在本批范围）**：全库仍有 **180 组**「同表同 cmd 多条 permissive」策略
+  （191 组中 11 组在本批表内），B2 不平移；列为已知未覆盖。
 
 ## 10.5 44 张 NOT NULL 表的写入路径核对（不造业务数据）
 
@@ -584,17 +609,56 @@ JWT 内的 `permissions`，因此必须用真实 `sub`，随机 `sub` 会 403。
 
 前提：停写窗口内单独执行；任何 DDL 只在事务中做，失败即整体回滚。
 
-1. **窗口前 24h**：确认无长事务/复制延迟告警；记录 §10.4 的基线数字。
-2. **备份**：`pg_dump -Fc topems_prod`（全库）+ 4 张全局表行快照（含 `tenant_id`）。
-3. **停写**：停 `pm` / `mobile` / `gis` / `integration` / `ai` 五个服务（B2 表 owner 均在此），
-   确认无连接在写；其余服务不受影响。
+### 10.8.1 生产服务形态（已核实，2026-11-10）
+
+生产是**单体单进程**，不是多服务部署：
+
+| 项 | 事实 |
+|---|---|
+| launchd unit | `com.topems.server`（PID 23366，`launchctl list` 可见，`KeepAlive=true`） |
+| 二进制 | `/Users/xingzhai/topems/bin/topems-server`（唯一业务进程） |
+| 监听 | `0.0.0.0:8099`（唯一业务端口） |
+| 入口 | `com.topems.nginx`（PID 1239）把 `/api/*`、`/ws/*`、`/health` 全部反代到 `127.0.0.1:8099` |
+| 其它 launchd | `com.topems.backup` / `com.topems.be08-observe` / `com.topems.nginx-logrotate`（非业务进程） |
+
+因此原方案「停 pm/mobile/gis/integration/ai 五个服务」**不成立**（生产没有这五个进程）；
+停写只需停 `com.topems.server` 一个 unit，全站业务 API 即不可写。
+
+### 10.8.2 步骤
+
+1. **窗口前 24h**：确认无长事务/备库延迟告警；记录基线
+   （`pg_policies` 总数 1077、本批 108 表 119、FORCE 117、`_sqlx_migrations` 642）。
+   暂停 `com.topems.backup`（避免 pg_dump 与 DDL 抢锁）。
+2. **备份**：`pg_dump -Fc topems_prod`（全库）+ `pg_policies` 全量快照
+   （`\copy (select * from pg_policies) to 'pg_policies_pre.csv' csv header`）
+   + 4 张全局表行快照（含 `tenant_id`）。
+3. **停写**：`launchctl bootout gui/$(id -u)/com.topems.server`
+   （**必须 bootout/unload，不能用 `stop`——`KeepAlive=true` 会立刻拉起**）。
+   确认 `lsof -iTCP:8099` 无监听、`pg_stat_activity` 无该应用连接。nginx 保持运行。
 4. **执行**：单连接 `psql -1 -v ON_ERROR_STOP=1` 按序应用 6 笔迁移（或 `sqlx migrate run`）。
    `lock_timeout=5s` 已内建，抢不到锁即失败退出，不挂起。
-5. **校验**：`scripts/ops/w7_b2_verify.sql`（策略数 470、FORCE 117、4 张表 nil=0、
-   `project_type_configs.tenant_id` 可空、108 张表逐张有 `rls_tenant_isolation`）。
-6. **冒烟**：按 §10.3 的 7 条用例在生产各租户重放（只读用例为主）；
-   观察 5 个服务错误率与慢查询。
-7. **回滚预案**：`scripts/ops/w7_b2_rollback.sql`（数据还原 + `NO FORCE` 急停）；
-   若需完整还原，回放第 2 步的 `pg_policies` 快照并恢复行快照。
-8. **验收**：§10.4 的 AFTER 列应等于 BEFORE 列 + 470 条新策略；无 `…0000` 全局行残留。
+5. **校验**：`scripts/ops/w7_b2_verify.sql`（`pg_policies` 总数 **1070**、
+   108 张表策略数 **112**、FORCE 117、4 张表 nil=0、
+   `project_type_configs.tenant_id` 可空、108 张表逐张恰有 1 条 `rls_tenant_isolation`）。
+6. **恢复服务**：`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.topems.server.plist`，
+   确认 `/health` 200 后恢复 `com.topems.backup`。
+7. **冒烟**：按 §10.3 的 7 条用例在生产各租户重放（只读用例为主）；
+   观察单体进程错误率、5xx 与慢查询。
+8. **回滚预案**：`scripts/ops/w7_b2_rollback.sql`（数据还原 + `NO FORCE` 急停）；
+   若需完整还原，回放第 2 步的 `pg_policies_pre.csv` 并恢复行快照，再启动服务。
+9. **验收**：`pg_policies` = 1070（= 1077 − 119 + 112）；本批 108 表内无
+   「同表同 cmd 多条 permissive」；无 `…0000` 全局行残留。
+
+### 10.8.3 已知未覆盖（不计入通过项）
+
+- `pm/project-types` 接口级行为未在生产 schema 复现：本地 `w7_b2_fresh` 缺 `name_en`
+  （新链漂移），生产只做了 `PREPARE` 形态校验。
+- `mobile-contract-smoke` 99/114：15 项为本地缺 CRM/WMS/approval/attendance 导致的
+  503 降级，hook 被**排除**而非通过。
+- B1 残留：全库 180 组「同表同 cmd 多条 permissive」策略不在本批 108 表内，B2 不处理。
+- `mobile.mobile_push_notifications` 的跨服务事件写入（§10.5 唯一例外）仍写 nil 且
+  无请求上下文，B2 后仍会失败，未在本批修复。
+- `hrm_finance_sync` / `crm_erp_sync` / `crm_scm_sync` 无调用方，未实测。
+- `async_task_queue` 未改（`lib.rs` 已注释、不参与编译）。
+- 本地缺 23 条迁移、8 张表 `tenant_id` 漂移，与本批无关，单列待办。
 
