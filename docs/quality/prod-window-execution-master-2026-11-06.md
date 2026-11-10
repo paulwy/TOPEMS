@@ -90,9 +90,9 @@ scripts/db/window-execution.sh all \
 | 备份命名 | `<table>_<yyyyMMdd_HHmmss>.dump` / `.csv` / `.dump.sha256` |
 | 备份表 | 字典 2 张 + 本批 7 张，共 9 张 |
 | 备份形式 | `pg_dump -Fc` + CSV，双份 |
-| 备份账号 | **owner / superuser / bypassrls**（旧策略下表可能对 app 角色不可见） |
+| 备份账号 | **超级用户**（`xingzhai` / `topems`）。B5 收口后 `finance`/`pdm` 等表已 `FORCE RLS`，**app 角色 `pg_dump --data` 会被拒**（`query would be affected by row-level security policy`），故窗口备份一律用超管，不接受绕道； |
 | 数据操作账号 | owner（回灌、回填、清理、迁移） |
-| 验证账号 | `topems_app`（非 superuser，验证 RLS 可见性） |
+| 验证账号 | `topems_prod`（非 superuser，验证 RLS 可见性）；**验证禁止用超户** |
 | 字典终态 | `77` 类 / `397` 项；legacy 4 类 / 17 项保留 |
 | 回填 | 现场重测；prod 基线约 `317` 行 = rfm `300` + audit `17` |
 | 清理 | 现场重测；prod 基线约 `194–198` 行（A 组） |

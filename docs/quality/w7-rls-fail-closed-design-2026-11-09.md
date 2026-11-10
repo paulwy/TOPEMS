@@ -826,6 +826,22 @@ W7 只做一件事：把 `core_user_company_scopes` 补上 FORCE（现在未 FOR
 
 ---
 
+## 13.1 谓词判据：区分「函数参数 cast」与「列侧 cast」（2026-11-10 固化）
+
+`pg_policies.qual` / `pg_get_expr(polqual, polrelid)` 是**反解析文本**，里面的 `::text` 有两种来源，判据必须分开，否则每批验证都会误报：
+
+| 形态 | 例子 | 结论 |
+|---|---|---|
+| 函数参数 cast | `current_setting('app.tenant_id'::text, true)` | **合法，且必须存在**。`current_setting` 首参是 `text`，解析器补的 cast |
+| 列侧 cast | `(tenant_id)::text = …` 或 `tenant_id::text` | **fail-open 隐患**，禁止。列转文本比较会绕过索引与 NULL 语义 |
+
+因此：
+- 静态门禁与验证脚本的判据是 `LIKE '%(tenant_id)::text%'`（带括号的列引用），**不是** `LIKE '%::text%'`；
+- 同时**反向断言**「函数参数 cast 存在」（`LIKE '%current_setting(''app.tenant_id''::text%'`），防止有人为了过门禁把谓词改成非标准写法；
+- B4 预演首轮就是这么误报的：把 `::text` 一律当 fail-open，21 条合法新策略全被标红。`scripts/ops/w7_b4_verify.sql` 的 A2 段已按上表实现，`scripts/ops/w7_b5_verify.sql` 的 `(tenant_id)::text` 判据同为正确形态。
+
+---
+
 ## 附录 A：取证 SQL（只读，可复跑）
 
 ```sql

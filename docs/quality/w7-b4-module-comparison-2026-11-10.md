@@ -456,7 +456,7 @@ ssh xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -At -U topem
 | P0 角色/权限 | `topems_prod`，`rolsuper = f`，PG 18.4 |
 | P0 账本 | 652 行，`max(version)=20261110120300`（< 本笔 20261110204000） |
 | P1 前快照 | 策略 **40** 条；21 张表 ENABLE+FORCE；`schema_defense_ledger` 无 RLS |
-| P2 备份 | `pg_dump --schema=pdm --schema-only` → `/tmp/pdm_before_w7b4_schema.dump`；全表 `n_live_tup=0`（无数据可备；带数据 dump 被 FORCE RLS 拒，属预期） |
+| P2 备份 | **超级用户** `xingzhai` 执行（B5 后公共前置）：全库 `pg_dump -Fc` + `pdm` schema-only + 策略/RLS/账本快照 + 旧二进制；预演时 `topems_prod` 身份带数据 dump 被 FORCE RLS 拒，已按新口径改为超管 |
 | P3 迁移应用 | 两笔均通过自带断言；`20 张收敛 / 跳过 0`、refs `2 条策略`；耗时 **23.2ms + 6.2ms**（断言 51.9ms） |
 | P3 断言 A/B/B2/C/D | ENABLE+FORCE 表数 21 ✔；无 `IS NULL`/nil-UUID 放行分支 ✔；20 张租户表策略均含 `app.rls_system` ✔；`schema_defense_ledger` 未开 RLS ✔；refs = `SELECT/true` + `ALL/app.rls_system` ✔ |
 | P3 事务内策略 | 总数 **22** = 20×1（`rls_tenant_isolation`）+ refs×2（`pdm_master_data_refs_read` / `_write`） |
