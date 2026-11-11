@@ -58,7 +58,7 @@ async fn employee_tenant_by_id(
     txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     id: &Uuid,
 ) -> Result<Uuid, TopemsError> {
-    sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+    let tenant = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
         "hrm",
         "SELECT tenant_id FROM hrm.employees WHERE id = $1 AND deleted_at IS NULL"
     ))
@@ -66,7 +66,19 @@ async fn employee_tenant_by_id(
     .fetch_optional(&mut **txn)
     .await
     .map_err(|e| TopemsError::Internal(format!("查询员工租户失败: {e}")))?
-    .ok_or_else(|| TopemsError::ResourceNotFound("员工不存在".to_string()))
+    .ok_or_else(|| TopemsError::ResourceNotFound("员工不存在".to_string()))?;
+
+    // 语义显式化：知道 id 即可按行回退租户读取（用户已批准的 by-id 读语义），
+    // 必须逐次留痕，不能作为隐含行为。
+    tracing::info!(
+        event = "tenant_by_id_fallback",
+        resource = "hrm.employees",
+        resource_id = %id,
+        tenant_id = %tenant,
+        "请求缺少租户上下文，按资源行回退租户（审计留痕）"
+    );
+
+    Ok(tenant)
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
