@@ -27,7 +27,7 @@ impl Loader<String> for ServiceHealthLoader {
         // 并行批量检查所有请求的服务健康状态
         let futures = keys.iter().map(|service_name| async move {
             let url = service_url(service_name);
-            let healthy = probe_service_health(service_name, url).await;
+            let healthy = probe_service_health(service_name, &url).await;
             (
                 service_name.clone(),
                 ServiceHealthGql {

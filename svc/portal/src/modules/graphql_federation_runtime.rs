@@ -304,6 +304,7 @@ pub async fn batch_resolve_entities(
     let futures = uncached_ids.iter().map(|id| {
         let service = service.to_string();
         let entity_type = entity_type.to_string();
+        let base_url = base_url.clone();
         let id = id.clone();
         async move {
             let start = std::time::Instant::now();

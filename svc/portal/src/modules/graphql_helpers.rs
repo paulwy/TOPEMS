@@ -5,6 +5,7 @@
 
 use crate::modules::graphql_types::ServiceStatsGql;
 use crate::shared::AppState;
+use topems_shared_auth::middleware::tenant::current_request_tenant;
 use topems_shared_auth::service::issue_service_token;
 use topems_shared_observability::telemetry::TracedRequestExt;
 
@@ -242,13 +243,39 @@ pub const FEDERATION_WRITE_PERMS: &[&str] = &[
     "scm:admin",
 ];
 
+/// 联邦调用需要透传的租户。
+///
+/// portal 是 BFF：请求进来时 `auth_middleware` 已把调用者的租户固化在 task-local，
+/// 跨服务调用必须原样带给下游，否则服务身份会以「无租户」落到随机 UUID 兜底
+/// 或系统通道，联邦读变成跨租户全量 / 空集。
+///
+/// 只在**普通租户作用域**注入：
+/// - 普通用户 / 选了租户的超管 → `system = false`，透传该租户；
+/// - service 身份（`system = true`，nil 租户）→ 不注入，交由下游显式系统白名单处理。
+// tenant-system: 系统通道不回填租户，避免把 nil 身份伪装成某个业务租户。
+fn federation_tenant_header() -> Option<String> {
+    let ctx = current_request_tenant()?;
+    if ctx.system || ctx.tenant.is_nil() {
+        return None;
+    }
+    Some(ctx.tenant.to_string())
+}
+
+/// 给联邦请求附加 `x-tenant-id`（有租户上下文时）。
+fn with_federation_tenant(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+    match federation_tenant_header() {
+        Some(tenant) => builder.header("x-tenant-id", tenant),
+        None => builder,
+    }
+}
+
 /// 带服务身份的任意方法请求（GET 之外还覆盖 batch POST / 写 PUT / DELETE）。
 pub fn service_request(
     method: reqwest::Method,
     url: &str,
     permissions: &[&str],
 ) -> reqwest::RequestBuilder {
-    let builder = shared_http_client().request(method, url).with_trace();
+    let builder = with_federation_tenant(shared_http_client().request(method, url).with_trace());
     match service_token(permissions) {
         Some(t) => builder.bearer_auth(t),
         None => builder,
@@ -261,7 +288,7 @@ pub async fn service_auth_get(
     url: &str,
     permissions: &[&str],
 ) -> Result<reqwest::Response, reqwest::Error> {
-    let builder = shared_http_client().get(url).with_trace();
+    let builder = with_federation_tenant(shared_http_client().get(url).with_trace());
     match service_token(permissions) {
         Some(t) => builder.bearer_auth(t).send().await,
         None => builder.send().await,
@@ -270,7 +297,7 @@ pub async fn service_auth_get(
 
 /// 带服务身份的请求构造（供 `let client = shared_http_client()` 形式的调用点使用）。
 pub fn service_auth_builder(url: &str, permissions: &[&str]) -> reqwest::RequestBuilder {
-    let builder = shared_http_client().get(url).with_trace();
+    let builder = with_federation_tenant(shared_http_client().get(url).with_trace());
     match service_token(permissions) {
         Some(t) => builder.bearer_auth(t),
         None => builder,
@@ -312,10 +339,14 @@ pub async fn probe_service_health(service_name: &str, standalone_url: &str) -> b
 
 /// 根据服务名获取服务 URL
 ///
-/// 模块化单体模式（`MONOLITH_SERVICE_URL` 已设置）：所有服务统一指向 topems-server，
-/// 健康探测走 server 聚合 `/health`（200 = 该服务所在进程存活）；
+/// 模块化单体模式（`MONOLITH_SERVICE_URL` 已设置）：所有服务进程内嵌于
+/// topems-server，URL 统一指向该入口——否则联邦实体解析会打到不存在的独立端口，
+/// 真实数据被静默降级为 `entity not found`；
 /// 独立部署模式：返回各服务独立端口。
-pub fn service_url(service_name: &str) -> &'static str {
+pub fn service_url(service_name: &str) -> String {
+    if let Ok(base) = std::env::var("MONOLITH_SERVICE_URL") {
+        return base;
+    }
     match service_name {
         "erp" => "http://localhost:8010",
         "crm" => "http://localhost:8029",
@@ -327,6 +358,7 @@ pub fn service_url(service_name: &str) -> &'static str {
         "notification" => "http://localhost:8084",
         _ => "http://localhost:8000",
     }
+    .to_string()
 }
 
 // ====== 从 graphql_schema.rs 迁移：缓存版本号 + 活跃订阅计数（批次5 收尾） ======
@@ -366,6 +398,45 @@ pub fn increment_subscriptions() {
 pub fn decrement_subscriptions() {
     ACTIVE_SUBSCRIPTIONS.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
     tracing::debug!("[graphql] 活跃订阅数递减至 {}", get_active_subscriptions());
+}
+
+#[cfg(test)]
+mod federation_tenant_tests {
+    use super::federation_tenant_header;
+    use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
+    use uuid::Uuid;
+
+    #[tokio::test]
+    async fn propagates_user_tenant() {
+        let tenant = Uuid::from_u128(1);
+        let got = scope_request_tenant(
+            RlsRequestTenant {
+                tenant,
+                system: false,
+            },
+            async { federation_tenant_header() },
+        )
+        .await;
+        assert_eq!(got.as_deref(), Some("00000000-0000-0000-0000-000000000001"));
+    }
+
+    #[tokio::test]
+    async fn skips_system_channel() {
+        let got = scope_request_tenant(
+            RlsRequestTenant {
+                tenant: Uuid::nil(),
+                system: true,
+            },
+            async { federation_tenant_header() },
+        )
+        .await;
+        assert_eq!(got, None);
+    }
+
+    #[test]
+    fn skips_without_request_context() {
+        assert_eq!(federation_tenant_header(), None);
+    }
 }
 
 #[cfg(test)]
