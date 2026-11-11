@@ -265,18 +265,7 @@ async fn spawn_background_tasks(state: &AppState, pool: sqlx::PgPool) {
         }
     });
 
-    // WebSocket 广播合并冲刷（契约 §6：超频广播每 100ms 合并批处理推送）
-    let ws_state_flush = state.ws_state.clone();
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(100));
-        loop {
-            interval.tick().await;
-            let merged = ws_state_flush.flush_pending_broadcasts().await;
-            if merged > 0 {
-                tracing::info!("WebSocket broadcast merge: flushed {} frames", merged);
-            }
-        }
-    });
+    // W7 P0：全局无租户广播通道已移除（曾用于超频合并帧），不再需要 flush task。
 
     // Audit log retention cleanup
     let retention_manager = state.retention_manager.clone();

@@ -64,20 +64,16 @@ export function useNotificationWebSocket(
         setIsConnected(true);
         setError(null);
 
-        // Subscribe to notification channel
+        // 服务端频道订阅（JSON-RPC 2.0）：通知与未读计数均在该频道下发
+        webSocketService.subscribeChannel('notifications');
+
+        // 本地按消息类型分发
         unsubscribe = webSocketService.subscribe('notification', (message: WebSocketMessage) => {
           handleNotificationMessage(message);
         });
 
-        // Subscribe to unread count updates
         webSocketService.subscribe('unread_count', (message: WebSocketMessage) => {
           handleUnreadCountMessage(message);
-        });
-
-        // Send initial subscription with user_id
-        webSocketService.send({
-          type: 'subscribe',
-          payload: { channel: 'notifications', user_id: userId },
         });
       } catch (err) {
         setIsConnected(false);

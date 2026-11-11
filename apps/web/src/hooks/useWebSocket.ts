@@ -77,9 +77,55 @@ export interface UseWebSocketOptions {
   autoAuthToken?: boolean;
 }
 
+// W7 P0：默认入口改为显式通知路由（/ws/core 在单体无路由，握手必然失败）。
 const WS_URL =
   (import.meta.env.VITE_WS_URL as string | undefined) ||
-  `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/core`;
+  `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/core/notifications`;
+
+/** 服务端可订阅频道白名单（与 ws.rs `WS_CHANNEL_WHITELIST` 对齐） */
+const WS_SERVER_CHANNELS = new Set(['alerts', 'notifications', 'events', 'permissions']);
+
+function nextRpcId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // ignore
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/** 超管：取当前切租户 ID；非超管返回 null（租户由 token 决定） */
+function getSuperuserTenantId(): string | null {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || 'null') as {
+      is_superuser?: boolean;
+    } | null;
+    if (user?.is_superuser !== true) return null;
+    return localStorage.getItem('current_tenant_id');
+  } catch {
+    return null;
+  }
+}
+
+function resolveWsBase(): string {
+  return (
+    (import.meta.env.VITE_WS_URL as string | undefined) ||
+    `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+  );
+}
+
+/** 拼接连接 URL：token + 超管租户（普通用户租户以 token claims 为准） */
+function buildWsUrl(baseUrl: string, token: string | null, extra?: Record<string, string>): string {
+  const params: Record<string, string> = { ...extra };
+  if (token) params.token = token;
+  const tenantId = getSuperuserTenantId();
+  if (tenantId) params.tenant_id = tenantId;
+  return Object.keys(params).length > 0
+    ? `${baseUrl}?${new URLSearchParams(params).toString()}`
+    : baseUrl;
+}
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -97,6 +143,8 @@ class WebSocketService {
   private authToken: string | null = null;
   private onAuthFailed?: (error: string) => void;
   private onAuthSuccess?: (data: Record<string, unknown>) => void;
+  /** 已在服务端订阅的频道（重连后按此集合补发 subscribe） */
+  private subscribedChannels = new Set<string>();
 
   setAuthToken(token: string | null): void {
     this.authToken = token;
@@ -111,10 +159,13 @@ class WebSocketService {
   }
 
   private getWsUrl(): string {
-    if (this.authToken) {
-      return `${WS_URL}?token=${encodeURIComponent(this.authToken)}`;
-    }
-    return WS_URL;
+    if (!this.authToken) return WS_URL;
+    const params = new URLSearchParams({ token: this.authToken });
+    // W7 P0：超管 token 不含租户，连接必须显式指定当前租户，否则服务端拒绝握手（403）。
+    // 普通用户的租户以 token claims 为准，不能由前端覆盖。
+    const tenantId = getSuperuserTenantId();
+    if (tenantId) params.set('tenant_id', tenantId);
+    return `${WS_URL}?${params.toString()}`;
   }
 
   connect(): Promise<void> {
@@ -144,7 +195,37 @@ class WebSocketService {
 
         this.socket.onmessage = (event) => {
           try {
-            const message: WebSocketMessage = JSON.parse(event.data);
+            const raw = JSON.parse(event.data) as Record<string, unknown>;
+
+            // 契约 §3：JSON-RPC 2.0 帧（心跳 / 订阅应答 / event）
+            if (raw.jsonrpc === '2.0') {
+              const method = raw.method as string | undefined;
+              if (method === 'ping') {
+                this.socket?.send(
+                  JSON.stringify({ jsonrpc: '2.0', id: raw.id ?? null, method: 'pong' })
+                );
+                return;
+              }
+              const result = raw.result as Record<string, unknown> | undefined;
+              if (method === undefined && result?.status === 'pong') {
+                this.heartbeatMonitor?.recordPong();
+                return;
+              }
+              if (method === 'event') {
+                const params = (raw.params ?? {}) as Record<string, unknown>;
+                const message: WebSocketMessage = {
+                  type: String(params.event ?? 'event'),
+                  payload: (params.data ?? {}) as Record<string, unknown>,
+                  timestamp: Number(params.ts ?? Date.now()),
+                };
+                this.notifySubscribers(message, params.channel as string | undefined);
+                return;
+              }
+              // subscribe/unsubscribe 应答
+              return;
+            }
+
+            const message = raw as unknown as WebSocketMessage;
             // 识别 pong 响应，重置心跳超时
             if (message.type === 'pong' && this.heartbeatMonitor) {
               this.heartbeatMonitor.recordPong();
@@ -198,7 +279,7 @@ class WebSocketService {
     if (!this.enableHeartbeat || !this.socket) return;
     this.heartbeatMonitor = new HeartbeatMonitor(
       () => {
-        this.send({ type: 'ping', payload: {} });
+        void this.sendJsonRpc('ping', {});
       },
       () => {
         logger.warn('[WebSocket] Heartbeat timeout, forcing reconnect');
@@ -241,16 +322,16 @@ class WebSocketService {
     }, delay);
   }
 
+  /**
+   * 注册本地消息处理器。key 可为服务端频道名或消息类型（兼容历史 type 分发）；
+   * 服务端频道订阅须显式调用 `subscribeChannel`。
+   */
   subscribe(channel: string, handler: (message: WebSocketMessage) => void): () => void {
     if (!this.subscriptions.has(channel)) {
       this.subscriptions.set(channel, new Set());
     }
 
     this.subscriptions.get(channel)!.add(handler);
-
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.send({ type: 'subscribe', payload: { channel } });
-    }
 
     return () => {
       this.unsubscribe(channel, handler);
@@ -264,22 +345,42 @@ class WebSocketService {
 
       if (handlers.size === 0) {
         this.subscriptions.delete(channel);
-        if (this.socket?.readyState === WebSocket.OPEN) {
-          this.send({ type: 'unsubscribe', payload: { channel } });
-        }
       }
     }
   }
 
+  /** 订阅服务端频道（JSON-RPC 2.0 subscribe；频道必须在服务端白名单内） */
+  subscribeChannel(channel: string): void {
+    if (!WS_SERVER_CHANNELS.has(channel)) {
+      logger.warn(`[WebSocket] 拒绝订阅未知频道: ${channel}`);
+      return;
+    }
+    this.subscribedChannels.add(channel);
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      void this.sendJsonRpc('subscribe', { channel });
+    }
+  }
+
+  /** 取消服务端频道订阅（JSON-RPC 2.0 unsubscribe） */
+  unsubscribeChannel(channel: string): void {
+    this.subscribedChannels.delete(channel);
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      void this.sendJsonRpc('unsubscribe', { channel });
+    }
+  }
+
   private resubscribeAll(): void {
-    this.subscriptions.forEach((_, channel) => {
-      this.send({ type: 'subscribe', payload: { channel } });
+    this.subscribedChannels.forEach((channel) => {
+      void this.sendJsonRpc('subscribe', { channel });
     });
   }
 
-  private notifySubscribers(message: WebSocketMessage): void {
-    const handlers = this.subscriptions.get(message.type);
-    if (handlers) {
+  private notifySubscribers(message: WebSocketMessage, channel?: string): void {
+    const keys = new Set<string>([message.type]);
+    if (channel) keys.add(channel);
+    keys.forEach((key) => {
+      const handlers = this.subscriptions.get(key);
+      if (!handlers) return;
       handlers.forEach((handler) => {
         try {
           handler(message);
@@ -287,7 +388,7 @@ class WebSocketService {
           logger.error('[WebSocket] Handler error:', error);
         }
       });
-    }
+    });
   }
 
   async send(message: { type: string; payload?: Record<string, unknown> }): Promise<void> {
@@ -299,6 +400,22 @@ class WebSocketService {
     const signedMessage = signature ? JSON.stringify({ ...message, signature }) : plainMessage;
 
     this.socket.send(signedMessage);
+  }
+
+  /** 发送 JSON-RPC 2.0 帧（subscribe/unsubscribe 等写操作须带签名） */
+  private async sendJsonRpc(method: string, params: Record<string, unknown>): Promise<void> {
+    if (this.socket?.readyState !== WebSocket.OPEN) return;
+
+    const frame: Record<string, unknown> = {
+      jsonrpc: '2.0',
+      id: nextRpcId(),
+      method,
+      params,
+    };
+    const plainMessage = JSON.stringify(frame);
+    const signature = await generateSignature(plainMessage);
+
+    this.socket.send(signature ? JSON.stringify({ ...frame, signature }) : plainMessage);
   }
 
   disconnect(): void {
@@ -370,24 +487,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     reconnectCountRef.current = 0;
     setReconnectCount(0);
 
-    const url = wsPath
-      ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
-      : WS_URL;
+    const url = wsPath ? `${resolveWsBase()}${wsPath}` : WS_URL;
 
-    const params: Record<string, string> = { ...queryParams };
-    if (token && autoAuthToken) {
-      params.token = token;
-    }
-
-    const fullUrl =
-      Object.keys(params).length > 0 ? `${url}?${new URLSearchParams(params).toString()}` : url;
+    const fullUrl = buildWsUrl(url, token, queryParams);
 
     const startHeartbeat = (ws: WebSocket) => {
       if (!enableHeartbeat) return;
       heartbeatMonitorRef.current = new HeartbeatMonitor(
         () => {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping', payload: {} }));
+            ws.send(
+              JSON.stringify({ jsonrpc: '2.0', id: nextRpcId(), method: 'ping', params: {} })
+            );
           }
         },
         () => {
@@ -441,7 +552,22 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       socketRef.current.onmessage = (event) => {
         let message: string | WebSocketMessage = event.data;
         try {
-          const parsed = JSON.parse(event.data) as WebSocketMessage;
+          const raw = JSON.parse(event.data) as Record<string, unknown>;
+          // 契约 §3：JSON-RPC 心跳（服务端 ping → 客户端 pong；客户端 ping → result.status=pong）
+          if (raw.jsonrpc === '2.0') {
+            if (raw.method === 'ping') {
+              socketRef.current?.send(
+                JSON.stringify({ jsonrpc: '2.0', id: raw.id ?? null, method: 'pong' })
+              );
+              return;
+            }
+            const result = raw.result as Record<string, unknown> | undefined;
+            if (raw.method === undefined && result?.status === 'pong') {
+              heartbeatMonitorRef.current?.recordPong();
+              return;
+            }
+          }
+          const parsed = raw as unknown as WebSocketMessage;
           // 识别 pong 响应，重置心跳超时
           if (parsed.type === 'pong' && heartbeatMonitorRef.current) {
             heartbeatMonitorRef.current.recordPong();
@@ -559,15 +685,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const connect = useCallback(() => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) {
       setAuthStatus('pending');
-      const url = wsPath
-        ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
-        : WS_URL;
-      const params: Record<string, string> = { ...queryParams };
-      if (token && autoAuthToken) {
-        params.token = token;
-      }
-      const fullUrl =
-        Object.keys(params).length > 0 ? `${url}?${new URLSearchParams(params).toString()}` : url;
+      const url = wsPath ? `${resolveWsBase()}${wsPath}` : WS_URL;
+      const fullUrl = buildWsUrl(url, token, queryParams);
       socketRef.current = new WebSocket(fullUrl);
     }
   }, [wsPath, queryParams, token, autoAuthToken]);

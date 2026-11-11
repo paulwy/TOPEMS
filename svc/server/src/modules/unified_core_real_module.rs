@@ -49,6 +49,13 @@ impl UnifiedCoreRealModule {
             )),
         );
         let ws_routes = axum::Router::new()
+            // W7 P0：通知入口显式挂载（前端默认连接 /ws/core/notifications）
+            .route(
+                "/ws/core/notifications",
+                axum::routing::get(
+                    topems_unified_core::modules::communication::ws::websocket_handler,
+                ),
+            )
             .route(
                 "/ws/healthz",
                 axum::routing::get(
@@ -61,7 +68,15 @@ impl UnifiedCoreRealModule {
                     topems_unified_core::modules::communication::ws::websocket_handler_path,
                 ),
             )
-            .with_state(ws_state);
+            .with_state(ws_state.clone());
+
+        // W7 P0：单体启动 Redis→WebSocket 事件桥接（独立部署由 main.rs 启动；
+        // 单体此前未启动，导致通知/告警事件永远到不了前端连接）。
+        let _bridge = topems_unified_core::modules::communication::ws_event_bridge::spawn_event_bridge(
+            ws_state,
+            topems_unified_core::modules::communication::ws_event_bridge::WsEventBridgeConfig::default(),
+        );
+        tracing::info!("WebSocket 事件桥接已启动（topems-server 单体模式）");
 
         // 嵌入模式（build_router_embedded）：core 业务路由挂根（/iam/* /flow/* 等），
         // 由本模块注册提供统一前缀 /api/core（
