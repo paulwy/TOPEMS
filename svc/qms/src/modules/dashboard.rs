@@ -35,7 +35,23 @@ pub struct DashboardStats {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_today_quality_pass_rate(
     State(state): State<crate::AppState>,
+    axum::Extension(claims): axum::Extension<topems_shared_auth::auth::Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取今日质量合格率失败");
+        }
+    };
+    let tenant_opt: Option<sqlx::types::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| sqlx::types::Uuid::parse_str(t).ok())
+    };
     // Mobile BFF 数据迁移已完成：改为查询 QMS 自有表 qa_quality_inspections。
     // Mobile 端通过 QmsApi（由 TypedServiceClient<QmsApi> 转发）直接写入/查询
     // QMS 表，无需跨 schema 查询 plugin_mobile。
@@ -47,17 +63,19 @@ pub async fn get_today_quality_pass_rate(
     // 跟踪: docs/project/TODO.md "V62.x Mobile BFF 数据迁移" 章节
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE created_at >= CURRENT_DATE"
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE created_at >= CURRENT_DATE AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok()
     .unwrap_or(0);
 
     let passed = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND created_at >= CURRENT_DATE"),
+        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND created_at >= CURRENT_DATE AND ($1::uuid IS NULL OR tenant_id = $1)"),
     )
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok()
     .unwrap_or(0);
@@ -86,20 +104,38 @@ pub async fn get_today_quality_pass_rate(
 )]
 pub async fn get_dashboard_stats(
     State(state): State<crate::AppState>,
+    axum::Extension(claims): axum::Extension<topems_shared_auth::auth::Claims>,
 ) -> ApiResponse<DashboardStats> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取仪表盘统计失败");
+        }
+    };
+    let tenant_opt: Option<sqlx::types::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| sqlx::types::Uuid::parse_str(t).ok())
+    };
     // Total inspections
     let total_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections"
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_inspections = total_inspections.unwrap_or(0);
 
     // Pending inspections
-    let pending_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'pending' OR status = 'in_progress' OR status = 'pending_audit'"))
-    .fetch_one(&state.pool)
+    let pending_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE (status = 'pending' OR status = 'in_progress' OR status = 'pending_audit') AND ($1::uuid IS NULL OR tenant_id = $1)"))
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let pending_inspections = pending_inspections.unwrap_or(0);
@@ -107,16 +143,18 @@ pub async fn get_dashboard_stats(
     // Completed inspections
     let completed_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed'"
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let completed_inspections = completed_inspections.unwrap_or(0);
 
     // Qualification rate
-    let qualified_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed'"#))
-    .fetch_one(&state.pool)
+    let qualified_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1)"#))
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let qualified_rate: f64 = big_decimal_to_f64(qualified_rate);
@@ -124,9 +162,10 @@ pub async fn get_dashboard_stats(
     // Total issues
     let total_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues"
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_issues = total_issues.unwrap_or(0);
@@ -134,9 +173,10 @@ pub async fn get_dashboard_stats(
     // Open issues
     let open_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'open'"
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'open' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let open_issues = open_issues.unwrap_or(0);
@@ -144,16 +184,18 @@ pub async fn get_dashboard_stats(
     // Resolved issues
     let resolved_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'resolved'"
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'resolved' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let resolved_issues = resolved_issues.unwrap_or(0);
 
     // Pending actions
-    let pending_actions: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE status = 'pending' OR status = 'in_progress'"))
-    .fetch_one(&state.pool)
+    let pending_actions: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1)"))
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let pending_actions = pending_actions.unwrap_or(0);
@@ -161,9 +203,10 @@ pub async fn get_dashboard_stats(
     // Total audit plans
     let total_audit_plans: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_audit_plans"
+        "SELECT COUNT(*) FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_audit_plans = total_audit_plans.unwrap_or(0);
@@ -171,9 +214,10 @@ pub async fn get_dashboard_stats(
     // In progress audit plans
     let in_progress_plans: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_audit_plans WHERE status = 'in_progress'"
+        "SELECT COUNT(*) FROM qms.qa_audit_plans WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
-    .fetch_one(&state.pool)
+    .bind(tenant_opt)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let in_progress_plans = in_progress_plans.unwrap_or(0);
