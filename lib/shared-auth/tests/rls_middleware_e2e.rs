@@ -219,3 +219,120 @@ async fn tenant_middleware_unauthorized_without_claims(pool: PgPool) {
     let (status, _body) = get_body(&app, None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED, "无 Claims 应 401");
 }
+
+/// 在请求事务上写一行，再按 body.fail 决定返回 2xx 还是 4xx。
+async fn write_then_respond(
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<TxnExt>,
+    Json(body): Json<Value>,
+) -> impl IntoResponse {
+    let tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
+    let name = body["name"].as_str().unwrap_or("e2e").to_string();
+    let fail = body["fail"].as_bool().unwrap_or(false);
+
+    {
+        let mut guard = txn_arc.lock().await;
+        let txn = guard.as_mut().expect("rls txn missing");
+        sqlx::query("INSERT INTO rls_e2e_items (id, tenant_id, name) VALUES ($1, $2, $3)")
+            .bind(Uuid::new_v4())
+            .bind(tenant)
+            .bind(&name)
+            .execute(&mut **txn)
+            .await
+            .expect("insert on request txn");
+    }
+
+    if fail {
+        (StatusCode::BAD_REQUEST, Json(json!({ "ok": false })))
+    } else {
+        (StatusCode::OK, Json(json!({ "ok": true })))
+    }
+}
+
+async fn post_item(app: &Router, claims: Claims, name: &str, fail: bool) -> StatusCode {
+    let body = json!({ "name": name, "fail": fail }).to_string();
+    let mut req = Request::builder()
+        .method("POST")
+        .uri("/write")
+        .header("content-type", "application/json")
+        .body(Body::from(body))
+        .unwrap();
+    req.extensions_mut().insert(claims);
+    app.clone().oneshot(req).await.unwrap().status()
+}
+
+fn build_write_app(pool: PgPool) -> Router {
+    Router::new()
+        .route("/write", axum::routing::post(write_then_respond))
+        .with_state(pool.clone())
+        .layer(middleware::from_fn_with_state(
+            pool.clone(),
+            tenant_middleware(),
+        ))
+}
+
+async fn count_by_name(pool: &PgPool, name: &str) -> i64 {
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM rls_e2e_items WHERE name = $1")
+        .bind(name)
+        .fetch_one(pool)
+        .await
+        .unwrap()
+}
+
+/// 2xx：请求事务内的写入由中间件统一提交。
+#[sqlx::test(migrations = false)]
+async fn tenant_middleware_commits_request_txn_on_2xx(pool: PgPool) {
+    let (t1, _t2) = seed_and_build(&pool).await;
+    let app = build_write_app(pool.clone());
+
+    let status = post_item(
+        &app,
+        make_claims(
+            Some(&t1.to_string()),
+            "123e4567-e89b-12d3-a456-426614174010",
+            "user",
+        ),
+        "commit-2xx",
+        false,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        count_by_name(&pool, "commit-2xx").await,
+        1,
+        "2xx 应提交请求事务内写入"
+    );
+}
+
+/// 非 2xx：请求事务内的写入由中间件回滚，行数不变。
+#[sqlx::test(migrations = false)]
+async fn tenant_middleware_rolls_back_request_txn_on_4xx(pool: PgPool) {
+    let (t1, _t2) = seed_and_build(&pool).await;
+    let app = build_write_app(pool.clone());
+    let before = count_by_name(&pool, "rollback-4xx").await;
+
+    let status = post_item(
+        &app,
+        make_claims(
+            Some(&t1.to_string()),
+            "123e4567-e89b-12d3-a456-426614174011",
+            "user",
+        ),
+        "rollback-4xx",
+        true,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        count_by_name(&pool, "rollback-4xx").await,
+        before,
+        "4xx 应回滚请求事务内写入，零落库"
+    );
+    assert_eq!(before, 0);
+}

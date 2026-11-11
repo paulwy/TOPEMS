@@ -93,26 +93,55 @@ fn bad_request(message: &str) -> Response {
         .into_response()
 }
 
-/// 请求收尾统一提交。
+/// 请求收尾统一处理：2xx 提交，非 2xx 回滚。
 ///
 /// `sqlx::Transaction` 未显式 commit 时 drop 即 ROLLBACK（写丢失）。handler 可能
 /// 自行 `commit()`（此时 Option 已被 take 成 None，本函数为空操作）；未自行提交的
-/// 写入在此统一落地，避免"每个 handler 都要记得 commit"的散点风险。
-async fn commit_request_txn(cell: RlsTxnCell) -> Result<(), sqlx::Error> {
+/// 写入在 2xx 时统一落地，非 2xx 时统一回滚——不再"报错也提交"，避免错误响应下
+/// 请求事务内的写入变成孤儿行。
+async fn finalize_request_txn(
+    cell: RlsTxnCell,
+    status: StatusCode,
+    method: &axum::http::Method,
+    path: &str,
+) -> Result<(), sqlx::Error> {
     let mut guard = cell.lock().await;
-    match guard.take() {
-        Some(txn) => txn.commit().await,
-        None => Ok(()),
+    let Some(txn) = guard.take() else {
+        return Ok(());
+    };
+    if status.is_success() {
+        return txn.commit().await;
     }
+    tracing::info!(
+        target: "rls_txn",
+        method = %method,
+        path = %path,
+        status = status.as_u16(),
+        "非 2xx 响应，回滚请求事务"
+    );
+    txn.rollback().await
 }
 
-/// 提交成功透传原响应；提交失败且原响应是 2xx 时改为 500，避免向调用方谎报成功。
-async fn finish_response(resp: Response, cell: RlsTxnCell) -> Response {
-    match commit_request_txn(cell).await {
+/// 收尾成功透传原响应；收尾失败且原响应是 2xx 时改为 500，避免向调用方谎报成功。
+async fn finish_response(
+    resp: Response,
+    cell: RlsTxnCell,
+    method: &axum::http::Method,
+    path: &str,
+) -> Response {
+    let status = resp.status();
+    match finalize_request_txn(cell, status, method, path).await {
         Ok(()) => resp,
         Err(e) => {
-            tracing::error!("RLS 事务提交失败: {}", e);
-            if !resp.status().is_success() {
+            tracing::error!(
+                target: "rls_txn",
+                method = %method,
+                path = %path,
+                status = status.as_u16(),
+                error = %e,
+                "RLS 请求事务收尾失败"
+            );
+            if !status.is_success() {
                 return resp;
             }
             (
@@ -384,8 +413,10 @@ pub fn tenant_middleware() -> impl Fn(
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
                 });
+                let method = req.method().clone();
+                let path = req.uri().path().to_string();
                 let resp = next.run(req).await;
-                return finish_response(resp, txn_cell).await;
+                return finish_response(resp, txn_cell, &method, &path).await;
             }
 
             let tenant_id_str = match claims.tenant_id.as_ref() {
@@ -466,8 +497,10 @@ pub fn tenant_middleware() -> impl Fn(
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 
+            let method = req.method().clone();
+            let path = req.uri().path().to_string();
             let resp = next.run(req).await;
-            finish_response(resp, txn_cell).await
+            finish_response(resp, txn_cell, &method, &path).await
         })
     }
 }
