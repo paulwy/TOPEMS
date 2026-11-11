@@ -40,7 +40,7 @@ pub async fn disable_user(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法停用用户"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权停用超级管理员"),
@@ -137,7 +137,7 @@ pub async fn enable_user(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法启用用户"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权启用超级管理员"),

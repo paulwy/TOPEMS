@@ -76,8 +76,7 @@ pub async fn get_user_permissions(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户权限"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
-    {
+    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -254,8 +253,7 @@ pub async fn get_user_roles(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户角色"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
-    {
+    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -358,8 +356,7 @@ pub async fn assign_user_role(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法分配角色"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
-    {
+    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -375,7 +372,7 @@ pub async fn assign_user_role(
         }
     }
 
-    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
         Err(e) => {
@@ -393,7 +390,7 @@ pub async fn assign_user_role(
     // 租户管理员只能分配本租户内、且权限集不超出自身权限集/不含平台层码的角色，
     // 防止借已有角色提权。
     if let IamScope::Tenant(_) = scope {
-        match tenant_scope::role_permission_codes(&state.pool, role_uuid).await {
+        match tenant_scope::role_permission_codes(&state.db, scope, role_uuid).await {
             Ok(codes) => {
                 if !tenant_scope::can_grant_codes(&claims, &codes) {
                     return tenant_scope::forbidden("不能授予平台层权限或超出自身权限集的角色");
@@ -515,8 +512,7 @@ pub async fn remove_user_role(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法移除角色"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_uuid, claims.is_superuser).await
-    {
+    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -532,7 +528,7 @@ pub async fn remove_user_role(
         }
     }
 
-    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
         Err(e) => {

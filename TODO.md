@@ -576,6 +576,24 @@ AFTER  | tenant_isolation_core_tenant_users | PERMISSIVE | {public} | ALL
 **证据文件**：`docs/quality/w7-b4-manufacturing-window-apply-2026-11-11.md` §11.7（F1 现象与临时策略前后对照）、
 §11.13（策略删除后登录回归）、§11.14（遗留）。
 
+**2026-11-11 方案 A 落地（待生产窗口）**：严格 fail-closed 迁移 + 代码 5 处裸池改作用域 + `Err` 不回落 +
+membership 确定性选择；副本预演全绿。方案与证据：`docs/quality/w7-b4-f1-change-plan-and-rehearsal-2026-11-11.md`。
+
+**F1 关联 TODO（本次不动，按序处理）**：
+
+1. ~~`create_role` 裸池写 `core_roles`~~：2026-11-11 已随 F1 修复（租户通道 / 平台系统通道）。
+   仍待办：`update_role` / `delete_role` 裸池对上不存在的行执行 UPDATE（0 行更新但返回成功，
+   属静默撒谎），需按同构改作用域并回归角色管理页。
+2. `get_user_permissions` 的角色/权限列表裸池读：严格策略下少报租户域角色（fail-closed）。
+3. `core_tenants.rls_global_read` 的 `tenant_id IS NULL` 全局目录读取：如需收紧为 `id = GUC`，
+   须单独设计并回归租户模块（租户模块多处查询依赖）。
+4. `iam` 空影子表：`iam.core_tenant_users`、`iam.core_users`、`iam.core_roles`、`iam.core_user_roles`、
+   `iam.core_permissions`、`iam.core_role_permissions` 均 0 行（`iam.core_tenants` 亦为 0），
+   待确认是删除还是纳入后续迁移基线。
+5. membership 无 `is_default` 列：当前 `created_at ASC → id ASC` 仅为**确定性排序**；
+   若产品需要“默认租户/默认公司”语义，应新增 `is_default` 列并在
+   `pick_membership_tenant` 中显式优先，不得用排序规则模拟默认值。
+
 ---
 
 ## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）

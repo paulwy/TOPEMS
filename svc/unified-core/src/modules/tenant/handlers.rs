@@ -235,6 +235,9 @@ pub async fn create_tenant(
         }
     };
 
+    // tenant-system: core_tenants 的全局行 tenant_id 为 NULL，只允许系统通道写入。
+    // 此处走请求作用域：仅超管请求上下文会打开 `app.rls_system='on'`，
+    // 非超管即使持有 iam:tenant:write 也会被策略 WITH CHECK 拒绝（不放宽授权）。
     match sqlx::query_as::<_, Tenant>(
         r#"
         INSERT INTO core_tenants (name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
@@ -555,6 +558,7 @@ pub async fn onboard_tenant(
     };
 
     // 1. Create the tenant row (mirrors create_tenant, status starts as trial).
+    // tenant-system: 全局租户行 tenant_id 为 NULL，只允许系统通道写入（同 create_tenant）。
     let tenant: Tenant = match sqlx::query_as::<_, Tenant>(
         r#"
         INSERT INTO core_tenants (name, code, tenant_type, plan, license_type)

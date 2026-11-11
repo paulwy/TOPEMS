@@ -6,6 +6,7 @@
 
 use axum::{http::StatusCode, Json};
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 pub const TENANT_USER_READ: &str = "tenant:iam:user:read";
@@ -159,8 +160,13 @@ pub enum UserTarget {
 
 /// 校验用户目标是否在作用域内。租户模式按 `core_tenant_users` 成员关系判定，
 /// 平台模式不做租户过滤，但仍禁止非超管修改超管目标。
+///
+/// 判定依赖 `public.core_tenant_users`，必须走作用域事务：
+/// - 租户模式 → `scope_read_for_tenant`（租户通道，只能看到本租户 membership）；
+/// - 平台模式 → `scope_read_system`（系统通道，CASE 短路不查 membership，但保持口径一致）。
+/// 裸池在严格 RLS 下会让 `EXISTS` 恒为 false，把正常用户误判为越权。
 pub async fn check_user_target(
-    pool: &sqlx::PgPool,
+    db: &Db,
     scope: IamScope,
     user_id: Uuid,
     operator_is_superuser: bool,
@@ -168,6 +174,11 @@ pub async fn check_user_target(
     let tenant_filter = match scope {
         IamScope::Platform => None,
         IamScope::Tenant(t) => Some(t),
+    };
+
+    let mut txn = match scope {
+        IamScope::Platform => db.scope_read_system().await?,
+        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
     };
 
     let row: Option<(bool, bool)> = sqlx::query_as(
@@ -188,8 +199,10 @@ pub async fn check_user_target(
     )
     .bind(user_id)
     .bind(tenant_filter)
-    .fetch_optional(pool)
+    .fetch_optional(&mut txn)
     .await?;
+
+    txn.commit().await?;
 
     Ok(match row {
         None => UserTarget::NotFound,
@@ -213,17 +226,27 @@ pub enum RoleTarget {
 
 /// 校验角色目标是否在作用域内。租户模式只认 `tenant_id = 本租户`，
 /// 平台角色（tenant_id NULL）与他租户角色一律按不存在处理，避免泄露。
+///
+/// `core_roles` 是 FORCE RLS 表，裸池无 GUC 时只能看到 `tenant_id IS NULL`
+/// 的全局角色，租户域角色会被误判为不存在；因此必须走作用域事务。
 pub async fn check_role_target(
-    pool: &sqlx::PgPool,
+    db: &Db,
     scope: IamScope,
     role_id: Uuid,
 ) -> Result<RoleTarget, sqlx::Error> {
+    let mut txn = match scope {
+        IamScope::Platform => db.scope_read_system().await?,
+        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
+    };
+
     let row: Option<Option<Uuid>> = sqlx::query_scalar(
         "SELECT tenant_id FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(role_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut txn)
     .await?;
+
+    txn.commit().await?;
 
     Ok(match (scope, row) {
         (_, None) => RoleTarget::NotFound,
@@ -237,10 +260,16 @@ pub async fn check_role_target(
 
 /// 角色当前持有的权限码集合，用于“授予不得超出操作者权限集”的校验。
 pub async fn role_permission_codes(
-    pool: &sqlx::PgPool,
+    db: &Db,
+    scope: IamScope,
     role_id: Uuid,
 ) -> Result<Vec<String>, sqlx::Error> {
-    sqlx::query_scalar(
+    let mut txn = match scope {
+        IamScope::Platform => db.scope_read_system().await?,
+        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
+    };
+
+    let codes = sqlx::query_scalar(
         r#"
         SELECT p.code
         FROM public.core_permissions p
@@ -250,8 +279,11 @@ pub async fn role_permission_codes(
         "#,
     )
     .bind(role_id)
-    .fetch_all(pool)
-    .await
+    .fetch_all(&mut txn)
+    .await?;
+
+    txn.commit().await?;
+    Ok(codes)
 }
 
 #[cfg(test)]

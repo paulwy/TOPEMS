@@ -95,24 +95,40 @@ pub async fn list_roles(
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
-
+    // `core_roles` 是 FORCE RLS 表：租户管理员必须走租户读通道才能看到本租户角色；
+    // 裸池无 GUC 时只能看到全局角色，新建的租户域角色会“建完即消失”。
     let result = if claims.is_superuser {
-        sqlx::query_as::<_, RoleRow>(
-            "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
-        )
-        .fetch_all(&state.pool)
-        .await
+        match state.db.scope_read_system().await {
+            Ok(mut scope) => {
+                let result = sqlx::query_as::<_, RoleRow>(
+                    "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
+                )
+                .fetch_all(&mut scope)
+                .await;
+                let _ = scope.commit().await;
+                result
+            }
+            Err(e) => Err(e),
+        }
     } else {
-        sqlx::query_as::<_, RoleRow>(
-            "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
-        )
-        .bind(tenant_id.unwrap_or_else(Uuid::nil))
-        .fetch_all(&state.pool)
-        .await
+        match tenant_scope::read_scope(&claims) {
+            Ok(IamScope::Tenant(tenant_id)) => {
+                match state.db.scope_read_for_tenant(tenant_id).await {
+                    Ok(mut scope) => {
+                        let result = sqlx::query_as::<_, RoleRow>(
+                        "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
+                    )
+                    .bind(tenant_id)
+                    .fetch_all(&mut scope)
+                    .await;
+                        let _ = scope.commit().await;
+                        result
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+            _ => return json_error(403, "缺少租户上下文，无法查看角色"),
+        }
     };
 
     match result {
@@ -191,22 +207,6 @@ pub async fn create_role(
         return json_error(403, "不能创建系统内置角色");
     }
 
-    // 检查角色名是否已存在
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1)",
-    )
-    .bind(&name)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(false);
-
-    if exists {
-        return Json(topems_shared_core::response::error_value(
-            409,
-            "角色名已存在",
-        ));
-    }
-
     // 授权上限：任何调用者都不得授予平台层码或超出自身权限集的权限。
     let resolved_permission_ids =
         match resolve_permission_ids(&state.pool, &claims, &permission_ids).await {
@@ -224,17 +224,41 @@ pub async fn create_role(
         IamScope::Tenant(tenant_id) => tenant_id,
     };
 
-    // 事务创建角色和权限关联
-    let mut tx = match state.pool.begin().await {
+    // `core_roles` 是 FORCE RLS 表：裸池无 GUC 时 INSERT 会被 42501 拒绝。
+    // 租户管理员写本租户角色走租户通道；平台分支写的是全局/平台角色，
+    // tenant-system: 该分支的 `tenant_id` 允许为空/平台值，必须走系统写通道，
+    // 且只有 write_scope 判定为 Platform（超管或 admin:iam:write）才会进入。
+    let tx_result = match scope {
+        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Platform => state.db.scope_system().await,
+    };
+    let mut tx = match tx_result {
         Ok(tx) => tx,
         Err(e) => {
-            tracing::error!("开始事务失败: {}", e);
+            tracing::error!("开始角色写事务失败: {}", e);
             return Json(topems_shared_core::response::error_value(
                 500,
                 &format!("创建角色失败: {}", e),
             ));
         }
     };
+
+    // 检查角色名是否已存在（在作用域内检查：租户通道能看到本租户角色 + 全局角色）
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1)",
+    )
+    .bind(&name)
+    .fetch_one(&mut tx)
+    .await
+    .unwrap_or(false);
+
+    if exists {
+        let _ = tx.rollback().await;
+        return Json(topems_shared_core::response::error_value(
+            409,
+            "角色名已存在",
+        ));
+    }
 
     // 创建角色
     if let Err(e) = sqlx::query(
@@ -244,7 +268,7 @@ pub async fn create_role(
     .bind(&name)
     .bind(&description)
     .bind(tenant_id)
-    .execute(&mut *tx)
+    .execute(&mut tx)
     .await
     {
         let _ = tx.rollback().await;
@@ -259,7 +283,7 @@ pub async fn create_role(
         )
         .bind(role_id)
         .bind(perm_uuid)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await;
     }
 
@@ -314,10 +338,26 @@ pub async fn get_role(
         }
     };
 
-    let tenant_filter = match tenant_scope::read_scope(&claims) {
-        Ok(IamScope::Platform) => None,
-        Ok(IamScope::Tenant(tenant_id)) => Some(tenant_id),
+    let scope = match tenant_scope::read_scope(&claims) {
+        Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法查看角色"),
+    };
+    let tenant_filter = match scope {
+        IamScope::Platform => None,
+        IamScope::Tenant(tenant_id) => Some(tenant_id),
+    };
+
+    // 与 list_roles 同口径：租户域角色必须经租户读通道才可见。
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_read_system().await,
+        IamScope::Tenant(tenant_id) => state.db.scope_read_for_tenant(tenant_id).await,
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("打开角色读作用域失败: {}", e);
+            return json_error(500, "获取角色失败：缺少租户上下文");
+        }
     };
 
     let role = sqlx::query_as::<_, RoleRow>(
@@ -325,8 +365,9 @@ pub async fn get_role(
     )
     .bind(role_uuid)
     .bind(tenant_filter)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx)
     .await;
+    let _ = tx.commit().await;
 
     match role {
         Ok(Some(r)) => {
@@ -699,7 +740,7 @@ pub async fn get_role_permissions(
         Err(_) => return json_error(403, "缺少租户上下文，无法查看角色权限"),
     };
 
-    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         // 集合类：角色不存在或跨租户/平台角色时返回空列表，不泄露存在性
         Ok(RoleTarget::NotFound) => {
@@ -759,7 +800,7 @@ pub async fn add_role_permission(
         Err(_) => return json_error(403, "缺少租户上下文，无法授权角色"),
     };
 
-    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
         Err(e) => {
@@ -872,7 +913,7 @@ pub async fn remove_role_permission(
         Err(_) => return json_error(403, "缺少租户上下文，无法移除角色权限"),
     };
 
-    match tenant_scope::check_role_target(&state.pool, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
         Err(e) => {

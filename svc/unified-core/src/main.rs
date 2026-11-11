@@ -505,6 +505,12 @@ async fn main() -> anyhow::Result<()> {
         (policy_mutex, retention_manager)
     };
 
+    // 全局行（tenant_id IS NULL）监控：行数 + 异常增量告警。
+    modules::iam::global_row_metrics::spawn_global_row_monitor(topems_shared_db::scope::Db::new(
+        ctx.db.clone(),
+        "public, shared",
+    ));
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         db: topems_shared_db::scope::Db::new(ctx.db.clone(), "public, shared"),

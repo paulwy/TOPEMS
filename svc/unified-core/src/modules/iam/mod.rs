@@ -2,6 +2,7 @@
 
 pub mod auth;
 pub mod company_scope;
+pub mod global_row_metrics;
 pub mod permission;
 pub mod permission_metadata;
 pub mod permission_verify;

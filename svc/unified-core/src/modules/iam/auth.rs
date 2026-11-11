@@ -2,9 +2,11 @@ use axum::extract::Extension;
 use axum::http::HeaderMap;
 use axum::response::{IntoResponse, Response};
 use axum::{extract::State, Json};
+use prometheus::{register_int_counter_vec, IntCounterVec};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
+use std::sync::OnceLock;
 use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -15,6 +17,37 @@ use topems_shared_auth::auth::Claims;
 
 /// 用户无 active membership 时的登录租户兜底（与历史行为一致）。
 const DEFAULT_TENANT_ID: &str = "00000000-0000-0000-0000-000000000001";
+
+/// membership 查询失败计数（`path` = login / refresh / logout）。
+///
+/// 失败**不回落默认租户**：宁可 5xx，也不能把用户静默签到错误租户。
+static MEMBERSHIP_LOOKUP_ERRORS: OnceLock<IntCounterVec> = OnceLock::new();
+/// 无 active membership、回落默认租户的计数（`path` = login / refresh / logout）。
+static MEMBERSHIP_FALLBACKS: OnceLock<IntCounterVec> = OnceLock::new();
+
+#[allow(clippy::expect_used)]
+fn membership_lookup_error_metric() -> &'static IntCounterVec {
+    MEMBERSHIP_LOOKUP_ERRORS.get_or_init(|| {
+        register_int_counter_vec!(
+            "auth_membership_lookup_error_total",
+            "Membership lookup errors on login/refresh/logout (no default-tenant fallback)",
+            &["path"]
+        )
+        .expect("failed to register auth_membership_lookup_error_total")
+    })
+}
+
+#[allow(clippy::expect_used)]
+fn membership_fallback_metric() -> &'static IntCounterVec {
+    MEMBERSHIP_FALLBACKS.get_or_init(|| {
+        register_int_counter_vec!(
+            "auth_membership_fallback_total",
+            "Login/refresh/logout falling back to default tenant because user has no active membership",
+            &["path"]
+        )
+        .expect("failed to register auth_membership_fallback_total")
+    })
+}
 
 /// #18 HttpOnly 迁移：refresh_token 走 HttpOnly Cookie（双轨兼容）
 ///
@@ -356,11 +389,19 @@ pub async fn login(
     // login 无 JWT、tenant_middleware 不会设置 `app.tenant_id`：membership 解析发生在
     // 租户确定之前，走系统通道（显式 nil 租户 + rls_system='on'）只读取该用户自身的
     // membership 行；之后的会话写入仍按解析出的真实租户设置 GUC。
-    let tenant_id = Some(
-        resolve_membership_tenant(&state.db, user.id)
-            .await
-            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
-    );
+    let tenant_id = match resolve_login_tenant(&state.db, user.id, "login").await {
+        Ok(t) => Some(t),
+        Err(_) => {
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
+        }
+    };
 
     // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
     let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
@@ -901,12 +942,20 @@ pub async fn refresh_token(
             .unwrap_or_default()
     };
 
-    // 查询用户所属租户，未关联时 fallback 到默认租户（与 login 同口径：系统通道读）
-    let tenant_id = Some(
-        resolve_membership_tenant(&state.db, user_id)
-            .await
-            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
-    );
+    // 查询用户所属租户；查询失败不回落默认租户（宁可 5xx），无 membership 才回落
+    let tenant_id = match resolve_login_tenant(&state.db, user_id, "refresh").await {
+        Ok(t) => Some(t),
+        Err(_) => {
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
+        }
+    };
 
     // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
     let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
@@ -1212,13 +1261,18 @@ pub async fn logout(
 
     tracing::info!("IAM auth logout called for user_id: {}", user_id);
 
-    // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
+    // 删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
     // 未关联时 fallback 到默认租户，与 login/refresh 同口径；解析走系统通道读）
-    let tenant_id = Some(
-        resolve_membership_tenant(&state.db, user_id)
-            .await
-            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
-    );
+    let tenant_id = match resolve_login_tenant(&state.db, user_id, "logout").await {
+        Ok(t) => Some(t),
+        Err(_) => {
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
+                .into_response();
+        }
+    };
 
     // 删除用户会话和刷新令牌
     let mut tx = match state.pool.begin().await {
@@ -1877,6 +1931,42 @@ pub async fn get_security_settings() -> Json<serde_json::Value> {
     }))
 }
 
+/// 用户 membership 候选行（`public.core_tenant_users`）。
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct MembershipRow {
+    id: Uuid,
+    tenant_id: Uuid,
+    status: String,
+    deleted_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// 在候选 membership 中做**确定性排序**（不是“默认公司/默认租户”语义）。
+///
+/// 规则（与产品口径一致）：
+/// 1) 只保留 `status='active'` 且未软删的行；
+/// 2) 首次绑定优先（`created_at` 早者优先，NULL 视为最晚）；
+/// 3) 同一时刻按 `id` 兜底，保证同一用户每次登录得到同一租户。
+///
+/// 表上目前没有 `is_default` 列；若产品需要“默认租户”语义，应新增该列并
+/// 调整本函数优先级（TODO 已登记），不得用排序规则去模拟产品默认值。
+fn pick_membership_tenant(rows: Vec<MembershipRow>) -> Option<Uuid> {
+    use std::cmp::Ordering;
+
+    rows.into_iter()
+        .filter(|r| r.status == "active" && r.deleted_at.is_none())
+        .min_by(|a, b| {
+            match (a.created_at, b.created_at) {
+                (Some(x), Some(y)) => x.cmp(&y),
+                (Some(_), None) => Ordering::Less,
+                (None, Some(_)) => Ordering::Greater,
+                (None, None) => Ordering::Equal,
+            }
+            .then_with(|| a.id.cmp(&b.id))
+        })
+        .map(|r| r.tenant_id)
+}
+
 /// 解析用户所属租户（login / refresh / logout 共用）。
 ///
 /// `public.core_tenant_users` 受 ENABLE+FORCE RLS 保护。这几条认证引导路径都发生在
@@ -1884,27 +1974,113 @@ pub async fn get_security_settings() -> Json<serde_json::Value> {
 /// 用请求通道（fail-closed）或裸池（0 行）。这里走系统通道（显式 nil 租户 +
 /// `app.rls_system='on'`），只读取 `user_id` 命中的 membership 行；解析出的真实租户
 /// 随后用于会话/令牌的租户上下文。
-async fn resolve_membership_tenant(db: &Db, user_id: Uuid) -> Option<Uuid> {
-    let result = async {
-        let mut scope = db.scope_read_system().await?;
-        let tid = sqlx::query_scalar::<_, Uuid>(
-            "SELECT tenant_id FROM public.core_tenant_users \
-             WHERE user_id = $1 AND status = 'active' LIMIT 1",
-        )
-        .bind(user_id)
-        .fetch_optional(&mut scope)
-        .await?;
-        scope.commit().await?;
-        Ok::<Option<Uuid>, sqlx::Error>(tid)
-    }
-    .await;
+///
+/// 返回 `Err` 时调用方必须拒绝登录（不得回落默认租户）；`Ok(None)` 表示确实没有
+/// 可用的 active membership。
+async fn resolve_membership_tenant(db: &Db, user_id: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
+    let mut scope = db.scope_read_system().await?;
+    let rows = sqlx::query_as::<_, MembershipRow>(
+        "SELECT id, tenant_id, status, deleted_at, created_at \
+         FROM public.core_tenant_users WHERE user_id = $1 \
+         ORDER BY created_at ASC NULLS LAST, id ASC",
+    )
+    .bind(user_id)
+    .fetch_all(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(pick_membership_tenant(rows))
+}
 
-    match result {
-        Ok(tid) => tid,
-        Err(e) => {
-            tracing::warn!("查询用户租户信息失败: {}", e);
-            None
+/// 登录链路统一入口：`Err` 不回落；`Ok(None)` 回落默认租户并留痕。
+async fn resolve_login_tenant(
+    db: &Db,
+    user_id: Uuid,
+    path: &'static str,
+) -> Result<String, sqlx::Error> {
+    match resolve_membership_tenant(db, user_id).await {
+        Ok(Some(tenant)) => Ok(tenant.to_string()),
+        Ok(None) => {
+            membership_fallback_metric()
+                .with_label_values(&[path])
+                .inc();
+            tracing::warn!(
+                user_id = %user_id,
+                path = path,
+                default_tenant = DEFAULT_TENANT_ID,
+                "用户无 active membership，回落默认租户"
+            );
+            Ok(DEFAULT_TENANT_ID.to_string())
         }
+        Err(e) => {
+            membership_lookup_error_metric()
+                .with_label_values(&[path])
+                .inc();
+            tracing::error!(
+                user_id = %user_id,
+                path = path,
+                "查询用户 membership 失败，拒绝回落默认租户: {}",
+                e
+            );
+            Err(e)
+        }
+    }
+}
+
+#[cfg(test)]
+mod membership_tests {
+    use super::*;
+
+    fn row(id: u128, tenant: u128, status: &str, deleted: bool, secs: i64) -> MembershipRow {
+        MembershipRow {
+            id: Uuid::from_u128(id),
+            tenant_id: Uuid::from_u128(tenant),
+            status: status.to_string(),
+            deleted_at: deleted.then(|| {
+                chrono::DateTime::<chrono::Utc>::from_timestamp(secs + 1_000, 0).unwrap_or_default()
+            }),
+            created_at: chrono::DateTime::<chrono::Utc>::from_timestamp(secs, 0),
+        }
+    }
+
+    #[test]
+    fn multiple_memberships_pick_same_tenant_in_any_order() {
+        let t1 = 0x1u128;
+        let t2 = 0x2u128;
+        let candidates = vec![
+            row(0x20, t2, "active", false, 200),
+            row(0x10, t1, "active", false, 100),
+        ];
+
+        let mut expected = None;
+        for shift in 0..8 {
+            let mut shuffled = candidates.clone();
+            let len = shuffled.len();
+            shuffled.rotate_left(shift % len);
+            let picked = pick_membership_tenant(shuffled);
+            assert_eq!(picked, Some(Uuid::from_u128(t1)));
+            if let Some(prev) = expected {
+                assert_eq!(Some(prev), picked, "同一用户多次解析必须得到同一租户");
+            }
+            expected = picked;
+        }
+    }
+
+    #[test]
+    fn soft_deleted_and_inactive_memberships_are_ignored() {
+        let picked = pick_membership_tenant(vec![
+            row(0x30, 0x3, "active", true, 1),
+            row(0x40, 0x4, "inactive", false, 2),
+            row(0x50, 0x5, "active", false, 3),
+        ]);
+        assert_eq!(picked, Some(Uuid::from_u128(0x5)));
+    }
+
+    #[test]
+    fn no_membership_returns_none() {
+        assert_eq!(
+            pick_membership_tenant(vec![row(0x60, 0x6, "active", true, 1)]),
+            None
+        );
     }
 }
 

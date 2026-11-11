@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::tenant_scope::{self, IamScope, UserTarget};
@@ -69,7 +70,7 @@ fn parse_user_id(user_id: &str) -> Result<Uuid, (StatusCode, Json<serde_json::Va
 /// - 平台管理员：优先显式 `tenant_id`；否则按目标用户的在职租户归属推导，
 ///   多于一个时要求显式指定。
 async fn resolve_tenant(
-    pool: &PgPool,
+    db: &Db,
     scope: IamScope,
     user_id: Uuid,
     requested: Option<Uuid>,
@@ -87,6 +88,12 @@ async fn resolve_tenant(
             if let Some(tenant) = requested {
                 return Ok(tenant);
             }
+            // 平台模式需要按用户反查跨租户 membership：必须走系统通道，
+            // 裸池在严格 RLS 下会得到 0 行（用户明明属于某租户却被判为“不属于任何租户”）。
+            let mut txn = db
+                .scope_read_system()
+                .await
+                .map_err(|e| internal(format!("打开系统读作用域失败: {}", e)))?;
             let tenants: Vec<Uuid> = sqlx::query_scalar(
                 r#"
                 SELECT DISTINCT tenant_id
@@ -95,9 +102,12 @@ async fn resolve_tenant(
                 "#,
             )
             .bind(user_id)
-            .fetch_all(pool)
+            .fetch_all(&mut txn)
             .await
             .map_err(|e| internal(format!("查询用户租户归属失败: {}", e)))?;
+            txn.commit()
+                .await
+                .map_err(|e| internal(format!("提交系统读作用域失败: {}", e)))?;
 
             match tenants.as_slice() {
                 [only] => Ok(*only),
@@ -110,12 +120,12 @@ async fn resolve_tenant(
 }
 
 async fn check_user(
-    pool: &PgPool,
+    db: &Db,
     claims: &Claims,
     scope: IamScope,
     user_id: Uuid,
 ) -> Result<(), (StatusCode, Json<serde_json::Value>)> {
-    match tenant_scope::check_user_target(pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => Ok(()),
         Ok(UserTarget::NotFound) => Err(tenant_scope::not_found_detail("用户不存在")),
         Ok(UserTarget::Superuser) => Err(tenant_scope::forbidden("无权修改超级管理员")),
@@ -178,11 +188,11 @@ pub async fn get_user_company_scopes(
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看主体范围"),
     };
-    if let Err(resp) = check_user(&state.pool, &claims, scope, user_uuid).await {
+    if let Err(resp) = check_user(&state.db, &claims, scope, user_uuid).await {
         return resp;
     }
 
-    let tenant_id = match resolve_tenant(&state.pool, scope, user_uuid, query.tenant_id).await {
+    let tenant_id = match resolve_tenant(&state.db, scope, user_uuid, query.tenant_id).await {
         Ok(t) => t,
         Err(resp) => return resp,
     };
@@ -241,11 +251,11 @@ pub async fn update_user_company_scopes(
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法配置主体范围"),
     };
-    if let Err(resp) = check_user(&state.pool, &claims, scope, user_uuid).await {
+    if let Err(resp) = check_user(&state.db, &claims, scope, user_uuid).await {
         return resp;
     }
 
-    let tenant_id = match resolve_tenant(&state.pool, scope, user_uuid, query.tenant_id).await {
+    let tenant_id = match resolve_tenant(&state.db, scope, user_uuid, query.tenant_id).await {
         Ok(t) => t,
         Err(resp) => return resp,
     };

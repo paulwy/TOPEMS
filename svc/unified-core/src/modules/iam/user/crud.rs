@@ -44,16 +44,29 @@ pub async fn list_users(
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    // 登录后的列表读取必须走请求作用域（租户通道）。裸池在严格 RLS 下读
+    // `core_tenant_users` 会得到 0 行，导致非超管用户列表恒为空。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "获取用户列表失败：缺少租户上下文",
+            ));
+        }
+    };
+
     let total_result = if claims.is_superuser {
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
     } else {
         sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM iam.users u WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR EXISTS (SELECT 1 FROM public.core_tenant_users tu WHERE tu.user_id = u.id AND tu.tenant_id = $1::uuid))",
+            "SELECT COUNT(*) FROM iam.users u WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR EXISTS (SELECT 1 FROM public.core_tenant_users tu WHERE tu.user_id = u.id AND tu.tenant_id = $1::uuid AND tu.status = 'active' AND tu.deleted_at IS NULL))",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     };
 
@@ -75,17 +88,17 @@ pub async fn list_users(
         .bind(page_size)
         .bind(offset)
         .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     } else {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users u WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR EXISTS (SELECT 1 FROM public.core_tenant_users tu WHERE tu.user_id = u.id AND tu.tenant_id = $1::uuid)) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users u WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR EXISTS (SELECT 1 FROM public.core_tenant_users tu WHERE tu.user_id = u.id AND tu.tenant_id = $1::uuid AND tu.status = 'active' AND tu.deleted_at IS NULL)) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .bind(page_size)
         .bind(offset)
         .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     };
 
@@ -98,7 +111,7 @@ pub async fn list_users(
                 "SELECT ur.user_id, r.name FROM public.core_user_roles ur JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = ANY($1) AND r.deleted_at IS NULL ORDER BY ur.user_id, r.name",
             )
             .bind(&user_ids)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
             .into_iter()
@@ -145,6 +158,10 @@ pub async fn list_users(
                     }
                 })
                 .collect();
+
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("Failed to commit user list read scope: {}", e);
+            }
 
             Json(serde_json::json!({
                 "success": true,
@@ -351,7 +368,14 @@ pub async fn create_user(
 
     // 租户管理员创建的账号必须同时写入 core_tenant_users，否则后续按租户过滤
     // 时看不到、也管不了自己刚建的账号。平台管理员保持既有行为（不写成员关系）。
-    let mut tx = match state.pool.begin().await {
+    //
+    // 写入必须带显式租户通道：`core_tenant_users` 已 FORCE RLS，裸池无 GUC 时
+    // INSERT 会被 fail-closed 策略拒绝（42501）。平台通道走系统作用域。
+    let tx_result = match scope {
+        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Platform => state.db.scope_system().await,
+    };
+    let mut tx = match tx_result {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin create_user transaction: {}", e);
@@ -376,7 +400,7 @@ pub async fn create_user(
     .bind(email)
     .bind(hashed_password)
     .bind(full_name)
-    .execute(&mut *tx)
+    .execute(&mut tx)
     .await;
 
     let result = match insert_result {
@@ -392,7 +416,7 @@ pub async fn create_user(
                 .bind(tenant_id)
                 .bind(user_id)
                 .bind(email)
-                .execute(&mut *tx)
+                .execute(&mut tx)
                 .await
                 {
                     let _ = tx.rollback().await;
@@ -505,7 +529,7 @@ pub async fn get_user(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -629,7 +653,7 @@ pub async fn update_user(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法修改用户"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -809,7 +833,7 @@ pub async fn delete_user(
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法删除用户"),
     };
 
-    match tenant_scope::check_user_target(&state.pool, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权删除超级管理员"),
