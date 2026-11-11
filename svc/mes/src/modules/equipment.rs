@@ -5,6 +5,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -16,6 +17,7 @@ use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::require_tenant;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -214,6 +216,14 @@ pub async fn list_equipment(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取设备列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -262,7 +272,7 @@ pub async fn list_equipment(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -296,7 +306,7 @@ pub async fn list_equipment(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let equipment = match fetch_query.fetch_all(&state.pool).await {
+    let equipment = match fetch_query.fetch_all(&mut scope).await {
         Ok(e) => e,
         Err(e) => {
             tracing::error!("Failed to fetch equipment: {}", e);
@@ -339,6 +349,14 @@ pub async fn create_equipment(
     {
         return e;
     }
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建设备失败");
+        }
+    };
 
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
@@ -383,16 +401,22 @@ pub async fn create_equipment(
     .bind(&req.description)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create equipment: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建设备失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit equipment: {}", e);
+        return ApiResponse::server_error("创建设备失败");
+    }
 
     ApiResponse::success(row_to_equipment_response(&row), "设备创建成功")
 }
@@ -419,6 +443,14 @@ pub async fn get_equipment(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取设备失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT 
@@ -433,7 +465,7 @@ pub async fn get_equipment(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -475,6 +507,14 @@ pub async fn update_equipment(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新设备失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query(
@@ -514,16 +554,22 @@ pub async fn update_equipment(
     .bind(&req.description)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update equipment: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("更新设备失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit equipment update: {}", e);
+        return ApiResponse::server_error("更新设备失败");
+    }
 
     match result {
         Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备更新成功"),
@@ -554,6 +600,14 @@ pub async fn delete_equipment(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除设备失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query(
@@ -564,16 +618,22 @@ pub async fn delete_equipment(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete equipment: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("删除设备失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit equipment delete: {}", e);
+        return ApiResponse::server_error("删除设备失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "设备删除成功")
@@ -605,6 +665,14 @@ pub async fn maintenance_equipment(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("设备维护失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
 
     let now = Utc::now();
@@ -632,16 +700,22 @@ pub async fn maintenance_equipment(
     .bind(next_maintenance_date)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to maintain equipment: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("设备维护失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit equipment maintenance: {}", e);
+        return ApiResponse::server_error("设备维护失败");
+    }
 
     match result {
         Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备维护成功"),
@@ -667,6 +741,14 @@ pub async fn get_equipment_statistics(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取设备统计失败");
+        }
+    };
+
     let stats = sqlx::query!(
         r#"
         SELECT
@@ -678,7 +760,7 @@ pub async fn get_equipment_statistics(
         FROM equipment
         "#,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let stats = match stats {
@@ -775,6 +857,14 @@ pub async fn list_maintenances(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取维护记录列表失败");
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -796,7 +886,7 @@ pub async fn list_maintenances(
         page_size,
         offset,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let records = match result {
@@ -835,7 +925,7 @@ pub async fn list_maintenances(
         "#,
         params.equipment_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let total = total_result.unwrap_or_default();
@@ -872,6 +962,14 @@ pub async fn create_maintenance(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建维护记录失败");
+        }
+    };
+
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
     let start_time = match DateTime::parse_from_rfc3339(&req.start_time) {
@@ -907,13 +1005,14 @@ pub async fn create_maintenance(
         now,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create maintenance: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建维护记录失败");
         }
     };
@@ -935,7 +1034,7 @@ pub async fn create_maintenance(
         equipment_id,
         tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
@@ -945,10 +1044,15 @@ pub async fn create_maintenance(
         equipment_id,
         tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit maintenance record: {}", e);
+        return ApiResponse::server_error("创建维护记录失败");
+    }
 
     ApiResponse::success(
         MaintenanceRecord {
@@ -1014,6 +1118,14 @@ pub async fn update_maintenance_status(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新维护状态失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
@@ -1034,7 +1146,7 @@ pub async fn update_maintenance_status(
     .bind(req.result)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -1042,6 +1154,7 @@ pub async fn update_maintenance_status(
         Ok(None) => return ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::warn!("Failed to update maintenance status: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("更新维护状态失败");
         }
     };
@@ -1062,7 +1175,7 @@ pub async fn update_maintenance_status(
         "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
@@ -1071,10 +1184,15 @@ pub async fn update_maintenance_status(
         "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit maintenance status: {}", e);
+        return ApiResponse::server_error("更新维护状态失败");
+    }
 
     ApiResponse::success(
         MaintenanceRecord {
@@ -1166,6 +1284,14 @@ pub async fn list_inspections(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取点检记录列表失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
 
     let page = query.page.unwrap_or(1) as i64;
@@ -1188,7 +1314,7 @@ pub async fn list_inspections(
         equipment_uuid,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let total: i64 = match count_result {
@@ -1220,7 +1346,7 @@ pub async fn list_inspections(
         page_size,
         offset,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -1287,6 +1413,7 @@ pub async fn list_inspections(
 pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(body): Json<CreateInspectionRequest>,
 ) -> ApiResponse<InspectionResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
@@ -1294,7 +1421,19 @@ pub async fn create_inspection(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    // equipment_inspections 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for create_inspection: {}", e);
+            return ApiResponse::server_error("创建设备点检记录失败");
+        }
+    };
 
     let equipment_uuid = match Uuid::parse_str(&body.equipment_id) {
         Ok(u) => u,
@@ -1308,7 +1447,7 @@ pub async fn create_inspection(
         equipment_uuid,
         tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (equipment_code, equipment_name) = match equipment_info {
@@ -1336,9 +1475,9 @@ pub async fn create_inspection(
             equipment_id, equipment_code, equipment_name,
             inspector, inspection_date, location,
             temperature, vibration, noiselevel,
-            status, items, abnormalities, remarks
+            status, items, abnormalities, remarks, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
         "#,
         equipment_uuid,
@@ -1354,9 +1493,19 @@ pub async fn create_inspection(
         items_value,
         body.abnormalities,
         body.remarks,
+        tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit inspection: {}", e);
+            return ApiResponse::server_error("创建设备点检记录失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => ApiResponse::success(

@@ -3,6 +3,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, put},
     Json, Router,
 };
@@ -13,6 +14,7 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -288,6 +290,14 @@ pub async fn list_work_orders(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工单列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -335,7 +345,7 @@ pub async fn list_work_orders(
     }
     count_query = count_query.bind(tenant_id);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -376,7 +386,7 @@ pub async fn list_work_orders(
     }
     fetch_query = fetch_query.bind(tenant_id).bind(page_size).bind(offset);
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work orders: {}", e);
@@ -506,6 +516,14 @@ pub async fn get_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -534,7 +552,7 @@ pub async fn get_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -561,6 +579,7 @@ pub async fn get_work_order(
 pub async fn create_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(body): Json<CreateWorkOrderRequest>,
 ) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
@@ -569,7 +588,18 @@ pub async fn create_work_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    // work_orders 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for create_work_order: {}", e);
+            return ApiResponse::server_error("创建工单失败");
+        }
+    };
     let order_id = parse_opt_uuid(&body.order_id);
     let work_station_id = parse_opt_uuid(&body.work_station_id);
     let process_id = parse_opt_uuid(&body.process_id);
@@ -622,8 +652,17 @@ pub async fn create_work_order(
     .bind(priority)
     .bind(&body.remark)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order: {}", e);
+            return ApiResponse::server_error("创建工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => {
@@ -716,6 +755,14 @@ pub async fn update_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for update_work_order: {}", e);
+            return ApiResponse::server_error("更新工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -784,8 +831,17 @@ pub async fn update_work_order(
     .bind(body.remark)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order update: {}", e);
+            return ApiResponse::server_error("更新工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "更新工单成功"),
@@ -826,6 +882,14 @@ pub async fn delete_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for delete_work_order: {}", e);
+            return ApiResponse::server_error("删除工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -844,8 +908,17 @@ pub async fn delete_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order deletion: {}", e);
+            return ApiResponse::server_error("删除工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => {
@@ -886,6 +959,14 @@ pub async fn start_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for start_work_order: {}", e);
+            return ApiResponse::server_error("开始工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -915,8 +996,17 @@ pub async fn start_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order start: {}", e);
+            return ApiResponse::server_error("开始工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "开始工单成功"),
@@ -952,6 +1042,14 @@ pub async fn complete_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for complete_work_order: {}", e);
+            return ApiResponse::server_error("完成工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -981,8 +1079,17 @@ pub async fn complete_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order completion: {}", e);
+            return ApiResponse::server_error("完成工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "完成工单成功"),
@@ -1020,6 +1127,14 @@ pub async fn cancel_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for cancel_work_order: {}", e);
+            return ApiResponse::server_error("取消工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1049,8 +1164,17 @@ pub async fn cancel_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order cancellation: {}", e);
+            return ApiResponse::server_error("取消工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "取消工单成功"),
@@ -1088,6 +1212,14 @@ pub async fn pause_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for pause_work_order: {}", e);
+            return ApiResponse::server_error("暂停工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1117,8 +1249,17 @@ pub async fn pause_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order pause: {}", e);
+            return ApiResponse::server_error("暂停工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "暂停工单成功"),
@@ -1156,6 +1297,14 @@ pub async fn resume_work_order(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for resume_work_order: {}", e);
+            return ApiResponse::server_error("恢复工单失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1185,8 +1334,17 @@ pub async fn resume_work_order(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit work order resume: {}", e);
+            return ApiResponse::server_error("恢复工单失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "恢复工单成功"),

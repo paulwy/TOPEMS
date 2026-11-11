@@ -12,6 +12,7 @@ use chrono::NaiveTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::resolve_create_tenant;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -206,6 +207,13 @@ async fn list_workshops(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询车间失败");
+        }
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -229,7 +237,7 @@ async fn list_workshops(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
-    let total = match count_query.fetch_one(&state.pool).await {
+    let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 车间计数失败: {}", e);
@@ -249,7 +257,7 @@ async fn list_workshops(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 车间查询失败: {}", e);
@@ -284,12 +292,19 @@ async fn get_workshop(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询车间失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id, code, name, location, manager, status, description, created_at, updated_at \
          FROM workshops WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -320,9 +335,22 @@ async fn create_workshop(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
+    // tenant-system: workshops 为主数据表，服务身份允许落 nil 租户；
+    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
+    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[mes] 车间创建开启事务失败: {}", e);
+            return ApiResponse::server_error("车间创建失败");
+        }
+    };
     let result = sqlx::query(
-        "INSERT INTO workshops (code, name, location, manager, status, description) \
-         VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6) RETURNING id",
+        "INSERT INTO workshops (code, name, location, manager, status, description, tenant_id) \
+         VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6, $7) RETURNING id",
     )
     .bind(&req.code)
     .bind(&req.name)
@@ -330,8 +358,17 @@ async fn create_workshop(
     .bind(&req.manager)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 车间创建提交失败: {}", e);
+            return ApiResponse::server_error("车间创建失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
@@ -357,6 +394,13 @@ async fn update_workshop(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 车间更新开启事务失败: {}", e);
+            return ApiResponse::server_error("车间更新失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE workshops SET \
          name = COALESCE($2, name), location = COALESCE($3, location), \
@@ -370,8 +414,16 @@ async fn update_workshop(
     .bind(&req.manager)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 车间更新提交失败: {}", e);
+            return ApiResponse::server_error("车间更新失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "车间更新成功"),
         Ok(None) => ApiResponse::not_found("车间不存在"),
@@ -390,10 +442,25 @@ async fn delete_workshop(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 车间删除开启事务失败: {}", e);
+            return ApiResponse::server_error("车间删除失败");
+        }
+    };
     let result = sqlx::query("UPDATE workshops SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 车间删除提交失败: {}", e);
+            return ApiResponse::server_error("车间删除失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "车间删除成功"),
         Ok(_) => ApiResponse::not_found("车间不存在"),
@@ -416,6 +483,13 @@ async fn list_production_lines(
     {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询产线失败");
+        }
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -439,7 +513,7 @@ async fn list_production_lines(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
-    let total = match count_query.fetch_one(&state.pool).await {
+    let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 产线计数失败: {}", e);
@@ -458,7 +532,7 @@ async fn list_production_lines(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 产线查询失败: {}", e);
@@ -494,12 +568,19 @@ async fn get_production_line(
     {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询产线失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id, code, name, workshop_id, description, status, created_at, updated_at \
          FROM production_lines WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -531,17 +612,39 @@ async fn create_production_line(
     {
         return e;
     }
+    // tenant-system: production_lines 为主数据表，服务身份允许落 nil 租户；
+    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
+    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[mes] 产线创建开启事务失败: {}", e);
+            return ApiResponse::server_error("产线创建失败");
+        }
+    };
     let result = sqlx::query(
-        "INSERT INTO production_lines (code, name, workshop_id, description, status) \
-         VALUES ($1, $2, $3, $4, COALESCE($5, 'active')) RETURNING id",
+        "INSERT INTO production_lines (code, name, workshop_id, description, status, tenant_id) \
+         VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6) RETURNING id",
     )
     .bind(&req.code)
     .bind(&req.name)
     .bind(req.workshop_id)
     .bind(&req.description)
     .bind(&req.status)
-    .fetch_optional(&state.pool)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 产线创建提交失败: {}", e);
+            return ApiResponse::server_error("产线创建失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
@@ -569,6 +672,13 @@ async fn update_production_line(
     {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 产线更新开启事务失败: {}", e);
+            return ApiResponse::server_error("产线更新失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE production_lines SET \
          name = COALESCE($2, name), workshop_id = COALESCE($3, workshop_id), \
@@ -581,8 +691,16 @@ async fn update_production_line(
     .bind(req.workshop_id)
     .bind(&req.description)
     .bind(&req.status)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 产线更新提交失败: {}", e);
+            return ApiResponse::server_error("产线更新失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "产线更新成功"),
         Ok(None) => ApiResponse::not_found("产线不存在"),
@@ -603,10 +721,25 @@ async fn delete_production_line(
     {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 产线删除开启事务失败: {}", e);
+            return ApiResponse::server_error("产线删除失败");
+        }
+    };
     let result = sqlx::query("UPDATE production_lines SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 产线删除提交失败: {}", e);
+            return ApiResponse::server_error("产线删除失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "产线删除成功"),
         Ok(_) => ApiResponse::not_found("产线不存在"),
@@ -627,6 +760,13 @@ async fn list_shifts(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftRead).await {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询班次失败");
+        }
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -650,7 +790,7 @@ async fn list_shifts(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
-    let total = match count_query.fetch_one(&state.pool).await {
+    let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 班次计数失败: {}", e);
@@ -669,7 +809,7 @@ async fn list_shifts(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 班次查询失败: {}", e);
@@ -705,12 +845,19 @@ async fn get_shift(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftRead).await {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询班次失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id, code, name, start_time, end_time, is_overnight, status, description, created_at, updated_at \
          FROM shifts WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -742,9 +889,22 @@ async fn create_shift(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
+    // tenant-system: shifts 为字典表，服务身份允许落 nil 租户；
+    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
+    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[mes] 班次创建开启事务失败: {}", e);
+            return ApiResponse::server_error("班次创建失败");
+        }
+    };
     let result = sqlx::query(
-        "INSERT INTO shifts (code, name, start_time, end_time, is_overnight, status, description) \
-         VALUES ($1, $2, $3, $4, COALESCE($5, FALSE), COALESCE($6, 'active'), $7) RETURNING id",
+        "INSERT INTO shifts (code, name, start_time, end_time, is_overnight, status, description, tenant_id) \
+         VALUES ($1, $2, $3, $4, COALESCE($5, FALSE), COALESCE($6, 'active'), $7, $8) RETURNING id",
     )
     .bind(&req.code)
     .bind(&req.name)
@@ -753,8 +913,17 @@ async fn create_shift(
     .bind(req.is_overnight)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 班次创建提交失败: {}", e);
+            return ApiResponse::server_error("班次创建失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
@@ -780,6 +949,13 @@ async fn update_shift(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 班次更新开启事务失败: {}", e);
+            return ApiResponse::server_error("班次更新失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE shifts SET \
          name = COALESCE($2, name), start_time = COALESCE($3, start_time), \
@@ -795,8 +971,16 @@ async fn update_shift(
     .bind(req.is_overnight)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 班次更新提交失败: {}", e);
+            return ApiResponse::server_error("班次更新失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "班次更新成功"),
         Ok(None) => ApiResponse::not_found("班次不存在"),
@@ -815,10 +999,25 @@ async fn delete_shift(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 班次删除开启事务失败: {}", e);
+            return ApiResponse::server_error("班次删除失败");
+        }
+    };
     let result = sqlx::query("UPDATE shifts SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 班次删除提交失败: {}", e);
+            return ApiResponse::server_error("班次删除失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "班次删除成功"),
         Ok(_) => ApiResponse::not_found("班次不存在"),
@@ -841,6 +1040,13 @@ async fn list_work_calendars(
     {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询日历失败");
+        }
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -864,7 +1070,7 @@ async fn list_work_calendars(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
-    let total = match count_query.fetch_one(&state.pool).await {
+    let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 日历计数失败: {}", e);
@@ -883,7 +1089,7 @@ async fn list_work_calendars(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 日历查询失败: {}", e);
@@ -921,12 +1127,19 @@ async fn get_work_calendar(
     {
         return e;
     }
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询日历失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id, code, name, calendar_type, work_date, shift_id, is_working, remark, created_at, updated_at \
          FROM work_calendars WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -960,9 +1173,22 @@ async fn create_work_calendar(
     {
         return e;
     }
+    // tenant-system: work_calendars 为字典表，服务身份允许落 nil 租户；
+    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
+    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[mes] 日历创建开启事务失败: {}", e);
+            return ApiResponse::server_error("日历创建失败");
+        }
+    };
     let result = sqlx::query(
-        "INSERT INTO work_calendars (code, name, calendar_type, work_date, shift_id, is_working, remark) \
-         VALUES ($1, $2, COALESCE($3, 'workday'), $4, $5, COALESCE($6, TRUE), $7) RETURNING id",
+        "INSERT INTO work_calendars (code, name, calendar_type, work_date, shift_id, is_working, remark, tenant_id) \
+         VALUES ($1, $2, COALESCE($3, 'workday'), $4, $5, COALESCE($6, TRUE), $7, $8) RETURNING id",
     )
     .bind(&req.code)
     .bind(&req.name)
@@ -971,8 +1197,17 @@ async fn create_work_calendar(
     .bind(req.shift_id)
     .bind(req.is_working)
     .bind(&req.remark)
-    .fetch_optional(&state.pool)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 日历创建提交失败: {}", e);
+            return ApiResponse::server_error("日历创建失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
@@ -1000,6 +1235,13 @@ async fn update_work_calendar(
     {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 日历更新开启事务失败: {}", e);
+            return ApiResponse::server_error("日历更新失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE work_calendars SET \
          name = COALESCE($2, name), calendar_type = COALESCE($3, calendar_type), \
@@ -1015,8 +1257,16 @@ async fn update_work_calendar(
     .bind(req.shift_id)
     .bind(req.is_working)
     .bind(&req.remark)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 日历更新提交失败: {}", e);
+            return ApiResponse::server_error("日历更新失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "日历更新成功"),
         Ok(None) => ApiResponse::not_found("日历不存在"),
@@ -1037,10 +1287,25 @@ async fn delete_work_calendar(
     {
         return e;
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[mes] 日历删除开启事务失败: {}", e);
+            return ApiResponse::server_error("日历删除失败");
+        }
+    };
     let result = sqlx::query("UPDATE work_calendars SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[mes] 日历删除提交失败: {}", e);
+            return ApiResponse::server_error("日历删除失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "日历删除成功"),
         Ok(_) => ApiResponse::not_found("日历不存在"),

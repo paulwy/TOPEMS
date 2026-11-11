@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO wips (\n            wip_no, order_id, order_no, product_id, product_name, product_code,\n            quantity, current_process_id, current_work_station_id,\n            status, batch_no, start_time, last_transfer_time, operator, notes,\n            created_at, updated_at\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14)\n        RETURNING \n            id, wip_no, order_id, order_no, product_id, product_name, product_code,\n            quantity, current_process_id, current_work_station_id,\n            status, batch_no, start_time, last_transfer_time, operator, notes,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO wips (\n            wip_no, order_id, order_no, product_id, product_name, product_code,\n            quantity, current_process_id, current_work_station_id,\n            status, batch_no, start_time, last_transfer_time, operator, notes,\n            created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14, $15)\n        RETURNING \n            id, wip_no, order_id, order_no, product_id, product_name, product_code,\n            quantity, current_process_id, current_work_station_id,\n            status, batch_no, start_time, last_transfer_time, operator, notes,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -217,7 +217,8 @@
         "Timestamptz",
         "Varchar",
         "Text",
-        "Timestamptz"
+        "Timestamptz",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -241,5 +242,5 @@
       true
     ]
   },
-  "hash": "ec3612f59032460e4cf1d5aac9c5cfc31bdbb0537c1e2bb7e4320268b726634a"
+  "hash": "b17bf835d77695fa7ab3259bdeb84ac89fad75536970bb3915e827326a4993a0"
 }

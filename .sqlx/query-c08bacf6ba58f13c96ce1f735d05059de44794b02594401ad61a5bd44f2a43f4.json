@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO equipment_inspections (\n            equipment_id, equipment_code, equipment_name,\n            inspector, inspection_date, location,\n            temperature, vibration, noiselevel,\n            status, items, abnormalities, remarks\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)\n        RETURNING *\n        ",
+  "query": "\n        INSERT INTO equipment_inspections (\n            equipment_id, equipment_code, equipment_name,\n            inspector, inspection_date, location,\n            temperature, vibration, noiselevel,\n            status, items, abnormalities, remarks, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n        RETURNING *\n        ",
   "describe": {
     "columns": [
       {
@@ -205,7 +205,8 @@
         "Varchar",
         "Jsonb",
         "Text",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -228,5 +229,5 @@
       true
     ]
   },
-  "hash": "0f51b002dd9b86dba271beb16c1ec8bf1197d0648691ad0295207ec6c2c19dc5"
+  "hash": "c08bacf6ba58f13c96ce1f735d05059de44794b02594401ad61a5bd44f2a43f4"
 }

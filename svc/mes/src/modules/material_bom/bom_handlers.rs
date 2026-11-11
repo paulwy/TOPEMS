@@ -1,9 +1,12 @@
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
+use axum::{
+    extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json,
+};
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -33,6 +36,14 @@ pub async fn list_material_boms(
     {
         return e;
     }
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料BOM列表失败");
+        }
+    };
 
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
@@ -74,7 +85,7 @@ pub async fn list_material_boms(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -105,7 +116,7 @@ pub async fn list_material_boms(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let boms = match fetch_query.fetch_all(&state.pool).await {
+    let boms = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material BOMs: {}", e);
@@ -168,6 +179,7 @@ pub async fn list_material_boms(
 pub async fn create_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialBomRequest>,
 ) -> ApiResponse<BomDetailResponse> {
     if let Err(e) =
@@ -183,7 +195,13 @@ pub async fn create_material_bom(
         rand::random::<u16>() % 10000
     );
 
-    let mut tx = match state.pool.begin().await {
+    // material_boms 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -195,8 +213,8 @@ pub async fn create_material_bom(
         r#"
         INSERT INTO material_boms (
             bom_no, product_id, product_name, product_code,
-            version, status, description, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $7)
+            version, status, description, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $7, $8)
         RETURNING 
             id, bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at
@@ -208,15 +226,16 @@ pub async fn create_material_bom(
         req.version.unwrap_or_else(|| "1.0".to_string()),
         req.description,
         now,
+        tenant_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let bom = match bom_result {
         Ok(b) => b,
         Err(e) => {
             tracing::error!("Failed to create material BOM: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建物料BOM失败");
         }
     };
@@ -227,8 +246,8 @@ pub async fn create_material_bom(
             r#"
             INSERT INTO bom_items (
                 bom_id, material_id, material_code, material_name,
-                specification, unit, quantity, loss_rate, sequence, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                specification, unit, quantity, loss_rate, sequence, notes, tenant_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING 
                 id, bom_id, material_id, material_code, material_name,
                 specification, unit, quantity, loss_rate, sequence, notes
@@ -252,8 +271,9 @@ pub async fn create_material_bom(
                 .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
             item.sequence.unwrap_or(idx as i32),
             item.notes.clone(),
+            tenant_id,
         )
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut scope)
         .await;
 
         match item_result {
@@ -274,13 +294,13 @@ pub async fn create_material_bom(
             }
             Err(e) => {
                 tracing::error!("Failed to create BOM item: {}", e);
-                let _ = tx.rollback().await;
+                let _ = scope.rollback().await;
                 return ApiResponse::server_error("创建BOM明细失败");
             }
         }
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("创建物料BOM失败");
     }
@@ -330,6 +350,14 @@ pub async fn get_material_bom(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料BOM失败");
+        }
+    };
+
     let bom_result = sqlx::query!(
         r#"
         SELECT 
@@ -340,7 +368,7 @@ pub async fn get_material_bom(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let bom = match bom_result {
@@ -363,7 +391,7 @@ pub async fn get_material_bom(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let items = match items_result {
@@ -422,6 +450,7 @@ pub async fn update_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateMaterialBomRequest>,
 ) -> ApiResponse<BomDetailResponse> {
     if let Err(e) =
@@ -432,7 +461,13 @@ pub async fn update_material_bom(
 
     let now = Utc::now();
 
-    let mut tx = match state.pool.begin().await {
+    // material_boms 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -458,34 +493,44 @@ pub async fn update_material_bom(
         req.description,
         now,
     )
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut scope)
     .await;
 
     let _bom = match bom_result {
         Ok(Some(b)) => b,
         Ok(None) => {
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::not_found("物料BOM不存在");
         }
         Err(e) => {
             tracing::error!("Failed to update material BOM: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("更新物料BOM失败");
         }
     };
 
     if let Some(items) = req.items {
         let _ = sqlx::query!("DELETE FROM bom_items WHERE bom_id = $1", id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
+
+        // 子表从父行继承租户：以父行当前租户为准（服务身份更新他人租户行时也不会写出 nil 子行）。
+        let parent_tenant: Option<Uuid> =
+            sqlx::query_scalar("SELECT tenant_id FROM material_boms WHERE id = $1")
+                .bind(id)
+                .fetch_optional(&mut scope)
+                .await
+                .ok()
+                .flatten();
+        let item_tenant = parent_tenant.or(Some(tenant_id));
 
         for (idx, item) in items.iter().enumerate() {
             let _ = sqlx::query!(
                 r#"
                 INSERT INTO bom_items (
                     bom_id, material_id, material_code, material_name,
-                    specification, unit, quantity, loss_rate, sequence, notes
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                    specification, unit, quantity, loss_rate, sequence, notes, tenant_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 "#,
                 id,
                 item.material_id,
@@ -506,13 +551,14 @@ pub async fn update_material_bom(
                     .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
                 item.sequence.unwrap_or(idx as i32),
                 item.notes.clone(),
+                item_tenant,
             )
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
         }
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("更新物料BOM失败");
     }
@@ -544,6 +590,14 @@ pub async fn delete_material_bom(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除物料BOM失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE material_boms SET deleted_at = NOW()
@@ -551,16 +605,22 @@ pub async fn delete_material_bom(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to delete material BOM: {}", e);
             return ApiResponse::server_error("删除物料BOM失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit transaction: {}", e);
+        return ApiResponse::server_error("删除物料BOM失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "物料BOM删除成功")

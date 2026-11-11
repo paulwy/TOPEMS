@@ -1,8 +1,11 @@
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
+use axum::{
+    extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json,
+};
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -15,6 +18,7 @@ use super::models::*;
 pub async fn create_material_return(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialReturnRequest>,
 ) -> ApiResponse<MaterialReturnResponse> {
     if let Err(e) =
@@ -30,12 +34,26 @@ pub async fn create_material_return(
         rand::random::<u16>() % 10000
     );
 
+    // material_returns 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin transaction: {}", e);
+            return ApiResponse::server_error("创建物料退库单失败");
+        }
+    };
+
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
             r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten();
@@ -44,22 +62,14 @@ pub async fn create_material_return(
         None
     };
 
-    let mut tx = match state.pool.begin().await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to begin transaction: {}", e);
-            return ApiResponse::server_error("创建物料退库单失败");
-        }
-    };
-
     let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
     let return_result = sqlx::query!(
         r#"
         INSERT INTO material_returns (
             return_no, order_id, order_no, status,
-            warehouse_id, operator_id, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $7)
+            warehouse_id, operator_id, notes, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $7, $8)
         RETURNING 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
@@ -72,15 +82,16 @@ pub async fn create_material_return(
         req.operator_id,
         req.notes,
         now,
+        tenant_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let return_record = match return_result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create material return: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建物料退库单失败");
         }
     };
@@ -90,8 +101,8 @@ pub async fn create_material_return(
             r#"
             INSERT INTO material_return_items (
                 return_id, material_id, material_code, material_name,
-                unit, quantity, reason, batch_no, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                unit, quantity, reason, batch_no, notes, tenant_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             "#,
             return_record.id,
             item.material_id,
@@ -106,12 +117,13 @@ pub async fn create_material_return(
             item.reason.clone(),
             item.batch_no.clone(),
             item.notes.clone(),
+            tenant_id,
         )
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("创建物料退库单失败");
     }
@@ -156,6 +168,14 @@ pub async fn list_material_returns(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料退库单列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -193,7 +213,7 @@ pub async fn list_material_returns(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -225,7 +245,7 @@ pub async fn list_material_returns(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let returns = match fetch_query.fetch_all(&state.pool).await {
+    let returns = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material returns: {}", e);
@@ -312,6 +332,14 @@ pub async fn get_material_return(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料退库单失败");
+        }
+    };
+
     let return_result = sqlx::query!(
         r#"
         SELECT id, return_no, order_id, order_no, status,
@@ -322,7 +350,7 @@ pub async fn get_material_return(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let return_record = match return_result {
@@ -344,7 +372,7 @@ pub async fn get_material_return(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let items = match items_result {
@@ -398,6 +426,14 @@ pub async fn update_material_return(
 
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新物料退库单失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE material_returns SET
@@ -419,17 +455,26 @@ pub async fn update_material_return(
         req.notes,
 now,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let return_record = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("物料退库单不存在"),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("物料退库单不存在");
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to update material return: {}", e);
             return ApiResponse::server_error("更新物料退库单失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit transaction: {}", e);
+        return ApiResponse::server_error("更新物料退库单失败");
+    }
 
     let return_json = serde_json::json!({
         "id": return_record.id.to_string(),
@@ -459,7 +504,7 @@ pub async fn delete_material_return(
         return e;
     }
 
-    let mut tx = match state.pool.begin().await {
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -468,26 +513,26 @@ pub async fn delete_material_return(
     };
 
     let _ = sqlx::query!("DELETE FROM material_return_items WHERE return_id = $1", id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
 
     let result = sqlx::query!(
         "UPDATE material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
         id
     )
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             tracing::error!("Failed to delete material return: {}", e);
             return ApiResponse::server_error("删除物料退库单失败");
         }
     };
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("删除物料退库单失败");
     }

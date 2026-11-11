@@ -3,6 +3,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{delete, get},
     Json, Router,
 };
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::require_tenant;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -188,6 +190,14 @@ pub async fn list_teams(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取班组列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -233,7 +243,7 @@ pub async fn list_teams(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -268,7 +278,7 @@ pub async fn list_teams(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let teams = match fetch_query.fetch_all(&state.pool).await {
+    let teams = match fetch_query.fetch_all(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to fetch teams: {}", e);
@@ -362,6 +372,14 @@ pub async fn get_team(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取班组失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, TeamDetailRow>(
         r#"
         SELECT 
@@ -378,7 +396,7 @@ pub async fn get_team(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -415,6 +433,7 @@ pub async fn get_team(
 pub async fn create_team(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateTeamRequest>,
 ) -> ApiResponse<TeamResponse> {
     if let Err(e) =
@@ -430,9 +449,19 @@ pub async fn create_team(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
     let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    // 租户来源统一为 Claims：tenant_id 必须随行写入，否则落 NULL 共享行，
-    // 后续以 claims 租户为谓词的 UPDATE 永远匹配不到该班组。
-    let tenant_id = get_tenant_id(&claims);
+    // teams 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for create_team: {}", e);
+            return ApiResponse::server_error("创建班组失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
@@ -456,13 +485,14 @@ pub async fn create_team(
     .bind(req.description)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create team: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建班组失败");
         }
     };
@@ -474,8 +504,8 @@ pub async fn create_team(
             let _ = sqlx::query(
                 r#"
                     INSERT INTO team_members (
-                        team_id, employee_id, employee_name, employee_code, position, join_date
-                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                        team_id, employee_id, employee_name, employee_code, position, join_date, tenant_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
             )
             .bind(result.id)
@@ -484,7 +514,8 @@ pub async fn create_team(
             .bind(member.employee_code)
             .bind(member.position)
             .bind(now)
-            .execute(&state.pool)
+            .bind(tenant_id)
+            .execute(&mut scope)
             .await;
         }
 
@@ -499,8 +530,13 @@ pub async fn create_team(
         .bind(result.id)
         .bind(now)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit team: {}", e);
+        return ApiResponse::server_error("创建班组失败");
     }
 
     let team = TeamResponse {
@@ -533,6 +569,14 @@ pub async fn update_team(
     {
         return e;
     }
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新班组失败");
+        }
+    };
 
     let work_station_id: Option<Uuid> = req
         .work_station_id
@@ -572,12 +616,19 @@ pub async fn update_team(
     .bind(req.description)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit team update: {}", e);
+                return ApiResponse::server_error("更新班组失败");
+            }
+            r
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to update team: {}", e);
             return ApiResponse::server_error("更新班组失败");
         }
@@ -617,6 +668,14 @@ pub async fn delete_team(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除班组失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE teams SET deleted_at = NOW()
@@ -626,8 +685,17 @@ pub async fn delete_team(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit team delete: {}", e);
+            return ApiResponse::server_error("删除班组失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     let result = match result {
         Ok(r) => r,
@@ -667,6 +735,14 @@ pub async fn get_team_members(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取班组成员失败");
+        }
+    };
+
     // team_members 无 tenant_id 列，租户隔离经 teams 归属校验（EXISTS）
     let result = sqlx::query_as::<_, TeamMemberRow>(
         r#"
@@ -685,7 +761,7 @@ pub async fn get_team_members(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let members = match result {
@@ -717,6 +793,7 @@ pub async fn add_team_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<TeamMemberCreateRequest>,
 ) -> ApiResponse<TeamMemberResponse> {
     if let Err(e) =
@@ -729,9 +806,21 @@ pub async fn add_team_member(
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
-    let tenant_id = get_tenant_id(&claims);
+    // team_members 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
-    // team_members 无 tenant_id 列：先校验目标班组归属本租户，防止跨租户写入
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for add_team_member: {}", e);
+            return ApiResponse::server_error("添加班组成员失败");
+        }
+    };
+
+    // 先校验目标班组归属本租户，防止跨租户写入。
     let team_exists = sqlx::query_scalar::<_, Uuid>(
         r#"
         SELECT id FROM teams
@@ -741,22 +830,27 @@ pub async fn add_team_member(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match team_exists {
         Ok(Some(_)) => {}
-        Ok(None) => return ApiResponse::not_found("班组不存在"),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("班组不存在");
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to check team: {}", e);
             return ApiResponse::server_error("添加班组成员失败");
         }
     }
 
+    // team_members 写入租户从班组行继承（teams.tenant_id），与校验条件一致。
     let result = sqlx::query_as::<_, TeamMemberRow>(
         r#"
         INSERT INTO team_members (
-            team_id, employee_id, employee_name, employee_code, position, join_date
-        ) VALUES ($1, $2, $3, $4, $5, $6)
+            team_id, employee_id, employee_name, employee_code, position, join_date, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING 
             id, team_id, employee_id, employee_name, employee_code,
             position, join_date, status
@@ -768,13 +862,15 @@ pub async fn add_team_member(
     .bind(req.employee_code)
     .bind(req.position)
     .bind(Utc::now())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to add team member: {}", e);
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("添加班组成员失败");
         }
     };
@@ -790,8 +886,13 @@ pub async fn add_team_member(
     .bind(id)
     .bind(Utc::now())
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit team member: {}", e);
+        return ApiResponse::server_error("添加班组成员失败");
+    }
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
@@ -834,6 +935,14 @@ pub async fn remove_team_member(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("移除班组成员失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE team_members SET status = 'inactive'
@@ -848,12 +957,13 @@ pub async fn remove_team_member(
     .bind(member_id)
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to remove team member: {}", e);
             return ApiResponse::server_error("移除班组成员失败");
         }
@@ -871,11 +981,17 @@ pub async fn remove_team_member(
         .bind(id)
         .bind(Utc::now())
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
+
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit team member removal: {}", e);
+            return ApiResponse::server_error("移除班组成员失败");
+        }
 
         ApiResponse::success("".to_string(), "班组成员移除成功")
     } else {
+        let _ = scope.rollback().await;
         ApiResponse::not_found("班组成员不存在")
     }
 }

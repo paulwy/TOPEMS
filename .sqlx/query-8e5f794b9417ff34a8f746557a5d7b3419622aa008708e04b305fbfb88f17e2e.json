@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO bom_items (\n                bom_id, material_id, material_code, material_name,\n                specification, unit, quantity, loss_rate, sequence, notes\n            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            RETURNING \n                id, bom_id, material_id, material_code, material_name,\n                specification, unit, quantity, loss_rate, sequence, notes\n            ",
+  "query": "\n            INSERT INTO bom_items (\n                bom_id, material_id, material_code, material_name,\n                specification, unit, quantity, loss_rate, sequence, notes, tenant_id\n            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n            RETURNING \n                id, bom_id, material_id, material_code, material_name,\n                specification, unit, quantity, loss_rate, sequence, notes\n            ",
   "describe": {
     "columns": [
       {
@@ -136,7 +136,8 @@
         "Numeric",
         "Numeric",
         "Int4",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -153,5 +154,5 @@
       true
     ]
   },
-  "hash": "84e1c35a35d5feef933351c579669b045cd212bd86a9ce98afda1dd8804fa81c"
+  "hash": "8e5f794b9417ff34a8f746557a5d7b3419622aa008708e04b305fbfb88f17e2e"
 }

@@ -3,6 +3,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -13,6 +14,7 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -135,6 +137,14 @@ pub async fn list_material_requirements(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料需求列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -168,7 +178,7 @@ pub async fn list_material_requirements(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -201,7 +211,7 @@ pub async fn list_material_requirements(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let requirements = match fetch_query.fetch_all(&state.pool).await {
+    let requirements = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material requirements: {}", e);
@@ -303,6 +313,14 @@ pub async fn get_material_requirement(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料需求失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -322,7 +340,7 @@ pub async fn get_material_requirement(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -366,6 +384,7 @@ pub async fn get_material_requirement(
 pub async fn create_material_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(body): Json<CreateMaterialRequirementRequest>,
 ) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) =
@@ -375,6 +394,22 @@ pub async fn create_material_requirement(
     }
 
     let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
+
+    // material_requirements 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!(
+                "Failed to begin scope for create_material_requirement: {}",
+                e
+            );
+            return ApiResponse::server_error("创建物料需求失败");
+        }
+    };
 
     let order_id = body
         .order_id
@@ -402,9 +437,9 @@ pub async fn create_material_requirement(
         INSERT INTO material_requirements (
             mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
-            required_date, priority, source_type, remark
+            required_date, priority, source_type, remark, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
         "#,
         mrp_no,
@@ -421,9 +456,19 @@ pub async fn create_material_requirement(
         body.priority,
         body.source_type,
         body.remark,
+        tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit material requirement: {}", e);
+            return ApiResponse::server_error("创建物料需求失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => ApiResponse::success(
@@ -474,6 +519,14 @@ pub async fn update_material_requirement(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新物料需求失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -511,8 +564,17 @@ pub async fn update_material_requirement(
         body.remark,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit material requirement update: {}", e);
+            return ApiResponse::server_error("更新物料需求失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => ApiResponse::success(
@@ -563,6 +625,14 @@ pub async fn delete_material_requirement(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除物料需求失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -576,8 +646,17 @@ pub async fn delete_material_requirement(
         "#,
         uuid,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit material requirement delete: {}", e);
+            return ApiResponse::server_error("删除物料需求失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(_) => ApiResponse::success(id, "删除物料需求成功"),
@@ -606,6 +685,7 @@ pub struct CalculateRequirementsRequest {
 pub async fn calculate_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(body): Json<CalculateRequirementsRequest>,
 ) -> ApiResponse<Vec<MaterialRequirementResponse>> {
     if let Err(e) =
@@ -613,6 +693,14 @@ pub async fn calculate_requirements(
     {
         return e;
     }
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("物料需求计算失败");
+        }
+    };
 
     let order_uuid = match Uuid::parse_str(&body.order_id) {
         Ok(u) => u,
@@ -629,7 +717,7 @@ pub async fn calculate_requirements(
         "#,
         order_uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let order = match order_result {
@@ -643,6 +731,12 @@ pub async fn calculate_requirements(
         }
     };
 
+    // material_requirements 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
     let bom_items_result = sqlx::query!(
         r#"
         SELECT bi.material_code, bi.material_name, bi.specification, bi.unit, bi.quantity
@@ -652,7 +746,7 @@ pub async fn calculate_requirements(
         "#,
         order.product_code,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let mut requirements: Vec<MaterialRequirementResponse> = Vec::new();
@@ -669,9 +763,9 @@ pub async fn calculate_requirements(
                     INSERT INTO material_requirements (
                         mrp_no, order_id, order_number, product_code, product_name,
                         material_code, material_name, specification, unit, required_quantity,
-                        required_date, priority, source_type, status
+                        required_date, priority, source_type, status, tenant_id
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                     RETURNING *
                     "#,
                     mrp_no,
@@ -688,8 +782,9 @@ pub async fn calculate_requirements(
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),
+                    tenant_id,
                 )
-                .fetch_one(&state.pool)
+                .fetch_one(&mut scope)
                 .await;
 
                 if let Ok(r) = insert_result {
@@ -723,6 +818,11 @@ pub async fn calculate_requirements(
         }
     }
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit calculated requirements: {}", e);
+        return ApiResponse::server_error("物料需求计算失败");
+    }
+
     ApiResponse::success(requirements, "物料需求计算成功")
 }
 
@@ -750,6 +850,14 @@ pub async fn confirm_requirement(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("确认物料需求失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -766,8 +874,17 @@ pub async fn confirm_requirement(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit confirm requirement: {}", e);
+            return ApiResponse::server_error("确认物料需求失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => ApiResponse::success(
@@ -831,6 +948,14 @@ pub async fn release_requirement(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("下发物料需求失败");
+        }
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -847,8 +972,17 @@ pub async fn release_requirement(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit release requirement: {}", e);
+            return ApiResponse::server_error("下发物料需求失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     match result {
         Ok(r) => ApiResponse::success(

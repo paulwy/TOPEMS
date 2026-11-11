@@ -15,13 +15,16 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
-    build_approve_response, build_reject_response, build_start_response, create_approval_and_log,
-    execute_transition_and_log, reject_and_log,
+    build_approve_response, build_reject_response, build_start_response,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::approval::{
+    create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
+};
+use topems_shared_db::scope::ScopedTxn;
 
 fn get_tenant_id(claims: &Claims) -> uuid::Uuid {
     claims
@@ -159,10 +162,18 @@ pub async fn list_anomaly_alerts(
     let mut alerts = Vec::new();
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("异常预警列表获取失败");
+        }
+    };
+
     // 并行检测各类异常
-    let equipment_alerts = detect_equipment_anomalies(&state.pool, tenant_id).await;
-    let quality_alerts = detect_quality_anomalies(&state.pool, tenant_id).await;
-    let production_alerts = detect_production_anomalies(&state.pool, tenant_id).await;
+    let equipment_alerts = detect_equipment_anomalies(&mut scope, tenant_id).await;
+    let quality_alerts = detect_quality_anomalies(&mut scope, tenant_id).await;
+    let production_alerts = detect_production_anomalies(&mut scope, tenant_id).await;
 
     alerts.extend(equipment_alerts);
     alerts.extend(quality_alerts);
@@ -225,7 +236,16 @@ pub async fn get_anomaly_summary(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<AnomalySummary> {
     let tenant_id = get_tenant_id(&claims);
-    let all_alerts = collect_all_alerts(&state.pool, tenant_id).await;
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("异常预警汇总获取失败");
+        }
+    };
+
+    let all_alerts = collect_all_alerts(&mut scope, tenant_id).await;
 
     let mut by_type: HashMap<String, usize> = HashMap::new();
     let mut equipment_map: HashMap<String, (String, usize, String)> = HashMap::new();
@@ -259,7 +279,7 @@ pub async fn get_anomaly_summary(
         })
         .collect();
 
-    let recent_trend = get_recent_anomaly_trend(&state.pool, tenant_id).await;
+    let recent_trend = get_recent_anomaly_trend(&mut scope, tenant_id).await;
 
     let summary = AnomalySummary {
         critical_count: all_alerts
@@ -299,7 +319,15 @@ pub async fn get_equipment_anomalies(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(equipment_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<AnomalyAlert>> {
-    let all_alerts = collect_all_alerts(&state.pool, get_tenant_id(&claims)).await;
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("设备异常预警获取失败");
+        }
+    };
+
+    let all_alerts = collect_all_alerts(&mut scope, get_tenant_id(&claims)).await;
     let filtered: Vec<AnomalyAlert> = all_alerts
         .into_iter()
         .filter(|a| a.source_id == equipment_id)
@@ -399,9 +427,18 @@ pub async fn trigger_anomaly_scan(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
-    let equipment_alerts = detect_equipment_anomalies(&state.pool, tenant_id).await;
-    let quality_alerts = detect_quality_anomalies(&state.pool, tenant_id).await;
-    let production_alerts = detect_production_anomalies(&state.pool, tenant_id).await;
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("异常扫描失败");
+        }
+    };
+
+    let equipment_alerts = detect_equipment_anomalies(&mut scope, tenant_id).await;
+    let quality_alerts = detect_quality_anomalies(&mut scope, tenant_id).await;
+    let production_alerts = detect_production_anomalies(&mut scope, tenant_id).await;
 
     let total = equipment_alerts.len() + quality_alerts.len() + production_alerts.len();
 
@@ -456,18 +493,26 @@ pub async fn get_anomaly_trend(
         30
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("异常趋势获取失败");
+        }
+    };
+
     let trend =
-        get_recent_anomaly_trend_days(&state.pool, get_tenant_id(&claims), days.min(90)).await;
+        get_recent_anomaly_trend_days(&mut scope, get_tenant_id(&claims), days.min(90)).await;
     ApiResponse::success(trend, "异常趋势获取成功")
 }
 
 // ==================== Detection Logic ====================
 
-async fn collect_all_alerts(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
+async fn collect_all_alerts(scope: &mut ScopedTxn<'_>, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
-    alerts.extend(detect_equipment_anomalies(pool, tenant_id).await);
-    alerts.extend(detect_quality_anomalies(pool, tenant_id).await);
-    alerts.extend(detect_production_anomalies(pool, tenant_id).await);
+    alerts.extend(detect_equipment_anomalies(scope, tenant_id).await);
+    alerts.extend(detect_quality_anomalies(scope, tenant_id).await);
+    alerts.extend(detect_production_anomalies(scope, tenant_id).await);
     alerts
 }
 
@@ -475,7 +520,7 @@ async fn collect_all_alerts(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<A
 /// 设备异常检测
 #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
 async fn detect_equipment_anomalies(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
 ) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
@@ -495,7 +540,7 @@ async fn detect_equipment_anomalies(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         let mut equipment_metrics: HashMap<String, Vec<(f64, f64, f64)>> = HashMap::new();
@@ -684,7 +729,7 @@ async fn detect_equipment_anomalies(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -739,7 +784,7 @@ async fn detect_equipment_anomalies(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -780,7 +825,10 @@ async fn detect_equipment_anomalies(
 }
 
 /// 质量异常检测
-async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
+async fn detect_quality_anomalies(
+    scope: &mut ScopedTxn<'_>,
+    tenant_id: uuid::Uuid,
+) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
     // 1. 基于质量记录检测缺陷率异常
@@ -801,7 +849,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) ->
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -878,7 +926,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) ->
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -927,7 +975,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) ->
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生产异常检测
 async fn detect_production_anomalies(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
 ) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
@@ -946,7 +994,7 @@ async fn detect_production_anomalies(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -1023,7 +1071,7 @@ async fn detect_production_anomalies(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -1097,10 +1145,10 @@ fn is_increasing_trend(data: &[f64]) -> bool {
 
 /// 获取最近 7 天的异常趋势
 async fn get_recent_anomaly_trend(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
 ) -> Vec<DailyAnomalyCount> {
-    get_recent_anomaly_trend_days(pool, tenant_id, 7).await
+    get_recent_anomaly_trend_days(scope, tenant_id, 7).await
 }
 
 #[allow(
@@ -1111,7 +1159,7 @@ async fn get_recent_anomaly_trend(
 )]
 /// 获取最近 N 天的异常趋势（基于质量记录和设备巡检异常）
 async fn get_recent_anomaly_trend_days(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
     days: usize,
 ) -> Vec<DailyAnomalyCount> {
@@ -1136,7 +1184,7 @@ async fn get_recent_anomaly_trend_days(
     )
     .bind(days as i64)
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         for row in rows {
@@ -1302,8 +1350,8 @@ pub async fn start_anomaly_handling_approval(
         Err(_) => return ApiResponse::unauthorized("无效的用户身份"),
     };
     let record_id = uuid::Uuid::parse_str(&id).unwrap_or_default();
-    let approval_id = match create_approval_and_log(
-        &state.pool,
+    let approval_id = match create_approval_and_log_db(
+        &state.db,
         "anomaly_alert",
         record_id,
         "acknowledged",
@@ -1349,8 +1397,8 @@ pub async fn approve_anomaly_handling(
     }
     // 校验 approval_id 与版本，执行 acknowledged→handling 转换并写入 audit log
     let record_id = uuid::Uuid::parse_str(&id).unwrap_or_default();
-    if let Err(e) = execute_transition_and_log(
-        &state.pool,
+    if let Err(e) = execute_transition_and_log_db(
+        &state.db,
         None,
         "anomaly_alert",
         record_id,
@@ -1397,8 +1445,8 @@ pub async fn reject_anomaly_handling(
     }
     // 校验 approval_id 与版本，记录驳回并写入 audit log
     let record_id = uuid::Uuid::parse_str(&id).unwrap_or_default();
-    if let Err(e) = reject_and_log(
-        &state.pool,
+    if let Err(e) = reject_and_log_db(
+        &state.db,
         "anomaly_alert",
         record_id,
         req.approval_id,

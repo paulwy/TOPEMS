@@ -5,6 +5,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -15,6 +16,7 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
@@ -55,13 +57,21 @@ async fn stub_wip_transfer_detail(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error(&format!("查询失败: {e}"));
+        }
+    };
+
     let row = sqlx::query(
         r#"SELECT id, transfer_no, wip_id, from_process_id, from_work_station_id,
                   to_process_id, to_work_station_id, quantity, transfer_time, operator, transfer_type, notes
            FROM wip_transfers WHERE id = $1"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
@@ -243,6 +253,14 @@ pub async fn list_wips(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取WIP列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -279,7 +297,7 @@ pub async fn list_wips(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -317,7 +335,7 @@ pub async fn list_wips(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let wips = match fetch_query.fetch_all(&state.pool).await {
+    let wips = match fetch_query.fetch_all(&mut scope).await {
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch WIP list: {}", e);
@@ -412,6 +430,7 @@ pub async fn list_wips(
 pub async fn create_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateWipRequest>,
 ) -> ApiResponse<WipResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipWrite).await {
@@ -425,13 +444,21 @@ pub async fn create_wip(
         rand::random::<u16>() % 10000
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for create_wip: {}", e);
+            return ApiResponse::server_error("创建WIP失败");
+        }
+    };
+
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
             r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
             get_tenant_id(&claims)
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten();
@@ -442,14 +469,21 @@ pub async fn create_wip(
 
     let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
+
+    // wips 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO wips (
             wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14, $15)
         RETURNING 
             id, wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
@@ -469,9 +503,19 @@ Utc::now(),
         req.operator,
         req.notes,
 Utc::now(),
+        tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit WIP: {}", e);
+            return ApiResponse::server_error("创建WIP失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     let result = match result {
         Ok(r) => r,
@@ -529,6 +573,14 @@ pub async fn get_wip(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取WIP失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -546,7 +598,7 @@ pub async fn get_wip(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -611,6 +663,14 @@ pub async fn update_wip(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for update_wip: {}", e);
+            return ApiResponse::server_error("更新WIP失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE wips SET
@@ -634,8 +694,17 @@ pub async fn update_wip(
         req.notes,
         Utc::now(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit WIP update: {}", e);
+            return ApiResponse::server_error("更新WIP失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     let result = match result {
         Ok(r) => r,
@@ -697,6 +766,14 @@ pub async fn delete_wip(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin scope for delete_wip: {}", e);
+            return ApiResponse::server_error("删除WIP失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE wips SET deleted_at = NOW()
@@ -704,8 +781,17 @@ pub async fn delete_wip(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("Failed to commit WIP deletion: {}", e);
+            return ApiResponse::server_error("删除WIP失败");
+        }
+    } else {
+        let _ = scope.rollback().await;
+    }
 
     let result = match result {
         Ok(r) => r,
@@ -749,7 +835,7 @@ pub async fn transfer_wip(
         rand::random::<u16>() % 10000
     );
 
-    let mut tx = match state.pool.begin().await {
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -761,25 +847,33 @@ pub async fn transfer_wip(
         r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
         req.wip_id
     )
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut scope)
     .await;
 
     let wip = match wip {
         Ok(Some(w)) => w,
         Ok(None) => {
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::not_found("WIP不存在");
         }
         Err(e) => {
             tracing::error!("Failed to fetch WIP: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("WIP转移失败");
         }
     };
 
+    // 子表从父行继承租户。
+    let wip_tenant: Option<Uuid> = sqlx::query_scalar("SELECT tenant_id FROM wips WHERE id = $1")
+        .bind(req.wip_id)
+        .fetch_optional(&mut scope)
+        .await
+        .ok()
+        .flatten();
+
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
-        let _ = tx.rollback().await;
+        let _ = scope.rollback().await;
         return ApiResponse::bad_request("转移数量不能大于当前WIP数量");
     }
 
@@ -789,8 +883,8 @@ pub async fn transfer_wip(
             transfer_no, wip_id,
             from_process_id, from_work_station_id,
             to_process_id, to_work_station_id,
-            quantity, transfer_time, operator, transfer_type, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            quantity, transfer_time, operator, transfer_type, notes, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING 
             id, transfer_no, wip_id,
             from_process_id, from_work_station_id,
@@ -810,15 +904,16 @@ pub async fn transfer_wip(
             .clone()
             .unwrap_or_else(|| "process_transfer".to_string()),
         req.notes.clone(),
+        wip_tenant,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let transfer = match transfer_result {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to create WIP transfer: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("WIP转移失败");
         }
     };
@@ -837,20 +932,15 @@ pub async fn transfer_wip(
         req.to_work_station_id,
         now,
     )
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await;
-
-    if let Err(e) = tx.commit().await {
-        tracing::error!("Failed to commit transaction: {}", e);
-        return ApiResponse::server_error("WIP转移失败");
-    }
 
     let from_process_name = if let Some(pid) = req.from_process_id {
         sqlx::query!(
             "SELECT process_name AS name FROM production_processes WHERE id = $1",
             pid
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten()
@@ -864,7 +954,7 @@ pub async fn transfer_wip(
             "SELECT process_name AS name FROM production_processes WHERE id = $1",
             pid
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten()
@@ -878,7 +968,7 @@ pub async fn transfer_wip(
             "SELECT station_name AS name FROM work_stations WHERE id = $1",
             wid
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten()
@@ -892,7 +982,7 @@ pub async fn transfer_wip(
             "SELECT station_name AS name FROM work_stations WHERE id = $1",
             wid
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten()
@@ -900,6 +990,11 @@ pub async fn transfer_wip(
     } else {
         None
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit transaction: {}", e);
+        return ApiResponse::server_error("WIP转移失败");
+    }
 
     let response = WipTransferResponse {
         id: transfer.id,
@@ -947,6 +1042,14 @@ pub async fn list_wip_transfers(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取WIP转移记录失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -968,7 +1071,7 @@ pub async fn list_wip_transfers(
         "#,
         wip_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let transfers = match result {
@@ -1024,6 +1127,14 @@ pub async fn get_wip_statistics(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取WIP统计失败");
+        }
+    };
+
     let total_result = sqlx::query(
         r#"
         SELECT 
@@ -1033,7 +1144,7 @@ pub async fn get_wip_statistics(
         WHERE status = 'in_progress'
         "#,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let (total_wip, total_quantity) = match total_result {
@@ -1060,7 +1171,7 @@ pub async fn get_wip_statistics(
         ORDER BY status
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let by_status: Vec<WipStatusCount> = match status_result {
@@ -1095,7 +1206,7 @@ pub async fn get_wip_statistics(
         ORDER BY quantity DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let by_process: Vec<WipProcessCount> = match process_result {

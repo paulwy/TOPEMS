@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                    INSERT INTO material_requirements (\n                        mrp_no, order_id, order_number, product_code, product_name,\n                        material_code, material_name, specification, unit, required_quantity,\n                        required_date, priority, source_type, status\n                    )\n                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n                    RETURNING *\n                    ",
+  "query": "\n                    INSERT INTO material_requirements (\n                        mrp_no, order_id, order_number, product_code, product_name,\n                        material_code, material_name, specification, unit, required_quantity,\n                        required_date, priority, source_type, status, tenant_id\n                    )\n                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)\n                    RETURNING *\n                    ",
   "describe": {
     "columns": [
       {
@@ -250,7 +250,8 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Varchar"
+        "Varchar",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -277,5 +278,5 @@
       true
     ]
   },
-  "hash": "5f8b93ce6eb97807621643ee8f9b68469cc279b99bf94e57ea4e118b72495aa6"
+  "hash": "dd225ba5aefefba21cac491cc0f3ffa7cfa4fc7e2208081310e32c4c340d0842"
 }

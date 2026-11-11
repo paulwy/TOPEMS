@@ -249,7 +249,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(unused_assignments)]
 async fn calculate_work_order_cost_detail_db(
-    pool: &sqlx::PgPool,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
     work_order_id: Uuid,
     tenant_id: Uuid,
 ) -> Result<(WorkOrderCostResult, Vec<CostBreakdownItem>), TopemsError> {
@@ -268,7 +268,7 @@ async fn calculate_work_order_cost_detail_db(
     )
     .bind(work_order_id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("查询工单失败: {}", e)))?;
 
@@ -327,7 +327,7 @@ async fn calculate_work_order_cost_detail_db(
     )
     .bind(&product_code)
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await;
 
     if let Ok(items) = bom_items {
@@ -440,7 +440,15 @@ pub async fn calculate_work_order_cost(
         return e;
     }
 
-    match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("计算工单成本失败");
+        }
+    };
+
+    match calculate_work_order_cost_detail_db(&mut scope, id, get_tenant_id(&claims)).await {
         Ok((result, _)) => ApiResponse::success(result, "工单成本计算成功"),
         Err(err) => {
             tracing::error!("计算工单成本失败: {}", err);
@@ -477,7 +485,15 @@ pub async fn get_work_order_cost_detail(
         return e;
     }
 
-    match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工单成本详情失败");
+        }
+    };
+
+    match calculate_work_order_cost_detail_db(&mut scope, id, get_tenant_id(&claims)).await {
         Ok((result, _)) => ApiResponse::success(result, "获取工单成本详情成功"),
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
@@ -513,6 +529,14 @@ pub async fn calculate_production_order_cost(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("查询生产订单失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
 
     let order = sqlx::query(
@@ -525,7 +549,7 @@ pub async fn calculate_production_order_cost(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let order = match order {
@@ -558,7 +582,7 @@ pub async fn calculate_production_order_cost(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let mut work_order_costs = Vec::new();
@@ -570,7 +594,7 @@ pub async fn calculate_production_order_cost(
         for row in rows {
             let wo_id: Uuid = row.try_get("id").unwrap_or_default();
             if let Ok((cost, _)) =
-                calculate_work_order_cost_detail_db(&state.pool, wo_id, tenant_id).await
+                calculate_work_order_cost_detail_db(&mut scope, wo_id, tenant_id).await
             {
                 work_order_costs.push(cost.clone());
                 total_material += cost.material_cost;
@@ -641,6 +665,14 @@ pub async fn get_period_cost_report(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取周期成本报告失败");
+        }
+    };
+
     let end_date = params
         .end_date
         .and_then(|d| DateTime::parse_from_rfc3339(&d).ok())
@@ -674,7 +706,7 @@ pub async fn get_period_cost_report(
     .bind(start_date)
     .bind(end_date)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let mut product_costs: HashMap<String, (f64, f64)> = HashMap::new();
@@ -693,7 +725,7 @@ pub async fn get_period_cost_report(
             let ws_id: Option<Uuid> = row.try_get("work_station_id").ok().flatten();
 
             if let Ok((cost, _)) =
-                calculate_work_order_cost_detail_db(&state.pool, wo_id, tenant_id).await
+                calculate_work_order_cost_detail_db(&mut scope, wo_id, tenant_id).await
             {
                 total_material += cost.material_cost;
                 total_labor += cost.labor_cost;
@@ -798,6 +830,14 @@ pub async fn get_cost_trend(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取成本趋势失败");
+        }
+    };
+
     let tenant_id = get_tenant_id(&claims);
     let end_date = Utc::now();
     let _start_date = end_date - Duration::days(90);
@@ -827,7 +867,7 @@ pub async fn get_cost_trend(
         .bind(period_start)
         .bind(period_end)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
         let cnt = match week_cost {

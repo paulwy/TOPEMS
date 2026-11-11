@@ -1,8 +1,11 @@
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
+use axum::{
+    extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json,
+};
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::require_tenant;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -15,6 +18,7 @@ use super::models::*;
 pub async fn create_material_issue(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialIssueRequest>,
 ) -> ApiResponse<MaterialIssueResponse> {
     if let Err(e) =
@@ -30,12 +34,26 @@ pub async fn create_material_issue(
         rand::random::<u16>() % 10000
     );
 
+    // material_issues 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin transaction: {}", e);
+            return ApiResponse::server_error("创建物料领用单失败");
+        }
+    };
+
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
             r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten();
@@ -44,22 +62,14 @@ pub async fn create_material_issue(
         None
     };
 
-    let mut tx = match state.pool.begin().await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to begin transaction: {}", e);
-            return ApiResponse::server_error("创建物料领用单失败");
-        }
-    };
-
     let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
     let issue_result = sqlx::query!(
         r#"
         INSERT INTO material_issues (
             issue_no, order_id, order_no, bom_id, status,
-            warehouse_id, operator_id, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $8)
+            warehouse_id, operator_id, notes, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $8, $9)
         RETURNING 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
@@ -73,15 +83,16 @@ pub async fn create_material_issue(
         req.operator_id,
         req.notes,
         now,
+        tenant_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let issue = match issue_result {
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to create material issue: {}", e);
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             return ApiResponse::server_error("创建物料领用单失败");
         }
     };
@@ -91,8 +102,8 @@ pub async fn create_material_issue(
             r#"
             INSERT INTO material_issue_items (
                 issue_id, material_id, material_code, material_name,
-                unit, planned_quantity, actual_quantity, batch_no, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                unit, planned_quantity, actual_quantity, batch_no, notes, tenant_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             "#,
             issue.id,
             item.material_id,
@@ -111,12 +122,13 @@ pub async fn create_material_issue(
                 .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
             item.batch_no.clone(),
             item.notes.clone(),
+            tenant_id,
         )
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
     }
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("创建物料领用单失败");
     }
@@ -160,6 +172,14 @@ pub async fn list_material_issues(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料领用单列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -197,7 +217,7 @@ pub async fn list_material_issues(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -229,7 +249,7 @@ pub async fn list_material_issues(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let issues = match fetch_query.fetch_all(&state.pool).await {
+    let issues = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material issues: {}", e);
@@ -320,6 +340,14 @@ pub async fn get_material_issue(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取物料领用单失败");
+        }
+    };
+
     let issue_result = sqlx::query!(
         r#"
         SELECT id, issue_no, order_id, order_no, bom_id, status,
@@ -330,7 +358,7 @@ pub async fn get_material_issue(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let issue = match issue_result {
@@ -352,7 +380,7 @@ pub async fn get_material_issue(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let items = match items_result {
@@ -407,6 +435,14 @@ pub async fn update_material_issue(
 
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新物料领用单失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE material_issues SET
@@ -428,17 +464,26 @@ pub async fn update_material_issue(
         req.notes,
 now,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let issue = match result {
         Ok(Some(i)) => i,
-        Ok(None) => return ApiResponse::not_found("物料领用单不存在"),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("物料领用单不存在");
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to update material issue: {}", e);
             return ApiResponse::server_error("更新物料领用单失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit transaction: {}", e);
+        return ApiResponse::server_error("更新物料领用单失败");
+    }
 
     let issue_json = serde_json::json!({
         "id": issue.id.to_string(),
@@ -469,7 +514,7 @@ pub async fn delete_material_issue(
         return e;
     }
 
-    let mut tx = match state.pool.begin().await {
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -478,26 +523,26 @@ pub async fn delete_material_issue(
     };
 
     let _ = sqlx::query!("DELETE FROM material_issue_items WHERE issue_id = $1", id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
 
     let result = sqlx::query!(
         "UPDATE material_issues SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
         id
     )
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
-            let _ = tx.rollback().await;
+            let _ = scope.rollback().await;
             tracing::error!("Failed to delete material issue: {}", e);
             return ApiResponse::server_error("删除物料领用单失败");
         }
     };
 
-    if let Err(e) = tx.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("删除物料领用单失败");
     }

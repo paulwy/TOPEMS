@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO wip_transfers (\n            transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        RETURNING \n            id, transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes\n        ",
+  "query": "\n        INSERT INTO wip_transfers (\n            transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes, tenant_id\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n        RETURNING \n            id, transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes\n        ",
   "describe": {
     "columns": [
       {
@@ -148,7 +148,8 @@
         "Timestamptz",
         "Varchar",
         "Varchar",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -166,5 +167,5 @@
       true
     ]
   },
-  "hash": "20c9444ebfeffa977618ea4003838c65e81ad5c4070309a2f07844920031f439"
+  "hash": "081017a73ea68aaa98eaaf2e97c2329abe2e1e4010183619288f068f860feaec"
 }

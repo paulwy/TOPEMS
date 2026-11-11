@@ -26,6 +26,7 @@ use topems_shared_auth::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_db::scope::ScopedTxn;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -416,7 +417,7 @@ fn calculate_risk_level(
 /// 主排程算法
 #[allow(clippy::indexing_slicing)]
 async fn run_aps_scheduling(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     request: &ApsScheduleRequest,
     simulate_only: bool,
     tenant_id: Uuid,
@@ -426,7 +427,7 @@ async fn run_aps_scheduling(
     let _weights = request.optimization_weights.clone().unwrap_or_default();
 
     // 1. 获取待排程订单
-    let orders = fetch_pending_orders(pool, request.order_ids.as_ref(), tenant_id).await?;
+    let orders = fetch_pending_orders(scope, request.order_ids.as_ref(), tenant_id).await?;
     if orders.is_empty() {
         return Ok(ApsScheduleResult {
             schedule_id: Uuid::new_v4(),
@@ -444,13 +445,13 @@ async fn run_aps_scheduling(
     }
 
     // 2. 获取可用工位
-    let stations = fetch_available_work_stations(pool, tenant_id).await?;
+    let stations = fetch_available_work_stations(scope, tenant_id).await?;
     if stations.is_empty() {
         return Err(TopemsError::BusinessLogic("没有可用的工位".to_string()));
     }
 
     // 3. 获取设备信息
-    let equipment_map = fetch_equipment_map(pool, tenant_id).await?;
+    let equipment_map = fetch_equipment_map(scope, tenant_id).await?;
 
     // 4. 按优先级排序订单
     let mut sorted_orders = orders.clone();
@@ -475,7 +476,7 @@ async fn run_aps_scheduling(
     for order in &sorted_orders {
         // 6.1 检查物料齐套性
         let material_ready =
-            check_material_availability(pool, order.id, order.quantity, tenant_id).await?;
+            check_material_availability(scope, order.id, order.quantity, tenant_id).await?;
 
         // 6.2 选择合适的工位
         let suitable_stations: Vec<&WorkStationInfo> =
@@ -641,7 +642,7 @@ async fn run_aps_scheduling(
     // 9. 如果不只是模拟，保存排程结果
     if !simulate_only {
         for item in &scheduled_items {
-            if let Err(e) = save_schedule_result(pool, item, tenant_id).await {
+            if let Err(e) = save_schedule_result(scope, item, tenant_id).await {
                 warnings.push(format!("保存排程 {} 失败: {}", item.order_no, e));
             }
         }
@@ -699,7 +700,7 @@ fn calculate_feasibility_score(
 // ==================== Database Operations ====================
 
 async fn fetch_pending_orders(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     order_ids: Option<&Vec<Uuid>>,
     tenant_id: Uuid,
 ) -> Result<Vec<WorkOrderInfo>, TopemsError> {
@@ -741,7 +742,7 @@ async fn fetch_pending_orders(
     query_builder = query_builder.bind(tenant_id);
 
     let rows = query_builder
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取待排程订单失败: {}", e)))?;
 
@@ -779,7 +780,7 @@ async fn fetch_pending_orders(
 }
 
 async fn fetch_available_work_stations(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
 ) -> Result<Vec<WorkStationInfo>, TopemsError> {
     let rows = sqlx::query(
@@ -791,7 +792,7 @@ async fn fetch_available_work_stations(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取工位信息失败: {}", e)))?;
 
@@ -817,7 +818,7 @@ async fn fetch_available_work_stations(
 }
 
 async fn fetch_equipment_map(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
 ) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
     let rows = sqlx::query(
@@ -828,7 +829,7 @@ async fn fetch_equipment_map(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取设备信息失败: {}", e)))?;
 
@@ -857,7 +858,7 @@ async fn fetch_equipment_map(
 }
 
 async fn check_material_availability(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     order_id: Uuid,
     _order_quantity: f64,
     tenant_id: Uuid,
@@ -869,7 +870,7 @@ async fn check_material_availability(
     )
     .bind(order_id)
     .bind(tenant_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("查询产品信息失败: {}", e)))?;
 
@@ -883,7 +884,7 @@ async fn check_material_availability(
 }
 
 async fn save_schedule_result(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     item: &ApsScheduleItem,
     tenant_id: Uuid,
 ) -> Result<(), TopemsError> {
@@ -933,7 +934,7 @@ async fn save_schedule_result(
     .bind(format!("APS排程，可行性: {:.0}%", item.feasibility_score))
     .bind(now)
     .bind(tenant_id)
-    .execute(pool)
+    .execute(&mut *scope)
     .await;
 
     match result {
@@ -982,9 +983,24 @@ pub async fn execute_aps_schedule(
             .unwrap_or(Uuid::nil())
     };
 
-    match run_aps_scheduling(&state.pool, &req, false, tenant_id).await {
-        Ok(result) => ApiResponse::success(result, "APS 智能排程执行成功"),
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("APS排程失败", e));
+        }
+    };
+
+    match run_aps_scheduling(&mut scope, &req, false, tenant_id).await {
+        Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("APS排程提交失败: {}", e);
+                return ApiResponse::from(TopemsError::internal("APS排程失败", e));
+            }
+            ApiResponse::success(result, "APS 智能排程执行成功")
+        }
         Err(err) => {
+            let _ = scope.rollback().await;
             tracing::error!("APS排程失败: {}", err);
             ApiResponse::from(TopemsError::internal("APS排程失败", err))
         }
@@ -1036,7 +1052,15 @@ pub async fn simulate_aps_schedule(
             .unwrap_or(Uuid::nil())
     };
 
-    match run_aps_scheduling(&state.pool, &aps_req, true, tenant_id).await {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("排程模拟失败");
+        }
+    };
+
+    match run_aps_scheduling(&mut scope, &aps_req, true, tenant_id).await {
         Ok(result) => {
             // 计算资源利用率
             let mut resource_utilization: HashMap<String, f64> = HashMap::new();
@@ -1102,6 +1126,14 @@ pub async fn check_schedule_constraints(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("约束检查失败");
+        }
+    };
+
     let mut results = Vec::new();
 
     for order_id in &req.order_ids {
@@ -1121,7 +1153,7 @@ pub async fn check_schedule_constraints(
                 .as_deref()
                 .and_then(|s| Uuid::parse_str(s).ok()),
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
 
         let order = match order {
@@ -1176,7 +1208,7 @@ pub async fn check_schedule_constraints(
                     .as_deref()
                     .and_then(|s| Uuid::parse_str(s).ok()),
             )
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await;
 
             if let Ok(items) = bom_items {
@@ -1219,7 +1251,7 @@ pub async fn check_schedule_constraints(
                     .as_deref()
                     .and_then(|s| Uuid::parse_str(s).ok()),
             )
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await;
 
             if let Ok(equips) = equipment {
@@ -1269,7 +1301,7 @@ pub async fn check_schedule_constraints(
                     .as_deref()
                     .and_then(|s| Uuid::parse_str(s).ok()),
             )
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await;
 
             if let Ok(team_list) = teams {
@@ -1349,10 +1381,19 @@ pub async fn get_optimization_report(
 
     // 统计订单状态
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取优化报告失败");
+        }
+    };
+
     let total_orders: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE tenant_id = $1::uuid")
             .bind(tenant_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -1360,7 +1401,7 @@ pub async fn get_optimization_report(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'scheduled' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1368,7 +1409,7 @@ pub async fn get_optimization_report(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1382,7 +1423,7 @@ pub async fn get_optimization_report(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok()
     .flatten();
@@ -1413,7 +1454,7 @@ pub async fn get_optimization_report(
         "#
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     if let Ok(loads) = station_loads {
@@ -1521,10 +1562,19 @@ pub async fn get_bottleneck_analysis(
 
     // 吞吐量分析
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取瓶颈分析失败");
+        }
+    };
+
     let total_orders: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE tenant_id = $1::uuid")
             .bind(tenant_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -1532,7 +1582,7 @@ pub async fn get_bottleneck_analysis(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1540,7 +1590,7 @@ pub async fn get_bottleneck_analysis(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1548,7 +1598,7 @@ pub async fn get_bottleneck_analysis(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1561,7 +1611,7 @@ pub async fn get_bottleneck_analysis(
         "#
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok()
     .flatten();
@@ -1576,7 +1626,7 @@ pub async fn get_bottleneck_analysis(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1589,7 +1639,7 @@ pub async fn get_bottleneck_analysis(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1618,7 +1668,7 @@ pub async fn get_bottleneck_analysis(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     if let Ok(stats) = station_stats {

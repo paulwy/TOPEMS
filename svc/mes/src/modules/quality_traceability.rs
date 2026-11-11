@@ -149,6 +149,14 @@ pub async fn forward_traceability(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("正向追溯失败");
+        }
+    };
+
     let order = sqlx::query!(
         r#"
         SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
@@ -158,7 +166,7 @@ pub async fn forward_traceability(
         "#,
         order_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let order = match order {
@@ -210,7 +218,7 @@ pub async fn forward_traceability(
         "#,
         order_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -312,6 +320,14 @@ pub async fn backward_traceability(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("反向追溯失败");
+        }
+    };
+
     let batch = sqlx::query!(
         r#"
         SELECT id, batch_no, product_id, product_name, product_code,
@@ -322,7 +338,7 @@ pub async fn backward_traceability(
         "#,
         batch_no,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let batch = match batch {
@@ -476,6 +492,14 @@ pub async fn get_trace_chain(
             .await;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("追溯链查询失败");
+        }
+    };
+
     let order = sqlx::query!(
         r#"
         SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
@@ -485,8 +509,10 @@ pub async fn get_trace_chain(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+    // 只读作用域无需 commit，显式 drop 后把 state 交给下游 handler
+    drop(scope);
 
     match order {
         Ok(Some(_)) => forward_traceability(State(state), Extension(claims), Path(id)).await,
@@ -541,6 +567,14 @@ pub async fn list_quality_records(
     {
         return e;
     }
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取质量记录列表失败");
+        }
+    };
 
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -608,7 +642,7 @@ pub async fn list_quality_records(
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
-    let total: i64 = match count_query.fetch_one(&state.pool).await {
+    let total: i64 = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality records: {}", e);
@@ -641,7 +675,7 @@ pub async fn list_quality_records(
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
     use sqlx::Row;
-    let records = match fetch_query.fetch_all(&state.pool).await {
+    let records = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality records: {}", e);
