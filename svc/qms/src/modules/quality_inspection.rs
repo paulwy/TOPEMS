@@ -11,7 +11,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::{get_tenant_id, require_tenant};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -21,6 +21,9 @@ const STATUS_IN_PROGRESS: &str = "in_progress";
 const STATUS_PENDING_AUDIT: &str = "pending_audit";
 const STATUS_COMPLETED: &str = "completed";
 const STATUS_REJECTED: &str = "rejected";
+
+/// 写后读回列（$3 = locale，$1 = id，$2 = tenant）。
+const INSPECTION_SELECT_CAST: &str = r#"id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#;
 
 #[utoipa::path(
     get,
@@ -152,12 +155,16 @@ pub async fn create_inspection(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateInspectionRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let inspection_no = format!(
         "INS-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
+    // TODO(w-b6a): product_id 属跨域主数据（pdm/mdm），当前未校验属主，本批不引入跨域依赖。
     let product_id = req
         .product_id
         .as_ref()
@@ -167,12 +174,46 @@ pub async fn create_inspection(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量检查创建失败");
+        }
+    };
+
+    // 同域引用校验：检验标准必须存在且同租户。
+    if let Some(sid) = standard_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_standards WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(sid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("检验标准不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate standard: {}", e);
+                return ApiResponse::server_error("质量检查创建失败");
+            }
+        }
+    }
+
     let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_inspections (tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by, product_name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $10 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(tenant_id).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(req.created_by).bind(req.product_name_en.clone()).bind(Locale::from_headers(&headers).as_sql())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match inspection {
-        Ok(data) => ApiResponse::success(data, "质量检查创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit inspection create: {}", e);
+                return ApiResponse::server_error("质量检查创建失败");
+            }
+            ApiResponse::success(data, "质量检查创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create inspection: {}", e);
             ApiResponse::server_error("质量检查创建失败")
@@ -258,12 +299,16 @@ pub async fn update_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInspectionRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    // TODO(w-b6a): product_id 属跨域主数据（pdm/mdm），当前未校验属主，本批不引入跨域依赖。
     let product_id = req
         .product_id
         .as_ref()
@@ -273,13 +318,65 @@ pub async fn update_inspection(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id::TEXT = $1 AND ($7::uuid IS NULL OR tenant_id = $7) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量检查更新失败");
+        }
+    };
+
+    // 同域引用校验：检验标准必须存在且同租户。
+    if let Some(sid) = standard_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_standards WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(sid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("检验标准不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate standard: {}", e);
+                return ApiResponse::server_error("质量检查更新失败");
+            }
+        }
+    }
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $7 AND deleted_at IS NULL"#)).bind(id.to_string()).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match inspection {
-        Ok(data) => ApiResponse::success(data, "质量检查更新成功"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            let locale = Locale::from_headers(&headers).as_sql();
+            match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                INSPECTION_SELECT_CAST
+            )))
+            .bind(id.to_string())
+            .bind(tenant_id)
+            .bind(locale)
+            .fetch_one(&mut scope)
+            .await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit inspection update: {}", e);
+                        return ApiResponse::server_error("质量检查更新失败");
+                    }
+                    ApiResponse::success(data, "质量检查更新成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload inspection: {}", e);
+                    ApiResponse::server_error("质量检查更新失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to update inspection: {}", e);
             ApiResponse::server_error("质量检查更新失败")
@@ -307,22 +404,39 @@ pub async fn delete_inspection(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量检查删除失败");
+        }
+    };
+
     let result = sqlx::query(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET deleted_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET deleted_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 AND deleted_at IS NULL"#),
     )
     .bind(id.to_string())
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "质量检查删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit inspection delete: {}", e);
+                return ApiResponse::server_error("质量检查删除失败");
+            }
+            ApiResponse::success(true, "质量检查删除成功")
+        }
         Ok(_) => ApiResponse::not_found("检查不存在或已删除"),
         Err(e) => {
             tracing::error!("Failed to delete inspection: {}", e);
@@ -348,26 +462,29 @@ pub async fn assign_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AssignInspectionRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量检查分配失败");
+        }
+    };
+
     let current = sqlx::query(
-        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -378,16 +495,53 @@ pub async fn assign_inspection(
                 return ApiResponse::bad_request("当前状态不允许分配");
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET assignee = $2, status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $4 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(req.assignee).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-            .fetch_one(&state.pool)
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                r#"UPDATE qms.qa_quality_inspections SET assignee = $2, status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#
+            ))
+            .bind(id.to_string())
+            .bind(req.assignee)
+            .bind(tenant_id)
+            .bind(current_status)
+            .execute(&mut scope)
             .await;
 
-            match inspection {
-                Ok(data) => {
-                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("assign").bind(req.operator).bind(None::<String>)
-                    .execute(&state.pool)
-                    .await;
-                    ApiResponse::success(data, "质量检查分配成功")
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    // 审计与主表同事务：写失败整体回滚。
+                    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("assign").bind(&req.operator).bind(None::<String>)
+                    .execute(&mut scope)
+                    .await
+                    {
+                        tracing::error!("Failed to write inspection audit: {}", e);
+                        return ApiResponse::server_error("质量检查分配失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string())
+                    .bind(tenant_id)
+                    .bind(locale)
+                    .fetch_one(&mut scope)
+                    .await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit inspection assign: {}", e);
+                                return ApiResponse::server_error("质量检查分配失败");
+                            }
+                            ApiResponse::success(data, "质量检查分配成功")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            ApiResponse::server_error("质量检查分配失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to assign inspection: {}", e);
@@ -422,19 +576,10 @@ pub async fn submit_result(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitInspectionResultRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    // 生产端契约：事件租户只能来自请求上下文；缺上下文直接拒绝，禁止随机 UUID / nil 兜底。
-    // （原实现用 get_tenant_id，缺失时回退 Uuid::new_v4()，会把事件发到不存在的租户）
-    let tenant_id = match topems_shared_auth::resolve_create_tenant(&claims) {
-        Ok(Some(t)) => t,
-        Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝提交检验结果"),
+    // 决策 1：submit_result 改 require_tenant —— 服务身份带 x-tenant-id 必须能写；
+    // 缺租户一律 400，禁止随机 UUID / nil 兜底。
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let id = match Uuid::parse_str(&id) {
@@ -442,12 +587,20 @@ pub async fn submit_result(
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("提交检查结果失败");
+        }
+    };
+
     let current = sqlx::query(
-        only_own_schema_query!("qms", r#"SELECT status, quantity FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"SELECT status, quantity FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -475,23 +628,58 @@ pub async fn submit_result(
             });
 
             let inspector = req.inspector.clone();
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id::TEXT = $1 AND ($8::uuid IS NULL OR tenant_id = $8) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $9 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-            .fetch_one(&state.pool)
+            let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $8 AND status = $10 AND deleted_at IS NULL"#)).bind(id.to_string()).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql()).bind(current_status)
+            .execute(&mut scope)
             .await;
 
-            match inspection {
-                Ok(data) => {
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
                     if let Some(results) = req.results {
                         for item in results {
-                            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_results (tenant_id, inspection_id, item_name, item_name_en, standard_value, measured_value, is_qualified, remark) VALUES ($1, $2, $3, $8, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(item.item_name).bind(item.standard_value).bind(item.measured_value).bind(item.is_qualified).bind(item.remark).bind(item.item_name_en)
-                            .execute(&state.pool)
-                            .await;
+                            // 子表与主表同事务：写失败整体回滚，禁止"主表 200、明细缺失"。
+                            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_results (tenant_id, inspection_id, item_name, item_name_en, standard_value, measured_value, is_qualified, remark) VALUES ($1, $2, $3, $8, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(item.item_name).bind(item.standard_value).bind(item.measured_value).bind(item.is_qualified).bind(item.remark).bind(item.item_name_en)
+                            .execute(&mut scope)
+                            .await
+                            {
+                                tracing::error!("Failed to write inspection result item: {}", e);
+                                return ApiResponse::server_error("提交检查结果失败");
+                            }
                         }
                     }
 
-                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
-                    .execute(&state.pool)
-                    .await;
+                    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
+                    .execute(&mut scope)
+                    .await
+                    {
+                        tracing::error!("Failed to write inspection audit: {}", e);
+                        return ApiResponse::server_error("提交检查结果失败");
+                    }
+
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    let data = match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string())
+                    .bind(tenant_id)
+                    .bind(locale)
+                    .fetch_one(&mut scope)
+                    .await
+                    {
+                        Ok(d) => d,
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            return ApiResponse::server_error("提交检查结果失败");
+                        }
+                    };
+
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit inspection submit: {}", e);
+                        return ApiResponse::server_error("提交检查结果失败");
+                    }
 
                     // 发布 QmsInspectionCompleted 事件（质量链联动：integration 订阅 → lims 采样 / ehs 风险）
                     if let Some(ref publisher) = state.event_publisher {
@@ -576,26 +764,29 @@ pub async fn audit_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AuditInspectionRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("审核失败");
+        }
+    };
+
     let current = sqlx::query(
-        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -612,26 +803,63 @@ pub async fn audit_inspection(
                 return ApiResponse::bad_request("当前状态不允许此操作");
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = $2, updated_at = NOW() WHERE id::TEXT = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $4 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(target_status).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-            .fetch_one(&state.pool)
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                r#"UPDATE qms.qa_quality_inspections SET status = $2, updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#
+            ))
+            .bind(id.to_string())
+            .bind(target_status)
+            .bind(tenant_id)
+            .bind(current_status)
+            .execute(&mut scope)
             .await;
 
-            match inspection {
-                Ok(data) => {
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
                     let action_name = if target_status == STATUS_COMPLETED {
                         "approve"
                     } else {
                         "reject"
                     };
-                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(action_name).bind(req.operator).bind(req.comment)
-                    .execute(&state.pool)
-                    .await;
-                    let msg = if target_status == STATUS_COMPLETED {
-                        "审核通过"
-                    } else {
-                        "审核驳回"
-                    };
-                    ApiResponse::success(data, msg)
+                    // 审计与主表同事务：写失败整体回滚。
+                    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(action_name).bind(&req.operator).bind(req.comment.clone())
+                    .execute(&mut scope)
+                    .await
+                    {
+                        tracing::error!("Failed to write inspection audit: {}", e);
+                        return ApiResponse::server_error("审核失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string())
+                    .bind(tenant_id)
+                    .bind(locale)
+                    .fetch_one(&mut scope)
+                    .await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit inspection audit: {}", e);
+                                return ApiResponse::server_error("审核失败");
+                            }
+                            let msg = if target_status == STATUS_COMPLETED {
+                                "审核通过"
+                            } else {
+                                "审核驳回"
+                            };
+                            ApiResponse::success(data, msg)
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            ApiResponse::server_error("审核失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to audit inspection: {}", e);
@@ -666,26 +894,29 @@ pub async fn rework_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AuditInspectionRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("返工申请失败");
+        }
+    };
+
     let current = sqlx::query(
-        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -696,17 +927,31 @@ pub async fn rework_inspection(
                 return ApiResponse::bad_request("当前状态不允许返工");
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-            .fetch_one(&state.pool)
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                r#"UPDATE qms.qa_quality_inspections SET status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 AND status = $3 AND deleted_at IS NULL"#
+            ))
+            .bind(id.to_string())
+            .bind(tenant_id)
+            .bind(current_status)
+            .execute(&mut scope)
             .await;
 
-            match inspection {
-                Ok(data) => {
-                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("rework").bind(&req.operator).bind(req.comment.clone())
-                    .execute(&state.pool)
-                    .await;
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    // 审计与审批事件均与主表同事务：任一失败整体回滚。
+                    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("rework").bind(&req.operator).bind(req.comment.clone())
+                    .execute(&mut scope)
+                    .await
+                    {
+                        tracing::error!("Failed to write inspection audit: {}", e);
+                        return ApiResponse::server_error("返工申请失败");
+                    }
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "inspection",
                         &id.to_string(),
@@ -716,8 +961,34 @@ pub async fn rework_inspection(
                         STATUS_IN_PROGRESS,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "返工申请已提交")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("返工申请失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string())
+                    .bind(tenant_id)
+                    .bind(locale)
+                    .fetch_one(&mut scope)
+                    .await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit inspection rework: {}", e);
+                                return ApiResponse::server_error("返工申请失败");
+                            }
+                            ApiResponse::success(data, "返工申请已提交")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            ApiResponse::server_error("返工申请失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to rework inspection: {}", e);
@@ -883,22 +1154,25 @@ pub async fn approve_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
-    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
-        .bind(id.to_string()).bind(tenant_opt).fetch_one(&state.pool).await;
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("审批失败");
+        }
+    };
+
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
+        .bind(id.to_string()).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -909,12 +1183,20 @@ pub async fn approve_inspection(
             {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'completed', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-                .fetch_one(&state.pool).await;
-            match inspection {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_quality_inspections SET status = $3, updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 AND status = $4 AND deleted_at IS NULL"
+            ))
+            .bind(id.to_string()).bind(tenant_id).bind(STATUS_COMPLETED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    // 审批事件与主表同事务：写失败整体回滚。
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "inspection",
                         &id.to_string(),
@@ -924,8 +1206,30 @@ pub async fn approve_inspection(
                         STATUS_COMPLETED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "审批通过")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("审批失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string()).bind(tenant_id).bind(locale).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit inspection approve: {}", e);
+                                return ApiResponse::server_error("审批失败");
+                            }
+                            ApiResponse::success(data, "审批通过")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            ApiResponse::server_error("审批失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve inspection: {}", e);
@@ -961,22 +1265,25 @@ pub async fn reject_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Inspection> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
-    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
-        .bind(id.to_string()).bind(tenant_opt).fetch_one(&state.pool).await;
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("驳回失败");
+        }
+    };
+
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
+        .bind(id.to_string()).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -986,12 +1293,19 @@ pub async fn reject_inspection(
             {
                 return ApiResponse::bad_request("当前状态不允许驳回");
             }
-            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'rejected', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
-                .fetch_one(&state.pool).await;
-            match inspection {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_quality_inspections SET status = $3, updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 AND status = $4 AND deleted_at IS NULL"
+            ))
+            .bind(id.to_string()).bind(tenant_id).bind(STATUS_REJECTED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "inspection",
                         &id.to_string(),
@@ -1001,8 +1315,30 @@ pub async fn reject_inspection(
                         STATUS_REJECTED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "审批驳回")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("驳回失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, Inspection>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2",
+                        INSPECTION_SELECT_CAST
+                    )))
+                    .bind(id.to_string()).bind(tenant_id).bind(locale).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit inspection reject: {}", e);
+                                return ApiResponse::server_error("驳回失败");
+                            }
+                            ApiResponse::success(data, "审批驳回")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload inspection: {}", e);
+                            ApiResponse::server_error("驳回失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to reject inspection: {}", e);
