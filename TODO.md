@@ -731,3 +731,17 @@ handler 内若再调用 `Db::scope_for_tenant()` / `scope()`（QMS 86 处、PM 1
 改一半。
 
 判定依据见 `docs/quality/w7-b4-scm-ehs-wms-readonly-assessment-2026-11-12.md` §5。
+
+### 17.3 全局口径：禁止用 `200 + success:false` 表达业务失败（2026-11-12 立项）
+
+多个模块的失败分支仍以 **HTTP 200 + body `{success:false}`** 表达业务失败（调用方与网关
+按状态码判成败时会当成成功）。已确认的近期样本：`POST /api/scm/sync/purchase-to-inbound`
+（改造前 4 次必然失败全部返回 200，见 `docs/quality/w7-b4-scm-ehs-wms-readonly-assessment-2026-11-12.md`
+§6.4），WMS `POST /wms/sync/inbound-from-scm` 同形态。
+
+统一改为 4xx/5xx 是**全局口径问题**，需要先定错误码映射（404 不存在 / 409 冲突或失败态 /
+422 语义错误 / 500 内部 / 503 可重试）并同步前端与网关的判错逻辑，**不能在单窗口里逐路由改一半**。
+
+本轮只改 SCM 同步链路这一处（`purchase-to-inbound` 两个入口 + `record_sync_log` 事务化），
+其余模块按服务分批另立窗口；排查清单可由
+`rg 'ApiResponse::success\(\s*serde_json::json!\(\{\s*"success":\s*false' svc/` 起步。

@@ -342,3 +342,57 @@ handler 已自行 `guard.take()+commit()` 时 `Option` 为 `None`，收尾为空
 3. 主 INSERT 失败后请求事务已中止，随后 `UPDATE … sync_retry_count` 在 `let _ =` 中被吞（`current transaction is aborted`），所以重试次数永远是 0，`>= max_retries` 的 500 分支不可达。
 
 结论：中间件改造本身正确且必要，但「失败不落 sync_logs」必须在 SCM 窗口把 `record_sync_log` 纳入请求事务、并把失败响应改为非 2xx，才能达成。
+
+## 7. SCM 窗口 A 项：`purchase-to-inbound` 链路改造与实测（2026-11-12）
+
+### 7.1 改动（`svc/scm/src/modules/data_sync.rs`）
+
+| # | 改动 | 位置 |
+|---|---|---|
+| 1 | 成功路径的同步日志改为 `record_sync_log_txn(txn, …)`，与主 INSERT 同一事务；写失败即整体回滚并返回 500（不再 `let _ =`） | `create_inbound_from_purchase_internal` |
+| 2 | `record_sync_log` 不再走裸池自动提交，改为自开短事务 commit | `record_sync_log` |
+| 3 | 失败分支改非 2xx：404（不存在/非已批准）、409（已创建入库单）、500（写入失败）、503（可重试失败）、409（达上限/已处于失败态） | 两个 handler + `failed_sync_response` |
+| 4 | 主 INSERT 失败后**先回滚请求事务**，再用独立短事务 `record_failed_sync_attempt` 累加 `sync_retry_count`（`SELECT … FOR UPDATE` + UPDATE + 日志，同事务提交） | `record_failed_sync_attempt` |
+| 5 | 重试上限抽为 `MAX_SYNC_RETRIES = 3`；达上限写 `sync_logs.status='failed'` + `retry_count=3`，此后直接 `AlreadyExhausted`，不再累加也不再自动重试 | 同上 |
+| 6 | 可观测信号：`tracing::warn/error!(target: "scm_sync")` 带 `purchase_order_id / retry_count / max_retries`；达上限为 ERROR | 同上 |
+| 7 | uuid 解析失败由 `200 + success:false` 改为 400 | `purchase_to_inbound` |
+
+### 7.2 硬指标改后对比（副本 `w7_s1_txn`，触发器强制主 INSERT 失败，连打 5 次）
+
+| 次 | HTTP（改前 → 改后） | `purchase_orders.sync_retry_count`（改前 → 改后） | `sync_logs`（改前 → 改后） | snapshots（改前 → 改后） |
+|---|---|---|---|---|
+| 1 | 200 `success:false` → **503** | 0 → **1** | +1 pending → **+1 pending(retry=1)** | 0 → 0 |
+| 2 | 200 `success:false` → **503** | 0 → **2** | +1 pending → **+1 pending(retry=2)** | 0 → 0 |
+| 3 | 200 `success:false` → **409**（达上限） | 0 → **3** | +1 pending → **+1 failed(retry=3)** | 0 → 0 |
+| 4 | 200 `success:false` → **409**（已失败态） | 0 → **3（不再增长）** | +1 pending → **0 新增** | 0 → 0 |
+| 5 | 200 `success:false` → **409**（已失败态） | 0 → **3** | +1 pending → **0 新增** | 0 → 0 |
+
+改后断言全部成立：
+
+- 响应始终非 2xx（503/503/409/409/409），无一次 200。
+- `sync_logs` 中 `source_code='S1FAIL-1' AND status='success'` = **0 行**（改前 4 次调用留下 4 条日志，且无一条是失败态）。
+- `sync_retry_count` 真实增长 0→1→2→3，达上限后不再变化。
+- 达上限后进入失败态：`status='failed'`、`retry_count=3`；`retry_failed_syncs` 的 `retry_count < max_retries` 条件不再命中，后续请求直接 409。
+- 库内无半截数据：`wms_inbound_order_snapshots` 中 `INB-S1FAIL%` **0 行**；采购订单仍为 `approved`，`inbound_order_id IS NULL`。
+- 服务日志（`target=scm_sync`）：`retry_count=1/2` 为 WARN，`retry_count=3` 为 ERROR「达到最大重试次数，进入失败态」。
+
+### 7.3 其余分支实测
+
+| 场景 | 期望 | 实测 |
+|---|---|---|
+| 正常单（`S1-OK-2`，`POST /api/scm/sync/purchase-to-inbound`） | 200，snapshot +1、日志 success、PO→`in_transit` | 200；snapshot 1→2；`sync_logs` success；PO `in_transit`/`INB-S1-OK-2`/`is_synced_to_wms=t` |
+| 正常单（`S1-OK-3`，`POST /api/scm/sync/purchase-order/{id}/to-inbound`） | 同上（第二个 handler） | 200；PO→`in_transit`；日志 success |
+| 同步日志写入必然失败（`scm.sync_logs` 加 `RAISE EXCEPTION` 触发器） | 整体回滚，500，无 snapshot、无日志、PO 不被回写 | 500；snapshot 0 行；`sync_logs` 0 行；PO 仍 `approved`、`sync_retry_count=0` |
+| 采购订单不存在 | 404 + 一条失败日志 | 404；`sync_logs` 新增 `failed`（`source_code=''`） |
+| uuid 非法 | 400 | 400「采购订单ID格式错误」 |
+
+### 7.4 附带发现（本轮未改，需并入后续窗口）
+
+「该采购订单已创建入库单」的 409 分支是**死分支**：判重语句是
+`SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1`，绑定的是
+`purchase_order.po_no`（如 `S1-DUP-1`），而本链路写入的 snapshot `order_number` 是
+`'INB-' || po_no`（如 `INB-S1-DUP-1`），两者永不相等。
+
+实测：预先插入 `INB-S1-DUP-1` 快照后再调用，返回 **200** 并新建了**第二条** `INB-S1-DUP-1` 快照
+（已清理）。当前唯一防重是成功回写把 PO 状态改为 `in_transit`，因此并发双请求仍可造重复。
+建议并入 B 项（同一窗口改判重键或加唯一约束）。

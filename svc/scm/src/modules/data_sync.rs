@@ -143,25 +143,13 @@ pub async fn purchase_to_inbound(
     Json(req): Json<PurchaseToInboundRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
+    if guard.is_none() {
+        return ApiResponse::server_error("rls transaction unavailable");
+    }
     let tenant_bind = tenant_bind_value(&claims);
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
-        Err(_) => {
-            return ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "采购订单ID格式错误".to_string(),
-                    "purchase_order_id": null,
-                    "inbound_order_id": null,
-                    "inbound_order_number": null,
-                }),
-                "采购订单ID格式错误",
-            );
-        }
+        Err(_) => return ApiResponse::bad_request("采购订单ID格式错误"),
     };
 
     let warehouse_id = req
@@ -169,15 +157,41 @@ pub async fn purchase_to_inbound(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let (result, to_emit) = create_inbound_from_purchase_internal(
-        &state,
-        purchase_order_id,
-        warehouse_id,
-        req.remarks,
-        tenant_bind,
-        &mut *txn,
-    )
-    .await;
+    let (result, to_emit, insert_error) = {
+        let txn = match guard.as_mut() {
+            Some(txn) => txn,
+            None => return ApiResponse::server_error("rls transaction unavailable"),
+        };
+        create_inbound_from_purchase_internal(
+            &state,
+            purchase_order_id,
+            warehouse_id,
+            req.remarks,
+            tenant_bind,
+            &mut *txn,
+        )
+        .await
+    };
+
+    if let Some(err) = insert_error {
+        // 请求事务已因主 INSERT 失败而中止：先回滚，再用独立短事务累加重试计数。
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.rollback().await {
+                tracing::error!(target: "scm_sync", "回滚请求事务失败: {}", e);
+            }
+        }
+        return failed_sync_response(&state, purchase_order_id, tenant_bind, &err).await;
+    }
+
+    if !result.success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.rollback().await {
+                tracing::error!(target: "scm_sync", "回滚请求事务失败: {}", e);
+            }
+        }
+        return result;
+    }
+
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
@@ -210,13 +224,38 @@ pub async fn create_inbound_from_purchase(
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
+    if guard.is_none() {
+        return ApiResponse::server_error("rls transaction unavailable");
+    }
     let tenant_bind = tenant_bind_value(&claims);
-    let (result, to_emit) =
-        create_inbound_from_purchase_internal(&state, id, None, None, tenant_bind, &mut *txn).await;
+
+    let (result, to_emit, insert_error) = {
+        let txn = match guard.as_mut() {
+            Some(txn) => txn,
+            None => return ApiResponse::server_error("rls transaction unavailable"),
+        };
+        create_inbound_from_purchase_internal(&state, id, None, None, tenant_bind, &mut *txn).await
+    };
+
+    if let Some(err) = insert_error {
+        // 请求事务已因主 INSERT 失败而中止：先回滚，再用独立短事务累加重试计数。
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.rollback().await {
+                tracing::error!(target: "scm_sync", "回滚请求事务失败: {}", e);
+            }
+        }
+        return failed_sync_response(&state, id, tenant_bind, &err).await;
+    }
+
+    if !result.success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.rollback().await {
+                tracing::error!(target: "scm_sync", "回滚请求事务失败: {}", e);
+            }
+        }
+        return result;
+    }
+
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
@@ -225,6 +264,44 @@ pub async fn create_inbound_from_purchase(
     }
     emit_inbound_after_commit(&state, to_emit).await;
     result
+}
+
+/// 主 INSERT 失败后的统一响应：先记账（独立短事务），再按记账结果返回非 2xx。
+async fn failed_sync_response(
+    state: &ApiState,
+    purchase_order_id: Uuid,
+    tenant_bind: Uuid,
+    insert_error: &str,
+) -> ApiResponse<serde_json::Value> {
+    use SyncAttempt::*;
+    match record_failed_sync_attempt(state, purchase_order_id, tenant_bind, insert_error).await {
+        Ok(Retry { retry_count }) => ApiResponse::error(
+            503,
+            &format!(
+                "创建入库单失败（第 {}/{} 次），已记录待重试",
+                retry_count, MAX_SYNC_RETRIES
+            ),
+        ),
+        Ok(Exhausted { retry_count }) => ApiResponse::error(
+            409,
+            &format!(
+                "创建入库单失败，已达到最大重试次数 {}/{}，需人工处理",
+                retry_count, MAX_SYNC_RETRIES
+            ),
+        ),
+        Ok(AlreadyExhausted { retry_count }) => ApiResponse::error(
+            409,
+            &format!(
+                "该采购订单同步已处于失败态（重试 {}/{} 次），需人工处理",
+                retry_count, MAX_SYNC_RETRIES
+            ),
+        ),
+        Ok(NotFound) => ApiResponse::error(404, "采购订单不存在或不属于当前租户"),
+        Err(e) => {
+            tracing::error!(target: "scm_sync", "记录同步重试次数失败: {}", e);
+            ApiResponse::error(500, "创建入库单失败，且重试记录写入失败")
+        }
+    }
 }
 
 /// D6：commit 成功之后发布 InboundOrderRequested；发布失败入 Redis ZSET 重试队列。
@@ -253,8 +330,13 @@ async fn emit_inbound_after_commit(
 }
 
 #[allow(clippy::as_conversions)]
-/// 返回 (HTTP 响应, 需在 commit 成功后发布的事件 payload)。
+/// 返回 (HTTP 响应, 需在 commit 成功后发布的事件 payload, 主 INSERT 失败原因)。
+///
 /// D6：事件不再事务内发布，交由调用方 commit 成功后 emit（失败入 ZSET 重试）。
+///
+/// 第三个返回值只在该函数**没有**写入请求事务的失败分支出现（主 INSERT 失败）；
+/// 调用方必须先回滚请求事务，再用独立短事务记录重试计数与失败日志——中止的事务
+/// 上不能再写任何东西。
 pub async fn create_inbound_from_purchase_internal(
     state: &ApiState,
     purchase_order_id: Uuid,
@@ -265,6 +347,7 @@ pub async fn create_inbound_from_purchase_internal(
 ) -> (
     ApiResponse<serde_json::Value>,
     Option<InboundOrderRequestedPayload>,
+    Option<String>,
 ) {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
@@ -281,58 +364,38 @@ pub async fn create_inbound_from_purchase_internal(
     let purchase_order = match purchase_order {
         Ok(Some(po)) => po,
         Ok(None) => {
-            let _ = record_sync_log(
+            log_sync_failure(
                 state,
-                "purchase_to_inbound",
-                "scm",
-                "wms",
-                "purchase_order",
                 purchase_order_id,
                 "",
-                None,
-                "",
-                "create",
+                "采购订单不存在或状态不是已批准",
                 "failed",
-                Some("采购订单不存在或状态不是已批准".to_string()),
                 0,
                 tenant_bind,
             )
             .await;
             return (
-                ApiResponse::success(
-                    serde_json::json!({
-                        "success": false,
-                        "message": "采购订单不存在或状态不是已批准".to_string(),
-                        "purchase_order_id": purchase_order_id,
-                        "inbound_order_id": null,
-                        "inbound_order_number": null,
-                    }),
-                    "采购订单不存在或状态不是已批准",
-                ),
+                ApiResponse::error(404, "采购订单不存在或状态不是已批准"),
+                None,
                 None,
             );
         }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            let _ = record_sync_log(
+            let message = format!("查询采购订单失败: {}", e);
+            log_sync_failure(
                 state,
-                "purchase_to_inbound",
-                "scm",
-                "wms",
-                "purchase_order",
                 purchase_order_id,
                 "",
-                None,
-                "",
-                "create",
+                &message,
                 "failed",
-                Some(format!("查询采购订单失败: {}", e)),
                 0,
                 tenant_bind,
             )
             .await;
             return (
                 ApiResponse::from(TopemsError::Internal("查询采购订单失败".to_string())),
+                None,
                 None,
             );
         }
@@ -351,34 +414,19 @@ pub async fn create_inbound_from_purchase_internal(
     .await;
 
     if existing_inbound.unwrap_or(0) > 0 {
-        let _ = record_sync_log(
+        log_sync_failure(
             state,
-            "purchase_to_inbound",
-            "scm",
-            "wms",
-            "purchase_order",
             purchase_order_id,
             &purchase_order.order_number,
-            None,
-            "",
-            "create",
-            "success",
-            Some("该采购订单已创建入库单".to_string()),
+            "该采购订单已创建入库单",
+            "skipped",
             0,
             tenant_bind,
         )
         .await;
         return (
-            ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "该采购订单已创建入库单".to_string(),
-                    "purchase_order_id": purchase_order_id,
-                    "inbound_order_id": null,
-                    "inbound_order_number": null,
-                }),
-                "该采购订单已创建入库单",
-            ),
+            ApiResponse::error(409, "该采购订单已创建入库单"),
+            None,
             None,
         );
     }
@@ -430,7 +478,7 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_id,
             });
 
-            let _ = sqlx::query(only_own_schema_query!(
+            if let Err(e) = sqlx::query(only_own_schema_query!(
                 "scm",
                 r#"
                 UPDATE scm.purchase_orders 
@@ -447,10 +495,19 @@ pub async fn create_inbound_from_purchase_internal(
             .bind(now)
             .bind(tenant_bind)
             .execute(&mut **txn)
-            .await;
+            .await
+            {
+                tracing::error!(target: "scm_sync", "回写采购订单同步状态失败: {}", e);
+                return (
+                    ApiResponse::from(TopemsError::Internal("回写采购订单同步状态失败".to_string())),
+                    None,
+                    None,
+                );
+            }
 
-            let _ = record_sync_log(
-                state,
+            // 成功日志与主 INSERT 同一事务：写失败即整体回滚，不留"有入库单无日志"的半截数据。
+            if let Err(e) = record_sync_log_txn(
+                txn,
                 "purchase_to_inbound",
                 "scm",
                 "wms",
@@ -465,7 +522,15 @@ pub async fn create_inbound_from_purchase_internal(
                 0,
                 tenant_bind,
             )
-            .await;
+            .await
+            {
+                tracing::error!(target: "scm_sync", "写同步日志失败: {}", e);
+                return (
+                    ApiResponse::from(TopemsError::Internal("写同步日志失败".to_string())),
+                    None,
+                    None,
+                );
+            }
 
             (
                 ApiResponse::success(
@@ -479,106 +544,245 @@ pub async fn create_inbound_from_purchase_internal(
                     "采购订单转入库单成功",
                 ),
                 to_emit,
+                None,
             )
         }
         Err(e) => {
-            tracing::error!("创建入库单失败: {}", e);
-
-            let retry_count = get_retry_count(state, purchase_order_id, tenant_bind)
-                .await
-                .unwrap_or(0);
-            let new_retry_count = retry_count + 1;
-            let max_retries = 3;
-
-            let status = if new_retry_count >= max_retries {
-                "failed"
-            } else {
-                "pending"
-            };
-
-            let next_retry_at = if new_retry_count < max_retries {
-                Some(now + Duration::seconds(new_retry_count as i64 * 60 * 2))
-            } else {
-                None
-            };
-
-            let _ = sqlx::query(only_own_schema_query!(
-                "scm",
-                r#"
-                UPDATE scm.purchase_orders 
-                SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
-                WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
-                "#
-            ))
-            .bind(purchase_order_id)
-            .bind(e.to_string())
-            .bind(new_retry_count)
-            .bind(now)
-            .bind(tenant_bind)
-            .execute(&mut **txn)
-            .await;
-
-            let _ = record_sync_log(
-                state,
-                "purchase_to_inbound",
-                "scm",
-                "wms",
-                "purchase_order",
-                purchase_order_id,
-                &purchase_order.order_number,
+            // 请求事务已被中止，不能在此写任何东西：重试计数与失败日志由调用方
+            // 先回滚请求事务，再用独立短事务写入。
+            tracing::error!(target: "scm_sync", "创建入库单失败: {}", e);
+            (
+                ApiResponse::from(TopemsError::Internal("创建入库单失败".to_string())),
                 None,
-                "",
-                "create",
-                status,
                 Some(e.to_string()),
-                new_retry_count,
-                tenant_bind,
             )
-            .await;
-
-            if new_retry_count < max_retries {
-                (
-                    ApiResponse::success(
-                        serde_json::json!({
-                            "success": false,
-                            "message": format!("创建入库单失败，将在 {} 秒后重试 (第 {} 次)", new_retry_count * 120, new_retry_count),
-                            "purchase_order_id": purchase_order_id,
-                            "inbound_order_id": null,
-                            "inbound_order_number": null,
-                            "retry_count": new_retry_count,
-                            "next_retry_at": next_retry_at,
-                        }),
-                        "创建入库单失败，将重试",
-                    ),
-                    None,
-                )
-            } else {
-                (
-                    ApiResponse::from(TopemsError::Internal(
-                        "创建入库单失败，已达到最大重试次数".to_string(),
-                    )),
-                    None,
-                )
-            }
         }
     }
 }
 
-pub async fn get_retry_count(
+/// 同步链路最大重试次数。达到后进入失败态（sync_logs.status = 'failed'，
+/// retry_count = MAX_SYNC_RETRIES），不再自动重试，需人工处理。
+const MAX_SYNC_RETRIES: i32 = 3;
+
+/// 主 INSERT 失败后，独立短事务记账的结果。
+enum SyncAttempt {
+    /// 未达上限，已记录本次失败，可重试。
+    Retry { retry_count: i32 },
+    /// 本次失败后达到上限，进入失败态。
+    Exhausted { retry_count: i32 },
+    /// 此前已达上限，不再累加、不再自动重试。
+    AlreadyExhausted { retry_count: i32 },
+    /// 采购订单不存在（或不属于该租户）。
+    NotFound,
+}
+
+/// 在调用方给定的事务内写同步日志。写失败必须上抛，由调用方回滚整体，
+/// 不允许出现"主 INSERT 成功、日志缺失"或"主 INSERT 失败、日志记成功"的半截数据。
+#[allow(clippy::too_many_arguments)]
+async fn record_sync_log_txn(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    sync_type: &str,
+    source_module: &str,
+    target_module: &str,
+    source_entity: &str,
+    source_id: Uuid,
+    source_code: &str,
+    target_id: Option<Uuid>,
+    target_code: &str,
+    operation: &str,
+    status: &str,
+    error_message: Option<String>,
+    retry_count: i32,
+    tenant_bind: Uuid,
+) -> Result<(), sqlx::Error> {
+    let now = Utc::now();
+
+    let next_retry_at = if status == "pending" && retry_count < MAX_SYNC_RETRIES {
+        Some(now + Duration::seconds((retry_count * 60).into()))
+    } else {
+        None
+    };
+
+    sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        INSERT INTO scm.sync_logs 
+            (sync_type, source_module, target_module, source_entity,
+             source_id, source_code, target_id, target_code, operation, status,
+             error_message, retry_count, max_retries, next_retry_at, executed_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        "#
+    ))
+    .bind(sync_type)
+    .bind(source_module)
+    .bind(target_module)
+    .bind(source_entity)
+    .bind(source_id)
+    .bind(source_code)
+    .bind(target_id)
+    .bind(target_code)
+    .bind(operation)
+    .bind(status)
+    .bind(error_message)
+    .bind(retry_count)
+    .bind(MAX_SYNC_RETRIES)
+    .bind(next_retry_at)
+    .bind(if status == "success" { Some(now) } else { None })
+    .bind(now)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await?;
+
+    Ok(())
+}
+
+/// 在请求事务之外记录一条 purchase-to-inbound 失败日志（独立短事务）。
+/// 写日志失败不静默：以 `target: "scm_sync"` 的 error 日志暴露。
+#[allow(clippy::too_many_arguments)]
+async fn log_sync_failure(
+    state: &ApiState,
+    purchase_order_id: Uuid,
+    source_code: &str,
+    message: &str,
+    status: &str,
+    retry_count: i32,
+    tenant_bind: Uuid,
+) {
+    if let Err(e) = record_sync_log(
+        state,
+        "purchase_to_inbound",
+        "scm",
+        "wms",
+        "purchase_order",
+        purchase_order_id,
+        source_code,
+        None,
+        "",
+        "create",
+        status,
+        Some(message.to_string()),
+        retry_count,
+        tenant_bind,
+    )
+    .await
+    {
+        tracing::error!(
+            target: "scm_sync",
+            purchase_order_id = %purchase_order_id,
+            "写同步失败日志失败: {}",
+            e
+        );
+    }
+}
+
+/// 主 INSERT 必然失败后调用：请求事务已回滚，这里用**独立短事务**累加
+/// `purchase_orders.sync_retry_count` 并写一条日志（pending / failed）。
+///
+/// 达到 [`MAX_SYNC_RETRIES`] 后进入失败态：日志 status = 'failed' 且
+/// retry_count = MAX_SYNC_RETRIES，`retry_failed_syncs` 的
+/// `retry_count < max_retries` 条件不再命中它；后续请求直接返回
+/// [`SyncAttempt::AlreadyExhausted`]，不再无限重试。
+///
+/// 可观测信号：达上限时打 `tracing::error!(target: "scm_sync")`，
+/// 并在 `scm.sync_logs` 留下 status = 'failed' 的失败记录。
+async fn record_failed_sync_attempt(
     state: &ApiState,
     purchase_order_id: Uuid,
     tenant_bind: Uuid,
-) -> Result<i32, sqlx::Error> {
-    let count: Option<i32> = sqlx::query_scalar(only_own_schema_query!(
+    error_message: &str,
+) -> Result<SyncAttempt, sqlx::Error> {
+    let mut txn = state.db.begin().await?;
+
+    let row = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        r#"
+        SELECT sync_retry_count, po_no
+        FROM scm.purchase_orders
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FOR UPDATE
+        "#
     ))
     .bind(purchase_order_id)
     .bind(tenant_bind)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *txn)
     .await?;
 
-    Ok(count.unwrap_or(0))
+    let Some(row) = row else {
+        txn.rollback().await?;
+        return Ok(SyncAttempt::NotFound);
+    };
+
+    let current: i32 = row.try_get("sync_retry_count")?;
+    let po_no: String = row.try_get("po_no")?;
+
+    if current >= MAX_SYNC_RETRIES {
+        txn.rollback().await?;
+        return Ok(SyncAttempt::AlreadyExhausted {
+            retry_count: current,
+        });
+    }
+
+    let retry_count = current + 1;
+    let exhausted = retry_count >= MAX_SYNC_RETRIES;
+    let now = Utc::now();
+
+    sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        UPDATE scm.purchase_orders
+        SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
+        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+        "#
+    ))
+    .bind(purchase_order_id)
+    .bind(error_message)
+    .bind(retry_count)
+    .bind(now)
+    .bind(tenant_bind)
+    .execute(&mut *txn)
+    .await?;
+
+    record_sync_log_txn(
+        &mut txn,
+        "purchase_to_inbound",
+        "scm",
+        "wms",
+        "purchase_order",
+        purchase_order_id,
+        &po_no,
+        None,
+        "",
+        "create",
+        if exhausted { "failed" } else { "pending" },
+        Some(error_message.to_string()),
+        retry_count,
+        tenant_bind,
+    )
+    .await?;
+
+    txn.commit().await?;
+
+    if exhausted {
+        tracing::error!(
+            target: "scm_sync",
+            purchase_order_id = %purchase_order_id,
+            retry_count,
+            max_retries = MAX_SYNC_RETRIES,
+            error = %error_message,
+            "采购订单转入库单达到最大重试次数，进入失败态（不再自动重试，需人工处理）"
+        );
+        Ok(SyncAttempt::Exhausted { retry_count })
+    } else {
+        tracing::warn!(
+            target: "scm_sync",
+            purchase_order_id = %purchase_order_id,
+            retry_count,
+            max_retries = MAX_SYNC_RETRIES,
+            error = %error_message,
+            "采购订单转入库单失败，已记录重试计数"
+        );
+        Ok(SyncAttempt::Retry { retry_count })
+    }
 }
 
 #[utoipa::path(
@@ -1835,43 +2039,27 @@ pub async fn record_sync_log(
     retry_count: i32,
     tenant_bind: Uuid,
 ) -> Result<(), sqlx::Error> {
-    let now = Utc::now();
-
-    let next_retry_at = if status == "pending" && retry_count < 3 {
-        Some(now + Duration::seconds((retry_count * 60).into()))
-    } else {
-        None
-    };
-
-    sqlx::query(only_own_schema_query!(
-        "scm",
-        r#"
-        INSERT INTO scm.sync_logs 
-            (sync_type, source_module, target_module, source_entity,
-             source_id, source_code, target_id, target_code, operation, status,
-             error_message, retry_count, max_retries, next_retry_at, executed_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-        "#
-    ))
-    .bind(sync_type)
-    .bind(source_module)
-    .bind(target_module)
-    .bind(source_entity)
-    .bind(source_id)
-    .bind(source_code)
-    .bind(target_id)
-    .bind(target_code)
-    .bind(operation)
-    .bind(status)
-    .bind(error_message)
-    .bind(retry_count)
-    .bind(3)
-    .bind(next_retry_at)
-    .bind(if status == "success" { Some(now) } else { None })
-    .bind(now)
-    .bind(tenant_bind)
-    .execute(&state.db)
+    // 不再走裸池自动提交：独立短事务写日志，写失败由调用方决定如何处理，
+    // 不会出现"INSERT 生效但事务已回滚"的错觉。
+    let mut txn = state.db.begin().await?;
+    record_sync_log_txn(
+        &mut txn,
+        sync_type,
+        source_module,
+        target_module,
+        source_entity,
+        source_id,
+        source_code,
+        target_id,
+        target_code,
+        operation,
+        status,
+        error_message,
+        retry_count,
+        tenant_bind,
+    )
     .await?;
+    txn.commit().await?;
 
     Ok(())
 }
