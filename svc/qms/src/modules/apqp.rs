@@ -30,8 +30,17 @@ const APQP_SELECT_COLS: &str = r#"id, tenant_id::TEXT, project_no, project_name,
 )]
 pub async fn list_apqp_projects(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpProjectQuery>,
 ) -> ApiResponse<Vec<ApqpProject>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -39,8 +48,9 @@ pub async fn list_apqp_projects(
     let projects = match (query.status.as_ref(), query.product_name.as_ref()) {
         (Some(st), Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND product_name ILIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#),
             )
+            .bind(tenant_opt)
             .bind(st)
             .bind(format!("%{}%", pn))
             .bind(page_size)
@@ -50,8 +60,9 @@ pub async fn list_apqp_projects(
         }
         (Some(st), None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
             )
+            .bind(tenant_opt)
             .bind(st)
             .bind(page_size)
             .bind(offset)
@@ -60,8 +71,9 @@ pub async fn list_apqp_projects(
         }
         (None, Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
             )
+            .bind(tenant_opt)
             .bind(format!("%{}%", pn))
             .bind(page_size)
             .bind(offset)
@@ -70,8 +82,9 @@ pub async fn list_apqp_projects(
         }
         (None, None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects ORDER BY created_at DESC LIMIT $1 OFFSET $2"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
             )
+            .bind(tenant_opt)
             .bind(page_size)
             .bind(offset)
             .fetch_all(&state.pool)
