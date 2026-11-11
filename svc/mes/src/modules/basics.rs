@@ -5,6 +5,7 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -12,7 +13,7 @@ use chrono::NaiveTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::resolve_create_tenant;
+use topems_shared_auth::middleware::require_tenant;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -330,14 +331,14 @@ async fn get_workshop(
 async fn create_workshop(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateWorkshopRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
-    // tenant-system: workshops 为主数据表，服务身份允许落 nil 租户；
-    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
-    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+    // workshops 写路径必须有确定租户：服务身份缺租户头一律 400（例外清单 #7 已收回）。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
@@ -605,6 +606,7 @@ async fn get_production_line(
 async fn create_production_line(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateProductionLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
@@ -612,9 +614,8 @@ async fn create_production_line(
     {
         return e;
     }
-    // tenant-system: production_lines 为主数据表，服务身份允许落 nil 租户；
-    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
-    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+    // production_lines 写路径必须有确定租户：服务身份缺租户头一律 400（例外清单 #7 已收回）。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
@@ -884,14 +885,14 @@ async fn get_shift(
 async fn create_shift(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateShiftRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
-    // tenant-system: shifts 为字典表，服务身份允许落 nil 租户；
-    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
-    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+    // 写路径必须有确定租户：服务身份缺租户头一律 400（例外清单 #7 已收回）。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
@@ -1166,6 +1167,7 @@ async fn get_work_calendar(
 async fn create_work_calendar(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateWorkCalendarRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
@@ -1173,9 +1175,8 @@ async fn create_work_calendar(
     {
         return e;
     }
-    // tenant-system: work_calendars 为字典表，服务身份允许落 nil 租户；
-    // 登记见 docs/quality/w7-cross-request-tenant-context-2026-11-10.md 例外清单 #7
-    let tenant_id: Option<Uuid> = match resolve_create_tenant(&claims) {
+    // 写路径必须有确定租户：服务身份缺租户头一律 400（例外清单 #7 已收回）。
+    let tenant_id: Uuid = match require_tenant(&claims, &headers) {
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };

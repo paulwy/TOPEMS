@@ -369,7 +369,7 @@ if !report.is_ok() {
 | 4 | 健康探针 | `lib/shared-db/src/scope.rs` `check_health` | 只执行 `SELECT 1`，不碰业务表 | 只允许常量 SQL；禁止扩写成业务查询 | 探针失败即 `degraded` |
 | 5 | 事件发布重试 relay（Redis ZSET） | `svc/*/src/main.rs` `commit_retry::run_relay` | 只读写 Redis，不访问 DB | 只允许重发已序列化的 payload | 失败继续留在 ZSET |
 | 6 | 事件 schema/契约校验 | `lib/shared-event` | 纯内存/序列化 | 不访问 DB | 无 |
-| 7 | MES 主数据/字典表写入：`workshops` / `production_lines` / `shifts` / `work_calendars` | `svc/mes/src/modules/basics.rs` 四个 create handler | 主数据由平台侧初始化，服务身份（service token）没有租户维度；允许落 nil 租户作为全局字典 | 只允许这四张表在 `resolve_create_tenant` 下写 nil；业务表（BOM/工单/WIP/领退料/班组/点检等）一律 `require_tenant`，服务身份缺租户头必须 400 | 服务身份缺租户时写 nil 行；非服务身份缺租户仍 400 |
+| 7 | ~~MES 主数据/字典表写入~~ **已于 2026-11-11 收回** | — | `workshops` / `production_lines` / `shifts` / `work_calendars` 是租户业务主数据，不是无租户维度的字典 | 四张表已改为 `require_tenant`，服务身份缺租户头一律 400；当前无写入类例外项 | 不得再以「主数据」为由写 nil 租户 |
 
 准入复查：每个模块做 RLS 时，**先审这张表**；新增例外必须在本文件追加一行并写理由，PR 里引用行号。
 
