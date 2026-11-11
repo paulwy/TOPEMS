@@ -84,6 +84,17 @@ scripts/db/window-execution.sh all \
 
 ## 1. 口径与范围
 
+### 1.0 窗口公共前置（W7 起，所有模块窗口一律适用）
+
+| 项 | 口径 |
+| --- | --- |
+| 备份 | **一律超级用户**（`xingzhai` / `topems`）。B5 后业务表 `FORCE RLS`，非超户 `pg_dump --data` 会被拒；备份不是验收，不受“验收不得用超管”约束 |
+| 验收 / 验证 | **一律非超户**（`topems_prod`）。禁止用超管跑验证脚本；超管会绕过 RLS，断言全部失真 |
+| 验证脚本自检 | 所有 `scripts/ops/w7_*_verify.sql` 开头必须硬拦 `rolsuper` / `rolbypassrls`，命中即 `RAISE EXCEPTION`，不得只靠使用说明 |
+| 例外 | 无。备份与验收是两条互斥身份，不得混用同一次连接 |
+
+> 已覆盖：`w7_b1_verify.sql`、`w7_b2_verify.sql`、`w7_b4_verify.sql`、`w7_b4_lims_verify.sql`、`w7_b5_verify.sql`。
+
 | 项 | 口径 |
 | --- | --- |
 | 备份目录 | `/Users/air/topems/backups/` |
@@ -99,6 +110,16 @@ scripts/db/window-execution.sh all \
 | B 组 | audit 孤儿打 `_orphan` 标记，不删、不归档、不加列；prod 约 `72–74` |
 | 收紧 | 窗口内只收紧 **字典 2 张 + 已回填 7 张**；其余 30 高危、271 中危窗口后分批 |
 | 段间规则 | **禁止跳段**；任一段失败必须回滚/恢复后再决定是否重跑 |
+
+### 1.0.1 进程拓扑纪律（2026-11-11 起，所有窗口一律适用）
+
+| 项 | 口径 |
+| --- | --- |
+| WS 事件桥接 | 同一环境**只允许一个** `unified-core-ws-bridge` 消费组实例：独立 `topems-unified-core` 与单体 `topems-server` **不得同时在线** |
+| 原因 | 两者共用 `topems:stream:events:*` 的同一消费组，事件会被随机分流到没有 WS 连接的一侧并被 ACK；表现为“前端收不到通知”，无 ERROR/WARN，极易误判为租户隔离回归 |
+| 开窗前检查 | `pgrep -fl topems-unified-core` 必须为空；`pgrep -fl target/debug/topems-server` 必须恰好 1 条 |
+| 开窗后自检 | `XINFO GROUPS topems:stream:events:PortalNotificationPublished` 的 `lag` 最终归 0；必要时 `XADD` 一条测试事件，确认目标进程侧有帧/日志 |
+| 已知实例 | 2026-11-11 本地 WS 端到端首轮即失败：残留的独立进程（:8000）抢走事件，停掉后 13/13 通过 |
 
 9 张备份表：
 

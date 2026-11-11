@@ -522,6 +522,20 @@
 
 负责人待定。
 
+### 12.6 部署纪律：WS 事件桥接单实例（2026-11-11 立项，即时生效）
+
+`spawn_event_bridge` 在单体 `svc/server` 与独立 `svc/unified-core` 都会启动，且消费组名固定为
+`unified-core-ws-bridge`。同机同时在线时，Redis Stream 事件会在两条 CONSUMER 连接间随机分流
+并被 ACK：
+
+- 症状：WS 连接、订阅、鉴权全部正常，但 `PortalNotificationPublished` 永远收不到；无 ERROR/WARN，
+  `XINFO GROUPS topems:stream:events:PortalNotificationPublished` 显示 `entries-read` 增长、`pending=0`。
+- 实例：2026-11-11 本地 WS 端到端首轮即因此失败（残留的 `:8000` 独立进程抢走消息），停掉后 13/13 通过。
+- 纪律：同一环境只跑一种形态（生产=单体；纯独立调试=独立进程，先停单体）；
+  开窗前 `pgrep -fl topems-unified-core` 必须为空。窗口执行总表 §1.0.1 已同步。
+- 长期（未做）：给单体与独立进程使用不同默认消费组名（或按 `HOSTNAME/PORT` 派生），
+  从机制上消除竞争；完成前以上纪律为准。
+
 ---
 
 ## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）
