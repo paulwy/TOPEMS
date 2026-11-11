@@ -10,7 +10,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::{get_tenant_id, require_tenant};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -158,16 +158,48 @@ pub async fn create_issue(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateIssueRequest>,
 ) -> ApiResponse<QualityIssue> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let issue_no = format!(
         "QI-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
-    let tenant_id = get_tenant_id(&claims, &headers);
 
     let related_inspection_id = req
         .related_inspection_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+
+    // 写作用域：事务级 search_path + app.tenant_id（RLS 与显式谓词双层隔离）。
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题创建失败");
+        }
+    };
+
+    // 同域引用校验：关联检验必须存在且同租户，否则 400，禁止跨租户引用落库。
+    if let Some(rid) = related_inspection_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(rid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("关联检验不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate related inspection: {}", e);
+                return ApiResponse::server_error("质量问题创建失败");
+            }
+        }
+    }
 
     let locale = Locale::from_headers(&headers).as_sql();
     let returning_cols = issue_select_cols("$10");
@@ -175,27 +207,18 @@ pub async fn create_issue(
         "INSERT INTO qms.qa_quality_issues (tenant_id, issue_no, title, title_en, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $9, $4, $5, $6, $7, 'open', $8) RETURNING {}",
         returning_cols
     ))).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by).bind(req.title_en.clone()).bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match issue {
         Ok(data) => {
-            // 事件租户只认 claims / 显式 x-tenant-id；缺上下文就不发布，
-            // 不回退到 get_tenant_id 的随机 UUID（会产生永远不可见的租户事件）。
-            let event_tenant = claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| Uuid::parse_str(t).ok())
-                .or_else(|| {
-                    headers
-                        .get("x-tenant-id")
-                        .and_then(|v| v.to_str().ok())
-                        .and_then(|s| Uuid::parse_str(s).ok())
-                })
-                .filter(|t| !t.is_nil());
-            if let (Some(ref publisher), Some(event_tenant)) =
-                (&state.event_publisher, event_tenant)
-            {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit issue create: {}", e);
+                return ApiResponse::server_error("质量问题创建失败");
+            }
+            // 事件租户 = 本次写入租户（require_tenant 已保证非空，禁止随机 UUID 兜底）。
+            let event_tenant = tenant_id;
+            if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let issue_id_val = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
                 let issue_no_val = data.issue_no.clone();
@@ -329,20 +352,50 @@ pub async fn update_issue(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let locale = Locale::from_headers(&headers).as_sql();
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题更新失败");
+        }
+    };
 
-    let returning_cols = issue_select_cols("$7");
-    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "UPDATE qms.qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $6 RETURNING {}",
-        returning_cols
-    ))).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id).bind(locale)
-    .fetch_one(&state.pool)
+    let updated = sqlx::query(only_own_schema_query!(
+        "qms",
+        "UPDATE qms.qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $6 AND deleted_at IS NULL"
+    ))
+    .bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match issue {
-        Ok(data) => ApiResponse::success(data, "质量问题更新成功"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            let locale = Locale::from_headers(&headers).as_sql();
+            match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                issue_select_cols("$3")
+            ))).bind(id).bind(tenant_id).bind(locale)
+            .fetch_one(&mut scope)
+            .await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit issue update: {}", e);
+                        return ApiResponse::server_error("质量问题更新失败");
+                    }
+                    ApiResponse::success(data, "质量问题更新成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload issue: {}", e);
+                    ApiResponse::server_error("质量问题更新失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to update issue: {}", e);
             ApiResponse::server_error("质量问题更新失败")
@@ -371,20 +424,50 @@ pub async fn resolve_issue(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let locale = Locale::from_headers(&headers).as_sql();
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题解决失败");
+        }
+    };
 
-    let returning_cols = issue_select_cols("$3");
-    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "UPDATE qms.qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
-        returning_cols
-    ))).bind(id).bind(tenant_id).bind(locale)
-    .fetch_one(&state.pool)
+    let updated = sqlx::query(only_own_schema_query!(
+        "qms",
+        "UPDATE qms.qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status <> 'resolved'"
+    ))
+    .bind(id).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match issue {
-        Ok(data) => ApiResponse::success(data, "质量问题已解决"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("质量问题不存在或已解决"),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("质量问题不存在或已解决"),
+        Ok(_) => {
+            let locale = Locale::from_headers(&headers).as_sql();
+            match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                issue_select_cols("$3")
+            ))).bind(id).bind(tenant_id).bind(locale)
+            .fetch_one(&mut scope)
+            .await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit issue resolve: {}", e);
+                        return ApiResponse::server_error("质量问题解决失败");
+                    }
+                    ApiResponse::success(data, "质量问题已解决")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload issue: {}", e);
+                    ApiResponse::server_error("质量问题解决失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to resolve issue: {}", e);
             ApiResponse::server_error("质量问题解决失败")
@@ -415,19 +498,36 @@ pub async fn delete_issue(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题删除失败");
+        }
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_quality_issues SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_quality_issues SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "质量问题删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("质量问题不存在或已删除"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit issue delete: {}", e);
+                return ApiResponse::server_error("质量问题删除失败");
+            }
+            ApiResponse::success(true, "质量问题删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete issue: {}", e);
             ApiResponse::server_error("质量问题删除失败")
@@ -463,15 +563,13 @@ pub async fn start_issue_approval(
     headers: axum::http::HeaderMap,
     Json(req): Json<StartApprovalRequest>,
 ) -> ApiResponse<QualityIssueWithWorkflow> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // W-B6a：本批只把租户来源改为 require_tenant。
+    // TODO(w-b6a): 异步 workflow 缺租户上下文（create_instance 未透传 tenant_id），
+    // 与事件总线同类问题，单独立项处理。
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let _tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
@@ -506,16 +604,23 @@ pub async fn start_issue_approval(
         }
     });
 
+    let mut scope = match state.db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量问题失败");
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let cols = issue_select_cols("$3");
     let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         cols
     )))
         .bind(issue_id)
-        .bind(tenant_opt)
+        .bind(tenant_id)
         .bind(locale)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
     match issue {
@@ -527,6 +632,7 @@ pub async fn start_issue_approval(
             },
             "质量问题审批流程已启动",
         ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("质量问题不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
             ApiResponse::server_error("获取质量问题失败")
@@ -554,7 +660,10 @@ pub async fn approve_issue(
     headers: axum::http::HeaderMap,
     Json(_req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<QualityIssueWithWorkflow> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
@@ -562,27 +671,56 @@ pub async fn approve_issue(
 
     tracing::info!("Approving issue {}", id);
 
-    let locale = Locale::from_headers(&headers).as_sql();
-    let returning_cols = issue_select_cols("$3");
-    let result = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "UPDATE qms.qa_quality_issues SET status = 'approved', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
-        returning_cols
-    )))
-        .bind(issue_id)
-        .bind(tenant_id)
-        .bind(locale)
-        .fetch_one(&state.pool)
-        .await;
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题审批失败");
+        }
+    };
+    let updated = sqlx::query(only_own_schema_query!(
+        "qms",
+        "UPDATE qms.qa_quality_issues SET status = 'approved', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status IS DISTINCT FROM 'approved'"
+    ))
+    .bind(issue_id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
-    match result {
-        Ok(data) => ApiResponse::success(
-            QualityIssueWithWorkflow {
-                issue: data,
-                approval_workflow_id: None,
-                approval_status: Some("approved".to_string()),
-            },
-            "质量问题审批通过",
-        ),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("当前状态不允许审批通过"),
+        Ok(_) => {
+            let locale = Locale::from_headers(&headers).as_sql();
+            match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                issue_select_cols("$3")
+            )))
+            .bind(issue_id)
+            .bind(tenant_id)
+            .bind(locale)
+            .fetch_one(&mut scope)
+            .await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit issue approve: {}", e);
+                        return ApiResponse::server_error("质量问题审批失败");
+                    }
+                    ApiResponse::success(
+                        QualityIssueWithWorkflow {
+                            issue: data,
+                            approval_workflow_id: None,
+                            approval_status: Some("approved".to_string()),
+                        },
+                        "质量问题审批通过",
+                    )
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload issue: {}", e);
+                    ApiResponse::server_error("质量问题审批失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to approve issue: {}", e);
             ApiResponse::server_error("质量问题审批失败")
@@ -610,7 +748,10 @@ pub async fn reject_issue(
     headers: axum::http::HeaderMap,
     Json(_req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<QualityIssueWithWorkflow> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
@@ -618,27 +759,56 @@ pub async fn reject_issue(
 
     tracing::info!("Rejecting issue {}", id);
 
-    let locale = Locale::from_headers(&headers).as_sql();
-    let returning_cols = issue_select_cols("$3");
-    let result = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "UPDATE qms.qa_quality_issues SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
-        returning_cols
-    )))
-        .bind(issue_id)
-        .bind(tenant_id)
-        .bind(locale)
-        .fetch_one(&state.pool)
-        .await;
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("质量问题审批驳回失败");
+        }
+    };
+    let updated = sqlx::query(only_own_schema_query!(
+        "qms",
+        "UPDATE qms.qa_quality_issues SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status IS DISTINCT FROM 'rejected'"
+    ))
+    .bind(issue_id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
-    match result {
-        Ok(data) => ApiResponse::success(
-            QualityIssueWithWorkflow {
-                issue: data,
-                approval_workflow_id: None,
-                approval_status: Some("rejected".to_string()),
-            },
-            "质量问题审批已驳回",
-        ),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("当前状态不允许驳回"),
+        Ok(_) => {
+            let locale = Locale::from_headers(&headers).as_sql();
+            match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                issue_select_cols("$3")
+            )))
+            .bind(issue_id)
+            .bind(tenant_id)
+            .bind(locale)
+            .fetch_one(&mut scope)
+            .await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit issue reject: {}", e);
+                        return ApiResponse::server_error("质量问题审批驳回失败");
+                    }
+                    ApiResponse::success(
+                        QualityIssueWithWorkflow {
+                            issue: data,
+                            approval_workflow_id: None,
+                            approval_status: Some("rejected".to_string()),
+                        },
+                        "质量问题审批已驳回",
+                    )
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload issue: {}", e);
+                    ApiResponse::server_error("质量问题审批驳回失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to reject issue: {}", e);
             ApiResponse::server_error("质量问题审批驳回失败")
@@ -683,22 +853,25 @@ pub async fn approve_issue_status(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> ApiResponse<QualityIssue> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("审批失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -711,13 +884,20 @@ pub async fn approve_issue_status(
             if issue_can_transition(&current_status, STATUS_CLOSED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, issue_select_cols("$3"))            )
-            ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
-            match issue {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_quality_issues SET status = $3, resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_CLOSED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    // 审批事件与主表同事务：写失败整体回滚 500，禁止"主表 200、事件缺失"。
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "issue",
                         &id.to_string(),
@@ -727,8 +907,30 @@ pub async fn approve_issue_status(
                         STATUS_CLOSED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "审批通过")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("审批失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        issue_select_cols("$3")
+                    )))
+                    .bind(id).bind(tenant_id).bind(locale).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit issue approve: {}", e);
+                                return ApiResponse::server_error("审批失败");
+                            }
+                            ApiResponse::success(data, "审批通过")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload issue: {}", e);
+                            ApiResponse::server_error("审批失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve issue: {}", e);
@@ -764,22 +966,25 @@ pub async fn reject_issue_status(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> ApiResponse<QualityIssue> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("驳回失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -787,13 +992,19 @@ pub async fn reject_issue_status(
             if issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_err() {
                 return ApiResponse::bad_request("当前状态不允许驳回");
             }
-            let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PROGRESS, issue_select_cols("$3"))            )
-            ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
-            match issue {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_quality_issues SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_IN_PROGRESS).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "issue",
                         &id.to_string(),
@@ -803,8 +1014,30 @@ pub async fn reject_issue_status(
                         STATUS_IN_PROGRESS,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "审批驳回")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("驳回失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        issue_select_cols("$3")
+                    )))
+                    .bind(id).bind(tenant_id).bind(locale).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit issue reject: {}", e);
+                                return ApiResponse::server_error("驳回失败");
+                            }
+                            ApiResponse::success(data, "审批驳回")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload issue: {}", e);
+                            ApiResponse::server_error("驳回失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to reject issue: {}", e);
@@ -840,22 +1073,25 @@ pub async fn cancel_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> ApiResponse<QualityIssue> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("取消失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -863,13 +1099,19 @@ pub async fn cancel_issue(
             if issue_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, issue_select_cols("$3"))            )
-            ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
-            match issue {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_quality_issues SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_CANCELLED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "issue",
                         &id.to_string(),
@@ -879,8 +1121,30 @@ pub async fn cancel_issue(
                         STATUS_CANCELLED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "质量问题已取消")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("取消失败");
+                    }
+                    let locale = Locale::from_headers(&headers).as_sql();
+                    match sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        issue_select_cols("$3")
+                    )))
+                    .bind(id).bind(tenant_id).bind(locale).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit issue cancel: {}", e);
+                                return ApiResponse::server_error("取消失败");
+                            }
+                            ApiResponse::success(data, "质量问题已取消")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload issue: {}", e);
+                            ApiResponse::server_error("取消失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel issue: {}", e);
