@@ -20,6 +20,24 @@
 SET ROLE :'app_role';
 \endif
 
+-- 硬拦：当前有效角色不得是 superuser / BYPASSRLS（否则 RLS 断言全部失真）
+DO $guard$
+DECLARE
+    v_super boolean;
+    v_bypass boolean;
+BEGIN
+    SELECT rolsuper, rolbypassrls INTO v_super, v_bypass
+    FROM pg_roles WHERE rolname = current_user;
+    IF v_super THEN
+        RAISE EXCEPTION '禁止以超级用户验证 RLS：% 是 superuser', current_user;
+    END IF;
+    IF v_bypass THEN
+        RAISE EXCEPTION '禁止以 BYPASSRLS 角色验证 RLS：%', current_user;
+    END IF;
+    RAISE NOTICE '验证角色 = %（非超户）', current_user;
+END
+$guard$;
+
 \echo ''
 \echo '=== A1. 12 张表策略清单（期望：每表 1~2 条，见迁移头注释）==='
 SELECT tablename,

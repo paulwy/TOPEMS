@@ -11,7 +11,9 @@ use crate::modules::audit::log_audit_event;
 use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+#[cfg(test)]
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -47,6 +49,24 @@ fn employee_cache_keys_all_locales(tenant_id: &Uuid, id: &Uuid) -> [String; 2] {
         employee_cache_key(tenant_id, id, "zh"),
         employee_cache_key(tenant_id, id, "en"),
     ]
+}
+
+/// by-id 读的租户回退：请求未携带租户上下文时，从目标资源行解析其租户。
+///
+/// 仅用于读路径；写路径必须由 [`require_tenant`] 严格返回 400，禁止回退。
+async fn employee_tenant_by_id(
+    txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    id: &Uuid,
+) -> Result<Uuid, TopemsError> {
+    sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "hrm",
+        "SELECT tenant_id FROM hrm.employees WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&mut **txn)
+    .await
+    .map_err(|e| TopemsError::Internal(format!("查询员工租户失败: {e}")))?
+    .ok_or_else(|| TopemsError::ResourceNotFound("员工不存在".to_string()))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -118,7 +138,10 @@ pub async fn list_employees(
     let tenant_id = if claims.is_superuser {
         Uuid::nil()
     } else {
-        get_tenant_id(&claims, &headers)
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => tenant,
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
     let service = EmployeeService::new(
         state.db.clone(),
@@ -166,16 +189,23 @@ pub async fn get_employee(
     >,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
 
-    // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离
+    // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离；
+    // 缺失时按 by-id 读规则回退到目标资源租户（服务身份在系统事务下可见该行）。
     let tenant_id = if claims.is_superuser {
         Uuid::nil()
     } else {
-        get_tenant_id(&claims, &headers)
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => tenant,
+            Err(_) => match employee_tenant_by_id(txn, &id).await {
+                Ok(tenant) => tenant,
+                Err(e) => return ApiResponse::from(e),
+            },
+        }
     };
     let locale = Locale::from_headers(&headers).as_sql();
     let cache_key = employee_cache_key(&tenant_id, &id, locale);
@@ -265,7 +295,13 @@ pub async fn get_employee_details(
     let tenant_id = if claims.is_superuser {
         Uuid::nil()
     } else {
-        get_tenant_id(&claims, &headers)
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => tenant,
+            Err(_) => match employee_tenant_by_id(txn, &id).await {
+                Ok(tenant) => tenant,
+                Err(e) => return ApiResponse::from(e),
+            },
+        }
     };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
@@ -353,7 +389,10 @@ pub async fn create_employee(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let service = EmployeeService::new(
         state.db.clone(),
         (*state.encryption).clone(),
@@ -509,7 +548,10 @@ pub async fn update_employee(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let service = EmployeeService::new(
         state.db.clone(),
         (*state.encryption).clone(),
@@ -656,7 +698,10 @@ pub async fn delete_employee(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let service = EmployeeService::new(
         state.db.clone(),
         (*state.encryption).clone(),
@@ -790,7 +835,10 @@ pub async fn export_employees(
     let tenant_id = if claims.is_superuser {
         Uuid::nil()
     } else {
-        get_tenant_id(&claims, &headers)
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => tenant,
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
 
     let employees = match &req.ids {
