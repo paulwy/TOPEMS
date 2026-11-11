@@ -314,7 +314,15 @@ handler 已自行 `guard.take()+commit()` 时 `Option` 为 `None`，收尾为空
 | WMS | `POST /api/wms/inbound-orders` `{"order_number":"S1-INB-1"}` | 200 | `wms.inbound_orders` 0→1 |
 | HRM | `POST /api/hrm/attendance/check-in` | 200 | `hrm.attendance_records` 0→1 |
 | HRM | 同上，body `{}` | 400 | `hrm.attendance_records` 1→1；日志 `rls_txn ... 回滚请求事务` |
+| CRM | `POST /api/crm/customers` `{"name","customer_type"}` | 200 | `crm.customers` 302→303 |
+| ERP | `POST /api/erp/customers` `{"code","name","customer_type"}` | 200 | `erp.customers` 0→1 |
+| SRM | `POST /api/srm/suppliers` `{"supplier_no","name","category","status","risk_level"}` | 200 | `srm.suppliers` 0→1 |
+| RD | `POST /api/rd/projects` `{"name","code","project_type":"R_D","leader","start_date"}` | 200 | `rs.projects` 命中新 id（+1） |
+| EHS | `POST /api/ehs/hazards` `{"title","category","level","source"}` | 200 | `ehs.qa_ehs_risks` 命中新 id（+1） |
+| CRM/RD | 缺必填字段 / 枚举值非法 | 422 | 行数不变；日志 `rls_txn ... 回滚请求事务` |
 | SCM | `POST /api/scm/sync/purchase-to-inbound`（正常单） | 200 | `scm.wms_inbound_order_snapshots` 0→1、`sync_logs` +1 |
+
+结论：8 个「写请求事务」服务全部实测到 2xx 提交；非 2xx 回滚与零落库由 3 条 HTTP 用例 + 2 条中间件 E2E 用例覆盖。其余 18 个挂中间件的服务不含 `&mut **txn` 写语句（见 6.2），本次改动对其无数据面影响。
 
 ### 6.4 硬指标未达成：`purchase-to-inbound` 失败后 `sync_logs` 仍落行
 
