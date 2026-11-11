@@ -40,6 +40,12 @@ impl UnifiedCoreRealModule {
             topems_shared_bootstrap::bootstrap_service_with_search_path(&config, "public").await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
+        // F1：`tenant_id IS NULL` 全局行监控。独立部署由 unified-core 的 main.rs 启动；
+        // 单体（topems-server）走本模块嵌入，必须在这里启动，否则生产没有该指标。
+        topems_unified_core::modules::iam::global_row_metrics::spawn_global_row_monitor(
+            topems_shared_db::scope::Db::new(ctx.db.clone(), "public, shared"),
+        );
+
         // P0 迷你试点（2026-10-29）：/ws/healthz + /ws/{module}/{feature}（对齐 P32-6 websocket-path-mapping）。
         // 复用 unified-core 的 WsState/handle_socket；独立 Router<Arc<WsState>> with_state 固化后 merge 进顶层，
         // 规避 Module 契约 routes() -> Router<()> 的 E0308 限制（同 mes_real_module WS 接线模式）。
