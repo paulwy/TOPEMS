@@ -14,7 +14,7 @@
 | 已 ENABLE+FORCE RLS | 107 |
 | 未启用 RLS | 2（`core_finance_currencies`、`reconcile_items`） |
 | 非空表 | 9，合计 **103 行** |
-| 表名清单 SHA256（按 `relname` 排序，119 行） | `5091d7af6d06517326a8ead567ac969bbd6abf06aae32be5dad81a1972de6917`（重定口径，见 §1.1；旧值 `2a314cb2…fdf750` **作废**） |
+| 表名清单 SHA256（v2：`schema.relname` 排序，119 行） | `31e68a2338793f319f1be5811226823150881fecc9c82108190476b732901e85`（见 §1.1；v1 旧值 `5091d7af…2de6917`、`2a314cb2…fdf750` 均标注为历史口径） |
 | 代码覆盖范围 | `services/finance/` 21 文件 205 处 + `modules/` 23 文件 687 处，裸池直接执行 SQL **全部清零**（B5-0 并入） |
 
 与 2026-11-09 设计文档的 104 张口径相比，两天内新增 5 张带 `tenant_id` 的表（A 类 84→89），漂移已在本清单固化。
@@ -142,24 +142,26 @@
 | source_amount_snapshots | 是 | 是 | 1 | UNSET+NIL+NULL+CAST | 0 | — |
 | vouchers | 是 | 是 | 1 | UNSET+NIL+NULL+CAST | 0 | — |
 
-### 1.1 表名清单 SHA256 复算（唯一口径，2026-11-10 重定）
+### 1.1 表名清单 SHA256 复算（v2 唯一口径，2026-11-10 定稿）
 
-旧值 `2a314cb213b9631c07cf4bde3b5caf126b13b7874b2170e8353cad8064fdf750` **作废**：其序列化口径当时未留档，在 119 张表名单上无法复算（名单本身零漂移，已用逐行 diff 证明生产与本文档 §1+§3 完全一致），因此重定唯一口径，今后复核只用下面这一条命令。
+**v2 是全仓唯一算法。** 序列化单元由 v1 的 `relname` 升为 `schema || '.' || relname`，其余不变。这样 B4（8 个 schema）与 B5（`finance`）能用同一行代码、同一套排序与同一把哈希复核，不再出现"同名表跨 schema 撞车"。
 
-口径写死：库 `topems_prod`、模式 `finance`、`relkind='r'`、只取 `relname`、SQL 侧 `ORDER BY relname COLLATE "C"`、客户端编码 UTF8、`psql -At`（行分隔符 LF，末尾带一个 LF）、哈希 SHA-256。
+口径写死：库 `topems_prod`、`relkind='r'`、拼接列 `n.nspname || '.' || c.relname`、SQL 侧 `ORDER BY (n.nspname||'.'||c.relname) COLLATE "C"`、客户端编码 UTF8、`psql -At`（行分隔符 LF，末尾带一个 LF）、哈希 SHA-256。**schema 过滤条件按域替换**：B5 为 `n.nspname='finance'`，B4 为 `n.nspname IN ('mes','wms','scm','srm','pdm','qms','lims','ehs')`。
 
 ```sh
 PGHOST=/tmp PGCLIENTENCODING=UTF8 /opt/homebrew/bin/psql -X -At -U topems_prod -d topems_prod \
-  -c "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='finance' AND c.relkind='r' ORDER BY c.relname COLLATE \"C\"" \
+  -c "SELECT n.nspname||'.'||c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='finance' AND c.relkind='r' ORDER BY (n.nspname||'.'||c.relname) COLLATE \"C\"" \
   | shasum -a 256 | cut -d' ' -f1
 ```
 
-2026-11-10 复算结果：
+2026-11-10 复算结果（v2）：
 
 | 项 | 值 |
 |---|---|
 | 行数 | 119 |
-| SHA256 | `5091d7af6d06517326a8ead567ac969bbd6abf06aae32be5dad81a1972de6917` |
+| SHA256 | `31e68a2338793f319f1be5811226823150881fecc9c82108190476b732901e85` |
+
+历史口径（v1，**仅存档、不再用于复核**）：序列化单元为 `relname`，命令与上同但 `SELECT c.relname` / `ORDER BY c.relname COLLATE "C"`；2026-11-10 得 `5091d7af6d06517326a8ead567ac969bbd6abf06aae32be5dad81a1972de6917`（119 行）。更早的 `2a314cb213b9631c07cf4bde3b5caf126b13b7874b2170e8353cad8064fdf750` 因序列化口径未留档、在 119 张名单上不可复算，已作废（名单本身零漂移，已用逐行 diff 证明生产与本文档 §1+§3 完全一致）。
 
 ## 2. 全局行 / 全局只读白名单（C）
 
@@ -425,7 +427,8 @@ FROM (
 ) s;
 
 -- 期望：与 §1 名单逐行一致（差异行必须为 0）
--- 表名清单 SHA256 = 2a314cb213b9631c07cf4bde3b5caf126b13b7874b2170e8353cad8064fdf750
+-- 表名清单 SHA256（v2 唯一口径，见 §1.1）= 31e68a2338793f319f1be5811226823150881fecc9c82108190476b732901e85
+-- （历史 v1 值 2a314cb2…fdf750 / 5091d7af…2de6917 已作废，不再用于复核）
 ```
 
 **冻结规则**：本文件一经确认，迁移批次只按 §1 名单执行；出现新表 → 停窗、重新冻结、重新评估批次归属。
