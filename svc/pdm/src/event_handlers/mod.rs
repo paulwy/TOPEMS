@@ -77,6 +77,7 @@ impl PdmEventHandlers {
             payload.total_amount
         );
 
+        // tenant-system: 后台事件处理器（白名单第 4 类），系统通道跨租户统计。
         let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
                 let count = sqlx::query_scalar::<_, i64>(
@@ -124,6 +125,7 @@ impl PdmEventHandlers {
         );
 
         if let Some(product_id) = payload.product_id {
+            // tenant-system: 后台事件处理器（白名单第 4 类），系统通道跨租户统计。
             let config_count = match self.db.scope_read_system().await {
                 Ok(mut scope) => {
                     let count = sqlx::query_scalar::<_, i64>(
@@ -178,6 +180,7 @@ impl PdmEventHandlers {
             payload.received_by
         );
 
+        // tenant-system: 后台事件处理器（白名单第 4 类），系统通道跨租户统计。
         let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
                 let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_materials")
@@ -259,6 +262,7 @@ impl PdmEventHandlers {
 
         // pdm_master_data_refs 无 tenant_id，按「全局只读 + 系统通道写」处理：
         // 写入必须走 scope_system（app.rls_system='on'），不能用请求租户上下文借道。
+        // tenant-system: 后台事件处理器（白名单第 4 类），主数据引用按系统通道写。
         let result = match self.db.scope_system().await {
             Ok(mut scope) => {
                 let result = sqlx::query(

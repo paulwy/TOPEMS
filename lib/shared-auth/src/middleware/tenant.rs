@@ -7,7 +7,9 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+use prometheus::{register_int_counter_vec, IntCounterVec};
 use sqlx::PgPool;
+use std::sync::OnceLock;
 use uuid::Uuid;
 
 /// 请求级 RLS 事务句柄：由 `tenant_middleware` 创建并挂到请求扩展上，
@@ -138,18 +140,103 @@ impl TenantContext {
     }
 }
 
+/// 兜底分支计数器（仅观测，不改变行为）。
+///
+/// `reason` 取值：`no_claims_no_header` / `invalid_claims_no_header` /
+/// `no_claims_invalid_header` / `invalid_claims_invalid_header`。
+static TENANT_FALLBACK: OnceLock<IntCounterVec> = OnceLock::new();
+
+#[allow(clippy::expect_used)]
+fn tenant_fallback_metric() -> &'static IntCounterVec {
+    TENANT_FALLBACK.get_or_init(|| {
+        register_int_counter_vec!(
+            "topems_tenant_id_fallback_total",
+            "get_tenant_id 进入随机 UUID 兜底的次数（按缺失原因）",
+            &["reason"]
+        )
+        .expect("failed to register topems_tenant_id_fallback_total")
+    })
+}
+
+tokio::task_local! {
+    /// 当前请求路径（仅用于兜底告警定位端点，不参与任何业务判定）。
+    static REQUEST_PATH: String;
+}
+
+/// 在请求作用域内携带 URI 路径，供 `get_tenant_id` 兜底告警标注端点。
+pub async fn scope_request_path<F, T>(path: String, fut: F) -> T
+where
+    F: std::future::Future<Output = T>,
+{
+    REQUEST_PATH.scope(path, fut).await
+}
+
+fn current_request_path() -> String {
+    REQUEST_PATH
+        .try_with(|p| p.clone())
+        .unwrap_or_else(|_| "-".to_string())
+}
+
 pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
-    claims
+    if let Some(tenant) = claims
         .tenant_id
-        .as_ref()
+        .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
+    {
+        return tenant;
+    }
+    let header_raw = headers.get("x-tenant-id").and_then(|v| v.to_str().ok());
+    if let Some(tenant) = header_raw.and_then(|s| Uuid::parse_str(s).ok()) {
+        return tenant;
+    }
+
+    // W7 get_tenant_id 改造第一步：只观测，不改变返回值。
+    // 该路径返回随机 UUID，任何按它读写的行都会落到不存在的租户（fail-closed 读 0 行/
+    // 写入孤儿行），因此先摸清真实触发频次与端点分布，再决定是否删除兜底。
+    let reason = match (claims.tenant_id.as_deref(), header_raw) {
+        (None, None) => "no_claims_no_header",
+        (Some(_), None) => "invalid_claims_no_header",
+        (None, Some(_)) => "no_claims_invalid_header",
+        (Some(_), Some(_)) => "invalid_claims_invalid_header",
+    };
+    tracing::warn!(
+        target: "tenant_fallback",
+        reason,
+        user = %claims.username,
+        is_superuser = claims.is_superuser,
+        path = %current_request_path(),
+        "get_tenant_id 缺少租户上下文，进入随机 UUID 兜底（W7 观测，未改变行为）"
+    );
+    tenant_fallback_metric().with_label_values(&[reason]).inc();
+    Uuid::new_v4()
+}
+
+/// 严格租户解析（W7 第二阶段）：claims → `x-tenant-id` → 400，禁止随机兜底。
+///
+/// 与 [`get_tenant_id`] 的区别：缺失或非法租户一律返回 `Err((400, 说明))`，
+/// 不会生成随机 UUID，也不会把 nil 当作可用租户。
+///
+/// 系统通道白名单仅四类：字典、主数据、健康检查、后台任务。这些路径必须显式
+/// 使用 `scope_system` / `scope_read_system`，并在调用处标注
+/// `// tenant-system: <原因>`；其余路径一律要求请求携带租户上下文。
+pub fn require_tenant(claims: &Claims, headers: &HeaderMap) -> Result<Uuid, (u16, String)> {
+    if let Some(tenant) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        return Ok(tenant);
+    }
+    if let Some(tenant) = headers
+        .get("x-tenant-id")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .filter(|t| !t.is_nil())
+    {
+        return Ok(tenant);
+    }
+    Err((400, "缺少租户上下文".to_string()))
 }
 
 /// 仅从 `Claims.tenant_id` 解析租户 ID，不回退到 header。
