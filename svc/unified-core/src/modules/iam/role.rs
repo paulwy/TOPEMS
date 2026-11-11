@@ -800,9 +800,15 @@ pub async fn add_role_permission(
         Err(_) => return json_error(403, "缺少租户上下文，无法授权角色"),
     };
 
-    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
-        Ok(RoleTarget::Ok) => {}
-        Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
+    // 写路径只允许本租户角色：全局角色为所有租户共用，租户管理员不得改动其权限面。
+    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+        Ok(tenant_scope::RoleWriteTarget::Ok) => {}
+        Ok(tenant_scope::RoleWriteTarget::NotFound) => {
+            return json_error(404, "角色不存在");
+        }
+        Ok(tenant_scope::RoleWriteTarget::Forbidden) => {
+            return json_error(403, "无权修改全局角色，请由平台管理员操作");
+        }
         Err(e) => {
             tracing::error!("Failed to check role target scope: {}", e);
             return json_error(500, &format!("查询角色失败: {}", e));
@@ -913,9 +919,15 @@ pub async fn remove_role_permission(
         Err(_) => return json_error(403, "缺少租户上下文，无法移除角色权限"),
     };
 
-    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
-        Ok(RoleTarget::Ok) => {}
-        Ok(RoleTarget::NotFound) => return json_error(404, "角色不存在"),
+    // 写路径只允许本租户角色：全局角色为所有租户共用，租户管理员不得改动其权限面。
+    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+        Ok(tenant_scope::RoleWriteTarget::Ok) => {}
+        Ok(tenant_scope::RoleWriteTarget::NotFound) => {
+            return json_error(404, "角色不存在");
+        }
+        Ok(tenant_scope::RoleWriteTarget::Forbidden) => {
+            return json_error(403, "无权修改全局角色，请由平台管理员操作");
+        }
         Err(e) => {
             tracing::error!("Failed to check role target scope: {}", e);
             return json_error(500, &format!("查询角色失败: {}", e));

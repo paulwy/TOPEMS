@@ -224,16 +224,15 @@ pub enum RoleTarget {
     NotFound,
 }
 
-/// 校验角色目标是否在作用域内。租户模式只认 `tenant_id = 本租户`，
-/// 平台角色（tenant_id NULL）与他租户角色一律按不存在处理，避免泄露。
+/// 读取角色归属租户。`Some(None)` 表示全局角色，`None` 表示角色不存在。
 ///
-/// `core_roles` 是 FORCE RLS 表，裸池无 GUC 时只能看到 `tenant_id IS NULL`
-/// 的全局角色，租户域角色会被误判为不存在；因此必须走作用域事务。
-pub async fn check_role_target(
+/// `core_roles` 是 FORCE RLS 表，必须走作用域事务，裸池无 GUC 时租户域角色会被
+/// 误判为不存在。
+async fn fetch_role_tenant(
     db: &Db,
     scope: IamScope,
     role_id: Uuid,
-) -> Result<RoleTarget, sqlx::Error> {
+) -> Result<Option<Option<Uuid>>, sqlx::Error> {
     let mut txn = match scope {
         IamScope::Platform => db.scope_read_system().await?,
         IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
@@ -247,17 +246,59 @@ pub async fn check_role_target(
     .await?;
 
     txn.commit().await?;
+    Ok(row)
+}
+
+/// 读/授予路径的角色目标校验。租户模式只认 `tenant_id = 本租户` 或全局角色
+/// （全局角色是平台角色目录，按产品语义租户可授予本租户成员，权限上限仍由
+/// `role_permission_codes` 校验）；他租户角色按不存在处理，避免泄露。
+pub async fn check_role_target(
+    db: &Db,
+    scope: IamScope,
+    role_id: Uuid,
+) -> Result<RoleTarget, sqlx::Error> {
+    let row = fetch_role_tenant(db, scope, role_id).await?;
 
     Ok(match (scope, row) {
         (_, None) => RoleTarget::NotFound,
         (IamScope::Platform, Some(_)) => RoleTarget::Ok,
-        // 全局角色（tenant_id IS NULL）是平台角色目录，按产品语义租户可授予
-        // 本租户成员；授予后的权限上限仍由 role_permission_codes 校验。
         (IamScope::Tenant(_), Some(None)) => RoleTarget::Ok,
         (IamScope::Tenant(tenant), Some(Some(role_tenant))) if role_tenant == tenant => {
             RoleTarget::Ok
         }
         (IamScope::Tenant(_), Some(_)) => RoleTarget::NotFound,
+    })
+}
+
+/// 角色权限写路径的目标校验结果。
+pub enum RoleWriteTarget {
+    Ok,
+    /// 角色存在，但为全局角色，租户管理员无权修改其权限面。
+    Forbidden,
+    NotFound,
+}
+
+/// 角色权限写路径（`add_role_permission` / `remove_role_permission`）的校验。
+///
+/// 与读/授予路径不同：租户模式只允许**本租户角色**。全局角色（`tenant_id IS
+/// NULL`）为所有租户共用，若允许租户管理员改动其权限面，等于跨租户写入；
+/// 平台模式（超管或平台管理员）保持既有全量行为。
+pub async fn check_role_write_target(
+    db: &Db,
+    scope: IamScope,
+    role_id: Uuid,
+) -> Result<RoleWriteTarget, sqlx::Error> {
+    let row = fetch_role_tenant(db, scope, role_id).await?;
+
+    Ok(match (scope, row) {
+        (_, None) => RoleWriteTarget::NotFound,
+        (IamScope::Platform, Some(_)) => RoleWriteTarget::Ok,
+        (IamScope::Tenant(tenant), Some(Some(role_tenant))) if role_tenant == tenant => {
+            RoleWriteTarget::Ok
+        }
+        // 全局角色对租户可见、可授予，但不可改；他租户角色在作用域内不可见。
+        (IamScope::Tenant(_), Some(None)) => RoleWriteTarget::Forbidden,
+        (IamScope::Tenant(_), Some(_)) => RoleWriteTarget::NotFound,
     })
 }
 
