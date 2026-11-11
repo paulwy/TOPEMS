@@ -389,6 +389,17 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-pool-acquire.mjs --changed-only
 
+    # [Gate TC] 租户上下文回归门禁（W7 第二步配套）
+    # R1 event_handlers 内使用 scope_system/scope_read_system；R2 modules 内直接使用 state.pool。
+    # 存量按文件计数冻结在 scripts/ci/tenant-context-baseline.json（2026-11-11：R1 4 / R2 1764），
+    # 只拦新增；确属系统通道的调用用 `// tenant-system: <原因>` 登记（见 lib/shared-db/src/schema.rs 模块头）。
+    tenant-context:
+      tags: database rls tenant
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-tenant-context.cjs --changed-only
+
     # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
     i18n-hardcode-admin:
       tags: frontend i18n hardcoded

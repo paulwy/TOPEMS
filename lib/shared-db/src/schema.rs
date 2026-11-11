@@ -1,5 +1,17 @@
 //! TOPEMS 系统的 Schema 定义
 //! 为了确保数据库架构隔离，每个服务都应该只访问自己对应的 Schema
+//!
+//! # 租户上下文登记约定（`// tenant-system:`）
+//!
+//! 启动期自愈、后台任务、健康检查等**没有请求租户上下文**的入口，允许走显式系统通道
+//! （`scope_system` / `scope_read_system` / 裸池 DDL），但必须在调用处或函数上方写一行：
+//!
+//! ```text
+//! // tenant-system: <原因>
+//! ```
+//!
+//! 该注释是 `scripts/ci/check-tenant-context.cjs` 的唯一豁免依据；没有注释的系统通道调用
+//! 会被判为新违规。代码里不得用"注释掉"的方式绕过——豁免必须写明为什么这里没有租户。
 
 pub const PUBLIC_SCHEMA: &str = "public";
 pub const UNIFIED_CORE_SCHEMA: &str = "unified_core";
@@ -536,6 +548,72 @@ pub async fn verify_table_columns(
     Ok(())
 }
 
+/// 给「本次 ensure 才补上 tenant_id」的表补租户隔离。
+///
+/// 只处理两类情况，且都不改变既有数据的可见性：
+///   - 空表（自愈新建的 skeleton）→ 直接 `ENABLE` + `FORCE` + 策略，新表从第一天就不裸奔；
+///   - 非空表（历史漂移）→ **不自动收紧**，只 WARN：既有行 tenant_id 多为 NULL，
+///     立即 FORCE 会让它们对所有租户不可见，必须先走迁移回填再收紧。
+///
+/// 策略实现复用 [`crate::rls::enable_tenant_rls`]，避免与中间件生成器出现两套谓词。
+// tenant-system: 启动期 schema 自愈，无请求租户上下文，属显式系统通道。
+async fn harden_new_tenant_tables(pool: &PgPool, schema: &str, tables: &[&str], service_tag: &str) {
+    let mut hardened: Vec<&str> = Vec::new();
+    let mut skipped: Vec<&str> = Vec::new();
+    for tbl in tables {
+        let count_sql = format!("SELECT count(*) FROM {}.{}", schema, tbl);
+        let rows: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
+            .fetch_one(pool)
+            .await
+        {
+            Ok(n) => n,
+            Err(e) => {
+                tracing::warn!(
+                    "[{} 租户隔离自愈] {}.{} 行数探测失败，跳过收紧: {}",
+                    service_tag,
+                    schema,
+                    tbl,
+                    e
+                );
+                skipped.push(tbl);
+                continue;
+            }
+        };
+        if rows > 0 {
+            skipped.push(tbl);
+            continue;
+        }
+        match crate::rls::enable_tenant_rls(pool, schema, tbl).await {
+            Ok(()) => hardened.push(tbl),
+            Err(e) => {
+                tracing::warn!(
+                    "[{} 租户隔离自愈] {}.{} 补 ENABLE/FORCE 失败: {}",
+                    service_tag,
+                    schema,
+                    tbl,
+                    e
+                );
+            }
+        }
+    }
+    if !hardened.is_empty() {
+        tracing::info!(
+            "[{} 租户隔离自愈] 自愈新增 tenant_id 的表已补 ENABLE/FORCE + 策略（{} 张）: {:?}",
+            service_tag,
+            hardened.len(),
+            hardened
+        );
+    }
+    if !skipped.is_empty() {
+        tracing::warn!(
+            "[{} 租户隔离自愈] 以下表本次补了 tenant_id 但表非空，未自动收紧；\
+             需迁移回填 tenant_id 后再 ENABLE/FORCE: {:?}",
+            service_tag,
+            skipped
+        );
+    }
+}
+
 /// 两阶段主入口：阶段 1 ensure（增量迁移）+ 阶段 2 verify（一致性自检）
 ///
 /// 参数：
@@ -613,6 +691,35 @@ pub async fn run_schema_defense(
     }
 
     // --------------------------------------------------------------------
+    // 阶段 0：记录 ensure 前缺少 tenant_id 的表
+    //
+    // 自愈建表（TABLE_DEFS 新增表）会先建 skeleton、再由阶段 1 补 tenant_id；
+    // 这类表若只补列不补策略，就会成为「有租户列、无 ENABLE/FORCE」的裸表。
+    // tenant-system: 启动期 schema 自愈没有请求租户上下文，走显式系统通道。
+    // --------------------------------------------------------------------
+    let mut new_tenant_tables: Vec<&str> = Vec::new();
+    if !skip_ensure {
+        for (tbl, cols_arr) in table_defs {
+            if !cols_arr.iter().any(|(col, _)| *col == "tenant_id") {
+                continue;
+            }
+            let exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM information_schema.columns \
+                 WHERE table_schema = $1 AND table_name = $2 AND column_name = 'tenant_id')",
+            )
+            .bind(schema)
+            .bind(*tbl)
+            .fetch_one(pool)
+            .await
+            // 查询失败按「已存在」处理：宁可少收紧，也不在信息不确定时误改线上表。
+            .unwrap_or(true);
+            if !exists {
+                new_tenant_tables.push(tbl);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------
     // 阶段 1：增量迁移 —— 逐列 ADD COLUMN IF NOT EXISTS（可被门控跳过）
     // --------------------------------------------------------------------
     let mut tables_done = 0usize;
@@ -641,6 +748,13 @@ pub async fn run_schema_defense(
             tables_done,
             cols_added
         );
+    }
+
+    // --------------------------------------------------------------------
+    // 阶段 1b：自愈新增 tenant_id 的表补 RLS（FORCE 模板根因）
+    // --------------------------------------------------------------------
+    if !new_tenant_tables.is_empty() {
+        harden_new_tenant_tables(pool, schema, &new_tenant_tables, service_tag).await;
     }
 
     // --------------------------------------------------------------------

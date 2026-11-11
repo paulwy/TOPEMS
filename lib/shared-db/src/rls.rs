@@ -28,6 +28,82 @@ impl Default for RlsConfig {
     }
 }
 
+/// 对单表启用 `ENABLE` + `FORCE ROW LEVEL SECURITY` 并确保租户策略存在。
+///
+/// 供启动期自愈（`schema::run_schema_defense`）与 [`RlsMiddleware`] 共用，
+/// 保证「策略形态」只有这一份实现：
+///   nil UUID（超管/服务身份）→ 全量
+///   精确租户匹配 → 本租户
+///   GUC 未设置 / 被 RESET 成空串 → 两侧为 NULL → 全拒（fail-closed）
+///
+/// ⚠️ 禁止退回 `tenant_id IS NULL` / `current_setting(...) = ''` 的"未设即豁免"分支
+/// （会把未设租户的查询放大成全量，等于关闭隔离）；CI 门禁见
+/// `scripts/ci/check-rls-policy-shape.sh`。
+///
+/// 调用方必须是表 owner 或超管；传入的 `schema` / `table` 均来自代码内静态定义或
+/// `information_schema`，不接受外部输入。
+// tenant-system: 启动期/管理面 DDL，没有请求租户上下文；这是显式系统通道，不参与租户隔离。
+pub async fn enable_tenant_rls(
+    pool: &PgPool,
+    schema: &str,
+    table: &str,
+) -> Result<(), sqlx::Error> {
+    let enable_rls = format!(
+        "ALTER TABLE IF EXISTS {}.{} ENABLE ROW LEVEL SECURITY",
+        schema, table
+    );
+    sqlx::query(sqlx::AssertSqlSafe(enable_rls))
+        .execute(pool)
+        .await?;
+
+    // P0：与 owner 身份解耦。未 FORCE 时表 owner（应用角色）会完全绕过 RLS，
+    // 策略是否 fail-closed 都形同不存在；FORCE 后才能保证受限身份也受策略约束。
+    let force_rls = format!(
+        "ALTER TABLE IF EXISTS {}.{} FORCE ROW LEVEL SECURITY",
+        schema, table
+    );
+    sqlx::query(sqlx::AssertSqlSafe(force_rls))
+        .execute(pool)
+        .await?;
+
+    let policy_name = format!("tenant_isolation_{}", table);
+    // PostgreSQL 18 不支持 CREATE POLICY IF NOT EXISTS（语法错误），
+    // 需先判断策略是否存在：存在则 ALTER POLICY 更新，否则 CREATE POLICY。
+    let policy_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = $1 AND tablename = $2 AND policyname = $3
+        )",
+    )
+    .bind(schema)
+    .bind(table)
+    .bind(&policy_name)
+    .fetch_one(pool)
+    .await?;
+
+    let nil_uuid = "00000000-0000-0000-0000-000000000000";
+    let pred = format!(
+        "(NULLIF(current_setting('app.tenant_id', true), ''))::uuid = '{nil_uuid}'::uuid
+         OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid"
+    );
+    let policy_sql = if policy_exists {
+        format!(
+            "ALTER POLICY {} ON {}.{} USING ({pred}) WITH CHECK ({pred})",
+            policy_name, schema, table
+        )
+    } else {
+        format!(
+            "CREATE POLICY {} ON {}.{} FOR ALL TO PUBLIC USING ({pred}) WITH CHECK ({pred})",
+            policy_name, schema, table
+        )
+    };
+    sqlx::query(sqlx::AssertSqlSafe(policy_sql))
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
 #[derive(Debug)]
 pub struct RlsMiddleware {
     pool: PgPool,
@@ -49,6 +125,7 @@ impl RlsMiddleware {
         Ok(Self { pool, config })
     }
 
+    // tenant-system: 启动期/管理面按 schema 批量收紧，无请求租户上下文，属显式系统通道。
     async fn enable_rls_on_tables(pool: &PgPool, schema: &str) -> Result<(), sqlx::Error> {
         // 仅选择含 tenant_id 列的表，避免对无租户列的表创建策略时报错
         let tables = sqlx::query(
@@ -71,66 +148,7 @@ impl RlsMiddleware {
 
         for table in tables {
             let table_name: String = table.try_get("table_name")?;
-            let enable_rls = format!(
-                "ALTER TABLE IF EXISTS {}.{} ENABLE ROW LEVEL SECURITY",
-                schema, table_name
-            );
-            sqlx::query(sqlx::AssertSqlSafe(enable_rls))
-                .execute(pool)
-                .await?;
-
-            // P0：与 owner 身份解耦。未 FORCE 时表 owner（应用角色）会完全绕过 RLS，
-            // 策略是否 fail-closed 都形同不存在；FORCE 后才能保证受限身份也受策略约束。
-            let force_rls = format!(
-                "ALTER TABLE IF EXISTS {}.{} FORCE ROW LEVEL SECURITY",
-                schema, table_name
-            );
-            sqlx::query(sqlx::AssertSqlSafe(force_rls))
-                .execute(pool)
-                .await?;
-
-            let policy_name = format!("tenant_isolation_{}", table_name);
-            // PostgreSQL 18 不支持 CREATE POLICY IF NOT EXISTS（语法错误），
-            // 需先判断策略是否存在：存在则 ALTER POLICY 更新，否则 CREATE POLICY。
-            let policy_exists: bool = sqlx::query_scalar(
-                "SELECT EXISTS (
-                    SELECT 1 FROM pg_policies
-                    WHERE schemaname = $1 AND tablename = $2 AND policyname = $3
-                )",
-            )
-            .bind(schema)
-            .bind(&table_name)
-            .bind(&policy_name)
-            .fetch_one(pool)
-            .await?;
-
-            // 策略形态的唯一真相源是迁移 `20261106120100_p0_rls_fail_closed.sql`，此处保持同一条谓词：
-            //   nil UUID（超管/服务身份）→ 全量
-            //   精确租户匹配 → 本租户
-            //   GUC 未设置 / 被 RESET 成空串 → 两侧为 NULL → 全拒（fail-closed）
-            // ⚠️ 禁止再退回 `tenant_id IS NULL` / `current_setting(...) = ''` 的"未设即豁免"分支
-            //   （会把未设租户的查询放大成全量，等于关闭隔离）；CI 门禁见
-            //   `scripts/ci/check-rls-policy-shape.sh`。
-            let nil_uuid = "00000000-0000-0000-0000-000000000000";
-            let pred = format!(
-                "(NULLIF(current_setting('app.tenant_id', true), ''))::uuid = '{nil_uuid}'::uuid
-                 OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid"
-            );
-            let policy_sql = if policy_exists {
-                format!(
-                    "ALTER POLICY {} ON {}.{} USING ({pred}) WITH CHECK ({pred})",
-                    policy_name, schema, table_name
-                )
-            } else {
-                format!(
-                    "CREATE POLICY {} ON {}.{} FOR ALL TO PUBLIC USING ({pred}) WITH CHECK ({pred})",
-                    policy_name, schema, table_name
-                )
-            };
-            sqlx::query(sqlx::AssertSqlSafe(policy_sql))
-                .execute(pool)
-                .await?;
-
+            enable_tenant_rls(pool, schema, &table_name).await?;
             debug!("Enabled FORCE RLS for table: {}", table_name);
         }
 
