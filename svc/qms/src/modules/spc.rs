@@ -10,6 +10,7 @@ use bigdecimal::ToPrimitive;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
@@ -205,23 +206,41 @@ pub async fn create_spc_chart(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcChartRequest>,
 ) -> ApiResponse<SpcChart> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let chart_no = format!(
         "SPC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
+    // TODO(w-b6b): product_id 属跨域主数据（pdm/mdm），当前未校验属主。
     let product_id = req
         .product_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启SPC控制图创建事务失败: {}", e);
+            return ApiResponse::server_error("SPC控制图创建失败");
+        }
+    };
+
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, COALESCE($19, 'active'), $20) RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.chart_name).bind(req.process_name).bind(req.unit).bind(req.usl).bind(req.lsl).bind(req.target).bind(req.sample_size).bind(req.sampling_frequency).bind(req.description).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(req.created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match chart {
-        Ok(data) => ApiResponse::success(data, "SPC控制图创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交SPC控制图创建事务失败: {}", e);
+                return ApiResponse::server_error("SPC控制图创建失败");
+            }
+            ApiResponse::success(data, "SPC控制图创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create SPC chart: {}", e);
             ApiResponse::server_error("SPC控制图创建失败")
@@ -304,18 +323,35 @@ pub async fn update_spc_chart(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSpcChartRequest>,
 ) -> ApiResponse<SpcChart> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启SPC控制图更新事务失败: {}", e);
+            return ApiResponse::server_error("SPC控制图更新失败");
+        }
+    };
+
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), chart_name = COALESCE($4, chart_name), process_name = COALESCE($5, process_name), unit = COALESCE($6, unit), usl = COALESCE($7, usl), lsl = COALESCE($8, lsl), target = COALESCE($9, target), sample_size = COALESCE($10, sample_size), sampling_frequency = COALESCE($11, sampling_frequency), description = COALESCE($12, description), ucl = COALESCE($13, ucl), cl = COALESCE($14, cl), lcl = COALESCE($15, lcl), status = COALESCE($16, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $17 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.chart_name).bind(req.process_name).bind(req.unit).bind(req.usl).bind(req.lsl).bind(req.target).bind(req.sample_size).bind(req.sampling_frequency).bind(req.description).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match chart {
-        Ok(data) => ApiResponse::success(data, "SPC控制图更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交SPC控制图更新事务失败: {}", e);
+                return ApiResponse::server_error("SPC控制图更新失败");
+            }
+            ApiResponse::success(data, "SPC控制图更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update SPC chart: {}", e);
@@ -343,23 +379,41 @@ pub async fn delete_spc_chart(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启SPC控制图删除事务失败: {}", e);
+            return ApiResponse::server_error("SPC控制图删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_spc_charts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_spc_charts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "SPC控制图删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("SPC控制图不存在"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交SPC控制图删除事务失败: {}", e);
+                return ApiResponse::server_error("SPC控制图删除失败");
+            }
+            ApiResponse::success(true, "SPC控制图删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete SPC chart: {}", e);
             ApiResponse::server_error("SPC控制图删除失败")
@@ -438,33 +492,48 @@ pub async fn add_spc_data_point(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcDataRequest>,
 ) -> ApiResponse<SpcDataPoint> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&req.chart_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id.to_string()).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启SPC数据点创建事务失败: {}", e);
+            return ApiResponse::server_error("SPC数据点添加失败");
+        }
+    };
+
+    // 同域引用校验：控制图必须存在且同租户，禁止跨租户挂靠。
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(chart_id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
+    let chart = match chart {
+        Ok(c) => c,
+        Err(sqlx::Error::RowNotFound) => {
+            return ApiResponse::bad_request("SPC控制图不存在或不属于当前租户")
+        }
+        Err(e) => {
+            tracing::error!("Failed to find SPC chart: {}", e);
+            return ApiResponse::server_error("SPC数据点添加失败");
+        }
+    };
+
     let ucl = chart
+        .ucl
         .as_ref()
-        .ok()
-        .and_then(|c| c.ucl.as_ref().and_then(|v| v.to_f64()))
+        .and_then(|v| v.to_f64())
         .unwrap_or(f64::INFINITY);
     let lcl = chart
+        .lcl
         .as_ref()
-        .ok()
-        .and_then(|c| c.lcl.as_ref().and_then(|v| v.to_f64()))
+        .and_then(|v| v.to_f64())
         .unwrap_or(f64::NEG_INFINITY);
     let value_f64 = big_decimal_to_f64_non_opt(req.value.clone());
     let is_out_of_control = Some(value_f64 > ucl || value_f64 < lcl);
@@ -477,14 +546,25 @@ pub async fn add_spc_data_point(
         .map(|dt| dt.with_timezone(&chrono::Utc));
 
     let point = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_data_points (tenant_id, chart_id, sample_no, value, subgroup_size, is_out_of_control, mean, range, operator, remark, measured_at) VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id::TEXT, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, mean, range, operator, remark, measured_at, created_at"#)).bind(tenant_id).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control).bind(req.mean).bind(req.range).bind(req.operator).bind(req.remark).bind(measured_at)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match point {
         Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET sample_count = COALESCE(sample_count, 0) + 1, updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2"#)).bind(chart_id.to_string()).bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+            // 子表计数与数据点同事务，失败整体回滚。
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET sample_count = COALESCE(sample_count, 0) + 1, updated_at = NOW() WHERE id = $1 AND tenant_id = $2"#))
+                .bind(chart_id)
+                .bind(tenant_id)
+                .execute(&mut scope)
+                .await
+            {
+                tracing::error!("更新SPC控制图计数失败，整体回滚: {}", e);
+                return ApiResponse::server_error("SPC数据点添加失败");
+            }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交SPC数据点事务失败: {}", e);
+                return ApiResponse::server_error("SPC数据点添加失败");
+            }
             ApiResponse::success(data, "SPC数据点添加成功")
         }
         Err(e) => {

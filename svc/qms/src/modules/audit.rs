@@ -9,6 +9,7 @@ use axum::{
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -88,7 +89,10 @@ pub async fn create_audit_plan(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateAuditPlanRequest>,
 ) -> ApiResponse<AuditPlan> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let plan_no = format!(
         "AP-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -98,12 +102,46 @@ pub async fn create_audit_plan(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9) RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核计划创建事务失败: {}", e);
+            return ApiResponse::server_error("审核计划创建失败");
+        }
+    };
+
+    // 同域引用校验：检验标准若给出，必须存在且同租户。
+    if let Some(sid) = standard_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_standards WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(sid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("检验标准不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate standard: {}", e);
+                return ApiResponse::server_error("审核计划创建失败");
+            }
+        }
+    }
+
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7::timestamptz, $8::timestamptz, $9) RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
-        Ok(data) => ApiResponse::success(data, "审核计划创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核计划创建事务失败: {}", e);
+                return ApiResponse::server_error("审核计划创建失败");
+            }
+            ApiResponse::success(data, "审核计划创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create audit plan: {}", e);
             ApiResponse::server_error("审核计划创建失败")
@@ -185,19 +223,36 @@ pub async fn start_audit_plan(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditPlan> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核计划启动事务失败: {}", e);
+            return ApiResponse::server_error("审核计划启动失败");
+        }
+    };
+
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
-        Ok(data) => ApiResponse::success(data, "审核计划已启动"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核计划启动事务失败: {}", e);
+                return ApiResponse::server_error("审核计划启动失败");
+            }
+            ApiResponse::success(data, "审核计划已启动")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("计划不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to start audit plan: {}", e);
             ApiResponse::server_error("审核计划启动失败")
@@ -224,19 +279,36 @@ pub async fn complete_audit_plan(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditPlan> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核计划完成事务失败: {}", e);
+            return ApiResponse::server_error("审核计划完成失败");
+        }
+    };
+
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
-        Ok(data) => ApiResponse::success(data, "审核计划已完成"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核计划完成事务失败: {}", e);
+                return ApiResponse::server_error("审核计划完成失败");
+            }
+            ApiResponse::success(data, "审核计划已完成")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("计划不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to complete audit plan: {}", e);
             ApiResponse::server_error("审核计划完成失败")
@@ -326,7 +398,10 @@ pub async fn create_audit_task(
     axum::extract::Path(plan_id): axum::extract::Path<String>,
     Json(req): Json<CreateAuditTaskRequest>,
 ) -> ApiResponse<AuditTask> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let plan_id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
@@ -337,12 +412,44 @@ pub async fn create_audit_task(
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
-    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_tasks (tenant_id, task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(tenant_id).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核任务创建事务失败: {}", e);
+            return ApiResponse::server_error("审核任务创建失败");
+        }
+    };
+
+    // 同域引用校验：父计划必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_audit_plans WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(plan_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("审核计划不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate audit plan: {}", e);
+            return ApiResponse::server_error("审核任务创建失败");
+        }
+    }
+
+    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_tasks (tenant_id, task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(tenant_id).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor)
+    .fetch_one(&mut scope)
     .await;
 
     match task {
-        Ok(data) => ApiResponse::success(data, "审核任务创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核任务创建事务失败: {}", e);
+                return ApiResponse::server_error("审核任务创建失败");
+            }
+            ApiResponse::success(data, "审核任务创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create audit task: {}", e);
             ApiResponse::server_error("审核任务创建失败")
@@ -369,19 +476,36 @@ pub async fn complete_audit_task(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditTask> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核任务完成事务失败: {}", e);
+            return ApiResponse::server_error("审核任务完成失败");
+        }
+    };
+
+    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match task {
-        Ok(data) => ApiResponse::success(data, "审核任务已完成"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核任务完成事务失败: {}", e);
+                return ApiResponse::server_error("审核任务完成失败");
+            }
+            ApiResponse::success(data, "审核任务已完成")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("任务不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to complete audit task: {}", e);
             ApiResponse::server_error("审核任务完成失败")
@@ -483,15 +607,10 @@ pub async fn create_audit_finding(
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Json(req): Json<CreateAuditFindingRequest>,
 ) -> ApiResponse<AuditFinding> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
@@ -503,36 +622,56 @@ pub async fn create_audit_finding(
     );
     let severity = req.severity.unwrap_or_else(|| "minor".to_string());
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核发现创建事务失败: {}", e);
+            return ApiResponse::server_error("审核发现创建失败");
+        }
+    };
+
+    // 同域引用校验：父任务必须存在且同租户。
     let task = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"SELECT plan_id FROM qms.qa_audit_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+        r#"SELECT plan_id FROM qms.qa_audit_tasks WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(task_id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     let plan_id = match task {
         Ok(row) => row.get::<Uuid, _>("plan_id"),
-        Err(_) => {
-            tracing::error!("Task not found");
-            return ApiResponse::not_found("审核任务不存在");
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("审核任务不存在"),
+        Err(e) => {
+            tracing::error!("Failed to find audit task: {}", e);
+            return ApiResponse::server_error("审核发现创建失败");
         }
     };
 
-    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_findings (tenant_id, finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(finding_no).bind(task_id).bind(plan_id).bind(req.title).bind(req.description).bind(severity).bind(req.category).bind(req.recommendation).bind(req.responsible).bind(req.target_date).bind(req.created_by)
-    .fetch_one(&state.pool)
+    // target_date 输入为文本，显式 cast 到 timestamptz（B6a 同类修复）。
+    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_findings (tenant_id, finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11::timestamptz, $12) RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(finding_no).bind(task_id).bind(plan_id).bind(req.title).bind(req.description).bind(severity).bind(req.category).bind(req.recommendation).bind(req.responsible).bind(req.target_date).bind(req.created_by)
+    .fetch_one(&mut scope)
     .await;
 
     match finding {
         Ok(data) => {
-            let _ = sqlx::query(
+            // 子表计数与主行同事务，失败整体回滚。
+            if let Err(e) = sqlx::query(
                 only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET finding_count = finding_count + 1 WHERE id = $1 AND tenant_id = $2"#),
             )
             .bind(task_id)
             .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("更新审核任务发现计数失败，整体回滚: {}", e);
+                return ApiResponse::server_error("审核发现创建失败");
+            }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核发现创建事务失败: {}", e);
+                return ApiResponse::server_error("审核发现创建失败");
+            }
             ApiResponse::success(data, "审核发现创建成功")
         }
         Err(e) => {
@@ -561,19 +700,36 @@ pub async fn verify_audit_finding(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditFinding> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的发现ID"),
     };
 
-    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核发现验证事务失败: {}", e);
+            return ApiResponse::server_error("审核发现验证失败");
+        }
+    };
+
+    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match finding {
-        Ok(data) => ApiResponse::success(data, "审核发现已验证"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核发现验证事务失败: {}", e);
+                return ApiResponse::server_error("审核发现验证失败");
+            }
+            ApiResponse::success(data, "审核发现已验证")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("发现不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to verify audit finding: {}", e);
             ApiResponse::server_error("审核发现验证失败")
