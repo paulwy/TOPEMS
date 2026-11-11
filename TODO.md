@@ -704,3 +704,30 @@ DLQ。若将来需要超管操作也产生事件，必须先定义「平台级�
 
 以上三条合起来即「通知功能从未接通」：功能是死的，只是没人报障。优先级低于 RLS 收口，
 但需单独立项修复。
+
+## 17. 请求事务收尾与连接容量（2026-11-12 立项）
+
+### 17.1 连接池容量按「每写请求 2 条连接」重算
+
+`tenant_middleware` 在请求开始 `pool.begin()` 占用 1 条连接，直到响应结束才 commit/rollback；
+handler 内若再调用 `Db::scope_for_tenant()` / `scope()`（QMS 86 处、PM 130 处、PDM 115 处），
+会再 `BEGIN` 一条新连接。**写请求峰值 = 2 条连接/请求**，读请求若也用 `scope*` 同样是 2 条。
+
+当前各服务 `max_connections` 取 2（如 `svc/server` 日志 `max_connections=2`），31 个模块池合计
+上限约 62 条，远低于「并发写请求数 × 2」。收敛方案（`scope_with` 复用请求事务）落地前，
+连接池参数必须按 2 倍重算，否则高并发下先出现池等待、再出现请求事务与 scope 事务互相等待。
+
+### 17.2 架构工单：「请求事务 vs `scope_for_tenant`」二选一（需先出全局方案）
+
+同一请求内存在两套互不相干的事务：
+
+1. 中间件请求事务（`lib/shared-auth/src/middleware/tenant.rs`），由 `Extension<Arc<Mutex<Option<Transaction>>>>`
+   传给 handler，SCM/WMS/ERP/HRM/CRM/SRM/RD/EHS 共 8 个服务在用（`&mut **txn` 写语句合计 590 条）。
+2. `Db::scope_for_tenant()` 自开连接自开事务（`lib/shared-db/src/scope.rs`），QMS/PM/PDM 等在用。
+
+两者不是同一条连接、不是同一层事务：外层非 2xx 回滚不会回滚内层 scope 已 commit 的写入，
+反之 scope 失败也不影响外层请求事务里的写入。**必须先出全局方案**（推荐统一到 `scope_with`
+复用请求事务，或明确废弃请求事务、全部改 scope），再按服务分批改；禁止在单个窗口里逐服务
+改一半。
+
+判定依据见 `docs/quality/w7-b4-scm-ehs-wms-readonly-assessment-2026-11-12.md` §5。
