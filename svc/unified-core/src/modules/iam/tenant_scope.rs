@@ -251,6 +251,9 @@ pub async fn check_role_target(
     Ok(match (scope, row) {
         (_, None) => RoleTarget::NotFound,
         (IamScope::Platform, Some(_)) => RoleTarget::Ok,
+        // 全局角色（tenant_id IS NULL）是平台角色目录，按产品语义租户可授予
+        // 本租户成员；授予后的权限上限仍由 role_permission_codes 校验。
+        (IamScope::Tenant(_), Some(None)) => RoleTarget::Ok,
         (IamScope::Tenant(tenant), Some(Some(role_tenant))) if role_tenant == tenant => {
             RoleTarget::Ok
         }
