@@ -122,10 +122,15 @@ const RoleManagementPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: authApi.createRole,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // 后端错误走内层 code（HTTP 恒 200），必须读 success 判定
+      if (!data?.success) {
+        pushToast('error', data?.message || i18n.t('iam.role_management_page.create_failed'));
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDrawerOpen(false);
-      pushToast('success', i18n.t('iam.role_management_page.k1'));
+      pushToast('success', i18n.t('iam.role_management_page.k7'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -133,21 +138,31 @@ const RoleManagementPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof authApi.updateRole>[1] }) =>
       authApi.updateRole(id, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // 同上：内层 success=false 时不得弹成功、不得关闭抽屉
+      if (!data?.success) {
+        pushToast('error', data?.message || i18n.t('iam.role_management_page.update_failed'));
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDrawerOpen(false);
       setEditingRole(null);
-      pushToast('success', i18n.t('iam.role_management_page.k2'));
+      pushToast('success', i18n.t('iam.role_management_page.k7'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
 
   const deleteMutation = useMutation({
     mutationFn: authApi.deleteRole,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // 同上：内层 success=false 时不得弹成功、不得清删除目标
+      if (!data?.success) {
+        pushToast('error', data?.message || i18n.t('iam.role_management_page.delete_failed'));
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', i18n.t('iam.role_management_page.k3'));
+      pushToast('success', i18n.t('iam.role_management_page.k7'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -160,7 +175,7 @@ const RoleManagementPage: React.FC = () => {
       if (!data?.success) {
         pushToast(
           'error',
-          data?.message || i18n.t('iam.role_management_page.messages.add_permission_failed')
+          data?.message || i18n.t('iam.role_management_page.add_permission_failed')
         );
         return;
       }
@@ -178,7 +193,7 @@ const RoleManagementPage: React.FC = () => {
       if (!data?.success) {
         pushToast(
           'error',
-          data?.message || i18n.t('iam.role_management_page.messages.remove_permission_failed')
+          data?.message || i18n.t('iam.role_management_page.remove_permission_failed')
         );
         return;
       }
