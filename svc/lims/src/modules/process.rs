@@ -63,12 +63,21 @@ pub async fn list_processes(
     headers: HeaderMap,
 ) -> ApiResponse<Vec<InspectionProcess>> {
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检验流程列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("加载检验流程失败");
+        }
+    };
     let rows = sqlx::query(
         "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes ORDER BY created_at DESC",
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(data) => {
@@ -124,13 +133,22 @@ pub async fn get_process(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检验流程读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检验流程失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
     .bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(data) => {
@@ -163,6 +181,14 @@ pub async fn create_process(
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateProcessRequest>,
 ) -> ApiResponse<InspectionProcess> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 创建检验流程写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建检验流程失败");
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
@@ -170,11 +196,15 @@ pub async fn create_process(
     .bind(req.description)
     .bind(req.steps)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 创建检验流程事务提交失败: {}", e);
+                return ApiResponse::server_error("创建检验流程失败");
+            }
             let is_active: bool = data.get("is_active");
             let process = InspectionProcess {
                 id: data.get("id"),
@@ -210,6 +240,14 @@ pub async fn update_process(
 
     let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 更新检验流程写作用域创建失败: {}", e);
+            return ApiResponse::server_error("更新检验流程失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
@@ -218,11 +256,15 @@ pub async fn update_process(
     .bind(req.description)
     .bind(req.steps)
     .bind(is_active)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 更新检验流程事务提交失败: {}", e);
+                return ApiResponse::server_error("更新检验流程失败");
+            }
             let is_active: bool = data.get("is_active");
             let process = InspectionProcess {
                 id: data.get("id"),
@@ -256,15 +298,27 @@ pub async fn delete_process(
         Err(_) => return ApiResponse::bad_request("Invalid process ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 删除检验流程写作用域创建失败: {}", e);
+            return ApiResponse::server_error("删除检验流程失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lab_processes SET deleted_at = NOW() WHERE id = $1")
         .bind(uuid)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
         Ok(data) => {
             if data.rows_affected() == 0 {
                 return ApiResponse::not_found("Process not found");
+            }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 删除检验流程事务提交失败: {}", e);
+                return ApiResponse::server_error("删除检验流程失败");
             }
             ApiResponse::success("OK".to_string(), "Process deleted successfully")
         }

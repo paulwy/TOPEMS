@@ -360,3 +360,31 @@ impl<'c> Executor<'c> for &'c mut ScopedTxn<'_> {
         conn.describe(sql)
     }
 }
+
+#[cfg(test)]
+mod tenant_guard_tests {
+    use super::*;
+    use sqlx::postgres::PgPoolOptions;
+
+    /// nil 租户必须直接报错，不允许降级成系统通道或 nil 租户作用域。
+    #[tokio::test]
+    async fn explicit_tenant_scopes_reject_nil() {
+        let Ok(pool) = PgPoolOptions::new().connect_lazy("postgres://u:p@127.0.0.1:1/none") else {
+            return;
+        };
+
+        let read_db = Db::new(pool.clone(), "lims, public");
+        let err = read_db.scope_read_for_tenant(Uuid::nil()).await.err();
+        assert!(
+            matches!(&err, Some(sqlx::Error::Protocol(m)) if m.contains("RLS context missing")),
+            "scope_read_for_tenant(nil) 应返回 Protocol: {err:?}"
+        );
+
+        let write_db = Db::new(pool, "lims, public");
+        let err = write_db.scope_for_tenant(Uuid::nil()).await.err();
+        assert!(
+            matches!(&err, Some(sqlx::Error::Protocol(m)) if m.contains("RLS context missing")),
+            "scope_for_tenant(nil) 应返回 Protocol: {err:?}"
+        );
+    }
+}

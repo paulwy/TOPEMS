@@ -151,14 +151,24 @@ pub async fn list_tasks_by_sample(
         Some(ctx.tenant_id)
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取样品检测任务读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取样品检测任务失败");
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC",
         TASK_SELECT_COLS
     )))
     .bind(sample_uuid)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(data) => {
@@ -196,13 +206,21 @@ pub async fn complete_step(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 步骤记录写作用域创建失败: {}", e);
+            return ApiResponse::server_error("步骤记录写入失败");
+        }
+    };
+
     // 校验任务存在
     let task_row = sqlx::query(
         "SELECT task_no FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(task_uuid)
     .bind(ctx.tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match task_row {
@@ -234,7 +252,7 @@ pub async fn complete_step(
     .bind(&req.conclusion)
     .bind(&req.inspector)
     .bind(ctx.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     if let Err(e) = insert_res {
@@ -252,11 +270,17 @@ pub async fn complete_step(
     .bind(&req.conclusion)
     .bind(&req.inspector)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(task_from_row(&r), "步骤完成，检验记录已保存"),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 步骤记录事务提交失败: {}", e);
+                return ApiResponse::server_error("步骤记录写入失败");
+            }
+            ApiResponse::success(task_from_row(&r), "步骤完成，检验记录已保存")
+        }
         Err(e) => {
             tracing::error!("Failed to update task after step: {}", e);
             ApiResponse::server_error("任务更新失败")
@@ -294,13 +318,23 @@ pub async fn list_tasks(
         }
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测任务列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测任务列表失败");
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
         TASK_SELECT_COLS
     )))
     .bind(ctx.tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(data) => {
@@ -360,9 +394,17 @@ pub async fn create_task(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测任务创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测任务创建失败");
+        }
+    };
+
     let row = sqlx::query("SELECT id, sample_no FROM public.qa_lab_samples WHERE id = $1")
         .bind(sample_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
     let sample = match row {
@@ -396,11 +438,15 @@ pub async fn create_task(
     .bind(&req.assigned_to)
     .bind(instrument_id)
     .bind(&req.planned_date)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测任务创建事务提交失败: {}", e);
+                return ApiResponse::server_error("检测任务创建失败");
+            }
             let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -482,14 +528,24 @@ pub async fn get_task(
         }
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测任务读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测任务失败");
+        }
+    };
+
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         TASK_SELECT_COLS
     )))
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => {
@@ -543,6 +599,14 @@ pub async fn update_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测任务更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测任务更新失败");
+        }
+    };
+
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5::timestamp, actual_start_date), actual_end_date = COALESCE($6::timestamp, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
         TASK_SELECT_COLS
@@ -554,11 +618,15 @@ pub async fn update_task(
     .bind(&req.actual_start_date)
     .bind(&req.actual_end_date)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测任务更新事务提交失败: {}", e);
+                return ApiResponse::server_error("检测任务更新失败");
+            }
             let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -633,6 +701,14 @@ pub async fn submit_result(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测结果提交写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测结果提交失败");
+        }
+    };
+
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
         TASK_SELECT_COLS
@@ -642,11 +718,15 @@ pub async fn submit_result(
     .bind(&req.conclusion)
     .bind(&req.recorded_by)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测结果提交事务提交失败: {}", e);
+                return ApiResponse::server_error("检测结果提交失败");
+            }
             let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -770,16 +850,28 @@ pub async fn delete_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测任务删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测任务删除失败");
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE public.qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(ctx.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测任务删除事务提交失败: {}", e);
+                return ApiResponse::server_error("检测任务删除失败");
+            }
             // 失效详情缓存并广播列表失效
             let detail_key = task_detail_key(&Some(ctx.tenant_id), &id.to_string());
             state.task_cache.remove(&detail_key).await;

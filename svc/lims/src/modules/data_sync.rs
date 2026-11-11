@@ -115,7 +115,15 @@ pub async fn list_sync_records(
         }
     }
 
-    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取同步记录列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取同步记录列表失败");
+        }
+    };
+
+    let records = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| SyncRecord {
                 id: row.get("id"),
@@ -134,6 +142,8 @@ pub async fn list_sync_records(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match records {
         Ok(data) => ApiResponse::success(data, "获取同步记录列表成功"),
@@ -166,12 +176,22 @@ pub async fn get_sync_record(
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取同步记录读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取同步记录失败");
+        }
+    };
+
     let row = sqlx::query(
         "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at, tenant_id FROM qa_lims_sync_records WHERE id = $1"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -269,32 +289,46 @@ pub async fn retry_sync(
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 同步重试写作用域创建失败: {}", e);
+            return ApiResponse::server_error("同步重试失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lims_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at, tenant_id"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "同步记录已重置为待处理",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 同步重试事务提交失败: {}", e);
+                return ApiResponse::server_error("同步重试失败");
+            }
+            ApiResponse::success(
+                SyncRecord {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    sync_no: r.get("sync_no"),
+                    sync_type: r.get("sync_type"),
+                    source_id: r.get("source_id"),
+                    target_service: r.get("target_service"),
+                    target_id: r.get("target_id"),
+                    status: r.get("status"),
+                    payload: r.get("payload"),
+                    response: r.get("response"),
+                    error_msg: r.get("error_msg"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "同步记录已重置为待处理",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -313,13 +347,27 @@ pub async fn delete_sync_record(
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 同步记录删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("同步记录删除失败");
+        }
+    };
+
     let result = sqlx::query("DELETE FROM qa_lims_sync_records WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "同步记录删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 同步记录删除事务提交失败: {}", e);
+                return ApiResponse::server_error("同步记录删除失败");
+            }
+            ApiResponse::success(true, "同步记录删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
             ApiResponse::server_error("同步记录删除失败")

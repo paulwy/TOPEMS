@@ -28,6 +28,13 @@ pub async fn list_instrument_data(
     let offset = (page - 1) * page_size;
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取仪器数据列表失败");
+        }
+    };
     let mut query_builder = QueryBuilder::<Postgres>::new(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
@@ -68,7 +75,7 @@ pub async fn list_instrument_data(
 
     let data = query_builder
         .build()
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .map(|rows| {
             rows.into_iter()
@@ -94,6 +101,8 @@ pub async fn list_instrument_data(
                 })
                 .collect()
         });
+
+    let _ = scope.commit().await;
 
     match data {
         Ok(data) => ApiResponse::success(data, "获取仪器数据列表成功"),
@@ -128,6 +137,13 @@ pub async fn get_instrument_data(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据详情读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取仪器数据失败");
+        }
+    };
     let row = sqlx::query(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
@@ -142,8 +158,10 @@ pub async fn get_instrument_data(
     )
     .bind(id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -199,6 +217,14 @@ pub async fn create_instrument_data(
         None => None,
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建仪器数据失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_instrument_data
@@ -217,33 +243,39 @@ pub async fn create_instrument_data(
     .bind(&req.protocol)
     .bind(&req.raw_data)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            InstrumentData {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                data_no: r.get("data_no"),
-                instrument_id: r.get("instrument_id"),
-                instrument_no: None,
-                instrument_name: None,
-                batch_no: r.get("batch_no"),
-                protocol: r.get("protocol"),
-                raw_data: r.get("raw_data"),
-                parsed_data: r.get("parsed_data"),
-                status: r.get("status"),
-                quality_score: r.get("quality_score"),
-                error_msg: r.get("error_msg"),
-                collected_at: r.get("collected_at"),
-                parsed_at: r.get("parsed_at"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "仪器数据创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器数据创建事务提交失败: {}", e);
+                return ApiResponse::server_error("创建仪器数据失败");
+            }
+            ApiResponse::success(
+                InstrumentData {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    data_no: r.get("data_no"),
+                    instrument_id: r.get("instrument_id"),
+                    instrument_no: None,
+                    instrument_name: None,
+                    batch_no: r.get("batch_no"),
+                    protocol: r.get("protocol"),
+                    raw_data: r.get("raw_data"),
+                    parsed_data: r.get("parsed_data"),
+                    status: r.get("status"),
+                    quality_score: r.get("quality_score"),
+                    error_msg: r.get("error_msg"),
+                    collected_at: r.get("collected_at"),
+                    parsed_at: r.get("parsed_at"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "仪器数据创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create instrument data: {}", e);
             ApiResponse::server_error("创建仪器数据失败")
@@ -259,6 +291,14 @@ pub async fn update_instrument_data(
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的数据ID"),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("更新仪器数据失败");
+        }
     };
 
     let row = sqlx::query(
@@ -279,33 +319,39 @@ pub async fn update_instrument_data(
     .bind(&req.status)
     .bind(&req.parsed_data)
     .bind(&req.error_msg)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            InstrumentData {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                data_no: r.get("data_no"),
-                instrument_id: r.get("instrument_id"),
-                instrument_no: None,
-                instrument_name: None,
-                batch_no: r.get("batch_no"),
-                protocol: r.get("protocol"),
-                raw_data: r.get("raw_data"),
-                parsed_data: r.get("parsed_data"),
-                status: r.get("status"),
-                quality_score: r.get("quality_score"),
-                error_msg: r.get("error_msg"),
-                collected_at: r.get("collected_at"),
-                parsed_at: r.get("parsed_at"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "仪器数据更新成功",
-        ),
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器数据更新事务提交失败: {}", e);
+                return ApiResponse::server_error("更新仪器数据失败");
+            }
+            ApiResponse::success(
+                InstrumentData {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    data_no: r.get("data_no"),
+                    instrument_id: r.get("instrument_id"),
+                    instrument_no: None,
+                    instrument_name: None,
+                    batch_no: r.get("batch_no"),
+                    protocol: r.get("protocol"),
+                    raw_data: r.get("raw_data"),
+                    parsed_data: r.get("parsed_data"),
+                    status: r.get("status"),
+                    quality_score: r.get("quality_score"),
+                    error_msg: r.get("error_msg"),
+                    collected_at: r.get("collected_at"),
+                    parsed_at: r.get("parsed_at"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "仪器数据更新成功",
+            )
+        }
         Ok(None) => ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to update instrument data: {}", e);
@@ -323,13 +369,27 @@ pub async fn delete_instrument_data(
         Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("删除仪器数据失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "仪器数据删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器数据删除事务提交失败: {}", e);
+                return ApiResponse::server_error("删除仪器数据失败");
+            }
+            ApiResponse::success(true, "仪器数据删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete instrument data: {}", e);
             ApiResponse::server_error("删除仪器数据失败")

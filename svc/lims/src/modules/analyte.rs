@@ -116,7 +116,14 @@ async fn list_analytes(
     for p in &params {
         count_query = count_query.bind(p);
     }
-    let total = match count_query.fetch_one(&state.pool).await {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 查询检验项目读作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验项目失败");
+        }
+    };
+    let total: i64 = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[lims] analyte 计数失败: {}", e);
@@ -132,7 +139,7 @@ async fn list_analytes(
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[lims] analyte 查询失败: {}", e);
@@ -154,6 +161,9 @@ async fn list_analytes(
             description: r.get("description"),
         })
         .collect();
+
+    let _ = scope.commit().await;
+
     ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
@@ -176,7 +186,17 @@ async fn get_analyte(
         sql = format!("{sql} AND tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let row = q.fetch_optional(&state.pool).await;
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 查询检验项目读作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验项目失败");
+        }
+    };
+    let row = q.fetch_optional(&mut scope).await;
+
+    let _ = scope.commit().await;
+
     match row {
         Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
@@ -209,6 +229,13 @@ async fn create_analyte(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = ctx.tenant_id;
     let _ = claims;
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检验项目创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项目创建失败");
+        }
+    };
     let result = sqlx::query(
         "INSERT INTO lims.qa_lims_analytes \
          (tenant_id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description) \
@@ -224,11 +251,15 @@ async fn create_analyte(
     .bind(&req.accuracy)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检验项目创建事务提交失败: {}", e);
+                return ApiResponse::server_error("检验项目创建失败");
+            }
             ApiResponse::success(serde_json::json!({ "id": id }), "检验项目创建成功")
         }
         Ok(None) => ApiResponse::server_error("检验项目创建失败"),
@@ -256,6 +287,13 @@ async fn update_analyte(
         limit_value = COALESCE($6, limit_value), accuracy = COALESCE($7, accuracy), \
         status = COALESCE($8, status), description = COALESCE($9, description), \
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检验项目更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项目更新失败");
+        }
+    };
     let result = match filter {
         Some(t) => {
             sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -271,7 +309,7 @@ async fn update_analyte(
             .bind(&req.status)
             .bind(&req.description)
             .bind(t)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
         }
         None => {
@@ -285,12 +323,18 @@ async fn update_analyte(
                 .bind(&req.accuracy)
                 .bind(&req.status)
                 .bind(&req.description)
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut scope)
                 .await
         }
     };
     match result {
-        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验项目更新成功"),
+        Ok(Some(_)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检验项目更新事务提交失败: {}", e);
+                return ApiResponse::server_error("检验项目更新失败");
+            }
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验项目更新成功")
+        }
         Ok(None) => ApiResponse::not_found("检验项目不存在"),
         Err(e) => {
             tracing::error!("[lims] analyte 更新失败: {}", e);
@@ -306,22 +350,35 @@ async fn delete_analyte(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let filter = resolve_tenant(&ctx, &claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检验项目删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项目删除失败");
+        }
+    };
     let result = if let Some(t) = filter {
         sqlx::query(
             "UPDATE lims.qa_lims_analytes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else {
         sqlx::query("UPDATE lims.qa_lims_analytes SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项目删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检验项目删除事务提交失败: {}", e);
+                return ApiResponse::server_error("检验项目删除失败");
+            }
+            ApiResponse::success("".to_string(), "检验项目删除成功")
+        }
         Ok(_) => ApiResponse::not_found("检验项目不存在"),
         Err(e) => {
             tracing::error!("[lims] analyte 删除失败: {}", e);

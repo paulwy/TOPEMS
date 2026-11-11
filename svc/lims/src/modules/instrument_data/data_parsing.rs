@@ -27,11 +27,19 @@ pub async fn parse_instrument_data(
         Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据解析写作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取仪器数据失败");
+        }
+    };
+
     let data_row = sqlx::query(
         "SELECT id::TEXT, data_no, protocol, raw_data FROM qa_lims_instrument_data WHERE id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (raw_data, protocol) = match data_row {
@@ -78,37 +86,43 @@ pub async fn parse_instrument_data(
         "parse_failed"
     })
     .bind(&parse_result.error_msg)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            InstrumentData {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                data_no: r.get("data_no"),
-                instrument_id: r.get("instrument_id"),
-                instrument_no: None,
-                instrument_name: None,
-                batch_no: r.get("batch_no"),
-                protocol: r.get("protocol"),
-                raw_data: r.get("raw_data"),
-                parsed_data: r.get("parsed_data"),
-                status: r.get("status"),
-                quality_score: r.get("quality_score"),
-                error_msg: r.get("error_msg"),
-                collected_at: r.get("collected_at"),
-                parsed_at: r.get("parsed_at"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            if parse_result.success {
-                "数据解析成功"
-            } else {
-                "数据解析失败"
-            },
-        ),
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器数据解析事务提交失败: {}", e);
+                return ApiResponse::server_error("解析数据失败");
+            }
+            ApiResponse::success(
+                InstrumentData {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    data_no: r.get("data_no"),
+                    instrument_id: r.get("instrument_id"),
+                    instrument_no: None,
+                    instrument_name: None,
+                    batch_no: r.get("batch_no"),
+                    protocol: r.get("protocol"),
+                    raw_data: r.get("raw_data"),
+                    parsed_data: r.get("parsed_data"),
+                    status: r.get("status"),
+                    quality_score: r.get("quality_score"),
+                    error_msg: r.get("error_msg"),
+                    collected_at: r.get("collected_at"),
+                    parsed_at: r.get("parsed_at"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                if parse_result.success {
+                    "数据解析成功"
+                } else {
+                    "数据解析失败"
+                },
+            )
+        }
         Ok(None) => ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to update parsed data: {}", e);

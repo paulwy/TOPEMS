@@ -17,51 +17,59 @@ use super::models::{InstrumentDataStatistics, ProtocolStat};
 pub async fn get_instrument_data_statistics(
     State(state): State<crate::shared::AppState>,
 ) -> ApiResponse<InstrumentDataStatistics> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器数据统计读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取统计数据失败");
+        }
+    };
+
     let total_data: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_instrument_data")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
     let today_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM qa_lims_instrument_data WHERE created_at >= CURRENT_DATE",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
     let success_count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_instrument_data WHERE status = 'parsed'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
     let failed_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM qa_lims_instrument_data WHERE status = 'parse_failed'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
     let pending_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM qa_lims_instrument_data WHERE status = 'pending' OR status = 'collected'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
     let total_tasks: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_collection_tasks")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
     let running_tasks: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_collection_tasks WHERE status = 'active'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
     let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_parse_rules")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -73,7 +81,7 @@ pub async fn get_instrument_data_statistics(
         ORDER BY count DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -97,6 +105,8 @@ pub async fn get_instrument_data_statistics(
         protocol_distribution: Some(protocol_distribution),
         instrument_distribution: None,
     };
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(stats, "获取统计数据成功")
 }

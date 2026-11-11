@@ -75,13 +75,23 @@ pub async fn list_reports(
 
     let search_pattern = query.sample_name.as_ref().map(|n| format!("%{}%", n));
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测报告列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测报告列表失败");
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(base_sql))
         .bind(&search_pattern)
         .bind(&query.status)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -122,6 +132,14 @@ pub async fn get_report(
         Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测报告读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测报告失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
@@ -131,8 +149,10 @@ pub async fn get_report(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(r)) => {
@@ -183,6 +203,14 @@ pub async fn generate_report(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 生成检测报告写作用域创建失败: {}", e);
+            return ApiResponse::server_error("生成检测报告失败");
+        }
+    };
+
     // Get sample info
     let sample_row = sqlx::query(
         r#"
@@ -191,7 +219,7 @@ pub async fn generate_report(
         "#,
     )
     .bind(sample_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (sample_no, sample_name, _sample_type, _source) = match sample_row {
@@ -258,7 +286,7 @@ pub async fn generate_report(
     .bind(&conclusion)
     .bind(&req.remark)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -268,8 +296,13 @@ pub async fn generate_report(
                 "UPDATE public.qa_lab_samples SET status = 'completed', updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 生成检测报告事务提交失败: {}", e);
+                return ApiResponse::server_error("生成检测报告失败");
+            }
 
             let report = serde_json::json!({
                 "id": r.get::<String, _>("id"),
@@ -354,6 +387,14 @@ pub async fn approve_report(
     };
     let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 报告审核写作用域创建失败: {}", e);
+            return ApiResponse::server_error("审核报告失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE public.qa_lab_inspection_reports
@@ -366,11 +407,15 @@ pub async fn approve_report(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
         Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 报告审核事务提交失败: {}", e);
+                return ApiResponse::server_error("审核报告失败");
+            }
             let report = serde_json::json!({
                 "id": r.get::<String, _>("id"),
                 "report_no": r.get::<String, _>("report_no"),
@@ -404,6 +449,14 @@ pub async fn export_report_pdf(
         Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 导出报告读作用域创建失败: {}", e);
+            return ApiResponse::server_error("导出报告失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
@@ -413,8 +466,10 @@ pub async fn export_report_pdf(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(r)) => {

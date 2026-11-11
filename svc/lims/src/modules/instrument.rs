@@ -157,7 +157,15 @@ pub async fn list_instruments(
         }
     }
 
-    let instruments = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取仪器列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取仪器列表失败");
+        }
+    };
+
+    let instruments = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| Instrument {
                 id: row.get("id"),
@@ -175,6 +183,8 @@ pub async fn list_instruments(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match instruments {
         Ok(data) => ApiResponse::success(data, "获取仪器列表成功"),
@@ -207,6 +217,14 @@ pub async fn create_instrument(
     );
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("仪器创建失败");
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO qa_lab_instruments (tenant_id, instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, $5, 'normal', $6) RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
@@ -216,27 +234,33 @@ pub async fn create_instrument(
     .bind(&req.model)
     .bind(&req.manufacturer)
     .bind(&req.location)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            Instrument {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                instrument_no: r.get("instrument_no"),
-                name: r.get("name"),
-                model: r.get("model"),
-                manufacturer: r.get("manufacturer"),
-                status: r.get("status"),
-                location: r.get("location"),
-                last_calibration_at: r.get("last_calibration_at"),
-                next_calibration_at: r.get("next_calibration_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "仪器创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器创建事务提交失败: {}", e);
+                return ApiResponse::server_error("仪器创建失败");
+            }
+            ApiResponse::success(
+                Instrument {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    instrument_no: r.get("instrument_no"),
+                    name: r.get("name"),
+                    model: r.get("model"),
+                    manufacturer: r.get("manufacturer"),
+                    status: r.get("status"),
+                    location: r.get("location"),
+                    last_calibration_at: r.get("last_calibration_at"),
+                    next_calibration_at: r.get("next_calibration_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "仪器创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create instrument: {}", e);
             ApiResponse::server_error("仪器创建失败")
@@ -275,14 +299,23 @@ pub async fn get_instrument(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取仪器读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取仪器失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
     .bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -323,6 +356,14 @@ pub async fn update_instrument(
     };
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("仪器更新失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lab_instruments SET name = COALESCE($2, name), model = COALESCE($3, model), manufacturer = COALESCE($4, manufacturer), status = COALESCE($5, status), location = COALESCE($6, location), next_calibration_at = COALESCE($7::timestamp, next_calibration_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
@@ -334,27 +375,33 @@ pub async fn update_instrument(
     .bind(&req.location)
     .bind(&req.next_calibration_at)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            Instrument {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                instrument_no: r.get("instrument_no"),
-                name: r.get("name"),
-                model: r.get("model"),
-                manufacturer: r.get("manufacturer"),
-                status: r.get("status"),
-                location: r.get("location"),
-                last_calibration_at: r.get("last_calibration_at"),
-                next_calibration_at: r.get("next_calibration_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "仪器更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器更新事务提交失败: {}", e);
+                return ApiResponse::server_error("仪器更新失败");
+            }
+            ApiResponse::success(
+                Instrument {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    instrument_no: r.get("instrument_no"),
+                    name: r.get("name"),
+                    model: r.get("model"),
+                    manufacturer: r.get("manufacturer"),
+                    status: r.get("status"),
+                    location: r.get("location"),
+                    last_calibration_at: r.get("last_calibration_at"),
+                    next_calibration_at: r.get("next_calibration_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "仪器更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -389,33 +436,47 @@ pub async fn calibrate(
     };
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器校准写作用域创建失败: {}", e);
+            return ApiResponse::server_error("仪器校准失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
     .bind(id)
     .bind(&req.next_calibration_at)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            Instrument {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                instrument_no: r.get("instrument_no"),
-                name: r.get("name"),
-                model: r.get("model"),
-                manufacturer: r.get("manufacturer"),
-                status: r.get("status"),
-                location: r.get("location"),
-                last_calibration_at: r.get("last_calibration_at"),
-                next_calibration_at: r.get("next_calibration_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "仪器校准成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器校准事务提交失败: {}", e);
+                return ApiResponse::server_error("仪器校准失败");
+            }
+            ApiResponse::success(
+                Instrument {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    instrument_no: r.get("instrument_no"),
+                    name: r.get("name"),
+                    model: r.get("model"),
+                    manufacturer: r.get("manufacturer"),
+                    status: r.get("status"),
+                    location: r.get("location"),
+                    last_calibration_at: r.get("last_calibration_at"),
+                    next_calibration_at: r.get("next_calibration_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "仪器校准成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to calibrate instrument: {}", e);
             ApiResponse::server_error("仪器校准失败")
@@ -434,16 +495,30 @@ pub async fn delete_instrument(
     };
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 仪器删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("仪器删除失败");
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE qa_lab_instruments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "仪器删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 仪器删除事务提交失败: {}", e);
+                return ApiResponse::server_error("仪器删除失败");
+            }
+            ApiResponse::success(true, "仪器删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete instrument: {}", e);
             ApiResponse::server_error("仪器删除失败")
@@ -526,6 +601,14 @@ pub async fn get_calibration_history(
         Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取校准历史读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取校准历史失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, instrument_id::TEXT, instrument_no, instrument_name,
@@ -539,8 +622,10 @@ pub async fn get_calibration_history(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -582,13 +667,21 @@ pub async fn create_calibration_record(
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 创建校准记录写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建校准记录失败");
+        }
+    };
+
     // Get instrument info
     let instrument_row = sqlx::query(
         "SELECT instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(instrument_id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (instrument_no, instrument_name) = match instrument_row {
@@ -629,7 +722,7 @@ pub async fn create_calibration_record(
     .bind(&req.notes)
     .bind(&req.certificate_no)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -641,8 +734,13 @@ pub async fn create_calibration_record(
             .bind(instrument_id)
             .bind(&calibration_date)
             .bind(&req.next_calibration_date)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 创建校准记录事务提交失败: {}", e);
+                return ApiResponse::server_error("创建校准记录失败");
+            }
 
             ApiResponse::success(
                 CalibrationRecord {
@@ -672,6 +770,13 @@ pub async fn create_calibration_record(
 pub async fn get_calibration_schedule(
     State(state): State<crate::shared::AppState>,
 ) -> ApiResponse<Vec<CalibrationSchedule>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取校准计划读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取校准计划失败");
+        }
+    };
     let rows = sqlx::query(
         r#"
         SELECT 
@@ -709,8 +814,10 @@ pub async fn get_calibration_schedule(
         ORDER BY is_overdue DESC, days_until_due ASC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -741,6 +848,13 @@ pub async fn get_calibration_schedule(
 pub async fn get_overdue_calibrations(
     State(state): State<crate::shared::AppState>,
 ) -> ApiResponse<Vec<CalibrationSchedule>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取过期校准读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取过期校准失败");
+        }
+    };
     let rows = sqlx::query(
         r#"
         SELECT 
@@ -765,8 +879,10 @@ pub async fn get_overdue_calibrations(
         ORDER BY days_until_due DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -861,6 +977,13 @@ pub async fn list_maintenance(
     } else {
         Some(ctx.tenant_id)
     };
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取维护记录读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取维护记录失败");
+        }
+    };
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {MAINTENANCE_COLUMNS} FROM lims.maintenance_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND instrument_id = $2 AND deleted_at IS NULL ORDER BY performed_at DESC NULLS LAST, created_at DESC"
         ),
@@ -868,8 +991,11 @@ pub async fn list_maintenance(
     )
     .bind(ctx.tenant_id)
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
+
     match rows {
         Ok(rows) => {
             let records: Vec<MaintenanceRecord> = rows
@@ -911,6 +1037,14 @@ pub async fn create_maintenance(
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMaintenanceRequest>,
 ) -> ApiResponse<MaintenanceRecord> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 创建维护记录写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建维护记录失败");
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
     )
@@ -923,24 +1057,31 @@ pub async fn create_maintenance(
     .bind(&req.next_maintenance_date)
     .bind(req.cost)
     .bind(&req.notes)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
     match row {
-        Ok(r) => ApiResponse::success(
-            MaintenanceRecord {
-                id: r.get("id"),
-                instrument_id: r.get("instrument_id"),
-                maintenance_type: r.get("maintenance_type"),
-                description: r.get("description"),
-                performed_by: r.get("performed_by"),
-                performed_at: r.get("performed_at"),
-                next_maintenance_date: r.get("next_maintenance_date"),
-                cost: r.get("cost"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-            },
-            "维护记录创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 创建维护记录事务提交失败: {}", e);
+                return ApiResponse::server_error("创建维护记录失败");
+            }
+            ApiResponse::success(
+                MaintenanceRecord {
+                    id: r.get("id"),
+                    instrument_id: r.get("instrument_id"),
+                    maintenance_type: r.get("maintenance_type"),
+                    description: r.get("description"),
+                    performed_by: r.get("performed_by"),
+                    performed_at: r.get("performed_at"),
+                    next_maintenance_date: r.get("next_maintenance_date"),
+                    cost: r.get("cost"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                },
+                "维护记录创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create maintenance record: {}", e);
             ApiResponse::server_error("创建维护记录失败")
@@ -971,6 +1112,13 @@ pub async fn update_maintenance(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 更新维护记录写作用域创建失败: {}", e);
+            return ApiResponse::server_error("更新维护记录失败");
+        }
+    };
     let row = sqlx::query(
         "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5::uuid, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes) WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
     )
@@ -983,24 +1131,31 @@ pub async fn update_maintenance(
     .bind(&req.next_maintenance_date)
     .bind(req.cost)
     .bind(&req.notes)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            MaintenanceRecord {
-                id: r.get("id"),
-                instrument_id: r.get("instrument_id"),
-                maintenance_type: r.get("maintenance_type"),
-                description: r.get("description"),
-                performed_by: r.get("performed_by"),
-                performed_at: r.get("performed_at"),
-                next_maintenance_date: r.get("next_maintenance_date"),
-                cost: r.get("cost"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-            },
-            "维护记录更新成功",
-        ),
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 更新维护记录事务提交失败: {}", e);
+                return ApiResponse::server_error("更新维护记录失败");
+            }
+            ApiResponse::success(
+                MaintenanceRecord {
+                    id: r.get("id"),
+                    instrument_id: r.get("instrument_id"),
+                    maintenance_type: r.get("maintenance_type"),
+                    description: r.get("description"),
+                    performed_by: r.get("performed_by"),
+                    performed_at: r.get("performed_at"),
+                    next_maintenance_date: r.get("next_maintenance_date"),
+                    cost: r.get("cost"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                },
+                "维护记录更新成功",
+            )
+        }
         Ok(None) => ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update maintenance record: {}", e);
@@ -1018,15 +1173,29 @@ pub async fn delete_maintenance(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 删除维护记录写作用域创建失败: {}", e);
+            return ApiResponse::server_error("删除维护记录失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE lims.maintenance_records SET deleted_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
     )
     .bind(ctx.tenant_id)
     .bind(record_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "维护记录删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 删除维护记录事务提交失败: {}", e);
+                return ApiResponse::server_error("删除维护记录失败");
+            }
+            ApiResponse::success(true, "维护记录删除成功")
+        }
         Ok(_) => ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::error!("Failed to delete maintenance record: {}", e);

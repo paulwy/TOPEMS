@@ -144,25 +144,13 @@ pub async fn list_samples(
         }
     }
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
-    // 只读事务，结束后直接 drop（回滚），不提交。
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for list_samples: {}", e);
+            tracing::error!("[lims] 获取样品列表读作用域创建失败: {}", e);
             return ApiResponse::server_error("获取样品列表失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for list_samples: {}", e);
-        return ApiResponse::server_error("获取样品列表失败");
-    }
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
@@ -230,7 +218,7 @@ pub async fn list_samples(
         }
     }
 
-    let samples = query_builder.fetch_all(&mut *tx).await.map(|rows| {
+    let samples = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| Sample {
                 id: row.get("id"),
@@ -249,6 +237,8 @@ pub async fn list_samples(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match samples {
         Ok(data) => {
@@ -287,23 +277,13 @@ pub async fn register_sample(
     );
     let tenant_id = ctx.tenant_id;
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for register_sample: {}", e);
+            tracing::error!("[lims] 样品登记写作用域创建失败: {}", e);
             return ApiResponse::server_error("样品登记失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(tenant_id.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for register_sample: {}", e);
-        return ApiResponse::server_error("样品登记失败");
-    }
 
     let row = sqlx::query(
         "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
@@ -315,13 +295,13 @@ pub async fn register_sample(
     .bind(&req.source)
     .bind(req.quantity)
     .bind(&req.unit)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match row {
         Ok(r) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("Failed to commit tx for register_sample: {}", e);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 样品登记事务提交失败: {}", e);
                 return ApiResponse::server_error("样品登记失败");
             }
             r
@@ -405,33 +385,23 @@ pub async fn get_sample(
         }
     }
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
-    // 只读事务，结束后直接 drop（回滚），不提交。
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for get_sample: {}", e);
+            tracing::error!("[lims] 获取样品读作用域创建失败: {}", e);
             return ApiResponse::server_error("获取样品失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for get_sample: {}", e);
-        return ApiResponse::server_error("获取样品失败");
-    }
 
     let row = sqlx::query(
         "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => {
@@ -482,24 +452,13 @@ pub async fn update_sample(
         Some(ctx.tenant_id)
     };
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for update_sample: {}", e);
+            tracing::error!("[lims] 样品更新写作用域创建失败: {}", e);
             return ApiResponse::server_error("样品更新失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for update_sample: {}", e);
-        return ApiResponse::server_error("样品更新失败");
-    }
 
     let row = sqlx::query(
         "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9::timestamp, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
@@ -513,13 +472,13 @@ pub async fn update_sample(
     .bind(&req.unit)
     .bind(&req.status)
     .bind(&req.expired_at)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match row {
         Ok(r) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("Failed to commit tx for update_sample: {}", e);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 样品更新事务提交失败: {}", e);
                 return ApiResponse::server_error("样品更新失败");
             }
             r
@@ -586,37 +545,26 @@ pub async fn delete_sample(
         Some(ctx.tenant_id)
     };
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与软删 UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for delete_sample: {}", e);
+            tracing::error!("[lims] 样品删除写作用域创建失败: {}", e);
             return ApiResponse::server_error("样品删除失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for delete_sample: {}", e);
-        return ApiResponse::server_error("样品删除失败");
-    }
 
     let result = sqlx::query(
         "UPDATE public.qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(_) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("Failed to commit tx for delete_sample: {}", e);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 样品删除事务提交失败: {}", e);
                 return ApiResponse::server_error("样品删除失败");
             }
             // 失效详情缓存并广播列表失效
@@ -735,6 +683,14 @@ pub async fn get_sample_lifecycle(
         Some(ctx.tenant_id)
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取样品生命周期记录读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取样品生命周期记录失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
@@ -746,8 +702,10 @@ pub async fn get_sample_lifecycle(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -801,33 +759,19 @@ pub async fn record_lifecycle_event(
         Some(ctx.tenant_id)
     };
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT/UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for record_lifecycle_event: {}", e);
+            tracing::error!("[lims] 记录生命周期事件写作用域创建失败: {}", e);
             return ApiResponse::server_error("记录生命周期事件失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!(
-            "Failed to set RLS context for record_lifecycle_event: {}",
-            e
-        );
-        return ApiResponse::server_error("记录生命周期事件失败");
-    }
 
     let sample_row =
         sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
             .bind(sample_id)
             .bind(tenant_id)
-            .fetch_optional(&mut *tx)
+            .fetch_optional(&mut scope)
             .await;
 
     let sample_no = match sample_row {
@@ -865,7 +809,7 @@ pub async fn record_lifecycle_event(
     .bind(&req.operator)
     .bind(&req.notes)
     .bind(&req.location)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -876,11 +820,11 @@ pub async fn record_lifecycle_event(
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
             .bind(tenant_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
 
-            if let Err(e) = tx.commit().await {
-                tracing::error!("Failed to commit tx for record_lifecycle_event: {}", e);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 记录生命周期事件事务提交失败: {}", e);
                 return ApiResponse::server_error("记录生命周期事件失败");
             }
 
@@ -944,34 +888,20 @@ pub async fn transition_sample_stage(
         return ApiResponse::bad_request("无效的目标阶段");
     }
 
-    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT/UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for transition_sample_stage: {}", e);
+            tracing::error!("[lims] 样品阶段转换写作用域创建失败: {}", e);
             return ApiResponse::server_error("样品阶段转换失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!(
-            "Failed to set RLS context for transition_sample_stage: {}",
-            e
-        );
-        return ApiResponse::server_error("样品阶段转换失败");
-    }
 
     let current_row = sqlx::query(
         "SELECT sample_no, status FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(sample_uuid)
     .bind(tenant_id)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut scope)
     .await;
 
     let (sample_no, current_stage) = match current_row {
@@ -1036,7 +966,7 @@ pub async fn transition_sample_stage(
     .bind(operator)
     .bind(notes)
     .bind(location)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -1047,11 +977,11 @@ pub async fn transition_sample_stage(
             .bind(sample_uuid)
             .bind(&to_stage)
             .bind(tenant_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
 
-            if let Err(e) = tx.commit().await {
-                tracing::error!("Failed to commit tx for transition_sample_stage: {}", e);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 样品阶段转换事务提交失败: {}", e);
                 return ApiResponse::server_error("样品阶段转换失败");
             }
 
@@ -1165,6 +1095,14 @@ pub async fn get_sample_traceability(
         Some(ctx.tenant_id)
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取样品追溯信息读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取样品追溯信息失败");
+        }
+    };
+
     let sample_row = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit,
@@ -1174,7 +1112,7 @@ pub async fn get_sample_traceability(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let sample = match sample_row {
@@ -1207,7 +1145,7 @@ pub async fn get_sample_traceability(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let lifecycle_history: Vec<serde_json::Value> = match lifecycle_rows {
@@ -1227,6 +1165,8 @@ pub async fn get_sample_traceability(
             .collect(),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询生命周期记录失败", e)),
     };
+
+    let _ = scope.commit().await;
 
     let current_status = sample
         .get("status")
@@ -1279,6 +1219,27 @@ pub fn calculate_stage_progress(current_stage: &str) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_sample_cache_keys_are_tenant_scoped() {
+        use uuid::Uuid;
+        let q = SampleQuery {
+            page: None,
+            page_size: None,
+            status: None,
+            sample_no: None,
+            sample_name: None,
+        };
+        let a = Some(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_default());
+        let b = Some(Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap_or_default());
+
+        let ka = sample_list_key(&a, &q);
+        let kb = sample_list_key(&b, &q);
+        assert_ne!(ka, kb);
+        assert!(ka.contains("00000000-0000-0000-0000-000000000001"));
+        assert!(kb.contains("00000000-0000-0000-0000-000000000002"));
+        assert_ne!(sample_detail_key(&a, "x"), sample_detail_key(&b, "x"));
+    }
 
     #[test]
     fn test_get_stage_name_known() {

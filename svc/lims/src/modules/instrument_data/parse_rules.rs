@@ -24,6 +24,14 @@ pub async fn list_parse_rules(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 解析规则列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取解析规则列表失败");
+        }
+    };
+
     let sql = match (query.status.as_ref(), query.protocol.as_ref()) {
         (Some(_), Some(_)) => {
             "SELECT id, rule_no, rule_name, protocol, instrument_type, \
@@ -74,7 +82,7 @@ pub async fn list_parse_rules(
         }
     }
 
-    let rules = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let rules = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| ParseRule {
                 id: row.get("id"),
@@ -94,6 +102,8 @@ pub async fn list_parse_rules(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match rules {
         Ok(data) => ApiResponse::success(data, "获取解析规则列表成功"),
@@ -126,6 +136,14 @@ pub async fn get_parse_rule(
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 解析规则详情读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取解析规则失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         SELECT id, rule_no, rule_name, protocol, instrument_type,
@@ -136,8 +154,10 @@ pub async fn get_parse_rule(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -175,6 +195,14 @@ pub async fn create_parse_rule(
     let rule_id = Uuid::new_v4();
     let rule_no = format!("PR-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 解析规则创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建解析规则失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_parse_rules
@@ -195,29 +223,35 @@ pub async fn create_parse_rule(
     .bind(&req.quality_rules)
     .bind(&req.description)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            ParseRule {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                rule_no: r.get("rule_no"),
-                rule_name: r.get("rule_name"),
-                protocol: r.get("protocol"),
-                instrument_type: r.get("instrument_type"),
-                parse_config: r.get("parse_config"),
-                quality_rules: r.get("quality_rules"),
-                status: r.get("status"),
-                version: r.get("version"),
-                description: r.get("description"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "解析规则创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 解析规则创建事务提交失败: {}", e);
+                return ApiResponse::server_error("创建解析规则失败");
+            }
+            ApiResponse::success(
+                ParseRule {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    rule_no: r.get("rule_no"),
+                    rule_name: r.get("rule_name"),
+                    protocol: r.get("protocol"),
+                    instrument_type: r.get("instrument_type"),
+                    parse_config: r.get("parse_config"),
+                    quality_rules: r.get("quality_rules"),
+                    status: r.get("status"),
+                    version: r.get("version"),
+                    description: r.get("description"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "解析规则创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create parse rule: {}", e);
             ApiResponse::server_error("创建解析规则失败")
@@ -233,6 +267,14 @@ pub async fn update_parse_rule(
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 解析规则更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("更新解析规则失败");
+        }
     };
 
     let row = sqlx::query(
@@ -257,29 +299,35 @@ pub async fn update_parse_rule(
     .bind(&req.parse_config)
     .bind(&req.quality_rules)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            ParseRule {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                rule_no: r.get("rule_no"),
-                rule_name: r.get("rule_name"),
-                protocol: r.get("protocol"),
-                instrument_type: r.get("instrument_type"),
-                parse_config: r.get("parse_config"),
-                quality_rules: r.get("quality_rules"),
-                status: r.get("status"),
-                version: r.get("version"),
-                description: r.get("description"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "解析规则更新成功",
-        ),
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 解析规则更新事务提交失败: {}", e);
+                return ApiResponse::server_error("更新解析规则失败");
+            }
+            ApiResponse::success(
+                ParseRule {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    rule_no: r.get("rule_no"),
+                    rule_name: r.get("rule_name"),
+                    protocol: r.get("protocol"),
+                    instrument_type: r.get("instrument_type"),
+                    parse_config: r.get("parse_config"),
+                    quality_rules: r.get("quality_rules"),
+                    status: r.get("status"),
+                    version: r.get("version"),
+                    description: r.get("description"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "解析规则更新成功",
+            )
+        }
         Ok(None) => ApiResponse::not_found("解析规则不存在"),
         Err(e) => {
             tracing::error!("Failed to update parse rule: {}", e);
@@ -297,13 +345,27 @@ pub async fn delete_parse_rule(
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 解析规则删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("删除解析规则失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "解析规则删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 解析规则删除事务提交失败: {}", e);
+                return ApiResponse::server_error("删除解析规则失败");
+            }
+            ApiResponse::success(true, "解析规则删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete parse rule: {}", e);
             ApiResponse::server_error("删除解析规则失败")

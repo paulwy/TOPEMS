@@ -60,7 +60,11 @@ impl LimsRealModule {
         // 3. 事件订阅者：lims 的 event_handlers 已由 bin-only 提升为 lib 暴露
         //    （svc/lims/src/lib.rs `pub mod event_handlers`），单体化与独立部署同源，
         //    挂载消费循环使质量链联动（qms→lims）自动落库
-        if let Err(e) = topems_lims::event_handlers::start_event_subscribers(ctx.db.clone()).await {
+        if let Err(e) = topems_lims::event_handlers::start_event_subscribers(
+            topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared"),
+        )
+        .await
+        {
             tracing::error!("⚠️ lims 事件订阅者启动失败: {}", e);
         } else {
             tracing::info!(
@@ -99,9 +103,11 @@ impl LimsRealModule {
             lims_l2_config("instrument"),
         )
         .await;
+        let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared");
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
+            db,
             health_config,
             event_publisher: ctx.event_publisher.clone(),
             sample_cache,

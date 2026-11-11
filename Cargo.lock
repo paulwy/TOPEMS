@@ -5875,6 +5875,7 @@ dependencies = [
  "topems-shared-auth",
  "topems-shared-bootstrap",
  "topems-shared-core",
+ "topems-shared-db",
  "topems-shared-event",
  "tracing",
  "utoipa",

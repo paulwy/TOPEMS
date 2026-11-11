@@ -101,6 +101,14 @@ pub async fn list_audit_logs(
         }
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取审计日志读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取审计日志失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
@@ -125,7 +133,7 @@ pub async fn list_audit_logs(
     .bind(params.end_date.clone())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -168,10 +176,12 @@ pub async fn list_audit_logs(
             .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
+
+            let _ = scope.commit().await;
 
             ApiResponse::success(
                 serde_json::json!({
@@ -207,6 +217,14 @@ pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AuditLog> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取审计日志读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取审计日志失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
@@ -216,8 +234,10 @@ pub async fn get_audit_log(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(Some(row)) => {
@@ -280,6 +300,15 @@ pub async fn export_audit_logs(
         }
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 导出审计日志读作用域创建失败: {}", e);
+            return ApiResponse::<serde_json::Value>::server_error("导出审计日志失败")
+                .into_response();
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
@@ -301,8 +330,10 @@ pub async fn export_audit_logs(
     .bind(&params.status)
     .bind(params.start_date)
     .bind(params.end_date)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(rows) => {

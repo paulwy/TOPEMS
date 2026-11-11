@@ -180,8 +180,12 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     tag = "lims_plugin"
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<PluginHealth> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => true,
+    let db_status = match state.db.scope_read().await {
+        Ok(mut scope) => {
+            let status = sqlx::query("SELECT 1").fetch_one(&mut scope).await.is_ok();
+            let _ = scope.commit().await;
+            status
+        }
         Err(_) => false,
     };
 

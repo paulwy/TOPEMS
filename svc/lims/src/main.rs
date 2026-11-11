@@ -88,11 +88,14 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
+    // 模块级数据库句柄：所有租户数据查询经 Db 作用域（事务级 search_path）
+    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared");
+
     if let Err(e) = models::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("LIMS schema defense warning: {}", e);
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
     }
 
@@ -108,41 +111,91 @@ async fn main() -> anyhow::Result<()> {
     let instrument_cache =
         init_cache::<serde_json::Value>(make_l2_config("instrument"), "instrument").await;
 
-    // 缓存预热：异步加载样品列表和任务列表首屏数据，避免首次请求缓存未命中
+    // 缓存预热：逐租户加载首屏数据（禁止全表扫描后跨租户写同一个 key）
     {
         let sample_c = sample_cache.clone();
         let task_c = task_cache.clone();
-        let pool = ctx.db.clone();
+        let db = db.clone();
         tokio::spawn(async move {
             tracing::info!("[lims] 开始缓存预热...");
 
-            // 预热样品列表（最近 10 条）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+            let sample_sql = "SELECT DISTINCT tenant_id FROM public.qa_lab_samples \
+                              WHERE tenant_id IS NOT NULL AND deleted_at IS NULL";
+            match topems_shared_db::tenant_sweep::sweep_tenants(
+                &db,
+                sample_sql,
+                |db, tenant| {
+                    let cache = sample_c.clone();
+                    async move {
+                        let mut scope = db.scope_read_for_tenant(tenant).await?;
+                        let data = sqlx::query_scalar::<_, serde_json::Value>(
+                            "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 10) t"
+                        )
+                        .bind(tenant)
+                        .fetch_optional(&mut scope)
+                        .await?;
+                        if let Some(data) = data {
+                            cache
+                                .set(
+                                    format!(
+                                        "lims:sample:list:{tenant}:p:1:ps:10:s:all:no:all:nm:all"
+                                    ),
+                                    data,
+                                )
+                                .await;
+                        }
+                        scope.commit().await
+                    }
+                },
             )
-            .fetch_optional(&pool)
             .await
             {
-                Ok(Some(data)) => {
-                    sample_c.set("lims:sample:list:warmup".to_string(), data).await;
-                    tracing::info!("[lims] 样品列表缓存预热完成");
-                }
-                Ok(None) => tracing::info!("[lims] 样品列表为空，跳过预热"),
+                Ok(r) if r.is_ok() => tracing::info!(
+                    "[lims] 样品列表缓存预热完成（{} 个租户）",
+                    r.succeeded
+                ),
+                Ok(r) => tracing::warn!(
+                    "[lims] 样品列表缓存预热部分失败: {}/{} 租户",
+                    r.failed.len(),
+                    r.enumerated
+                ),
                 Err(e) => tracing::warn!("[lims] 样品列表缓存预热失败: {}", e),
             }
 
-            // 预热任务列表（最近 10 条）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at, updated_at FROM public.qa_lab_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+            let task_sql = "SELECT DISTINCT tenant_id FROM public.qa_lab_tasks \
+                            WHERE tenant_id IS NOT NULL AND deleted_at IS NULL";
+            match topems_shared_db::tenant_sweep::sweep_tenants(
+                &db,
+                task_sql,
+                |db, tenant| {
+                    let cache = task_c.clone();
+                    async move {
+                        let mut scope = db.scope_read_for_tenant(tenant).await?;
+                        let data = sqlx::query_scalar::<_, serde_json::Value>(
+                            "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at, updated_at FROM public.qa_lab_tasks WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 10) t"
+                        )
+                        .bind(tenant)
+                        .fetch_optional(&mut scope)
+                        .await?;
+                        if let Some(data) = data {
+                            cache
+                                .set(format!("lims:task:list:{tenant}"), data)
+                                .await;
+                        }
+                        scope.commit().await
+                    }
+                },
             )
-            .fetch_optional(&pool)
             .await
             {
-                Ok(Some(data)) => {
-                    task_c.set("lims:task:list:warmup".to_string(), data).await;
-                    tracing::info!("[lims] 任务列表缓存预热完成");
+                Ok(r) if r.is_ok() => {
+                    tracing::info!("[lims] 任务列表缓存预热完成（{} 个租户）", r.succeeded)
                 }
-                Ok(None) => tracing::info!("[lims] 任务列表为空，跳过预热"),
+                Ok(r) => tracing::warn!(
+                    "[lims] 任务列表缓存预热部分失败: {}/{} 租户",
+                    r.failed.len(),
+                    r.enumerated
+                ),
                 Err(e) => tracing::warn!("[lims] 任务列表缓存预热失败: {}", e),
             }
 
@@ -218,6 +271,7 @@ async fn main() -> anyhow::Result<()> {
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
+        db: db.clone(),
         health_config: SimpleHealthConfig::new("topems-lims").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         sample_cache,

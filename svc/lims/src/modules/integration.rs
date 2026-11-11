@@ -45,6 +45,14 @@ pub async fn create_integration_sample(
     let source = req.source.unwrap_or_else(|| "系统集成".to_string());
     let status = req.status.unwrap_or_else(|| "registered".to_string());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 集成样本创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("集成样本创建失败");
+        }
+    };
+
     let result = sqlx::query(
         "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -57,19 +65,25 @@ pub async fn create_integration_sample(
     .bind(&sample_type)
     .bind(&source)
     .bind(&status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(row) => ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "sample_no": row.try_get::<String, _>("sample_no").ok(),
-                "sample_name": row.try_get::<String, _>("sample_name").ok(),
-                "status": row.try_get::<String, _>("status").ok(),
-            }),
-            "集成样本创建成功",
-        ),
+        Ok(row) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 集成样本创建事务提交失败: {}", e);
+                return ApiResponse::server_error("集成样本创建失败");
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "sample_no": row.try_get::<String, _>("sample_no").ok(),
+                    "sample_name": row.try_get::<String, _>("sample_name").ok(),
+                    "status": row.try_get::<String, _>("status").ok(),
+                }),
+                "集成样本创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("[integration] 创建样本失败: {}", e);
             ApiResponse::server_error("集成样本创建失败")
@@ -92,11 +106,18 @@ pub async fn create_integration_task(
     Json(req): Json<CreateIntegrationTaskRequest>,
 ) -> ApiResponse<serde_json::Value> {
     // qa_lab_tasks.sample_id 为 NOT NULL：按 sample_no 关联解析样本（integration 仅提供 sample_no）
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 集成任务创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("集成任务创建失败");
+        }
+    };
     let sample_id: Option<Uuid> = sqlx::query_scalar(
         "SELECT id FROM public.qa_lab_samples WHERE sample_no = $1 AND deleted_at IS NULL",
     )
     .bind(&req.sample_no)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
@@ -119,19 +140,25 @@ pub async fn create_integration_task(
     .bind(&req.sample_no)
     .bind(&test_items)
     .bind(&status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(row) => ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "task_no": row.try_get::<String, _>("task_no").ok(),
-                "sample_no": row.try_get::<String, _>("sample_no").ok(),
-                "status": row.try_get::<String, _>("status").ok(),
-            }),
-            "集成任务创建成功",
-        ),
+        Ok(row) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 集成任务创建事务提交失败: {}", e);
+                return ApiResponse::server_error("集成任务创建失败");
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "task_no": row.try_get::<String, _>("task_no").ok(),
+                    "sample_no": row.try_get::<String, _>("sample_no").ok(),
+                    "status": row.try_get::<String, _>("status").ok(),
+                }),
+                "集成任务创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("[integration] 创建任务失败: {}", e);
             ApiResponse::server_error("集成任务创建失败")

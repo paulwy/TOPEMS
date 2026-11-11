@@ -426,7 +426,15 @@ pub async fn list_plans(
         }
     }
 
-    let plans = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取能力验证计划列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取能力验证计划列表失败");
+        }
+    };
+
+    let plans = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| ProficiencyTestingPlan {
                 id: row.get("id"),
@@ -452,6 +460,8 @@ pub async fn list_plans(
             .collect()
     });
 
+    let _ = scope.commit().await;
+
     match plans {
         Ok(data) => ApiResponse::success(data, "获取能力验证计划列表成功"),
         Err(e) => {
@@ -470,6 +480,14 @@ pub async fn create_plan(
         "PT-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证计划创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证计划创建失败");
+        }
+    };
 
     let row = sqlx::query(
         r#"
@@ -499,34 +517,40 @@ pub async fn create_plan(
     .bind(&req.contact_phone)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            ProficiencyTestingPlan {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_no: r.get("plan_no"),
-                plan_name: r.get("plan_name"),
-                provider: r.get("provider"),
-                test_item: r.get("test_item"),
-                test_method: r.get("test_method"),
-                plan_year: r.get("plan_year"),
-                sample_type: r.get("sample_type"),
-                expected_result: r.get("expected_result"),
-                registration_date: r.get("registration_date"),
-                test_deadline: r.get("test_deadline"),
-                report_deadline: r.get("report_deadline"),
-                status: r.get("status"),
-                contact_person: r.get("contact_person"),
-                contact_phone: r.get("contact_phone"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "能力验证计划创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证计划创建事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证计划创建失败");
+            }
+            ApiResponse::success(
+                ProficiencyTestingPlan {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_no: r.get("plan_no"),
+                    plan_name: r.get("plan_name"),
+                    provider: r.get("provider"),
+                    test_item: r.get("test_item"),
+                    test_method: r.get("test_method"),
+                    plan_year: r.get("plan_year"),
+                    sample_type: r.get("sample_type"),
+                    expected_result: r.get("expected_result"),
+                    registration_date: r.get("registration_date"),
+                    test_deadline: r.get("test_deadline"),
+                    report_deadline: r.get("report_deadline"),
+                    status: r.get("status"),
+                    contact_person: r.get("contact_person"),
+                    contact_phone: r.get("contact_phone"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "能力验证计划创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create PT plan: {}", e);
             ApiResponse::server_error("能力验证计划创建失败")
@@ -556,12 +580,22 @@ pub async fn get_plan(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取能力验证计划读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取能力验证计划失败");
+        }
+    };
+
     let row = sqlx::query(
         "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at, updated_at, tenant_id::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -607,6 +641,14 @@ pub async fn update_plan(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证计划更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证计划更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_pt_plans 
@@ -647,34 +689,40 @@ pub async fn update_plan(
     .bind(&req.contact_person)
     .bind(&req.contact_phone)
     .bind(&req.notes)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            ProficiencyTestingPlan {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_no: r.get("plan_no"),
-                plan_name: r.get("plan_name"),
-                provider: r.get("provider"),
-                test_item: r.get("test_item"),
-                test_method: r.get("test_method"),
-                plan_year: r.get("plan_year"),
-                sample_type: r.get("sample_type"),
-                expected_result: r.get("expected_result"),
-                registration_date: r.get("registration_date"),
-                test_deadline: r.get("test_deadline"),
-                report_deadline: r.get("report_deadline"),
-                status: r.get("status"),
-                contact_person: r.get("contact_person"),
-                contact_phone: r.get("contact_phone"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "能力验证计划更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证计划更新事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证计划更新失败");
+            }
+            ApiResponse::success(
+                ProficiencyTestingPlan {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_no: r.get("plan_no"),
+                    plan_name: r.get("plan_name"),
+                    provider: r.get("provider"),
+                    test_item: r.get("test_item"),
+                    test_method: r.get("test_method"),
+                    plan_year: r.get("plan_year"),
+                    sample_type: r.get("sample_type"),
+                    expected_result: r.get("expected_result"),
+                    registration_date: r.get("registration_date"),
+                    test_deadline: r.get("test_deadline"),
+                    report_deadline: r.get("report_deadline"),
+                    status: r.get("status"),
+                    contact_person: r.get("contact_person"),
+                    contact_phone: r.get("contact_phone"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "能力验证计划更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -693,13 +741,27 @@ pub async fn delete_plan(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证计划删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证计划删除失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lims_pt_plans SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "能力验证计划删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证计划删除事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证计划删除失败");
+            }
+            ApiResponse::success(true, "能力验证计划删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete PT plan: {}", e);
             ApiResponse::server_error("能力验证计划删除失败")
@@ -727,11 +789,19 @@ pub async fn receive_sample(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证样品接收写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证样品接收登记失败");
+        }
+    };
+
     let plan_row = sqlx::query(
         "SELECT plan_no, plan_name FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(plan_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (plan_no, plan_name) = match plan_row {
@@ -766,35 +836,41 @@ pub async fn receive_sample(
     .bind(&req.storage_condition)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let _ = sqlx::query(
         "UPDATE qa_lims_pt_plans SET status = 'sample_received', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            PtSample {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_id: r.get("plan_id"),
-                plan_no: r.get("plan_no"),
-                plan_name: r.get("plan_name"),
-                sample_code: r.get("sample_code"),
-                sample_name: r.get("sample_name"),
-                received_date: r.get("received_date"),
-                received_by: r.get("received_by"),
-                storage_condition: r.get("storage_condition"),
-                sample_status: r.get("sample_status"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-            },
-            "能力验证样品接收登记成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证样品接收事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证样品接收登记失败");
+            }
+            ApiResponse::success(
+                PtSample {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_id: r.get("plan_id"),
+                    plan_no: r.get("plan_no"),
+                    plan_name: r.get("plan_name"),
+                    sample_code: r.get("sample_code"),
+                    sample_name: r.get("sample_name"),
+                    received_date: r.get("received_date"),
+                    received_by: r.get("received_by"),
+                    storage_condition: r.get("storage_condition"),
+                    sample_status: r.get("sample_status"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                },
+                "能力验证样品接收登记成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to receive PT sample: {}", e);
             ApiResponse::server_error("能力验证样品接收登记失败")
@@ -830,6 +906,14 @@ pub async fn list_plan_samples(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取能力验证样品列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取能力验证样品列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, plan_id::TEXT, plan_no, plan_name, sample_code, sample_name,
@@ -842,8 +926,10 @@ pub async fn list_plan_samples(
     )
     .bind(tenant_filter)
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -890,10 +976,18 @@ pub async fn submit_result(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证结果录入写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证结果录入失败");
+        }
+    };
+
     let plan_row =
         sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1")
             .bind(plan_id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await;
 
     let plan_no = match plan_row {
@@ -904,7 +998,7 @@ pub async fn submit_result(
 
     let sample_row = sqlx::query("SELECT sample_code FROM qa_lims_pt_samples WHERE id = $1")
         .bind(sample_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
 
     let sample_code = match sample_row {
@@ -973,43 +1067,49 @@ pub async fn submit_result(
     .bind(&req.notes)
     .bind(submitted_at)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let _ = sqlx::query(
         "UPDATE qa_lims_pt_plans SET status = 'testing', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            PtResult {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_id: r.get("plan_id"),
-                plan_no: r.get("plan_no"),
-                sample_id: r.get("sample_id"),
-                sample_code: r.get("sample_code"),
-                test_item: r.get("test_item"),
-                test_result: r.get("test_result"),
-                result_unit: r.get("result_unit"),
-                test_date: r.get("test_date"),
-                tested_by: r.get("tested_by"),
-                instrument: r.get("instrument"),
-                test_method: r.get("test_method"),
-                replicate_results: r.get("replicate_results"),
-                mean_value: r.get("mean_value"),
-                standard_deviation: r.get("standard_deviation"),
-                coefficient_variation: r.get("coefficient_variation"),
-                notes: r.get("notes"),
-                submitted_at: r.get("submitted_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "能力验证结果录入成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证结果录入事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证结果录入失败");
+            }
+            ApiResponse::success(
+                PtResult {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_id: r.get("plan_id"),
+                    plan_no: r.get("plan_no"),
+                    sample_id: r.get("sample_id"),
+                    sample_code: r.get("sample_code"),
+                    test_item: r.get("test_item"),
+                    test_result: r.get("test_result"),
+                    result_unit: r.get("result_unit"),
+                    test_date: r.get("test_date"),
+                    tested_by: r.get("tested_by"),
+                    instrument: r.get("instrument"),
+                    test_method: r.get("test_method"),
+                    replicate_results: r.get("replicate_results"),
+                    mean_value: r.get("mean_value"),
+                    standard_deviation: r.get("standard_deviation"),
+                    coefficient_variation: r.get("coefficient_variation"),
+                    notes: r.get("notes"),
+                    submitted_at: r.get("submitted_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "能力验证结果录入成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to submit PT result: {}", e);
             ApiResponse::server_error("能力验证结果录入失败")
@@ -1045,6 +1145,14 @@ pub async fn list_plan_results(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取能力验证结果列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取能力验证结果列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
@@ -1058,8 +1166,10 @@ pub async fn list_plan_results(
     )
     .bind(tenant_filter)
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -1123,11 +1233,19 @@ pub async fn evaluate_result(
         Err(_) => return ApiResponse::bad_request("无效的结果ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 能力验证结果评价写作用域创建失败: {}", e);
+            return ApiResponse::server_error("能力验证结果评价失败");
+        }
+    };
+
     let result_row = sqlx::query(
         "SELECT plan_no, sample_id, sample_code, test_item, test_result::FLOAT8 AS test_result FROM qa_lims_pt_results WHERE id = $1"
     )
     .bind(result_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (plan_no, sample_id, sample_code, test_item, test_result) = match result_row {
@@ -1193,42 +1311,48 @@ pub async fn evaluate_result(
     .bind(evaluated_at)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let _ = sqlx::query(
         "UPDATE qa_lims_pt_plans SET status = 'evaluated', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            PtEvaluation {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_id: r.get("plan_id"),
-                plan_no: r.get("plan_no"),
-                sample_id: r.get("sample_id"),
-                sample_code: r.get("sample_code"),
-                test_item: r.get("test_item"),
-                test_result: r.get("test_result"),
-                assigned_value: r.get("assigned_value"),
-                standard_deviation: r.get("standard_deviation"),
-                z_score: r.get("z_score"),
-                en_score: r.get("en_score"),
-                measurement_uncertainty: r.get("measurement_uncertainty"),
-                reference_uncertainty: r.get("reference_uncertainty"),
-                evaluation_method: r.get("evaluation_method"),
-                evaluation_result: r.get("evaluation_result"),
-                evaluated_by: r.get("evaluated_by"),
-                evaluated_at: r.get("evaluated_at"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-            },
-            "能力验证结果评价完成",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 能力验证结果评价事务提交失败: {}", e);
+                return ApiResponse::server_error("能力验证结果评价失败");
+            }
+            ApiResponse::success(
+                PtEvaluation {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_id: r.get("plan_id"),
+                    plan_no: r.get("plan_no"),
+                    sample_id: r.get("sample_id"),
+                    sample_code: r.get("sample_code"),
+                    test_item: r.get("test_item"),
+                    test_result: r.get("test_result"),
+                    assigned_value: r.get("assigned_value"),
+                    standard_deviation: r.get("standard_deviation"),
+                    z_score: r.get("z_score"),
+                    en_score: r.get("en_score"),
+                    measurement_uncertainty: r.get("measurement_uncertainty"),
+                    reference_uncertainty: r.get("reference_uncertainty"),
+                    evaluation_method: r.get("evaluation_method"),
+                    evaluation_result: r.get("evaluation_result"),
+                    evaluated_by: r.get("evaluated_by"),
+                    evaluated_at: r.get("evaluated_at"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                },
+                "能力验证结果评价完成",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to evaluate PT result: {}", e);
             ApiResponse::server_error("能力验证结果评价失败")
@@ -1264,6 +1388,14 @@ pub async fn list_plan_evaluations(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取能力验证评价列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取能力验证评价列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
@@ -1277,8 +1409,10 @@ pub async fn list_plan_evaluations(
     )
     .bind(tenant_filter)
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -1341,10 +1475,18 @@ pub async fn create_corrective_action(
         Err(_) => return ApiResponse::bad_request("无效的评价ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 整改记录创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不满意结果整改记录创建失败");
+        }
+    };
+
     let plan_row =
         sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1")
             .bind(plan_id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await;
 
     let plan_no = match plan_row {
@@ -1374,31 +1516,37 @@ pub async fn create_corrective_action(
     .bind(&req.responsible_person)
     .bind(&req.deadline)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            PtCorrectiveAction {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_id: r.get("plan_id"),
-                plan_no: r.get("plan_no"),
-                evaluation_id: r.get("evaluation_id"),
-                unsatisfactory_item: r.get("unsatisfactory_item"),
-                root_cause: r.get("root_cause"),
-                corrective_measures: r.get("corrective_measures"),
-                responsible_person: r.get("responsible_person"),
-                deadline: r.get("deadline"),
-                status: r.get("status"),
-                verification_result: r.get("verification_result"),
-                verified_by: r.get("verified_by"),
-                verified_at: r.get("verified_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不满意结果整改记录创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 整改记录创建事务提交失败: {}", e);
+                return ApiResponse::server_error("不满意结果整改记录创建失败");
+            }
+            ApiResponse::success(
+                PtCorrectiveAction {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_id: r.get("plan_id"),
+                    plan_no: r.get("plan_no"),
+                    evaluation_id: r.get("evaluation_id"),
+                    unsatisfactory_item: r.get("unsatisfactory_item"),
+                    root_cause: r.get("root_cause"),
+                    corrective_measures: r.get("corrective_measures"),
+                    responsible_person: r.get("responsible_person"),
+                    deadline: r.get("deadline"),
+                    status: r.get("status"),
+                    verification_result: r.get("verification_result"),
+                    verified_by: r.get("verified_by"),
+                    verified_at: r.get("verified_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不满意结果整改记录创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create PT corrective action: {}", e);
             ApiResponse::server_error("不满意结果整改记录创建失败")
@@ -1435,6 +1583,14 @@ pub async fn update_corrective_action(
         None
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 整改记录更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不满意结果整改记录更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_pt_corrective_actions 
@@ -1463,31 +1619,37 @@ pub async fn update_corrective_action(
     .bind(&req.verification_result)
     .bind(&req.verified_by)
     .bind(verified_at)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            PtCorrectiveAction {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                plan_id: r.get("plan_id"),
-                plan_no: r.get("plan_no"),
-                evaluation_id: r.get("evaluation_id"),
-                unsatisfactory_item: r.get("unsatisfactory_item"),
-                root_cause: r.get("root_cause"),
-                corrective_measures: r.get("corrective_measures"),
-                responsible_person: r.get("responsible_person"),
-                deadline: r.get("deadline"),
-                status: r.get("status"),
-                verification_result: r.get("verification_result"),
-                verified_by: r.get("verified_by"),
-                verified_at: r.get("verified_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不满意结果整改记录更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 整改记录更新事务提交失败: {}", e);
+                return ApiResponse::server_error("不满意结果整改记录更新失败");
+            }
+            ApiResponse::success(
+                PtCorrectiveAction {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    plan_id: r.get("plan_id"),
+                    plan_no: r.get("plan_no"),
+                    evaluation_id: r.get("evaluation_id"),
+                    unsatisfactory_item: r.get("unsatisfactory_item"),
+                    root_cause: r.get("root_cause"),
+                    corrective_measures: r.get("corrective_measures"),
+                    responsible_person: r.get("responsible_person"),
+                    deadline: r.get("deadline"),
+                    status: r.get("status"),
+                    verification_result: r.get("verification_result"),
+                    verified_by: r.get("verified_by"),
+                    verified_at: r.get("verified_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不满意结果整改记录更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -1525,6 +1687,14 @@ pub async fn list_plan_corrective_actions(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取整改记录列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取整改记录列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, plan_id::TEXT, plan_no, evaluation_id::TEXT, unsatisfactory_item,
@@ -1538,8 +1708,10 @@ pub async fn list_plan_corrective_actions(
     )
     .bind(tenant_filter)
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {

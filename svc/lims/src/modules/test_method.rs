@@ -257,6 +257,14 @@ pub async fn list_methods(
         offset_idx
     );
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取检测方法列表失败");
+        }
+    };
+
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     if let Some(st) = query.status.as_ref() {
         query_builder = query_builder.bind(st);
@@ -273,7 +281,7 @@ pub async fn list_methods(
     }
     query_builder = query_builder.bind(page_size).bind(offset);
 
-    let methods = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let methods = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| TestMethod {
                 id: row.get("id"),
@@ -303,6 +311,8 @@ pub async fn list_methods(
             .collect()
     });
 
+    let _ = scope.commit().await;
+
     match methods {
         Ok(data) => ApiResponse::success(data, "获取检测方法列表成功"),
         Err(e) => {
@@ -318,6 +328,14 @@ pub async fn create_method(
     Json(req): Json<CreateTestMethodRequest>,
 ) -> ApiResponse<TestMethod> {
     let version = "1.0".to_string();
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("检测方法创建失败");
+        }
+    };
 
     let row = sqlx::query(
         r#"
@@ -351,38 +369,44 @@ pub async fn create_method(
     .bind(&req.calculation_formula)
     .bind(&req.uncertainty_ref)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            TestMethod {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                method_code: r.get("method_code"),
-                method_name: r.get("method_name"),
-                category_id: r.get("category_id"),
-                category_name: r.get("category_name"),
-                standard: r.get("standard"),
-                version: r.get("version"),
-                description: r.get("description"),
-                principle: r.get("principle"),
-                instruments: r.get("instruments"),
-                reagents: r.get("reagents"),
-                parameters: r.get("parameters"),
-                steps: r.get("steps"),
-                calculation_formula: r.get("calculation_formula"),
-                uncertainty_ref: r.get("uncertainty_ref"),
-                status: r.get("status"),
-                validated: r.get("validated"),
-                validated_at: r.get("validated_at"),
-                validated_by: r.get("validated_by"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "检测方法创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("检测方法创建事务提交失败: {}", e);
+                return ApiResponse::server_error("检测方法创建失败");
+            }
+            ApiResponse::success(
+                TestMethod {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    method_code: r.get("method_code"),
+                    method_name: r.get("method_name"),
+                    category_id: r.get("category_id"),
+                    category_name: r.get("category_name"),
+                    standard: r.get("standard"),
+                    version: r.get("version"),
+                    description: r.get("description"),
+                    principle: r.get("principle"),
+                    instruments: r.get("instruments"),
+                    reagents: r.get("reagents"),
+                    parameters: r.get("parameters"),
+                    steps: r.get("steps"),
+                    calculation_formula: r.get("calculation_formula"),
+                    uncertainty_ref: r.get("uncertainty_ref"),
+                    status: r.get("status"),
+                    validated: r.get("validated"),
+                    validated_at: r.get("validated_at"),
+                    validated_by: r.get("validated_by"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "检测方法创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create test method: {}", e);
             ApiResponse::server_error("检测方法创建失败")
@@ -425,6 +449,14 @@ pub async fn get_method(
         return ApiResponse::success(cached, "从内存缓存获取检测方法成功");
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取检测方法失败");
+        }
+    };
+
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {}
@@ -436,8 +468,10 @@ pub async fn get_method(
     )))
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => {
@@ -489,6 +523,14 @@ pub async fn update_method(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("检测方法更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_test_methods
@@ -531,11 +573,15 @@ pub async fn update_method(
     .bind(&req.uncertainty_ref)
     .bind(&req.status)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("检测方法更新事务提交失败: {}", e);
+                return ApiResponse::server_error("检测方法更新失败");
+            }
             state
                 .test_method_cache
                 .remove(&test_method_cache_key(
@@ -591,16 +637,28 @@ pub async fn delete_method(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("检测方法删除失败");
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE qa_lims_test_methods SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(ctx.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("检测方法删除事务提交失败: {}", e);
+                return ApiResponse::server_error("检测方法删除失败");
+            }
             state
                 .test_method_cache
                 .remove(&test_method_cache_key(
@@ -649,7 +707,15 @@ pub async fn list_categories(
         query_builder = query_builder.bind(pid_uuid);
     }
 
-    let categories = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取方法分类列表失败");
+        }
+    };
+
+    let categories = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| MethodCategory {
                 id: row.get("id"),
@@ -665,6 +731,8 @@ pub async fn list_categories(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match categories {
         Ok(data) => ApiResponse::success(data, "获取方法分类列表成功"),
@@ -682,6 +750,14 @@ pub async fn create_category(
 ) -> ApiResponse<MethodCategory> {
     let sort_order = req.sort_order.unwrap_or(0);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("方法分类创建失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_method_categories (category_code, category_name, parent_id, sort_order, description, status, tenant_id)
@@ -695,25 +771,31 @@ pub async fn create_category(
     .bind(sort_order)
     .bind(&req.description)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            MethodCategory {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                category_code: r.get("category_code"),
-                category_name: r.get("category_name"),
-                parent_id: r.get("parent_id"),
-                sort_order: r.get("sort_order"),
-                description: r.get("description"),
-                status: r.get("status"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "方法分类创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("方法分类创建事务提交失败: {}", e);
+                return ApiResponse::server_error("方法分类创建失败");
+            }
+            ApiResponse::success(
+                MethodCategory {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    category_code: r.get("category_code"),
+                    category_name: r.get("category_name"),
+                    parent_id: r.get("parent_id"),
+                    sort_order: r.get("sort_order"),
+                    description: r.get("description"),
+                    status: r.get("status"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "方法分类创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create method category: {}", e);
             ApiResponse::server_error("方法分类创建失败")
@@ -745,6 +827,14 @@ pub async fn update_category(
         Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("方法分类更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_method_categories
@@ -765,25 +855,31 @@ pub async fn update_category(
     .bind(&req.description)
     .bind(&req.status)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            MethodCategory {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                category_code: r.get("category_code"),
-                category_name: r.get("category_name"),
-                parent_id: r.get("parent_id"),
-                sort_order: r.get("sort_order"),
-                description: r.get("description"),
-                status: r.get("status"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "方法分类更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("方法分类更新事务提交失败: {}", e);
+                return ApiResponse::server_error("方法分类更新失败");
+            }
+            ApiResponse::success(
+                MethodCategory {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    category_code: r.get("category_code"),
+                    category_name: r.get("category_name"),
+                    parent_id: r.get("parent_id"),
+                    sort_order: r.get("sort_order"),
+                    description: r.get("description"),
+                    status: r.get("status"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "方法分类更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -803,16 +899,30 @@ pub async fn delete_category(
         Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("方法分类删除失败");
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(ctx.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "方法分类删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("方法分类删除事务提交失败: {}", e);
+                return ApiResponse::server_error("方法分类删除失败");
+            }
+            ApiResponse::success(true, "方法分类删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete method category: {}", e);
             ApiResponse::server_error("方法分类删除失败")
@@ -852,7 +962,15 @@ pub async fn list_validations(
         query_builder = query_builder.bind(mid_uuid);
     }
 
-    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取方法验证记录列表失败");
+        }
+    };
+
+    let records = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| MethodValidationRecord {
                 id: row.get("id"),
@@ -874,6 +992,8 @@ pub async fn list_validations(
             .collect()
     });
 
+    let _ = scope.commit().await;
+
     match records {
         Ok(data) => ApiResponse::success(data, "获取方法验证记录列表成功"),
         Err(e) => {
@@ -893,12 +1013,20 @@ pub async fn create_validation(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("方法验证记录创建失败");
+        }
+    };
+
     let method_row = sqlx::query(
         "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(method_id)
     .bind(ctx.tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (method_code, method_name, version) = match method_row {
@@ -938,7 +1066,7 @@ pub async fn create_validation(
     .bind(&req.report_url)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     if req.conclusion == "pass" || req.conclusion == "合格" {
@@ -949,31 +1077,37 @@ pub async fn create_validation(
         .bind(&validation_date)
         .bind(&req.validated_by)
         .bind(ctx.tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     }
 
     match row {
-        Ok(r) => ApiResponse::success(
-            MethodValidationRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                method_id: r.get("method_id"),
-                method_code: r.get("method_code"),
-                method_name: r.get("method_name"),
-                version: r.get("version"),
-                validation_type: r.get("validation_type"),
-                validation_date: r.get("validation_date"),
-                validated_by: r.get("validated_by"),
-                conclusion: r.get("conclusion"),
-                parameters: r.get("parameters"),
-                report_url: r.get("report_url"),
-                notes: r.get("notes"),
-                status: r.get("status"),
-                created_at: r.get("created_at"),
-            },
-            "方法验证记录创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("方法验证记录创建事务提交失败: {}", e);
+                return ApiResponse::server_error("方法验证记录创建失败");
+            }
+            ApiResponse::success(
+                MethodValidationRecord {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    method_id: r.get("method_id"),
+                    method_code: r.get("method_code"),
+                    method_name: r.get("method_name"),
+                    version: r.get("version"),
+                    validation_type: r.get("validation_type"),
+                    validation_date: r.get("validation_date"),
+                    validated_by: r.get("validated_by"),
+                    conclusion: r.get("conclusion"),
+                    parameters: r.get("parameters"),
+                    report_url: r.get("report_url"),
+                    notes: r.get("notes"),
+                    status: r.get("status"),
+                    created_at: r.get("created_at"),
+                },
+                "方法验证记录创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create method validation: {}", e);
             ApiResponse::server_error("方法验证记录创建失败")
@@ -1011,6 +1145,14 @@ pub async fn list_method_versions(
         Some(ctx.tenant_id)
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取方法版本列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at
@@ -1021,8 +1163,10 @@ pub async fn list_method_versions(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -1073,12 +1217,20 @@ pub async fn create_new_version(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return ApiResponse::server_error("方法版本更新失败");
+        }
+    };
+
     let method_row = sqlx::query(
         "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(ctx.tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (_method_code, _method_name, current_version) = match method_row {
@@ -1113,7 +1265,7 @@ pub async fn create_new_version(
     .bind(version_description)
     .bind(change_log)
     .bind(ctx.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let row = sqlx::query(
@@ -1131,38 +1283,44 @@ pub async fn create_new_version(
     .bind(id)
     .bind(&new_version)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            TestMethod {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                method_code: r.get("method_code"),
-                method_name: r.get("method_name"),
-                category_id: r.get("category_id"),
-                category_name: r.get("category_name"),
-                standard: r.get("standard"),
-                version: r.get("version"),
-                description: r.get("description"),
-                principle: r.get("principle"),
-                instruments: r.get("instruments"),
-                reagents: r.get("reagents"),
-                parameters: r.get("parameters"),
-                steps: r.get("steps"),
-                calculation_formula: r.get("calculation_formula"),
-                uncertainty_ref: r.get("uncertainty_ref"),
-                status: r.get("status"),
-                validated: r.get("validated"),
-                validated_at: r.get("validated_at"),
-                validated_by: r.get("validated_by"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            &format!("方法版本更新成功，新版本: {}", new_version),
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("方法版本更新事务提交失败: {}", e);
+                return ApiResponse::server_error("方法版本更新失败");
+            }
+            ApiResponse::success(
+                TestMethod {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    method_code: r.get("method_code"),
+                    method_name: r.get("method_name"),
+                    category_id: r.get("category_id"),
+                    category_name: r.get("category_name"),
+                    standard: r.get("standard"),
+                    version: r.get("version"),
+                    description: r.get("description"),
+                    principle: r.get("principle"),
+                    instruments: r.get("instruments"),
+                    reagents: r.get("reagents"),
+                    parameters: r.get("parameters"),
+                    steps: r.get("steps"),
+                    calculation_formula: r.get("calculation_formula"),
+                    uncertainty_ref: r.get("uncertainty_ref"),
+                    status: r.get("status"),
+                    validated: r.get("validated"),
+                    validated_at: r.get("validated_at"),
+                    validated_by: r.get("validated_by"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                &format!("方法版本更新成功，新版本: {}", new_version),
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create new method version: {}", e);
             ApiResponse::server_error("方法版本更新失败")

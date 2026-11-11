@@ -61,6 +61,14 @@ pub async fn list_records(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测记录列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测记录列表失败");
+        }
+    };
+
     let rows = match query.task_id.as_ref() {
         Some(tid) => {
             let tid = match Uuid::parse_str(tid) {
@@ -73,7 +81,7 @@ pub async fn list_records(
             .bind(tid)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         }
         None => sqlx::query(
@@ -81,9 +89,11 @@ pub async fn list_records(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(data) => {
@@ -126,6 +136,14 @@ pub async fn create_record(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测记录创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测记录创建失败");
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at, created_at, tenant_id"
     )
@@ -135,18 +153,22 @@ pub async fn create_record(
     .bind(&req.conclusion)
     .bind(&req.recorded_by)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
             let task_no = sqlx::query("SELECT task_no FROM public.qa_lab_tasks WHERE id = $1")
                 .bind(task_id)
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut scope)
                 .await
                 .ok()
                 .flatten()
                 .map(|r| r.get::<String, _>("task_no"));
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测记录创建事务提交失败: {}", e);
+                return ApiResponse::server_error("检测记录创建失败");
+            }
             ApiResponse::success(
                 InspectionRecord {
                     id: r.get("id"),
@@ -180,12 +202,22 @@ pub async fn list_records_by_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取任务检测记录读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取任务检测记录失败");
+        }
+    };
+
     let rows = sqlx::query(
         "SELECT r.id, r.tenant_id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
     )
     .bind(task_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => ApiResponse::success(
@@ -234,12 +266,22 @@ pub async fn get_record(
         Err(_) => return ApiResponse::bad_request("无效的记录ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取检测记录读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取检测记录失败");
+        }
+    };
+
     let row = sqlx::query(
         "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -275,13 +317,27 @@ pub async fn delete_record(
         Err(_) => return ApiResponse::bad_request("无效的记录ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 检测记录删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("检测记录删除失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "检测记录删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 检测记录删除事务提交失败: {}", e);
+                return ApiResponse::server_error("检测记录删除失败");
+            }
+            ApiResponse::success(true, "检测记录删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete record: {}", e);
             ApiResponse::server_error("检测记录删除失败")

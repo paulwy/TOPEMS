@@ -1,8 +1,8 @@
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
+    require_event_tenant, EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
     QmsInspectionCompletedPayload,
 };
 
@@ -10,11 +10,11 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct LimsEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
 }
 
 impl LimsEventHandlers {
-    pub fn new(db: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self { db }
     }
 
@@ -42,6 +42,9 @@ impl LimsEventHandlers {
             event.trace_id
         );
 
+        // 租户只来自 payload；缺失/nil/非法 → 报错进重试上限 → DLQ
+        let tenant = require_event_tenant(&event)?;
+
         let payload: QmsInspectionCompletedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 QMS 检验完成事件 payload 失败: {}", e))
         })?;
@@ -56,10 +59,16 @@ impl LimsEventHandlers {
         );
 
         let now = Utc::now();
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant.get())
+            .await
+            .map_err(|e| TopemsError::internal("LIMS 事件处理器建立租户作用域失败", e))?;
+
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO lims_inspection_records (record_no, source_type, source_inspection_id, product_id, product_name, result, qualification_rate, inspector, status, tenant_id, created_at, updated_at)
-             VALUES ($1, 'qms', $2, $3, $4, $5, $6, $7, 'completed', '00000000-0000-0000-0000-000000000000', $8, $8)
-             ON CONFLICT (source_type, source_inspection_id) DO NOTHING
+             VALUES ($1, 'qms', $2, $3, $4, $5, $6, $7, 'completed', $9, $8, $8)
+             ON CONFLICT (tenant_id, source_type, source_inspection_id) DO NOTHING
              RETURNING id",
         )
         .bind(format!("LAB-{}", payload.inspection_no))
@@ -70,7 +79,8 @@ impl LimsEventHandlers {
         .bind(payload.qualification_rate)
         .bind(&payload.inspector)
         .bind(now)
-        .fetch_optional(&self.db)
+        .bind(tenant.get())
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
@@ -89,10 +99,14 @@ impl LimsEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[lims] 检验结果同步失败: {}", e);
+                return Err(TopemsError::internal("检验结果同步失败", e));
             }
         }
 
-        Ok(())
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::internal("LIMS 事件处理器提交事务失败", e))
     }
 
     async fn handle_ehs_hazard_reported(&self, event: Event) -> HandlerResult {
@@ -101,6 +115,8 @@ impl LimsEventHandlers {
             event.event_type,
             event.trace_id
         );
+
+        let tenant = require_event_tenant(&event)?;
 
         let payload: EhsHazardReportedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析 EHS 隐患报告事件 payload 失败: {}", e))
@@ -118,10 +134,16 @@ impl LimsEventHandlers {
         let now = Utc::now();
         let task_no = format!("SAFE-TASK-{}", payload.hazard_id);
 
+        let mut scope = self
+            .db
+            .scope_for_tenant(tenant.get())
+            .await
+            .map_err(|e| TopemsError::internal("LIMS 事件处理器建立租户作用域失败", e))?;
+
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO lims_safety_tasks (task_no, title, category, level, description, location, status, source_type, source_hazard_id, assigned_to, tenant_id, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'ehs_hazard', $7, 'system', '00000000-0000-0000-0000-000000000000', $8, $8)
-             ON CONFLICT (source_type, source_hazard_id) DO NOTHING
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'ehs_hazard', $7, 'system', $9, $8, $8)
+             ON CONFLICT (tenant_id, source_type, source_hazard_id) DO NOTHING
              RETURNING id",
         )
         .bind(&task_no)
@@ -132,7 +154,8 @@ impl LimsEventHandlers {
         .bind(payload.location.unwrap_or_default())
         .bind(payload.hazard_id)
         .bind(now)
-        .fetch_optional(&self.db)
+        .bind(tenant.get())
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
@@ -151,14 +174,18 @@ impl LimsEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[lims] 实验室安全检测任务创建失败: {}", e);
+                return Err(TopemsError::internal("实验室安全检测任务创建失败", e));
             }
         }
 
-        Ok(())
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::internal("LIMS 事件处理器提交事务失败", e))
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
+pub async fn start_event_subscribers(db: Db) -> Result<(), TopemsError> {
     let handlers = LimsEventHandlers::new(db);
     let subscriber = handlers
         .build_subscriber()

@@ -40,6 +40,7 @@ pub use database::{
     test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
 pub mod scope;
+pub mod tenant_sweep;
 pub use database::budget::{
     snapshot as connection_budget_snapshot, BudgetConfig, BudgetSnapshot, Ledger, PoolReservation,
     DEFAULT_TOTAL_CONNECTION_BUDGET,

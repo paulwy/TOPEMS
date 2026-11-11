@@ -44,8 +44,16 @@ pub struct Statistics {
 pub async fn get_statistics(
     State(state): State<crate::shared::AppState>,
 ) -> ApiResponse<Statistics> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取统计数据读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取统计数据失败");
+        }
+    };
+
     let total_samples = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .ok()
         .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -53,7 +61,7 @@ pub async fn get_statistics(
 
     let pending_samples =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'received'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -61,7 +69,7 @@ pub async fn get_statistics(
 
     let testing_samples =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'testing'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -69,7 +77,7 @@ pub async fn get_statistics(
 
     let completed_samples =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'completed'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -77,14 +85,14 @@ pub async fn get_statistics(
 
     let cancelled_samples =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'cancelled'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
             .unwrap_or(0);
 
     let total_tasks = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .ok()
         .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -92,7 +100,7 @@ pub async fn get_statistics(
 
     let pending_tasks =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'pending'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -100,7 +108,7 @@ pub async fn get_statistics(
 
     let in_progress_tasks =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'in_progress'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -108,21 +116,21 @@ pub async fn get_statistics(
 
     let completed_tasks =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'completed'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
             .unwrap_or(0);
 
     let total_processes = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_processes")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .ok()
         .and_then(|row| row.try_get::<i64, _>(0).ok())
         .unwrap_or(0);
 
     let total_instruments = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .ok()
         .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -130,7 +138,7 @@ pub async fn get_statistics(
 
     let normal_instruments =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'normal'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -138,7 +146,7 @@ pub async fn get_statistics(
 
     let calibration_instruments =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'calibration'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -146,7 +154,7 @@ pub async fn get_statistics(
 
     let maintenance_instruments =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'maintenance'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
@@ -154,11 +162,13 @@ pub async fn get_statistics(
 
     let disabled_instruments =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'disabled'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .and_then(|row| row.try_get::<i64, _>(0).ok())
             .unwrap_or(0);
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         Statistics {

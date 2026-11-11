@@ -33,11 +33,19 @@ pub async fn trigger_collection(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集触发写作用域创建失败: {}", e);
+            return ApiResponse::server_error("触发数据采集失败");
+        }
+    };
+
     let task_row = sqlx::query(
         "SELECT id::TEXT, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (instrument_id, protocol, task_no) = match task_row {
@@ -114,7 +122,7 @@ pub async fn trigger_collection(
     .bind(&protocol)
     .bind(&sample_raw_data)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -130,8 +138,13 @@ pub async fn trigger_collection(
                 "#,
             )
             .bind(task_id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 采集触发事务提交失败: {}", e);
+                return ApiResponse::server_error("触发数据采集失败");
+            }
 
             ApiResponse::success(
                 InstrumentData {
@@ -184,6 +197,14 @@ pub async fn list_collection_tasks(
     let offset = (page - 1) * page_size;
     let locale = Locale::from_headers(&headers).as_sql();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集任务列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取采集任务列表失败");
+        }
+    };
+
     let sql = match query.status.as_ref() {
         Some(_) => {
             "SELECT t.id, t.task_no, t.task_name, t.instrument_id, t.protocol, \
@@ -224,7 +245,7 @@ pub async fn list_collection_tasks(
         }
     }
 
-    let tasks = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let tasks = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| CollectionTask {
                 id: row.get("id"),
@@ -251,6 +272,8 @@ pub async fn list_collection_tasks(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match tasks {
         Ok(data) => ApiResponse::success(data, "获取采集任务列表成功"),
@@ -285,6 +308,14 @@ pub async fn get_collection_task(
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集任务详情读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取采集任务失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         SELECT t.id, t.task_no, t.task_name, t.instrument_id, t.protocol,
@@ -300,8 +331,10 @@ pub async fn get_collection_task(
     )
     .bind(id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -354,6 +387,14 @@ pub async fn create_collection_task(
         None => None,
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集任务创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("创建采集任务失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_collection_tasks
@@ -377,36 +418,42 @@ pub async fn create_collection_task(
     .bind(req.interval_minutes)
     .bind(&req.parse_rule_id)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            CollectionTask {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                task_no: r.get("task_no"),
-                task_name: r.get("task_name"),
-                instrument_id: r.get("instrument_id"),
-                instrument_no: None,
-                instrument_name: None,
-                protocol: r.get("protocol"),
-                collection_mode: r.get("collection_mode"),
-                cron_expression: r.get("cron_expression"),
-                interval_minutes: r.get("interval_minutes"),
-                parse_rule_id: r.get("parse_rule_id"),
-                status: r.get("status"),
-                last_run_at: r.get("last_run_at"),
-                next_run_at: r.get("next_run_at"),
-                total_collections: r.get("total_collections"),
-                success_count: r.get("success_count"),
-                failed_count: r.get("failed_count"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "采集任务创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 采集任务创建事务提交失败: {}", e);
+                return ApiResponse::server_error("创建采集任务失败");
+            }
+            ApiResponse::success(
+                CollectionTask {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    task_no: r.get("task_no"),
+                    task_name: r.get("task_name"),
+                    instrument_id: r.get("instrument_id"),
+                    instrument_no: None,
+                    instrument_name: None,
+                    protocol: r.get("protocol"),
+                    collection_mode: r.get("collection_mode"),
+                    cron_expression: r.get("cron_expression"),
+                    interval_minutes: r.get("interval_minutes"),
+                    parse_rule_id: r.get("parse_rule_id"),
+                    status: r.get("status"),
+                    last_run_at: r.get("last_run_at"),
+                    next_run_at: r.get("next_run_at"),
+                    total_collections: r.get("total_collections"),
+                    success_count: r.get("success_count"),
+                    failed_count: r.get("failed_count"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "采集任务创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create collection task: {}", e);
             ApiResponse::server_error("创建采集任务失败")
@@ -422,6 +469,14 @@ pub async fn update_collection_task(
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集任务更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("更新采集任务失败");
+        }
     };
 
     let row = sqlx::query(
@@ -447,36 +502,42 @@ pub async fn update_collection_task(
     .bind(&req.cron_expression)
     .bind(req.interval_minutes)
     .bind(&req.parse_rule_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            CollectionTask {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                task_no: r.get("task_no"),
-                task_name: r.get("task_name"),
-                instrument_id: r.get("instrument_id"),
-                instrument_no: None,
-                instrument_name: None,
-                protocol: r.get("protocol"),
-                collection_mode: r.get("collection_mode"),
-                cron_expression: r.get("cron_expression"),
-                interval_minutes: r.get("interval_minutes"),
-                parse_rule_id: r.get("parse_rule_id"),
-                status: r.get("status"),
-                last_run_at: r.get("last_run_at"),
-                next_run_at: r.get("next_run_at"),
-                total_collections: r.get("total_collections"),
-                success_count: r.get("success_count"),
-                failed_count: r.get("failed_count"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "采集任务更新成功",
-        ),
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 采集任务更新事务提交失败: {}", e);
+                return ApiResponse::server_error("更新采集任务失败");
+            }
+            ApiResponse::success(
+                CollectionTask {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    task_no: r.get("task_no"),
+                    task_name: r.get("task_name"),
+                    instrument_id: r.get("instrument_id"),
+                    instrument_no: None,
+                    instrument_name: None,
+                    protocol: r.get("protocol"),
+                    collection_mode: r.get("collection_mode"),
+                    cron_expression: r.get("cron_expression"),
+                    interval_minutes: r.get("interval_minutes"),
+                    parse_rule_id: r.get("parse_rule_id"),
+                    status: r.get("status"),
+                    last_run_at: r.get("last_run_at"),
+                    next_run_at: r.get("next_run_at"),
+                    total_collections: r.get("total_collections"),
+                    success_count: r.get("success_count"),
+                    failed_count: r.get("failed_count"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "采集任务更新成功",
+            )
+        }
         Ok(None) => ApiResponse::not_found("采集任务不存在"),
         Err(e) => {
             tracing::error!("Failed to update collection task: {}", e);
@@ -494,14 +555,28 @@ pub async fn delete_collection_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 采集任务删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("删除采集任务失败");
+        }
+    };
+
     let result =
         sqlx::query("UPDATE qa_lims_collection_tasks SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "采集任务删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 采集任务删除事务提交失败: {}", e);
+                return ApiResponse::server_error("删除采集任务失败");
+            }
+            ApiResponse::success(true, "采集任务删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete collection task: {}", e);
             ApiResponse::server_error("删除采集任务失败")

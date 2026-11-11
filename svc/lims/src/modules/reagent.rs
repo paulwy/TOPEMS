@@ -137,7 +137,15 @@ pub async fn list_reagents(
         }
     }
 
-    let reagents = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取试剂列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取试剂列表失败");
+        }
+    };
+
+    let reagents = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| Reagent {
                 id: row.get("id"),
@@ -156,6 +164,8 @@ pub async fn list_reagents(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match reagents {
         Ok(data) => ApiResponse::success(data, "获取试剂列表成功"),
@@ -189,6 +199,14 @@ pub async fn create_reagent(
     );
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 试剂创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("试剂创建失败");
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
@@ -201,11 +219,15 @@ pub async fn create_reagent(
     .bind(req.quantity)
     .bind(&req.unit)
     .bind(req.expired_at.as_deref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 试剂创建事务提交失败: {}", e);
+                return ApiResponse::server_error("试剂创建失败");
+            }
             let reagent = Reagent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -298,14 +320,23 @@ pub async fn get_reagent(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取试剂读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取试剂失败");
+        }
+    };
     let row = sqlx::query(
         "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
     .bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -347,6 +378,14 @@ pub async fn update_reagent(
     };
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 试剂更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("试剂更新失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lab_reagents SET name = COALESCE($3, name), specification = COALESCE($4, specification), manufacturer = COALESCE($5, manufacturer), batch_no = COALESCE($6, batch_no), quantity = COALESCE($7, quantity), unit = COALESCE($8, unit), status = COALESCE($9, status), expired_at = COALESCE($10, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
@@ -360,28 +399,34 @@ pub async fn update_reagent(
     .bind(&req.unit)
     .bind(&req.status)
     .bind(req.expired_at.as_deref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            Reagent {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                reagent_no: r.get("reagent_no"),
-                name: r.get("name"),
-                specification: r.get("specification"),
-                manufacturer: r.get("manufacturer"),
-                batch_no: r.get("batch_no"),
-                quantity: r.get("quantity"),
-                unit: r.get("unit"),
-                status: r.get("status"),
-                expired_at: r.get("expired_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "试剂更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 试剂更新事务提交失败: {}", e);
+                return ApiResponse::server_error("试剂更新失败");
+            }
+            ApiResponse::success(
+                Reagent {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    reagent_no: r.get("reagent_no"),
+                    name: r.get("name"),
+                    specification: r.get("specification"),
+                    manufacturer: r.get("manufacturer"),
+                    batch_no: r.get("batch_no"),
+                    quantity: r.get("quantity"),
+                    unit: r.get("unit"),
+                    status: r.get("status"),
+                    expired_at: r.get("expired_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "试剂更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -402,16 +447,30 @@ pub async fn delete_reagent(
     };
     let tenant_id = ctx.tenant_id;
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 试剂删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("试剂删除失败");
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE qa_lab_reagents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "试剂删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 试剂删除事务提交失败: {}", e);
+                return ApiResponse::server_error("试剂删除失败");
+            }
+            ApiResponse::success(true, "试剂删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete reagent: {}", e);
             ApiResponse::server_error("试剂删除失败")

@@ -299,7 +299,15 @@ pub async fn list_projects(
         }
     }
 
-    let projects = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取不确定度评定项目列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取不确定度评定项目列表失败");
+        }
+    };
+
+    let projects = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| UncertaintyProject {
                 id: row.get("id"),
@@ -326,6 +334,8 @@ pub async fn list_projects(
             .collect()
     });
 
+    let _ = scope.commit().await;
+
     match projects {
         Ok(data) => ApiResponse::success(data, "获取不确定度评定项目列表成功"),
         Err(e) => {
@@ -344,6 +354,14 @@ pub async fn create_project(
         "UNC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度评定项目创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度评定项目创建失败");
+        }
+    };
 
     let row = sqlx::query(
         r#"
@@ -368,35 +386,41 @@ pub async fn create_project(
     .bind(&req.evaluator)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyProject {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_no: r.get("project_no"),
-                project_name: r.get("project_name"),
-                method_id: r.get("method_id"),
-                method_name: r.get("method_name"),
-                test_item: r.get("test_item"),
-                measurand: r.get("measurand"),
-                measurement_range: r.get("measurement_range"),
-                unit: r.get("unit"),
-                status: r.get("status"),
-                evaluator: r.get("evaluator"),
-                evaluation_date: r.get("evaluation_date"),
-                combined_uncertainty: r.get("combined_uncertainty"),
-                expanded_uncertainty: r.get("expanded_uncertainty"),
-                coverage_factor: r.get("coverage_factor"),
-                confidence_level: r.get("confidence_level"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度评定项目创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度评定项目创建事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度评定项目创建失败");
+            }
+            ApiResponse::success(
+                UncertaintyProject {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_no: r.get("project_no"),
+                    project_name: r.get("project_name"),
+                    method_id: r.get("method_id"),
+                    method_name: r.get("method_name"),
+                    test_item: r.get("test_item"),
+                    measurand: r.get("measurand"),
+                    measurement_range: r.get("measurement_range"),
+                    unit: r.get("unit"),
+                    status: r.get("status"),
+                    evaluator: r.get("evaluator"),
+                    evaluation_date: r.get("evaluation_date"),
+                    combined_uncertainty: r.get("combined_uncertainty"),
+                    expanded_uncertainty: r.get("expanded_uncertainty"),
+                    coverage_factor: r.get("coverage_factor"),
+                    confidence_level: r.get("confidence_level"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度评定项目创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create uncertainty project: {}", e);
             ApiResponse::server_error("不确定度评定项目创建失败")
@@ -426,12 +450,22 @@ pub async fn get_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取不确定度评定项目读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取不确定度评定项目失败");
+        }
+    };
+
     let row = sqlx::query(
         "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at, updated_at, tenant_id FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -478,6 +512,14 @@ pub async fn update_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度评定项目更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度评定项目更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_uncertainty_projects 
@@ -516,35 +558,41 @@ pub async fn update_project(
     .bind(req.coverage_factor)
     .bind(req.confidence_level)
     .bind(&req.notes)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyProject {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_no: r.get("project_no"),
-                project_name: r.get("project_name"),
-                method_id: r.get("method_id"),
-                method_name: r.get("method_name"),
-                test_item: r.get("test_item"),
-                measurand: r.get("measurand"),
-                measurement_range: r.get("measurement_range"),
-                unit: r.get("unit"),
-                status: r.get("status"),
-                evaluator: r.get("evaluator"),
-                evaluation_date: r.get("evaluation_date"),
-                combined_uncertainty: r.get("combined_uncertainty"),
-                expanded_uncertainty: r.get("expanded_uncertainty"),
-                coverage_factor: r.get("coverage_factor"),
-                confidence_level: r.get("confidence_level"),
-                notes: r.get("notes"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度评定项目更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度评定项目更新事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度评定项目更新失败");
+            }
+            ApiResponse::success(
+                UncertaintyProject {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_no: r.get("project_no"),
+                    project_name: r.get("project_name"),
+                    method_id: r.get("method_id"),
+                    method_name: r.get("method_name"),
+                    test_item: r.get("test_item"),
+                    measurand: r.get("measurand"),
+                    measurement_range: r.get("measurement_range"),
+                    unit: r.get("unit"),
+                    status: r.get("status"),
+                    evaluator: r.get("evaluator"),
+                    evaluation_date: r.get("evaluation_date"),
+                    combined_uncertainty: r.get("combined_uncertainty"),
+                    expanded_uncertainty: r.get("expanded_uncertainty"),
+                    coverage_factor: r.get("coverage_factor"),
+                    confidence_level: r.get("confidence_level"),
+                    notes: r.get("notes"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度评定项目更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -563,14 +611,28 @@ pub async fn delete_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度评定项目删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度评定项目删除失败");
+        }
+    };
+
     let result =
         sqlx::query("UPDATE qa_lims_uncertainty_projects SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "不确定度评定项目删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度评定项目删除事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度评定项目删除失败");
+            }
+            ApiResponse::success(true, "不确定度评定项目删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete uncertainty project: {}", e);
             ApiResponse::server_error("不确定度评定项目删除失败")
@@ -600,6 +662,14 @@ pub async fn list_sources(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取不确定度来源列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取不确定度来源列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id, project_id, source_name, source_type, description,
@@ -611,8 +681,10 @@ pub async fn list_sources(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -663,6 +735,14 @@ pub async fn create_source(
 
     let sort_order = req.sort_order.unwrap_or(0);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度来源创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度来源创建失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_uncertainty_sources (
@@ -682,26 +762,32 @@ pub async fn create_source(
     .bind(req.sensitivity_coefficient)
     .bind(sort_order)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintySource {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_name: r.get("source_name"),
-                source_type: r.get("source_type"),
-                description: r.get("description"),
-                distribution_type: r.get("distribution_type"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                sort_order: r.get("sort_order"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度来源创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度来源创建事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度来源创建失败");
+            }
+            ApiResponse::success(
+                UncertaintySource {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_name: r.get("source_name"),
+                    source_type: r.get("source_type"),
+                    description: r.get("description"),
+                    distribution_type: r.get("distribution_type"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    sort_order: r.get("sort_order"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度来源创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create uncertainty source: {}", e);
             ApiResponse::server_error("不确定度来源创建失败")
@@ -732,6 +818,14 @@ pub async fn update_source(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度来源更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度来源更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_uncertainty_sources 
@@ -755,26 +849,32 @@ pub async fn update_source(
     .bind(&req.distribution_type)
     .bind(req.sensitivity_coefficient)
     .bind(req.sort_order)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintySource {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_name: r.get("source_name"),
-                source_type: r.get("source_type"),
-                description: r.get("description"),
-                distribution_type: r.get("distribution_type"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                sort_order: r.get("sort_order"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度来源更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度来源更新事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度来源更新失败");
+            }
+            ApiResponse::success(
+                UncertaintySource {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_name: r.get("source_name"),
+                    source_type: r.get("source_type"),
+                    description: r.get("description"),
+                    distribution_type: r.get("distribution_type"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    sort_order: r.get("sort_order"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度来源更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -793,14 +893,28 @@ pub async fn delete_source(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度来源删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度来源删除失败");
+        }
+    };
+
     let result =
         sqlx::query("UPDATE qa_lims_uncertainty_sources SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "不确定度来源删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度来源删除事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度来源删除失败");
+            }
+            ApiResponse::success(true, "不确定度来源删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete uncertainty source: {}", e);
             ApiResponse::server_error("不确定度来源删除失败")
@@ -830,6 +944,14 @@ pub async fn list_components(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取不确定度分量列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取不确定度分量列表失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT c.id, c.project_id, c.source_id, s.source_name, c.component_type,
@@ -843,8 +965,10 @@ pub async fn list_components(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match rows {
         Ok(rows) => {
@@ -903,11 +1027,19 @@ pub async fn create_component(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度分量创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度分量创建失败");
+        }
+    };
+
     let source_row = sqlx::query(
         "SELECT source_name FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(source_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let source_name: Option<String> = match source_row {
@@ -942,31 +1074,37 @@ pub async fn create_component(
     .bind(&req.description)
     .bind(ctx.tenant_id)
     .bind(source_name.as_deref())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyComponent {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_id: r.get("source_id"),
-                source_name: r.get("source_name"),
-                component_type: r.get("component_type"),
-                component_name: r.get("component_name"),
-                standard_uncertainty: r.get("standard_uncertainty"),
-                relative_uncertainty: r.get("relative_uncertainty"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                degrees_freedom: r.get("degrees_freedom"),
-                calculation_method: r.get("calculation_method"),
-                parameters: r.get("parameters"),
-                description: r.get("description"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度分量创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度分量创建事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度分量创建失败");
+            }
+            ApiResponse::success(
+                UncertaintyComponent {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_id: r.get("source_id"),
+                    source_name: r.get("source_name"),
+                    component_type: r.get("component_type"),
+                    component_name: r.get("component_name"),
+                    standard_uncertainty: r.get("standard_uncertainty"),
+                    relative_uncertainty: r.get("relative_uncertainty"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    degrees_freedom: r.get("degrees_freedom"),
+                    calculation_method: r.get("calculation_method"),
+                    parameters: r.get("parameters"),
+                    description: r.get("description"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度分量创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create uncertainty component: {}", e);
             ApiResponse::server_error("不确定度分量创建失败")
@@ -997,6 +1135,14 @@ pub async fn update_component(
         Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度分量更新写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度分量更新失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_uncertainty_components 
@@ -1025,31 +1171,37 @@ pub async fn update_component(
     .bind(&req.calculation_method)
     .bind(&req.parameters)
     .bind(&req.description)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyComponent {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_id: r.get("source_id"),
-                source_name: r.get("source_name"),
-                component_type: r.get("component_type"),
-                component_name: r.get("component_name"),
-                standard_uncertainty: r.get("standard_uncertainty"),
-                relative_uncertainty: r.get("relative_uncertainty"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                degrees_freedom: r.get("degrees_freedom"),
-                calculation_method: r.get("calculation_method"),
-                parameters: r.get("parameters"),
-                description: r.get("description"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "不确定度分量更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度分量更新事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度分量更新失败");
+            }
+            ApiResponse::success(
+                UncertaintyComponent {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_id: r.get("source_id"),
+                    source_name: r.get("source_name"),
+                    component_type: r.get("component_type"),
+                    component_name: r.get("component_name"),
+                    standard_uncertainty: r.get("standard_uncertainty"),
+                    relative_uncertainty: r.get("relative_uncertainty"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    degrees_freedom: r.get("degrees_freedom"),
+                    calculation_method: r.get("calculation_method"),
+                    parameters: r.get("parameters"),
+                    description: r.get("description"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "不确定度分量更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -1068,14 +1220,28 @@ pub async fn delete_component(
         Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 不确定度分量删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度分量删除失败");
+        }
+    };
+
     let result =
         sqlx::query("UPDATE qa_lims_uncertainty_components SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "不确定度分量删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 不确定度分量删除事务提交失败: {}", e);
+                return ApiResponse::server_error("不确定度分量删除失败");
+            }
+            ApiResponse::success(true, "不确定度分量删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete uncertainty component: {}", e);
             ApiResponse::server_error("不确定度分量删除失败")
@@ -1138,6 +1304,14 @@ pub async fn calculate_type_a(
         "count": n
     });
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] A类不确定度计算写作用域创建失败: {}", e);
+            return ApiResponse::server_error("A类不确定度计算失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_uncertainty_components (
@@ -1159,31 +1333,37 @@ pub async fn calculate_type_a(
     .bind(degrees_freedom)
     .bind(&params)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyComponent {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_id: r.get("source_id"),
-                source_name: r.get("source_name"),
-                component_type: r.get("component_type"),
-                component_name: r.get("component_name"),
-                standard_uncertainty: r.get("standard_uncertainty"),
-                relative_uncertainty: r.get("relative_uncertainty"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                degrees_freedom: r.get("degrees_freedom"),
-                calculation_method: r.get("calculation_method"),
-                parameters: r.get("parameters"),
-                description: r.get("description"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "A类不确定度计算完成",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] A类不确定度计算事务提交失败: {}", e);
+                return ApiResponse::server_error("A类不确定度计算失败");
+            }
+            ApiResponse::success(
+                UncertaintyComponent {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_id: r.get("source_id"),
+                    source_name: r.get("source_name"),
+                    component_type: r.get("component_type"),
+                    component_name: r.get("component_name"),
+                    standard_uncertainty: r.get("standard_uncertainty"),
+                    relative_uncertainty: r.get("relative_uncertainty"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    degrees_freedom: r.get("degrees_freedom"),
+                    calculation_method: r.get("calculation_method"),
+                    parameters: r.get("parameters"),
+                    description: r.get("description"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "A类不确定度计算完成",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to calculate Type A uncertainty: {}", e);
             ApiResponse::server_error("A类不确定度计算失败")
@@ -1234,6 +1414,14 @@ pub async fn calculate_type_b(
         "divisor": divisor
     });
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] B类不确定度计算写作用域创建失败: {}", e);
+            return ApiResponse::server_error("B类不确定度计算失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_uncertainty_components (
@@ -1256,31 +1444,37 @@ pub async fn calculate_type_b(
     .bind(&params)
     .bind(&req.description)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            UncertaintyComponent {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                project_id: r.get("project_id"),
-                source_id: r.get("source_id"),
-                source_name: r.get("source_name"),
-                component_type: r.get("component_type"),
-                component_name: r.get("component_name"),
-                standard_uncertainty: r.get("standard_uncertainty"),
-                relative_uncertainty: r.get("relative_uncertainty"),
-                sensitivity_coefficient: r.get("sensitivity_coefficient"),
-                degrees_freedom: r.get("degrees_freedom"),
-                calculation_method: r.get("calculation_method"),
-                parameters: r.get("parameters"),
-                description: r.get("description"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "B类不确定度计算完成",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] B类不确定度计算事务提交失败: {}", e);
+                return ApiResponse::server_error("B类不确定度计算失败");
+            }
+            ApiResponse::success(
+                UncertaintyComponent {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    project_id: r.get("project_id"),
+                    source_id: r.get("source_id"),
+                    source_name: r.get("source_name"),
+                    component_type: r.get("component_type"),
+                    component_name: r.get("component_name"),
+                    standard_uncertainty: r.get("standard_uncertainty"),
+                    relative_uncertainty: r.get("relative_uncertainty"),
+                    sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                    degrees_freedom: r.get("degrees_freedom"),
+                    calculation_method: r.get("calculation_method"),
+                    parameters: r.get("parameters"),
+                    description: r.get("description"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "B类不确定度计算完成",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to calculate Type B uncertainty: {}", e);
             ApiResponse::server_error("B类不确定度计算失败")
@@ -1310,11 +1504,19 @@ pub async fn calculate_combined(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 合成不确定度计算写作用域创建失败: {}", e);
+            return ApiResponse::server_error("合成不确定度计算失败");
+        }
+    };
+
     let rows = sqlx::query(
         "SELECT standard_uncertainty::float8, sensitivity_coefficient::float8, degrees_freedom::float8 FROM qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let components = match rows {
@@ -1326,7 +1528,7 @@ pub async fn calculate_combined(
         return ApiResponse::bad_request("没有可计算的不确定度分量");
     }
 
-    let mut combined_var = 0.0;
+    let mut combined_var: f64 = 0.0;
     let mut numerator = 0.0;
     let mut denominator = 0.0;
 
@@ -1358,7 +1560,7 @@ pub async fn calculate_combined(
     let project_row =
         sqlx::query("SELECT coverage_factor::float8 FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await;
 
     let coverage_factor = match project_row {
@@ -1378,7 +1580,7 @@ pub async fn calculate_combined(
     .bind(id)
     .bind(combined_uncertainty)
     .bind(expanded_uncertainty)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() == 0 => {
@@ -1405,6 +1607,11 @@ pub async fn calculate_combined(
         "component_count": components.len()
     });
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[lims] 合成不确定度计算事务提交失败: {}", e);
+        return ApiResponse::server_error("合成不确定度计算失败");
+    }
+
     ApiResponse::success(result, "合成不确定度计算完成")
 }
 
@@ -1417,11 +1624,19 @@ pub async fn generate_report(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 生成不确定度评定报告读作用域创建失败: {}", e);
+            return ApiResponse::server_error("不确定度评定报告生成失败");
+        }
+    };
+
     let project_row = sqlx::query(
         "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::float8, expanded_uncertainty::float8, coverage_factor::float8, confidence_level::float8, notes, created_at FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let project = match project_row {
@@ -1455,7 +1670,7 @@ pub async fn generate_report(
         "SELECT id::TEXT, source_name, source_type, description, distribution_type, sensitivity_coefficient::float8, sort_order FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let sources: Vec<serde_json::Value> = match source_rows {
@@ -1487,7 +1702,7 @@ pub async fn generate_report(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let components: Vec<serde_json::Value> = match component_rows {
@@ -1509,6 +1724,8 @@ pub async fn generate_report(
             .collect(),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询分量失败", e)),
     };
+
+    let _ = scope.commit().await;
 
     let report = serde_json::json!({
         "report_title": "测量不确定度评定报告",

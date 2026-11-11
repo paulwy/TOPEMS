@@ -225,7 +225,15 @@ pub async fn list_barcodes(
         }
     }
 
-    let barcodes = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取条码列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取条码列表失败");
+        }
+    };
+
+    let barcodes = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| SampleBarcode {
                 id: row.get("id"),
@@ -245,6 +253,8 @@ pub async fn list_barcodes(
             })
             .collect()
     });
+
+    let _ = scope.commit().await;
 
     match barcodes {
         Ok(data) => ApiResponse::success(data, "获取条码列表成功"),
@@ -269,6 +279,14 @@ pub async fn generate_barcode(
         return ApiResponse::bad_request("生成数量必须在1-100之间");
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 生成条码写作用域创建失败: {}", e);
+            return ApiResponse::server_error("生成条码失败");
+        }
+    };
+
     let mut sample_no: Option<String> = None;
     let sample_uuid = match &req.sample_id {
         Some(sid) => {
@@ -279,7 +297,7 @@ pub async fn generate_barcode(
             let sample_row =
                 sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
                     .bind(id)
-                    .fetch_optional(&state.pool)
+                    .fetch_optional(&mut scope)
                     .await;
             match sample_row {
                 Ok(Some(row)) => {
@@ -318,7 +336,7 @@ pub async fn generate_barcode(
         .bind(&req.barcode_type)
         .bind(sample_uuid)
         .bind(&sample_no)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
         match row {
@@ -343,6 +361,11 @@ pub async fn generate_barcode(
                 return ApiResponse::server_error("生成条码失败");
             }
         }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[lims] 生成条码事务提交失败: {}", e);
+        return ApiResponse::server_error("生成条码失败");
     }
 
     ApiResponse::success(generated, "条码生成成功")
@@ -370,12 +393,22 @@ pub async fn get_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取条码读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取条码失败");
+        }
+    };
+
     let row = sqlx::query(
         "SELECT id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at, last_printed_at, created_at, updated_at FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match row {
         Ok(r) => ApiResponse::success(
@@ -416,6 +449,14 @@ pub async fn update_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 更新条码写作用域创建失败: {}", e);
+            return ApiResponse::server_error("条码更新失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lims_sample_barcodes SET sample_id = COALESCE($2::uuid, sample_id), rfid_tag = COALESCE($3, rfid_tag), status = COALESCE($4, status), updated_at = NOW() WHERE id = $1 RETURNING id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at, last_printed_at, created_at, updated_at"
     )
@@ -423,29 +464,35 @@ pub async fn update_barcode(
     .bind(&req.sample_id)
     .bind(&req.rfid_tag)
     .bind(&req.status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            SampleBarcode {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                barcode: r.get("barcode"),
-                barcode_type: r.get("barcode_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                rfid_tag: r.get("rfid_tag"),
-                print_count: r.get("print_count"),
-                status: r.get("status"),
-                generated_by: r.get("generated_by"),
-                generated_at: r.get("generated_at"),
-                last_printed_at: r.get("last_printed_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "条码更新成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 更新条码事务提交失败: {}", e);
+                return ApiResponse::server_error("条码更新失败");
+            }
+            ApiResponse::success(
+                SampleBarcode {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    barcode: r.get("barcode"),
+                    barcode_type: r.get("barcode_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    rfid_tag: r.get("rfid_tag"),
+                    print_count: r.get("print_count"),
+                    status: r.get("status"),
+                    generated_by: r.get("generated_by"),
+                    generated_at: r.get("generated_at"),
+                    last_printed_at: r.get("last_printed_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "条码更新成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -477,33 +524,47 @@ pub async fn print_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 条码打印写作用域创建失败: {}", e);
+            return ApiResponse::server_error("条码打印失败");
+        }
+    };
+
     let row = sqlx::query(
         "UPDATE qa_lims_sample_barcodes SET print_count = print_count + 1, last_printed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at, last_printed_at, created_at, updated_at, tenant_id"
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            SampleBarcode {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                barcode: r.get("barcode"),
-                barcode_type: r.get("barcode_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                rfid_tag: r.get("rfid_tag"),
-                print_count: r.get("print_count"),
-                status: r.get("status"),
-                generated_by: r.get("generated_by"),
-                generated_at: r.get("generated_at"),
-                last_printed_at: r.get("last_printed_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "条码打印成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 条码打印事务提交失败: {}", e);
+                return ApiResponse::server_error("条码打印失败");
+            }
+            ApiResponse::success(
+                SampleBarcode {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    barcode: r.get("barcode"),
+                    barcode_type: r.get("barcode_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    rfid_tag: r.get("rfid_tag"),
+                    print_count: r.get("print_count"),
+                    status: r.get("status"),
+                    generated_by: r.get("generated_by"),
+                    generated_at: r.get("generated_at"),
+                    last_printed_at: r.get("last_printed_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "条码打印成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to print barcode: {}", e);
             ApiResponse::server_error("条码打印失败")
@@ -528,6 +589,13 @@ pub async fn print_barcodes_batch(
     if req.barcode_ids.is_empty() {
         return ApiResponse::bad_request("barcode_ids 不能为空");
     }
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 条码批量打印写作用域创建失败: {}", e);
+            return ApiResponse::server_error("条码批量打印失败");
+        }
+    };
     let mut printed: Vec<String> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
     for id_str in &req.barcode_ids {
@@ -543,12 +611,16 @@ pub async fn print_barcodes_batch(
         )
         .bind(copies)
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
         match result {
             Ok(Some(r)) => printed.push(r.get::<String, _>("barcode")),
             _ => failed.push(id_str.clone()),
         }
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[lims] 条码批量打印事务提交失败: {}", e);
+        return ApiResponse::server_error("条码批量打印失败");
     }
     ApiResponse::success(
         serde_json::json!({ "printed": printed, "failed": failed, "total": printed.len() }),
@@ -565,13 +637,27 @@ pub async fn delete_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 条码删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("条码删除失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lims_sample_barcodes SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "条码删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 条码删除事务提交失败: {}", e);
+                return ApiResponse::server_error("条码删除失败");
+            }
+            ApiResponse::success(true, "条码删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete barcode: {}", e);
             ApiResponse::server_error("条码删除失败")
@@ -599,11 +685,19 @@ pub async fn scan_barcode(
         return ApiResponse::bad_request("无效的扫描类型");
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 条码扫描登记写作用域创建失败: {}", e);
+            return ApiResponse::server_error("条码扫描登记失败");
+        }
+    };
+
     let barcode_row = sqlx::query(
         "SELECT id, sample_id, sample_no FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode = $1",
     )
     .bind(&req.barcode)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (barcode_id, sample_id, sample_no) = match barcode_row {
@@ -645,7 +739,7 @@ pub async fn scan_barcode(
     .bind(&req.location)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     if let (Some(sid), "receive") = (sample_id, req.scan_type.as_str()) {
@@ -653,7 +747,7 @@ pub async fn scan_barcode(
             "UPDATE public.qa_lab_samples SET status = 'received', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     }
 
@@ -662,12 +756,16 @@ pub async fn scan_barcode(
             "UPDATE public.qa_lab_samples SET status = 'destroyed', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
     }
 
     match row {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] 条码扫描登记事务提交失败: {}", e);
+                return ApiResponse::server_error("条码扫描登记失败");
+            }
             let _ = scan_type_name;
             ApiResponse::success(
                 BarcodeScanRecord {
@@ -820,7 +918,15 @@ pub async fn list_rfid_tags(
         }
     }
 
-    let tags = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 获取RFID标签列表读作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取RFID标签列表失败");
+        }
+    };
+
+    let tags = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| RfidTag {
                 id: row.get("id"),
@@ -838,6 +944,8 @@ pub async fn list_rfid_tags(
             .collect()
     });
 
+    let _ = scope.commit().await;
+
     match tags {
         Ok(data) => ApiResponse::success(data, "获取RFID标签列表成功"),
         Err(e) => {
@@ -854,6 +962,14 @@ pub async fn create_rfid_tag(
 ) -> ApiResponse<RfidTag> {
     let tag_type = req.tag_type.unwrap_or_else(|| "uhf".to_string());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] RFID标签创建写作用域创建失败: {}", e);
+            return ApiResponse::server_error("RFID标签创建失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lims_rfid_tags (tag_id, tag_type, status, tenant_id)
@@ -865,26 +981,32 @@ pub async fn create_rfid_tag(
     .bind(&req.tag_id)
     .bind(&tag_type)
     .bind(ctx.tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            RfidTag {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                tag_id: r.get("tag_id"),
-                tag_type: r.get("tag_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                status: r.get("status"),
-                assigned_at: r.get("assigned_at"),
-                last_read_at: r.get("last_read_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "RFID标签创建成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] RFID标签创建事务提交失败: {}", e);
+                return ApiResponse::server_error("RFID标签创建失败");
+            }
+            ApiResponse::success(
+                RfidTag {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    tag_id: r.get("tag_id"),
+                    tag_type: r.get("tag_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    status: r.get("status"),
+                    assigned_at: r.get("assigned_at"),
+                    last_read_at: r.get("last_read_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "RFID标签创建成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create RFID tag: {}", e);
             ApiResponse::server_error("RFID标签创建失败")
@@ -920,9 +1042,17 @@ pub async fn assign_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] RFID标签绑定写作用域创建失败: {}", e);
+            return ApiResponse::server_error("RFID标签绑定失败");
+        }
+    };
+
     let sample_row = sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
         .bind(sample_uuid)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
 
     let sample_no = match sample_row {
@@ -943,26 +1073,32 @@ pub async fn assign_rfid_tag(
     .bind(tag_uuid)
     .bind(sample_uuid)
     .bind(&sample_no)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            RfidTag {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                tag_id: r.get("tag_id"),
-                tag_type: r.get("tag_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                status: r.get("status"),
-                assigned_at: r.get("assigned_at"),
-                last_read_at: r.get("last_read_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "RFID标签绑定成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] RFID标签绑定事务提交失败: {}", e);
+                return ApiResponse::server_error("RFID标签绑定失败");
+            }
+            ApiResponse::success(
+                RfidTag {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    tag_id: r.get("tag_id"),
+                    tag_type: r.get("tag_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    status: r.get("status"),
+                    assigned_at: r.get("assigned_at"),
+                    last_read_at: r.get("last_read_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "RFID标签绑定成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to assign RFID tag: {}", e);
             ApiResponse::server_error("RFID标签绑定失败")
@@ -992,6 +1128,14 @@ pub async fn unassign_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的RFID标签ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] RFID标签解绑写作用域创建失败: {}", e);
+            return ApiResponse::server_error("RFID标签解绑失败");
+        }
+    };
+
     let row = sqlx::query(
         r#"
         UPDATE qa_lims_rfid_tags 
@@ -1002,26 +1146,32 @@ pub async fn unassign_rfid_tag(
         "#
     )
     .bind(tag_uuid)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            RfidTag {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                tag_id: r.get("tag_id"),
-                tag_type: r.get("tag_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                status: r.get("status"),
-                assigned_at: r.get("assigned_at"),
-                last_read_at: r.get("last_read_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "RFID标签解绑成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] RFID标签解绑事务提交失败: {}", e);
+                return ApiResponse::server_error("RFID标签解绑失败");
+            }
+            ApiResponse::success(
+                RfidTag {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    tag_id: r.get("tag_id"),
+                    tag_type: r.get("tag_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    status: r.get("status"),
+                    assigned_at: r.get("assigned_at"),
+                    last_read_at: r.get("last_read_at"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "RFID标签解绑成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
@@ -1053,13 +1203,27 @@ pub async fn delete_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的RFID标签ID"),
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] RFID标签删除写作用域创建失败: {}", e);
+            return ApiResponse::server_error("RFID标签删除失败");
+        }
+    };
+
     let result = sqlx::query("UPDATE qa_lims_rfid_tags SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "RFID标签删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[lims] RFID标签删除事务提交失败: {}", e);
+                return ApiResponse::server_error("RFID标签删除失败");
+            }
+            ApiResponse::success(true, "RFID标签删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete RFID tag: {}", e);
             ApiResponse::server_error("RFID标签删除失败")
@@ -1084,11 +1248,19 @@ pub async fn trace_sample_by_barcode(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(barcode): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[lims] 样品追溯查询读作用域创建失败: {}", e);
+            return ApiResponse::server_error("样品追溯查询失败");
+        }
+    };
+
     let barcode_row = sqlx::query(
         "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, status FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode = $1"
     )
     .bind(&barcode)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (sample_id, sample_no) = match barcode_row {
@@ -1109,7 +1281,7 @@ pub async fn trace_sample_by_barcode(
             "#,
         )
         .bind(sid)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
 
         match sample_row {
@@ -1143,7 +1315,7 @@ pub async fn trace_sample_by_barcode(
         "#
     )
     .bind(&barcode)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let scan_history: Vec<serde_json::Value> = match scan_rows {
@@ -1165,6 +1337,8 @@ pub async fn trace_sample_by_barcode(
             .collect(),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询扫描记录失败", e)),
     };
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         serde_json::json!({

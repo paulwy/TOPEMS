@@ -10,6 +10,7 @@ description = "TOPEMS-LIMS"
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
+topems-shared-db = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
