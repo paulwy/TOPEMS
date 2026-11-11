@@ -216,10 +216,7 @@ pub async fn list_teams(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("t.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -376,7 +373,7 @@ pub async fn get_team(
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
           AND t.deleted_at IS NULL
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $2::uuid)
+          AND t.tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -496,7 +493,7 @@ pub async fn create_team(
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1
             ), updated_at = $2 WHERE id = $1
-              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+              AND tenant_id = $3::uuid
             "#,
         )
         .bind(result.id)
@@ -558,7 +555,7 @@ pub async fn update_team(
             description = COALESCE($8, description),
             updated_at = $9
         WHERE id = $1
-          AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
+          AND tenant_id = $10::uuid
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -624,7 +621,7 @@ pub async fn delete_team(
         r#"
         UPDATE teams SET deleted_at = NOW()
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -681,7 +678,7 @@ pub async fn get_team_members(
           AND EXISTS (
               SELECT 1 FROM teams t
               WHERE t.id = tm.team_id AND t.deleted_at IS NULL
-                AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $2::uuid)
+                AND t.tenant_id = $2::uuid
           )
         ORDER BY tm.join_date DESC
         "#,
@@ -739,7 +736,7 @@ pub async fn add_team_member(
         r#"
         SELECT id FROM teams
         WHERE id = $1 AND deleted_at IS NULL
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -787,7 +784,7 @@ pub async fn add_team_member(
         UPDATE teams SET member_count = (
             SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
         ), updated_at = $2 WHERE id = $1
-          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+          AND tenant_id = $3::uuid
         "#,
     )
     .bind(id)
@@ -844,7 +841,7 @@ pub async fn remove_team_member(
           AND EXISTS (
               SELECT 1 FROM teams t
               WHERE t.id = $2
-                AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $3::uuid)
+                AND t.tenant_id = $3::uuid
           )
         "#,
     )
@@ -868,7 +865,7 @@ pub async fn remove_team_member(
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
             ), updated_at = $2 WHERE id = $1
-              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+              AND tenant_id = $3::uuid
             "#,
         )
         .bind(id)

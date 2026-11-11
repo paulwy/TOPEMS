@@ -260,11 +260,10 @@ async fn calculate_work_order_cost_detail_db(
                wo.work_station_id, wo.team_id, wo.operator
         FROM mes.work_orders wo
         WHERE wo.id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               )
         "#,
     )
     .bind(work_order_id)
@@ -320,11 +319,10 @@ async fn calculate_work_order_cost_detail_db(
         FROM mes.bom_items bi
         JOIN mes.material_boms b ON bi.bom_id = b.id
         WHERE b.product_code = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.product_code = b.product_code AND po.tenant_id = $2::uuid
-               ))
+               )
         "#,
     )
     .bind(&product_code)
@@ -522,7 +520,7 @@ pub async fn calculate_production_order_cost(
         SELECT id, order_number AS order_no, product_code, product_name, quantity::numeric, status
         FROM mes.production_orders
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -555,7 +553,7 @@ pub async fn calculate_production_order_cost(
     let work_order_ids = sqlx::query(
         r#"
         SELECT id FROM mes.work_orders WHERE order_id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -667,11 +665,10 @@ pub async fn get_period_cost_report(
         FROM mes.work_orders wo
         WHERE wo.actual_start_date IS NOT NULL
         AND wo.actual_start_date >= $1 AND wo.actual_start_date <= $2
-        AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-             OR EXISTS (
+        AND EXISTS (
                  SELECT 1 FROM mes.production_orders po
                  WHERE po.id = wo.order_id AND po.tenant_id = $3::uuid
-             ))
+             )
         "#,
     )
     .bind(start_date)
@@ -821,11 +818,10 @@ pub async fn get_cost_trend(
             r#"
             SELECT COUNT(*) as cnt FROM mes.work_orders wo
             WHERE wo.actual_start_date >= $1 AND wo.actual_start_date <= $2
-              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-                   OR EXISTS (
+              AND EXISTS (
                        SELECT 1 FROM mes.production_orders po
                        WHERE po.id = wo.order_id AND po.tenant_id = $3::uuid
-                   ))
+                   )
             "#,
         )
         .bind(period_start)

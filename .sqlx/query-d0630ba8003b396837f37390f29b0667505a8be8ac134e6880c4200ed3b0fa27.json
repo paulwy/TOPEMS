@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            ps.id, ps.schedule_no, ps.order_no, ps.product_name,\n            ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.quantity, ps.completed_quantity,\n            COALESCE(ws.station_name, NULL) as work_station_name\n        FROM mes.production_schedules ps\n        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id\n            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)\n        WHERE ps.planned_start_time IS NOT NULL\n          AND ps.planned_end_time IS NOT NULL\n          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $1::uuid)\n        ORDER BY ps.planned_start_time ASC\n        ",
+  "query": "\n        SELECT\n            ps.id, ps.schedule_no, ps.order_no, ps.product_name,\n            ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.quantity, ps.completed_quantity,\n            COALESCE(ws.station_name, NULL) as work_station_name\n        FROM mes.production_schedules ps\n        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id\n            AND ws.tenant_id = $1::uuid\n        WHERE ps.planned_start_time IS NOT NULL\n          AND ps.planned_end_time IS NOT NULL\n          AND ps.tenant_id = $1::uuid\n        ORDER BY ps.planned_start_time ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -151,5 +151,5 @@
       null
     ]
   },
-  "hash": "70fd2290b614b792a6201fc7ff467119bdbd1e481a742c45434f71f146ea42b8"
+  "hash": "d0630ba8003b396837f37390f29b0667505a8be8ac134e6880c4200ed3b0fa27"
 }

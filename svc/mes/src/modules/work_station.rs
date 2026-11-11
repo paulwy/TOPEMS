@@ -223,10 +223,7 @@ pub async fn list_work_stations(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("ws.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -473,7 +470,7 @@ pub async fn update_work_station(
             description = COALESCE($9, description),
             updated_at = $10
         WHERE id = $1
-          AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
+          AND tenant_id = $11::uuid
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -523,7 +520,7 @@ pub async fn delete_work_station(
         r#"
         UPDATE work_stations SET deleted_at = NOW()
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -576,7 +573,7 @@ pub async fn activate_work_station(
             status = 'active',
             updated_at = $2
         WHERE id = $1
-          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+          AND tenant_id = $3::uuid
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -633,7 +630,7 @@ pub async fn deactivate_work_station(
             status = 'inactive',
             updated_at = $2
         WHERE id = $1 AND status = 'active'
-          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+          AND tenant_id = $3::uuid
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,

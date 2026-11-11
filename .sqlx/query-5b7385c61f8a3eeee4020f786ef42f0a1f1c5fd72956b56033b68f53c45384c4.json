@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            e.id as equipment_id,\n            e.equipment_name as equipment_name,\n            e.equipment_code as equipment_code,\n            COALESCE(AVG(oee.availability), 0) as availability,\n            COALESCE(AVG(oee.performance), 0) as performance,\n            COALESCE(AVG(oee.quality_rate), 0) as quality_rate,\n            COALESCE(AVG(oee.oee), 0) as oee\n        FROM equipment e\n        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id\n          AND ($2::date IS NULL OR oee.record_date >= $2)\n          AND ($3::date IS NULL OR oee.record_date <= $3)\n          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $4::uuid)\n        WHERE ($1::uuid IS NULL OR e.id = $1)\n          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $4::uuid)\n        GROUP BY e.id, e.equipment_name, e.equipment_code\n        ORDER BY oee DESC\n        ",
+  "query": "\n        SELECT\n            e.id as equipment_id,\n            e.equipment_name as equipment_name,\n            e.equipment_code as equipment_code,\n            COALESCE(AVG(oee.availability), 0) as availability,\n            COALESCE(AVG(oee.performance), 0) as performance,\n            COALESCE(AVG(oee.quality_rate), 0) as quality_rate,\n            COALESCE(AVG(oee.oee), 0) as oee\n        FROM equipment e\n        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id\n          AND ($2::date IS NULL OR oee.record_date >= $2)\n          AND ($3::date IS NULL OR oee.record_date <= $3)\n          AND oee.tenant_id = $4::uuid\n        WHERE ($1::uuid IS NULL OR e.id = $1)\n          AND e.tenant_id = $4::uuid\n        GROUP BY e.id, e.equipment_name, e.equipment_code\n        ORDER BY oee DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -79,5 +79,5 @@
       null
     ]
   },
-  "hash": "91f2b4570a06a5767e5aaa010bfa57706c599dd2032b2b07c21b89c463fc1c4d"
+  "hash": "5b7385c61f8a3eeee4020f786ef42f0a1f1c5fd72956b56033b68f53c45384c4"
 }

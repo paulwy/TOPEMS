@@ -315,10 +315,7 @@ pub async fn list_production_orders(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -804,7 +801,7 @@ pub async fn get_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM production_orders
         WHERE id = $1 AND deleted_at IS NULL
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -941,7 +938,7 @@ pub async fn update_production_order(
             workshop_id = COALESCE($7, workshop_id),
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND status = 'pending' AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
+        WHERE id = $1 AND status = 'pending' AND tenant_id = $10::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1049,7 +1046,7 @@ pub async fn delete_production_order(
         r#"
         UPDATE production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled') AND deleted_at IS NULL
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -1123,7 +1120,7 @@ pub async fn start_production_order(
             status = 'in_progress',
             actual_start_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'released' AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'released' AND tenant_id = $4::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1229,7 +1226,7 @@ pub async fn complete_production_order(
             completed_quantity = quantity,
             actual_end_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'in_progress' AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'in_progress' AND tenant_id = $4::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1333,7 +1330,7 @@ pub async fn cancel_production_order(
         UPDATE production_orders SET
             status = 'cancelled',
             updated_at = $2
-        WHERE id = $1 AND status IN ('pending', 'released', 'paused') AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status IN ('pending', 'released', 'paused') AND tenant_id = $3::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1436,7 +1433,7 @@ pub async fn release_production_order(
         UPDATE production_orders SET
             status = 'released',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'pending' AND tenant_id = $3::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,

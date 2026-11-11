@@ -390,7 +390,7 @@ pub async fn submit_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -408,7 +408,7 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -447,7 +447,7 @@ pub async fn approve_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -465,7 +465,7 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -504,7 +504,7 @@ pub async fn reject_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -522,7 +522,7 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)

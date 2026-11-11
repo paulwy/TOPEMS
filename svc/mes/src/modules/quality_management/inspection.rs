@@ -541,7 +541,7 @@ pub async fn update_inspection(
             result = COALESCE($6, result),
             memo = COALESCE($7, memo),
             updated_at = NOW()
-        WHERE id = $8 AND ($9::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $9::uuid)
+        WHERE id = $8 AND tenant_id = $9::uuid
         RETURNING
             id, inspection_no, order_id, order_number,
             product_code, product_name, process_id, process_name,
@@ -618,7 +618,7 @@ pub async fn delete_inspection(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)

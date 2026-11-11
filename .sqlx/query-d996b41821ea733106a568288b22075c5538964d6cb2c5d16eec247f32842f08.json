@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            ps.id, ps.schedule_no, ps.order_id, ps.order_no,\n            ps.product_id, ps.product_name, ps.product_code,\n            ps.quantity, ps.work_station_id, ps.equipment_id,\n            ps.process_id, ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.priority, ps.sequence, ps.notes,\n            ps.created_at, ps.updated_at,\n            COALESCE(ws.station_name, NULL) as work_station_name,\n            COALESCE(e.equipment_name, NULL) as equipment_name,\n            COALESCE(pp.process_name, NULL) as process_name\n        FROM mes.production_schedules ps\n        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id\n            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $2::uuid)\n        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id\n            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)\n        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id\n            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pp.tenant_id = $2::uuid)\n        WHERE ps.id = $1\n          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $2::uuid)\n        ",
+  "query": "\n        SELECT\n            ps.id, ps.schedule_no, ps.order_id, ps.order_no,\n            ps.product_id, ps.product_name, ps.product_code,\n            ps.quantity, ps.work_station_id, ps.equipment_id,\n            ps.process_id, ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.priority, ps.sequence, ps.notes,\n            ps.created_at, ps.updated_at,\n            COALESCE(ws.station_name, NULL) as work_station_name,\n            COALESCE(e.equipment_name, NULL) as equipment_name,\n            COALESCE(pp.process_name, NULL) as process_name\n        FROM mes.production_schedules ps\n        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id\n            AND ws.tenant_id = $2::uuid\n        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id\n            AND e.tenant_id = $2::uuid\n        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id\n            AND pp.tenant_id = $2::uuid\n        WHERE ps.id = $1\n          AND ps.tenant_id = $2::uuid\n        ",
   "describe": {
     "columns": [
       {
@@ -286,5 +286,5 @@
       null
     ]
   },
-  "hash": "86be8025066d62c4aee150e923c964aa3e20dc9ebc59d24c4cad154e98884655"
+  "hash": "d996b41821ea733106a568288b22075c5538964d6cb2c5d16eec247f32842f08"
 }

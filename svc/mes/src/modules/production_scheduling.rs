@@ -265,10 +265,7 @@ pub async fn list_production_schedules(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("ps.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -469,7 +466,7 @@ pub async fn create_production_schedule(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
             tenant_id
         )
@@ -604,13 +601,13 @@ pub async fn get_production_schedule(
             COALESCE(pp.process_name, NULL) as process_name
         FROM mes.production_schedules ps
         LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
-            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $2::uuid)
+            AND ws.tenant_id = $2::uuid
         LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
-            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
+            AND e.tenant_id = $2::uuid
         LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
-            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pp.tenant_id = $2::uuid)
+            AND pp.tenant_id = $2::uuid
         WHERE ps.id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $2::uuid)
+          AND ps.tenant_id = $2::uuid
         "#,
         id,
         tenant_id,
@@ -705,7 +702,7 @@ pub async fn update_production_schedule(
             status = COALESCE($9, status),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1 AND ($12::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $12::uuid)
+        WHERE id = $1 AND tenant_id = $12::uuid
         RETURNING 
             id, schedule_no, order_id, order_no,
             product_id, product_name, product_code,
@@ -806,7 +803,7 @@ pub async fn delete_production_schedule(
     let result = sqlx::query(
         r#"
         UPDATE production_schedules SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled') AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -869,7 +866,7 @@ pub async fn adjust_schedule(
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
-            WHERE id = $1 AND status IN ('pending', 'in_progress') AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
+            WHERE id = $1 AND status IN ('pending', 'in_progress') AND tenant_id = $5::uuid
             "#,
         )
         .bind(schedule_id)
@@ -925,10 +922,10 @@ pub async fn get_gantt_data(
             COALESCE(ws.station_name, NULL) as work_station_name
         FROM mes.production_schedules ps
         LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
-            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
+            AND ws.tenant_id = $1::uuid
         WHERE ps.planned_start_time IS NOT NULL
           AND ps.planned_end_time IS NOT NULL
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $1::uuid)
+          AND ps.tenant_id = $1::uuid
         ORDER BY ps.planned_start_time ASC
         "#,
         tenant_id,

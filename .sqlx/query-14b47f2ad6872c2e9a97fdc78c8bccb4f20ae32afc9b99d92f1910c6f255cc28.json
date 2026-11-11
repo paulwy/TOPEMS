@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+  "query": "SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND tenant_id = $2::uuid",
   "describe": {
     "columns": [
       {
@@ -37,5 +37,5 @@
       false
     ]
   },
-  "hash": "a5270b837aef0930ff2560d69a8786bef69270b2b411e800f67d26d140289c11"
+  "hash": "14b47f2ad6872c2e9a97fdc78c8bccb4f20ae32afc9b99d92f1910c6f255cc28"
 }

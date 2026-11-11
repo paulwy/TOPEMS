@@ -178,10 +178,7 @@ pub async fn list_records(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -418,7 +415,7 @@ pub async fn get_record(
             created_at, updated_at
         FROM mes.production_records
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
         id,
         get_tenant_id(&claims),
@@ -490,7 +487,7 @@ pub async fn update_record(
             status = $7,
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
+        WHERE id = $1 AND tenant_id = $10::uuid
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
@@ -558,7 +555,7 @@ pub async fn delete_record(
     let result = sqlx::query(
         r#"
         UPDATE mes.production_records SET deleted_at = NOW()
-        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -614,7 +611,7 @@ pub async fn complete_record(
             end_time = $2,
             status = 'completed',
             updated_at = $2
-        WHERE id = $1 AND status = 'in_progress' AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'in_progress' AND tenant_id = $3::uuid
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,

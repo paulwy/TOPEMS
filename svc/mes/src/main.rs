@@ -111,14 +111,14 @@ async fn main() -> anyhow::Result<()> {
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM mes.process_routes WHERE deleted_at IS NULL
-                              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)),
+                              AND tenant_id = $1::uuid),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
                     SELECT pr.* FROM mes.process_routes pr
                     WHERE pr.deleted_at IS NULL
-                      AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pr.tenant_id = $1::uuid)
+                      AND pr.tenant_id = $1::uuid
                     ORDER BY pr.created_at DESC
                     LIMIT 10 OFFSET 0
                 ) t
@@ -148,13 +148,13 @@ async fn main() -> anyhow::Result<()> {
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM capacities
-                              WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)),
+                              WHERE tenant_id = $1::uuid),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
                     SELECT c.* FROM capacities c
-                    WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR c.tenant_id = $1::uuid)
+                    WHERE c.tenant_id = $1::uuid
                     ORDER BY c.capacity_date DESC
                     LIMIT 10 OFFSET 0
                 ) t

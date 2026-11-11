@@ -214,10 +214,7 @@ pub async fn list_process_routes(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pr.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("pr.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -542,7 +539,7 @@ pub async fn update_process_route(
             description = COALESCE($2, description),
             status = COALESCE($3, status),
             updated_at = NOW()
-        WHERE id = $4 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
+        WHERE id = $4 AND tenant_id = $5::uuid
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
@@ -624,7 +621,7 @@ pub async fn delete_process_route(
 
     let result = sqlx::query(
         r#"
-        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -803,7 +800,7 @@ pub async fn add_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND tenant_id = $2::uuid
                 "#,
                 process_uuid,
                 tenant_id,
@@ -903,7 +900,7 @@ pub async fn update_route_step(
         SET 
             sequence = COALESCE($1, sequence),
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
-        WHERE id = $3 AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
+        WHERE id = $3 AND tenant_id = $4::uuid
         RETURNING id, route_id, process_id, sequence,
             estimated_time_minutes,
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
@@ -1054,7 +1051,7 @@ pub async fn reorder_route_steps(
             r#"
             UPDATE process_route_steps
             SET sequence = $1
-            WHERE id = $2 AND route_id = $3 AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
+            WHERE id = $2 AND route_id = $3 AND tenant_id = $4::uuid
             "#,
         )
         .bind((idx + 1) as i32)

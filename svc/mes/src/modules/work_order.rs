@@ -318,13 +318,9 @@ pub async fn list_work_orders(
     let tenant_id = get_tenant_id(&claims);
     let tenant_idx = params.len() + 1;
     if where_clause.is_empty() {
-        where_clause.push_str(&format!(
-            " WHERE (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR wo.tenant_id = ${tenant_idx}::uuid)"
-        ));
+        where_clause.push_str(&format!(" WHERE wo.tenant_id = ${tenant_idx}::uuid"));
     } else {
-        where_clause.push_str(&format!(
-            " AND (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR wo.tenant_id = ${tenant_idx}::uuid)"
-        ));
+        where_clause.push_str(&format!(" AND wo.tenant_id = ${tenant_idx}::uuid"));
     }
 
     let count_sql = format!(
@@ -533,8 +529,7 @@ pub async fn get_work_order(
             created_at, updated_at
         FROM mes.work_orders wo
         WHERE wo.id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -759,8 +754,7 @@ pub async fn update_work_order(
             remark = COALESCE($15, remark),
             updated_at = NOW()
         WHERE wo.id = $16
-          AND ($17::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $17::uuid)
+          AND wo.tenant_id = $17::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -845,8 +839,7 @@ pub async fn delete_work_order(
         r#"
         UPDATE mes.work_orders wo SET deleted_at = NOW()
         WHERE wo.id = $1 AND wo.status IN ('pending', 'cancelled')
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -907,8 +900,7 @@ pub async fn start_work_order(
         UPDATE mes.work_orders wo
         SET status = 'in_progress', actual_start_date = NOW(), updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'pending'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -974,8 +966,7 @@ pub async fn complete_work_order(
         UPDATE mes.work_orders wo
         SET status = 'completed', actual_end_date = NOW(), updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'in_progress'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1043,8 +1034,7 @@ pub async fn cancel_work_order(
         UPDATE mes.work_orders wo
         SET status = 'cancelled', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status IN ('pending', 'in_progress', 'paused')
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1112,8 +1102,7 @@ pub async fn pause_work_order(
         UPDATE mes.work_orders wo
         SET status = 'paused', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'in_progress'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1181,8 +1170,7 @@ pub async fn resume_work_order(
         UPDATE mes.work_orders wo
         SET status = 'in_progress', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'paused'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR wo.tenant_id = $2::uuid)
+          AND wo.tenant_id = $2::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,

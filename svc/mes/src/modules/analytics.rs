@@ -223,7 +223,7 @@ pub async fn get_capacity_utilization(
             c.utilization_rate as utilization
         FROM mes.capacities c
         WHERE c.capacity_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR c.tenant_id = $2::uuid)
+          AND c.tenant_id = $2::uuid
         ORDER BY c.capacity_date, c.work_center_name
         LIMIT 500
         "#,
@@ -305,7 +305,7 @@ pub async fn get_energy_cost(
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND cost_category IN ('能源', '电力', '燃气', '水', '压缩空气')
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY cost_category
         ORDER BY total DESC
         "#,
@@ -350,7 +350,7 @@ pub async fn get_energy_cost(
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND cost_category IN ('能源', '电力', '燃气')
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY cost_date
         ORDER BY cost_date
         LIMIT 30
@@ -383,7 +383,7 @@ pub async fn get_energy_cost(
             SUM(total_cost) as cost
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY workshop
         ORDER BY cost DESC
         LIMIT 10
@@ -448,7 +448,7 @@ pub async fn get_equipment_mtbf(
         LEFT JOIN mes.equipment e ON m.equipment_id = e.id
         WHERE m.started_at >= CURRENT_TIMESTAMP - $1 * INTERVAL '1 day'
           AND m.maintenance_type = '故障维修'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR m.tenant_id = $2::uuid)
+          AND m.tenant_id = $2::uuid
         GROUP BY e.equipment_type
         ORDER BY fault_count DESC
         "#,
@@ -482,7 +482,7 @@ pub async fn get_equipment_mtbf(
         FROM mes.equipment_maintenance_records
         WHERE started_at >= CURRENT_TIMESTAMP - $1 * INTERVAL '1 day'
           AND maintenance_type = '故障维修'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY fault_reason
         ORDER BY frequency DESC
         LIMIT 10
@@ -517,7 +517,7 @@ pub async fn get_equipment_mtbf(
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)
+          AND o.tenant_id = $2::uuid
         GROUP BY e.equipment_name
         LIMIT 20
         "#,
@@ -591,7 +591,7 @@ pub async fn get_delivery_analytics(
             COUNT(*) FILTER (WHERE status IN ('completed', 'delivered') AND actual_end_date <= planned_end_date) as on_time_count
         FROM mes.production_orders
         WHERE planned_end_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY planned_end_date
         ORDER BY planned_end_date
         LIMIT 30
@@ -678,7 +678,7 @@ pub async fn get_oee_dashboard(
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)
+          AND o.tenant_id = $2::uuid
         GROUP BY e.equipment_name
         ORDER BY oee DESC
         LIMIT 20
@@ -718,7 +718,7 @@ pub async fn get_oee_dashboard(
             AVG(quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee
         WHERE record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY record_date
         ORDER BY record_date
         LIMIT 30
@@ -806,7 +806,7 @@ pub async fn get_quality_pareto(
         FROM mes.quality_inspections
         WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND result = '不合格'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         GROUP BY memo
         ORDER BY count DESC
         LIMIT 20
@@ -853,7 +853,7 @@ pub async fn get_quality_pareto(
                     COUNT(*) as total
                 FROM mes.quality_inspections
                 WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
-                  AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+                  AND tenant_id = $2::uuid
                 "#,
             )
             .bind(days)

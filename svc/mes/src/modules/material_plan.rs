@@ -143,7 +143,7 @@ pub async fn list_material_plans(
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
            AND ($3::uuid IS NULL OR plan_id = $3) \
-           AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)",
+           AND tenant_id = $4::uuid",
     )
     .bind(&status)
     .bind(&search)
@@ -163,7 +163,7 @@ pub async fn list_material_plans(
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
            AND ($3::uuid IS NULL OR plan_id = $3) \
-           AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid) \
+           AND tenant_id = $4::uuid \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6",
     )
     .bind(&status)
@@ -213,7 +213,7 @@ pub async fn get_material_plan(
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
                 supply_type, status, tenant_id::text, created_at, updated_at \
          FROM mes.material_plans WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+           AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(get_tenant_id_from_claims(&claims))
@@ -309,7 +309,7 @@ pub async fn update_material_plan(
          status = COALESCE($10, status), \
          updated_at = NOW() \
          WHERE id = $1 \
-           AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid) \
+           AND tenant_id = $11::uuid \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id::text, created_at, updated_at",
@@ -348,7 +348,7 @@ pub async fn delete_material_plan(
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let result = sqlx::query(
         "DELETE FROM mes.material_plans WHERE id = $1 \
-           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+           AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(get_tenant_id_from_claims(&claims))
@@ -384,7 +384,7 @@ async fn transition_status(
     sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
          WHERE id = $1 \
-           AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid) \
+           AND tenant_id = $3::uuid \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id::text, created_at, updated_at",

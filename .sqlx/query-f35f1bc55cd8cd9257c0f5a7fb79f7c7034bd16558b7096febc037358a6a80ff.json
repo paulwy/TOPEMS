@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,\n            created_at, updated_at\n        FROM mes.production_records\n        WHERE id = $1\n          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)\n        ",
+  "query": "\n        SELECT\n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,\n            created_at, updated_at\n        FROM mes.production_records\n        WHERE id = $1\n          AND tenant_id = $2::uuid\n        ",
   "describe": {
     "columns": [
       {
@@ -188,5 +188,5 @@
       false
     ]
   },
-  "hash": "2345057ca0d75279c022772f49b5274058b62af8a3e4e58fbcb97701629a0590"
+  "hash": "f35f1bc55cd8cd9257c0f5a7fb79f7c7034bd16558b7096febc037358a6a80ff"
 }

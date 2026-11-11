@@ -64,7 +64,7 @@ async fn stub_efficiency_detail(
         r#"SELECT id, equipment_id, record_date, availability, performance, quality_rate, oee
            FROM mes.equipment_oee
            WHERE equipment_id = $1
-             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+             AND tenant_id = $2::uuid
            ORDER BY record_date DESC
            LIMIT 10"#,
     )
@@ -309,10 +309,7 @@ pub async fn list_oee_records(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("oee.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -536,7 +533,7 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND tenant_id = $2::uuid"#,
         req.equipment_id,
         get_tenant_id(&claims),
     )
@@ -607,9 +604,9 @@ pub async fn get_oee_record(
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
-            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
+            AND e.tenant_id = $2::uuid
         WHERE oee.id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
+          AND oee.tenant_id = $2::uuid
         "#,
         id,
         get_tenant_id(&claims),
@@ -713,7 +710,7 @@ pub async fn update_oee_record(
                ideal_cycle_time, actual_output, good_output, defective_output
         FROM mes.equipment_oee
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
         id,
         tenant_id,
@@ -759,7 +756,7 @@ pub async fn update_oee_record(
             operator = COALESCE($14, operator),
             notes = COALESCE($15, notes),
             updated_at = $16
-        WHERE id = $1 AND ($17::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $17::uuid)
+        WHERE id = $1 AND tenant_id = $17::uuid
         RETURNING 
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
@@ -854,7 +851,7 @@ pub async fn delete_oee_record(
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -923,11 +920,11 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.oee), 0) as avg_oee
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
-          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $4::uuid)
+          AND e.tenant_id = $4::uuid
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
-          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $4::uuid)
+          AND oee.tenant_id = $4::uuid
         "#,
         req.equipment_id,
         start_date,
@@ -963,10 +960,10 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.oee), 0) as oee
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
+          AND e.tenant_id = $2::uuid
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
+          AND oee.tenant_id = $2::uuid
         GROUP BY DATE(oee.record_date)
         ORDER BY date DESC
         LIMIT 14
@@ -1037,9 +1034,9 @@ pub async fn get_oee_statistics(
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
-          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $4::uuid)
+          AND oee.tenant_id = $4::uuid
         WHERE ($1::uuid IS NULL OR e.id = $1)
-          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $4::uuid)
+          AND e.tenant_id = $4::uuid
         GROUP BY e.id, e.equipment_name, e.equipment_code
         ORDER BY oee DESC
         "#,
@@ -1132,9 +1129,9 @@ pub async fn get_equipment_efficiency_analysis(
         FROM equipment e
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
+          AND oee.tenant_id = $2::uuid
         WHERE e.id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
+          AND e.tenant_id = $2::uuid
         GROUP BY e.id, e.equipment_name, e.equipment_code, e.status
         ORDER BY oee DESC
         "#,

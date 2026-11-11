@@ -489,7 +489,7 @@ async fn detect_equipment_anomalies(
         FROM mes.equipment_inspections ei
         JOIN mes.equipment e ON e.id = ei.equipment_id
         WHERE ei.inspection_date::date >= CURRENT_DATE - INTERVAL '7 days'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
+          AND e.tenant_id = $1::uuid
         ORDER BY ei.inspection_date DESC
         LIMIT 100
         "#,
@@ -678,7 +678,7 @@ async fn detect_equipment_anomalies(
         FROM mes.equipment_oee eo
         JOIN mes.equipment e ON e.id = eo.equipment_id
         WHERE eo.record_date >= CURRENT_DATE - INTERVAL '30 days'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR eo.tenant_id = $1::uuid)
+          AND eo.tenant_id = $1::uuid
         GROUP BY e.id, e.equipment_code, e.equipment_name
         HAVING AVG(eo.oee) < 0.60
         "#,
@@ -733,7 +733,7 @@ async fn detect_equipment_anomalies(
                last_maintenance_date, next_maintenance_date
         FROM mes.equipment
         WHERE status != 'scrapped'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+          AND tenant_id = $1::uuid
           AND (next_maintenance_date IS NOT NULL AND next_maintenance_date < CURRENT_DATE
                OR (last_maintenance_date IS NULL AND purchase_date < CURRENT_DATE - INTERVAL '90 days'))
         "#,
@@ -792,11 +792,10 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) ->
                COUNT(*) as record_count
         FROM mes.quality_records qr
         WHERE qr.created_at >= NOW() - INTERVAL '7 days'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         GROUP BY order_no, product_name
         HAVING SUM(quantity) > 0 AND SUM(defective_quantity)::float / SUM(quantity) > 0.05
         "#,
@@ -872,11 +871,10 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) ->
         FROM mes.quality_records qr
         WHERE qr.quality_status = 'rejected'
           AND qr.created_at >= NOW() - INTERVAL '24 hours'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         "#,
     )
     .bind(tenant_id)
@@ -944,7 +942,7 @@ async fn detect_production_anomalies(
         WHERE status NOT IN ('completed', 'cancelled')
           AND planned_end_date IS NOT NULL
           AND planned_end_date < NOW()
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+          AND tenant_id = $1::uuid
         "#,
     )
     .bind(tenant_id)
@@ -1018,11 +1016,10 @@ async fn detect_production_anomalies(
         WHERE w.status = 'in_progress'
           AND w.start_time IS NOT NULL
           AND w.start_time < NOW() - INTERVAL '48 hours'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = w.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         "#,
     )
     .bind(tenant_id)
@@ -1128,11 +1125,10 @@ async fn get_recent_anomaly_trend_days(
                COUNT(*) FILTER (WHERE quality_status = 'rejected') as critical
         FROM mes.quality_records qr
         WHERE qr.created_at >= NOW() - INTERVAL '90 days'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $2::uuid
-               ))
+               )
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at) DESC
         LIMIT $1

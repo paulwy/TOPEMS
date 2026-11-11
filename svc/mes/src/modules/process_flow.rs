@@ -242,10 +242,7 @@ pub async fn list_process_flows(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pf.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("pf.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -567,7 +564,7 @@ pub async fn update_process_flow(
             unit = COALESCE($7, unit),
             status = COALESCE($8, status),
             updated_at = NOW()
-        WHERE id = $9 AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
+        WHERE id = $9 AND tenant_id = $10::uuid
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
@@ -637,7 +634,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query(
         r#"
-        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -819,7 +816,7 @@ pub async fn add_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND tenant_id = $2::uuid
                 "#,
                 process_uuid,
                 tenant_id,
@@ -1194,7 +1191,7 @@ pub async fn analyze_capacity(
 
     let flow_result = sqlx::query!(
         r#"
-        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid
         "#,
         flow_uuid,
         get_tenant_id(&claims),

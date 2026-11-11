@@ -245,10 +245,7 @@ pub async fn list_equipment(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -431,7 +428,7 @@ pub async fn get_equipment(
             description, created_at, updated_at
         FROM equipment
         WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -495,7 +492,7 @@ pub async fn update_equipment(
             next_maintenance_date = COALESCE($11, next_maintenance_date),
             description = COALESCE($12, description),
             updated_at = $13
-        WHERE id = $1 AND ($14::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $14::uuid)
+        WHERE id = $1 AND tenant_id = $14::uuid
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -562,7 +559,7 @@ pub async fn delete_equipment(
     let result = sqlx::query(
         r#"
         UPDATE equipment SET deleted_at = NOW()
-        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
@@ -622,7 +619,7 @@ pub async fn maintenance_equipment(
             last_maintenance_date = $2,
             next_maintenance_date = $3,
             updated_at = $4
-        WHERE id = $1 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
+        WHERE id = $1 AND tenant_id = $5::uuid
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -934,7 +931,7 @@ pub async fn create_maintenance(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
         equipment_id,
         tenant_id,
     )
@@ -944,7 +941,7 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
         equipment_id,
         tenant_id,
     )
@@ -1026,7 +1023,7 @@ pub async fn update_maintenance_status(
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
-        WHERE id = $1 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
+        WHERE id = $1 AND tenant_id = $5::uuid
         RETURNING 
             id, equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at
@@ -1184,9 +1181,9 @@ pub async fn list_inspections(
         r#"
         SELECT COUNT(*) FROM equipment_inspections
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (
+          AND EXISTS (
               SELECT 1 FROM mes.equipment e WHERE e.id = equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
-          ))
+          )
         "#,
         equipment_uuid,
         tenant_id,
@@ -1212,9 +1209,9 @@ pub async fn list_inspections(
             ei.created_at
         FROM equipment_inspections ei
         WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (
+          AND EXISTS (
               SELECT 1 FROM mes.equipment e WHERE e.id = ei.equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
-          ))
+          )
         ORDER BY ei.created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -1307,7 +1304,7 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"#,
         equipment_uuid,
         tenant_id,
     )

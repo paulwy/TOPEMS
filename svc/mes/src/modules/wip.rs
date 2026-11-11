@@ -427,7 +427,7 @@ pub async fn create_wip(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
             get_tenant_id(&claims)
         )

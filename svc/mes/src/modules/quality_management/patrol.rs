@@ -432,7 +432,7 @@ pub async fn update_patrol(
             findings = COALESCE($8, findings),
             memo = COALESCE($9, memo),
             updated_at = NOW()
-        WHERE id = $10 AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
+        WHERE id = $10 AND tenant_id = $11::uuid
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
@@ -502,7 +502,7 @@ pub async fn delete_patrol(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -731,7 +731,7 @@ pub async fn update_patrol_item(
             actual_value = COALESCE($3, actual_value),
             status = COALESCE($4, status),
             remark = COALESCE($5, remark)
-        WHERE id = $6 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
+        WHERE id = $6 AND tenant_id = $7::uuid
         RETURNING id, patrol_id, item_name, standard, actual_value, status, remark
         "#,
     )
@@ -787,7 +787,7 @@ pub async fn delete_patrol_item(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)

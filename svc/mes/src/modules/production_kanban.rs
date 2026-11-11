@@ -145,7 +145,7 @@ pub async fn get_dashboard(
             COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
             COALESCE(SUM(completed_quantity), 0) as total_output
         FROM mes.production_orders
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+        WHERE tenant_id = $1::uuid
         "#,
     )
     .bind(tenant_id)
@@ -166,7 +166,7 @@ pub async fn get_dashboard(
         SELECT COALESCE(SUM(completed_quantity), 0) as today_output
         FROM mes.production_records
         WHERE start_time::date = CURRENT_DATE
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+          AND tenant_id = $1::uuid
         "#,
     )
     .bind(tenant_id)
@@ -196,11 +196,10 @@ pub async fn get_dashboard(
             COALESCE(SUM(qualified_quantity), 0) as good_quantity
         FROM mes.quality_records qr
         WHERE qr.quality_status IN ('qualified', 'rejected')
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         "#,
     )
     .bind(tenant_id)
@@ -240,7 +239,7 @@ pub async fn get_dashboard(
         FROM (
             SELECT DISTINCT ON (equipment_id) oee
             FROM mes.equipment_oee
-            WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+            WHERE tenant_id = $1::uuid
             ORDER BY equipment_id, record_date DESC
         ) latest
         "#,
@@ -290,7 +289,7 @@ pub async fn get_dashboard(
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM mes.production_orders
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+        WHERE tenant_id = $1::uuid
         ORDER BY created_at DESC
         LIMIT 10
         "#,
@@ -355,20 +354,20 @@ pub async fn get_dashboard(
             SELECT order_id, operator_id
             FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
         LEFT JOIN mes.production_orders po ON pr.order_id = po.id
-            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR po.tenant_id = $1::uuid)
+            AND po.tenant_id = $1::uuid
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
         ) today_stats ON true
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
+        WHERE ws.tenant_id = $1::uuid
         ORDER BY ws.station_name
         "#,
     )
@@ -427,11 +426,10 @@ pub async fn get_dashboard(
             COALESCE(SUM(qualified_quantity), 0) AS good_quantity
         FROM mes.quality_records qr
         WHERE qr.created_at >= CURRENT_DATE - INTERVAL '7 days'
-          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+          AND EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         GROUP BY DATE(qr.created_at)
         ORDER BY date DESC
         LIMIT 7
@@ -494,11 +492,11 @@ pub async fn get_dashboard(
             SELECT oee
             FROM mes.equipment_oee
             WHERE equipment_id = e.id
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
+        WHERE e.tenant_id = $1::uuid
         ORDER BY e.equipment_name
         "#,
     )
@@ -585,7 +583,7 @@ pub async fn get_order_progress(
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM mes.production_orders
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+        WHERE tenant_id = $1::uuid
         ORDER BY created_at DESC
         "#,
     )
@@ -685,20 +683,20 @@ pub async fn get_workstation_status(
             SELECT order_id, operator_id
             FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
         LEFT JOIN mes.production_orders po ON pr.order_id = po.id
-            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR po.tenant_id = $1::uuid)
+            AND po.tenant_id = $1::uuid
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
         ) today_stats ON true
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
+        WHERE ws.tenant_id = $1::uuid
         ORDER BY ws.station_name
         "#,
     )
@@ -792,11 +790,10 @@ pub async fn get_quality_trend(
             COALESCE(SUM(qr.quantity), 0) AS total_quantity,
             COALESCE(SUM(qr.qualified_quantity), 0) AS good_quantity
         FROM mes.quality_records qr
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
+        WHERE EXISTS (
                    SELECT 1 FROM mes.production_orders po
                    WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
-               ))
+               )
         GROUP BY DATE(qr.created_at)
         ORDER BY date DESC
         LIMIT 30
@@ -895,11 +892,11 @@ pub async fn get_equipment_status(
             SELECT oee
             FROM mes.equipment_oee
             WHERE equipment_id = e.id
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+              AND tenant_id = $1::uuid
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
+        WHERE e.tenant_id = $1::uuid
         ORDER BY e.equipment_name
         "#,
     )

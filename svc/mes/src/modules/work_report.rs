@@ -283,10 +283,7 @@ pub async fn list_work_reports(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!(
-        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR wr.tenant_id = ${}::uuid)",
-        tenant_ph, tenant_ph
-    );
+    let tenant_filter = format!("wr.tenant_id = ${}::uuid", tenant_ph);
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {
@@ -831,7 +828,7 @@ pub async fn update_work_report(
             status = COALESCE($14, status),
             updated_at = NOW()
         WHERE id = $15
-          AND ($16::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $16::uuid)
+          AND tenant_id = $16::uuid
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -929,7 +926,7 @@ pub async fn delete_work_report(
     let result = sqlx::query(
         r#"
         UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -988,7 +985,7 @@ pub async fn approve_work_report(
             approved_at = NOW(),
             updated_at = NOW()
         WHERE id = $2
-          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+          AND tenant_id = $3::uuid
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -1084,7 +1081,7 @@ pub async fn reject_work_report(
             approval_remark = $2,
             updated_at = NOW()
         WHERE id = $3
-          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
+          AND tenant_id = $4::uuid
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
