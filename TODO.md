@@ -576,8 +576,10 @@ AFTER  | tenant_isolation_core_tenant_users | PERMISSIVE | {public} | ALL
 **证据文件**：`docs/quality/w7-b4-manufacturing-window-apply-2026-11-11.md` §11.7（F1 现象与临时策略前后对照）、
 §11.13（策略删除后登录回归）、§11.14（遗留）。
 
-**2026-11-11 方案 A 落地（待生产窗口）**：严格 fail-closed 迁移 + 代码 5 处裸池改作用域 + `Err` 不回落 +
-membership 确定性选择；副本预演全绿。方案与证据：`docs/quality/w7-b4-f1-change-plan-and-rehearsal-2026-11-11.md`。
+**2026-11-11 方案 A 已上线生产**：严格 fail-closed 迁移 + 代码 5 处裸池改作用域 + `Err` 不回落 +
+membership 确定性选择；副本预演与生产窗口验收全绿。方案/预演：
+`docs/quality/w7-b4-f1-change-plan-and-rehearsal-2026-11-11.md`；窗口报告：
+`docs/quality/w7-b4-f1-production-window-apply-2026-11-11.md`。
 
 **F1 关联 TODO（本次不动，按序处理）**：
 
