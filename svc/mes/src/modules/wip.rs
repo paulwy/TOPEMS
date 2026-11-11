@@ -822,11 +822,17 @@ pub async fn delete_wip(
 pub async fn transfer_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateWipTransferRequest>,
 ) -> ApiResponse<WipTransferResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipTransfer).await {
         return e;
     }
+    // 写路径必须有确定租户：先于父行查询判定，服务身份缺租户头一律 400。
+    let _tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let now = Utc::now();
     let transfer_no = format!(

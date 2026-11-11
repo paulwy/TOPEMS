@@ -693,6 +693,11 @@ pub async fn calculate_requirements(
     {
         return e;
     }
+    // 写路径必须有确定租户：先于订单查询判定，服务身份缺租户头一律 400。
+    let _tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_code, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
