@@ -155,7 +155,15 @@ const RoleManagementPage: React.FC = () => {
   const addPermissionMutation = useMutation({
     mutationFn: ({ roleId, permissionId }: { roleId: string; permissionId: string }) =>
       authApi.addRolePermission(roleId, permissionId),
-    onSuccess: (_data, { roleId }) => {
+    onSuccess: (data, { roleId }) => {
+      // 后端错误走内层 code（HTTP 恒 200），必须读 success 判定，否则会把拒绝误报成成功
+      if (!data?.success) {
+        pushToast(
+          'error',
+          data?.message || i18n.t('iam.role_management_page.messages.add_permission_failed')
+        );
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: [...PERMISSIONS_QUERY_KEY, roleId] });
       pushToast('success', i18n.t('iam.role_management_page.k7'));
     },
@@ -165,7 +173,15 @@ const RoleManagementPage: React.FC = () => {
   const removePermissionMutation = useMutation({
     mutationFn: ({ roleId, permissionId }: { roleId: string; permissionId: string }) =>
       authApi.removeRolePermission(roleId, permissionId),
-    onSuccess: (_data, { roleId }) => {
+    onSuccess: (data, { roleId }) => {
+      // 同上：内层 success=false 时不得弹成功提示
+      if (!data?.success) {
+        pushToast(
+          'error',
+          data?.message || i18n.t('iam.role_management_page.messages.remove_permission_failed')
+        );
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: [...PERMISSIONS_QUERY_KEY, roleId] });
       pushToast('success', i18n.t('iam.role_management_page.k12'));
     },
