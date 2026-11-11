@@ -14,6 +14,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -235,16 +236,13 @@ pub async fn get_quality_task(
 pub async fn update_quality_task_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Path(id): Path<String>,
     Json(req): Json<QualityTaskStatusRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -254,26 +252,40 @@ pub async fn update_quality_task_status(
         return ApiResponse::bad_request("状态不能为空");
     }
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质检任务状态更新事务失败: {}", e);
+            return ApiResponse::server_error("更新质检任务状态失败");
+        }
+    };
+
     let updated = sqlx::query(only_own_schema_query!(
         "qms",
         r#"
         UPDATE qms.qa_quality_inspections
         SET status = $1, updated_at = NOW()
-        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3)
+        WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
     "#
     ))
     .bind(&req.status)
     .bind(id)
-    .bind(tenant_opt)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("质检任务不存在"),
-        Ok(_) => ApiResponse::success(
-            serde_json::json!({ "id": id, "status": req.status }),
-            "更新质检任务状态成功",
-        ),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("质检任务不存在或状态已变更"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质检任务状态事务失败: {}", e);
+                return ApiResponse::server_error("更新质检任务状态失败");
+            }
+            ApiResponse::success(
+                serde_json::json!({ "id": id, "status": req.status }),
+                "更新质检任务状态成功",
+            )
+        }
         Err(e) => {
             tracing::error!("quality-task status 更新失败: {}", e);
             ApiResponse::server_error("更新质检任务状态失败")
@@ -360,26 +372,50 @@ pub async fn list_defect_records(
 pub async fn report_defect(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<ReportDefectRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.item_name.is_empty() {
         return ApiResponse::bad_request("缺陷项目名称不能为空");
     }
-    let inspection_id = match req.inspection_id.as_deref().map(uuid::Uuid::parse_str) {
-        Some(Ok(u)) => u,
-        Some(Err(_)) => return ApiResponse::bad_request("无效的检查ID"),
-        None => uuid::Uuid::nil(),
+    // inspection_id 必填且必须同租户，禁止 nil 兜底。
+    let inspection_id = match req.inspection_id.as_deref() {
+        Some(s) => match uuid::Uuid::parse_str(s) {
+            Ok(u) => u,
+            Err(_) => return ApiResponse::bad_request("无效的检查ID"),
+        },
+        None => return ApiResponse::bad_request("检查ID不能为空"),
     };
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启缺陷记录创建事务失败: {}", e);
+            return ApiResponse::server_error("上报缺陷记录失败");
+        }
+    };
+
+    // 同域引用校验：检验单必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(inspection_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("检查不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate inspection: {}", e);
+            return ApiResponse::server_error("上报缺陷记录失败");
+        }
+    }
 
     let inserted = sqlx::query_as::<_, DefectRecord>(only_own_schema_query!("qms", r#"
         INSERT INTO qms.qa_inspection_results (
@@ -397,14 +433,20 @@ pub async fn report_defect(
     .bind(req.measured_value.as_deref())
     .bind(req.remark.as_deref())
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match inserted {
-        Ok(record) => ApiResponse::success(
-            serde_json::to_value(record).unwrap_or(serde_json::json!({})),
-            "上报缺陷记录成功",
-        ),
+        Ok(record) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交缺陷记录事务失败: {}", e);
+                return ApiResponse::server_error("上报缺陷记录失败");
+            }
+            ApiResponse::success(
+                serde_json::to_value(record).unwrap_or(serde_json::json!({})),
+                "上报缺陷记录成功",
+            )
+        }
         Err(e) => {
             tracing::error!("defect-record 创建失败: {}", e);
             ApiResponse::server_error("上报缺陷记录失败")

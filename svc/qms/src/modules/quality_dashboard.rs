@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
@@ -446,14 +446,35 @@ pub async fn list_alert_rules(
 )]
 pub async fn create_alert_rule(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateAlertRuleRequest>,
 ) -> ApiResponse<AlertRule> {
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11, $12) RETURNING id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by).bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启预警规则创建事务失败: {}", e);
+            return ApiResponse::server_error("预警规则创建失败");
+        }
+    };
+
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11, $12) RETURNING id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match rule {
-        Ok(data) => ApiResponse::success(data, "预警规则创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交预警规则创建事务失败: {}", e);
+                return ApiResponse::server_error("预警规则创建失败");
+            }
+            ApiResponse::success(data, "预警规则创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create alert rule: {}", e);
             ApiResponse::server_error("预警规则创建失败")
@@ -529,20 +550,40 @@ pub async fn get_alert_rule(
 )]
 pub async fn update_alert_rule(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateAlertRuleRequest>,
 ) -> ApiResponse<AlertRule> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的预警规则ID"),
     };
 
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_rules SET rule_name = COALESCE($2, rule_name), alert_type = COALESCE($3, alert_type), metric = COALESCE($4, metric), condition = COALESCE($5, condition), threshold = COALESCE($6, threshold), duration = COALESCE($7, duration), severity = COALESCE($8, severity), status = COALESCE($9, status), notification_type = COALESCE($10, notification_type), recipients = COALESCE($11, recipients), description = COALESCE($12, description), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at"#)).bind(id).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.status).bind(req.notification_type).bind(req.recipients).bind(req.description)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启预警规则更新事务失败: {}", e);
+            return ApiResponse::server_error("预警规则更新失败");
+        }
+    };
+
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_rules SET rule_name = COALESCE($2, rule_name), alert_type = COALESCE($3, alert_type), metric = COALESCE($4, metric), condition = COALESCE($5, condition), threshold = COALESCE($6, threshold), duration = COALESCE($7, duration), severity = COALESCE($8, severity), status = COALESCE($9, status), notification_type = COALESCE($10, notification_type), recipients = COALESCE($11, recipients), description = COALESCE($12, description), updated_at = NOW() WHERE id = $1 AND tenant_id = $13 AND deleted_at IS NULL RETURNING id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at"#)).bind(id).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.status).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match rule {
-        Ok(data) => ApiResponse::success(data, "预警规则更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交预警规则更新事务失败: {}", e);
+                return ApiResponse::server_error("预警规则更新失败");
+            }
+            ApiResponse::success(data, "预警规则更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预警规则不存在或已删除"),
         Err(e) => {
             tracing::error!("Failed to update alert rule: {}", e);
@@ -566,23 +607,45 @@ pub async fn update_alert_rule(
 )]
 pub async fn delete_alert_rule(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的预警规则ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启预警规则删除事务失败: {}", e);
+            return ApiResponse::server_error("预警规则删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_alert_rules SET deleted_at = NOW() WHERE id = $1"#
+        r#"UPDATE qms.qa_alert_rules SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "预警规则删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("预警规则不存在"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交预警规则删除事务失败: {}", e);
+                return ApiResponse::server_error("预警规则删除失败");
+            }
+            ApiResponse::success(true, "预警规则删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete alert rule: {}", e);
             ApiResponse::server_error("预警规则删除失败")
@@ -660,16 +723,56 @@ pub async fn list_alert_messages(
 )]
 pub async fn create_alert_message(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateAlertMessageRequest>,
 ) -> ApiResponse<AlertMessage> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let rule_id = req.rule_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold).bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启预警消息创建事务失败: {}", e);
+            return ApiResponse::server_error("预警消息创建失败");
+        }
+    };
+
+    // 同域引用校验：规则若给出，必须存在且同租户。
+    if let Some(rid) = rule_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_alert_rules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(rid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("预警规则不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate alert rule: {}", e);
+                return ApiResponse::server_error("预警消息创建失败");
+            }
+        }
+    }
+
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match message {
-        Ok(data) => ApiResponse::success(data, "预警消息创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交预警消息创建事务失败: {}", e);
+                return ApiResponse::server_error("预警消息创建失败");
+            }
+            ApiResponse::success(data, "预警消息创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create alert message: {}", e);
             ApiResponse::server_error("预警消息创建失败")
@@ -693,23 +796,40 @@ pub async fn create_alert_message(
 pub async fn acknowledge_alert(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<AlertMessage> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的预警消息ID"),
     };
 
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启预警确认事务失败: {}", e);
+            return ApiResponse::server_error("预警确认失败");
+        }
+    };
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = 'active' RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match message {
-        Ok(data) => ApiResponse::success(data, "预警已确认"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预警消息不存在或已确认"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交预警确认事务失败: {}", e);
+                return ApiResponse::server_error("预警确认失败");
+            }
+            ApiResponse::success(data, "预警已确认")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("预警消息不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to acknowledge alert: {}", e);
             ApiResponse::server_error("预警确认失败")

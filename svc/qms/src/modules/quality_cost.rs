@@ -7,13 +7,20 @@ use axum::{
     Extension, Json, Router,
 };
 use bigdecimal::BigDecimal;
+use chrono::{DateTime, Utc};
 use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
+
+/// 请求体日期只有日期部分，统一按 UTC 零点落 `timestamptz`。
+fn date_to_utc(d: chrono::NaiveDate) -> DateTime<Utc> {
+    DateTime::<Utc>::from_naive_utc_and_offset(d.and_hms_opt(0, 0, 0).unwrap_or_default(), Utc)
+}
 
 #[utoipa::path(
     get,
@@ -149,7 +156,10 @@ pub async fn create_quality_cost(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateQualityCostRequest>,
 ) -> ApiResponse<QualityCost> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let cost_no = format!(
         "QC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -159,16 +169,45 @@ pub async fn create_quality_cost(
         .related_issue_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let incurred_dt = req
-        .incurred_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let incurred_dt = req.incurred_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量成本创建事务失败: {}", e);
+            return ApiResponse::server_error("质量成本记录创建失败");
+        }
+    };
+
+    // 同域引用：关联质量问题必须存在且属于当前租户。
+    if let Some(issue_id) = related_issue_id {
+        let exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#))
+            .bind(issue_id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await;
+        match exists {
+            Ok(0) => return ApiResponse::bad_request("关联质量问题不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("校验关联质量问题失败: {}", e);
+                return ApiResponse::server_error("质量成本记录创建失败");
+            }
+        }
+    }
 
     let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at"#)).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match cost {
-        Ok(data) => ApiResponse::success(data, "质量成本记录创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量成本创建事务失败: {}", e);
+                return ApiResponse::server_error("质量成本记录创建失败");
+            }
+            ApiResponse::success(data, "质量成本记录创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create quality cost: {}", e);
             ApiResponse::server_error("质量成本记录创建失败")
@@ -254,7 +293,10 @@ pub async fn update_quality_cost(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateQualityCostRequest>,
 ) -> ApiResponse<QualityCost> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
@@ -264,16 +306,45 @@ pub async fn update_quality_cost(
         .related_issue_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let incurred_dt = req
-        .incurred_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let incurred_dt = req.incurred_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量成本更新事务失败: {}", e);
+            return ApiResponse::server_error("质量成本记录更新失败");
+        }
+    };
+
+    // 同域引用：关联质量问题必须存在且属于当前租户。
+    if let Some(issue_id) = related_issue_id {
+        let exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#))
+            .bind(issue_id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await;
+        match exists {
+            Ok(0) => return ApiResponse::bad_request("关联质量问题不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("校验关联质量问题失败: {}", e);
+                return ApiResponse::server_error("质量成本记录更新失败");
+            }
+        }
+    }
 
     let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at"#)).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match cost {
-        Ok(data) => ApiResponse::success(data, "质量成本记录更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量成本更新事务失败: {}", e);
+                return ApiResponse::server_error("质量成本记录更新失败");
+            }
+            ApiResponse::success(data, "质量成本记录更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update quality cost: {}", e);
@@ -302,23 +373,41 @@ pub async fn delete_quality_cost(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量成本删除事务失败: {}", e);
+            return ApiResponse::server_error("质量成本记录删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "质量成本记录删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量成本删除事务失败: {}", e);
+                return ApiResponse::server_error("质量成本记录删除失败");
+            }
+            ApiResponse::success(true, "质量成本记录删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete quality cost: {}", e);
             ApiResponse::server_error("质量成本记录删除失败")

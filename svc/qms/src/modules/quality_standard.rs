@@ -9,6 +9,7 @@ use axum::{
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::ApiResponse;
@@ -183,52 +184,75 @@ pub async fn create_standard(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateStandardRequest>,
 ) -> ApiResponse<QualityStandard> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let code = format!(
         "QS-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
-    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量标准创建事务失败: {}", e);
+            return ApiResponse::server_error("质量标准创建失败");
+        }
+    };
 
     let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standards (tenant_id, code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(tenant_id).bind(code).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(version).bind(req.created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
-    match standard {
-        Ok(data) => {
-            let created_by = data.created_by.clone();
-            if let Ok(standard_id) = Uuid::parse_str(&data.id) {
-                let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(data.version.clone()).bind(data.name.clone()).bind(data.category.clone()).bind(data.level.clone()).bind(data.specification.clone()).bind(data.description.clone()).bind(data.status.clone()).bind(created_by)
-                .execute(&state.pool)
-                .await;
-            }
-            // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear_l1();
-
-            // 发布缓存失效事件，通知其他服务失效相关缓存
-            if let Some(ref publisher) = state.event_publisher {
-                let publisher = publisher.clone();
-                tokio::spawn(async move {
-                    if let Err(e) = publisher
-                        .publish_cache_invalidated(
-                            "qms:quality_standard:*",
-                            "pattern",
-                            Some("quality_standard_created"),
-                        )
-                        .await
-                    {
-                        tracing::warn!("发布缓存失效事件失败: {}", e);
-                    }
-                });
-            }
-
-            ApiResponse::success(data, "质量标准创建成功")
-        }
+    let data = match standard {
+        Ok(d) => d,
         Err(e) => {
             tracing::error!("Failed to create standard: {}", e);
-            ApiResponse::server_error("质量标准创建失败")
+            return ApiResponse::server_error("质量标准创建失败");
         }
+    };
+
+    // 修订记录与主行同事务，失败整体回滚。
+    let standard_id = match Uuid::parse_str(&data.id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::server_error("质量标准创建失败"),
+    };
+    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(data.version.clone()).bind(data.name.clone()).bind(data.category.clone()).bind(data.level.clone()).bind(data.specification.clone()).bind(data.description.clone()).bind(data.status.clone()).bind(data.created_by.clone())
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("写入质量标准修订记录失败，整体回滚: {}", e);
+        return ApiResponse::server_error("质量标准创建失败");
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交质量标准创建事务失败: {}", e);
+        return ApiResponse::server_error("质量标准创建失败");
+    }
+
+    // 失效列表缓存（创建后列表数据可能变化）
+    state.dict_cache.clear_l1();
+
+    // 发布缓存失效事件，通知其他服务失效相关缓存
+    if let Some(ref publisher) = state.event_publisher {
+        let publisher = publisher.clone();
+        tokio::spawn(async move {
+            if let Err(e) = publisher
+                .publish_cache_invalidated(
+                    "qms:quality_standard:*",
+                    "pattern",
+                    Some("quality_standard_created"),
+                )
+                .await
+            {
+                tracing::warn!("发布缓存失效事件失败: {}", e);
+            }
+        });
+    }
+
+    ApiResponse::success(data, "质量标准创建成功")
 }
 
 #[utoipa::path(
@@ -309,38 +333,59 @@ pub async fn update_standard(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
 ) -> ApiResponse<QualityStandard> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量标准更新事务失败: {}", e);
+            return ApiResponse::server_error("质量标准更新失败");
+        }
+    };
+
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
-    if let Ok(current_data) = current {
-        if let Ok(standard_id) = Uuid::parse_str(&current_data.id) {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(current_data.version).bind(current_data.name).bind(current_data.category).bind(current_data.level).bind(current_data.specification).bind(current_data.description).bind(current_data.status).bind(current_data.created_by)
-            .execute(&state.pool)
-            .await;
+    let current_data = match current {
+        Ok(d) => d,
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("记录不存在"),
+        Err(e) => {
+            tracing::error!("Failed to fetch standard: {}", e);
+            return ApiResponse::server_error("质量标准更新失败");
         }
+    };
+
+    // 修订记录与主行同事务，失败整体回滚。
+    let standard_id = match Uuid::parse_str(&current_data.id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::server_error("质量标准更新失败"),
+    };
+    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(current_data.version.clone()).bind(current_data.name.clone()).bind(current_data.category.clone()).bind(current_data.level.clone()).bind(current_data.specification.clone()).bind(current_data.description.clone()).bind(current_data.status.clone()).bind(current_data.created_by.clone())
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("写入质量标准修订记录失败，整体回滚: {}", e);
+        return ApiResponse::server_error("质量标准更新失败");
     }
 
     let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = COALESCE($7, version), status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(req.version).bind(req.status).bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match standard {
         Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量标准更新事务失败: {}", e);
+                return ApiResponse::server_error("质量标准更新失败");
+            }
             // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -395,19 +440,35 @@ pub async fn delete_standard(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量标准删除事务失败: {}", e);
+            return ApiResponse::server_error("质量标准删除失败");
+        }
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
         Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量标准删除事务失败: {}", e);
+                return ApiResponse::server_error("质量标准删除失败");
+            }
+
             // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -510,70 +571,86 @@ pub async fn create_revision(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
 ) -> ApiResponse<QualityStandard> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启质量标准版本创建事务失败: {}", e);
+            return ApiResponse::server_error("质量标准版本创建失败");
+        }
+    };
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
-    match current {
-        Ok(current_data) => {
-            let version = current_data.version.clone();
-            let name = current_data.name.clone();
-            let category = current_data.category.clone();
-            let level = current_data.level.clone();
-            let specification = current_data.specification.clone();
-            let description = current_data.description.clone();
-            let status = current_data.status.clone();
-            let created_by = current_data.created_by.clone();
-
-            if let Ok(standard_id) = Uuid::parse_str(&current_data.id) {
-                let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(version.clone()).bind(name.clone()).bind(category.clone()).bind(level.clone()).bind(specification.clone()).bind(description.clone()).bind(status.clone()).bind(created_by.clone())
-                    .execute(&state.pool)
-                    .await;
-            }
-
-            let new_version = req.version.unwrap_or_else(|| {
-                let current_version = version.as_deref().unwrap_or("1.0");
-                let parts: Vec<&str> = current_version.split('.').collect();
-                if parts.len() >= 2 {
-                    let mut v: Vec<String> = parts.iter().map(|s| s.to_string()).collect();
-                    if let Ok(patch) = v[1].parse::<i32>() {
-                        v[1] = (patch + 1).to_string();
-                    }
-                    v.join(".")
-                } else {
-                    format!("{}.1", current_version)
-                }
-            });
-
-            let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(new_version).bind(req.status).bind(tenant_id)
-            .fetch_one(&state.pool)
-            .await;
-
-            match standard {
-                Ok(data) => ApiResponse::success(data, "质量标准版本创建成功"),
-                Err(e) => {
-                    tracing::error!("Failed to create revision: {}", e);
-                    ApiResponse::server_error("质量标准版本创建失败")
-                }
-            }
-        }
+    let current_data = match current {
+        Ok(d) => d,
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to find standard: {}", e);
-            ApiResponse::not_found("质量标准不存在")
+            return ApiResponse::server_error("质量标准版本创建失败");
+        }
+    };
+
+    let version = current_data.version.clone();
+    let name = current_data.name.clone();
+    let category = current_data.category.clone();
+    let level = current_data.level.clone();
+    let specification = current_data.specification.clone();
+    let description = current_data.description.clone();
+    let status = current_data.status.clone();
+    let created_by = current_data.created_by.clone();
+
+    // 修订记录与主行同事务，失败整体回滚。
+    let standard_id = match Uuid::parse_str(&current_data.id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::server_error("质量标准版本创建失败"),
+    };
+    if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standard_revisions (tenant_id, standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#)).bind(tenant_id).bind(standard_id).bind(version.clone()).bind(name.clone()).bind(category.clone()).bind(level.clone()).bind(specification.clone()).bind(description.clone()).bind(status.clone()).bind(created_by.clone())
+        .execute(&mut scope)
+        .await
+    {
+        tracing::error!("写入质量标准修订记录失败，整体回滚: {}", e);
+        return ApiResponse::server_error("质量标准版本创建失败");
+    }
+
+    let new_version = req.version.unwrap_or_else(|| {
+        let current_version = version.as_deref().unwrap_or("1.0");
+        let parts: Vec<&str> = current_version.split('.').collect();
+        if parts.len() >= 2 {
+            let mut v: Vec<String> = parts.iter().map(|s| s.to_string()).collect();
+            if let Ok(patch) = v[1].parse::<i32>() {
+                v[1] = (patch + 1).to_string();
+            }
+            v.join(".")
+        } else {
+            format!("{}.1", current_version)
+        }
+    });
+
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(new_version).bind(req.status).bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await;
+
+    match standard {
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量标准版本创建事务失败: {}", e);
+                return ApiResponse::server_error("质量标准版本创建失败");
+            }
+            ApiResponse::success(data, "质量标准版本创建成功")
+        }
+        Err(e) => {
+            tracing::error!("Failed to create revision: {}", e);
+            ApiResponse::server_error("质量标准版本创建失败")
         }
     }
 }

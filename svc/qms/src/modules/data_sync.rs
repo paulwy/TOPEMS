@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -90,16 +91,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
         }
         (Some(_), None) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, Some(_)) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, None) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
     };
 
@@ -190,7 +191,7 @@ pub async fn get_sync_record(
     let _tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
+        only_own_schema_query!("qms", "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
     )
     .bind(id)
     .bind(tenant_opt)
@@ -298,36 +299,52 @@ pub async fn retry_sync(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启同步重试事务失败: {}", e);
+            return ApiResponse::server_error("同步重试失败");
+        }
+    };
 
     let row = sqlx::query(
-        only_own_schema_query!("qms", "UPDATE qms.qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at")
+        only_own_schema_query!("qms", "UPDATE qms.qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at")
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(r) => ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "同步记录已重置为待处理",
-        ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交同步重试事务失败: {}", e);
+                return ApiResponse::server_error("同步重试失败");
+            }
+            ApiResponse::success(
+                SyncRecord {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    sync_no: r.get("sync_no"),
+                    sync_type: r.get("sync_type"),
+                    source_id: r.get("source_id"),
+                    target_service: r.get("target_service"),
+                    target_id: r.get("target_id"),
+                    status: r.get("status"),
+                    payload: r.get("payload"),
+                    response: r.get("response"),
+                    error_msg: r.get("error_msg"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "同步记录已重置为待处理",
+            )
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("记录状态已变更或不存在"),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
             ApiResponse::server_error("同步重试失败")
@@ -358,7 +375,17 @@ pub async fn delete_sync_record(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启同步记录删除事务失败: {}", e);
+            return ApiResponse::server_error("同步记录删除失败");
+        }
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
@@ -366,11 +393,18 @@ pub async fn delete_sync_record(
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "同步记录删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交同步记录删除事务失败: {}", e);
+                return ApiResponse::server_error("同步记录删除失败");
+            }
+            ApiResponse::success(true, "同步记录删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
             ApiResponse::server_error("同步记录删除失败")
