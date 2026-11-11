@@ -78,6 +78,7 @@ impl QmsRealModule {
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
+            db: topems_shared_db::scope::Db::new(ctx.db.clone(), "qms, public, shared"),
             health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
             dict_cache: crate::modules::cache_init::build_l2_cache("qms:dict", l2_config).await,

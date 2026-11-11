@@ -29,6 +29,13 @@ pub async fn list_fmea_analyses(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaQuery>,
 ) -> ApiResponse<Vec<FmeaAnalysis>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取FMEA分析列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -44,16 +51,16 @@ pub async fn list_fmea_analyses(
 
     let analyses = match (query.status.as_ref(), query.product_id.as_ref()) {
         (Some(st), Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(st).bind(pid).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(st), None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
 
@@ -129,6 +136,13 @@ pub async fn get_fmea_analysis(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<FmeaAnalysis> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取FMEA分析失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -144,7 +158,7 @@ pub async fn get_fmea_analysis(
     };
 
     let fmea = sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match fmea {
@@ -257,6 +271,13 @@ pub async fn list_fmea_items(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaItemQuery>,
 ) -> ApiResponse<Vec<FmeaItem>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取FMEA条目列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -276,11 +297,11 @@ pub async fn list_fmea_items(
 
     let items = if let Some(fid) = fmea_id {
         sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_id::TEXT, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at, updated_at FROM qms.qa_fmea_items WHERE ($1::uuid IS NULL OR tenant_id = $1) AND fmea_id = $2 ORDER BY rpn DESC"#)).bind(tenant_opt).bind(fid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     } else {
         sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_id::TEXT, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at, updated_at FROM qms.qa_fmea_items WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY rpn DESC LIMIT 100"#)).bind(tenant_opt)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     };
 
@@ -352,6 +373,13 @@ pub async fn get_fmea_item(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<FmeaItem> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取FMEA条目失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -367,7 +395,7 @@ pub async fn get_fmea_item(
     };
 
     let item = sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, fmea_id::TEXT, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at, updated_at FROM qms.qa_fmea_items WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
@@ -497,6 +525,13 @@ pub async fn get_fmea_statistics(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<FmeaStatistics> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取FMEA统计失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -517,7 +552,7 @@ pub async fn get_fmea_statistics(
     ))
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_items = total.unwrap_or(0);
@@ -527,7 +562,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let high_risk_count = high_risk.unwrap_or(0);
@@ -537,7 +572,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let medium_risk_count = medium_risk.unwrap_or(0);
@@ -547,7 +582,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let low_risk_count = low_risk.unwrap_or(0);
@@ -557,7 +592,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let average_rpn: f64 = big_decimal_to_f64(avg_rpn);
@@ -567,7 +602,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let max_rpn = max_rpn_val.unwrap_or(0) as i64;
@@ -577,7 +612,7 @@ pub async fn get_fmea_statistics(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let min_rpn = min_rpn_val.unwrap_or(0) as i64;

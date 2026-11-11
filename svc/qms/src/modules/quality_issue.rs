@@ -47,6 +47,13 @@ pub async fn list_issues(
     axum::extract::Query(query): axum::extract::Query<IssueQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<QualityIssue>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量问题列表失败");
+        }
+    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -76,7 +83,7 @@ pub async fn list_issues(
                 .bind(page_size)
                 .bind(offset)
                 .bind(locale)
-                .fetch_all(&state.pool)
+                .fetch_all(&mut scope)
                 .await
         }
         (Some(st), None) => {
@@ -91,7 +98,7 @@ pub async fn list_issues(
                 .bind(page_size)
                 .bind(offset)
                 .bind(locale)
-                .fetch_all(&state.pool)
+                .fetch_all(&mut scope)
                 .await
         }
         (None, Some(sv)) => {
@@ -106,7 +113,7 @@ pub async fn list_issues(
                 .bind(page_size)
                 .bind(offset)
                 .bind(locale)
-                .fetch_all(&state.pool)
+                .fetch_all(&mut scope)
                 .await
         }
         (None, None) => {
@@ -120,7 +127,7 @@ pub async fn list_issues(
                 .bind(page_size)
                 .bind(offset)
                 .bind(locale)
-                .fetch_all(&state.pool)
+                .fetch_all(&mut scope)
                 .await
         }
     };
@@ -256,6 +263,13 @@ pub async fn get_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityIssue> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量问题失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -276,7 +290,7 @@ pub async fn get_issue(
         "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         cols
     ))).bind(id).bind(tenant_opt).bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match issue {

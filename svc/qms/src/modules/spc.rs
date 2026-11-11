@@ -145,6 +145,13 @@ pub async fn list_spc_charts(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcChartQuery>,
 ) -> ApiResponse<Vec<SpcChart>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取SPC控制图列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -160,16 +167,16 @@ pub async fn list_spc_charts(
 
     let charts = match (query.chart_type.as_ref(), query.product_id.as_ref()) {
         (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(ct).bind(pid).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(ct), None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(ct).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
 
@@ -241,6 +248,13 @@ pub async fn get_spc_chart(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SpcChart> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取SPC控制图失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -256,7 +270,7 @@ pub async fn get_spc_chart(
     };
 
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match chart {
@@ -369,6 +383,13 @@ pub async fn get_spc_data_points(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcDataQuery>,
 ) -> ApiResponse<Vec<SpcDataPoint>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取SPC数据点失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -386,7 +407,7 @@ pub async fn get_spc_data_points(
     let limit = query.limit.unwrap_or(100);
 
     let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, mean, range, operator, remark, measured_at, created_at FROM qms.qa_spc_data_points WHERE chart_id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no DESC LIMIT $3"#)).bind(chart_id.to_string()).bind(tenant_opt).bind(limit)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match points {
@@ -672,6 +693,13 @@ pub async fn get_spc_chart_data_points(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取SPC数据点失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -688,7 +716,7 @@ pub async fn get_spc_chart_data_points(
     let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, mean, range, operator, remark, measured_at, created_at FROM qms.qa_spc_data_points WHERE chart_id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no ASC"#))
         .bind(chart_id.to_string())
         .bind(tenant_opt)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
     match points {
         Ok(data) => ApiResponse::success(

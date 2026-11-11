@@ -79,9 +79,10 @@ use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -89,10 +90,25 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
+    /// 读路径统一作用域句柄：GET 查询必须经 `scope_read_*`，不得直接裸池。
+    pub db: Db,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+}
+
+/// 按调用身份选择读作用域：
+/// - 租户用户 → `scope_read_for_tenant`（显式租户，fail-closed）；
+/// - 超管 / 服务身份 → `scope_read_system`（显式 nil 租户 + 系统通道）。
+pub async fn read_scope_for_claims<'a>(db: &'a Db, claims: &Claims) -> sqlx::Result<ScopedTxn<'a>> {
+    if claims.is_superuser || topems_shared_auth::service::is_service_claims(claims) {
+        // tenant-system: 超管/服务身份跨租户读，显式系统通道（联邦读依赖超管带租户头能出数）。
+        db.scope_read_system().await
+    } else {
+        let tenant = topems_shared_auth::get_tenant_id_from_claims(claims);
+        db.scope_read_for_tenant(tenant).await
+    }
 }
 
 impl FromRef<AppState> for AuthState {

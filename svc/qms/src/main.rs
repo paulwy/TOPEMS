@@ -35,6 +35,8 @@ pub use shared::*;
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: sqlx::PgPool,
+    /// 读路径统一作用域句柄：GET 查询必须经 `scope_read_*`，不得直接裸池。
+    pub db: topems_shared_db::scope::Db,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
@@ -222,6 +224,7 @@ async fn main() -> anyhow::Result<()> {
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "qms, public, shared"),
         health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         workflow_client,

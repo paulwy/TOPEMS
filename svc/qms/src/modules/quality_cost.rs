@@ -39,6 +39,13 @@ pub async fn list_quality_costs(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> ApiResponse<ListQualityCostsResponse> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量成本列表失败");
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -87,7 +94,7 @@ pub async fn list_quality_costs(
         count_query = count_query.bind(p.clone());
     }
 
-    let total: i64 = match count_query.fetch_one(&state.pool).await {
+    let total: i64 = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality costs: {}", e);
@@ -108,7 +115,7 @@ pub async fn list_quality_costs(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    match fetch_query.fetch_all(&state.pool).await {
+    match fetch_query.fetch_all(&mut scope).await {
         Ok(data) => ApiResponse::success(
             ListQualityCostsResponse {
                 costs: data,
@@ -189,6 +196,13 @@ pub async fn get_quality_cost(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<QualityCost> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量成本记录失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -204,7 +218,7 @@ pub async fn get_quality_cost(
     };
 
     let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match cost {
@@ -334,6 +348,13 @@ pub async fn get_cost_statistics(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> ApiResponse<QualityCostStatistics> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量成本统计失败");
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE 1=1");
@@ -380,7 +401,7 @@ pub async fn get_cost_statistics(
     for p in &params {
         total_query = total_query.bind(p.clone());
     }
-    let total: Option<BigDecimal> = match total_query.fetch_one(&state.pool).await {
+    let total: Option<BigDecimal> = match total_query.fetch_one(&mut scope).await {
         Ok(v) => Some(v),
         Err(e) => {
             tracing::error!("Failed to fetch total cost: {}", e);
@@ -397,7 +418,7 @@ pub async fn get_cost_statistics(
     for p in &params {
         category_query = category_query.bind(p.clone());
     }
-    let category_rows = category_query.fetch_all(&state.pool).await;
+    let category_rows = category_query.fetch_all(&mut scope).await;
 
     let category_summary = match category_rows {
         Ok(rows) => rows
@@ -431,7 +452,7 @@ pub async fn get_cost_statistics(
     for p in &params {
         dept_query = dept_query.bind(p.clone());
     }
-    let dept_rows = dept_query.fetch_all(&state.pool).await;
+    let dept_rows = dept_query.fetch_all(&mut scope).await;
 
     let department_summary = match dept_rows {
         Ok(rows) => rows
@@ -490,6 +511,13 @@ pub async fn get_cost_trend(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> ApiResponse<Vec<CostTrendItem>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量成本趋势失败");
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE 1=1");
@@ -552,7 +580,7 @@ pub async fn get_cost_trend(
     for p in &params {
         q = q.bind(p.clone());
     }
-    let rows = q.fetch_all(&state.pool).await;
+    let rows = q.fetch_all(&mut scope).await;
 
     match rows {
         Ok(data) => {

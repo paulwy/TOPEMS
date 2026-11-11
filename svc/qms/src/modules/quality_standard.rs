@@ -51,6 +51,13 @@ pub async fn list_standards(
     axum::extract::Query(query): axum::extract::Query<StandardQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<ListStandardsResponse> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量标准列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -103,7 +110,7 @@ pub async fn list_standards(
 
     let count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql)).bind(tenant_opt);
 
-    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+    let total: Option<i64> = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count standards: {}", e);
@@ -129,7 +136,7 @@ pub async fn list_standards(
         .bind(page_size)
         .bind(offset);
 
-    match fetch_query.fetch_all(&state.pool).await {
+    match fetch_query.fetch_all(&mut scope).await {
         Ok(data) => {
             let response = ListStandardsResponse {
                 standards: data,
@@ -244,6 +251,13 @@ pub async fn get_standard(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityStandard> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量标准失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -259,7 +273,7 @@ pub async fn get_standard(
     let _tenant_id = get_tenant_id(&claims, &headers);
 
     let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match standard {
@@ -442,6 +456,13 @@ pub async fn list_revisions(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<StandardRevision>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量标准修订记录失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -457,7 +478,7 @@ pub async fn list_revisions(
     let _tenant_id = get_tenant_id(&claims, &headers);
 
     let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at FROM qms.qa_standard_revisions WHERE standard_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match revisions {

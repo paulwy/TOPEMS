@@ -45,6 +45,13 @@ pub async fn list_inspections(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<InspectionQuery>,
 ) -> ApiResponse<ListInspectionsResponse> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量检查列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -73,7 +80,7 @@ pub async fn list_inspections(
     .bind(query.status.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -107,7 +114,7 @@ pub async fn list_inspections(
     .bind(page_size)
     .bind(offset)
     .bind(Locale::from_headers(&headers).as_sql())
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(d) => d,
@@ -193,6 +200,13 @@ pub async fn get_inspection(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Inspection> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取质量检查失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -208,7 +222,7 @@ pub async fn get_inspection(
     };
 
     let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id.to_string()).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match inspection {
@@ -737,6 +751,13 @@ pub async fn get_inspection_results(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<InspectionResult>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取检查结果明细失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -752,7 +773,7 @@ pub async fn get_inspection_results(
     };
 
     let results = sqlx::query_as::<_, InspectionResult>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, CASE WHEN $3 = 'en' THEN COALESCE(item_name_en, item_name) ELSE item_name END AS item_name, standard_value, measured_value, is_qualified, remark, created_at FROM qms.qa_inspection_results WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match results {
@@ -783,6 +804,13 @@ pub async fn get_inspection_audits(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<InspectionAudit>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取检查审核记录失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -798,7 +826,7 @@ pub async fn get_inspection_audits(
     };
 
     let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match audits {

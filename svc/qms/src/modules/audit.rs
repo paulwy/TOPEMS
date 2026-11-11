@@ -28,6 +28,13 @@ pub async fn list_audit_plans(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditPlanQuery>,
 ) -> ApiResponse<Vec<AuditPlan>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取审核计划列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -43,16 +50,16 @@ pub async fn list_audit_plans(
 
     let plans = match (query.status.as_ref(), query.audit_type.as_ref()) {
         (Some(st), Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND audit_type = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(st).bind(at).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(st), None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(at).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
 
@@ -123,6 +130,13 @@ pub async fn get_audit_plan(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditPlan> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取审核计划失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -138,7 +152,7 @@ pub async fn get_audit_plan(
     };
 
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
@@ -246,6 +260,13 @@ pub async fn list_audit_tasks(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditTaskQuery>,
 ) -> ApiResponse<Vec<AuditTask>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取审核任务列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -263,16 +284,16 @@ pub async fn list_audit_tasks(
 
     let tasks = match (plan_id, query.status.as_ref()) {
         (Some(plan), Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(plan), None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(plan).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
 
@@ -384,6 +405,13 @@ pub async fn list_audit_findings(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditFindingQuery>,
 ) -> ApiResponse<Vec<AuditFinding>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取审核发现列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -401,28 +429,28 @@ pub async fn list_audit_findings(
 
     let findings = match (plan_id, query.severity.as_ref(), query.status.as_ref()) {
         (Some(plan), Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND severity = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"#)).bind(tenant_opt).bind(plan).bind(sv).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(plan), Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(sv).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(plan), None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(sv).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (Some(plan), None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(plan).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(sv).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
         (None, None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await,
     };
 

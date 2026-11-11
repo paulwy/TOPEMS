@@ -68,6 +68,13 @@ pub async fn list_sync_records(
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<SyncRecord>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取同步记录列表失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -113,7 +120,7 @@ pub async fn list_sync_records(
         }
     }
 
-    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let records = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| SyncRecord {
                 id: row.get("id"),
@@ -161,6 +168,13 @@ pub async fn get_sync_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<SyncRecord> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取同步记录失败");
+        }
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
@@ -180,7 +194,7 @@ pub async fn get_sync_record(
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {

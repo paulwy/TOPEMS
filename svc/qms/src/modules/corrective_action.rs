@@ -28,6 +28,13 @@ pub async fn list_actions(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ActionQuery>,
 ) -> ApiResponse<ListActionsResponse> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取整改措施列表失败");
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -85,7 +92,7 @@ pub async fn list_actions(
         count_query = count_query.bind(p.clone());
     }
 
-    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+    let total: Option<i64> = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count actions: {}", e);
@@ -112,7 +119,7 @@ pub async fn list_actions(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    match fetch_query.fetch_all(&state.pool).await {
+    match fetch_query.fetch_all(&mut scope).await {
         Ok(data) => ApiResponse::success(
             ListActionsResponse {
                 actions: data,
@@ -223,6 +230,13 @@ pub async fn get_action(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<CorrectiveAction> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取整改措施失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -238,7 +252,7 @@ pub async fn get_action(
     };
 
     let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match action {
@@ -271,6 +285,13 @@ pub async fn get_action_items(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<ActionItem>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取措施明细失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -286,7 +307,7 @@ pub async fn get_action_items(
     };
 
     let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_id::TEXT, item_name, responsible, due_date, status, completed_at, remark, created_at FROM qms.qa_corrective_action_items WHERE action_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match items {

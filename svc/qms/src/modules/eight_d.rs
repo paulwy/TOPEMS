@@ -35,6 +35,13 @@ pub async fn list_eightd_reports(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<EightDQuery>,
 ) -> ApiResponse<ListEightDReportsResponse> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取8D报告列表失败");
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -86,7 +93,7 @@ pub async fn list_eightd_reports(
         count_query = count_query.bind(p.clone());
     }
 
-    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+    let total: Option<i64> = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count 8D reports: {}", e);
@@ -118,7 +125,7 @@ pub async fn list_eightd_reports(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    match fetch_query.fetch_all(&state.pool).await {
+    match fetch_query.fetch_all(&mut scope).await {
         Ok(data) => ApiResponse::success(
             ListEightDReportsResponse {
                 reports: data,
@@ -206,6 +213,13 @@ pub async fn get_eightd_report(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EightDReport> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取8D报告失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -221,7 +235,7 @@ pub async fn get_eightd_report(
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match report {
@@ -656,6 +670,13 @@ pub async fn get_eightd_audit_logs(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<EightDAuditLog>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取8D审核日志失败");
+        }
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -671,7 +692,7 @@ pub async fn get_eightd_audit_logs(
     };
 
     let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_id::TEXT AS report_id, action, step, operator, comment, created_at FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match logs {

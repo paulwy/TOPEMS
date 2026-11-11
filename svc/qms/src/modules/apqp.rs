@@ -33,6 +33,13 @@ pub async fn list_apqp_projects(
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpProjectQuery>,
 ) -> ApiResponse<Vec<ApqpProject>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP项目列表失败");
+        }
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -55,7 +62,7 @@ pub async fn list_apqp_projects(
             .bind(format!("%{}%", pn))
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         }
         (Some(st), None) => {
@@ -66,7 +73,7 @@ pub async fn list_apqp_projects(
             .bind(st)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         }
         (None, Some(pn)) => {
@@ -77,7 +84,7 @@ pub async fn list_apqp_projects(
             .bind(format!("%{}%", pn))
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         }
         (None, None) => {
@@ -87,7 +94,7 @@ pub async fn list_apqp_projects(
             .bind(tenant_opt)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         }
     };
@@ -207,8 +214,16 @@ async fn init_default_phases(pool: &sqlx::PgPool, project_id: &str) -> Result<()
 )]
 pub async fn get_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpProject> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP项目失败");
+        }
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
@@ -218,7 +233,7 @@ pub async fn get_apqp_project(
         only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#),
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match project {
@@ -427,8 +442,16 @@ pub async fn transition_project_status(
 )]
 pub async fn list_apqp_phases(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<ApqpPhase>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP阶段列表失败");
+        }
+    };
     let project_id = match query.get("project_id") {
         Some(pid) => match Uuid::parse_str(pid) {
             Ok(u) => Some(u),
@@ -442,13 +465,13 @@ pub async fn list_apqp_phases(
             only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
         )
         .bind(pid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     } else {
         sqlx::query_as::<_, ApqpPhase>(
             only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at FROM qms.qa_apqp_phases ORDER BY created_at DESC LIMIT 100"#),
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     };
 
@@ -525,8 +548,16 @@ pub async fn create_apqp_phase(
 )]
 pub async fn get_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpPhase> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP阶段失败");
+        }
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的阶段ID"),
@@ -536,7 +567,7 @@ pub async fn get_apqp_phase(
         only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at FROM qms.qa_apqp_phases WHERE id = $1"#),
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match phase {
@@ -664,8 +695,16 @@ pub async fn delete_apqp_phase(
 )]
 pub async fn list_apqp_tasks(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpTaskQuery>,
 ) -> ApiResponse<Vec<ApqpTask>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP任务列表失败");
+        }
+    };
     let project_id = query
         .project_id
         .as_ref()
@@ -708,7 +747,7 @@ pub async fn list_apqp_tasks(
         query_builder = query_builder.bind(param);
     }
 
-    let tasks = query_builder.fetch_all(&state.pool).await;
+    let tasks = query_builder.fetch_all(&mut scope).await;
 
     match tasks {
         Ok(data) => ApiResponse::success(data, "获取APQP任务列表成功"),
@@ -786,8 +825,16 @@ pub async fn create_apqp_task(
 )]
 pub async fn get_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpTask> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP任务失败");
+        }
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
@@ -797,7 +844,7 @@ pub async fn get_apqp_task(
         only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at FROM qms.qa_apqp_tasks WHERE id = $1"#),
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match task {
@@ -920,8 +967,16 @@ pub async fn delete_apqp_task(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_apqp_risks(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpRiskQuery>,
 ) -> ApiResponse<Vec<ApqpRisk>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP风险列表失败");
+        }
+    };
     let project_id = query
         .project_id
         .as_ref()
@@ -960,7 +1015,7 @@ pub async fn list_apqp_risks(
         }
     }
 
-    let risks = query_builder.fetch_all(&state.pool).await;
+    let risks = query_builder.fetch_all(&mut scope).await;
 
     match risks {
         Ok(data) => ApiResponse::success(data, "获取APQP风险列表成功"),
@@ -1037,8 +1092,16 @@ pub async fn create_apqp_risk(
 )]
 pub async fn get_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpRisk> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP风险失败");
+        }
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的风险ID"),
@@ -1048,7 +1111,7 @@ pub async fn get_apqp_risk(
         only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, created_at, updated_at FROM qms.qa_apqp_risks WHERE id = $1"#),
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match risk {
@@ -1173,8 +1236,16 @@ pub async fn delete_apqp_risk(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_apqp_progress(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpProgressStatistics> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP进度统计失败");
+        }
+    };
     let project_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
@@ -1185,7 +1256,7 @@ pub async fn get_apqp_progress(
         r#"SELECT COUNT(*) FROM qms.qa_apqp_phases WHERE project_id = $1"#
     ))
     .bind(project_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_phases = total_phases.unwrap_or(0);
@@ -1195,7 +1266,7 @@ pub async fn get_apqp_progress(
         r#"SELECT COUNT(*) FROM qms.qa_apqp_phases WHERE project_id = $1 AND status = 'completed'"#
     ))
     .bind(project_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let completed_phases = completed_phases.unwrap_or(0);
@@ -1205,7 +1276,7 @@ pub async fn get_apqp_progress(
         r#"SELECT COUNT(*) FROM qms.qa_apqp_tasks WHERE project_id = $1"#
     ))
     .bind(project_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_tasks = total_tasks.unwrap_or(0);
@@ -1215,7 +1286,7 @@ pub async fn get_apqp_progress(
         r#"SELECT COUNT(*) FROM qms.qa_apqp_tasks WHERE project_id = $1 AND status = 'completed'"#
     ))
     .bind(project_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let completed_tasks = completed_tasks.unwrap_or(0);
@@ -1230,7 +1301,7 @@ pub async fn get_apqp_progress(
         only_own_schema_query!("qms", r#"SELECT id, phase_name, phase_code, COALESCE(status, 'pending') as status FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
     )
     .bind(project_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let mut phase_progress = Vec::new();
@@ -1242,7 +1313,7 @@ pub async fn get_apqp_progress(
                 r#"SELECT COUNT(*) FROM qms.qa_apqp_tasks WHERE phase_id = $1"#
             ))
             .bind(pid)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok();
             let phase_total_tasks = phase_total.unwrap_or(0);
@@ -1251,7 +1322,7 @@ pub async fn get_apqp_progress(
                 only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_apqp_tasks WHERE phase_id = $1 AND status = 'completed'"#),
             )
             .bind(pid)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok();
             let phase_completed_tasks = phase_completed.unwrap_or(0);
@@ -1298,8 +1369,16 @@ pub async fn get_apqp_progress(
 )]
 pub async fn list_apqp_approvals(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<ApqpApproval>> {
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant read scope: {}", e);
+            return ApiResponse::server_error("获取APQP审批列表失败");
+        }
+    };
     let project_id = query
         .get("project_id")
         .and_then(|s| Uuid::parse_str(s).ok());
@@ -1309,13 +1388,13 @@ pub async fn list_apqp_approvals(
             only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
         )
         .bind(pid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     } else {
         sqlx::query_as::<_, ApqpApproval>(
             only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     };
 
