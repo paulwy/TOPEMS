@@ -7,14 +7,22 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::ScopedTxn;
 
 const STATUS_IN_PRODUCTION: &str = "in_production";
 const STATUS_COMPLETED: &str = "completed";
 const STATUS_CANCELLED: &str = "cancelled";
+
+/// 请求体里的日期只有日期部分，统一按 UTC 零点落 `timestamptz`。
+fn date_to_utc(d: chrono::NaiveDate) -> DateTime<Utc> {
+    DateTime::<Utc>::from_naive_utc_and_offset(d.and_hms_opt(0, 0, 0).unwrap_or_default(), Utc)
+}
 
 const APQP_SELECT_COLS: &str = r#"id, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#;
 
@@ -120,25 +128,37 @@ pub async fn list_apqp_projects(
 )]
 pub async fn create_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpProjectRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let project_no = format!(
         "APQP-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
+    // TODO(w-b6b): product_id 属跨域主数据（pdm/mdm），当前未校验属主。
     let product_id = req
         .product_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let start_dt = req
-        .start_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let target_dt = req
-        .target_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let start_dt = req.start_date.map(date_to_utc);
+    let target_dt = req.target_date.map(date_to_utc);
 
-    let project = sqlx::query_as::<_, ApqpProject>(
+    // 项目与其默认阶段同事务：任一环节失败整体回滚，避免“主表 200、子表缺失”。
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP创建事务失败: {}", e);
+            return ApiResponse::server_error("APQP项目创建失败");
+        }
+    };
+
+    let project = match sqlx::query_as::<_, ApqpProject>(
         only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_projects (project_no, project_name, product_id, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, progress, risk_level, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'planning', 'phase1', $7, $8, $9, $10, 0, 'low', $11, $12) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(project_no)
@@ -152,27 +172,40 @@ pub async fn create_apqp_project(
     .bind(start_dt)
     .bind(target_dt)
     .bind(req.created_by)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
-    .await;
-
-    match project {
-        Ok(data) => {
-            let project_id = data.id.clone();
-            tokio::spawn(async move {
-                let pool = state.pool.clone();
-                _ = init_default_phases(&pool, &project_id).await;
-            });
-            ApiResponse::success(data, "APQP项目创建成功")
-        }
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(d) => d,
         Err(e) => {
             tracing::error!("Failed to create APQP project: {}", e);
-            ApiResponse::server_error("APQP项目创建失败")
+            return ApiResponse::server_error("APQP项目创建失败");
         }
+    };
+
+    let project_id = match Uuid::parse_str(&project.id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::server_error("APQP项目创建失败"),
+    };
+
+    if let Err(e) = init_default_phases(&mut scope, project_id, tenant_id).await {
+        tracing::error!("写入APQP默认阶段失败，整体回滚: {}", e);
+        return ApiResponse::server_error("APQP项目创建失败");
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交APQP创建事务失败: {}", e);
+        return ApiResponse::server_error("APQP项目创建失败");
+    }
+
+    ApiResponse::success(project, "APQP项目创建成功")
 }
 
-async fn init_default_phases(pool: &sqlx::PgPool, project_id: &str) -> Result<(), sqlx::Error> {
+async fn init_default_phases(
+    scope: &mut ScopedTxn<'_>,
+    project_id: Uuid,
+    tenant_id: Uuid,
+) -> Result<(), sqlx::Error> {
     let phases = vec![
         ("phase1", "计划和确定项目", 1),
         ("phase2", "产品设计开发", 2),
@@ -181,18 +214,16 @@ async fn init_default_phases(pool: &sqlx::PgPool, project_id: &str) -> Result<()
         ("phase5", "反馈评定和纠正措施", 5),
     ];
 
-    let pid = Uuid::parse_str(project_id).unwrap_or_default();
-
     for (code, name, order) in phases {
         sqlx::query(
             only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, status, sort_order, tenant_id) VALUES ($1, $2, $3, 'pending', $4, $5)"#),
         )
-        .bind(pid)
+        .bind(project_id)
         .bind(code)
         .bind(name)
         .bind(order)
-        .bind(Uuid::nil())
-        .execute(pool)
+        .bind(tenant_id)
+        .execute(&mut *scope)
         .await?;
     }
 
@@ -263,38 +294,38 @@ pub async fn get_apqp_project(
 pub async fn update_apqp_project(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateApqpProjectRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
+    // TODO(w-b6b): product_id 属跨域主数据（pdm/mdm），当前未校验属主。
     let product_id = req
         .product_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let start_dt = req
-        .start_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let target_dt = req
-        .target_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let actual_end_dt = req
-        .actual_end_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let start_dt = req.start_date.map(date_to_utc);
+    let target_dt = req.target_date.map(date_to_utc);
+    let actual_end_dt = req.actual_end_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP更新事务失败: {}", e);
+            return ApiResponse::server_error("APQP项目更新失败");
+        }
+    };
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 AND ($16::uuid IS NULL OR tenant_id = $16::uuid) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 AND tenant_id = $16 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.project_name)
@@ -311,12 +342,18 @@ pub async fn update_apqp_project(
     .bind(actual_end_dt)
     .bind(req.progress)
     .bind(req.risk_level)
-    .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match project {
-        Ok(data) => ApiResponse::success(data, "APQP项目更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP更新事务失败: {}", e);
+                return ApiResponse::server_error("APQP项目更新失败");
+            }
+            ApiResponse::success(data, "APQP项目更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update APQP project: {}", e);
@@ -341,32 +378,44 @@ pub async fn update_apqp_project(
 pub async fn delete_apqp_project(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP删除事务失败: {}", e);
+            return ApiResponse::server_error("APQP项目删除失败");
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_apqp_projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"UPDATE qms.qa_apqp_projects SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_filter)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "APQP项目删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("APQP项目不存在"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP删除事务失败: {}", e);
+                return ApiResponse::server_error("APQP项目删除失败");
+            }
+            ApiResponse::success(true, "APQP项目删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete APQP project: {}", e);
             ApiResponse::server_error("APQP项目删除失败")
@@ -390,20 +439,17 @@ pub async fn delete_apqp_project(
 pub async fn transition_project_status(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<StatusTransitionRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
-    };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let valid_statuses = ["planning", "developing", "verifying", "released", "closed"];
@@ -412,17 +458,32 @@ pub async fn transition_project_status(
         return ApiResponse::bad_request("无效的状态值");
     }
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP状态流转事务失败: {}", e);
+            return ApiResponse::server_error("状态流转失败");
+        }
+    };
+
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(id)
     .bind(&req.target_status)
-    .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match project {
-        Ok(data) => ApiResponse::success(data, "状态流转成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP状态流转事务失败: {}", e);
+                return ApiResponse::server_error("状态流转失败");
+            }
+            ApiResponse::success(data, "状态流转成功")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to transition project status: {}", e);
             ApiResponse::server_error("状态流转失败")
@@ -496,19 +557,47 @@ pub async fn list_apqp_phases(
 )]
 pub async fn create_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpPhaseRequest>,
 ) -> ApiResponse<ApqpPhase> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let start_dt = req
-        .start_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let end_dt = req
-        .end_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let start_dt = req.start_date.map(date_to_utc);
+    let end_dt = req.end_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP阶段创建事务失败: {}", e);
+            return ApiResponse::server_error("APQP阶段创建失败");
+        }
+    };
+
+    // 同域引用校验：父项目必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_apqp_projects WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(project_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("APQP项目不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate APQP project: {}", e);
+            return ApiResponse::server_error("APQP阶段创建失败");
+        }
+    }
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
         only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, description, status, start_date, end_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at"#),
@@ -520,12 +609,18 @@ pub async fn create_apqp_phase(
     .bind(start_dt)
     .bind(end_dt)
     .bind(req.sort_order.unwrap_or(0))
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match phase {
-        Ok(data) => ApiResponse::success(data, "APQP阶段创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP阶段创建事务失败: {}", e);
+                return ApiResponse::server_error("APQP阶段创建失败");
+            }
+            ApiResponse::success(data, "APQP阶段创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create APQP phase: {}", e);
             ApiResponse::server_error("APQP阶段创建失败")
@@ -596,29 +691,35 @@ pub async fn get_apqp_phase(
 )]
 pub async fn update_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateApqpPhaseRequest>,
 ) -> ApiResponse<ApqpPhase> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的阶段ID"),
     };
 
-    let start_dt = req
-        .start_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let end_dt = req
-        .end_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let actual_start_dt = req
-        .actual_start_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let actual_end_dt = req
-        .actual_end_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let start_dt = req.start_date.map(date_to_utc);
+    let end_dt = req.end_date.map(date_to_utc);
+    let actual_start_dt = req.actual_start_date.map(date_to_utc);
+    let actual_end_dt = req.actual_end_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP阶段更新事务失败: {}", e);
+            return ApiResponse::server_error("APQP阶段更新失败");
+        }
+    };
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.phase_name)
@@ -630,11 +731,18 @@ pub async fn update_apqp_phase(
     .bind(actual_end_dt)
     .bind(req.progress)
     .bind(req.sort_order)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match phase {
-        Ok(data) => ApiResponse::success(data, "APQP阶段更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP阶段更新事务失败: {}", e);
+                return ApiResponse::server_error("APQP阶段更新失败");
+            }
+            ApiResponse::success(data, "APQP阶段更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update APQP phase: {}", e);
@@ -658,24 +766,45 @@ pub async fn update_apqp_phase(
 )]
 pub async fn delete_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的阶段ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP阶段删除事务失败: {}", e);
+            return ApiResponse::server_error("APQP阶段删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"DELETE FROM qms.qa_apqp_phases WHERE id = $1"#
+        r#"DELETE FROM qms.qa_apqp_phases WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("APQP阶段不存在"),
-        Ok(_) => ApiResponse::success(true, "APQP阶段删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP阶段删除事务失败: {}", e);
+                return ApiResponse::server_error("APQP阶段删除失败");
+            }
+            ApiResponse::success(true, "APQP阶段删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete APQP phase: {}", e);
             ApiResponse::server_error("APQP阶段删除失败")
@@ -770,8 +899,14 @@ pub async fn list_apqp_tasks(
 )]
 pub async fn create_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpTaskRequest>,
 ) -> ApiResponse<ApqpTask> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
@@ -781,9 +916,50 @@ pub async fn create_apqp_task(
         Err(_) => return ApiResponse::bad_request("无效的阶段ID"),
     };
 
-    let due_dt = req
-        .due_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let due_dt = req.due_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP任务创建事务失败: {}", e);
+            return ApiResponse::server_error("APQP任务创建失败");
+        }
+    };
+
+    // 同域引用校验：父项目与阶段都必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_apqp_projects WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(project_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("APQP项目不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate APQP project: {}", e);
+            return ApiResponse::server_error("APQP任务创建失败");
+        }
+    }
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_apqp_phases WHERE id = $1 AND project_id = $2 AND tenant_id = $3"
+    ))
+    .bind(phase_id)
+    .bind(project_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("APQP阶段不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate APQP phase: {}", e);
+            return ApiResponse::server_error("APQP任务创建失败");
+        }
+    }
 
     let task = sqlx::query_as::<_, ApqpTask>(
         only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_tasks (project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at"#),
@@ -797,12 +973,18 @@ pub async fn create_apqp_task(
     .bind(req.assignee)
     .bind(due_dt)
     .bind(req.sort_order.unwrap_or(0))
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match task {
-        Ok(data) => ApiResponse::success(data, "APQP任务创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP任务创建事务失败: {}", e);
+                return ApiResponse::server_error("APQP任务创建失败");
+            }
+            ApiResponse::success(data, "APQP任务创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create APQP task: {}", e);
             ApiResponse::server_error("APQP任务创建失败")
@@ -873,23 +1055,33 @@ pub async fn get_apqp_task(
 )]
 pub async fn update_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateApqpTaskRequest>,
 ) -> ApiResponse<ApqpTask> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let due_dt = req
-        .due_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let completed_dt = req
-        .completed_at
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let due_dt = req.due_date.map(date_to_utc);
+    let completed_dt = req.completed_at.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP任务更新事务失败: {}", e);
+            return ApiResponse::server_error("APQP任务更新失败");
+        }
+    };
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.task_name)
@@ -901,11 +1093,18 @@ pub async fn update_apqp_task(
     .bind(due_dt)
     .bind(completed_dt)
     .bind(req.sort_order)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match task {
-        Ok(data) => ApiResponse::success(data, "APQP任务更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP任务更新事务失败: {}", e);
+                return ApiResponse::server_error("APQP任务更新失败");
+            }
+            ApiResponse::success(data, "APQP任务更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update APQP task: {}", e);
@@ -929,24 +1128,45 @@ pub async fn update_apqp_task(
 )]
 pub async fn delete_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP任务删除事务失败: {}", e);
+            return ApiResponse::server_error("APQP任务删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"DELETE FROM qms.qa_apqp_tasks WHERE id = $1"#
+        r#"DELETE FROM qms.qa_apqp_tasks WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("APQP任务不存在"),
-        Ok(_) => ApiResponse::success(true, "APQP任务删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP任务删除事务失败: {}", e);
+                return ApiResponse::server_error("APQP任务删除失败");
+            }
+            ApiResponse::success(true, "APQP任务删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete APQP task: {}", e);
             ApiResponse::server_error("APQP任务删除失败")
@@ -1038,17 +1258,47 @@ pub async fn list_apqp_risks(
 )]
 pub async fn create_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpRiskRequest>,
 ) -> ApiResponse<ApqpRisk> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let rpn = req.severity * req.occurrence * req.detection;
-    let target_dt = req
-        .target_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let target_dt = req.target_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP风险创建事务失败: {}", e);
+            return ApiResponse::server_error("APQP风险创建失败");
+        }
+    };
+
+    // 同域引用校验：父项目必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_apqp_projects WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(project_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("APQP项目不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate APQP project: {}", e);
+            return ApiResponse::server_error("APQP风险创建失败");
+        }
+    }
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
         only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_risks (project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, created_at, updated_at"#),
@@ -1064,12 +1314,18 @@ pub async fn create_apqp_risk(
     .bind(req.mitigation_plan)
     .bind(req.responsible)
     .bind(target_dt)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match risk {
-        Ok(data) => ApiResponse::success(data, "APQP风险创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP风险创建事务失败: {}", e);
+                return ApiResponse::server_error("APQP风险创建失败");
+            }
+            ApiResponse::success(data, "APQP风险创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create APQP risk: {}", e);
             ApiResponse::server_error("APQP风险创建失败")
@@ -1140,20 +1396,32 @@ pub async fn get_apqp_risk(
 )]
 pub async fn update_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateApqpRiskRequest>,
 ) -> ApiResponse<ApqpRisk> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的风险ID"),
     };
 
-    let target_dt = req
-        .target_date
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let target_dt = req.target_date.map(date_to_utc);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP风险更新事务失败: {}", e);
+            return ApiResponse::server_error("APQP风险更新失败");
+        }
+    };
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_risks SET risk_name = COALESCE($2, risk_name), description = COALESCE($3, description), risk_category = COALESCE($4, risk_category), severity = COALESCE($5, severity), occurrence = COALESCE($6, occurrence), detection = COALESCE($7, detection), rpn = COALESCE($5, severity) * COALESCE($6, occurrence) * COALESCE($7, detection), status = COALESCE($8, status), mitigation_plan = COALESCE($9, mitigation_plan), responsible = COALESCE($10, responsible), target_date = COALESCE($11, target_date), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_risks SET risk_name = COALESCE($2, risk_name), description = COALESCE($3, description), risk_category = COALESCE($4, risk_category), severity = COALESCE($5, severity), occurrence = COALESCE($6, occurrence), detection = COALESCE($7, detection), rpn = COALESCE($5, severity) * COALESCE($6, occurrence) * COALESCE($7, detection), status = COALESCE($8, status), mitigation_plan = COALESCE($9, mitigation_plan), responsible = COALESCE($10, responsible), target_date = COALESCE($11, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $12 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.risk_name)
@@ -1166,12 +1434,18 @@ pub async fn update_apqp_risk(
     .bind(req.mitigation_plan)
     .bind(req.responsible)
     .bind(target_dt)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match risk {
-        Ok(data) => ApiResponse::success(data, "APQP风险更新成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP风险更新事务失败: {}", e);
+                return ApiResponse::server_error("APQP风险更新失败");
+            }
+            ApiResponse::success(data, "APQP风险更新成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update APQP risk: {}", e);
@@ -1195,24 +1469,45 @@ pub async fn update_apqp_risk(
 )]
 pub async fn delete_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的风险ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP风险删除事务失败: {}", e);
+            return ApiResponse::server_error("APQP风险删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"DELETE FROM qms.qa_apqp_risks WHERE id = $1"#
+        r#"DELETE FROM qms.qa_apqp_risks WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("APQP风险不存在"),
-        Ok(_) => ApiResponse::success(true, "APQP风险删除成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP风险删除事务失败: {}", e);
+                return ApiResponse::server_error("APQP风险删除失败");
+            }
+            ApiResponse::success(true, "APQP风险删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete APQP risk: {}", e);
             ApiResponse::server_error("APQP风险删除失败")
@@ -1419,13 +1714,46 @@ pub async fn list_apqp_approvals(
 )]
 pub async fn create_apqp_approval(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpApprovalRequest>,
 ) -> ApiResponse<ApqpApproval> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP审批创建事务失败: {}", e);
+            return ApiResponse::server_error("APQP审批创建失败");
+        }
+    };
+
+    // 同域引用校验：父项目必须存在且同租户。
+    match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_apqp_projects WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(project_id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(0) => return ApiResponse::bad_request("APQP项目不存在或不属于当前租户"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to validate APQP project: {}", e);
+            return ApiResponse::server_error("APQP审批创建失败");
+        }
+    }
+
+    // qa_apqp_approvals 无 tenant_id 列（表无 RLS），租户隔离通过父项目属主保证。
     let approval = sqlx::query_as::<_, ApqpApproval>(
         only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment) VALUES ($1, $2, 'pending', $3, $4) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
@@ -1433,11 +1761,17 @@ pub async fn create_apqp_approval(
     .bind(req.approval_type)
     .bind(req.applicant)
     .bind(req.comment)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match approval {
-        Ok(data) => ApiResponse::success(data, "APQP审批创建成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP审批创建事务失败: {}", e);
+                return ApiResponse::server_error("APQP审批创建失败");
+            }
+            ApiResponse::success(data, "APQP审批创建成功")
+        }
         Err(e) => {
             tracing::error!("Failed to create APQP approval: {}", e);
             ApiResponse::server_error("APQP审批创建失败")
@@ -1460,9 +1794,15 @@ pub async fn create_apqp_approval(
 )]
 pub async fn process_apqp_approval(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ProcessApprovalRequest>,
 ) -> ApiResponse<ApqpApproval> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的审批ID"),
@@ -1470,19 +1810,34 @@ pub async fn process_apqp_approval(
 
     let status = if req.approved { "approved" } else { "rejected" };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP审批处理事务失败: {}", e);
+            return ApiResponse::server_error("APQP审批处理失败");
+        }
+    };
+
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 AND project_id IN (SELECT id FROM qms.qa_apqp_projects WHERE tenant_id = $5 AND deleted_at IS NULL) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(id)
     .bind(status)
     .bind(req.approver)
     .bind(req.comment)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match approval {
-        Ok(data) => ApiResponse::success(data, "APQP审批处理成功"),
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交APQP审批处理事务失败: {}", e);
+                return ApiResponse::server_error("APQP审批处理失败");
+            }
+            ApiResponse::success(data, "APQP审批处理成功")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("审批记录不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to process APQP approval: {}", e);
             ApiResponse::server_error("APQP审批处理失败")
@@ -1514,29 +1869,34 @@ pub struct ApqpApprovalRequest {
 pub async fn approve_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApqpApprovalRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP审批事务失败: {}", e);
+            return ApiResponse::server_error("审批失败");
+        }
     };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -1550,14 +1910,16 @@ pub async fn approve_apqp(
             if apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS)            )
-            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS)))
+                .bind(id)
+                .bind(tenant_id)
+                .fetch_one(&mut scope)
+                .await;
             match project {
                 Ok(data) => {
-                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
-                        &tenant_str,
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
+                        &tenant_id.to_string(),
                         "apqp",
                         &id.to_string(),
                         "approve",
@@ -1566,18 +1928,28 @@ pub async fn approve_apqp(
                         STATUS_IN_PRODUCTION,
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::error!("写入APQP审批事件失败，整体回滚: {}", e);
+                        return ApiResponse::server_error("审批失败");
+                    }
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("提交APQP审批事务失败: {}", e);
+                        return ApiResponse::server_error("审批失败");
+                    }
                     ApiResponse::success(data, "审批通过")
                 }
+                Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to approve APQP: {}", e);
                     ApiResponse::server_error("审批失败")
                 }
             }
         }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("APQP项目不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            ApiResponse::not_found("APQP项目不存在")
+            ApiResponse::server_error("审批失败")
         }
     }
 }
@@ -1599,29 +1971,34 @@ pub async fn approve_apqp(
 pub async fn complete_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApqpApprovalRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP完成事务失败: {}", e);
+            return ApiResponse::server_error("完成失败");
+        }
     };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -1635,14 +2012,16 @@ pub async fn complete_apqp(
             if apqp_can_transition(&current_status, STATUS_COMPLETED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许完成");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS)            )
-            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS)))
+                .bind(id)
+                .bind(tenant_id)
+                .fetch_one(&mut scope)
+                .await;
             match project {
                 Ok(data) => {
-                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
-                        &tenant_str,
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
+                        &tenant_id.to_string(),
                         "apqp",
                         &id.to_string(),
                         "complete",
@@ -1651,18 +2030,28 @@ pub async fn complete_apqp(
                         STATUS_COMPLETED,
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::error!("写入APQP完成事件失败，整体回滚: {}", e);
+                        return ApiResponse::server_error("完成失败");
+                    }
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("提交APQP完成事务失败: {}", e);
+                        return ApiResponse::server_error("完成失败");
+                    }
                     ApiResponse::success(data, "APQP项目已完成")
                 }
+                Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to complete APQP: {}", e);
                     ApiResponse::server_error("完成失败")
                 }
             }
         }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("APQP项目不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            ApiResponse::not_found("APQP项目不存在")
+            ApiResponse::server_error("完成失败")
         }
     }
 }
@@ -1684,29 +2073,34 @@ pub async fn complete_apqp(
 pub async fn cancel_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApqpApprovalRequest>,
 ) -> ApiResponse<ApqpProject> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启APQP取消事务失败: {}", e);
+            return ApiResponse::server_error("取消失败");
+        }
     };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .bind(tenant_filter)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await;
 
     match current {
@@ -1715,14 +2109,16 @@ pub async fn cancel_apqp(
             if apqp_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS)            )
-            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS)))
+                .bind(id)
+                .bind(tenant_id)
+                .fetch_one(&mut scope)
+                .await;
             match project {
                 Ok(data) => {
-                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
-                        &tenant_str,
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
+                        &tenant_id.to_string(),
                         "apqp",
                         &id.to_string(),
                         "cancel",
@@ -1731,18 +2127,28 @@ pub async fn cancel_apqp(
                         STATUS_CANCELLED,
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::error!("写入APQP取消事件失败，整体回滚: {}", e);
+                        return ApiResponse::server_error("取消失败");
+                    }
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("提交APQP取消事务失败: {}", e);
+                        return ApiResponse::server_error("取消失败");
+                    }
                     ApiResponse::success(data, "APQP项目已取消")
                 }
+                Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to cancel APQP: {}", e);
                     ApiResponse::server_error("取消失败")
                 }
             }
         }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("APQP项目不存在或状态已变更"),
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            ApiResponse::not_found("APQP项目不存在")
+            ApiResponse::server_error("取消失败")
         }
     }
 }
