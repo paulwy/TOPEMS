@@ -48,6 +48,17 @@
       ],
       "evidence": "三环境账本只读核验（2026-11-08）：local topems 556 行/max 20261107000020、topems_test 576 行/max 20261105235700、topems_prod 595 行/max 20261107000046，均无 20261107000025；prod mes.core_menus 不存在（information_schema 仅 public/iam/flow 有 core_menus），prod public.core_menus 449 行全部 tenant=...0001 且 267 个 code 全部已存在（test public 423 行中已含 241 个）。基线重建库 topems_m025_baseline_verify（anchor 20261105235700，prod 基线）：修复前 apply-forward 在 025 报 relation \"mes.core_menus\" does not exist，其余 001-024/026-046 全部成功；修复后 apply-forward 0 失败，public.core_menus=267 行（tenant ...0001，267/267 code 命中）、public.core_menu_groups=94，无全零租户行；删除账本行重放第二遍幂等（267/94 不变），终态 0 待应用。",
       "approved": true
+    },
+    {
+      "id": "B20261111-w7b4-supplier-users-guard",
+      "date": "2026-11-11",
+      "committer": "paulwy",
+      "reason": "W7-B4 第 6 笔（srm.supplier_users 去 PERMISSIVE SELECT 放行 + 加 RESTRICTIVE）在应用前被生产副本证明无法直接执行：生产账本内 20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql 已 DROP TABLE srm.supplier_users，而开发库未升级到 P4、该表仍存在，同一份迁移必须在两种环境形态下都幂等可跑。改造为存在性守卫：to_regclass('srm.supplier_users') IS NULL → RAISE NOTICE + RETURN（该迁移记成功、no-op），表存在才走原收敛与断言逻辑。不改版本号、不删除文件、不用 --defer（--defer 会在账本永久留 pending），属已提交迁移的受控内容修改。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261112095000_w7_b4_srm_supplier_users_restrictive.sql"
+      ],
+      "evidence": "生产副本 topems_w7_reh_prod_20261111（由生产全库 dump sha256=54bad79c4b8e3618960ce7d3944a5d843bf83a772186138f3243b296dacf8086 恢复，账本 655/max 20261110210000）从 anchor 20261110210000 顺序应用前 5 笔后，第 6 笔硬失败：ERROR: W7-B4-SRM 失败：srm.supplier_users 不存在（账本止于 660/max 20261112094000）；根因定位 database/migrations/20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql:60 DROP TABLE srm.supplier_users（该版本在 prod 账本内、本地开发库账本内没有）。守卫改造后重建副本、从干净恢复点重跑六笔，账本 661/max 20261112095000，mes 52 表/50 RLS/50 FORCE/57 策略、19 表 tenant_id 19/19、srm 21 表/20 RLS/20 FORCE/20 策略/RESTRICTIVE 0、quarantine 0、v_tenant_backfill_gaps 0 全绿；开发克隆 topems_w7_reh_20261111（账本 578、表存在）同文件走非 no-op 分支并断言通过。",
+      "approved": true
     }
   ]
 }

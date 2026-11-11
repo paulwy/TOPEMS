@@ -16,6 +16,11 @@
 -- 注意：tenant 侧管理端如需读取 supplier_users，必须显式设置 app.supplier_id；
 --       平台/系统通道用 app.rls_system='on'。
 --
+-- 环境幂等：`srm.supplier_users` 已于 20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql
+--       在生产删除，但仍存在于未升级到 P4 的开发库。本迁移两种形态都必须能跑：
+--       表不存在 → RAISE NOTICE 后 RETURN（no-op，账本记成功），不报错；
+--       表存在   → 走下方收敛与断言。
+--
 -- 回滚（急停）：DROP 两条策略，恢复窗口前 pg_policies 快照中的旧策略。
 -- ============================================================
 
@@ -26,7 +31,8 @@ DECLARE
     pol record;
 BEGIN
     IF to_regclass('srm.supplier_users') IS NULL THEN
-        RAISE EXCEPTION 'W7-B4-SRM 失败：srm.supplier_users 不存在';
+        RAISE NOTICE 'W7-B4-SRM：srm.supplier_users 不存在（已由 20261105100000 删除），本迁移 no-op';
+        RETURN;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -69,6 +75,11 @@ DECLARE
     v_restrict int;
     v_force boolean;
 BEGIN
+    IF to_regclass('srm.supplier_users') IS NULL THEN
+        RAISE NOTICE 'W7-B4-SRM：srm.supplier_users 不存在，跳过断言（no-op）';
+        RETURN;
+    END IF;
+
     SELECT count(*) INTO v_pols FROM pg_policies
     WHERE schemaname = 'srm' AND tablename = 'supplier_users';
     IF v_pols <> 2 THEN
