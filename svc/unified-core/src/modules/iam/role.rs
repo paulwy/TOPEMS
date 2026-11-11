@@ -420,17 +420,6 @@ pub async fn update_role(
         payload
     );
 
-    // 租户约束：超管 nil -> None（全量），普通用户限本租户角色；
-    // 非超管必须带租户上下文，否则拒绝，避免“无租户=全量”的隐式放开。
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match tenant_scope::tenant_uuid(&claims) {
-            Some(tenant_id) => Some(tenant_id),
-            None => return json_error(403, "缺少租户上下文，无法更新角色"),
-        }
-    };
-
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
@@ -441,20 +430,27 @@ pub async fn update_role(
         }
     };
 
-    // 检查角色是否存在（限定操作者租户）
-    let current_name: Option<String> = sqlx::query_scalar(
-        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
-    )
-    .bind(role_uuid)
-    .bind(tenant_filter)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-
-    let current_name = match current_name {
-        Some(name) => name,
-        None => return Json(topems_shared_core::response::error_value(404, "角色不存在")),
+    // 写作用域：平台管理员全量；租户管理员仅本租户，缺租户上下文直接拒绝。
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法更新角色"),
     };
+
+    // 存在性与可写性判定必须走作用域事务：core_roles 是 FORCE RLS 表，
+    // 裸池无 GUC 时本租户角色会被过滤成“不存在”，SQL 错误也不得伪装成 404。
+    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+        Ok(tenant_scope::RoleWriteTarget::Ok) => {}
+        Ok(tenant_scope::RoleWriteTarget::NotFound) => {
+            return json_error(404, "角色不存在");
+        }
+        Ok(tenant_scope::RoleWriteTarget::Forbidden) => {
+            return json_error(403, "无权修改全局角色，请由平台管理员操作");
+        }
+        Err(e) => {
+            tracing::error!("更新角色前查询角色失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    }
 
     let name = payload
         .get("name")
@@ -464,25 +460,6 @@ pub async fn update_role(
         .get("description")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-
-    if let Some(new_name) = &name {
-        if tenant_scope::is_reserved_role_name(new_name) && new_name != &current_name {
-            return json_error(403, "不能使用系统内置角色名");
-        }
-        if new_name != &current_name {
-            let name_exists: bool = sqlx::query_scalar(
-                "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1 AND id <> $2)",
-            )
-            .bind(new_name)
-            .bind(role_uuid)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(false);
-            if name_exists {
-                return json_error(409, "角色名已存在");
-            }
-        }
-    }
 
     let permission_ids: Option<Vec<String>> = match payload.get("permission_ids") {
         None => None,
@@ -501,54 +478,112 @@ pub async fn update_role(
         None => None,
     };
 
-    // 事务更新角色和权限
-    let mut tx = match state.pool.begin().await {
+    // 作用域写事务：core_roles 为 FORCE RLS，裸池事务在严格策略下会 0 行更新。
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_system().await,
+        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+    };
+    let mut tx = match tx_result {
         Ok(tx) => tx,
         Err(e) => {
-            tracing::error!("开始事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("更新角色失败: {}", e),
-            ));
+            tracing::error!("开始角色写事务失败: {}", e);
+            return json_error(500, &format!("更新角色失败: {}", e));
         }
     };
 
-    // 更新角色信息
+    // 事务内读取当前名称：既做保留名校验，也在角色被并发删除时回 404。
+    let current_name: Option<String> = match sqlx::query_scalar(
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(role_uuid)
+    .fetch_optional(&mut tx)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询角色失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    };
+    let current_name = match current_name {
+        Some(name) => name,
+        None => {
+            let _ = tx.rollback().await;
+            return json_error(404, "角色不存在");
+        }
+    };
+
+    if let Some(new_name) = &name {
+        if tenant_scope::is_reserved_role_name(new_name) && new_name != &current_name {
+            let _ = tx.rollback().await;
+            return json_error(403, "不能使用系统内置角色名");
+        }
+        if new_name != &current_name {
+            let name_exists: bool = match sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1 AND id <> $2)",
+            )
+            .bind(new_name)
+            .bind(role_uuid)
+            .fetch_one(&mut tx)
+            .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    let _ = tx.rollback().await;
+                    tracing::error!("检查角色名失败: {}", e);
+                    return json_error(500, &format!("检查角色名失败: {}", e));
+                }
+            };
+            if name_exists {
+                let _ = tx.rollback().await;
+                return json_error(409, "角色名已存在");
+            }
+        }
+    }
+
+    // 更新角色信息（作用域事务内不再附加 tenant_id 谓词；行数必须为 1）
     if let Some(name) = &name {
-        if let Err(e) = sqlx::query(
-            "UPDATE public.core_roles SET name = $1, updated_at = NOW() WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)",
+        match sqlx::query(
+            "UPDATE public.core_roles SET name = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL",
         )
         .bind(name)
         .bind(role_uuid)
-        .bind(tenant_filter)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
         {
-            let _ = tx.rollback().await;
-            tracing::error!("更新角色名称失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("更新角色失败: {}", e),
-            ));
+            Ok(result) if result.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = tx.rollback().await;
+                return json_error(409, "角色已被删除或状态已变更，请刷新后重试");
+            }
+            Err(e) => {
+                let _ = tx.rollback().await;
+                tracing::error!("更新角色名称失败: {}", e);
+                return json_error(500, &format!("更新角色失败: {}", e));
+            }
         }
     }
 
     if let Some(desc) = &description {
-        if let Err(e) = sqlx::query(
-            "UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)",
+        match sqlx::query(
+            "UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL",
         )
         .bind(desc)
         .bind(role_uuid)
-        .bind(tenant_filter)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
         {
-            let _ = tx.rollback().await;
-            tracing::error!("更新角色描述失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("更新角色失败: {}", e),
-            ));
+            Ok(result) if result.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = tx.rollback().await;
+                return json_error(409, "角色已被删除或状态已变更，请刷新后重试");
+            }
+            Err(e) => {
+                let _ = tx.rollback().await;
+                tracing::error!("更新角色描述失败: {}", e);
+                return json_error(500, &format!("更新角色失败: {}", e));
+            }
         }
     }
 
@@ -557,35 +592,34 @@ pub async fn update_role(
         // 删除现有权限关联
         if let Err(e) = sqlx::query("DELETE FROM public.core_role_permissions WHERE role_id = $1")
             .bind(role_uuid)
-            .execute(&mut *tx)
+            .execute(&mut tx)
             .await
         {
             let _ = tx.rollback().await;
             tracing::error!("删除角色权限关联失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("更新角色权限失败: {}", e),
-            ));
+            return json_error(500, &format!("更新角色权限失败: {}", e));
         }
 
         // 添加新的权限关联
         for perm_uuid in &perm_ids {
-            let _ = sqlx::query(
+            if let Err(e) = sqlx::query(
                 "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
             )
             .bind(role_uuid)
             .bind(perm_uuid)
-            .execute(&mut *tx)
-            .await;
+            .execute(&mut tx)
+            .await
+            {
+                let _ = tx.rollback().await;
+                tracing::error!("添加角色权限关联失败: {}", e);
+                return json_error(500, &format!("更新角色权限失败: {}", e));
+            }
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(topems_shared_core::response::error_value(
-            500,
-            &format!("更新角色失败: {}", e),
-        ));
+        return json_error(500, &format!("更新角色失败: {}", e));
     }
 
     topems_shared_auth::invalidate_all_permission_caches();
@@ -615,98 +649,126 @@ pub async fn delete_role(
         }
     };
 
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match tenant_scope::tenant_uuid(&claims) {
-            Some(tenant_id) => Some(tenant_id),
-            None => return json_error(403, "缺少租户上下文，无法删除角色"),
+    // 写作用域：平台管理员全量；租户管理员仅本租户，缺租户上下文直接拒绝。
+    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法删除角色"),
+    };
+
+    // 存在性与可写性判定走作用域事务：裸池无 GUC 时本租户角色被 RLS 过滤成“不存在”。
+    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+        Ok(tenant_scope::RoleWriteTarget::Ok) => {}
+        Ok(tenant_scope::RoleWriteTarget::NotFound) => {
+            return json_error(404, "角色不存在");
+        }
+        Ok(tenant_scope::RoleWriteTarget::Forbidden) => {
+            return json_error(403, "无权修改全局角色，请由平台管理员操作");
+        }
+        Err(e) => {
+            tracing::error!("删除角色前查询角色失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    }
+
+    // 作用域写事务：core_roles 为 FORCE RLS，裸池事务无法删除租户域角色。
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_system().await,
+        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始角色删除事务失败: {}", e);
+            return json_error(500, &format!("删除角色失败: {}", e));
         }
     };
 
-    // 检查角色是否存在且归属本租户，并拦截系统内置角色
-    let role_name: Option<String> = sqlx::query_scalar(
-        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+    // 事务内读取角色名：拦截系统内置角色；并发已删除时回 404。
+    let role_name: Option<String> = match sqlx::query_scalar(
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(role_uuid)
-    .bind(tenant_filter)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx)
     .await
-    .unwrap_or(None);
+    {
+        Ok(row) => row,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询角色失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    };
 
     let role_name = match role_name {
         Some(name) => name,
-        None => return Json(topems_shared_core::response::error_value(404, "角色不存在")),
+        None => {
+            let _ = tx.rollback().await;
+            return json_error(404, "角色不存在");
+        }
     };
 
     if tenant_scope::is_reserved_role_name(&role_name) {
+        let _ = tx.rollback().await;
         return json_error(403, "不能删除系统内置角色");
     }
 
-    // 检查是否有用户使用该角色
+    // 检查是否有用户使用该角色（错误不得吞成 0 后继续删除）
     let user_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_user_roles WHERE role_id = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_user_roles WHERE role_id = $1")
             .bind(role_uuid)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut tx)
             .await
-            .unwrap_or(0);
+        {
+            Ok(count) => count,
+            Err(e) => {
+                let _ = tx.rollback().await;
+                tracing::error!("检查角色使用情况失败: {}", e);
+                return json_error(500, &format!("删除角色失败: {}", e));
+            }
+        };
 
     if user_count > 0 {
-        return Json(topems_shared_core::response::error_value(
+        let _ = tx.rollback().await;
+        return json_error(
             409,
             &format!("该角色已被 {} 个用户使用，请先移除用户关联", user_count),
-        ));
+        );
     }
-
-    // 事务删除角色权限关联和角色本身，保证原子性
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("开始事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("删除角色失败: {}", e),
-            ));
-        }
-    };
 
     // 删除角色权限关联
     if let Err(e) = sqlx::query("DELETE FROM public.core_role_permissions WHERE role_id = $1")
         .bind(role_uuid)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
     {
         let _ = tx.rollback().await;
         tracing::error!("删除角色权限关联失败: {}", e);
-        return Json(topems_shared_core::response::error_value(
-            500,
-            &format!("删除角色失败: {}", e),
-        ));
+        return json_error(500, &format!("删除角色失败: {}", e));
     }
 
-    // 删除角色（软删除，附租户谓词作双保险）
-    if let Err(e) = sqlx::query(
-        "UPDATE public.core_roles SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+    // 删除角色（软删除；作用域事务内不再附加 tenant_id 谓词，行数必须为 1）
+    match sqlx::query(
+        "UPDATE public.core_roles SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(role_uuid)
-    .bind(tenant_filter)
-    .execute(&mut *tx)
+    .execute(&mut tx)
     .await
     {
-        let _ = tx.rollback().await;
-        tracing::error!("删除角色失败: {}", e);
-        return Json(topems_shared_core::response::error_value(
-            500,
-            &format!("删除角色失败: {}", e),
-        ));
+        Ok(result) if result.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = tx.rollback().await;
+            return json_error(409, "角色已被删除或状态已变更，请刷新后重试");
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("删除角色失败: {}", e);
+            return json_error(500, &format!("删除角色失败: {}", e));
+        }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(topems_shared_core::response::error_value(
-            500,
-            &format!("删除角色失败: {}", e),
-        ));
+        return json_error(500, &format!("删除角色失败: {}", e));
     }
 
     topems_shared_auth::invalidate_all_permission_caches();
