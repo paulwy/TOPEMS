@@ -9,7 +9,7 @@ use axum::{
 };
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::{get_tenant_id, require_tenant};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -17,7 +17,8 @@ const STATUS_VERIFIED: &str = "verified";
 const STATUS_CLOSED: &str = "closed";
 const STATUS_CANCELLED: &str = "cancelled";
 
-const EIGHTD_SELECT_COLS: &str = r#"id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#;
+/// 读回用列（uuid 列转 TEXT，避免 String 解码 uuid 失败）。
+const EIGHTD_SELECT_CAST: &str = r#"id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#;
 
 #[utoipa::path(
     get,
@@ -158,7 +159,10 @@ pub async fn create_eightd_report(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateEightDRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let report_no = format!(
         "8D-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -172,8 +176,36 @@ pub async fn create_eightd_report(
         .due_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("8D报告创建失败");
+        }
+    };
+
+    // 同域引用校验：关联质量问题必须存在且同租户，否则 400。
+    if let Some(iid) = related_issue_id {
+        match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "qms",
+            "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(iid)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(0) => return ApiResponse::bad_request("关联质量问题不存在或不属于当前租户"),
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Failed to validate related issue: {}", e);
+                return ApiResponse::server_error("8D报告创建失败");
+            }
+        }
+    }
+
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_reports (tenant_id, report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'new', $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(tenant_id).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match report {
@@ -181,9 +213,18 @@ pub async fn create_eightd_report(
             let report_id = Uuid::parse_str(&data.id).ok();
             let created_by = data.created_by.clone();
             if let Some(rid) = report_id {
-                let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, operator, comment) VALUES ($1, $2, 'create', 'D2', $3, '创建8D报告')"#)).bind(tenant_id).bind(rid).bind(created_by)
-                .execute(&state.pool)
-                .await;
+                // 子表与主表同事务：写失败整体回滚，禁止"主表 200、审计缺失"。
+                if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, operator, comment) VALUES ($1, $2, 'create', 'D2', $3, '创建8D报告')"#)).bind(tenant_id).bind(rid).bind(created_by)
+                .execute(&mut scope)
+                .await
+                {
+                    tracing::error!("Failed to write 8D audit log: {}", e);
+                    return ApiResponse::server_error("8D报告创建失败");
+                }
+            }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit 8D create: {}", e);
+                return ApiResponse::server_error("8D报告创建失败");
             }
             ApiResponse::success(data, "8D报告创建成功")
         }
@@ -269,7 +310,10 @@ pub async fn update_eightd_report(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEightDRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
@@ -279,13 +323,41 @@ pub async fn update_eightd_report(
         .due_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("8D报告更新失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 AND deleted_at IS NULL"#)).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => ApiResponse::success(data, "8D报告更新成功"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(_) => match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+            EIGHTD_SELECT_CAST
+        )))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(data) => {
+                if let Err(e) = scope.commit().await {
+                    tracing::error!("Failed to commit 8D update: {}", e);
+                    return ApiResponse::server_error("8D报告更新失败");
+                }
+                ApiResponse::success(data, "8D报告更新成功")
+            }
+            Err(e) => {
+                tracing::error!("Failed to reload 8D report: {}", e);
+                ApiResponse::server_error("8D报告更新失败")
+            }
+        },
         Err(e) => {
             tracing::error!("Failed to update 8D report: {}", e);
             ApiResponse::server_error("8D报告更新失败")
@@ -312,23 +384,41 @@ pub async fn delete_eightd_report(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("8D报告删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "8D报告删除成功"),
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("8D报告不存在或已删除"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit 8D delete: {}", e);
+                return ApiResponse::server_error("8D报告删除失败");
+            }
+            ApiResponse::success(true, "8D报告删除成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete 8D report: {}", e);
             ApiResponse::server_error("8D报告删除失败")
@@ -356,23 +446,58 @@ pub async fn update_d1_team(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D1团队组建更新失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("8D报告不存在"),
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D1团队组建更新成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
+        }
+        Ok(_) => {
+            // 审计与主表同事务：写失败整体回滚。
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D1团队组建更新失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D1 update: {}", e);
+                        return ApiResponse::server_error("D1团队组建更新失败");
+                    }
+                    ApiResponse::success(data, "D1团队组建更新成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D1团队组建更新失败")
+                }
+            }
         }
         Err(e) => {
             tracing::error!("Failed to update D1 team: {}", e);
@@ -401,24 +526,58 @@ pub async fn submit_d3_containment(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D3临时遏制措施提交失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D3', '提交临时遏制措施')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D3临时遏制措施提交成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D3', '提交临时遏制措施')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D3临时遏制措施提交失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D3 submit: {}", e);
+                        return ApiResponse::server_error("D3临时遏制措施提交失败");
+                    }
+                    ApiResponse::success(data, "D3临时遏制措施提交成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D3临时遏制措施提交失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to submit D3 containment: {}", e);
             ApiResponse::server_error("D3临时遏制措施提交失败")
@@ -446,24 +605,58 @@ pub async fn submit_d4_root_cause(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D4根本原因分析提交失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D4', '提交根本原因分析')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D4根本原因分析提交成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D4', '提交根本原因分析')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D4根本原因分析提交失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D4 submit: {}", e);
+                        return ApiResponse::server_error("D4根本原因分析提交失败");
+                    }
+                    ApiResponse::success(data, "D4根本原因分析提交成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D4根本原因分析提交失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to submit D4 root cause: {}", e);
             ApiResponse::server_error("D4根本原因分析提交失败")
@@ -491,24 +684,58 @@ pub async fn submit_d5_permanent_action(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D5永久纠正措施提交失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D5', '提交永久纠正措施')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D5永久纠正措施提交成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D5', '提交永久纠正措施')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D5永久纠正措施提交失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D5 submit: {}", e);
+                        return ApiResponse::server_error("D5永久纠正措施提交失败");
+                    }
+                    ApiResponse::success(data, "D5永久纠正措施提交成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D5永久纠正措施提交失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to submit D5 permanent action: {}", e);
             ApiResponse::server_error("D5永久纠正措施提交失败")
@@ -536,24 +763,58 @@ pub async fn verify_d6_effectiveness(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D6效果验证失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'verify', 'D6', '验证措施有效性')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D6效果验证成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'verify', 'D6', '验证措施有效性')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D6效果验证失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D6 verify: {}", e);
+                        return ApiResponse::server_error("D6效果验证失败");
+                    }
+                    ApiResponse::success(data, "D6效果验证成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D6效果验证失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to verify D6 effectiveness: {}", e);
             ApiResponse::server_error("D6效果验证失败")
@@ -581,24 +842,58 @@ pub async fn submit_d7_preventive(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("D7预防措施提交失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D7', '提交预防再发生措施')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "D7预防措施提交成功")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D7', '提交预防再发生措施')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("D7预防措施提交失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D D7 submit: {}", e);
+                        return ApiResponse::server_error("D7预防措施提交失败");
+                    }
+                    ApiResponse::success(data, "D7预防措施提交成功")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("D7预防措施提交失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to submit D7 preventive: {}", e);
             ApiResponse::server_error("D7预防措施提交失败")
@@ -626,24 +921,58 @@ pub async fn close_eightd_report(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
-    .fetch_one(&state.pool)
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("8D报告关闭失败");
+        }
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    match report {
-        Ok(data) => {
-            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'close', 'D8', '关闭8D报告')"#)).bind(tenant_id).bind(id)
-            .execute(&state.pool)
-            .await;
-            ApiResponse::success(data, "8D报告已关闭")
+    match updated {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告不存在或当前状态不允许该操作")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
+        Ok(_) => {
+            if let Err(e) = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'close', 'D8', '关闭8D报告')"#)).bind(tenant_id).bind(id)
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("Failed to write 8D audit log: {}", e);
+                return ApiResponse::server_error("8D报告关闭失败");
+            }
+            match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                EIGHTD_SELECT_CAST
+            )))
+            .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+            {
+                Ok(data) => {
+                    if let Err(e) = scope.commit().await {
+                        tracing::error!("Failed to commit 8D close: {}", e);
+                        return ApiResponse::server_error("8D报告关闭失败");
+                    }
+                    ApiResponse::success(data, "8D报告已关闭")
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reload 8D report: {}", e);
+                    ApiResponse::server_error("8D报告关闭失败")
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("Failed to close 8D report: {}", e);
             ApiResponse::server_error("8D报告关闭失败")
@@ -732,22 +1061,25 @@ pub async fn approve_eightd(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("审批失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -760,12 +1092,19 @@ pub async fn approve_eightd(
             if eight_d_can_transition(&current_status, STATUS_VERIFIED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS)            )
-            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
-            match report {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_eightd_reports SET status = $3, d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_VERIFIED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "eight_d",
                         &id.to_string(),
@@ -775,8 +1114,29 @@ pub async fn approve_eightd(
                         STATUS_VERIFIED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "审批通过")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("审批失败");
+                    }
+                    match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        EIGHTD_SELECT_CAST
+                    )))
+                    .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit 8D approve: {}", e);
+                                return ApiResponse::server_error("审批失败");
+                            }
+                            ApiResponse::success(data, "审批通过")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload 8D report: {}", e);
+                            ApiResponse::server_error("审批失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve 8D: {}", e);
@@ -812,22 +1172,25 @@ pub async fn close_eightd_approval(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("关闭失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -840,12 +1203,19 @@ pub async fn close_eightd_approval(
             if eight_d_can_transition(&current_status, STATUS_CLOSED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许关闭");
             }
-            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS)            )
-            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
-            match report {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_eightd_reports SET status = $3, d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_CLOSED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "eight_d",
                         &id.to_string(),
@@ -855,8 +1225,29 @@ pub async fn close_eightd_approval(
                         STATUS_CLOSED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "8D报告已关闭")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("关闭失败");
+                    }
+                    match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        EIGHTD_SELECT_CAST
+                    )))
+                    .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit 8D close-approval: {}", e);
+                                return ApiResponse::server_error("关闭失败");
+                            }
+                            ApiResponse::success(data, "8D报告已关闭")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload 8D report: {}", e);
+                            ApiResponse::server_error("关闭失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to close 8D: {}", e);
@@ -892,22 +1283,25 @@ pub async fn cancel_eightd(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> ApiResponse<EightDReport> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope: {}", e);
+            return ApiResponse::server_error("取消失败");
+        }
+    };
+
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_id).fetch_one(&mut scope).await;
 
     match current {
         Ok(row) => {
@@ -915,12 +1309,19 @@ pub async fn cancel_eightd(
             if eight_d_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS)            )
-            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
-            match report {
-                Ok(data) => {
-                    let _ = crate::models::audit_log::log_approval_event(
-                        &state.pool,
+            let updated = sqlx::query(only_own_schema_query!(
+                "qms",
+                "UPDATE qms.qa_eightd_reports SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4"
+            ))
+            .bind(id).bind(tenant_id).bind(STATUS_CANCELLED).bind(&current_status)
+            .execute(&mut scope).await;
+            match updated {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("状态已被并发修改，请重试")
+                }
+                Ok(_) => {
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
+                        &mut scope,
                         &tenant_id.to_string(),
                         "eight_d",
                         &id.to_string(),
@@ -930,8 +1331,29 @@ pub async fn cancel_eightd(
                         STATUS_CANCELLED,
                         req.comment.as_deref(),
                     )
-                    .await;
-                    ApiResponse::success(data, "8D报告已取消")
+                    .await
+                    {
+                        tracing::error!("Failed to log approval event: {}", e);
+                        return ApiResponse::server_error("取消失败");
+                    }
+                    match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
+                        "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+                        EIGHTD_SELECT_CAST
+                    )))
+                    .bind(id).bind(tenant_id).fetch_one(&mut scope).await
+                    {
+                        Ok(data) => {
+                            if let Err(e) = scope.commit().await {
+                                tracing::error!("Failed to commit 8D cancel: {}", e);
+                                return ApiResponse::server_error("取消失败");
+                            }
+                            ApiResponse::success(data, "8D报告已取消")
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to reload 8D report: {}", e);
+                            ApiResponse::server_error("取消失败")
+                        }
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel 8D: {}", e);
