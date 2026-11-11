@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
@@ -50,7 +50,10 @@ pub async fn get_settings(
     Path(category): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let result = sqlx::query(
         "SELECT key, value FROM mes.module_settings WHERE tenant_id = $1 AND category = $2",
@@ -90,7 +93,10 @@ pub async fn update_settings(
     headers: HeaderMap,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = chrono::Utc::now();
 
     let mut updated = 0;

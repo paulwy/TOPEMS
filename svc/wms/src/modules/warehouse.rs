@@ -13,13 +13,32 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::get_tenant_id;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
 use topems_shared_event::event::{
     commit_retry, CacheInvalidatedPayload, EventPublisher, EventType,
 };
+
+/// by-id 读的租户回退：请求未携带租户上下文时，从目标仓库行解析租户。
+///
+/// 仅用于读路径；写路径必须由 [`require_tenant`] 严格返回 400，禁止回退。
+/// 仓库允许公共行（`tenant_id IS NULL`，超管创建），因此返回 `Option<Uuid>`。
+async fn warehouse_tenant_by_id(
+    txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    id: &Uuid,
+) -> Result<Option<Uuid>, TopemsError> {
+    sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+        "wms",
+        "SELECT tenant_id FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&mut **txn)
+    .await
+    .map_err(|e| TopemsError::internal("查询仓库租户失败", e))?
+    .ok_or_else(|| TopemsError::ResourceNotFound("仓库不存在".to_string()))
+}
 
 /// D6：发布 CacheInvalidated（缓存失效）；失败入 Redis ZSET 重试队列。
 /// 缓存失效为 best-effort（下游 TTL 自愈），但仍走统一重试兜底。
@@ -123,7 +142,10 @@ pub async fn list_warehouses(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(get_tenant_id(&claims, &headers))
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => Some(tenant),
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
 
     let cache_key = warehouse_list_cache_key(
@@ -238,7 +260,10 @@ pub async fn create_warehouse(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(get_tenant_id(&claims, &headers))
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => Some(tenant),
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
 
     let result = sqlx::query_as::<_, Warehouse>(
@@ -355,7 +380,13 @@ pub async fn get_warehouse(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(get_tenant_id(&claims, &headers))
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => Some(tenant),
+            Err(_) => match warehouse_tenant_by_id(txn, &id).await {
+                Ok(tenant) => tenant,
+                Err(e) => return ApiResponse::from(e),
+            },
+        }
     };
     let cache_key = warehouse_cache_key(
         &tenant_id,
@@ -433,7 +464,10 @@ pub async fn update_warehouse(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(get_tenant_id(&claims, &headers))
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => Some(tenant),
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
 
     let existing = sqlx::query_as::<_, Warehouse>(
@@ -581,7 +615,10 @@ pub async fn delete_warehouse(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(get_tenant_id(&claims, &headers))
+        match require_tenant(&claims, &headers) {
+            Ok(tenant) => Some(tenant),
+            Err((code, msg)) => return ApiResponse::error(code, &msg),
+        }
     };
 
     let result = sqlx::query(
