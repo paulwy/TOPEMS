@@ -16,9 +16,9 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
-use topems_shared_db::tenant::get_tenant_id_or_new;
 use topems_shared_event::event::{
     commit_retry, EventType, StockInboundPayload, WmsInventoryItemReceivedPayload,
 };
@@ -1861,7 +1861,10 @@ pub async fn start_inbound_approval(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1928,7 +1931,10 @@ pub async fn approve_inbound(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -2019,7 +2025,10 @@ pub async fn reject_inbound(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),

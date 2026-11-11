@@ -16,9 +16,9 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::tenant::get_tenant_id_or_new;
 
 fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
@@ -1742,7 +1742,10 @@ pub async fn start_stock_take_approval(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1810,7 +1813,10 @@ pub async fn approve_stock_take(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1902,7 +1908,10 @@ pub async fn reject_stock_take(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),

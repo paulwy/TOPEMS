@@ -35,11 +35,6 @@ pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     get_tenant_id_option(claims, headers).unwrap_or_else(Uuid::nil)
 }
 
-/// 优先从 Claims.tenant_id 获取，否则回退到 `x-tenant-id` header，最终 fallback 到新生成的 UUID。
-pub fn get_tenant_id_or_new(claims: &Claims, headers: &HeaderMap) -> Uuid {
-    get_tenant_id_option(claims, headers).unwrap_or_else(Uuid::new_v4)
-}
-
 /// 在当前 PostgreSQL 会话设置 `app.tenant_id`，使 RLS 策略生效。
 /// 必须在每条业务 SQL 之前调用（一次连接内一次即可，但 sqlx-pool 每次取连接需重设）。
 pub async fn set_session_tenant_id(

@@ -14,9 +14,9 @@ use crate::models::transfer_order::*;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::tenant::get_tenant_id_or_new;
 use topems_shared_event::event::{commit_retry, EventType, WmsWarehouseTransferCompletedPayload};
 
 pub fn create_routes<S>() -> Router<S>
@@ -1007,7 +1007,10 @@ pub async fn start_transfer_approval(
         Ok(uuid) => uuid,
         Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1079,7 +1082,10 @@ pub async fn approve_transfer(
         Ok(uuid) => uuid,
         Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1175,7 +1181,10 @@ pub async fn reject_transfer(
         Ok(uuid) => uuid,
         Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
-    let tenant_id = get_tenant_id_or_new(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
