@@ -18,7 +18,7 @@ use topems_shared_core::{
 };
 
 use crate::middleware::service_identity::ServiceIdentity;
-use crate::middleware::tenant::{rls_request_tenant, scope_request_tenant};
+use crate::middleware::tenant::{rls_request_tenant, scope_request_path, scope_request_tenant};
 use crate::security::audit_logger::{
     apply_claims_to_audit_context, audit_context_from_claims, current_audit_context,
     scope_audit_context, AuditContextSlot,
@@ -1040,8 +1040,13 @@ pub async fn auth_middleware(
         let audit_ctx =
             audit_context_from_claims(&claims, current_audit_context().unwrap_or_default());
         parts.extensions.insert(claims);
+        let req_path = parts.uri.path().to_string();
         let req = Request::from_parts(parts, body);
-        return scope_request_tenant(rls_ctx, scope_audit_context(audit_ctx, next.run(req))).await;
+        return scope_request_tenant(
+            rls_ctx,
+            scope_request_path(req_path, scope_audit_context(audit_ctx, next.run(req))),
+        )
+        .await;
     } else if dev_mode_requested && is_prod_profile {
         tracing::warn!(
             "DEVELOPMENT_MODE 在生产环境（PROFILE/RUST_ENV/ENV=prod|production）被忽略，仍要求真实认证"
@@ -1159,7 +1164,11 @@ pub async fn auth_middleware(
     parts.extensions.insert(claims.clone());
     let req = Request::from_parts(parts, body);
     let rls_ctx = rls_request_tenant(&claims);
-    scope_request_tenant(rls_ctx, scope_audit_context(audit_ctx, next.run(req))).await
+    scope_request_tenant(
+        rls_ctx,
+        scope_request_path(path, scope_audit_context(audit_ctx, next.run(req))),
+    )
+    .await
 }
 
 /// P1-4 白名单：未改密用户仅放行自服务改密与登出。
