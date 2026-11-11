@@ -536,6 +536,46 @@
 - 长期（未做）：给单体与独立进程使用不同默认消费组名（或按 `HOSTNAME/PORT` 派生），
   从机制上消除竞争；完成前以上纪律为准。
 
+### 12.7 F1：`public.core_tenant_users` 旧策略缺 `app.rls_system` 分支（2026-11-11 立项，待修）
+
+**现象**：生产 `public.core_tenant_users` 只有一条旧策略 `tenant_isolation_core_tenant_users`
+（`PERMISSIVE / ALL / {public}`），qual 不含 `app.rls_system` 分支。登录的成员解析走系统通道
+（`app.tenant_id = 00000000-0000-0000-0000-000000000000` + `app.rls_system = 'on'`），
+在 app 角色下实测命中 **0 行**（`select tenant_id … where user_id=…` 空结果）。
+
+**后果**：`resolve_membership_tenant` 拿不到成员行 → 回落 `DEFAULT_TENANT_ID`，
+**非默认租户用户登录一律被签成默认租户**。W7-B4 窗口内实测：探针 B 的成员行指向临时租户 B，
+登录 token 的 `tenant_id` 仍为默认租户，只能靠窗口内临时策略取得正确的 B token。
+
+**窗口内临时处置（已还原，无残留）**：
+
+```text
+BEFORE | tenant_isolation_core_tenant_users | PERMISSIVE | {public} | ALL
+CREATE | POLICY w7b4_probe_sysread ON public.core_tenant_users
+         AS PERMISSIVE FOR SELECT TO topems_prod
+         USING (current_setting('app.rls_system', true) = 'on')
+       | 2026-11-11 17:40:43
+LOGIN  | A/B 均 code=0，B 的 tenant_id=c51c3a73-6cd4-49eb-b21e-efd7231e445b（临时租户 B）
+DROP   | POLICY w7b4_probe_sysread | 2026-11-11 17:40:44
+AFTER  | tenant_isolation_core_tenant_users | PERMISSIVE | {public} | ALL
+```
+
+删除后回归（⑤）：新建默认租户临时探针 `w7_mes_probe_c`（`is_superuser=false`）登录
+`http=200/code=0`，`tenant_id=00000000-0000-0000-0000-000000000001`，随即删除，`count(*)=0`。
+说明「策略删了登录也废了」不成立；但**非默认租户登录仍然不可用**，F1 未消除。
+
+**修复方向**（独立工单，不并入 W7-B4 已推送迁移）：
+
+1. 将 `public.core_tenant_users` 策略对齐 W7-B4 fail-closed 模板：
+   `COALESCE(current_setting('app.rls_system', true),'off')='on' OR tenant_id = (NULLIF(current_setting('app.tenant_id', true),''))::uuid`，
+   同时收敛旧策略「GUC 未设置即放行」的 fail-open 分支。
+2. 同批排查 `public.core_users` / `core_sessions` / `core_refresh_tokens` 是否有同类旧策略。
+3. 验收：非默认租户用户登录 token 的 `tenant_id` 等于其成员行租户；`x-tenant-id` 对非超户仍不可欺骗；
+   A/B 跨租户读写隔离保持；`switch-tenant` 路径实测。
+
+**证据文件**：`docs/quality/w7-b4-manufacturing-window-apply-2026-11-11.md` §11.7（F1 现象与临时策略前后对照）、
+§11.13（策略删除后登录回归）、§11.14（遗留）。
+
 ---
 
 ## 13. 财务网关权限改判细分码（2026-11-09 立项，待开工）
