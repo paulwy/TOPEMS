@@ -349,11 +349,14 @@ pub async fn create_inbound_from_purchase_internal(
     Option<InboundOrderRequestedPayload>,
     Option<String>,
 ) {
+    // B-0 防重：先锁采购单行（FOR UPDATE），让并发请求在这里串行化；
+    // 后到的请求在锁释放后必然读到已回写的 status/inbound_order_id，从而走 409。
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
-        WHERE id = $1 AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FOR UPDATE
         "#),
     )
     .bind(purchase_order_id)
@@ -401,34 +404,82 @@ pub async fn create_inbound_from_purchase_internal(
         }
     };
 
-    let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-        "scm",
-        r#"
-        SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots
-        WHERE order_number = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
-        "#
-    ))
-    .bind(&purchase_order.order_number)
-    .bind(tenant_bind)
-    .fetch_one(&mut **txn)
-    .await;
+    if purchase_order.status != "approved" {
+        // 行锁释放后读到非 approved：并发请求已被前一个请求回写（in_transit），
+        // 或采购单本来就不在可转入库单的状态。
+        let existing_inbound_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+            "scm",
+            "SELECT inbound_order_id FROM scm.purchase_orders WHERE id = $1"
+        ))
+        .bind(purchase_order_id)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten();
 
-    if existing_inbound.unwrap_or(0) > 0 {
+        let (message, log_status) = if existing_inbound_id.is_some() {
+            ("该采购订单已创建入库单".to_string(), "skipped")
+        } else {
+            (
+                format!("采购订单当前状态为 {}，不可转入库单", purchase_order.status),
+                "failed",
+            )
+        };
         log_sync_failure(
             state,
             purchase_order_id,
             &purchase_order.order_number,
-            "该采购订单已创建入库单",
-            "skipped",
+            &message,
+            log_status,
             0,
             tenant_bind,
         )
         .await;
-        return (
-            ApiResponse::error(409, "该采购订单已创建入库单"),
-            None,
-            None,
-        );
+        return (ApiResponse::error(409, &message), None, None);
+    }
+
+    // 判重键必须是**本链路实际写入的键**：snapshot.purchase_order_id。
+    // （旧实现比较 order_number = po_no，而写入的是 'INB-' || po_no，永不相等。）
+    let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        r#"
+        SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots
+        WHERE purchase_order_id = $1 AND deleted_at IS NULL
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        "#
+    ))
+    .bind(purchase_order_id)
+    .bind(tenant_bind)
+    .fetch_one(&mut **txn)
+    .await;
+
+    match existing_inbound {
+        Ok(0) => {}
+        Ok(_) => {
+            log_sync_failure(
+                state,
+                purchase_order_id,
+                &purchase_order.order_number,
+                "该采购订单已创建入库单",
+                "skipped",
+                0,
+                tenant_bind,
+            )
+            .await;
+            return (
+                ApiResponse::error(409, "该采购订单已创建入库单"),
+                None,
+                None,
+            );
+        }
+        Err(e) => {
+            tracing::error!("查询已创建入库单失败: {}", e);
+            return (
+                ApiResponse::from(TopemsError::Internal("查询已创建入库单失败".to_string())),
+                None,
+                None,
+            );
+        }
     }
 
     let inbound_id = Uuid::new_v4();
@@ -548,7 +599,21 @@ pub async fn create_inbound_from_purchase_internal(
             )
         }
         Err(e) => {
-            // 请求事务已被中止，不能在此写任何东西：重试计数与失败日志由调用方
+            // 唯一索引兜底：并发双请求中后到者若绕过行锁，会撞 (tenant, purchase_order_id)
+            // 唯一索引。这是"已创建"冲突，不是可重试故障，不写重试计数。
+            if is_unique_violation(&e) {
+                tracing::warn!(
+                    target: "scm_sync",
+                    purchase_order_id = %purchase_order_id,
+                    "并发写入入库单快照撞唯一索引，按已创建处理"
+                );
+                return (
+                    ApiResponse::error(409, "该采购订单已创建入库单"),
+                    None,
+                    None,
+                );
+            }
+            // 其余错误：请求事务已被中止，不能在此写任何东西；重试计数与失败日志由调用方
             // 先回滚请求事务，再用独立短事务写入。
             tracing::error!(target: "scm_sync", "创建入库单失败: {}", e);
             (
@@ -563,6 +628,11 @@ pub async fn create_inbound_from_purchase_internal(
 /// 同步链路最大重试次数。达到后进入失败态（sync_logs.status = 'failed'，
 /// retry_count = MAX_SYNC_RETRIES），不再自动重试，需人工处理。
 const MAX_SYNC_RETRIES: i32 = 3;
+
+/// 判断是否为唯一约束冲突（SQLSTATE 23505）。
+fn is_unique_violation(e: &sqlx::Error) -> bool {
+    e.as_database_error().and_then(|db| db.code()).as_deref() == Some("23505")
+}
 
 /// 主 INSERT 失败后，独立短事务记账的结果。
 enum SyncAttempt {
@@ -1603,11 +1673,13 @@ pub async fn batch_sync_purchase_to_wms(
             let mut pending_events: Vec<InboundOrderRequestedPayload> = Vec::new();
 
             for po in purchase_orders {
+                // B-0：判重键与单条链路一致，用 purchase_order_id（写入的是 'INB-'||po_no，
+                // 旧实现拿 po_no 比 order_number 永不命中）。
                 let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                     "scm",
-                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE purchase_order_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
                 ))
-                .bind(&po.order_number)
+                .bind(po.id)
                 .bind(tenant_bind)
                 .fetch_one(&mut **txn)
                 .await
