@@ -328,9 +328,20 @@ pub async fn create_sync_record(
             .bind(tenant_id)
             .execute(&mut **txn)
             .await;
-            if let Err(e) = status_updated {
-                tracing::error!("更新同步记录状态失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("同步任务提交失败".to_string()));
+            match status_updated {
+                Ok(r) if r.rows_affected() == 1 => {}
+                Ok(_) => {
+                    tracing::error!("更新同步记录状态 0 行: id={}", rid);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "同步任务提交失败：状态更新未命中".to_string(),
+                    ));
+                }
+                Err(e) => {
+                    tracing::error!("更新同步记录状态失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "同步任务提交失败".to_string(),
+                    ));
+                }
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
