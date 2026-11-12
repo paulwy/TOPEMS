@@ -1,6 +1,6 @@
-# W7-B4 第二批 WMS 生产窗口方案（待批准，未开窗）
+# W7-B4 第二批 WMS 生产窗口方案（2026-11-12 已执行）
 
-- 状态：**方案待批准，未执行任何生产变更**
+- 状态：**2026-11-12 已执行完成**（A1–A7 全部通过，未回滚；复盘与偏差见 §7）
 - 目标环境：`xingzhai@192.168.110.115`（`id -u = 501`），launchd `gui/501/com.topems.server`，监听 `8099`，二进制 `/Users/xingzhai/topems/bin/topems-server`
 - 目标库：生产 `topems_prod`（plist `DATABASE_URL` 指向它）
 - 变更范围：`wms.outbound_orders.expected_ship_date / actual_ship_date` 统一为 `timestamptz`；出库日期读写口径对齐；统计口径修正
@@ -46,20 +46,26 @@
 > alias psql=/opt/homebrew/bin/psql
 > ```
 
-### 3.1 备份（窗口前）
+### 3.1 备份（窗口前，**结构与数据**）
 
 ```bash
 TS=$(date +%Y%m%d-%H%M%S)
 mkdir -p ~/topems/backups
-pg_dump -h 127.0.0.1 -U topems_prod -d topems_prod \
+pg_dump -h 127.0.0.1 -U xingzhai -d topems_prod \
   -t wms.outbound_orders -t wms.outbound_order_items \
-  --schema-only -f ~/topems/backups/w7b4_wms_shipdate_before_$TS.sql
+  -f ~/topems/backups/w7b4_wms_shipdate_before_$TS.sql
 psql -h 127.0.0.1 -U topems_prod -d topems_prod -Atc \
   "select 'orders='||count(*) from wms.outbound_orders;
    select 'items='||count(*) from wms.outbound_order_items;"
 ```
 
-期望：`orders=0`、`items=0`；备份文件含两列 `date` 定义。
+- **dump 必须用超户**：两表为 `FORCE ROW LEVEL SECURITY`，用 `topems_prod` 导数据段会报
+  `query would be affected by row-level security policy for table "..."` 并以非 0 退出，产出残缺文件。
+- **不要加 `--schema-only`**：本备份必须同时含结构与数据。
+- **0 行也要留证**：文件里应出现两段 `COPY wms.<table> (...) FROM stdin;`，各自紧跟一行 `\.`，中间无数据行。
+- 行数由上面的 `psql`（非超户）单独记录，与 dump 互为交叉验证。
+
+期望：结构（两表 `CREATE TABLE`）+ 数据段（两条 `COPY` 各 0 行）齐全；`orders=0`、`items=0`；备份文件含两列 `date` 定义。
 
 ### 3.2 预检（只读）
 
@@ -246,3 +252,25 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8099/health
 ## 6. 不在本次窗口
 
 - 连接池容量：`topems-wms` 独立进程池硬编码 10、收货路径提交后另开只读作用域导致 20 并发 `pool timed out`（10s）；生产单体 WMS 模块池 max=2（有效并发 1，`DB_MAX_CONNECTIONS=8` 在嵌入路径不生效）。事实、实测旁证与撞墙阈值见计划文档 §7，单独立项，本窗口不改池大小。
+
+## 7. 窗口复盘（2026-11-12）
+
+### 7.1 结果
+
+- 迁移走 sqlx migrator，只应用 `20261112160000`；账本 max `20261112104000 → 20261112160000`（count 665 → 666，`success=true`），checksum 已追加到 `database/checksums.txt`。
+- 两列 `date → timestamp with time zone`；两表仍 0 行；`wms` RLS 仍 `37` 表强制、`pg_policies=42`。
+- 二进制由 `w7-b4-wms` HEAD `c9f3f8bcb` 构建，安装后 mtime 晚于提交时间；`launchctl kickstart -k` 后 pid `6315 → 97708`，健康检查 200，停机约 4 秒。
+- 非超户 token 顺序验收 A1–A7 全部符合期望，未触发回滚。
+
+### 7.2 教训：方案与派单纪律口径冲突
+
+- **事实**：本方案 §3.1 原写作 `pg_dump ... --schema-only`（只备结构）；派单纪律要求"备份要含两表**结构与数据**（0 行也要留证）"。执行严格照方案做，导致窗口备份缺少数据段，事后才发现与更严的派单口径不符。
+- **根因**：方案先定稿、派单纪律后到；执行前没有做"方案条目 ↔ 派单硬要求"的逐条对照，默认方案即派单的完整落地。
+- **处置**：当次不接受回滚（数据面为零、当日 03:00 全库 dump 含两表 `TABLE DATA` 段），改为补一份"变更后留存"的含数据段 dump（`tables_after_with_data_<TS>.sql`，超户导出、两条 `COPY` 各 0 行），并把 §3.1 改为"结构+数据"。
+- **衍生发现**：数据段必须超户导出——两表 `FORCE ROW LEVEL SECURITY`，非超户 `pg_dump` 会直接报错退出并留下残缺文件。原 §3.1 用 `topems_prod` 导出数据本就跑不通。
+
+### 7.3 流程改进
+
+1. 派单的硬要求先落成"窗口执行清单"，方案的每条命令必须能映射到清单条目；映射不上就是方案缺口。
+2. 方案与派单口径冲突时，**以更严者为准**，并在开窗前停下确认，不按"方案已批准"自行取宽。
+3. 备份类步骤的验收要落到产物内容（有无 `COPY`/`\.`），而不是只看命令退出码与文件存在。
