@@ -86,18 +86,19 @@ impl std::fmt::Display for ScmPermission {
 
 pub type ModulePermission = ScmPermission;
 
-/// 计算租户绑定值：超管返回 nil uuid（0000…000，RLS policy 豁免分支），
-/// 普通用户返回其 tenant_id（缺失/非法时回退 nil，保证最严隔离）。
+/// 计算租户绑定值（写入 `tenant_id` 或作为查询租户谓词）：
+/// - `tenant_middleware` 在 `tenant_middleware` 阶段已把超管的 `x-tenant-id`
+///   解析并**回填进 Claims**（`req.extensions` 里的是回填后的副本），因此这里
+///   直接读 `claims.tenant_id` 即可覆盖两类身份：
+///   * 超管：等于显式选择的租户（缺失时中间件已 400，不会走到业务层）；
+///   * 普通用户：等于自身租户（忽略伪造的 `x-tenant-id`）。
+/// - 缺失/非法 → nil uuid（最严隔离；同时与 RLS 系统通道的 nil 语义一致）。
 pub fn tenant_bind_value(claims: &Claims) -> Uuid {
-    if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or_else(Uuid::nil)
-    }
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil)
 }
 
 pub async fn check_permission<T>(

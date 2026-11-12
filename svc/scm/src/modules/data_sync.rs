@@ -745,6 +745,31 @@ async fn log_sync_failure(
     }
 }
 
+/// 开启一个**带租户 GUC** 的独立短事务（不经请求事务中间件）。
+///
+/// B-2 之后 `scm` 全表为 fail-closed 策略（USING/WITH CHECK 均要求
+/// `app.rls_system='on'` 或 `tenant_id = app.tenant_id`）。裸池 `begin()` 不设 GUC
+/// 时任何写入都会被 WITH CHECK 拒绝，因此重试计数 / 同步日志这类"请求事务之外"
+/// 的短事务必须显式带上租户通道：
+///   * `tenant_bind` 非 nil → 普通租户通道（`app.rls_system='off'`）；
+///   * `tenant_bind` 为 nil（超管未带 `x-tenant-id`）→ 系统通道（nil + `rls_system='on'`）。
+async fn begin_tenant_txn(
+    state: &ApiState,
+    tenant_bind: Uuid,
+) -> Result<sqlx::Transaction<'static, sqlx::Postgres>, sqlx::Error> {
+    let mut txn = state.db.begin().await?;
+    let system = tenant_bind.is_nil();
+    sqlx::query(
+        "SELECT set_config('app.tenant_id', $1, true), \
+                set_config('app.rls_system', $2, true)",
+    )
+    .bind(tenant_bind.to_string())
+    .bind(if system { "on" } else { "off" })
+    .execute(&mut *txn)
+    .await?;
+    Ok(txn)
+}
+
 /// 主 INSERT 必然失败后调用：请求事务已回滚，这里用**独立短事务**累加
 /// `purchase_orders.sync_retry_count` 并写一条日志（pending / failed）。
 ///
@@ -761,7 +786,7 @@ async fn record_failed_sync_attempt(
     tenant_bind: Uuid,
     error_message: &str,
 ) -> Result<SyncAttempt, sqlx::Error> {
-    let mut txn = state.db.begin().await?;
+    let mut txn = begin_tenant_txn(state, tenant_bind).await?;
 
     let row = sqlx::query(only_own_schema_query!(
         "scm",
@@ -2112,8 +2137,9 @@ pub async fn record_sync_log(
     tenant_bind: Uuid,
 ) -> Result<(), sqlx::Error> {
     // 不再走裸池自动提交：独立短事务写日志，写失败由调用方决定如何处理，
-    // 不会出现"INSERT 生效但事务已回滚"的错觉。
-    let mut txn = state.db.begin().await?;
+    // 不会出现"INSERT 生效但事务已回滚"的错觉。B-2 后必须带租户 GUC，
+    // 否则 fail-closed 策略会拒绝写入。
+    let mut txn = begin_tenant_txn(state, tenant_bind).await?;
     record_sync_log_txn(
         &mut txn,
         sync_type,

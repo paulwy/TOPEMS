@@ -123,11 +123,27 @@ pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListSyncRecordParams>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+
+    // B-2 后 scm 全表 fail-closed：裸池读会 0 行，必须复用请求级 RLS 事务。
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("rls transaction unavailable");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
 
     let result = sqlx::query_as::<_, SyncRecord>(
         r#"
@@ -151,7 +167,7 @@ pub async fn list_sync_records(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -171,8 +187,12 @@ pub async fn list_sync_records(
             .bind(&params.sync_type)
             .bind(&params.status)
             .bind(tenant_bind)
-            .fetch_one(&state.db)
+            .fetch_one(&mut scope)
             .await
+            .map_err(|e| {
+                tracing::error!("获取同步记录总数失败: {}", e);
+                e
+            })
             .unwrap_or(0);
 
             ApiResponse::success(
@@ -209,8 +229,22 @@ pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<SyncRecord> {
     let tenant_bind = tenant_bind_value(&claims);
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("rls transaction unavailable");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let result = sqlx::query_as::<_, SyncRecord>(
         r#"
         SELECT id, sync_no, source_system, target_system, sync_type, sync_direction,
@@ -222,7 +256,7 @@ pub async fn get_sync_record(
     )
     .bind(id)
     .bind(tenant_bind)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -292,7 +326,7 @@ pub async fn create_sync_record(
                 let Ok(mut scope) = db.scope_system().await else {
                     return;
                 };
-                let _ = sqlx::query(
+                let update_res = sqlx::query(
                     r#"
                     UPDATE scm.sync_records
                     SET status = 'completed', total_count = 0, success_count = 0,
@@ -305,7 +339,13 @@ pub async fn create_sync_record(
                 .bind(tenant)
                 .execute(&mut scope)
                 .await;
-                let _ = scope.commit().await;
+                if let Err(e) = update_res {
+                    tracing::error!(target: "scm_sync", sync_record_id = %rid, "后台标记同步记录完成失败: {}", e);
+                    return;
+                }
+                if let Err(e) = scope.commit().await {
+                    tracing::error!(target: "scm_sync", sync_record_id = %rid, "后台提交同步记录完成状态失败: {}", e);
+                }
             });
             ApiResponse::success(record, "同步任务已创建")
         }
@@ -333,9 +373,23 @@ pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<SyncResult> {
     let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("rls transaction unavailable");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let updated = sqlx::query(
         r#"
         UPDATE scm.sync_records
@@ -349,7 +403,7 @@ pub async fn retry_sync_record(
     .bind(id)
     .bind(now)
     .bind(tenant_bind)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut scope)
     .await;
 
     match updated {
@@ -394,11 +448,26 @@ pub async fn list_sync_details(
     Extension(claims): Extension<Claims>,
     Path(sync_id): Path<uuid::Uuid>,
     Query(params): Query<ListSyncRecordParams>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("rls transaction unavailable");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
 
     let items = sqlx::query_as::<_, SyncDetailRecord>(
         r#"
@@ -414,7 +483,7 @@ pub async fn list_sync_details(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await;
 
     match items {
@@ -424,7 +493,7 @@ pub async fn list_sync_details(
             )
             .bind(sync_id)
             .bind(tenant_bind)
-            .fetch_one(&state.db)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 

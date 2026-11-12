@@ -678,7 +678,7 @@ pub async fn audit_admission(
     };
 
     for item in &data.audit_items {
-        let _ = sqlx::query(only_own_schema_query!(
+        let written = sqlx::query(only_own_schema_query!(
             "scm",
             r#"
             INSERT INTO scm.supplier_admission_audit_items (
@@ -694,6 +694,23 @@ pub async fn audit_admission(
         .bind(tenant_bind)
         .execute(&mut **txn)
         .await;
+
+        // 审核明细写失败必须整体回滚，不能"审核成功但明细没落库"。
+        if let Err(e) = written {
+            tracing::error!(
+                target: "scm_admission",
+                admission_id = %admission_id,
+                audit_item = %item.audit_item,
+                "写入审核明细失败，回滚整个审核: {}",
+                e
+            );
+            if let Some(t) = guard.take() {
+                if let Err(re) = t.rollback().await {
+                    tracing::error!(target: "scm_admission", "回滚请求事务失败: {}", re);
+                }
+            }
+            return ApiResponse::from(TopemsError::Internal("写入供应商审核明细失败".to_string()));
+        }
     }
 
     let all_passed = data.audit_items.iter().all(|i| i.audit_result == "passed");

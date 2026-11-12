@@ -15,6 +15,8 @@ use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 
 // ===== 数据类型 =====
 
@@ -60,7 +62,17 @@ pub async fn get_purchase_trend(
     tracing::info!("获取SCM采购趋势数据");
     let tenant_bind = tenant_bind_value(&claims);
 
-    let rows: Vec<(Option<String>, Option<i64>, Option<f64>)> = sqlx::query_as(
+    // B-2 之后 scm 全表 fail-closed：裸池读会 0 行，必须走带租户 GUC 的读作用域。
+    let db = Db::new(state.db.clone(), "scm, public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 SCM 采购趋势读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    let rows: Vec<(Option<String>, Option<i64>, Option<f64>)> = match sqlx::query_as(
         "SELECT 
             dates.date::text as date,
             COALESCE(po.count, 0) as count,
@@ -75,12 +87,25 @@ pub async fn get_purchase_trend(
                AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
              GROUP BY DATE(created_at)
          ) po ON dates.date = po.date
-         ORDER BY dates.date"
+         ORDER BY dates.date",
     )
     .bind(tenant_bind)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(rows) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交 SCM 采购趋势读作用域失败: {}", e);
+            }
+            rows
+        }
+        Err(e) => {
+            tracing::error!("获取SCM采购趋势失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "获取SCM采购趋势失败".to_string(),
+            ));
+        }
+    };
 
     let items: Vec<PurchaseTrendItem> = rows
         .into_iter()
@@ -113,14 +138,30 @@ pub async fn get_purchase_status(
     tracing::info!("获取SCM采购状态分布");
     let tenant_bind = tenant_bind_value(&claims);
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)")
-            .bind(tenant_bind)
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let db = Db::new(state.db.clone(), "scm, public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 SCM 采购状态读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
-    let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
+    let total: i64 = match sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)")
+            .bind(tenant_bind)
+            .fetch_one(&mut scope)
+            .await
+    {
+        Ok(total) => total,
+        Err(e) => {
+            tracing::error!("获取SCM采购订单总数失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "获取SCM采购状态分布失败".to_string(),
+            ));
+        }
+    };
+
+    let rows: Vec<(Option<String>, Option<i64>)> = match sqlx::query_as(
         "SELECT status, COUNT(*) as count
          FROM scm.purchase_orders
          WHERE deleted_at IS NULL
@@ -129,9 +170,20 @@ pub async fn get_purchase_status(
          ORDER BY count DESC",
     )
     .bind(tenant_bind)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(rows) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交 SCM 采购状态读作用域失败: {}", e);
+            }
+            rows
+        }
+        Err(e) => {
+            tracing::error!("获取SCM采购状态分布失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取SCM采购状态分布失败".to_string()));
+        }
+    };
 
     let items: Vec<PurchaseStatusItem> = rows
         .into_iter()
@@ -172,8 +224,17 @@ pub async fn get_supplier_ranking(
     tracing::info!("获取SCM供应商采购排名");
     let tenant_bind = tenant_bind_value(&claims);
 
+    let db = Db::new(state.db.clone(), "scm, public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 SCM 供应商排名读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let locale = Locale::from_headers(&headers).as_sql();
-    let rows: Vec<(Option<String>, Option<String>, Option<i64>, Option<f64>)> = sqlx::query_as(
+    let rows: Vec<(Option<String>, Option<String>, Option<i64>, Option<f64>)> = match sqlx::query_as(
         "SELECT po.supplier_id::text as supplier_id,
                 CASE WHEN $1 = 'en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name,
                 COUNT(*) as order_count, COALESCE(SUM(po.total_amount)::float8, 0) as total_amount
@@ -188,9 +249,22 @@ pub async fn get_supplier_ranking(
     )
     .bind(locale)
     .bind(tenant_bind)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(rows) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交 SCM 供应商排名读作用域失败: {}", e);
+            }
+            rows
+        }
+        Err(e) => {
+            tracing::error!("获取SCM供应商采购排名失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "获取SCM供应商采购排名失败".to_string(),
+            ));
+        }
+    };
 
     let items: Vec<SupplierRankingItem> = rows
         .into_iter()

@@ -171,7 +171,7 @@ pub async fn create_contract(
         Ok(item) => {
             if let Some(items) = &data.items {
                 for (idx, item_data) in items.iter().enumerate() {
-                    let _ = sqlx::query(only_own_schema_query!(
+                    let written = sqlx::query(only_own_schema_query!(
                         "scm",
                         r#"
                         INSERT INTO scm.purchase_contract_items (
@@ -193,6 +193,25 @@ pub async fn create_contract(
                     .bind(tenant_bind)
                     .execute(&mut **txn)
                     .await;
+
+                    // 明细写失败必须整体回滚：合同头与明细不能一半一半。
+                    if let Err(e) = written {
+                        tracing::error!(
+                            target: "scm_contract",
+                            contract_id = %item.id,
+                            line_number = idx + 1,
+                            "写入合同明细失败，回滚整个创建: {}",
+                            e
+                        );
+                        if let Some(t) = guard.take() {
+                            if let Err(re) = t.rollback().await {
+                                tracing::error!(target: "scm_contract", "回滚请求事务失败: {}", re);
+                            }
+                        }
+                        return ApiResponse::from(TopemsError::Internal(
+                            "写入采购合同明细失败".to_string(),
+                        ));
+                    }
                 }
             }
             if let Some(t) = guard.take() {
@@ -257,19 +276,37 @@ pub async fn get_contract(
 
     match contract {
         Ok(contract) => {
-            let items = sqlx::query_as::<_, PurchaseContractItem>(
+            // 明细查询失败不得再静默转空列表：错误必须显式报出。
+            let items = match sqlx::query_as::<_, PurchaseContractItem>(
                 only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price, amount, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) ORDER BY line_number"),
             )
             .bind(contract_id)
             .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await
-            .unwrap_or_default();
+            {
+                Ok(rows) => rows,
+                Err(e) => {
+                    tracing::error!(
+                        target: "scm_contract",
+                        contract_id = %contract_id,
+                        "获取采购合同明细失败: {}",
+                        e
+                    );
+                    return ApiResponse::from(TopemsError::Internal(
+                        "获取采购合同明细失败".to_string(),
+                    ));
+                }
+            };
+            let items_count = items.len();
 
             ApiResponse::success(
                 serde_json::json!({
                     "contract": contract,
                     "items": items,
+                    // 空明细必须有明确语义（而不是"没明细又没报错"）
+                    "items_count": items_count,
+                    "items_empty": items_count == 0,
                 }),
                 "获取采购合同成功",
             )
@@ -358,7 +395,7 @@ pub async fn update_contract(
     match contract {
         Ok(item) => {
             if let Some(items) = &data.items {
-                let _ = sqlx::query(only_own_schema_query!(
+                let cleared = sqlx::query(only_own_schema_query!(
                     "scm",
                     "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
                 ))
@@ -367,8 +404,25 @@ pub async fn update_contract(
                 .execute(&mut **txn)
                 .await;
 
+                if let Err(e) = cleared {
+                    tracing::error!(
+                        target: "scm_contract",
+                        contract_id = %contract_id,
+                        "清理旧合同明细失败，回滚整个更新: {}",
+                        e
+                    );
+                    if let Some(t) = guard.take() {
+                        if let Err(re) = t.rollback().await {
+                            tracing::error!(target: "scm_contract", "回滚请求事务失败: {}", re);
+                        }
+                    }
+                    return ApiResponse::from(TopemsError::Internal(
+                        "清理旧采购合同明细失败".to_string(),
+                    ));
+                }
+
                 for (idx, item_data) in items.iter().enumerate() {
-                    let _ = sqlx::query(only_own_schema_query!(
+                    let written = sqlx::query(only_own_schema_query!(
                         "scm",
                         r#"
                         INSERT INTO scm.purchase_contract_items (
@@ -390,6 +444,24 @@ pub async fn update_contract(
                     .bind(tenant_bind)
                     .execute(&mut **txn)
                     .await;
+
+                    if let Err(e) = written {
+                        tracing::error!(
+                            target: "scm_contract",
+                            contract_id = %contract_id,
+                            line_number = idx + 1,
+                            "写入合同明细失败，回滚整个更新: {}",
+                            e
+                        );
+                        if let Some(t) = guard.take() {
+                            if let Err(re) = t.rollback().await {
+                                tracing::error!(target: "scm_contract", "回滚请求事务失败: {}", re);
+                            }
+                        }
+                        return ApiResponse::from(TopemsError::Internal(
+                            "写入采购合同明细失败".to_string(),
+                        ));
+                    }
                 }
             }
             if let Some(t) = guard.take() {

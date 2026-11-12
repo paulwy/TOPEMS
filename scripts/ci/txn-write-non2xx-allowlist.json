@@ -1,0 +1,20 @@
+{
+  "_comment": "误报登记：UPDATE/DELETE ... RETURNING 命中 0 行时返回 404，未产生任何写入，属合法分支。新增条目必须写清 reason。",
+  "allow": [
+    {
+      "file": "svc/scm/src/modules/supplier.rs",
+      "function": "delete_supplier",
+      "reason": "DELETE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/scm/src/modules/supplier_evaluation.rs",
+      "function": "delete_evaluation",
+      "reason": "DELETE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/scm/src/modules/sync_records.rs",
+      "function": "retry_sync_record",
+      "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    }
+  ]
+}

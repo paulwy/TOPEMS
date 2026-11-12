@@ -26,7 +26,20 @@
 use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
+
+/// 后台同步专用：按 payload 租户开写作用域。
+///
+/// 不能再用裸池写 scm/srm —— 两张表都是 fail-closed / 严格租户策略，未设 GUC 时
+/// INSERT 会被 WITH CHECK 拒绝（且失败只落死信，主流程看不到）。
+/// 有租户 → 普通租户通道；无租户（mdm 全局供应商）→ 系统通道。
+async fn open_write_scope<'a>(db: &'a Db, tenant: Option<Uuid>) -> sqlx::Result<ScopedTxn<'a>> {
+    match tenant.filter(|t| !t.is_nil()) {
+        Some(t) => db.scope_for_tenant(t).await,
+        None => db.scope_system().await,
+    }
+}
 
 /// 同步用的供应商业务字段快照（从 mdm 行投影）。
 #[derive(Debug, Clone, serde::Serialize)]
@@ -76,14 +89,22 @@ type CategoryDict = HashMap<String, (String, String)>;
 
 /// 一次性加载类别字典（mdm_supplier_categories 只有少量行）。
 /// 返回 code -> (source_values->>'scm', source_values->>'srm')。
-async fn load_category_dict(db: &PgPool) -> CategoryDict {
+async fn load_category_dict(db: &Db) -> CategoryDict {
+    let mut scope = match db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("[mdm-sync] 打开类别字典读作用域失败: {}", e);
+            return HashMap::new();
+        }
+    };
     let rows: Vec<(String, Option<serde_json::Value>)> = sqlx::query_as(
         r#"SELECT code, source_values FROM master_data.mdm_supplier_categories
            WHERE status = 'active' AND deleted_at IS NULL"#,
     )
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
     let mut map = HashMap::new();
     for (code, sv) in rows {
         if let Some(sv) = sv {
@@ -131,7 +152,7 @@ fn translate_to_srm(dict: &CategoryDict, p: &SupplierSyncPayload) -> String {
 
 /// 把同步失败落死信表。自身失败只打日志，不再抛错。
 async fn write_dead_letter(
-    db: &PgPool,
+    db: &Db,
     direction: &str,
     entity_key: &str,
     op: SyncOp,
@@ -139,6 +160,18 @@ async fn write_dead_letter(
     payload: &SupplierSyncPayload,
 ) {
     let payload_json = serde_json::to_value(payload).unwrap_or(serde_json::Value::Null);
+    let mut scope = match db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!(
+                "[mdm-sync] 死信表写作用域开启失败: direction={}, entity_key={}, err={}",
+                direction,
+                entity_key,
+                e
+            );
+            return;
+        }
+    };
     let res = sqlx::query(
         r#"INSERT INTO master_data.mdm_sync_dead_letter
              (entity_type, entity_key, direction, operation, error_message, payload, tenant_id)
@@ -150,21 +183,30 @@ async fn write_dead_letter(
     .bind(error)
     .bind(&payload_json)
     .bind(payload.tenant_id)
-    .execute(db)
+    .execute(&mut scope)
     .await;
-    if let Err(e) = res {
-        tracing::error!(
+    match res {
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!(
+                    "[mdm-sync] 死信表提交失败: entity_key={}, err={}",
+                    entity_key,
+                    e
+                );
+            }
+        }
+        Err(e) => tracing::error!(
             "[mdm-sync] 写死信表失败: direction={}, entity_key={}, err={}",
             direction,
             entity_key,
             e
-        );
+        ),
     }
 }
 
 /// upsert 到 scm.suppliers（按 supplier_no 唯一键）。category 已由调用方翻译。
 async fn upsert_scm(
-    db: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     p: &SupplierSyncPayload,
     scm_category: Option<String>,
 ) -> Result<(), sqlx::Error> {
@@ -221,13 +263,16 @@ async fn upsert_scm(
     .bind(&p.name_en)
     .bind(p.lead_time_days)
     .bind(p.tenant_id)
-    .execute(db)
+    .execute(&mut *scope)
     .await?;
     Ok(())
 }
 
 /// 软删 scm.suppliers（按 supplier_no + tenant_id）。
-async fn soft_delete_scm(db: &PgPool, p: &SupplierSyncPayload) -> Result<(), sqlx::Error> {
+async fn soft_delete_scm(
+    scope: &mut ScopedTxn<'_>,
+    p: &SupplierSyncPayload,
+) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "master_data",
         r#"UPDATE scm.suppliers SET deleted_at = now(), updated_at = now()
@@ -238,7 +283,7 @@ async fn soft_delete_scm(db: &PgPool, p: &SupplierSyncPayload) -> Result<(), sql
     ))
     .bind(&p.supplier_no)
     .bind(p.tenant_id)
-    .execute(db)
+    .execute(&mut *scope)
     .await?;
     Ok(())
 }
@@ -246,7 +291,7 @@ async fn soft_delete_scm(db: &PgPool, p: &SupplierSyncPayload) -> Result<(), sql
 /// upsert 到 srm.suppliers（按 supplier_no 唯一键；srm 无 remarks/lead_time_days）。
 /// category 已由调用方翻译为非空字符串（srm.category NOT NULL）。
 async fn upsert_srm(
-    db: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     p: &SupplierSyncPayload,
     srm_category: String,
 ) -> Result<(), sqlx::Error> {
@@ -296,13 +341,16 @@ async fn upsert_srm(
     .bind(&p.bank_account)
     .bind(&p.name_en)
     .bind(p.tenant_id)
-    .execute(db)
+    .execute(&mut *scope)
     .await?;
     Ok(())
 }
 
 /// 软删 srm.suppliers（按 supplier_no + tenant_id）。
-async fn soft_delete_srm(db: &PgPool, p: &SupplierSyncPayload) -> Result<(), sqlx::Error> {
+async fn soft_delete_srm(
+    scope: &mut ScopedTxn<'_>,
+    p: &SupplierSyncPayload,
+) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "master_data",
         r#"UPDATE srm.suppliers SET deleted_at = now(), updated_at = now()
@@ -313,7 +361,7 @@ async fn soft_delete_srm(db: &PgPool, p: &SupplierSyncPayload) -> Result<(), sql
     ))
     .bind(&p.supplier_no)
     .bind(p.tenant_id)
-    .execute(db)
+    .execute(&mut *scope)
     .await?;
     Ok(())
 }
@@ -325,20 +373,38 @@ pub fn spawn_mdm_to_downstream(db: PgPool, payload: SupplierSyncPayload, op: Syn
         return;
     }
     tokio::spawn(async move {
+        let mdm_db = Db::new(db.clone(), "master_data, public, shared");
+        let scm_db = Db::new(db.clone(), "scm, public, shared");
+        let srm_db = Db::new(db.clone(), "srm, public, shared");
+
         // 一次性加载类别字典（仅 create/update 需要翻译；delete 不需要）
         let dict = if op == SyncOp::Delete {
             CategoryDict::new()
         } else {
-            load_category_dict(&db).await
+            load_category_dict(&mdm_db).await
         };
 
         // ---- scm ----
-        let scm_res = match op {
-            SyncOp::Delete => soft_delete_scm(&db, &payload).await,
-            _ => {
-                let scm_cat = translate_to_scm(&dict, &payload);
-                upsert_scm(&db, &payload, scm_cat).await
+        let scm_res = match open_write_scope(&scm_db, payload.tenant_id).await {
+            Ok(mut scope) => {
+                let res = match op {
+                    SyncOp::Delete => soft_delete_scm(&mut scope, &payload).await,
+                    _ => {
+                        let scm_cat = translate_to_scm(&dict, &payload);
+                        upsert_scm(&mut scope, &payload, scm_cat).await
+                    }
+                };
+                match res {
+                    Ok(()) => scope.commit().await,
+                    Err(e) => {
+                        if let Err(re) = scope.rollback().await {
+                            tracing::error!("[mdm-sync] scm 写作用域回滚失败: {}", re);
+                        }
+                        Err(e)
+                    }
+                }
             }
+            Err(e) => Err(e),
         };
         if let Err(e) = scm_res {
             tracing::warn!(
@@ -348,7 +414,7 @@ pub fn spawn_mdm_to_downstream(db: PgPool, payload: SupplierSyncPayload, op: Syn
                 e
             );
             write_dead_letter(
-                &db,
+                &mdm_db,
                 "mdm_to_scm",
                 &payload.supplier_no,
                 op,
@@ -359,12 +425,26 @@ pub fn spawn_mdm_to_downstream(db: PgPool, payload: SupplierSyncPayload, op: Syn
         }
 
         // ---- srm ----
-        let srm_res = match op {
-            SyncOp::Delete => soft_delete_srm(&db, &payload).await,
-            _ => {
-                let srm_cat = translate_to_srm(&dict, &payload);
-                upsert_srm(&db, &payload, srm_cat).await
+        let srm_res = match open_write_scope(&srm_db, payload.tenant_id).await {
+            Ok(mut scope) => {
+                let res = match op {
+                    SyncOp::Delete => soft_delete_srm(&mut scope, &payload).await,
+                    _ => {
+                        let srm_cat = translate_to_srm(&dict, &payload);
+                        upsert_srm(&mut scope, &payload, srm_cat).await
+                    }
+                };
+                match res {
+                    Ok(()) => scope.commit().await,
+                    Err(e) => {
+                        if let Err(re) = scope.rollback().await {
+                            tracing::error!("[mdm-sync] srm 写作用域回滚失败: {}", re);
+                        }
+                        Err(e)
+                    }
+                }
             }
+            Err(e) => Err(e),
         };
         if let Err(e) = srm_res {
             tracing::warn!(
@@ -374,7 +454,7 @@ pub fn spawn_mdm_to_downstream(db: PgPool, payload: SupplierSyncPayload, op: Syn
                 e
             );
             write_dead_letter(
-                &db,
+                &mdm_db,
                 "mdm_to_srm",
                 &payload.supplier_no,
                 op,
