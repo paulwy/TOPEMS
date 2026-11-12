@@ -74,7 +74,7 @@ impl WmsEventHandlers {
             payload.order_id,
             payload.order_no
         );
-        let _ = store_po_snapshot(
+        store_po_snapshot(
             &self.db,
             payload.order_id,
             payload.order_no,
@@ -100,7 +100,7 @@ impl WmsEventHandlers {
             payload.order_id,
             payload.order_no
         );
-        let _ = store_po_snapshot(
+        store_po_snapshot(
             &self.db,
             payload.order_id,
             payload.order_no,
@@ -129,6 +129,19 @@ impl WmsEventHandlers {
 
         let now = chrono::Utc::now();
 
+        // 事件不带租户上下文时直接失败，禁止写 nil 租户行（RLS fail-closed 也会拒写）。
+        let tenant_id = payload.tenant_id.ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "入库单事件缺少租户 - inbound_id={}",
+                payload.inbound_order_id
+            ))
+        })?;
+        let scope_db = topems_shared_db::scope::Db::new(self.db.clone(), "wms, public");
+        let mut scope = scope_db
+            .scope_for_tenant(tenant_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启入库单事务失败: {}", e)))?;
+
         sqlx::query(
             r#"INSERT INTO wms.inbound_orders
                 (id, order_number, warehouse_id, supplier_id,
@@ -141,10 +154,14 @@ impl WmsEventHandlers {
         .bind(payload.warehouse_id)
         .bind(payload.supplier_id)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-        .execute(&self.db)
+        .bind(tenant_id)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建入库单失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交入库单失败: {}", e)))?;
 
         tracing::info!(
             "[wms] 入库单创建成功 - inbound_id={}, order_number={}",
@@ -388,6 +405,24 @@ async fn store_po_snapshot(
     tenant_id: Option<uuid::Uuid>,
 ) {
     let now = chrono::Utc::now();
+    // 事件消费不经过租户中间件，没有 `app.tenant_id`；M1 起策略 fail-closed，
+    // 必须显式开一个租户作用域，且租户缺失时直接跳过而不是写 nil 租户行。
+    let Some(tenant_id) = tenant_id else {
+        tracing::warn!(
+            "[wms] 采购订单快照缺少租户，已跳过 - id={}, order_number={}",
+            id,
+            order_number
+        );
+        return;
+    };
+    let scope_db = topems_shared_db::scope::Db::new(db.clone(), "wms, public");
+    let mut scope = match scope_db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("[wms] 开启采购订单快照事务失败 - id={}, error={}", id, e);
+            return;
+        }
+    };
     let result = sqlx::query(
         r#"INSERT INTO wms.purchase_order_snapshots
            (id, order_number, supplier_id, supplier_name, total_amount, payable_amount,
@@ -417,16 +452,22 @@ async fn store_po_snapshot(
     .bind(now)
     .bind(now)
     .bind(now)
-    .bind(tenant_id.unwrap_or(uuid::Uuid::nil()))
-    .execute(db)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => tracing::debug!(
-            "[wms] 采购订单快照已存储 - id={}, order_number={}",
-            id,
-            order_number
-        ),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("[wms] 提交采购订单快照失败 - id={}, error={}", id, e);
+            } else {
+                tracing::debug!(
+                    "[wms] 采购订单快照已存储 - id={}, order_number={}",
+                    id,
+                    order_number
+                );
+            }
+        }
         Err(e) => tracing::warn!("[wms] 存储采购订单快照失败 - id={}, error={}", id, e),
     }
 }

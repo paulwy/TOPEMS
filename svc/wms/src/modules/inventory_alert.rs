@@ -1009,13 +1009,13 @@ pub async fn create_alert_rule(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1199,13 +1199,13 @@ pub async fn update_alert_rule(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1333,13 +1333,13 @@ pub async fn delete_alert_rule(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1616,13 +1616,13 @@ pub async fn confirm_alert_record(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(

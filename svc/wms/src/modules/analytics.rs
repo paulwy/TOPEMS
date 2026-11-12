@@ -139,14 +139,11 @@ async fn get_inventory_turnover(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<InventoryTurnoverResponse> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(match resolve_tenant_id(&claims) {
-            Ok(id) => id,
-            Err(e) => return ApiResponse::unauthorized(&e.classify().1),
-        })
-    };
+    // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
+    let tenant_id: Option<Uuid> = Some(match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    });
 
     let (start, end) = parse_date_range(&params);
     let group_by = params.group_by.as_deref().unwrap_or("month");

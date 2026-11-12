@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -214,19 +215,24 @@ pub async fn compute_replenishment(
     >,
     Json(req): Json<ReplenishmentComputeRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let request_data = serde_json::to_value(&req).ok();
     let consumption_days = req.consumption_period_days.unwrap_or(30);
 
-    let mut tx = match state.db.begin().await {
+    // 独立租户短事务：草稿清理与建议生成必须同一事务，且带明确 tenant_id。
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut tx = match db.scope_for_tenant(tenant).await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
@@ -235,9 +241,10 @@ pub async fn compute_replenishment(
     };
 
     let clear_result = sqlx::query(
-        "UPDATE wms.replenishment_suggestions SET deleted_at = NOW() WHERE status = 'draft'",
+        "UPDATE wms.replenishment_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND tenant_id = $1",
     )
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut tx)
     .await;
 
     if let Err(e) = clear_result {
@@ -300,20 +307,23 @@ pub async fn compute_replenishment(
             $2,
             $6
         FROM wms.inventory i
-        LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
+        LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id AND w.tenant_id = $6
         LEFT JOIN wms.replenishment_rules r ON 
             (r.material_code = i.material_code OR r.material_category IS NOT NULL)
             AND (r.warehouse_id = i.warehouse_id OR r.warehouse_id IS NULL)
             AND r.enabled = true
+            AND r.tenant_id = $6
         LEFT JOIN (
             SELECT material_code, from_warehouse_id AS warehouse_id,
                    SUM(quantity) / $3 as avg_daily
             FROM wms.inventory_movements
             WHERE movement_type = 'outbound'
+              AND tenant_id = $6
               AND created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
             GROUP BY material_code, from_warehouse_id
         ) consumption ON i.material_code = consumption.material_code AND i.warehouse_id = consumption.warehouse_id
         WHERE i.deleted_at IS NULL
+          AND i.tenant_id = $6
           AND ($4::uuid IS NULL OR i.warehouse_id = $4
           AND (
               i.available_quantity < COALESCE(r.reorder_point, i.reorder_point, 0)
@@ -343,8 +353,8 @@ pub async fn compute_replenishment(
     .bind(consumption_days)
     .bind(req.warehouse_id)
     .bind(req.rule_based_only.unwrap_or(false))
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
-    .fetch_all(&mut *tx)
+    .bind(tenant)
+    .fetch_all(&mut tx)
     .await;
 
     // 供应商信息保持 NULL（原跨 schema JOIN scm.supplier_products 已移除，因该表不存在）

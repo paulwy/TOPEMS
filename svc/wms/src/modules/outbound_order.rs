@@ -15,6 +15,7 @@ use crate::models::outbound_order::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
@@ -225,13 +226,13 @@ pub async fn create_outbound_order(
     // （命中 RLS 严格策略 `tenant_id IS NULL` 分支，零 uuid/NULL/污染真实租户任何连接池
     // 上下文都放行）；普通用户绑 claims.tenant_id。organization_id 为业务 NOT NULL 列，
     // 不在此处理（保持单租户默认值）。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -442,13 +443,13 @@ pub async fn update_outbound_order(
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -560,13 +561,13 @@ pub async fn delete_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -749,13 +750,13 @@ pub async fn create_outbound_order_item(
     });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(
@@ -1076,13 +1077,13 @@ pub async fn confirm_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1191,13 +1192,13 @@ pub async fn pick_outbound_order(
     }
     let now = Utc::now();
 
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query_as::<_, OutboundOrder>(
         only_own_schema_query!("wms", r#"
@@ -1303,13 +1304,13 @@ pub async fn pack_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1415,107 +1416,248 @@ pub async fn ship_outbound_order(
     >,
     Json(items): Json<Vec<ShipItemRequest>>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    // 释放请求级事务：库存扣减要在独立短事务内加行锁，且不能与请求事务
+    // 叠加占用连接（并发压测 20 线程会打满连接池）。
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启出库事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
-        Ok(t) => t,
-        Err(e) => return e,
+    // 订单必须存在且处于可发货状态：不存在 → 404，状态不符 → 409。
+    let order_status: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT status FROM wms.outbound_orders
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FOR UPDATE
+        "#
+    ))
+    .bind(id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("锁定出库订单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("出库失败");
+        }
     };
+    let order_status = match order_status {
+        Some(s) => s,
+        None => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在".to_string()));
+        }
+    };
+    if !matches!(
+        order_status.as_str(),
+        "created" | "confirmed" | "picking" | "packing"
+    ) {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict(&format!("出库订单当前状态不允许发货: {}", order_status));
+    }
 
     for item in &items {
-        let _ = sqlx::query(only_own_schema_query!(
+        if item.shipped_quantity <= 0.0 {
+            let _ = scope.rollback().await;
+            return ApiResponse::bad_request(&format!(
+                "发货数量必须大于 0（明细 {}）",
+                item.item_id
+            ));
+        }
+
+        // 明细必须属于该单且同租户，并锁行；顺带取扣减谓词所需字段。
+        let line: Option<(Uuid, String, String, Option<String>, f64, f64)> =
+            match sqlx::query_as(only_own_schema_query!(
+                "wms",
+                r#"
+                SELECT organization_id, material_code, material_name, batch_number,
+                       requested_quantity::float8,
+                       COALESCE(shipped_quantity, 0)::float8
+                FROM wms.outbound_order_items
+                WHERE id = $1 AND order_id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+                FOR UPDATE
+                "#
+            ))
+            .bind(item.item_id)
+            .bind(id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("锁定出库明细失败: {}", e);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("出库失败");
+                }
+            };
+        let (organization_id, material_code, material_name, batch_number, requested, shipped) =
+            match line {
+                Some(v) => v,
+                None => {
+                    let _ = scope.rollback().await;
+                    return ApiResponse::not_found(&format!(
+                        "出库明细不存在或不属于该订单: {}",
+                        item.item_id
+                    ));
+                }
+            };
+
+        if shipped + item.shipped_quantity > requested + f64::EPSILON {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict(&format!(
+                "发货数量超出应收：明细 {} 应收 {} 已发 {} 本次 {}",
+                item.item_id, requested, shipped, item.shipped_quantity
+            ));
+        }
+
+        let line_updated = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
             UPDATE wms.outbound_order_items SET
-                shipped_quantity = $1, notes = $2, updated_at = $3
-            WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                shipped_quantity = COALESCE(shipped_quantity, 0) + $1,
+                notes = COALESCE($2, notes),
+                updated_at = $3
+            WHERE id = $4 AND order_id = $5 AND tenant_id = $6 AND deleted_at IS NULL
             "#
         ))
         .bind(item.shipped_quantity)
         .bind(&item.remarks)
         .bind(now)
+        .bind(item.item_id)
         .bind(id)
-        .bind(item.item_id)
-        .execute(&mut *tx)
+        .bind(tenant)
+        .execute(&mut scope)
         .await;
+        match line_updated {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!("出库明细状态已变化: {}", item.item_id));
+            }
+            Err(e) => {
+                tracing::error!("更新出库明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库失败");
+            }
+        }
 
-        // P1-10：条件原子 UPDATE（WHERE 可用库存足够才扣减，PG 对命中行隐式加行锁）。
-        // 不再吞掉影响行数：0 行 = 无匹配库存或可用量不足，按业务错误中断整笔发货（tx 随返回自动回滚）。
-        let deduct = sqlx::query(
-            only_own_schema_query!("wms", r#"
-            UPDATE wms.inventory SET
-                quantity = quantity - $1,
-                available_quantity = available_quantity - $1,
-                updated_at = $2
-            WHERE organization_id = (SELECT organization_id FROM wms.outbound_order_items WHERE id = $3)
-              AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
-              AND available_quantity >= $1
-              AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
-            "#),
-        )
+        // D3：一次只锁一行库存。
+        // - 明细带批次时谓词强制 `batch_number = $4`，只可能命中该批次那一行；
+        // - 明细无批次时按「最早到期 → created_at → id」取第一行（LIMIT 1），
+        //   不再出现「同 org/material 的每个批次各扣一次」。
+        // `FOR UPDATE` 在 READ COMMITTED 下会等锁并重判 `available_quantity >= $5`，
+        // 因此并发扣减不会超卖。
+        let stock_id: Option<Uuid> = match sqlx::query_scalar(only_own_schema_query!(
+            "wms",
+            r#"
+            SELECT id FROM wms.inventory
+            WHERE organization_id = $1
+              AND material_code = $2
+              AND tenant_id = $3
+              AND deleted_at IS NULL
+              AND ($4::varchar IS NULL OR batch_number = $4::varchar)
+              AND available_quantity >= $5
+            ORDER BY expiry_date NULLS LAST, created_at, id
+            LIMIT 1
+            FOR UPDATE
+            "#
+        ))
+        .bind(organization_id)
+        .bind(&material_code)
+        .bind(tenant)
+        .bind(batch_number.as_deref())
         .bind(item.shipped_quantity)
-        .bind(now)
-        .bind(item.item_id)
-        .bind(tenant_filter)
-        .execute(&mut *tx)
-        .await;
-
-        match deduct {
-            Ok(r) if r.rows_affected() == 0 => {
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("锁定库存行失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库扣减库存失败");
+            }
+        };
+        let stock_id = match stock_id {
+            Some(v) => v,
+            None => {
                 tracing::warn!(
-                    "出库发货可用库存不足: item_id={}, 需扣减={}",
+                    "出库发货可用库存不足: item_id={}, material_code={}, batch={:?}, 需扣减={}",
                     item.item_id,
+                    material_code,
+                    batch_number,
                     item.shipped_quantity
                 );
+                let _ = scope.rollback().await;
                 return ApiResponse::from(TopemsError::BusinessLogic(format!(
                     "可用库存不足，无法出库（明细 {}，需 {}）",
                     item.item_id, item.shipped_quantity
                 )));
             }
+        };
+
+        let deduct = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.inventory SET
+                quantity = quantity - $2,
+                available_quantity = available_quantity - $2,
+                updated_at = $3
+            WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL AND available_quantity >= $2
+            "#
+        ))
+        .bind(stock_id)
+        .bind(item.shipped_quantity)
+        .bind(now)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match deduct {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                // 已锁行且已校验可用量，仍 0 行说明不变量被破坏，按 500 处理。
+                tracing::error!(
+                    "出库扣减 0 行（已锁定库存行）: stock_id={} item_id={}",
+                    stock_id,
+                    item.item_id
+                );
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库扣减库存失败");
+            }
             Err(e) => {
                 tracing::error!("出库扣减库存失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("出库扣减库存失败".to_string()));
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库扣减库存失败");
             }
-            Ok(_) => {}
         }
 
-        // V19.8: 出库发货时同步写入 inventory_movements
-        let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "wms",
-            r#"SELECT COUNT(*) FROM wms.inventory_movements
-               WHERE movement_no LIKE $1"#
-        ))
-        .bind(format!("MV-{}%", now.format("%Y%m%d")))
-        .fetch_one(&mut *tx)
-        .await
-        .unwrap_or(0);
-        let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
+        // V19.8: 出库发货时同步写入 inventory_movements（失败即回滚）
+        let movement_no = movement_no(now);
         let movement_id = Uuid::new_v4();
-
-        let _ = sqlx::query(only_own_schema_query!(
+        let movement = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
             INSERT INTO wms.inventory_movements (
@@ -1526,52 +1668,82 @@ pub async fn ship_outbound_order(
             )
             SELECT
                 $1, $2, $3, 'outbound', $4, 'outbound_order',
-                NULL, oo.material_code, oo.material_name, $5,
+                NULL, $5, $6, $7,
                 oo.source_location_id, NULL, o.warehouse_id, NULL,
-                'completed', $6, $7, $6, $6
+                'completed', $8, $9, $8, $8
             FROM wms.outbound_order_items oo
             JOIN wms.outbound_orders o ON oo.order_id = o.id
-            WHERE oo.id = $8
+            WHERE oo.id = $10 AND oo.tenant_id = $3
             "#
         ))
         .bind(movement_id)
         .bind(&movement_no)
-        .bind(tenant_filter)
+        .bind(tenant)
         .bind(id.to_string())
+        .bind(&material_code)
+        .bind(&material_name)
         .bind(item.shipped_quantity)
         .bind(now)
         .bind(format!("出库发货：订单 {}", id))
         .bind(item.item_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
+        match movement {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                tracing::error!("出库 movement 写入 0 行: item_id={}", item.item_id);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库移动记录写入失败");
+            }
+            Err(e) => {
+                tracing::error!("出库 movement 写入失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("出库移动记录写入失败");
+            }
+        }
     }
 
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
-    let _ = sqlx::query(only_own_schema_query!(
+    let status_updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'shipping', packing_status = 'completed', packing_end_time = $1::timestamptz,
             shipping_status = 'in_progress', actual_ship_date = $1::date, updated_at = $1::timestamptz
-        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+          AND status IN ('created', 'confirmed', 'picking', 'packing')
         "#
     ))
     .bind(now)
     .bind(id)
-    .bind(tenant_filter)
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
-
-    if tx.commit().await.is_err() {
-        return ApiResponse::from(TopemsError::Internal("出库操作失败".to_string()));
+    match status_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("出库订单状态已变化，发货未生效");
+        }
+        Err(e) => {
+            tracing::error!("更新出库订单状态失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("出库失败");
+        }
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("出库事务提交失败: {}", e);
+        return ApiResponse::server_error("出库操作失败");
+    }
+
+    // 响应读取使用独立只读作用域（请求事务已释放）。
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启出库只读作用域失败: {}", e);
+            return ApiResponse::server_error("出库失败");
+        }
+    };
 
     let order_result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -1584,11 +1756,12 @@ pub async fn ship_outbound_order(
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
                created_at, updated_at
-        FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.outbound_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     let (response, status_str, error_msg, response_data) = match order_result {
@@ -1606,14 +1779,13 @@ pub async fn ship_outbound_order(
                     r#"
                     SELECT id, material_code, material_name, unit
                     FROM wms.outbound_order_items
-                    WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
-                      AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+                    WHERE order_id = $1 AND id = ANY($2) AND tenant_id = $3 AND deleted_at IS NULL
                     "#
                 ))
                 .bind(id)
                 .bind(&line_ids)
-                .bind(tenant_filter)
-                .fetch_all(&mut **txn)
+                .bind(tenant)
+                .fetch_all(&mut read_scope)
                 .await;
 
                 let mut lines_by_id: std::collections::HashMap<Uuid, (String, String, String)> =
@@ -1773,13 +1945,13 @@ pub async fn complete_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1913,7 +2085,7 @@ pub async fn start_outbound_approval(
             if !crate::shared::fsm::outbound_order_requires_approval(&current_status, "shipping") {
                 return ApiResponse::bad_request("当前状态无需审批");
             }
-            let _ = crate::models::audit_log::log_approval_event(
+            if let Err(e) = crate::models::audit_log::log_approval_event(
                 &mut **txn,
                 &tenant_id.to_string(),
                 "outbound_order",
@@ -1924,7 +2096,10 @@ pub async fn start_outbound_approval(
                 &current_status,
                 req.comment.as_deref(),
             )
-            .await;
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
             ApiResponse::success(
                 serde_json::json!({"status": current_status, "approval_started": true}),
                 "审批启动成功",
@@ -1995,7 +2170,7 @@ pub async fn approve_outbound(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "outbound_order",
@@ -2006,7 +2181,10 @@ pub async fn approve_outbound(
                         "shipping",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
@@ -2088,7 +2266,7 @@ pub async fn reject_outbound(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "outbound_order",
@@ -2099,7 +2277,10 @@ pub async fn reject_outbound(
                         "picking",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);

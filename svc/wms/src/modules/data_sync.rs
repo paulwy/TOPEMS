@@ -243,13 +243,14 @@ pub async fn create_shipping_from_outbound_internal(
     // D6：事件不在此发布——此时仍在事务内（UPDATE 未提交）。payload 交回外层，
     // 由外层 handler 在 guard.take().commit() 成功后发布，失败入 ZSET 重试。
 
-    let _ = sqlx::query(only_own_schema_query!(
+    // 子写失败必须显式打断，父操作（外发 shipping 单）与本地状态不能只落一半。
+    let status_updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders 
         SET status = 'shipped', sales_order_id = $2, 
             sales_order_number = $3, is_synced_to_crm = TRUE, updated_at = $4
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
         "#,
         "wms"
     ))
@@ -257,10 +258,29 @@ pub async fn create_shipping_from_outbound_internal(
     .bind(shipping_id)
     .bind(&shipping_order_number)
     .bind(now)
+    .bind(tenant_id)
     .execute(&mut **txn)
     .await;
+    match status_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            return (
+                ApiResponse::from(TopemsError::BusinessLogic(
+                    "同步出库单状态失败：0 行受影响".to_string(),
+                )),
+                None,
+            )
+        }
+        Err(e) => {
+            tracing::error!("同步出库单状态失败: {}", e);
+            return (
+                ApiResponse::from(TopemsError::Internal("同步出库单状态失败".to_string())),
+                None,
+            );
+        }
+    }
 
-    let _ = record_sync_log(
+    if let Err(e) = record_sync_log(
         &state,
         "outbound_to_shipping",
         "wms",
@@ -276,7 +296,10 @@ pub async fn create_shipping_from_outbound_internal(
         0,
         &mut *txn,
     )
-    .await;
+    .await
+    {
+        tracing::warn!("同步日志写入失败: {}", e);
+    }
 
     (
         ApiResponse::success(
@@ -418,7 +441,7 @@ pub async fn create_inbound_from_scm(
 
     match result {
         Ok(_) => {
-            let _ = record_sync_log(
+            if let Err(e) = record_sync_log(
                 &state,
                 "purchase_to_inbound",
                 "scm",
@@ -434,7 +457,10 @@ pub async fn create_inbound_from_scm(
                 0,
                 &mut *txn,
             )
-            .await;
+            .await
+            {
+                tracing::warn!("同步日志写入失败: {}", e);
+            }
 
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
