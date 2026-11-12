@@ -38,6 +38,14 @@ if ! psql "$DSN" -X -q -t -A -F'|' -v ON_ERROR_STOP=1 >"$tmp" 2>&1 <<'SQL'
 \pset footer off
 BEGIN READ ONLY;
 
+-- 库身份证明（每次运行必打，防止把开发库当生产库）
+SELECT 'IDENT|' || current_database()
+       || '|' || coalesce(inet_server_addr()::text, 'unix:' || current_setting('unix_socket_directories'))
+       || '|ledger_max=' || (SELECT max(version)::text FROM _sqlx_migrations)
+       || '|user=' || current_user
+       || '|super/bypass=' || (SELECT rolsuper::text || '/' || rolbypassrls::text
+                                 FROM pg_roles WHERE rolname = current_user);
+
 -- 有 tenant_id 列的表：逐表计数
 SELECT format(
          'SELECT %L, count(*), count(*) FILTER (WHERE tenant_id IS NULL) FROM scm.%I',
@@ -74,9 +82,13 @@ then
   exit 3
 fi
 
+ident="$(grep '^IDENT|' "$tmp" | head -1 | cut -d'|' -f2-)"
+echo "库身份: ${ident:-<未取得>}"
+echo
 echo "表名                                  总行数      NULL 租户"
 echo "------------------------------------------------------------"
 awk -F'|' -v exempt="$EXEMPT" '
+  $1 == "IDENT" { next }
   $1 == "MISSING" {
     mark = ($2 == exempt) ? "  (豁免: 系统账本，按设计无租户列)" : "  <== 需补列"
     print "  [缺列] " $2 mark

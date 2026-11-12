@@ -121,6 +121,30 @@ scripts/db/window-execution.sh all \
 | 开窗后自检 | `XINFO GROUPS topems:stream:events:PortalNotificationPublished` 的 `lag` 最终归 0；必要时 `XADD` 一条测试事件，确认目标进程侧有帧/日志 |
 | 已知实例 | 2026-11-11 本地 WS 端到端首轮即失败：残留的独立进程（:8000）抢走事件，停掉后 13/13 通过 |
 
+### 1.0.2 库身份前置（2026-11-12 起，所有窗口一律适用）
+
+> 起因：W7-B 窗口连续两次把本机开发库 `topems`（账本 `20261109101400`）当成生产库出数，两份计数被判作废。
+
+| 项 | 口径 |
+| --- | --- |
+| 报告首行 | 任何实测/验收报告**第一行**必须是库身份：`库名｜主机｜账本 max｜连接用户｜rolsuper/rolbypassrls`。缺此行视为未验证，必须重做 |
+| 生产唯一目标 | 库 `topems_prod`，主机 `192.168.110.115`（`ssh xingzhai@192.168.110.115`，psql 走主机本机 socket `/tmp`），账本基线 ≥ `20261112100000` |
+| 开发库 | 本机 `127.0.0.1:5432/topems`，账本 `20261109101400`，**不得**作为生产结论来源，也不得用其形态推断生产 PRE |
+| 执行身份 | 只读盘点用超户（`xingzhai`，super/bypass 均为 true）；RLS 验收用非超户 `topems_prod` |
+| 自动取证 | `scripts/db/check-scm-tenant-null.sh` 首行即打印上述身份行，窗口与巡检都直接引用该行 |
+
+取身份 SQL（只读，可直接粘贴）：
+
+```sql
+BEGIN READ ONLY;
+SELECT current_database(),
+       coalesce(inet_server_addr()::text, 'unix:' || current_setting('unix_socket_directories')) AS host,
+       (SELECT max(version)::text FROM _sqlx_migrations) AS ledger_max,
+       current_user,
+       (SELECT rolsuper::text || '/' || rolbypassrls::text FROM pg_roles WHERE rolname = current_user) AS super_bypass;
+COMMIT;
+```
+
 9 张备份表：
 
 `public.core_dict_types`、`public.core_dict_items`、`crm.crm_master_data_refs`、
