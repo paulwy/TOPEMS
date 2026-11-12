@@ -101,12 +101,12 @@ awk -F'|' -v exempt="$EXEMPT" '
     printf "%-36s %10d %12d%s\n", name, total, nul, mark
     checked++
     sum_total += total
-    sum_null += nul
+    if (name != exempt) sum_null += nul
     if (nul > 0 && name != exempt) bad++
   }
   END {
     printf "------------------------------------------------------------\n"
-    printf "受检表 %d 张，合计 %d 行，NULL 租户 %d 行\n", checked, sum_total, sum_null
+    printf "受检表 %d 张，合计 %d 行，NULL 租户 %d 行（不含系统账本）\n", checked, sum_total, sum_null
     exit (bad > 0 ? 1 : 0)
   }
 ' "$tmp" || rc=$?
@@ -124,4 +124,4 @@ if grep -q '^MISSING|' "$tmp"; then
   fi
 fi
 
-echo "OK：scm 全 schema 无 NULL 租户行"
+echo "OK：scm 全 schema（系统账本除外）无 NULL 租户行"
