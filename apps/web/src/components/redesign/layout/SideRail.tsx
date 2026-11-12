@@ -329,7 +329,14 @@ export const SideRail: React.FC<SideRailProps> = ({
         list?.map((item) => ({
           ...item,
           label: t(item.label),
-          children: item.children?.map((child) => ({ ...child, label: t(child.label) })),
+          children: item.children?.map((child) => ({
+            ...child,
+            label: t(child.label),
+            children: child.children?.map((grandchild) => ({
+              ...grandchild,
+              label: t(grandchild.label),
+            })),
+          })),
         })),
     [t]
   );
@@ -352,16 +359,49 @@ export const SideRail: React.FC<SideRailProps> = ({
     persistExpandState(expandedGroups, expandedSubGroups);
   }, [expandedGroups, expandedSubGroups]);
 
-  // 默认展开策略：当前所在模块与其 group 自动展开（用户手动折叠后仍保留选择）
+  // 默认展开策略：当前所在域组、模块内语义分组与模块三级菜单自动展开
+  // activeId 可能是二级模块 id（`<module>`）或三级 navItem id（`<module>:<navCode>`）
   useEffect(() => {
     if (!activeId) return;
-    const [moduleCode] = activeId.split(':');
-    const moduleItem = resolvedItems.find((item) => item.id === moduleCode);
-    const activeChild = moduleItem?.children?.find((child) => child.id === activeId);
-    setExpandedGroups((prev) => (prev.has(moduleCode) ? prev : new Set(prev).add(moduleCode)));
-    if (activeChild?.group) {
-      const subKey = `${moduleCode}:${activeChild.group}`;
+    let domainId: string | undefined;
+    let moduleCode: string | undefined;
+    for (const item of resolvedItems) {
+      if (item.id === activeId) {
+        domainId = item.id;
+        break;
+      }
+      const hitChild = item.children?.find((child) => child.id === activeId);
+      if (hitChild) {
+        domainId = item.id;
+        moduleCode = hitChild.id;
+        break;
+      }
+      const hitGrandchild = item.children?.find((child) =>
+        child.children?.some((nav) => nav.id === activeId)
+      );
+      if (hitGrandchild) {
+        domainId = item.id;
+        moduleCode = hitGrandchild.id;
+        break;
+      }
+    }
+    if (!domainId) return;
+    const domainKey = domainId;
+    setExpandedGroups((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
+    if (!moduleCode) return;
+    const moduleKey = moduleCode;
+    const activeModule = resolvedItems
+      .find((item) => item.id === domainKey)
+      ?.children?.find((child) => child.id === moduleKey);
+    // 模块所在语义分组（如 master/business）需要展开，否则二级模块按钮不可见
+    if (activeModule?.group) {
+      const subKey = `${domainKey}:${activeModule.group}`;
       setExpandedSubGroups((prev) => (prev.has(subKey) ? prev : new Set(prev).add(subKey)));
+    }
+    // 当前落在三级项时，模块的三级菜单需要展开，否则激活项不可见
+    if (activeModule?.children?.some((nav) => nav.id === activeId)) {
+      const thirdKey = `mod:${moduleKey}`;
+      setExpandedSubGroups((prev) => (prev.has(thirdKey) ? prev : new Set(prev).add(thirdKey)));
     }
     // resolvedItems 仅为查找当前 group 归属，不是展开状态来源，不参与重算
   }, [activeId]);
@@ -432,7 +472,11 @@ export const SideRail: React.FC<SideRailProps> = ({
           const hasChildren = item.children && item.children.length > 0;
           const isExpanded = expandedGroups.has(item.id);
           const hasActiveChild =
-            hasChildren && item.children!.some((child) => child.id === activeId);
+            hasChildren &&
+            item.children!.some(
+              (child) =>
+                child.id === activeId || Boolean(child.children?.some((nav) => nav.id === activeId))
+            );
           const showActive = isActive || hasActiveChild;
 
           return (
@@ -569,38 +613,139 @@ export const SideRail: React.FC<SideRailProps> = ({
                             groupItems.map((child) => {
                               const ChildIcon = child.icon;
                               const isChildActive = activeId === child.id;
+                              // 三级（模块 navItems）：按 NavGroup 标准顺序摊平展示；
+                              // 无三级项时不渲染展开箭头，避免“点了没反应”的空箭头
+                              const thirdItems = groupChildren(child.children ?? []).flatMap(
+                                (entry) => entry.items
+                              );
+                              const hasThird = thirdItems.length > 0;
+                              const thirdKey = `mod:${child.id}`;
+                              const thirdExpanded = expandedSubGroups.has(thirdKey);
+                              const hasActiveThird =
+                                hasThird && thirdItems.some((nav) => nav.id === activeId);
+                              const showChildActive = isChildActive || hasActiveThird;
                               return (
-                                <button
-                                  key={child.id}
-                                  type='button'
-                                  onClick={() => onItemClick?.(child.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--space-2)',
-                                    width: '100%',
-                                    height: '36px',
-                                    padding: '0 var(--space-3)',
-                                    backgroundColor: isChildActive
-                                      ? 'var(--bg-hover)'
-                                      : 'transparent',
-                                    border: 'none',
-                                    borderRadius: 'var(--radius-sm)',
-                                    color: isChildActive
-                                      ? 'var(--accent-primary)'
-                                      : 'var(--text-secondary)',
-                                    fontSize: 'var(--text-sm)',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    transition: 'all var(--duration-fast) var(--ease-out)',
-                                  }}
-                                >
-                                  <ChildIcon
-                                    size={16}
-                                    className={styles.il4}
-                                  />
-                                  <span className={styles.il5}>{child.label}</span>
-                                </button>
+                                <div key={child.id}>
+                                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <button
+                                      type='button'
+                                      onClick={() => onItemClick?.(child.id)}
+                                      aria-current={isChildActive ? 'page' : undefined}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--space-2)',
+                                        flex: 1,
+                                        minWidth: 0,
+                                        height: '36px',
+                                        padding: '0 var(--space-3)',
+                                        backgroundColor: showChildActive
+                                          ? 'var(--bg-hover)'
+                                          : 'transparent',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius-sm)',
+                                        color: showChildActive
+                                          ? 'var(--accent-primary)'
+                                          : 'var(--text-secondary)',
+                                        fontSize: 'var(--text-sm)',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        transition: 'all var(--duration-fast) var(--ease-out)',
+                                      }}
+                                    >
+                                      <ChildIcon
+                                        size={16}
+                                        className={styles.il4}
+                                      />
+                                      <span className={styles.il5}>{child.label}</span>
+                                    </button>
+                                    {hasThird && (
+                                      <button
+                                        type='button'
+                                        onClick={() => toggleSubGroup(thirdKey)}
+                                        aria-expanded={thirdExpanded}
+                                        aria-label={`${child.label} ${
+                                          thirdExpanded
+                                            ? t('shared.tree_view.k1')
+                                            : t('shared.tree_view.k0')
+                                        }`}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          width: '24px',
+                                          height: '24px',
+                                          flexShrink: 0,
+                                          padding: 0,
+                                          background: 'transparent',
+                                          border: 'none',
+                                          borderRadius: 'var(--radius-sm)',
+                                          color: 'var(--text-tertiary)',
+                                          cursor: 'pointer',
+                                          transition: 'color var(--duration-fast) var(--ease-out)',
+                                        }}
+                                      >
+                                        {thirdExpanded ? (
+                                          <ChevronDown size={14} />
+                                        ) : (
+                                          <ChevronRight size={14} />
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {hasThird && thirdExpanded && (
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 'var(--space-0-5)',
+                                        marginLeft: '12px',
+                                        paddingLeft: '10px',
+                                        borderLeft: '1px solid var(--border-default)',
+                                      }}
+                                    >
+                                      {thirdItems.map((nav) => {
+                                        const NavIcon = nav.icon;
+                                        const isNavActive = activeId === nav.id;
+                                        return (
+                                          <button
+                                            key={nav.id}
+                                            type='button'
+                                            onClick={() => onItemClick?.(nav.id)}
+                                            aria-current={isNavActive ? 'page' : undefined}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 'var(--space-2)',
+                                              width: '100%',
+                                              height: '32px',
+                                              padding: '0 var(--space-3)',
+                                              backgroundColor: isNavActive
+                                                ? 'var(--bg-hover)'
+                                                : 'transparent',
+                                              border: 'none',
+                                              borderRadius: 'var(--radius-sm)',
+                                              color: isNavActive
+                                                ? 'var(--accent-primary)'
+                                                : 'var(--text-tertiary)',
+                                              fontSize: 'var(--text-xs)',
+                                              cursor: 'pointer',
+                                              textAlign: 'left',
+                                              transition:
+                                                'all var(--duration-fast) var(--ease-out)',
+                                            }}
+                                          >
+                                            <NavIcon
+                                              size={14}
+                                              className={styles.il4}
+                                            />
+                                            <span className={styles.il5}>{nav.label}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               );
                             })}
                         </div>

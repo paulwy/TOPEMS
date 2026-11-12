@@ -1,4 +1,4 @@
-const CACHE_NAME = 'topems-cache-v4';
+const CACHE_NAME = 'topems-cache-v5';
 const RUNTIME_CACHE = 'topems-runtime-v2';
 const API_CACHE = 'topems-api-v2';
 const IMAGE_CACHE = 'topems-images-v2';

@@ -141,6 +141,8 @@ function buildSidebarItems(
     );
     const children = navigationRegistryV2
       .getSidebarNavItems(moduleItem.code, checkPermission)
+      // P2-2 同口径：dashboard 入口不占侧边栏三级菜单，模块按钮本身已指向模块首页
+      .filter((child) => !child.code.endsWith('-dashboard'))
       .filter((child) => {
         if (!dbMenus) return true;
         const dbItem = dbMenus.get(child.code);
@@ -275,12 +277,16 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
     [checkPermission, unreadCount, resourceVersion, dbMenus]
   );
 
-  // 根据当前路径计算激活的导航项（优先匹配子菜单，再匹配模块组）
+  // 根据当前路径计算激活的导航项（优先匹配三级，再二级，最后一级）
   const activeId = useMemo(() => {
     const allItems: { id: string; path?: string }[] = [];
     items.forEach((item) => {
       if (item.children) {
         item.children.forEach((child) => {
+          // 三级（模块 navItems）先入列，保证更深的路径优先命中原精确/前缀匹配
+          child.children?.forEach((grandchild) => {
+            allItems.push({ id: grandchild.id, path: grandchild.path });
+          });
           allItems.push({ id: child.id, path: child.path });
         });
       }
@@ -311,6 +317,10 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
       if (item.children) {
         item.children.forEach((child) => {
           allItems.push({ id: child.id, path: child.path });
+          // 三级 navItems 的 id 形如 `${moduleCode}:${navCode}`
+          child.children?.forEach((grandchild) => {
+            allItems.push({ id: grandchild.id, path: grandchild.path });
+          });
         });
       }
     });
