@@ -84,25 +84,20 @@ async fn list_inventory_movements(
         return e.0;
     }
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(match &claims.tenant_id {
-            Some(id) => match Uuid::parse_str(id) {
-                Ok(id) => id,
-                Err(_) => {
-                    return ApiResponse::from(TopemsError::AuthenticationFailed(
-                        "无效的租户ID".to_string(),
-                    ))
-                }
-            },
-            None => {
+    // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
+    let tenant_id: Option<Uuid> = Some(match &claims.tenant_id {
+        Some(id) => match Uuid::parse_str(id) {
+            Ok(id) => id,
+            Err(_) => {
                 return ApiResponse::from(TopemsError::AuthenticationFailed(
-                    "缺少租户ID".to_string(),
+                    "无效的租户ID".to_string(),
                 ))
             }
-        })
-    };
+        },
+        None => {
+            return ApiResponse::from(TopemsError::AuthenticationFailed("缺少租户ID".to_string()))
+        }
+    });
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -317,25 +312,20 @@ async fn get_inventory_movement(
         return e.0;
     }
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(match &claims.tenant_id {
-            Some(id) => match Uuid::parse_str(id) {
-                Ok(id) => id,
-                Err(_) => {
-                    return ApiResponse::from(TopemsError::AuthenticationFailed(
-                        "无效的租户ID".to_string(),
-                    ))
-                }
-            },
-            None => {
+    // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
+    let tenant_id: Option<Uuid> = Some(match &claims.tenant_id {
+        Some(id) => match Uuid::parse_str(id) {
+            Ok(id) => id,
+            Err(_) => {
                 return ApiResponse::from(TopemsError::AuthenticationFailed(
-                    "缺少租户ID".to_string(),
+                    "无效的租户ID".to_string(),
                 ))
             }
-        })
-    };
+        },
+        None => {
+            return ApiResponse::from(TopemsError::AuthenticationFailed("缺少租户ID".to_string()))
+        }
+    });
 
     let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
         "wms",

@@ -15,6 +15,7 @@ use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -243,13 +244,13 @@ pub async fn create_stock_take(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, StockTake>(
@@ -408,13 +409,13 @@ pub async fn update_stock_take(
         Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let existing = sqlx::query_as::<_, StockTake>(only_own_schema_query!(
@@ -541,13 +542,13 @@ pub async fn delete_stock_take(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -634,59 +635,93 @@ pub async fn start_stock_take(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
-
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
+    let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
-        Err(e) => return e,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let now = Utc::now();
+
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
-    let _ = sqlx::query(only_own_schema_query!(
+    // 状态类 0 行 → 409；不存在 → 404。
+    let started = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.stock_takes SET
             status = 'in_progress', actual_date = $1::date, updated_at = $1::timestamptz
-        WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2 AND tenant_id = $3 AND status = 'planned' AND deleted_at IS NULL
         "#
     ))
     .bind(now.date_naive())
     .bind(id)
-    .bind(tenant_filter)
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
+    match started {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let exists = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                "wms",
+                r#"SELECT id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+            ))
+            .bind(id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await;
+            let _ = scope.rollback().await;
+            return match exists {
+                Ok(Some(_)) => ApiResponse::conflict("盘点单当前状态不允许开始"),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))
+                }
+                Err(e) => {
+                    tracing::error!("查询盘点单失败: {}", e);
+                    ApiResponse::server_error("开始盘点失败")
+                }
+            };
+        }
+        Err(e) => {
+            tracing::error!("更新盘点单状态失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("开始盘点失败");
+        }
+    }
 
-    let warehouse_id_result = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+    let warehouse_id = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
         "wms",
-        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#
+        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
-    .fetch_one(&mut *tx)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
     .await;
+    let warehouse_id = match warehouse_id {
+        Ok(Some(warehouse_id)) => warehouse_id,
+        Ok(None) => None,
+        Err(e) => {
+            tracing::error!("查询盘点仓库失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("开始盘点失败");
+        }
+    };
 
-    if let Ok(warehouse_id) = warehouse_id_result {
-        let _ = sqlx::query(only_own_schema_query!(
+    if let Some(warehouse_id) = warehouse_id {
+        let seeded = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
             INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
@@ -698,27 +733,33 @@ pub async fn start_stock_take(
                    i.batch_number, i.location_id, i.quantity, i.unit,
                    i.quality_status, NOW(), NOW(), $3
             FROM wms.inventory i
-            WHERE i.warehouse_id = $2 AND i.deleted_at IS NULL
+            WHERE i.warehouse_id = $2 AND i.tenant_id = $3 AND i.deleted_at IS NULL
             "#
         ))
         .bind(id)
         .bind(warehouse_id)
-        // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-        .bind(if claims.is_superuser {
-            None
-        } else {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .execute(&mut *tx)
+        .bind(tenant)
+        .execute(&mut scope)
         .await;
+        if let Err(e) = seeded {
+            tracing::error!("生成盘点明细失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("生成盘点明细失败");
+        }
     }
 
-    if tx.commit().await.is_err() {
+    if let Err(e) = scope.commit().await {
+        tracing::error!("盘点事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("开始盘点失败".to_string()));
     }
+
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点只读作用域失败: {}", e);
+            return ApiResponse::server_error("开始盘点失败");
+        }
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -726,11 +767,12 @@ pub async fn start_stock_take(
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
                total_items, counted_items, discrepancy_items, remarks, created_at, updated_at
-        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     let (response, status_str, error_msg, response_data) = match result {
@@ -895,6 +937,11 @@ pub async fn create_stock_take_item(
     let request_data = serde_json::to_value(&req).ok();
     let item_id = Uuid::new_v4();
     let now = Utc::now();
+    // 盘点明细必须落明确租户，禁止再写 NULL（NULL 行对所有租户可见）。
+    let item_tenant = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let variance = if let Some(actual) = req.actual_quantity {
         Some(actual - req.expected_quantity)
@@ -944,12 +991,7 @@ pub async fn create_stock_take_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    .bind(if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
-    })
+    .bind(item_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1018,81 +1060,123 @@ pub async fn create_stock_take_item(
 pub async fn count_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Path(_id): Path<Uuid>,
-    _headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(items): Json<Vec<CountItemRequest>>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let _request_data = serde_json::to_value(&items).ok();
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let now = Utc::now();
 
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
-        Ok(t) => t,
-        Err(e) => return e,
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点计数事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
     for item in &items {
-        let system_qty_result = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
+        if item.counted_quantity < 0.0 {
+            let _ = scope.rollback().await;
+            return ApiResponse::bad_request(&format!("实盘数量不能为负（明细 {}）", item.item_id));
+        }
+
+        // 明细必须属于本盘点单且同租户：0 行 → 404，绝不跨单/跨租户写入。
+        let system_qty = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
             "wms",
-            r#"SELECT system_quantity::float8 FROM wms.stock_take_items WHERE id = $1"#
+            r#"
+            SELECT system_quantity::float8 FROM wms.stock_take_items
+            WHERE id = $1 AND stock_take_id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+            FOR UPDATE
+            "#
         ))
         .bind(item.item_id)
-        .fetch_one(&mut *tx)
+        .bind(id)
+        .bind(tenant)
+        .fetch_optional(&mut scope)
         .await;
 
-        if let Ok(system_qty) = system_qty_result {
-            let discrepancy = item.counted_quantity - system_qty;
-            let discrepancy_type = if discrepancy > 0.0 {
-                "over"
-            } else if discrepancy < 0.0 {
-                "under"
-            } else {
-                "none"
-            };
+        let system_qty = match system_qty {
+            Ok(Some(v)) => v,
+            Ok(None) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::not_found(&format!(
+                    "盘点明细不存在或不属于该盘点单: {}",
+                    item.item_id
+                ));
+            }
+            Err(e) => {
+                tracing::error!("查询盘点明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("盘点计数失败");
+            }
+        };
 
-            let _ = sqlx::query(only_own_schema_query!(
-                "wms",
-                r#"
-                UPDATE wms.stock_take_items SET
-                    counted_quantity = $1,
-                    discrepancy_quantity = $2,
-                    discrepancy_type = $3,
-                    discrepancy_reason = $4,
-                    notes = $5,
-                    counting_time = $6,
-                    updated_at = $6
-                WHERE id = $7 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-                "#
-            ))
-            .bind(item.counted_quantity)
-            .bind(discrepancy)
-            .bind(discrepancy_type)
-            .bind(&item.discrepancy_reason)
-            .bind(&item.remarks)
-            .bind(now)
-            .bind(item.item_id)
-            .execute(&mut *tx)
-            .await;
+        let discrepancy = item.counted_quantity - system_qty;
+        let discrepancy_type = if discrepancy > 0.0 {
+            "over"
+        } else if discrepancy < 0.0 {
+            "under"
+        } else {
+            "none"
+        };
+
+        let updated = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.stock_take_items SET
+                counted_quantity = $1,
+                discrepancy_quantity = $2,
+                discrepancy_type = $3,
+                discrepancy_reason = $4,
+                notes = $5,
+                counting_time = $6,
+                updated_at = $6
+            WHERE id = $7 AND stock_take_id = $8 AND tenant_id = $9 AND deleted_at IS NULL
+            "#
+        ))
+        .bind(item.counted_quantity)
+        .bind(discrepancy)
+        .bind(discrepancy_type)
+        .bind(&item.discrepancy_reason)
+        .bind(&item.remarks)
+        .bind(now)
+        .bind(item.item_id)
+        .bind(id)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match updated {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!("盘点明细状态已变化: {}", item.item_id));
+            }
+            Err(e) => {
+                tracing::error!("更新盘点明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("盘点计数失败");
+            }
         }
     }
 
-    if tx.commit().await.is_err() {
+    if let Err(e) = scope.commit().await {
+        tracing::error!("盘点计数事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("盘点计数失败".to_string()));
     }
 
@@ -1424,33 +1508,27 @@ pub async fn complete_stock_take(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
-
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
+    let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
-        Err(e) => return e,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let now = Utc::now();
+
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
     let stats_result = sqlx::query(
@@ -1463,24 +1541,64 @@ pub async fn complete_stock_take(
             SUM(counted_quantity)::float8 as counted_quantity,
             SUM(CASE WHEN discrepancy_type IS NOT NULL THEN discrepancy_quantity ELSE 0 END)::float8 as discrepancy_quantity
         FROM wms.stock_take_items
-        WHERE stock_take_id = $1 AND deleted_at IS NULL
+        WHERE stock_take_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#),
     )
     .bind(id)
-    .fetch_one(&mut *tx)
+    .bind(tenant)
+    .fetch_one(&mut scope)
     .await;
 
     let (total_items, counted_items, discrepancy_items, total_qty, counted_qty, discrepancy_qty) =
         match stats_result {
-            Ok(r) => (
-                r.try_get::<i64, _>("total_items").unwrap_or(0),
-                r.try_get::<i64, _>("counted_items").unwrap_or(0),
-                r.try_get::<i64, _>("discrepancy_items").unwrap_or(0),
-                r.try_get::<f64, _>("total_quantity").unwrap_or(0.0),
-                r.try_get::<f64, _>("counted_quantity").unwrap_or(0.0),
-                r.try_get::<f64, _>("discrepancy_quantity").unwrap_or(0.0),
-            ),
-            Err(_) => (0, 0, 0, 0.0, 0.0, 0.0),
+            Ok(r) => {
+                let total_items = match r.try_get::<i64, _>("total_items") {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::error!("读取盘点统计失败: {}", e);
+                        let _ = scope.rollback().await;
+                        return ApiResponse::server_error("完成盘点失败");
+                    }
+                };
+                let counted_items = match r.try_get::<i64, _>("counted_items") {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::error!("读取盘点统计失败: {}", e);
+                        let _ = scope.rollback().await;
+                        return ApiResponse::server_error("完成盘点失败");
+                    }
+                };
+                let discrepancy_items = match r.try_get::<i64, _>("discrepancy_items") {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::error!("读取盘点统计失败: {}", e);
+                        let _ = scope.rollback().await;
+                        return ApiResponse::server_error("完成盘点失败");
+                    }
+                };
+                (
+                    total_items,
+                    counted_items,
+                    discrepancy_items,
+                    r.try_get::<Option<f64>, _>("total_quantity")
+                        .ok()
+                        .flatten()
+                        .unwrap_or(0.0),
+                    r.try_get::<Option<f64>, _>("counted_quantity")
+                        .ok()
+                        .flatten()
+                        .unwrap_or(0.0),
+                    r.try_get::<Option<f64>, _>("discrepancy_quantity")
+                        .ok()
+                        .flatten()
+                        .unwrap_or(0.0),
+                )
+            }
+            Err(e) => {
+                tracing::error!("统计盘点明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("完成盘点失败");
+            }
         };
 
     let accuracy_rate = if total_items > 0 {
@@ -1489,7 +1607,7 @@ pub async fn complete_stock_take(
         0.0
     };
 
-    let _ = sqlx::query(only_own_schema_query!(
+    let updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.stock_takes SET
@@ -1502,7 +1620,8 @@ pub async fn complete_stock_take(
             discrepancy_quantity = $6,
             accuracy_rate = $7,
             updated_at = $8
-        WHERE id = $9 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
+        WHERE id = $9 AND tenant_id = $10 AND deleted_at IS NULL
+          AND status NOT IN ('completed', 'cancelled')
         "#
     ))
     .bind(total_items)
@@ -1514,13 +1633,51 @@ pub async fn complete_stock_take(
     .bind(accuracy_rate)
     .bind(now)
     .bind(id)
-    .bind(tenant_filter)
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
+    match updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let exists = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                "wms",
+                r#"SELECT id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+            ))
+            .bind(id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await;
+            let _ = scope.rollback().await;
+            return match exists {
+                Ok(Some(_)) => ApiResponse::conflict("盘点单当前状态不允许完成"),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))
+                }
+                Err(e) => {
+                    tracing::error!("查询盘点单失败: {}", e);
+                    ApiResponse::server_error("完成盘点失败")
+                }
+            };
+        }
+        Err(e) => {
+            tracing::error!("更新盘点单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("完成盘点失败");
+        }
+    }
 
-    if tx.commit().await.is_err() {
+    if let Err(e) = scope.commit().await {
+        tracing::error!("完成盘点事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("完成盘点失败".to_string()));
     }
+
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点只读作用域失败: {}", e);
+            return ApiResponse::server_error("完成盘点失败");
+        }
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1530,11 +1687,12 @@ pub async fn complete_stock_take(
                total_items, counted_items, discrepancy_items, total_quantity, counted_quantity,
                discrepancy_quantity, discrepancy_value, accuracy_rate,
                approval_status, adjustment_status, remarks, created_at, updated_at
-        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     let (response, status_str, error_msg, response_data) = match result {
@@ -1600,87 +1758,160 @@ pub async fn adjust_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
-
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
+    let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
-        Err(e) => return e,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let now = Utc::now();
+
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启盘点调整事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
-    let discrepancies = sqlx::query(only_own_schema_query!(
+    let organization_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT organization_id FROM wms.stock_takes
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        "#
+    ))
+    .bind(id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await;
+    let organization_id = match organization_id {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()));
+        }
+        Err(e) => {
+            tracing::error!("查询盘点单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("库存调整失败");
+        }
+    };
+
+    let discrepancies = sqlx::query_as::<_, (String, Option<String>, f64)>(only_own_schema_query!(
         "wms",
         r#"
         SELECT material_code, batch_number, discrepancy_quantity::float8
         FROM wms.stock_take_items
-        WHERE stock_take_id = $1 AND discrepancy_type != 'none' AND discrepancy_type IS NOT NULL
+        WHERE stock_take_id = $1 AND tenant_id = $2
+          AND discrepancy_type != 'none' AND discrepancy_type IS NOT NULL
           AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .fetch_all(&mut *tx)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
-    if let Ok(items) = discrepancies {
-        for item in items {
-            let material_code: String = item.try_get("material_code").unwrap_or_default();
-            let batch_number: Option<String> = item.try_get("batch_number").ok();
-            let discrepancy_qty: f64 = item.try_get("discrepancy_quantity").unwrap_or(0.0);
+    let discrepancies = match discrepancies {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询盘点差异失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("库存调整失败");
+        }
+    };
 
-            if discrepancy_qty != 0.0 {
-                let _ = sqlx::query(only_own_schema_query!(
-                    "wms",
-                    r#"
-                    UPDATE wms.inventory SET
-                        quantity = quantity + $1,
-                        available_quantity = available_quantity + $1,
-                        updated_at = $2
-                    WHERE organization_id = (SELECT organization_id FROM wms.stock_take_items WHERE stock_take_id = $6 AND deleted_at IS NULL LIMIT 1)
-                      AND material_code = $3
-                      AND ($4::text IS NULL OR batch_number = $4)
-                      AND deleted_at IS NULL
-                      AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
-                    "#
-                ))
-                .bind(discrepancy_qty)
-                .bind(now)
-                .bind(&material_code)
-                .bind(batch_number)
-                .bind(tenant_filter)
-                .bind(id)
-                .execute(&mut *tx)
-                .await;
+    for (material_code, batch_number, discrepancy_qty) in discrepancies {
+        if discrepancy_qty == 0.0 {
+            continue;
+        }
+
+        // 一次只锁一行（带批次则精确到批次；无批次按最早到期取一行），
+        // 杜绝「同物料多批次各加一次差异」。
+        let stock_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"
+            SELECT id FROM wms.inventory
+            WHERE organization_id = $1
+              AND material_code = $2
+              AND tenant_id = $3
+              AND deleted_at IS NULL
+              AND ($4::varchar IS NULL OR batch_number = $4::varchar)
+            ORDER BY expiry_date NULLS LAST, created_at, id
+            LIMIT 1
+            FOR UPDATE
+            "#
+        ))
+        .bind(organization_id)
+        .bind(&material_code)
+        .bind(tenant)
+        .bind(batch_number.as_deref())
+        .fetch_optional(&mut scope)
+        .await;
+        let stock_id = match stock_id {
+            Ok(Some(v)) => v,
+            Ok(None) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!(
+                    "物料 {} 批次 {:?} 的库存行不存在，无法调整",
+                    material_code, batch_number
+                ));
+            }
+            Err(e) => {
+                tracing::error!("锁定库存行失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("库存调整失败");
+            }
+        };
+
+        let adjusted = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.inventory SET
+                quantity = quantity + $2,
+                available_quantity = available_quantity + $2,
+                updated_at = $3
+            WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+              AND available_quantity + $2 >= 0
+            "#
+        ))
+        .bind(stock_id)
+        .bind(discrepancy_qty)
+        .bind(now)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match adjusted {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!(
+                    "物料 {} 调整后库存将为负，已拒绝",
+                    material_code
+                ));
+            }
+            Err(e) => {
+                tracing::error!("调整库存失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("库存调整失败");
             }
         }
     }
 
-    let _ = sqlx::query(only_own_schema_query!(
+    let updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.stock_takes SET
@@ -1688,16 +1919,29 @@ pub async fn adjust_stock_take(
             adjusted_by = 'system',
             adjustment_date = $1::date,
             updated_at = $1::timestamptz
-        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
         "#
     ))
     .bind(now.date_naive())
     .bind(id)
-    .bind(tenant_filter)
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
+    match updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("盘点单状态已变化，调整未生效");
+        }
+        Err(e) => {
+            tracing::error!("更新盘点单调整状态失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("库存调整失败");
+        }
+    }
 
-    if tx.commit().await.is_err() {
+    if let Err(e) = scope.commit().await {
+        tracing::error!("库存调整事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()));
     }
 
@@ -1761,7 +2005,7 @@ pub async fn start_stock_take_approval(
             if !crate::shared::fsm::stock_take_requires_approval(&current_status, "completed") {
                 return ApiResponse::bad_request("当前状态无需审批");
             }
-            let _ = crate::models::audit_log::log_approval_event(
+            if let Err(e) = crate::models::audit_log::log_approval_event(
                 &mut **txn,
                 &tenant_id.to_string(),
                 "stock_take",
@@ -1772,7 +2016,10 @@ pub async fn start_stock_take_approval(
                 &current_status,
                 req.comment.as_deref(),
             )
-            .await;
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
             ApiResponse::success(
                 serde_json::json!({"status": current_status, "approval_started": true}),
                 "审批启动成功",
@@ -1844,7 +2091,7 @@ pub async fn approve_stock_take(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "stock_take",
@@ -1855,7 +2102,10 @@ pub async fn approve_stock_take(
                         "completed",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
@@ -1927,7 +2177,7 @@ pub async fn reject_stock_take(
             if current_status != "in_progress" {
                 return ApiResponse::bad_request("当前状态不允许驳回返工");
             }
-            let _ = crate::models::audit_log::log_approval_event(
+            if let Err(e) = crate::models::audit_log::log_approval_event(
                 &mut **txn,
                 &tenant_id.to_string(),
                 "stock_take",
@@ -1938,7 +2188,10 @@ pub async fn reject_stock_take(
                 &current_status,
                 req.comment.as_deref(),
             )
-            .await;
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
             ApiResponse::success(
                 serde_json::json!({"id": id, "status": current_status, "rework": true}),
                 "审批驳回，需重新盘点(rework)",

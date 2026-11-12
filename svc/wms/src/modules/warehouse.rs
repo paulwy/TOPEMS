@@ -21,37 +21,6 @@ use topems_shared_event::event::{
     commit_retry, CacheInvalidatedPayload, EventPublisher, EventType,
 };
 
-/// by-id 读的租户回退：请求未携带租户上下文时，从目标仓库行解析租户。
-///
-/// 仅用于读路径；写路径必须由 [`require_tenant`] 严格返回 400，禁止回退。
-/// 仓库允许公共行（`tenant_id IS NULL`，超管创建），因此返回 `Option<Uuid>`。
-async fn warehouse_tenant_by_id(
-    txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-    id: &Uuid,
-) -> Result<Option<Uuid>, TopemsError> {
-    let tenant = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
-        "wms",
-        "SELECT tenant_id FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL"
-    ))
-    .bind(id)
-    .fetch_optional(&mut **txn)
-    .await
-    .map_err(|e| TopemsError::internal("查询仓库租户失败", e))?
-    .ok_or_else(|| TopemsError::ResourceNotFound("仓库不存在".to_string()))?;
-
-    // 语义显式化：知道 id 即可按行回退租户读取（用户已批准的 by-id 读语义），
-    // 必须逐次留痕，不能作为隐含行为。
-    tracing::info!(
-        event = "tenant_by_id_fallback",
-        resource = "wms.warehouses",
-        resource_id = %id,
-        tenant_id = ?tenant,
-        "请求缺少租户上下文，按资源行回退租户（审计留痕）"
-    );
-
-    Ok(tenant)
-}
-
 /// D6：发布 CacheInvalidated（缓存失效）；失败入 Redis ZSET 重试队列。
 /// 缓存失效为 best-effort（下游 TTL 自愈），但仍走统一重试兜底。
 async fn publish_cache_invalidated_with_retry(
@@ -151,13 +120,9 @@ pub async fn list_warehouses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match require_tenant(&claims, &headers) {
-            Ok(tenant) => Some(tenant),
-            Err((code, msg)) => return ApiResponse::error(code, &msg),
-        }
+    let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
+        Ok(t) => Some(t),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let cache_key = warehouse_list_cache_key(
@@ -269,13 +234,9 @@ pub async fn create_warehouse(
     // 租户绑定对齐新惯例（与 mobile sync-policy v3 同款）：超管→SQL NULL（公共行，
     // 命中 RLS `tenant_id IS NULL` 分支），普通用户→claims.tenant_id。organization_id
     // 为业务 NOT NULL 列，保持单租户默认值不动。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match require_tenant(&claims, &headers) {
-            Ok(tenant) => Some(tenant),
-            Err((code, msg)) => return ApiResponse::error(code, &msg),
-        }
+    let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
+        Ok(t) => Some(t),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let result = sqlx::query_as::<_, Warehouse>(
@@ -389,16 +350,11 @@ pub async fn get_warehouse(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match require_tenant(&claims, &headers) {
-            Ok(tenant) => Some(tenant),
-            Err(_) => match warehouse_tenant_by_id(txn, &id).await {
-                Ok(tenant) => tenant,
-                Err(e) => return ApiResponse::from(e),
-            },
-        }
+    // 租户严格取自请求上下文（超管的 x-tenant-id 已由中间件写入 claims）。
+    // 不再对超管降级成 NULL，也不再用行内 tenant 兜底掩盖缺少租户。
+    let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
+        Ok(tenant) => Some(tenant),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let cache_key = warehouse_cache_key(
         &tenant_id,
@@ -473,13 +429,9 @@ pub async fn update_warehouse(
     };
     let request_data = serde_json::to_value(&req).ok();
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match require_tenant(&claims, &headers) {
-            Ok(tenant) => Some(tenant),
-            Err((code, msg)) => return ApiResponse::error(code, &msg),
-        }
+    let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
+        Ok(t) => Some(t),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let existing = sqlx::query_as::<_, Warehouse>(
@@ -624,13 +576,9 @@ pub async fn delete_warehouse(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        match require_tenant(&claims, &headers) {
-            Ok(tenant) => Some(tenant),
-            Err((code, msg)) => return ApiResponse::error(code, &msg),
-        }
+    let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
+        Ok(t) => Some(t),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let result = sqlx::query(

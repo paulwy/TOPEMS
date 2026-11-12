@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::models::transfer_order::*;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -141,6 +142,7 @@ pub async fn list_transfers(
 pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -158,11 +160,10 @@ pub async fn create_transfer(
     let id = Uuid::new_v4();
     let order_number = format!("TF{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
     let now = Utc::now();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -202,7 +203,7 @@ pub async fn create_transfer(
                     .unit_price
                     .map(|p| p * rust_decimal::Decimal::from(item.planned_quantity));
 
-                let _ = sqlx::query(
+                let inserted = sqlx::query(
                     only_own_schema_query!("wms", r#"
                     INSERT INTO wms.transfer_order_items (
                         id, transfer_id, line_number, sku, material_name, specification,
@@ -235,17 +236,34 @@ pub async fn create_transfer(
                 .execute(&mut **txn)
                 .await;
 
+                if let Err(e) = inserted {
+                    tracing::error!("写入调拨明细失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "创建调拨单失败：明细写入失败".to_string(),
+                    ));
+                }
+
                 line_number += 1;
             }
 
-            let total_qty = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            let total_qty = sqlx::query_scalar::<_, Option<i64>>(only_own_schema_query!(
                 "wms",
-                "SELECT SUM(planned_quantity) FROM wms.transfer_order_items WHERE transfer_id = $1"
+                "SELECT SUM(planned_quantity) FROM wms.transfer_order_items WHERE transfer_id = $1 AND tenant_id = $2"
             ))
             .bind(id)
+            .bind(tenant_id)
             .fetch_one(&mut **txn)
-            .await
-            .unwrap_or(0);
+            .await;
+            let total_qty = match total_qty {
+                Ok(Some(v)) => v,
+                Ok(None) => 0,
+                Err(e) => {
+                    tracing::error!("汇总调拨明细数量失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "创建调拨单失败：汇总明细失败".to_string(),
+                    ));
+                }
+            };
 
             transfer.total_quantity = Some(total_qty);
 
@@ -401,13 +419,13 @@ pub async fn update_transfer(
     };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
@@ -512,13 +530,13 @@ pub async fn delete_transfer(
             return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -594,13 +612,13 @@ pub async fn confirm_transfer(
     };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
@@ -648,74 +666,327 @@ pub async fn confirm_transfer(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn ship_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<TransferOrder> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
             return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
-
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启调拨发货事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
-    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+    let order: Option<(String, Uuid)> = match sqlx::query_as(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT status, from_warehouse_id FROM wms.transfer_orders
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FOR UPDATE
+        "#
+    ))
+    .bind(transfer_id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("锁定调拨单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+        }
+    };
+    let (status, from_warehouse_id) = match order {
+        Some(v) => v,
+        None => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()));
+        }
+    };
+    if status != "confirmed" {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict(&format!("调拨单当前状态不允许发货: {}", status));
+    }
+
+    // D1：发货真正扣减来源仓库存（带行锁，一次只锁一行）。
+    let organization_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "wms",
+        r#"SELECT organization_id FROM wms.warehouses WHERE id = $1 AND tenant_id = $2"#
+    ))
+    .bind(from_warehouse_id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await;
+    let organization_id = match organization_id {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("来源仓库不存在，无法发货");
+        }
+        Err(e) => {
+            tracing::error!("查询来源仓库失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+        }
+    };
+
+    let items: Vec<(Uuid, String, String, Option<String>, i64, Option<Uuid>)> =
+        match sqlx::query_as(only_own_schema_query!(
+            "wms",
+            r#"
+            SELECT id, sku, material_name, batch_number, planned_quantity, from_location_id
+            FROM wms.transfer_order_items
+            WHERE transfer_id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status = 'pending'
+            ORDER BY line_number
+            "#
+        ))
+        .bind(transfer_id)
+        .bind(tenant)
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询调拨明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+            }
+        };
+    if items.is_empty() {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict("调拨单没有待发货明细");
+    }
+
+    for (item_id, sku, material_name, batch_number, planned, from_location_id) in items {
+        let stock_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"
+            SELECT id FROM wms.inventory
+            WHERE organization_id = $1
+              AND warehouse_id = $2
+              AND tenant_id = $3
+              AND material_code = $4
+              AND deleted_at IS NULL
+              AND ($5::varchar IS NULL OR batch_number = $5::varchar)
+              AND ($6::uuid IS NULL OR location_id = $6::uuid)
+              AND available_quantity >= $7
+            ORDER BY expiry_date NULLS LAST, created_at, id
+            LIMIT 1
+            FOR UPDATE
+            "#
+        ))
+        .bind(organization_id)
+        .bind(from_warehouse_id)
+        .bind(tenant)
+        .bind(&sku)
+        .bind(batch_number.as_deref())
+        .bind(from_location_id)
+        .bind(planned)
+        .fetch_optional(&mut scope)
+        .await;
+        let stock_id = match stock_id {
+            Ok(Some(v)) => v,
+            Ok(None) => {
+                tracing::warn!(
+                    "调拨发货可用库存不足: sku={}, batch={:?}, 需={}",
+                    sku,
+                    batch_number,
+                    planned
+                );
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::BusinessLogic(format!(
+                    "可用库存不足，无法调拨发货（物料 {}，需 {}）",
+                    sku, planned
+                )));
+            }
+            Err(e) => {
+                tracing::error!("锁定库存行失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+            }
+        };
+
+        let deducted = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.inventory SET
+                quantity = quantity - $2,
+                available_quantity = available_quantity - $2,
+                updated_at = $3
+            WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL AND available_quantity >= $2
+            "#
+        ))
+        .bind(stock_id)
+        .bind(planned)
+        .bind(now)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match deducted {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                tracing::error!("调拨扣减 0 行（已锁行）: stock_id={}", stock_id);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+            }
+            Err(e) => {
+                tracing::error!("调拨扣减库存失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+            }
+        }
+
+        let item_updated = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.transfer_order_items SET
+                shipped_quantity = planned_quantity,
+                status = 'shipped',
+                updated_at = $2
+            WHERE id = $1 AND transfer_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'pending'
+            "#
+        ))
+        .bind(item_id)
+        .bind(now)
+        .bind(transfer_id)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match item_updated {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!("调拨明细状态已变化: {}", item_id));
+            }
+            Err(e) => {
+                tracing::error!("更新调拨明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+            }
+        }
+
+        let movement = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            INSERT INTO wms.inventory_movements (
+                id, movement_no, tenant_id, movement_type, reference_id, reference_type,
+                material_id, material_code, material_name, quantity,
+                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
+                status, performed_at, notes, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, 'transfer_out', $4, 'transfer_order',
+                NULL, $5, $6, $7,
+                $8, NULL, $9, NULL,
+                'completed', $10, $11, $10, $10
+            )
+            "#
+        ))
+        .bind(Uuid::new_v4())
+        .bind(movement_no(now))
+        .bind(tenant)
+        .bind(transfer_id.to_string())
+        .bind(&sku)
+        .bind(&material_name)
+        .bind(planned as f64)
+        .bind(from_location_id)
+        .bind(from_warehouse_id)
+        .bind(now)
+        .bind(format!("调拨出库：单 {}", transfer_id))
+        .execute(&mut scope)
+        .await;
+        if let Err(e) = movement {
+            tracing::error!("调拨出库 movement 写入失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+        }
+    }
+
+    let order_updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'shipped',
             shipped_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'confirmed' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
-        RETURNING *
+        WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'confirmed'
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .bind(tenant_filter)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .execute(&mut scope)
+    .await;
+    match order_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("调拨单状态已变化，发货未生效");
+        }
+        Err(e) => {
+            tracing::error!("更新调拨单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+        }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("调拨发货事务提交失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+    }
+
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启调拨只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
+        }
+    };
+
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT * FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        "#
+    ))
+    .bind(transfer_id)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     match result {
-        Ok(transfer) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(transfer, "发货成功")
-        }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在或状态不正确".to_string(),
-        )),
+        Ok(transfer) => ApiResponse::success(transfer, "发货成功"),
         Err(e) => {
-            tracing::error!("发货失败: {}", e);
+            tracing::error!("读取调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("发货失败".to_string()))
         }
     }
@@ -728,105 +999,341 @@ pub async fn ship_transfer(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn receive_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<TransferOrder> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
             return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
-
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启调拨收货事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
-    if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
-        for item in items {
-            let item_id_str = item.get("item_id").and_then(|v| v.as_str()).unwrap_or("");
-            let received_qty = item
-                .get("received_quantity")
-                .and_then(|v| v.as_i64())
-                .unwrap_or(0);
+    let order: Option<(String, Uuid)> = match sqlx::query_as(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT status, to_warehouse_id FROM wms.transfer_orders
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FOR UPDATE
+        "#
+    ))
+    .bind(transfer_id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("锁定调拨单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+        }
+    };
+    let (status, to_warehouse_id) = match order {
+        Some(v) => v,
+        None => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()));
+        }
+    };
+    if status != "shipped" {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict(&format!("调拨单当前状态不允许收货: {}", status));
+    }
 
-            if let Ok(item_id) = Uuid::parse_str(item_id_str) {
-                let _ = sqlx::query(
-                    only_own_schema_query!("wms", r#"
-                    UPDATE wms.transfer_order_items SET
-                        received_quantity = received_quantity + $1,
-                        status = CASE WHEN received_quantity + $1 >= planned_quantity THEN 'completed' ELSE 'partial' END,
-                        updated_at = $2
-                    WHERE id = $3 AND transfer_id = $4
-                      AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
-                    "#),
-                )
-                .bind(received_qty)
-                .bind(now)
-                .bind(item_id)
-                .bind(transfer_id)
-                .bind(tenant_filter)
-                .execute(&mut **txn)
-                .await;
+    let organization_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "wms",
+        r#"SELECT organization_id FROM wms.warehouses WHERE id = $1 AND tenant_id = $2"#
+    ))
+    .bind(to_warehouse_id)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await;
+    let organization_id = match organization_id {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("目的仓库不存在，无法收货");
+        }
+        Err(e) => {
+            tracing::error!("查询目的仓库失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+        }
+    };
+
+    // 解析请求明细；格式非法直接 400，不静默跳过。
+    let payload_items = match data.get("items").and_then(|v| v.as_array()) {
+        Some(v) if !v.is_empty() => v,
+        Some(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::bad_request("收货明细不能为空");
+        }
+        None => {
+            let _ = scope.rollback().await;
+            return ApiResponse::bad_request("缺少 items 收货明细");
+        }
+    };
+
+    for item in payload_items {
+        let item_id = match item
+            .get("item_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+        {
+            Some(v) => v,
+            None => {
+                let _ = scope.rollback().await;
+                return ApiResponse::bad_request("收货明细 item_id 非法");
             }
+        };
+        let received_qty = match item.get("received_quantity").and_then(|v| v.as_i64()) {
+            Some(v) if v > 0 => v,
+            _ => {
+                let _ = scope.rollback().await;
+                return ApiResponse::bad_request(&format!(
+                    "收货数量必须为正整数（明细 {}）",
+                    item_id
+                ));
+            }
+        };
+
+        let line: Option<(String, String, Option<String>, i64, i64, Option<Uuid>)> =
+            match sqlx::query_as(only_own_schema_query!(
+                "wms",
+                r#"
+                SELECT sku, material_name, batch_number, planned_quantity, received_quantity, to_location_id
+                FROM wms.transfer_order_items
+                WHERE id = $1 AND transfer_id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+                FOR UPDATE
+                "#
+            ))
+            .bind(item_id)
+            .bind(transfer_id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("锁定调拨明细失败: {}", e);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+                }
+            };
+        let (sku, material_name, batch_number, planned, already_received, to_location_id) =
+            match line {
+                Some(v) => v,
+                None => {
+                    let _ = scope.rollback().await;
+                    return ApiResponse::not_found(&format!(
+                        "调拨明细不存在或不属于该调拨单: {}",
+                        item_id
+                    ));
+                }
+            };
+        if already_received + received_qty > planned {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict(&format!(
+                "收货数量超出计划：明细 {} 计划 {} 已收 {} 本次 {}",
+                item_id, planned, already_received, received_qty
+            ));
+        }
+
+        // D1：收货真正增加目的仓库存（按 org+物料+批次 upsert，带租户）。
+        let upserted = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            INSERT INTO wms.inventory (organization_id, warehouse_id, location_id,
+                                      material_code, material_name, specification,
+                                      batch_number, quantity, unit, available_quantity,
+                                      quality_status, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, '件', $7, 'qualified', $8, $8, $9)
+            ON CONFLICT (organization_id, material_code, batch_number) DO UPDATE SET
+                quantity = wms.inventory.quantity + $7,
+                available_quantity = wms.inventory.available_quantity + $7,
+                updated_at = $8
+            WHERE wms.inventory.tenant_id = $9 AND wms.inventory.deleted_at IS NULL
+            "#
+        ))
+        .bind(organization_id)
+        .bind(to_warehouse_id)
+        .bind(to_location_id)
+        .bind(&sku)
+        .bind(&material_name)
+        .bind(batch_number.as_deref())
+        .bind(received_qty)
+        .bind(now)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match upserted {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                tracing::error!("调拨收货库存写入 0 行: item_id={}", item_id);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("收货库存写入失败".to_string()));
+            }
+            Err(e) => {
+                tracing::error!("调拨收货库存写入失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("收货库存写入失败".to_string()));
+            }
+        }
+
+        let item_updated = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            UPDATE wms.transfer_order_items SET
+                received_quantity = received_quantity + $1,
+                status = CASE WHEN received_quantity + $1 >= planned_quantity THEN 'completed' ELSE 'partial' END,
+                updated_at = $2
+            WHERE id = $3 AND transfer_id = $4 AND tenant_id = $5 AND deleted_at IS NULL
+            "#
+        ))
+        .bind(received_qty)
+        .bind(now)
+        .bind(item_id)
+        .bind(transfer_id)
+        .bind(tenant)
+        .execute(&mut scope)
+        .await;
+        match item_updated {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!("调拨明细状态已变化: {}", item_id));
+            }
+            Err(e) => {
+                tracing::error!("更新调拨明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+            }
+        }
+
+        let movement = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            INSERT INTO wms.inventory_movements (
+                id, movement_no, tenant_id, movement_type, reference_id, reference_type,
+                material_id, material_code, material_name, quantity,
+                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
+                status, performed_at, notes, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, 'transfer_in', $4, 'transfer_order',
+                NULL, $5, $6, $7,
+                NULL, $8, NULL, $9,
+                'completed', $10, $11, $10, $10
+            )
+            "#
+        ))
+        .bind(Uuid::new_v4())
+        .bind(movement_no(now))
+        .bind(tenant)
+        .bind(transfer_id.to_string())
+        .bind(&sku)
+        .bind(&material_name)
+        .bind(received_qty as f64)
+        .bind(to_location_id)
+        .bind(to_warehouse_id)
+        .bind(now)
+        .bind(format!("调拨入库：单 {}", transfer_id))
+        .execute(&mut scope)
+        .await;
+        if let Err(e) = movement {
+            tracing::error!("调拨入库 movement 写入失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
         }
     }
 
-    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+    let order_updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'received',
             received_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'shipped' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
-        RETURNING *
+        WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'shipped'
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .bind(tenant_filter)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .execute(&mut scope)
+    .await;
+    match order_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("调拨单状态已变化，收货未生效");
+        }
+        Err(e) => {
+            tracing::error!("更新调拨单失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+        }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("调拨收货事务提交失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+    }
+
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启调拨只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
+        }
+    };
+
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT * FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        "#
+    ))
+    .bind(transfer_id)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     match result {
-        Ok(transfer) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(transfer, "收货成功")
-        }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在或状态不正确".to_string(),
-        )),
+        Ok(transfer) => ApiResponse::success(transfer, "收货成功"),
         Err(e) => {
-            tracing::error!("收货失败: {}", e);
+            tracing::error!("读取调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("收货失败".to_string()))
         }
     }
@@ -844,6 +1351,7 @@ pub async fn complete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -864,16 +1372,12 @@ pub async fn complete_transfer(
             return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -882,18 +1386,18 @@ pub async fn complete_transfer(
             status = 'completed',
             actual_date = CURRENT_DATE,
             updated_at = $1
-        WHERE id = $2 AND status = 'received' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2 AND status = 'received' AND tenant_id = $3 AND deleted_at IS NULL
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(transfer_id)
-    .bind(tenant_filter)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(transfer) => {
+        Ok(Some(transfer)) => {
             // D6（对齐 erp c843ad423）：本 handler 写 guard 事务但此前缺显式 commit，
             // UPDATE 随 Drop 回滚而事件已发=幽灵事件。先 commit，成功后再发布。
             if let Some(t) = guard.take() {
@@ -960,9 +1464,26 @@ pub async fn complete_transfer(
 
             ApiResponse::success(transfer, "完成调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在或状态不正确".to_string(),
-        )),
+        Ok(None) => {
+            let exists = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                "wms",
+                r#"SELECT id FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+            ))
+            .bind(transfer_id)
+            .bind(tenant)
+            .fetch_optional(&mut **txn)
+            .await;
+            match exists {
+                Ok(Some(_)) => ApiResponse::conflict("调拨单当前状态不允许完成"),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
+                }
+                Err(e) => {
+                    tracing::error!("查询调拨单失败: {}", e);
+                    ApiResponse::from(TopemsError::Internal("完成调拨单失败".to_string()))
+                }
+            }
+        }
         Err(e) => {
             tracing::error!("完成调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("完成调拨单失败".to_string()))
@@ -1027,7 +1548,7 @@ pub async fn start_transfer_approval(
             if !crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped") {
                 return ApiResponse::bad_request("当前状态无需审批");
             }
-            let _ = crate::models::audit_log::log_approval_event(
+            if let Err(e) = crate::models::audit_log::log_approval_event(
                 &mut **txn,
                 &tenant_id.to_string(),
                 "transfer_order",
@@ -1038,7 +1559,10 @@ pub async fn start_transfer_approval(
                 &current_status,
                 req.comment.as_deref(),
             )
-            .await;
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
             ApiResponse::success(
                 serde_json::json!({"status": current_status, "approval_started": true}),
                 "审批启动成功",
@@ -1114,7 +1638,7 @@ pub async fn approve_transfer(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "transfer_order",
@@ -1125,7 +1649,10 @@ pub async fn approve_transfer(
                         "shipped",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
@@ -1212,7 +1739,7 @@ pub async fn reject_transfer(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "transfer_order",
@@ -1223,7 +1750,10 @@ pub async fn reject_transfer(
                         "pending",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);

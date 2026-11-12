@@ -17,6 +17,7 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::openapi::Inventory;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
@@ -37,35 +38,6 @@ fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     })
-}
-
-/// V19.7: 生成库存移动单号 MV-YYYYMMDD-6位序列号
-async fn generate_inventory_movement_no(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
-) -> String {
-    let today = Utc::now().format("%Y%m%d").to_string();
-    let prefix = format!("MV-{}", today);
-    let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
-        "wms",
-        r#"SELECT COUNT(*) FROM wms.inventory_movements
-           WHERE tenant_id = $1 AND movement_no LIKE $2"#
-    ))
-    .bind(tenant_id)
-    .bind(format!("{}%", prefix))
-    .fetch_one(&mut **txn)
-    .await
-    .unwrap_or(0);
-    format!("{}-{:06}", prefix, seq + 1)
-}
-
-/// V19.7: 从 Claims 中解析 tenant_id
-fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, TopemsError> {
-    match &claims.tenant_id {
-        Some(id) => Uuid::parse_str(id)
-            .map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
-        None => Err(TopemsError::BusinessLogic("缺少租户ID".to_string())),
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -346,14 +318,10 @@ pub async fn create_inventory(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    // 严格租户：超管的租户由中间件从 x-tenant-id 写入 claims，这里不再落 NULL。
+    let tenant_id = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
 
     let result = sqlx::query_as::<_, InventoryItem>(
@@ -526,38 +494,55 @@ pub async fn update_inventory(
     >,
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_id = match resolve_tenant_id(&claims) {
-        Ok(id) => id,
-        Err(msg) => return ApiResponse::from(TopemsError::AuthenticationFailed(msg.to_string())),
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let request_data = serde_json::to_value(&req).ok();
+
+    // D2：绝对值覆盖 + 行锁。改用独立短事务，锁住目标行后读旧值算差额，
+    // 并发 PUT 不会出现「读旧值 → 互相覆盖 → movement 差分失真」。
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启库存调整事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
+    };
 
     let existing_result = sqlx::query(
         only_own_schema_query!("wms", r#"
         SELECT id, material_code, material_name, specification, unit, quantity::float8, 
                available_quantity::float8, location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status
-        FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.inventory WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FOR UPDATE
         "#),
     )
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
     .await;
 
     let existing = match existing_result {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return ApiResponse::from(TopemsError::ResourceNotFound("库存不存在".to_string()))
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::ResourceNotFound("库存不存在".to_string()));
         }
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询库存失败", e)),
+        Err(e) => {
+            tracing::error!("锁定库存行失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询库存失败", e));
+        }
     };
 
     let sku = req.sku.unwrap_or_else(|| {
@@ -625,10 +610,10 @@ pub async fn update_inventory(
             material_code = $2, material_name = $3, specification = $4, unit = $5, 
             quantity = $6, available_quantity = $7, location_id = $8, warehouse_id = $9, 
             min_quantity = $10, max_quantity = $11, quality_status = $12, updated_at = $13
-        WHERE id = $1 AND deleted_at IS NULL AND ($14::uuid IS NULL OR tenant_id = $14::uuid)
+        WHERE id = $1 AND tenant_id = $14 AND deleted_at IS NULL
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
-                  location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
-                  created_at, updated_at, quantity::float8 AS quantity_f8
+                  available_quantity, location_id, warehouse_id, min_quantity, max_quantity,
+                  quality_status as status, created_at, updated_at, quantity::float8 AS quantity_f8
         "#
     ))
     .bind(id)
@@ -644,8 +629,8 @@ pub async fn update_inventory(
     .bind(max_quantity)
     .bind(&status)
     .bind(now)
-    .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_one(&mut scope)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -657,7 +642,7 @@ pub async fn update_inventory(
             let old_quantity: f64 = existing.try_get::<f64, _>("quantity").unwrap_or(0.0);
             let quantity_diff = quantity - old_quantity;
             if quantity_diff.abs() > f64::EPSILON {
-                let movement_no = generate_inventory_movement_no(&mut *txn, tenant_id).await;
+                let movement_no = movement_no(now);
                 let movement_id = Uuid::new_v4();
                 let operator_id = Uuid::parse_str(&claims.sub).ok();
                 let movement_type = if quantity_diff > 0.0 {
@@ -685,7 +670,7 @@ pub async fn update_inventory(
                 ))
                 .bind(movement_id)
                 .bind(&movement_no)
-                .bind(tenant_id)
+                .bind(tenant)
                 .bind(movement_type)
                 .bind(id.to_string())
                 .bind(id)
@@ -698,18 +683,18 @@ pub async fn update_inventory(
                 .bind(now)
                 .bind(format!("库存调整：{} → {}", old_quantity, quantity))
                 .bind(now)
-                .execute(&mut **txn)
+                .execute(&mut scope)
                 .await
                 {
-                    tracing::warn!("写入 inventory_movements 失败（不阻塞主流程）: {}", e);
+                    tracing::error!("写入 inventory_movements 失败: {}", e);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("库存调整流水写入失败");
                 }
             }
 
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return ApiResponse::server_error("事务提交失败");
             }
             (
                 ApiResponse::success(item_json.clone(), "库存更新成功"),
@@ -781,20 +766,16 @@ pub async fn delete_inventory(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_filter)
+    .bind(tenant)
     .execute(&mut **txn)
     .await;
 

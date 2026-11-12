@@ -170,13 +170,13 @@ pub async fn create_cycle_count_config(
     };
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
@@ -329,13 +329,13 @@ pub async fn update_cycle_count_config(
 
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     // 计算新的下次盘点日期
@@ -438,13 +438,13 @@ pub async fn delete_cycle_count_config(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query!(
@@ -574,13 +574,13 @@ pub async fn generate_cycle_count(
     // 创建盘点单
     let stock_take_id = Uuid::new_v4();
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query!(
         r#"
@@ -619,7 +619,7 @@ pub async fn generate_cycle_count(
         _ => now + Duration::days(30),
     };
 
-    let _ = sqlx::query!(
+    let cfg_updated = sqlx::query!(
         r#"
         UPDATE wms.cycle_count_configs
         SET last_count_date = $2, next_count_date = $3, updated_at = $4
@@ -633,6 +633,14 @@ pub async fn generate_cycle_count(
     )
     .execute(&mut **txn)
     .await;
+    match cfg_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => return ApiResponse::conflict("周期盘点配置状态已变化，生成未生效"),
+        Err(e) => {
+            tracing::error!("更新周期盘点配置失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新周期盘点配置失败".to_string()));
+        }
+    }
 
     log_audit_event(
         &state.db,
@@ -696,13 +704,13 @@ pub async fn generate_all_cycle_counts(
 
     let now = Utc::now();
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     // 查询所有到期的配置
@@ -763,7 +771,7 @@ pub async fn generate_all_cycle_counts(
                 _ => now + Duration::days(30),
             };
 
-            let _ = sqlx::query!(
+            let cfg_updated = sqlx::query!(
                 r#"
                 UPDATE wms.cycle_count_configs
                 SET last_count_date = $2, next_count_date = $3, updated_at = $4
@@ -777,6 +785,16 @@ pub async fn generate_all_cycle_counts(
             )
             .execute(&mut **txn)
             .await;
+            match cfg_updated {
+                Ok(r) if r.rows_affected() == 1 => {}
+                Ok(_) => return ApiResponse::conflict("周期盘点配置状态已变化，批量生成未生效"),
+                Err(e) => {
+                    tracing::error!("更新周期盘点配置失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "更新周期盘点配置失败".to_string(),
+                    ));
+                }
+            }
 
             generated_count += 1;
             results.push(serde_json::json!({

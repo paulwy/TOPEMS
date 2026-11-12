@@ -15,6 +15,7 @@ use crate::models::inbound_order::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
@@ -143,13 +144,13 @@ pub async fn list_inbound_orders(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     // 显式租户过滤：超管→None（全部），普通用户→claims.tenant_id，RLS 之外双保险
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
@@ -262,13 +263,13 @@ pub async fn create_inbound_order(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     // 事件只携带真实租户：超管/NULL 上下文不发布（发 nil 只会变成不可见行或 DLQ）。
     let event_tenant = tenant_id.filter(|t| !t.is_nil());
@@ -543,13 +544,13 @@ pub async fn update_inbound_order(
     let status = req.status.unwrap_or(existing.status);
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, InboundOrder>(
@@ -671,13 +672,13 @@ pub async fn delete_inbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -843,13 +844,13 @@ pub async fn create_inbound_order_item(
     });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1195,13 +1196,13 @@ pub async fn confirm_inbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
@@ -1316,26 +1317,30 @@ pub async fn receive_inbound_order(
     >,
     Json(items): Json<Vec<ReceiveItemRequest>>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
-    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    // 用于 INSERT…SELECT 写 inventory.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+
+    // 释放请求级事务：收货要在独立短事务内完成「明细 + 库存 + movement + 状态」，
+    // 且不叠加占用连接。
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启入库事务失败: {}", e);
+            return ApiResponse::server_error("开启事务失败");
+        }
     };
 
     // P2 收货数量前置校验：received_quantity 非负且不超过明细应收(expected_quantity)。
@@ -1347,14 +1352,13 @@ pub async fn receive_inbound_order(
             "wms",
             r#"
             SELECT id, expected_quantity::float8 FROM wms.inbound_order_items
-            WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
-              AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
-                   OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE order_id = $1 AND id = ANY($2) AND tenant_id = $3 AND deleted_at IS NULL
             "#
         ))
         .bind(id)
         .bind(&line_ids)
-        .fetch_all(&mut **txn)
+        .bind(tenant)
+        .fetch_all(&mut scope)
         .await;
 
         let lines = match lines {
@@ -1399,23 +1403,14 @@ pub async fn receive_inbound_order(
         }
     }
 
-    let tx = state.db.begin().await.map_err(|e| {
-        tracing::error!("开启事务失败: {}", e);
-        ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()))
-    });
-
-    let mut tx = match tx {
-        Ok(t) => t,
-        Err(e) => return e,
-    };
-
     for item in &items {
-        let _ = sqlx::query(only_own_schema_query!(
+        // 明细必须属于该单且同租户：0 行 → 404（父行不动，整笔回滚）。
+        let item_updated = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
             UPDATE wms.inbound_order_items SET
                 received_quantity = $1, quality_status = $2, notes = $3, updated_at = $4
-            WHERE order_id = $5 AND id = $6 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE order_id = $5 AND id = $6 AND tenant_id = $7 AND deleted_at IS NULL
             "#
         ))
         .bind(item.received_quantity)
@@ -1424,23 +1419,39 @@ pub async fn receive_inbound_order(
         .bind(now)
         .bind(id)
         .bind(item.item_id)
-        .execute(&mut *tx)
+        .bind(tenant)
+        .execute(&mut scope)
         .await;
+        match item_updated {
+            Ok(r) if r.rows_affected() == 1 => {}
+            Ok(_) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::not_found(&format!(
+                    "入库明细不存在或不属于该入库单: {}",
+                    item.item_id
+                ));
+            }
+            Err(e) => {
+                tracing::error!("更新入库明细失败: {}", e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("入库操作失败");
+            }
+        }
 
         if item.quality_status == "qualified" {
-            let _ = sqlx::query(only_own_schema_query!(
+            let upsert = sqlx::query(only_own_schema_query!(
                 "wms",
                 r#"
                 INSERT INTO wms.inventory (organization_id, warehouse_id, location_id,
                                           material_code, material_name, specification,
                                           batch_number, quantity, unit, available_quantity,
                                           quality_status, created_at, updated_at, tenant_id)
-                SELECT $3, i.warehouse_id, io.location_id,
+                SELECT i.organization_id, i.warehouse_id, io.location_id,
                        io.material_code, io.material_name, io.specification,
                        io.batch_number, $1, io.unit, $1, 'qualified', NOW(), NOW(), $3
                 FROM wms.inbound_order_items io
                 JOIN wms.inbound_orders i ON io.order_id = i.id
-                WHERE io.id = $2
+                WHERE io.id = $2 AND io.tenant_id = $3
                 ON CONFLICT (organization_id, material_code, batch_number) DO UPDATE SET
                     quantity = wms.inventory.quantity + $1,
                     available_quantity = wms.inventory.available_quantity + $1,
@@ -1449,24 +1460,27 @@ pub async fn receive_inbound_order(
             ))
             .bind(item.received_quantity)
             .bind(item.item_id)
-            .bind(tenant_id)
-            .execute(&mut *tx)
+            .bind(tenant)
+            .execute(&mut scope)
             .await;
+            match upsert {
+                Ok(r) if r.rows_affected() == 1 => {}
+                Ok(_) => {
+                    tracing::error!("入库库存写入 0 行: item_id={}", item.item_id);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("入库库存写入失败");
+                }
+                Err(e) => {
+                    tracing::error!("入库库存写入失败: {}", e);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("入库库存写入失败");
+                }
+            }
 
-            // V19.8: 入库收货时同步写入 inventory_movements
-            let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
-                "wms",
-                r#"SELECT COUNT(*) FROM wms.inventory_movements
-                   WHERE movement_no LIKE $1"#
-            ))
-            .bind(format!("MV-{}%", now.format("%Y%m%d")))
-            .fetch_one(&mut *tx)
-            .await
-            .unwrap_or(0);
-            let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
+            // V19.8: 入库收货时同步写入 inventory_movements（失败即回滚）
+            let movement_no = movement_no(now);
             let movement_id = Uuid::new_v4();
-
-            let _ = sqlx::query(only_own_schema_query!(
+            let movement = sqlx::query(only_own_schema_query!(
                 "wms",
                 r#"
                 INSERT INTO wms.inventory_movements (
@@ -1482,39 +1496,75 @@ pub async fn receive_inbound_order(
                     'completed', $6, $7, $6, $6
                 FROM wms.inbound_order_items io
                 JOIN wms.inbound_orders i ON io.order_id = i.id
-                WHERE io.id = $8
+                WHERE io.id = $8 AND io.tenant_id = $3
                 "#
             ))
             .bind(movement_id)
             .bind(&movement_no)
-            .bind(tenant_id)
+            .bind(tenant)
             .bind(id.to_string())
             .bind(item.received_quantity)
             .bind(now)
             .bind(format!("入库收货：订单 {}", id))
             .bind(item.item_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
+            match movement {
+                Ok(r) if r.rows_affected() == 1 => {}
+                Ok(_) => {
+                    tracing::error!("入库 movement 写入 0 行: item_id={}", item.item_id);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("入库移动记录写入失败");
+                }
+                Err(e) => {
+                    tracing::error!("入库 movement 写入失败: {}", e);
+                    let _ = scope.rollback().await;
+                    return ApiResponse::server_error("入库移动记录写入失败");
+                }
+            }
         }
     }
 
-    let _ = sqlx::query(only_own_schema_query!(
+    let status_updated = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
             status = 'received', actual_arrival_date = $1, updated_at = $1
-        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+          AND status NOT IN ('received', 'completed', 'cancelled')
         "#
     ))
     .bind(now)
     .bind(id)
-    .bind(tenant_id)
-    .execute(&mut *tx)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
+    match status_updated {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("入库单不存在或当前状态不允许收货");
+        }
+        Err(e) => {
+            tracing::error!("更新入库单状态失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("入库操作失败");
+        }
+    }
 
-    if tx.commit().await.is_err() {
+    if let Err(e) = scope.commit().await {
+        tracing::error!("入库事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("入库操作失败".to_string()));
     }
+
+    // 响应读取使用独立只读作用域（请求事务已释放）。
+    let mut read_scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启入库只读作用域失败: {}", e);
+            return ApiResponse::server_error("入库失败");
+        }
+    };
 
     let order_result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
@@ -1536,11 +1586,12 @@ pub async fn receive_inbound_order(
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
                created_by, updated_by, approved_by, approved_at, organization_id,
                created_at, updated_at
-        FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.inbound_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_one(&mut read_scope)
     .await;
 
     let (response, status_str, error_msg, response_data) = match order_result {
@@ -1558,14 +1609,13 @@ pub async fn receive_inbound_order(
                     r#"
                     SELECT id, material_code, material_name, unit
                     FROM wms.inbound_order_items
-                    WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
-                      AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+                    WHERE order_id = $1 AND id = ANY($2) AND tenant_id = $3 AND deleted_at IS NULL
                     "#
                 ))
                 .bind(id)
                 .bind(&line_ids)
-                .bind(tenant_id)
-                .fetch_all(&mut **txn)
+                .bind(tenant)
+                .fetch_all(&mut read_scope)
                 .await;
 
                 let mut lines_by_id: std::collections::HashMap<Uuid, (String, String, String)> =
@@ -1730,13 +1780,13 @@ pub async fn complete_inbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
@@ -1880,7 +1930,7 @@ pub async fn start_inbound_approval(
             if !crate::shared::fsm::inbound_order_requires_approval(&current_status, "completed") {
                 return ApiResponse::bad_request("当前状态无需审批");
             }
-            let _ = crate::models::audit_log::log_approval_event(
+            if let Err(e) = crate::models::audit_log::log_approval_event(
                 &mut **txn,
                 &tenant_id.to_string(),
                 "inbound_order",
@@ -1891,7 +1941,10 @@ pub async fn start_inbound_approval(
                 &current_status,
                 req.comment.as_deref(),
             )
-            .await;
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
             ApiResponse::success(
                 serde_json::json!({"status": current_status, "approval_started": true}),
                 "审批启动成功",
@@ -1962,7 +2015,7 @@ pub async fn approve_inbound(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "inbound_order",
@@ -1973,7 +2026,10 @@ pub async fn approve_inbound(
                         "completed",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
@@ -2055,7 +2111,7 @@ pub async fn reject_inbound(
             .await;
             match result {
                 Ok(_) => {
-                    let _ = crate::models::audit_log::log_approval_event(
+                    if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
                         "inbound_order",
@@ -2066,7 +2122,10 @@ pub async fn reject_inbound(
                         "confirmed",
                         req.comment.as_deref(),
                     )
-                    .await;
+                    .await
+                    {
+                        tracing::warn!("审计日志写入失败: {}", e);
+                    }
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);

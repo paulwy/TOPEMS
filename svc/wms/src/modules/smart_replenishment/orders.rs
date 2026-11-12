@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use chrono::Utc;
@@ -8,6 +9,7 @@ use uuid::Uuid;
 
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -108,6 +110,7 @@ pub async fn list_orders(
 pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -122,6 +125,10 @@ pub async fn create_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
 
     let id = Uuid::new_v4();
     let order_number = format!("RO{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
@@ -153,13 +160,7 @@ pub async fn create_order(
     )
     .bind(now)
     .bind(now)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .unwrap_or(Uuid::nil()),
-    )
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -169,7 +170,7 @@ pub async fn create_order(
                 let mut line_number = 1;
                 for item in items {
                     let item_id = Uuid::new_v4();
-                    let _ = sqlx::query(
+                    let inserted = sqlx::query(
                         r#"
                         INSERT INTO wms.replenishment_order_items (
                             id, order_id, line_number, sku, material_name, specification,
@@ -194,15 +195,15 @@ pub async fn create_order(
                     .bind(item.get("total_amount").and_then(|v| v.as_f64()))
                     .bind(now)
                     .bind(now)
-                    .bind(
-                        claims
-                            .tenant_id
-                            .as_deref()
-                            .and_then(|s| Uuid::parse_str(s).ok())
-                            .unwrap_or(Uuid::nil()),
-                    )
+                    .bind(tenant)
                     .execute(&mut **txn)
                     .await;
+                    if let Err(e) = inserted {
+                        tracing::error!("写入补货明细失败: {}", e);
+                        return ApiResponse::from(TopemsError::Internal(
+                            "创建补货单失败：明细写入失败".to_string(),
+                        ));
+                    }
                     line_number += 1;
                 }
             }
@@ -325,13 +326,13 @@ pub async fn update_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(
@@ -403,6 +404,7 @@ pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -416,44 +418,51 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    let _ = sqlx::query("DELETE FROM wms.replenishment_order_items WHERE order_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
-        .bind(id)
-        .bind(tenant_filter)
-        .execute(&mut **txn)
-        .await;
+    // 先软删主表并校验命中行：0 行 → 404，且不再删除明细（避免孤儿行）。
+    let deleted = sqlx::query(
+        "UPDATE wms.replenishment_orders SET deleted_at = NOW()
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant)
+    .execute(&mut **txn)
+    .await;
 
-    let result =
-        sqlx::query("UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
-            .bind(id)
-            .bind(tenant_filter)
-            .execute(&mut **txn)
-            .await;
-
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success("".to_string(), "删除补货订单成功")
+    match deleted {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("补货订单不存在".to_string()))
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("补货订单不存在".to_string())),
         Err(e) => {
             tracing::error!("删除补货订单失败: {}", e);
-            ApiResponse::from(TopemsError::Internal("删除补货订单失败".to_string()))
+            return ApiResponse::from(TopemsError::Internal("删除补货订单失败".to_string()));
         }
     }
+
+    let items_deleted = sqlx::query(
+        "DELETE FROM wms.replenishment_order_items WHERE order_id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant)
+    .execute(&mut **txn)
+    .await;
+    if let Err(e) = items_deleted {
+        tracing::error!("删除补货明细失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("删除补货订单失败".to_string()));
+    }
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return ApiResponse::server_error("事务提交失败");
+        }
+    }
+    ApiResponse::success("".to_string(), "删除补货订单成功")
 }
 
 #[utoipa::path(
@@ -559,13 +568,13 @@ pub async fn confirm_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(
@@ -641,13 +650,13 @@ pub async fn complete_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query(

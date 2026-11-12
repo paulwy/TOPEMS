@@ -291,13 +291,13 @@ pub async fn create_discrepancy(
     };
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
@@ -547,13 +547,13 @@ pub async fn adjust_inventory(
     }
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_filter: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     // 获取已审批的差异处理记录
@@ -584,31 +584,56 @@ pub async fn adjust_inventory(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询差异处理记录失败", e)),
     };
 
-    // 执行库存调整
-    let adjust_result = sqlx::query!(
+    // 执行库存调整：按主键原子增量，并保证调整后数量与可用量都不为负。
+    let adjust_qty = match record.adjustment_quantity {
+        Some(v) => {
+            use std::str::FromStr;
+            match sqlx::types::BigDecimal::from_str(&format!("{:.2}", v)) {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("差异调整量无法转换为数值: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "库存调整数量非法".to_string(),
+                    ));
+                }
+            }
+        }
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "差异记录缺少调整数量".to_string(),
+            ))
+        }
+    };
+
+    let adjust_result = sqlx::query(
         r#"
         UPDATE wms.inventory SET
             quantity = quantity + $2,
+            available_quantity = available_quantity + $2,
             last_movement_date = $3,
             last_movement_type = 'cycle_count_adjustment',
             movement_count = movement_count + 1,
             updated_at = $3
-        WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
-        RETURNING id
+        WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+          AND quantity + $2 >= 0 AND available_quantity + $2 >= 0
         "#,
-        record.inventory_id,
-        record.adjustment_quantity.map(|v| {
-            use std::str::FromStr;
-            sqlx::types::BigDecimal::from_str(&format!("{:.2}", v)).unwrap_or_default()
-        }),
-        now,
-        record.tenant_id
     )
-    .fetch_one(&mut **txn)
+    .bind(record.inventory_id)
+    .bind(&adjust_qty)
+    .bind(now)
+    .bind(record.tenant_id)
+    .execute(&mut **txn)
     .await;
 
-    if adjust_result.is_err() {
-        return ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()));
+    match adjust_result {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            return ApiResponse::conflict("库存调整后数量将为负，已拒绝");
+        }
+        Err(e) => {
+            tracing::error!("库存调整失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()));
+        }
     }
 
     // 更新差异处理记录状态
@@ -617,7 +642,7 @@ pub async fn adjust_inventory(
         r#"
         UPDATE wms.discrepancy_records SET
             adjustment_status = 'completed', adjustment_date = $2, updated_at = $2
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -626,6 +651,7 @@ pub async fn adjust_inventory(
     ))
     .bind(id)
     .bind(now)
+    .bind(record.tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -661,6 +687,7 @@ pub async fn adjust_inventory(
                 "库存调整完成",
             )
         }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("差异记录状态已变化，调整未生效"),
         Err(e) => {
             tracing::error!("更新差异处理状态失败: {}", e);
             ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()))
@@ -703,13 +730,13 @@ pub async fn process_stock_take_discrepancies(
 
     let now = Utc::now();
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let tenant_id: Option<Uuid> = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => Some(t),
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
     // 获取盘点单已完成的所有盘点明细
