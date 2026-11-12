@@ -241,7 +241,12 @@ pub async fn create_outbound_order(
         INSERT INTO wms.outbound_orders (id, organization_id, order_number, order_type, warehouse_id,
                                         customer_id, order_date, expected_ship_date, total_value,
                                         status, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, $11, $2, 'sales', $3, $4, $5, $6, $7,
+        VALUES ($1, $11, $2, 'sales', $3, $4, $5,
+               CASE WHEN $6::timestamptz IS NULL THEN NULL
+                    ELSE date_trunc('day', $6::timestamptz AT TIME ZONE 'Asia/Shanghai')
+                         AT TIME ZONE 'Asia/Shanghai'
+               END,
+               $7,
                'created', $8, $9, $10, $11)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
@@ -455,7 +460,15 @@ pub async fn update_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            warehouse_id = $2, customer_id = $3, expected_ship_date = $4, actual_ship_date = $5, 
+            warehouse_id = $2, customer_id = $3,
+            expected_ship_date = CASE WHEN $4::timestamptz IS NULL THEN NULL
+                    ELSE date_trunc('day', $4::timestamptz AT TIME ZONE 'Asia/Shanghai')
+                         AT TIME ZONE 'Asia/Shanghai'
+                END,
+            actual_ship_date = CASE WHEN $5::timestamptz IS NULL THEN NULL
+                    ELSE date_trunc('day', $5::timestamptz AT TIME ZONE 'Asia/Shanghai')
+                         AT TIME ZONE 'Asia/Shanghai'
+                END,
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
@@ -1708,7 +1721,10 @@ pub async fn ship_outbound_order(
         r#"
         UPDATE wms.outbound_orders SET
             status = 'shipping', packing_status = 'completed', packing_end_time = $1::timestamptz,
-            shipping_status = 'in_progress', actual_ship_date = $1::date, updated_at = $1::timestamptz
+            shipping_status = 'in_progress',
+            actual_ship_date = date_trunc('day', $1::timestamptz AT TIME ZONE 'Asia/Shanghai')
+                               AT TIME ZONE 'Asia/Shanghai',
+            updated_at = $1::timestamptz
         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
           AND status IN ('created', 'confirmed', 'picking', 'packing')
         "#
