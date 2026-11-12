@@ -448,7 +448,10 @@ pub async fn create_notice(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -628,7 +631,10 @@ pub async fn update_notice(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -851,7 +857,10 @@ pub async fn create_inspection(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -1027,7 +1036,10 @@ pub async fn update_inspection(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -1171,7 +1183,10 @@ pub async fn inspection_pass(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -1308,7 +1323,10 @@ pub async fn inspection_fail(
     .await;
 
     if let Some(t) = guard.take() {
-        let _ = t.commit().await;
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
     }
 
     response
@@ -1481,7 +1499,10 @@ pub async fn create_inspection_record(
     match result {
         Ok(row) => {
             if let Some(t) = guard.take() {
-                let _ = t.commit().await;
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return ApiResponse::server_error("提交事务失败");
+                }
             }
             let record = inspection_record_row_to_json(&row);
             ApiResponse::success(record, "创建检验记录明细成功")
@@ -1622,7 +1643,10 @@ pub async fn update_inspection_record(
     match result {
         Ok(Some(row)) => {
             if let Some(t) = guard.take() {
-                let _ = t.commit().await;
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return ApiResponse::server_error("提交事务失败");
+                }
             }
             ApiResponse::success(inspection_record_row_to_json(&row), "更新检验记录明细成功")
         }
@@ -1671,7 +1695,10 @@ pub async fn delete_inspection_record(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             if let Some(t) = guard.take() {
-                let _ = t.commit().await;
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return ApiResponse::server_error("提交事务失败");
+                }
             }
             ApiResponse::success(serde_json::json!({"id": id}), "删除检验记录明细成功")
         }
