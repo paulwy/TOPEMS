@@ -1135,7 +1135,7 @@ pub async fn delete_comparison(
     }
     let tenant_bind = tenant_bind_value(&claims);
 
-    let _ = sqlx::query(only_own_schema_query!(
+    let item_result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         DELETE FROM scm.price_comparison_items WHERE comparison_id = $1
@@ -1146,6 +1146,11 @@ pub async fn delete_comparison(
     .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Err(e) = item_result {
+        tracing::error!("删除比价分析明细失败: {}", e);
+        return ApiResponse::from(TopemsError::internal("删除比价分析明细失败", e));
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -1159,15 +1164,15 @@ pub async fn delete_comparison(
     .execute(&mut **txn)
     .await;
 
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("rls commit failed: {}", e);
-            return ApiResponse::server_error("提交事务失败");
-        }
-    }
-
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return ApiResponse::server_error("提交事务失败");
+                }
+            }
+
             ApiResponse::success(serde_json::json!({"id": id}), "比价分析已删除")
         }
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("比价分析不存在".to_string())),
