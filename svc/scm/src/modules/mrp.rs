@@ -521,7 +521,7 @@ pub async fn compute_mrp(
     Json(req): Json<MrpComputeRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
+    let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
@@ -537,27 +537,16 @@ pub async fn compute_mrp(
     let include_sales = req.include_sales_orders.unwrap_or(true);
     let include_forecast = req.include_forecast.unwrap_or(true);
 
-    let mut tx = match state.db.begin().await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
-        }
-    };
-
     let clear_result = sqlx::query(only_own_schema_query!(
         "scm",
         "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_bind)
-    .execute(&mut *tx)
+    .execute(&mut **txn)
     .await;
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
-        tx.rollback()
-            .await
-            .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
         return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
     }
 
@@ -650,16 +639,13 @@ pub async fn compute_mrp(
     .bind(include_forecast)
     .bind(tenant_bind)
     .bind(locale)
-    .fetch_all(&mut *tx)
+    .fetch_all(&mut **txn)
     .await;
 
     let items = match insert_result {
         Ok(items) => items,
         Err(e) => {
             tracing::error!("MRP计算失败: {}", e);
-            tx.rollback()
-                .await
-                .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
             log_audit_event(
                 &state.db,
                 "compute".to_string(),
@@ -679,22 +665,9 @@ pub async fn compute_mrp(
         }
     };
 
-    if let Err(e) = tx.commit().await {
-        tracing::error!("提交事务失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
-    }
-
     let items_json: Vec<serde_json::Value> = items.iter().map(mrp_suggestion_row_to_json).collect();
     let count = items.len() as i64;
     let response_data = Some(serde_json::json!({ "generated_count": count }));
-
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("事务提交失败: {}", e);
-
-            return ApiResponse::server_error("事务提交失败");
-        }
-    }
 
     let response = ApiResponse::success(
         serde_json::json!({
