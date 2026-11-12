@@ -13,6 +13,7 @@
     "*.less",
     "src/index.css",
     "src/main.tsx",
+    "src/lib/navigation/index.ts",
     "src/sw.ts",
     "src/i18n/**/*"
   ],
