@@ -566,11 +566,18 @@ pre-push:
         export RUST_TEST_THREADS=1
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
         # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；.env 缺失则回退测试内默认值）
+        #
+        # [2026-11-12] DATABASE_URL 也必须显式导出：sqlx::test 的 dotenv 从 crate 工作目录向上取
+        # 最近一份 .env，被 gitignore 的 crate 级 svc/*/.env 会覆盖根 .env；若其端口不可达或口令陈旧，
+        # 全量测试会在 setup 阶段 30s×N 超时报 PoolTimedOut（实测 3 条 ≈92s，单跑 0.3s 通过）。
+        # 已存在的环境变量不会被 dotenv 覆盖，从根 .env 派生并导出即可消除这类环境漂移。
         if [ -f .env ]; then
           if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
           if [ -z "${REDIS_URL:-}" ]; then REDIS_URL=$(sed -nE 's/^REDIS_URL=(.*)/\1/p' .env | head -1); fi
+          if [ -z "${DATABASE_URL:-}" ]; then DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
           if [ -n "$TEST_DATABASE_URL" ]; then export TEST_DATABASE_URL; fi
           if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
+          if [ -n "$DATABASE_URL" ]; then export DATABASE_URL; fi
         fi
         cargo test --workspace --lib
 
