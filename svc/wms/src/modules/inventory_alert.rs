@@ -563,7 +563,10 @@ pub async fn get_alert_statistics(
                 alert_count: r.alert_count.unwrap_or(0),
             })
             .collect(),
-        Err(_) => vec![],
+        Err(e) => {
+            tracing::warn!("预警按仓库统计失败，降级为空列表: {}", e);
+            vec![]
+        }
     };
 
     // 按物料统计
@@ -598,7 +601,10 @@ pub async fn get_alert_statistics(
                 alert_count: r.alert_count.unwrap_or(0),
             })
             .collect(),
-        Err(_) => vec![],
+        Err(e) => {
+            tracing::warn!("预警按物料统计失败，降级为空列表: {}", e);
+            vec![]
+        }
     };
 
     ApiResponse::success(
