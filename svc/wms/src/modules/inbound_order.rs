@@ -1446,7 +1446,7 @@ pub async fn receive_inbound_order(
                                           material_code, material_name, specification,
                                           batch_number, quantity, unit, available_quantity,
                                           quality_status, created_at, updated_at, tenant_id)
-                SELECT $3, i.warehouse_id, io.location_id,
+                SELECT i.organization_id, i.warehouse_id, io.location_id,
                        io.material_code, io.material_name, io.specification,
                        io.batch_number, $1, io.unit, $1, 'qualified', NOW(), NOW(), $3
                 FROM wms.inbound_order_items io

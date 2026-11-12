@@ -612,8 +612,8 @@ pub async fn update_inventory(
             min_quantity = $10, max_quantity = $11, quality_status = $12, updated_at = $13
         WHERE id = $1 AND tenant_id = $14 AND deleted_at IS NULL
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
-                  location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
-                  created_at, updated_at, quantity::float8 AS quantity_f8
+                  available_quantity, location_id, warehouse_id, min_quantity, max_quantity,
+                  quality_status as status, created_at, updated_at, quantity::float8 AS quantity_f8
         "#
     ))
     .bind(id)
