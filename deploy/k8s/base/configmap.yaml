@@ -5,6 +5,9 @@ metadata:
   name: topems-config
   namespace: topems
 data:
+  # 容器内必须监听全部网卡：Service/Pod 探针与集群互访才会命中
+  # （宿主/裸机默认回环 127.0.0.1，见 deploy/README.md「监听地址口径」）
+  BIND_ADDR: "0.0.0.0"
   # Database
   POSTGRES_HOST: "postgres-service"
   POSTGRES_PORT: "5432"

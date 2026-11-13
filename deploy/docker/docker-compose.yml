@@ -5,6 +5,8 @@
 #    整目录 2026-10-08 起弃用，仅作 docker 临时验证（见 README.md）。
 
 x-common-env: &common-env
+  # 容器内必须监听全部网卡：宿主端口映射/容器互访才会命中（宿主/裸机默认回环 127.0.0.1）
+  BIND_ADDR: "0.0.0.0"
   DATABASE_URL: postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
   MIGRATE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
   CORE_URL: http://unified-core:8000
@@ -175,6 +177,7 @@ services:
       dockerfile: svc/unified-core/Dockerfile
     container_name: topems-unified-core
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - CORE_PORT=8000
       - REDIS_URL=redis://redis:6379
@@ -727,6 +730,7 @@ services:
         SERVICE_DIR: rd
     container_name: topems-rd
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - RD_PORT=8053
@@ -780,6 +784,7 @@ services:
         SERVICE_DIR: analytics
     container_name: topems-bi
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - BI_PORT=8060
@@ -827,6 +832,7 @@ services:
         SERVICE_DIR: portal
     container_name: topems-portal
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - PORTAL_PORT=8063
@@ -871,6 +877,7 @@ services:
         SERVICE_DIR: finance
     container_name: topems-finance
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - FINANCE_PORT=8011
@@ -927,6 +934,7 @@ services:
         SERVICE_DIR: ai
     container_name: topems-ai
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - AI_PORT=8013
@@ -975,6 +983,7 @@ services:
         SERVICE_DIR: mobile
     container_name: topems-mobile
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - MOBILE_PORT=8070
@@ -1019,6 +1028,7 @@ services:
         SERVICE_DIR: gis
     container_name: topems-gis
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - GIS_PORT=8071
@@ -1066,6 +1076,7 @@ services:
         SERVICE_DIR: integration
     container_name: topems-integration
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - INTEGRATION_PORT=8072
@@ -1114,6 +1125,7 @@ services:
         SERVICE_DIR: plugin-registry
     container_name: topems-plugin-registry
     environment:
+      - BIND_ADDR=0.0.0.0
       - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - PLUGIN_REGISTRY_PORT=8096
