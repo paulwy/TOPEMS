@@ -483,12 +483,13 @@ pub async fn create_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     if req.formula_no.is_empty() {
         return ApiResponse::bad_request("配方编号不能为空");
@@ -633,12 +634,13 @@ pub async fn update_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionFormula>(
@@ -712,12 +714,13 @@ pub async fn delete_formula(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let result = sqlx::query(
         "UPDATE pdm_production_formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",

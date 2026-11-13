@@ -477,12 +477,13 @@ pub async fn create_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     if req.version_number.trim().is_empty() || req.title.trim().is_empty() {
         return ApiResponse::bad_request("版本号和标题不能为空");
     }
@@ -601,12 +602,13 @@ pub async fn update_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_document_versions
@@ -678,12 +680,13 @@ pub async fn delete_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query(
         "UPDATE pdm_document_versions SET deleted_at = NOW(), updated_at = NOW() WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL",
     )
@@ -727,12 +730,13 @@ pub async fn publish_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_document_versions
@@ -806,12 +810,13 @@ pub async fn upload_version(
             ));
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok());
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let Some(tenant_id) = crate::shared::strict_claims_tenant(&claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝写入/查询（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
     let mut filename: Option<String> = None;
     let mut content_type: Option<String> = None;
     let mut bytes: Option<Vec<u8>> = None;
@@ -1025,41 +1030,6 @@ mod handler_tests {
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
         );
-    }
-
-    #[test]
-    fn test_get_tenant_id_from_header() {
-        let claims = make_claims(None);
-        let mut headers = axum::http::HeaderMap::new();
-        headers.insert(
-            "x-tenant-id",
-            "550e8400-e29b-41d4-a716-446655440050".parse().unwrap(),
-        );
-        let tenant_opt: Option<uuid::Uuid> = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok());
-        let tid = tenant_opt.unwrap_or_else(|| {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        });
-        assert_eq!(
-            tid,
-            Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        );
-    }
-
-    #[test]
-    fn test_get_tenant_id_fallback_v4() {
-        let claims = make_claims(None);
-        let _headers = axum::http::HeaderMap::new();
-        let tenant_opt: Option<uuid::Uuid> = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok());
-        let tid = tenant_opt.unwrap_or_else(|| {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        });
-        assert_eq!(tid.get_version(), Some(uuid::Version::Nil));
     }
 
     #[test]
