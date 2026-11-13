@@ -2,6 +2,8 @@
 
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -195,13 +197,27 @@ pub async fn list_files(
     }
 }
 
+/// 权限不足响应：必须返回真实 HTTP 403，而非 200 + body.code。
+fn forbidden_response(message: &str) -> Response {
+    (
+        StatusCode::FORBIDDEN,
+        Json(serde_json::json!({
+            "success": false,
+            "message": message,
+            "data": null,
+            "code": 403
+        })),
+    )
+        .into_response()
+}
+
 /// 获取文件详情
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<serde_json::Value> {
+) -> Response {
     tracing::info!(
         "File manage get_file called with id: {} for user: {}",
         id,
@@ -217,7 +233,8 @@ pub async fn get_file(
                 "message": "无效的文件ID",
                 "data": null,
                 "code": 400
-            }));
+            }))
+            .into_response();
         }
     };
 
@@ -230,7 +247,8 @@ pub async fn get_file(
                 "message": "无效的用户ID",
                 "data": null,
                 "code": 400
-            }));
+            }))
+            .into_response();
         }
     };
 
@@ -250,7 +268,8 @@ pub async fn get_file(
                 "message": "文件不存在",
                 "data": null,
                 "code": 404
-            }));
+            }))
+            .into_response();
         }
         Err(e) => {
             tracing::error!("Failed to fetch file: {}", e);
@@ -259,18 +278,14 @@ pub async fn get_file(
                 "message": format!("获取文件失败: {}", e),
                 "data": null,
                 "code": 500
-            }));
+            }))
+            .into_response();
         }
     };
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "没有权限查看此文件",
-            "data": null,
-            "code": 403
-        }));
+        return forbidden_response("没有权限查看此文件");
     }
 
     let file_info = FileInfo {
@@ -297,6 +312,7 @@ pub async fn get_file(
         "data": file_info,
         "code": 0
     }))
+    .into_response()
 }
 
 /// 更新文件信息
@@ -1137,4 +1153,22 @@ pub async fn search_files(
         "data": null,
         "code": 501
     }))
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_file_forbidden_response_returns_http_403() {
+        let res = forbidden_response("没有权限查看此文件");
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+        let bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .expect("read response body");
+        let body: serde_json::Value = serde_json::from_slice(&bytes).expect("response body json");
+        assert_eq!(body.get("success"), Some(&serde_json::json!(false)));
+        assert_eq!(body.get("code"), Some(&serde_json::json!(403)));
+    }
 }

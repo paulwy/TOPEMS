@@ -1,4 +1,9 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -137,14 +142,13 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
 pub async fn update_settings(
     State(state): State<AppState>,
     Json(req): Json<UpdateAiSettingsRequest>,
-) -> Json<Value> {
+) -> Response {
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
         None => {
-            return Json(json!({
-                "success": false,
-                "message": "未找到租户ID"
-            }));
+            // 缺租户上下文按 400 处理（与 SCM require_tenant_bind 口径一致），
+            // 不能以 200 + success:false 掩盖失败。
+            return missing_tenant_response();
         }
     };
 
@@ -155,7 +159,8 @@ pub async fn update_settings(
             return Json(json!({
                 "success": false,
                 "message": format!("更新AI配置失败: {}", e)
-            }));
+            }))
+            .into_response();
         }
     };
 
@@ -206,6 +211,7 @@ pub async fn update_settings(
                     "available_models": available_models
                 }
             }))
+            .into_response()
         }
         Err(e) => {
             tracing::error!("更新AI配置失败: {}", e);
@@ -213,8 +219,22 @@ pub async fn update_settings(
                 "success": false,
                 "message": format!("更新AI配置失败: {}", e)
             }))
+            .into_response()
         }
     }
+}
+
+/// 缺租户上下文响应：返回真实 HTTP 400，而非 200 + success:false。
+fn missing_tenant_response() -> Response {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(json!({
+            "success": false,
+            "code": 400,
+            "message": "未找到租户ID"
+        })),
+    )
+        .into_response()
 }
 
 // 辅助函数：从请求头获取租户ID
@@ -224,3 +244,21 @@ async fn get_tenant_id_from_header(_state: &AppState) -> Option<Uuid> {
     None
 }
 use utoipa::ToSchema;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_update_settings_missing_tenant_returns_http_400() {
+        let res = missing_tenant_response();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        let bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .expect("read response body");
+        let body: serde_json::Value = serde_json::from_slice(&bytes).expect("response body json");
+        assert_eq!(body.get("success"), Some(&serde_json::json!(false)));
+        assert_eq!(body.get("code"), Some(&serde_json::json!(400)));
+    }
+}

@@ -280,7 +280,7 @@ pub async fn broadcast_notification(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BroadcastNotificationRequest>,
-) -> Json<serde_json::Value> {
+) -> Response {
     tracing::info!(
         "Broadcasting notification to {} users by user: {}",
         req.user_ids.len(),
@@ -289,12 +289,16 @@ pub async fn broadcast_notification(
 
     // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "没有权限发送广播通知",
-            "data": null,
-            "code": 403
-        }));
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "没有权限发送广播通知",
+                "data": null,
+                "code": 403
+            })),
+        )
+            .into_response();
     }
 
     let mut txn_guard = txn_arc.lock().await;
@@ -305,7 +309,8 @@ pub async fn broadcast_notification(
             "message": "数据库事务不可用",
             "data": null,
             "code": 500
-        }));
+        }))
+        .into_response();
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
@@ -316,7 +321,8 @@ pub async fn broadcast_notification(
                 "message": "数据库事务不可用",
                 "data": null,
                 "code": 500
-            }));
+            }))
+            .into_response();
         }
     };
 
@@ -415,6 +421,7 @@ pub async fn broadcast_notification(
             "channels": channels
         }
     }))
+    .into_response()
 }
 
 /// 创建通知（兼容前端 POST /notification/notifications 路径）
@@ -6860,7 +6867,8 @@ mod tests {
             Json(req),
         )
         .await;
-        let v = res.0;
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+        let v = response_json(res).await;
         assert_eq!(v["success"], false);
         assert_eq!(v["code"], 403);
     }
