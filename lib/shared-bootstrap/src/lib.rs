@@ -50,7 +50,8 @@
 //! | `build_application(ctx, config, public, protected, openapi)` | 自动装配 auth/rls/request-context/rate-limit/CORS/Prometheus/telemetry 中间件 |
 //! | `Application { router, port, name }` | Pattern C 用：手动组装 router 后传入 |
 //! | `resolve_port(config)` | 从环境变量解析端口，失败用 `config.port` 回退 |
-//! | `run(app)` | 绑定 `0.0.0.0:{port}`，`axum::serve` 启动 |
+//! | `resolve_bind_addr()` | 从 `BIND_ADDR` 解析监听地址，缺省回落回环 `127.0.0.1` |
+//! | `run(app)` | 绑定 `{bind_addr}:{port}`（默认回环），`axum::serve` 启动 |
 //!
 //! **警告**：V1 遗留的 `BootstrapConfig / AppState / ServiceBootstrap` 结构已被 Pattern B/C 取代，
 //! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service → build_application → run` 三段式。
@@ -370,7 +371,11 @@ impl ServiceBootstrap {
         let port = env::var("SERVER_PORT")
             .or_else(|_| env::var("PORT"))
             .unwrap_or_else(|_| self.config.default_port.to_string());
-        let addr = format!("0.0.0.0:{}", port);
+        let addr = std::net::SocketAddr::new(
+            resolve_bind_addr()?,
+            port.parse::<u16>()
+                .map_err(|e| anyhow::anyhow!("SERVER_PORT/PORT 非法（{port}）: {e}"))?,
+        );
 
         tracing::info!("🌐 服务地址: {}", addr);
         tracing::info!(
@@ -1174,9 +1179,34 @@ pub fn build_application(
     }
 }
 
+/// 默认监听地址：**仅回环**，进程只接受本机连接，对外统一由 nginx 反代。
+///
+/// 历史默认是 `0.0.0.0`（全部网卡），会让局域网绕过 nginx 直连明文端口
+/// （TLS 与访问日志同时被绕过）。确需放开（如容器内必须 `0.0.0.0` 才能被宿主
+/// 端口映射命中）时，显式设置环境变量 `BIND_ADDR`。
+pub const DEFAULT_BIND_ADDR: &str = "127.0.0.1";
+
+/// 解析监听地址（纯函数，便于单测覆盖默认值）：
+/// `None` 或空白回落 [`DEFAULT_BIND_ADDR`]，非法值直接报错（不静默回退）。
+pub fn parse_bind_addr(raw: Option<&str>) -> Result<std::net::IpAddr> {
+    match raw.map(str::trim).filter(|s| !s.is_empty()) {
+        None => DEFAULT_BIND_ADDR
+            .parse()
+            .map_err(|e| anyhow::anyhow!("DEFAULT_BIND_ADDR 非法（{DEFAULT_BIND_ADDR}）: {e}")),
+        Some(s) => s
+            .parse()
+            .map_err(|e| anyhow::anyhow!("BIND_ADDR 非法（{s}）: {e}")),
+    }
+}
+
+/// 从环境变量解析监听地址：`BIND_ADDR` 优先，缺省/空白回落回环。
+pub fn resolve_bind_addr() -> Result<std::net::IpAddr> {
+    parse_bind_addr(env::var("BIND_ADDR").ok().as_deref())
+}
+
 /// 启动 HTTP 服务
 pub async fn run(app: Application) -> Result<()> {
-    let addr = format!("0.0.0.0:{}", app.port);
+    let addr = std::net::SocketAddr::new(resolve_bind_addr()?, app.port);
     tracing::info!("🌐 {} 服务地址: {}", app.name, addr);
     tracing::info!("🔒 认证保护已启用");
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -1858,6 +1888,49 @@ mod tests {
         assert_eq!(resolve_port(&cfg), 8010);
         std::env::remove_var("ERP_PORT");
         std::env::remove_var("PORT");
+    }
+
+    // ===== 监听地址：默认必须回环（防止回退到 0.0.0.0 全部网卡） =====
+
+    #[test]
+    fn test_default_bind_addr_is_loopback() {
+        let ip: std::net::IpAddr = DEFAULT_BIND_ADDR
+            .parse()
+            .expect("DEFAULT_BIND_ADDR 必须是合法 IP");
+        assert!(ip.is_loopback(), "默认监听地址必须回环，实际 {ip}");
+        assert!(!ip.is_unspecified(), "默认监听地址不得是 0.0.0.0/::");
+    }
+
+    #[test]
+    fn test_parse_bind_addr_defaults_to_loopback() {
+        for raw in [None, Some(""), Some("   ")] {
+            let ip = parse_bind_addr(raw).expect("缺省/空白应回落回环");
+            assert_eq!(ip.to_string(), "127.0.0.1", "raw={raw:?}");
+        }
+    }
+
+    #[test]
+    fn test_parse_bind_addr_explicit_override() {
+        // 显式配置仍可放开（容器/反代同机多网卡场景），但必须由调用方主动设置。
+        assert_eq!(
+            parse_bind_addr(Some("0.0.0.0")).unwrap().to_string(),
+            "0.0.0.0"
+        );
+        assert_eq!(parse_bind_addr(Some(" ::1 ")).unwrap().to_string(), "::1");
+    }
+
+    #[test]
+    fn test_parse_bind_addr_rejects_invalid() {
+        assert!(parse_bind_addr(Some("not-an-ip")).is_err());
+        assert!(parse_bind_addr(Some("8099")).is_err());
+    }
+
+    #[serial]
+    #[test]
+    fn test_resolve_bind_addr_env_unset_is_loopback() {
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::remove_var("BIND_ADDR");
+        assert_eq!(resolve_bind_addr().unwrap().to_string(), "127.0.0.1");
     }
 
     // ===== derive_service_tag edge cases =====

@@ -58,7 +58,8 @@ async fn main() {
         // CORS
         .layer(create_cors_layer());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8099").await.unwrap();
+    // 与主服务同口径：默认只绑回环，对外统一走 nginx 反代（勿改回 0.0.0.0）。
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8099").await.unwrap();
     info!("🌐 服务地址: http://localhost:8099");
 
     // 优雅停机：监听 Ctrl+C / SIGTERM，停止接受新连接并排空在途请求

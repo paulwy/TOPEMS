@@ -50,7 +50,7 @@ impl MonitorRealModule {
             metrics: ctx.metrics.clone(),
             start_time: Instant::now(),
             bff_url: std::env::var("MONITOR_BFF_URL")
-                .unwrap_or_else(|_| "http://localhost:8099".to_string()),
+                .unwrap_or_else(|_| "http://127.0.0.1:8099".to_string()),
         };
 
         // 注册完整路由

@@ -16,7 +16,7 @@ use topems_server::modules::dashboard_module::DashboardModule;
 use topems_server::platform_module::PlatformModule;
 use topems_server::registry::classify_degraded_kind;
 use topems_server::ModuleRegistry;
-use topems_shared_bootstrap::shutdown_signal;
+use topems_shared_bootstrap::{resolve_bind_addr, shutdown_signal};
 use topems_shared_core::logging::init_logging;
 
 /// 记录模块降级：构建失败不阻塞启动（既有设计），但健康检查必须能看到。
@@ -735,11 +735,13 @@ async fn main() -> Result<()> {
     // 生产 nginx 全 /api/* 统一代理 topems-server:8099（无 per-service 转发，P0-3 双轨合一）；
     // 真实 mes 模块（mes_real_module → topems_mes::create_routes 挂 /api/mes）已提供业务路由；ws 看板如需在
     // :8099 恢复，应由 mes_real_module 内嵌 topems_mes::dashboard_ws（属 server 侧后续接线，非 U1 范围）。
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    // 监听地址：默认只绑回环 `127.0.0.1`（进程不接受非本机连接，对外统一走 nginx）。
+    // 生产 plist 不设 BIND_ADDR → 得到回环；确需放开到全部网卡时显式设置 BIND_ADDR=0.0.0.0。
+    let addr = std::net::SocketAddr::new(resolve_bind_addr()?, port);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("topems-server 监听于 http://{}", addr);
-    tracing::info!("健康检查: http://localhost:{}/api/server/health", port);
+    tracing::info!("健康检查: http://{}/api/server/health", addr);
     tracing::info!(
         "进程内调用演示: http://localhost:{}/api/dashboard/financial-summary",
         port

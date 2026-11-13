@@ -111,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
     app.router = app.router.merge(mcp::mcp_routes().with_state(db.clone()));
 
     tracing::info!(
-        "✅ Search Service is running at http://0.0.0.0:{} (prefix: {}, legacy: {:?}, mcp: /mcp)",
+        "✅ Search Service is running (port: {}, prefix: {}, legacy: {:?}, mcp: /mcp)",
         app.port,
         config.api_prefix,
         config.legacy_prefixes
