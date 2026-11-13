@@ -812,6 +812,24 @@ entries:
       - { kind: ledger, ref: "docs/quality/prod-schema-drift-2026-11-09.md:2.2", detail: "未入账" }
     precondition: "20261109100700 应用并入账"
 
+  - version: "20261112105000"
+    file: "database/migrations/20261112105000_w7_b4_wms_rls_fail_closed.sql"
+    class: rls
+    why_deferred: "11-12 窗口以单文件 sqlx source 仅应用 20261112160000，105000 从未投递；生产账本无此版本"
+    declared_objects:
+      - "wms 39 张表 RLS：DROP 旧策略 + ENABLE/FORCE + 39 条 rls_tenant_isolation（37 租户通道 + 2 系统通道）"
+    prod_presence:
+      status: "absent"
+      detail: "生产 wms 仍为 fail-open：39 表 / 42 条策略（16 条 true/true）/ safety_stock_settings rls=false"
+      checked_at: "2026-11-13"
+    disposition: forwarded
+    forward_patch: "20261113100000"
+    basis: "旧版本 <= 账本 max(20261112190000) 不得 in-place 重放；效果由 20261113100000 复刻"
+    evidence:
+      - { kind: ledger, ref: "生产 _sqlx_migrations", detail: "667 行 / max 20261112190000 / 无 20261112105000" }
+      - { kind: data, ref: "只读核对 wms pg_policies", detail: "39 表 / 42 策略 / 16 条 true/true / safety_stock_settings rls=false" }
+    precondition: "20261113100000 应用并入账"
+
 # ===== 43 条之外的待应用前向补丁（status: to_apply） =====
 # 说明：它们 version > 当前账本 max 20261108141500，是方案 C 下唯一允许应用的集合。
 # 43 条旧文件的 forwarded 效果由这里承接；本清单不参与 43 条计数。
@@ -1014,3 +1032,11 @@ pending_forward_patches:
     effect: "六张 finance `_v52` 表回填 17 列 typmod（14×varchar(255)、3×numeric(18,2)）；finance_audit_rules_v52 对齐 6 处语义差异（text→varchar(255)、created_by uuid→varchar(255)、is_active 默认 false、created_at/updated_at 去 now() 默认、id 默认 gen_random_uuid()）"
     destructive_scan: "ALTER COLUMN TYPE 位于 DO 块且逐列比对 atttypmod 守卫；created_by 为 uuid 且表内非 0 行时 RAISE EXCEPTION 中止；金额列存在 >2 位小数时 RAISE EXCEPTION 拒绝静默舍入；无 DELETE/UPDATE/TRUNCATE/DROP"
     note: "前向补丁 > 20261109190000，不改已推送历史；幂等（已正确类型/默认值则跳过）"
+
+  - version: "20261113100000"
+    file: "database/migrations/20261113100000_w7_b4_wms_rls_fail_closed_forward.sql"
+    status: to_apply
+    effect: "前向复刻 105000：wms 39 表收敛为 fail-closed，37 条租户通道 + 2 条系统通道"
+    destructive_scan: "DROP POLICY / ALTER TABLE RLS / CREATE POLICY；无 DELETE/UPDATE/TRUNCATE；前置断言失败即 RAISE EXCEPTION"
+    replaces: [ "20261112105000" ]
+    note: "前向补丁 > 20261112190000，不改已推送历史；配 database/rollback/20261113100000_w7_b4_wms_rls_fail_closed_forward.rollback.sql"
