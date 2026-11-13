@@ -44,6 +44,13 @@ pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
 }
 
 /// Get marketplace summary
+///
+/// 全局表登记：`core.core_plugins` 是**全租户共享插件目录**，不是租户私有数据。
+/// - `code` 全局唯一；`tenant_id` 表示发布方，不表示查看方；
+/// - 租户级安装/授权关系在 `core.core_tenant_plugins`（按 tenant_id 隔离）；
+/// - 因此市场列表按 `is_published` 放行，**禁止**在本查询追加 `tenant_id` 谓词，
+///   否则非发布租户会看到空市场（把越权改成功能故障）；
+/// - 租户隔离责任在发布侧：谁能上传/发布插件由 `/api/plugin/dev/*` 鉴权与审核控制。
 pub async fn get_marketplace_summary(
     State(state): State<AppState>,
     headers: HeaderMap,

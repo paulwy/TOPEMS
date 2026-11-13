@@ -689,6 +689,8 @@
 
 ## 类 C：有租户列但仅 allow_all → 新增租户策略（行为变化最大）
 
+> **全局表例外（2026-11-14 定案）**：`core.core_plugins` 是**全租户共享插件目录**，不参与租户隔离，保留 `allow_all`。依据：`code` 全局唯一；`tenant_id` 表示发布方而非查看方；租户级安装/授权关系在 `core.core_tenant_plugins`。隔离责任在发布侧（`/api/plugin/dev/*` 上传/发布鉴权与审核），市场查询按 `is_published` 放行，**不得**追加 `tenant_id` 谓词（会导致非发布租户市场为空）。
+
 | 表 | 租户列 | 可空 | FORCE RLS | 策略（名:形态） | 建议动作 |
 |---|---|---|---|---|---|
 | ai.ai_training_samples | tenant_id | YES | Y | ai_allow_all_ai_training_samples:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
@@ -696,7 +698,7 @@
 | ai.document_chunks | tenant_id | NO | Y | ai_allow_all_document_chunks:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
 | ai.qa_history | tenant_id | NO | Y | ai_allow_all_qa_history:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
 | bi.audit_logs | tenant_id | YES | Y | bi_allow_all_audit_logs:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
-| core.core_plugins | tenant_id | YES | Y | core_allow_all_core_plugins:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
+| core.core_plugins | tenant_id | YES | Y | core_allow_all_core_plugins:allow_all | 保留 allow_all（登记为全局表）：全租户共享插件目录，tenant_id 为发布方，租户安装关系在 core.core_tenant_plugins；隔离责任在发布侧鉴权 |
 | crm.audit_logs | tenant_id | YES | Y | crm_allow_all_audit_logs:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
 | ehs.audit_logs | tenant_id | YES | Y | ehs_allow_all_audit_logs:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
 | ehs.drill_records | tenant_id | YES | Y | ehs_allow_all_drill_records:allow_all | 以租户策略替换 allow_all（需逐个确认业务全局语义） |
