@@ -41,6 +41,9 @@ impl IntegrationEventHandlers {
             })
             // 7 类业务事件：编排方经 /api/internal/* 调用归属服务（D3 §5.1 选项 A），
             // 不再直写 qms.*/ehs.* schema。
+            // 【死路径 3/3｜本次只标注不删除】无生产发布方的
+            // `LimsInspectionAbnormalDetected` 订阅；该事件当前仅在
+            // `svc/ehs/tests/event_flow_integration.rs` 中由测试构造。
             .subscribe_handler(
                 vec![
                     EventType::QmsInspectionCompleted,

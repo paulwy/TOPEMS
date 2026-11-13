@@ -21,7 +21,6 @@ serde_json.workspace = true
 sqlx.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-md5.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true

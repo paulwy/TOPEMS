@@ -16,7 +16,7 @@ use sqlx::types::Uuid;
 use std::sync::atomic::{AtomicU64, Ordering};
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
+    lims_abnormal_hazard_no, EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
     LimsInspectionAbnormalDetectedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     QmsInspectionCompletedPayload, QmsQualityIssueCreatedPayload,
 };
@@ -50,18 +50,6 @@ fn rand_suffix(n: usize) -> String {
 /// `ehs.qa_ehs_hazards.hazard_no` 的 64 字符上限。
 fn quality_issue_hazard_no(issue_no: &str) -> String {
     format!("HAZ-QMS-{}", issue_no)
-}
-
-/// LIMS 检测异常 → EHS 隐患的确定性编号。
-///
-/// 该事件 payload 不含 inspection_no；`task_no` 是 varchar(64) 的可变文本，
-/// 加前缀后可能超过 `hazard_no` 的 64 字符上限。因此改用有界的 `task_id`
-/// （UUID，全局唯一），并用 `test_item` 的短摘要区分同一任务下的多个异常检测项，
-/// 避免不同检测项被 `ON CONFLICT` 合并覆盖。整体长度 54 字符。
-fn lims_abnormal_hazard_no(task_id: Uuid, test_item: &str) -> String {
-    let digest = format!("{:x}", md5::compute(test_item.trim().as_bytes()));
-    let short: String = digest.chars().take(8).collect();
-    format!("HAZ-LIMS-{task_id}-{short}")
 }
 
 /// LIMS 试剂告警 → EHS 告警的确定性编号。
@@ -312,6 +300,12 @@ pub async fn handle_ehs_accident_reported(
 }
 
 /// LIMS 检测异常 → EHS 隐患。
+///
+/// 【死路径 1/3｜本次只标注不删除】`LimsInspectionAbnormalDetected` 当前全仓
+/// 0 个生产发布点（仅 `publisher.rs` 方法定义与 ehs 测试构造），本 handler 不会被
+/// 真实事件触发。幂等键 `HAZ-LIMS-{task_id}-{fnv1a_64_hex8(test_item)}` 与 ehs 侧
+/// handler 共用 `topems_shared_event::event::lims_abnormal_hazard_no` 单一实现；
+/// 若未来启用，必须确保只有本路径（或 ehs handler 二选一）写入，否则会双写。
 pub async fn handle_lims_inspection_abnormal(
     payload: &LimsInspectionAbnormalDetectedPayload,
 ) -> Result<(), TopemsError> {
@@ -455,6 +449,8 @@ pub async fn dispatch(event_type: EventType, payload: &Value) -> Result<(), Tope
             let parsed = serde_json::from_value::<EhsAccidentReportedPayload>(payload.clone())?;
             handle_ehs_accident_reported(&parsed).await?;
         }
+        // 【死路径 2/3｜本次只标注不删除】无生产发布方的 `LimsInspectionAbnormalDetected`
+        // 分发分支；`LimsInspectionAbnormalDetectedPayload` 类型暂留（见 J1 登记）。
         EventType::LimsInspectionAbnormalDetected => {
             require_raw_payload_tenant(payload, "LimsInspectionAbnormalDetected")?;
             let parsed =
@@ -500,6 +496,7 @@ mod tests {
         let captured = Captured::default();
         let app = Router::new()
             .route("/api/internal/ehs/alerts/integration", post(capture))
+            .route("/api/internal/ehs/hazards/integration", post(capture))
             .with_state(captured.clone());
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
@@ -509,6 +506,26 @@ mod tests {
             axum::serve(listener, app).await.expect("mock ehs serve");
         });
         (format!("http://{}", addr), captured)
+    }
+
+    /// `EHS_SERVICE_URL` 是进程级环境变量，两个转发测试必须串行，避免互相改写。
+    static ENV_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+    fn abnormal_payload(
+        tenant_id: Uuid,
+        task_id: Uuid,
+        test_item: &str,
+    ) -> LimsInspectionAbnormalDetectedPayload {
+        LimsInspectionAbnormalDetectedPayload {
+            tenant_id,
+            task_id,
+            task_no: "LIMS-TASK-001".to_string(),
+            sample_id: Uuid::parse_str("22222222-3333-4444-5555-666666666666").expect("sample id"),
+            sample_no: "SMP-001".to_string(),
+            test_item: test_item.to_string(),
+            abnormal_data: serde_json::json!({"value": 0.85, "limit": 0.50}),
+            conclusion: "不合格".to_string(),
+        }
     }
 
     fn reagent_payload(tenant_id: Uuid) -> LimsReagentAlertPayload {
@@ -571,6 +588,7 @@ mod tests {
     /// 缺失/非法租户拒收且计数递增。
     #[tokio::test]
     async fn reagent_alert_forwarding_is_tenant_scoped_and_redelivery_stable() {
+        let _env_guard = ENV_LOCK.lock().await;
         let (base_url, captured) = start_mock_ehs().await;
         let prev = std::env::var("EHS_SERVICE_URL").ok();
         std::env::set_var("EHS_SERVICE_URL", &base_url);
@@ -648,6 +666,57 @@ mod tests {
             3,
             "非法租户不得触发下游请求"
         );
+
+        match prev {
+            Some(v) => std::env::set_var("EHS_SERVICE_URL", v),
+            None => std::env::remove_var("EHS_SERVICE_URL"),
+        }
+    }
+
+    /// LIMS 检测异常 → EHS：integration 路径照常写，且幂等键与 ehs handler 共用
+    /// 单一实现（同事件重投请求体完全一致、不同 test_item 不合并、编号有界）。
+    #[tokio::test]
+    async fn lims_abnormal_forwarding_uses_shared_key_and_redelivery_is_stable() {
+        let _env_guard = ENV_LOCK.lock().await;
+        let (base_url, captured) = start_mock_ehs().await;
+        let prev = std::env::var("EHS_SERVICE_URL").ok();
+        std::env::set_var("EHS_SERVICE_URL", &base_url);
+
+        let tenant_id = Uuid::parse_str("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee").expect("tenant");
+        let task_id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").expect("task id");
+        let payload = abnormal_payload(tenant_id, task_id, "重金属检测");
+
+        // 首次投递 + 原样重投：必须发出同一 hazard_no / 同一租户。
+        handle_lims_inspection_abnormal(&payload)
+            .await
+            .expect("首次编排应成功");
+        handle_lims_inspection_abnormal(&payload)
+            .await
+            .expect("重投编排应成功");
+
+        let expected = lims_abnormal_hazard_no(task_id, "重金属检测");
+        {
+            let bodies = captured.0.lock().expect("capture lock");
+            assert_eq!(bodies.len(), 2, "两次投递都应发出请求");
+            assert_eq!(bodies[0], bodies[1], "重投请求体必须完全一致（幂等键收敛）");
+            assert_eq!(bodies[0]["hazard_no"], serde_json::json!(expected));
+            assert_eq!(
+                bodies[0]["tenant_id"],
+                serde_json::json!(tenant_id.to_string())
+            );
+            assert!(expected.len() <= 64, "{expected}");
+        }
+
+        // 同一任务下不同检测项：编号不同，不得被 ON CONFLICT 合并。
+        let other = abnormal_payload(tenant_id, task_id, "微生物限度");
+        handle_lims_inspection_abnormal(&other)
+            .await
+            .expect("不同检测项编排应成功");
+        {
+            let bodies = captured.0.lock().expect("capture lock");
+            assert_eq!(bodies.len(), 3);
+            assert_ne!(bodies[2]["hazard_no"], bodies[0]["hazard_no"]);
+        }
 
         match prev {
             Some(v) => std::env::set_var("EHS_SERVICE_URL", v),
