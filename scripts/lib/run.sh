@@ -135,12 +135,14 @@ _kill_background_cargo() {
     [ -z "$cargo_pids" ] && return 0
 
     # 2026-10-03：仅保留工作目录在本仓库的进程（防误杀其他项目/并行会话的编译）
+    # 2026-11：精确前缀匹配（cwd 必须等于 PROJECT_ROOT 或位于其下），避免子串误命中
     local filtered_pids=""
-    local p2
+    local p2 p2_cwd
     for p2 in $cargo_pids; do
-        if lsof -a -p "$p2" -d cwd -Fn 2>/dev/null | grep -q "$PROJECT_ROOT"; then
-            filtered_pids="$filtered_pids $p2"
-        fi
+        p2_cwd=$(lsof -a -p "$p2" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+        case "$p2_cwd" in
+            "$PROJECT_ROOT"|"$PROJECT_ROOT"/*) filtered_pids="$filtered_pids $p2" ;;
+        esac
     done
     cargo_pids="${filtered_pids# }"
     [ -z "$cargo_pids" ] && return 0
@@ -169,11 +171,12 @@ _kill_background_cargo() {
     # 兜底强杀：仅针对工作目录在本仓库的残留进程（与上方 cwd 过滤一致，防误杀其他项目）
     local force_pids
     force_pids=$(ps aux | grep -v grep | grep -E "cargo-llvm-cov|cargo test.*llvm-cov|cargo nextest" | awk '{print $2}' | tr '\n' ' ')
-    local fp
+    local fp fp_cwd
     for fp in $force_pids; do
-        if lsof -a -p "$fp" -d cwd -Fn 2>/dev/null | grep -q "$PROJECT_ROOT"; then
-            kill -9 "$fp" 2>/dev/null || true
-        fi
+        fp_cwd=$(lsof -a -p "$fp" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+        case "$fp_cwd" in
+            "$PROJECT_ROOT"|"$PROJECT_ROOT"/*) kill -9 "$fp" 2>/dev/null || true ;;
+        esac
     done
     success "后台 cargo 进程已终止"
     return 1

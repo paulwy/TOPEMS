@@ -20,6 +20,7 @@ _clean_cov_remnants() {
             if $dry_run; then
                 info "[DRY-RUN] 将删除 coverage/target 残留: $cov_dir ($size)"
             else
+                _assert_safe_path "$cov_dir" || return 1
                 info "清理 coverage 残留: $cov_dir ($size)"
                 rm -rf "$cov_dir"
                 detail "已清理 $cov_dir"
@@ -39,6 +40,97 @@ _acc_freed() {
     k=$(du -sk "$1" 2>/dev/null | awk '{print $1}')
     [ -n "$k" ] || k=0
     _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + k))
+    return 0
+}
+
+# =============================================
+# 安全护栏（2026-11 磁盘清理评审）
+# =============================================
+
+# 受保护 worktree：任何清理分支都不允许触碰（其它并行工作流的现场）
+_PROTECTED_WORKTREES=(
+    "/private/tmp/topems-scm"
+    "/private/tmp/topems-ehs"
+    "/private/tmp/topems-wms"
+    "/private/tmp/topems-base"
+    "/private/tmp/topems-wire"
+    "/private/tmp/topems-deploy-65a360877"
+)
+
+_is_protected_worktree() {
+    local p="$1" w
+    for w in "${_PROTECTED_WORKTREES[@]}"; do
+        [ "$p" = "$w" ] && return 0
+    done
+    return 1
+}
+
+# 危险路径断言：所有 rm -rf 前统一调用；命中保护清单即 abort 并打印路径。
+# 用法: _assert_safe_path [--allow-sqlx] <path>...
+#   --allow-sqlx  仅 --sqlx 显式清理分支使用（.sqlx 为可恢复的离线编译缓存）
+_assert_safe_path() {
+    local allow_sqlx=false
+    if [ "${1:-}" = "--allow-sqlx" ]; then
+        allow_sqlx=true
+        shift
+    fi
+    local p
+    for p in "$@"; do
+        if [ -z "$p" ] || [ "$p" = "/" ]; then
+            error "拒绝删除非法路径: '${p}'"
+            return 1
+        fi
+        if printf '%s\n' "$p" | grep -Eq '(^|/)(backups|database|\.git|\.env|secret)(/|$)|docs/quality/evidence'; then
+            error "拒绝删除受保护路径（命中 backups|database|.git|.env|secret|docs/quality/evidence）: $p"
+            return 1
+        fi
+        if [ "$allow_sqlx" = false ] && printf '%s\n' "$p" | grep -Eq '(^|/)\.sqlx(/|$)'; then
+            error "拒绝删除受保护路径（.sqlx 为离线编译缓存）: $p"
+            error "  如确需清理，请使用显式选项: $0 clean --sqlx"
+            return 1
+        fi
+    done
+    return 0
+}
+
+# 收集独立 worktree 路径（git worktree list --porcelain + /private/tmp/topems-* + $HOME/topems-wt-*）
+# 排除：主仓自身、_PROTECTED_WORKTREES、不存在的路径、重复项
+_collect_worktrees() {
+    local -a raw=()
+    local -a out=()
+    local line g p q dup
+    while IFS= read -r line; do
+        [ -n "$line" ] && raw+=("$line")
+    done < <(git -C "$PROJECT_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')
+    for g in /private/tmp/topems-* "$HOME"/topems-wt-*; do
+        [ -d "$g" ] && raw+=("$g")
+    done
+    for p in "${raw[@]}"; do
+        [ -d "$p" ] || continue
+        [ "$p" = "$PROJECT_ROOT" ] && continue
+        _is_protected_worktree "$p" && continue
+        dup=false
+        for q in "${out[@]}"; do
+            [ "$q" = "$p" ] && { dup=true; break; }
+        done
+        [ "$dup" = false ] && out+=("$p")
+    done
+    [ ${#out[@]} -gt 0 ] && printf '%s\n' "${out[@]}"
+    return 0
+}
+
+# 运行态占用探测：lsof -a -d txt +D，覆盖 debug/release 与任意 worktree 的进程
+# 输出: 每个占用进程一行 "PID <pid> <可执行文件路径>"
+_runtime_busy_procs() {
+    local t
+    for t in "$@"; do
+        [ -d "$t" ] || continue
+        lsof -a -d txt +D "$t" -Fpn 2>/dev/null \
+            | awk '
+                /^p/ { pid = substr($0, 2) }
+                /^n/ { name = substr($0, 2); if (pid != "") print "PID " pid "  " name }
+              '
+    done | sort -u
     return 0
 }
 
@@ -187,30 +279,36 @@ clean_project() {
     local clean_sccache=false
     local clean_analyze=false
     local clean_sqlx=false
+    local clean_tmp_logs=false
+    local clean_include_worktrees=false
+    local clean_yes=false
     local dry_run=false
     local preflight=false
     local prune_done=false
 
     for arg in "$@"; do
         case "$arg" in
-            --rust)         clean_rust=true ;;
-            --debug)        clean_debug=true ;;
-            --debug-full)   clean_debug_full=true ;;
-            --sccache)      clean_sccache=true ;;
-            --analyze)      clean_analyze=true ;;
-            --sqlx)         clean_sqlx=true ;;
-            --frontend)     clean_frontend=true ;;
-            --cache)        clean_cache=true ;;
-            --system-cache) clean_system_cache=true ;;
-            --logs)         clean_logs=true ;;
-            --ollama)       clean_ollama=true ;;
-            --all)          clean_all=true ;;
-            --deep)         clean_deep=true ;;
-            --dry-run)      dry_run=true ;;
-            --preflight)    preflight=true ;;
+            --rust)              clean_rust=true ;;
+            --debug)             clean_debug=true ;;
+            --debug-full)        clean_debug_full=true ;;
+            --sccache)           clean_sccache=true ;;
+            --analyze)           clean_analyze=true ;;
+            --sqlx)              clean_sqlx=true ;;
+            --frontend)          clean_frontend=true ;;
+            --cache)             clean_cache=true ;;
+            --system-cache)      clean_system_cache=true ;;
+            --logs)              clean_logs=true ;;
+            --tmp-logs)          clean_tmp_logs=true ;;
+            --include-worktrees) clean_include_worktrees=true ;;
+            --yes|-y)            clean_yes=true ;;
+            --ollama)            clean_ollama=true ;;
+            --all)               clean_all=true ;;
+            --deep)              clean_deep=true ;;
+            --dry-run)           dry_run=true ;;
+            --preflight)         preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --debug --debug-full --sccache --analyze --sqlx --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
+                echo "可用选项: --rust --debug --debug-full --sccache --analyze --sqlx --frontend --cache --system-cache --ollama --logs --tmp-logs --include-worktrees --yes --all --deep --dry-run --preflight"
                 return 1
                 ;;
         esac
@@ -250,14 +348,67 @@ clean_project() {
         for rem in "$PROJECT_ROOT"/svc/*/target "$PROJECT_ROOT"/lib/*/target; do
             [ -e "$rem" ] && analyze_dirs+=("$rem")
         done
+        # 补充独立 worktree 与 /private/tmp 临时目录占用
+        local wt_paths
+        wt_paths=$(_collect_worktrees)
+        if [ -n "$wt_paths" ]; then
+            local wt
+            while IFS= read -r wt; do
+                [ -z "$wt" ] && continue
+                [ -d "$wt/target" ] && analyze_dirs+=("$wt/target")
+                [ -d "$wt/node_modules" ] && analyze_dirs+=("$wt/node_modules")
+                analyze_dirs+=("$wt")
+            done <<< "$wt_paths"
+        fi
+        for rem in /private/tmp/topems-*; do
+            [ -d "$rem" ] && analyze_dirs+=("$rem")
+        done
+        [ -d "$HOME/.ollama" ] && analyze_dirs+=("$HOME/.ollama")
+        # 去重（worktree 路径与 /private/tmp/topems-* glob 会重复）
+        local -a analyze_uniq=()
+        local x y seen
+        for x in "${analyze_dirs[@]}"; do
+            seen=false
+            for y in "${analyze_uniq[@]}"; do
+                [ "$y" = "$x" ] && { seen=true; break; }
+            done
+            [ "$seen" = false ] && analyze_uniq+=("$x")
+        done
         {
             local d
-            for d in "${analyze_dirs[@]}"; do
+            for d in "${analyze_uniq[@]}"; do
                 if [ -e "$d" ]; then
                     du -sh "$d" 2>/dev/null
                 fi
             done
         } | sort -rh | head -20
+        echo ""
+        info "Worktree 占用汇总:"
+        if [ -z "$wt_paths" ]; then
+            detail "  未发现可清理的独立 worktree"
+        else
+            local wt
+            while IFS= read -r wt; do
+                [ -n "$wt" ] && du -sh "$wt" 2>/dev/null
+            done <<< "$wt_paths"
+        fi
+        echo ""
+        info "Docker 占用汇总:"
+        if command -v docker >/dev/null 2>&1; then
+            docker system df 2>/dev/null || detail "  docker 未运行或不可用，跳过"
+        else
+            detail "  未安装 docker，跳过"
+        fi
+        echo ""
+        info "Ollama 占用汇总:"
+        if [ -d "$HOME/.ollama" ]; then
+            du -sh "$HOME/.ollama" 2>/dev/null || true
+            local mcount
+            mcount=$(ollama list 2>/dev/null | tail -n +2 | grep -c . 2>/dev/null || true)
+            detail "  已安装模型数: ${mcount:-0}"
+        else
+            detail "  未安装 Ollama，跳过"
+        fi
         echo ""
         info "磁盘当前可用: $(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $4}')（$(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $5}') 已用）"
         echo ""
@@ -297,7 +448,8 @@ clean_project() {
        [ "$clean_frontend" = false ] && \
        [ "$clean_cache" = false ] && [ "$clean_system_cache" = false ] && \
        [ "$clean_ollama" = false ] && [ "$clean_logs" = false ] && \
-       [ "$clean_sqlx" = false ] && [ "$clean_all" = false ]; then
+       [ "$clean_sqlx" = false ] && [ "$clean_tmp_logs" = false ] && \
+       [ "$clean_include_worktrees" = false ] && [ "$clean_all" = false ]; then
         clean_debug=true
     fi
     if [ "$clean_all" = true ]; then
@@ -311,6 +463,77 @@ clean_project() {
         clean_frontend=true
     fi
 
+    # ── D1/D2: 运行态占用检测（lsof -a -d txt +D，覆盖 debug/release 与任意 worktree）──
+    #    命中即拒绝删除（fail-closed），并输出 PID 与进程路径，避免删除运行中服务的产物。
+    local -a runtime_targets=()
+    local __d __wt __wts
+    if [ "$clean_rust" = true ] && [ -d "$PROJECT_ROOT/target" ]; then
+        runtime_targets+=("$PROJECT_ROOT/target")
+    fi
+    if [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ]; then
+        for __d in "$PROJECT_ROOT/target/debug/incremental" "$PROJECT_ROOT/target/release/incremental" "$PROJECT_ROOT/target/tmp"; do
+            [ -d "$__d" ] && runtime_targets+=("$__d")
+        done
+        if [ "$clean_debug_full" = true ]; then
+            for __d in deps build examples; do
+                [ -d "$PROJECT_ROOT/target/debug/$__d" ] && runtime_targets+=("$PROJECT_ROOT/target/debug/$__d")
+            done
+        fi
+    fi
+    if [ "$clean_include_worktrees" = true ]; then
+        __wts=$(_collect_worktrees)
+        if [ -n "$__wts" ]; then
+            while IFS= read -r __wt; do
+                [ -z "$__wt" ] && continue
+                if [ "$clean_yes" = true ]; then
+                    [ -d "$__wt/target" ] && runtime_targets+=("$__wt/target")
+                else
+                    [ -d "$__wt/target/debug/incremental" ] && runtime_targets+=("$__wt/target/debug/incremental")
+                fi
+            done <<< "$__wts"
+        fi
+    fi
+    if [ "$dry_run" = false ] && [ ${#runtime_targets[@]} -gt 0 ]; then
+        local busy_procs
+        busy_procs=$(_runtime_busy_procs "${runtime_targets[@]}")
+        if [ -n "$busy_procs" ]; then
+            error "检测到进程正在使用待清理目录，已拒绝删除（请先停止服务或构建）:"
+            printf '%s\n' "$busy_procs" | sed 's/^/    /'
+            return 1
+        fi
+    fi
+    if ps aux | grep -v grep | grep -qE "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc"; then
+        warning "检测到活跃构建进程（cargo/rustc），本仓库相关的将在清理时被终止（并行构建请先停手）"
+    fi
+
+    # ── --all: 执行前打印删除计划并确认；非 TTY 且未带 --yes 直接拒绝 ──
+    if [ "$clean_all" = true ] && [ "$dry_run" = false ]; then
+        echo ""
+        warn "全量清理计划（--all）:"
+        echo "  - Rust 编译产物: $PROJECT_ROOT/target"
+        echo "  - 前端产物: apps/{web,desktop,mobile}/dist、coverage/、playwright-report/"
+        echo "  - 项目缓存: apps/web/.lighthouseci、cli/.venv、cli/.pytest_cache、node_modules/.cache"
+        echo "  - 日志: logs/ 与仓库根目录 *.log / *.out"
+        if [ "$clean_include_worktrees" = true ]; then
+            echo "  - Worktree: 各 worktree 的 target/debug/incremental（整 target 需同时给 --include-worktrees --yes）"
+        fi
+        echo ""
+        if [ "$clean_yes" = true ]; then
+            detail "已指定 --yes，跳过交互确认"
+        elif [ ! -t 0 ]; then
+            error "非交互环境（stdin 非 TTY）执行全量清理必须显式加 --yes；已拒绝执行。"
+            return 1
+        else
+            local confirm_all=""
+            # read 在 EOF（管道耗尽）时返回非 0，需容忍，否则 set -e 会直接退出
+            read -r -p "确认执行全量清理？(y/N): " confirm_all || true
+            if [ "$confirm_all" != "y" ] && [ "$confirm_all" != "Y" ]; then
+                warn "已取消全量清理。"
+                return 1
+            fi
+        fi
+    fi
+
     # --system-cache 是危险操作，需要二次确认
     local did_clean=false
     if [ "$clean_system_cache" = true ] && [ "$dry_run" = false ]; then
@@ -322,14 +545,6 @@ clean_project() {
             warn "已取消系统缓存清理。"
             clean_system_cache=false
         fi
-    fi
-
-    # ── D1/D2: 运行态与构建活动感知（clean 前透明提示，避免误伤并行构建/运行中服务）──
-    if ps aux | grep -v grep | grep -q "$PROJECT_ROOT/target/release/"; then
-        warning "检测到运行中的服务进程（target/release/），clean 后重启将触发重新编译"
-    fi
-    if ps aux | grep -v grep | grep -qE "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc"; then
-        warning "检测到活跃构建进程（cargo/rustc），本仓库相关的将在清理时被终止（并行构建请先停手）"
     fi
 
     echo ""
@@ -362,6 +577,7 @@ clean_project() {
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Rust 编译产物: $dir ($size)"
             else
+                _assert_safe_path "$dir" || return 1
                 info "清理 Rust 编译产物（直接删除 target/，等效 cargo clean 且更快）..."
                 _acc_freed "$dir"
                 rm -rf "$dir"
@@ -374,6 +590,38 @@ clean_project() {
 
     fi
 
+    # ── --include-worktrees: 清理独立 worktree 的编译缓存 ──
+    #    默认只删 <wt>/target/debug/incremental 一档；删整个 <wt>/target 必须显式 --include-worktrees --yes。
+    if [ "$clean_include_worktrees" = true ]; then
+        local wt_list
+        wt_list=$(_collect_worktrees)
+        if [ -z "$wt_list" ]; then
+            detail "未发现可清理的独立 worktree，跳过"
+        else
+            local wt wt_dir wt_size
+            while IFS= read -r wt; do
+                [ -n "$wt" ] || continue
+                if [ "$clean_yes" = true ]; then
+                    wt_dir="$wt/target"
+                else
+                    wt_dir="$wt/target/debug/incremental"
+                fi
+                if [ -d "$wt_dir" ]; then
+                    wt_size=$(du -sh "$wt_dir" 2>/dev/null | awk '{print $1}')
+                    if [ "$dry_run" = true ]; then
+                        info "[DRY-RUN] 将删除 worktree 缓存: $wt_dir ($wt_size)"
+                    else
+                        _assert_safe_path "$wt_dir" || return 1
+                        _acc_freed "$wt_dir"
+                        rm -rf "$wt_dir"
+                        detail "已删除 $wt_dir ($wt_size)"
+                        did_clean=true
+                    fi
+                fi
+            done <<< "$wt_list"
+        fi
+    fi
+
     # ── .sqlx 离线编译缓存（默认不删，已入库 git；--sqlx 或 CLEAN_SQLX=true 才清理）──
     if [ "$clean_sqlx" = true ] || [ "${CLEAN_SQLX:-false}" = "true" ]; then
         local sqlx_dir="$PROJECT_ROOT/.sqlx"
@@ -383,6 +631,7 @@ clean_project() {
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
             else
+                _assert_safe_path --allow-sqlx "$sqlx_dir" || return 1
                 _acc_freed "$sqlx_dir"
                 rm -rf "$sqlx_dir"
                 detail "已清理 .sqlx ($sqlx_size)"
@@ -420,6 +669,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _assert_safe_path "$dir" || return 1
                     _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
@@ -449,6 +699,7 @@ clean_project() {
                 info "[DRY-RUN] 将清空 sccache 缓存: $sccache_dir ($sccache_size)"
             else
                 sccache --stop-server >/dev/null 2>&1 || true
+                _assert_safe_path "$sccache_dir" || return 1
                 _acc_freed "$sccache_dir"
                 rm -rf "${sccache_dir:?}/"* 2>/dev/null
                 detail "已清空 sccache 编译缓存 ($sccache_size)"
@@ -476,6 +727,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _assert_safe_path "$dir" || return 1
                     _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
@@ -495,6 +747,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _assert_safe_path "$dir" || return 1
                     _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
@@ -525,6 +778,7 @@ clean_project() {
                     if [ "$dry_run" = true ]; then
                         info "[DRY-RUN] 将删除: $dir ($size)"
                     else
+                        _assert_safe_path "$dir" || return 1
                         _acc_freed "$dir"
                         rm -rf "$dir"
                         detail "已删除 $dir ($size)"
@@ -552,7 +806,6 @@ clean_project() {
     if [ "$clean_cache" = true ]; then
         local project_cache_dirs=(
             "$PROJECT_ROOT/apps/web/.lighthouseci"
-            "$PROJECT_ROOT/apps/web/.storybook"
             "$PROJECT_ROOT/cli/.venv"
             "$PROJECT_ROOT/cli/.pytest_cache"
             "$PROJECT_ROOT/apps/web/node_modules/.cache"
@@ -564,6 +817,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除项目缓存: $dir ($size)"
                 else
+                    _assert_safe_path "$dir" || return 1
                     _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
@@ -602,6 +856,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除系统缓存: $dir ($size)"
                 else
+                    _assert_safe_path "$dir" || return 1
                     _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
@@ -616,6 +871,7 @@ clean_project() {
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Cargo registry: $HOME/.cargo/registry ($cargo_size)"
             else
+                _assert_safe_path "$HOME/.cargo/registry" || return 1
                 _acc_freed "$HOME/.cargo/registry"
                 rm -rf "$HOME/.cargo/registry"
                 detail "已删除 Cargo registry ($cargo_size)"
@@ -720,23 +976,46 @@ clean_project() {
                     info "[DRY-RUN] 将清空: $dir ($size)"
                 else
                     _acc_freed "$dir"
-                    find "$dir" -name "*.log" -type f -delete 2>/dev/null
-                    detail "已清空 $dir 下的日志"
+                    find "$dir" \( -name "*.log" -o -name "*.out" \) -type f -delete 2>/dev/null
+                    detail "已清空 $dir 下的日志（*.log / *.out）"
                     did_clean=true
                 fi
             fi
         done
 
         local root_logs
-        root_logs=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.log" -type f 2>/dev/null)
+        root_logs=$(find "$PROJECT_ROOT" -maxdepth 1 \( -name "*.log" -o -name "*.out" \) -type f 2>/dev/null)
         if [ -n "$root_logs" ]; then
             if [ "$dry_run" = true ]; then
-                info "[DRY-RUN] 将删除根目录日志文件"
+                info "[DRY-RUN] 将删除根目录日志文件（*.log / *.out）"
             else
-                find "$PROJECT_ROOT" -maxdepth 1 -name "*.log" -type f -delete 2>/dev/null
+                find "$PROJECT_ROOT" -maxdepth 1 \( -name "*.log" -o -name "*.out" \) -type f -delete 2>/dev/null
                 detail "已删除根目录日志文件"
                 did_clean=true
             fi
+        fi
+    fi
+
+    # ── --tmp-logs: 清理 /private/tmp/topems*.log（构建/服务临时日志；默认不删）──
+    if [ "$clean_tmp_logs" = true ]; then
+        local tmp_logs
+        tmp_logs=$(find /private/tmp -maxdepth 1 -name "topems*.log" -type f 2>/dev/null)
+        if [ -n "$tmp_logs" ]; then
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除 /private/tmp/topems*.log:"
+                printf '%s\n' "$tmp_logs" | sed 's/^/    /'
+            else
+                local _lf
+                while IFS= read -r _lf; do
+                    [ -n "$_lf" ] || continue
+                    _acc_freed "$_lf"
+                    rm -f "$_lf" 2>/dev/null || true
+                done <<< "$tmp_logs"
+                detail "已删除 /private/tmp/topems*.log"
+                did_clean=true
+            fi
+        else
+            detail "/private/tmp 下无 topems*.log，跳过"
         fi
     fi
 

@@ -142,7 +142,8 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 
 清理（场景: 磁盘治理——日常增量 clean_target.sh → 显式定向 clean → 危险 --system-cache）:
   clean-all             全量清理，等价 clean --all（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
-                         可追加参数：--dry-run 预览 / --deep / --system-cache 等
+                         执行前打印删除计划并交互确认；非 TTY 环境必须显式加 --yes
+                         可追加参数：--dry-run 预览 / --deep / --system-cache / --include-worktrees / --yes 等
   clean [选项]            清理编译产物、缓存、日志（默认增量：只清 debug 增量缓存，保留产物与依赖）
                             --rust         全量清理 Rust 编译产物 (target/ 含 release, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
                             --sqlx         清理 SQLx 离线编译缓存 (.sqlx，已入库 git，默认不删；清理后需 sqlx prepare 重新生成)
@@ -151,12 +152,16 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
                             --sccache      停止 sccache 守护进程并清空编译缓存（下次构建冷启动）
                             --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
                             --deep         深度清理所有 node_modules + pnpm store prune（解决 dual versions / lockfile 漂移）
-                            --cache        清理项目级缓存 (apps/web/.lighthouseci, apps/web/.storybook, cli/.venv, cli/.pytest_cache, node_modules/.cache)
+                            --cache        清理项目级缓存 (apps/web/.lighthouseci, cli/.venv, cli/.pytest_cache, node_modules/.cache)
                             --system-cache 清理系统级缓存 (pnpm/cargo/IDE，危险操作需确认)
                             --ollama       清理 Ollama 模型（保留项目使用的模型）
-                            --logs         清理日志文件 (logs/*.log)
+                            --logs         清理日志文件 (logs/ 与根目录 *.log / *.out)
+                            --tmp-logs     清理 /private/tmp/topems*.log（默认不删）
+                            --include-worktrees 扫描独立 worktree（git worktree list + /private/tmp/topems-* + ~/topems-wt-*）
+                                           默认只删各 worktree 的 target/debug/incremental；删整个 target 需同时加 --yes
+                            --yes, -y      跳过 --all 交互确认（非 TTY 必需）；配合 --include-worktrees 时删整个 worktree target
                             --all          全量清理（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
-                            --analyze      磁盘占用分析（只读排行，不删除任何文件）
+                            --analyze      磁盘占用分析（只读排行，含 worktree / docker / ollama 汇总，不删除任何文件）
                             --dry-run      预演模式，仅显示将删除的内容
                           环境变量: DISK_BLOCK_GB（阻断阈值，默认5）/ DISK_WARN_GB（警告阈值，默认10）
                           清理提醒: 磁盘守卫在可用空间 < 阈值时自动拦截/提示（topems clean 释放）
@@ -474,6 +479,8 @@ case "${1:-help}" in
         show_help
         ;;
     clean-all)
+        # 活跃构建检测：持构建锁/有构建进程时拒绝清理，避免与 cargo 并发写 target
+        _acquire_build_lock || exit 1
         clean_project --all "${@:2}"
         ;;
     clean)
