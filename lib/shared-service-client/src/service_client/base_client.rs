@@ -279,6 +279,11 @@ impl BaseServiceClient {
         self.custom_headers.insert(key.into(), value.into());
     }
 
+    /// 读取已设置的持久化请求头（用于断言/排障，不发起请求）。
+    pub fn header_value(&self, key: &str) -> Option<&str> {
+        self.custom_headers.get(key).map(String::as_str)
+    }
+
     pub fn base_url(&self) -> &str {
         &self.base_url
     }

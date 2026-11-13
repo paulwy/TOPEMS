@@ -3,6 +3,7 @@ pub mod module;
 pub mod permission;
 pub mod service_identity;
 pub mod tenant;
+pub mod tenant_scope;
 
 pub use department::{department_middleware, require_department};
 pub use module::{require_module_active, require_module_permission};
@@ -16,3 +17,4 @@ pub use tenant::{
     resolve_create_tenant, tenant_middleware, tenant_middleware_no_txn, try_tenant_id,
     try_tenant_id_from_claims,
 };
+pub use tenant_scope::{BindTenantScope, SystemChannel, TenantScope};

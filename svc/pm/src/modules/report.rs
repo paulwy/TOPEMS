@@ -7,17 +7,12 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
-use topems_shared_db::scope::Db;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::report::{
@@ -229,9 +224,17 @@ async fn generate_report(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
+    // C 类：报告生成只服务租户内用户，缺租户即 400。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
+    let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1 AND tenant_id = $2::uuid"))
         .bind(project_id)
-        .bind(get_tenant_id(&claims))
+        .bind_tenant_scope(&tenant_scope)
         .fetch_one(&mut scope)
         .await;
 
@@ -249,9 +252,9 @@ async fn generate_report(
         Err(_) => serde_json::json!({}),
     };
 
-    let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) ORDER BY sequence_number"))
+    let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 AND tenant_id = $2::uuid ORDER BY sequence_number"))
         .bind(project_id)
-        .bind(get_tenant_id(&claims))
+        .bind_tenant_scope(&tenant_scope)
         .fetch_all(&mut scope)
         .await;
 

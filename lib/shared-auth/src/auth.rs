@@ -23,7 +23,7 @@ use crate::security::audit_logger::{
     apply_claims_to_audit_context, audit_context_from_claims, current_audit_context,
     scope_audit_context, AuditContextSlot,
 };
-use crate::service::{is_service_claims, record_service_call};
+use crate::service::{is_service_claims, record_service_call, record_system_channel};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -1143,6 +1143,47 @@ pub async fn auth_middleware(
             service_name: claims.username.clone(),
             permissions: claims.permissions.clone(),
         });
+    }
+
+    // 显式系统通道标记（W7 阶段三 P0）：调用方不再用 nil `x-tenant-id` 当暗号，
+    // 改为 `x-system-channel` + `x-caller-service` + `x-system-reason`。目标端据此
+    // 校验身份、落日志并计数，便于追溯"谁、为什么"在使用跨租户通道。
+    if let Some(channel) = parts
+        .headers
+        .get("x-system-channel")
+        .and_then(|v| v.to_str().ok())
+    {
+        let caller = parts
+            .headers
+            .get("x-caller-service")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("-");
+        let reason = parts
+            .headers
+            .get("x-system-reason")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("-");
+        if !crate::service::system_channel_allowed(channel, &claims) {
+            tracing::warn!(
+                channel,
+                caller,
+                reason,
+                user = %claims.username,
+                path = %path,
+                "系统通道身份校验失败：仅 service_token 服务身份可声明系统通道"
+            );
+            return api_error::<()>(403, "系统通道仅限服务身份使用").into_response();
+        }
+        tracing::warn!(
+            channel,
+            caller,
+            reason,
+            user = %claims.username,
+            method = %method,
+            path = %path,
+            "系统通道请求（跨租户可见），已记录调用方与原因"
+        );
+        record_system_channel(caller);
     }
 
     // P1-4：未改密（must_change_password=true）硬拦截——除自服务改密与登出外一律 403。

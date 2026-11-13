@@ -8,18 +8,12 @@ use axum::{
     Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
 use topems_shared_db::scope::Db;
 
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
@@ -134,11 +128,18 @@ pub async fn get_project_status(
 
     tracing::info!("获取PM项目状态分布");
 
-    let tenant_uuid = get_tenant_id(&claims);
+    // C 类：项目状态统计只服务租户内用户，缺租户即 400。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(tenant_scope) => tenant_scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
     let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL AND tenant_id = $1::uuid",
     )
-    .bind(tenant_uuid)
+    .bind_tenant_scope(&tenant_scope)
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
@@ -146,11 +147,11 @@ pub async fn get_project_status(
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT status, COUNT(*) as count
          FROM pm.projects
-         WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+         WHERE deleted_at IS NULL AND tenant_id = $1::uuid
          GROUP BY status
          ORDER BY count DESC",
     )
-    .bind(tenant_uuid)
+    .bind_tenant_scope(&tenant_scope)
     .fetch_all(&mut scope)
     .await
     .unwrap_or_default();

@@ -2,6 +2,7 @@ use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Serialize)]
@@ -385,7 +386,11 @@ pub async fn approve_report(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    // C 类写路径：审核报告只允许本租户用户，缺租户即 400（不存在跨租户写的理由）。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
 
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
@@ -400,13 +405,13 @@ pub async fn approve_report(
         UPDATE public.qa_lab_inspection_reports
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
-          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
                   inspector, inspection_items, conclusion, remark, status, created_at
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind_tenant_scope(&tenant_scope)
     .fetch_optional(&mut scope)
     .await;
 

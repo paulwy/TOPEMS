@@ -17,18 +17,12 @@ use lettre::{
 };
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_db::scope::Db;
 
 type RlsTxnCell =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -1445,6 +1439,19 @@ pub async fn resend_emails(
         }
     };
     tracing::info!("mail resend_emails by user: {}", claims.username);
+
+    // C 类：重发邮件只允许本租户用户，缺租户即 400。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": message,
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
     let email_ids: Vec<String> = payload
         .get("email_ids")
         .and_then(|v| v.as_array())
@@ -1472,8 +1479,8 @@ pub async fn resend_emails(
             }
         };
         match sqlx::query(only_own_schema_query!("public",
-            "SELECT from_email, to_email, subject, body FROM public.core_emails WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
-            .bind(email_id).bind(get_tenant_id(&claims)).fetch_optional(&mut scope).await
+            "SELECT from_email, to_email, subject, body FROM public.core_emails WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"))
+            .bind(email_id).bind_tenant_scope(&tenant_scope).fetch_optional(&mut scope).await
         {
             Ok(Some(row)) => {
                 let from_email = row.get::<String,_>("from_email");

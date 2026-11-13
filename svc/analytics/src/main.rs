@@ -14,10 +14,11 @@ use axum::{
 };
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
 use utoipa::OpenApi;
@@ -293,19 +294,35 @@ async fn reports_center_stats(
     // analytics service (schema=bi) is not authorized to read hrm.* under the
     // schema-boundary gate, and bi has no org view either — see the degraded
     // "not-connected" orgStatsStatus below (BE-02, plan C).
+    // B 类：看板统计对 S2S 可达；普通用户必须有租户，服务令牌/超管走系统通道并落日志计数。
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.reports_center_stats",
+        "core_users,core_roles,audit_logs",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
     let (total_users, active_users, total_roles, total_permissions, recent_activities) = sqlx::query_as::<_, (
         i64, i64, i64, i64, i64,
-    )>(r#"
+    )>(sqlx::AssertSqlSafe(format!(r#"
         SELECT
-            (SELECT COUNT(*) FROM core_users WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS total_users,
+            (SELECT COUNT(*) FROM core_users WHERE {0}) AS total_users,
             (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
-               AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS active_users,
-            (SELECT COUNT(*) FROM core_roles WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS total_roles,
+               AND {0}) AS active_users,
+            (SELECT COUNT(*) FROM core_roles WHERE {0}) AS total_roles,
             -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
             (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
-               AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS recent_activities
-    "#).bind(get_tenant_id_from_claims(&claims)).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
+               AND {0}) AS recent_activities
+    "#, scope.sql_predicate("tenant_id", "$1"))))
+    .bind_tenant_scope(&scope)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or((0, 0, 0, 0, 0));
 
     // 组织计数（BE-02 方案 A）：hrm 组织数据对 analytics（schema=bi，boundary allow=[]）不可裸引，
     // 由 bi.org_stats 物化视图提供快照（companies/departments/employees 排除软删 + refreshed_at）。
@@ -338,7 +355,7 @@ async fn reports_center_stats(
     // 查询失败返回空数组，绝不回退到随机假数据。
     let user_growth: Vec<serde_json::Value> = {
         use sqlx::Row as _;
-        sqlx::query(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"
             WITH months AS (
                 SELECT to_char(m, 'YYYY-MM') AS month
@@ -352,18 +369,17 @@ async fn reports_center_stats(
                 months.month AS month,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE to_char(u.created_at, 'YYYY-MM') = months.month
-                     AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-                          OR u.tenant_id = $1::uuid)) AS new_users,
+                     AND {}) AS new_users,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE u.last_login_at IS NOT NULL
                      AND to_char(u.last_login_at, 'YYYY-MM') = months.month
-                     AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-                          OR u.tenant_id = $1::uuid)) AS active_users
+                     AND {0}) AS active_users
             FROM months
             ORDER BY months.month
             "#,
-        )
-        .bind(get_tenant_id_from_claims(&claims))
+            scope.sql_predicate("tenant_id", "$1")
+        )))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()
@@ -387,21 +403,21 @@ async fn reports_center_stats(
     // 绝不保留假数字。
     let role_distribution: Vec<serde_json::Value> = {
         use sqlx::Row as _;
-        sqlx::query(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"
             SELECT r.name AS role_name, COUNT(u.id) AS user_count
             FROM core_roles r
             LEFT JOIN core_user_roles ur ON ur.role_id = r.id
             LEFT JOIN core_users u ON u.id = ur.user_id AND u.deleted_at IS NULL
             WHERE r.deleted_at IS NULL
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-                   OR r.tenant_id = $1::uuid)
+              AND {}
             GROUP BY r.name
             ORDER BY user_count DESC, r.name
             LIMIT 10
             "#,
-        )
-        .bind(get_tenant_id_from_claims(&claims))
+            scope.sql_predicate("tenant_id", "$1")
+        )))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()
@@ -420,19 +436,19 @@ async fn reports_center_stats(
     // 查询失败回落空数组，绝不回退假分类数字。
     let activity_types: Vec<serde_json::Value> = {
         use sqlx::Row as _;
-        sqlx::query(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"
             SELECT action AS activity, COUNT(*) AS cnt
             FROM public.audit_logs
             WHERE created_at >= NOW() - INTERVAL '30 days'
-              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-                   OR tenant_id = $1::uuid)
+              AND {}
             GROUP BY action
             ORDER BY cnt DESC, action
             LIMIT 10
             "#,
-        )
-        .bind(get_tenant_id_from_claims(&claims))
+            scope.sql_predicate("tenant_id", "$1")
+        )))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()

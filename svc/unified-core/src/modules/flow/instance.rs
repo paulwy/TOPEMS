@@ -9,15 +9,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_auth::service::is_service_claims;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -59,6 +52,18 @@ pub async fn list_instances(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    // B 类（S2S 可达）：普通用户必须有租户；服务令牌/超管显式走系统通道并落日志计数。
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.list_instances",
+        "core_workflow_instances",
+    ) {
+        Ok(scope) => scope,
+        Err((code, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!("{code}: {message}")));
+        }
+    };
+
     // 用户维度可见性过滤：服务身份（sub 全 0 / role=service）豁免，返回全量；
     // 普通用户仅可见「自己发起的」或「作为任务处理人参与（public.core_workflow_tasks.assignee_id）」的实例。
     let user_uuid: Option<Uuid> = if is_service_claims(&claims) {
@@ -76,7 +81,7 @@ pub async fn list_instances(
     let workflow_uuid = workflow_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let total: i64 = if !has_filters {
-        sqlx::query_scalar(
+        sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             r#"SELECT COUNT(*) FROM public.core_workflow_instances
                WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
                    SELECT 1 FROM public.core_workflow_tasks t
@@ -91,15 +96,16 @@ pub async fn list_instances(
                    WHERE a.workflow_instance_id = public.core_workflow_instances.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
-               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
-        )
+               AND {}"#,
+            scope.sql_predicate("tenant_id", "$2")
+        )))
         .bind(user_uuid)
-        .bind(get_tenant_id(&claims))
+        .bind_tenant_scope(&scope)
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0)
     } else {
-        match sqlx::query_scalar(
+        match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             r#"SELECT COUNT(*) FROM public.core_workflow_instances
                WHERE (title ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
@@ -117,13 +123,14 @@ pub async fn list_instances(
                      WHERE a.workflow_instance_id = public.core_workflow_instances.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
-                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)"#,
-        )
+                 AND {}"#,
+            scope.sql_predicate("tenant_id", "$5")
+        )))
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
-        .bind(get_tenant_id(&claims))
+        .bind_tenant_scope(&scope)
         .fetch_one(&state.pool)
         .await
         {
@@ -136,7 +143,7 @@ pub async fn list_instances(
     };
 
     let items: Vec<WorkflowInstance> = if !has_filters {
-        match sqlx::query_as::<_, WorkflowInstance>(
+        match sqlx::query_as::<_, WorkflowInstance>(sqlx::AssertSqlSafe(format!(
             r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
                       w.name AS workflow_name,
                       COALESCE(u.full_name, u.username) AS start_user_name
@@ -156,13 +163,14 @@ pub async fn list_instances(
                    WHERE a.workflow_instance_id = i.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
-               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR i.tenant_id = $2::uuid)
-               ORDER BY i.created_at DESC LIMIT $3 OFFSET $4"#
-        )
+               AND {}
+               ORDER BY i.created_at DESC LIMIT $2 OFFSET $3"#,
+            scope.sql_predicate("i.tenant_id", "$4")
+        )))
         .bind(user_uuid)
-        .bind(get_tenant_id(&claims))
         .bind(page_size)
         .bind(offset)
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.pool)
         .await
         {
@@ -178,7 +186,7 @@ pub async fn list_instances(
             .clone()
             .and_then(|s| Uuid::parse_str(&s).ok());
 
-        match sqlx::query_as::<_, WorkflowInstance>(
+        match sqlx::query_as::<_, WorkflowInstance>(sqlx::AssertSqlSafe(format!(
             r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
                       w.name AS workflow_name,
                       COALESCE(u.full_name, u.username) AS start_user_name
@@ -201,16 +209,17 @@ pub async fn list_instances(
                      WHERE a.workflow_instance_id = i.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
-                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR i.tenant_id = $5::uuid)
-               ORDER BY i.created_at DESC LIMIT $6 OFFSET $7"#
-        )
+                 AND {}
+               ORDER BY i.created_at DESC LIMIT $5 OFFSET $6"#,
+            scope.sql_predicate("i.tenant_id", "$7")
+        )))
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
-        .bind(get_tenant_id(&claims))
         .bind(page_size)
         .bind(offset)
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.pool)
         .await
         {

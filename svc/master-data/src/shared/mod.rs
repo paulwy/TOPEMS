@@ -2,8 +2,10 @@ use axum::extract::FromRef;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::TopemsError;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -26,4 +28,20 @@ impl FromRef<AppState> for PgPool {
     fn from_ref(state: &AppState) -> Self {
         state.db.clone()
     }
+}
+
+/// B 类读路径：普通用户必须有租户；服务令牌/超管显式走系统通道（落日志 + 计数）。
+pub fn tenant_read_scope(
+    claims: &Claims,
+    source: &'static str,
+    table: &'static str,
+) -> Result<TenantScope, TopemsError> {
+    TenantScope::from_claims(claims, source, table)
+        .map_err(|(_, message)| TopemsError::ValidationFailed(message))
+}
+
+/// D 类写路径：只允许租户通道，缺失/非法/nil 租户一律 400。
+pub fn tenant_write_scope(claims: &Claims) -> Result<TenantScope, TopemsError> {
+    TenantScope::require_tenant(claims)
+        .map_err(|(_, message)| TopemsError::ValidationFailed(message))
 }

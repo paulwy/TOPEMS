@@ -9,22 +9,14 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::shared::AppState;
-
-/// 请求级租户上下文（对齐 rls_middleware 同源：读 x-tenant-id 头；缺失/非法 → nil 全放行）
-fn req_tenant_id(headers: &HeaderMap) -> Uuid {
-    headers
-        .get("x-tenant-id")
-        .and_then(|h| h.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil)
-}
+use crate::shared::{tenant_read_scope, tenant_write_scope, AppState};
 
 fn material_columns(locale: &str) -> String {
     format!(
@@ -111,6 +103,7 @@ pub struct MaterialListResponse {
 pub async fn list_materials(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<MaterialQuery>,
 ) -> ApiResponse<MaterialListResponse> {
     let page = query.page.unwrap_or(1).max(1);
@@ -118,18 +111,29 @@ pub async fn list_materials(
     let offset = (page - 1) * page_size;
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let total: i64 = match sqlx::query_scalar(
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.materials.list",
+        "master_data.materials",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
+    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.materials
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR material_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR material_code ILIKE '%' || $3 || '%' OR material_name ILIKE '%' || $3 || '%')
-             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
-    )
+             AND {}"#,
+        scope.sql_predicate("tenant_id", "$4")
+    )))
     .bind(query.material_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.db)
     .await
     {
@@ -148,10 +152,11 @@ pub async fn list_materials(
              AND ($1::text IS NULL OR material_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR material_code ILIKE '%' || $3 || '%' OR material_name ILIKE '%' || $3 || '%')
-             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
+             AND {}
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
-        material_columns(&locale)
+        material_columns(&locale),
+        scope.sql_predicate("tenant_id", "$6")
     );
 
     let items: Vec<Material> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
@@ -160,7 +165,7 @@ pub async fn list_materials(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.db)
         .await
     {
@@ -182,16 +187,29 @@ pub async fn list_materials(
 pub async fn get_material(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Material> {
     let locale = Locale::from_headers(&headers).as_sql();
+
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.materials.get",
+        "master_data.materials",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     let sql = format!(
-        r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
-        material_columns(&locale)
+        r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND {}"#,
+        material_columns(&locale),
+        scope.sql_predicate("tenant_id", "$2")
     );
     let row: Option<Material> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_optional(&state.db)
         .await
     {
@@ -250,10 +268,15 @@ pub async fn create_material(
 
 pub async fn update_material(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> ApiResponse<Material> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     let row: Option<Material> = match sqlx::query_as(
         r#"UPDATE master_data.materials SET
              material_name = COALESCE($2, material_name),
@@ -266,7 +289,7 @@ pub async fn update_material(
              description = COALESCE($9, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
+             AND tenant_id = $10::uuid
            RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at, updated_at"#,
     )
     .bind(id)
@@ -278,7 +301,7 @@ pub async fn update_material(
     .bind(req.uom_id)
     .bind(&req.status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.db)
     .await
     {
@@ -299,14 +322,19 @@ pub async fn update_material(
 
 pub async fn delete_material(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     match sqlx::query(
-        "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .execute(&state.db)
     .await
     {
@@ -386,6 +414,7 @@ pub struct UomListResponse {
 pub async fn list_uoms(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<UomQuery>,
 ) -> ApiResponse<UomListResponse> {
     let page = query.page.unwrap_or(1).max(1);
@@ -393,18 +422,25 @@ pub async fn list_uoms(
     let offset = (page - 1) * page_size;
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let total: i64 = match sqlx::query_scalar(
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(&claims, "master-data.uoms.list", "master_data.uoms") {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
+    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.uoms
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR uom_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR uom_code ILIKE '%' || $3 || '%' OR uom_name ILIKE '%' || $3 || '%')
-             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
-    )
+             AND {}"#,
+        scope.sql_predicate("tenant_id", "$4")
+    )))
     .bind(query.uom_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.db)
     .await
     {
@@ -423,10 +459,11 @@ pub async fn list_uoms(
              AND ($1::text IS NULL OR uom_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR uom_code ILIKE '%' || $3 || '%' OR uom_name ILIKE '%' || $3 || '%')
-             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
+             AND {}
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
-        uom_columns(&locale)
+        uom_columns(&locale),
+        scope.sql_predicate("tenant_id", "$6")
     );
 
     let items: Vec<Uom> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
@@ -435,7 +472,7 @@ pub async fn list_uoms(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.db)
         .await
     {
@@ -457,16 +494,25 @@ pub async fn list_uoms(
 pub async fn get_uom(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Uom> {
     let locale = Locale::from_headers(&headers).as_sql();
+
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(&claims, "master-data.uoms.get", "master_data.uoms") {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     let sql = format!(
-        r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
-        uom_columns(&locale)
+        r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND {}"#,
+        uom_columns(&locale),
+        scope.sql_predicate("tenant_id", "$2")
     );
     let row: Option<Uom> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_optional(&state.db)
         .await
     {
@@ -484,10 +530,16 @@ pub async fn get_uom(
 
 pub async fn create_uom(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateUomRequest>,
 ) -> ApiResponse<Uom> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
+    // 创建路径：租户已知时写入真实租户；确实无上下文（服务令牌）时写 nil。
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let row: Option<Uom> = match sqlx::query_as(
         r#"INSERT INTO master_data.uoms
             (uom_code, uom_name, name_en, uom_type, category, status, description, tenant_id, created_by)
@@ -501,7 +553,7 @@ pub async fn create_uom(
     .bind(&req.category)
     .bind(&status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     {
@@ -522,10 +574,15 @@ pub async fn create_uom(
 
 pub async fn update_uom(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUomRequest>,
 ) -> ApiResponse<Uom> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     let row: Option<Uom> = match sqlx::query_as(
         r#"UPDATE master_data.uoms SET
              uom_name = COALESCE($2, uom_name),
@@ -536,7 +593,7 @@ pub async fn update_uom(
              description = COALESCE($7, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
+             AND tenant_id = $8::uuid
            RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at, updated_at"#,
     )
     .bind(id)
@@ -546,7 +603,7 @@ pub async fn update_uom(
     .bind(&req.category)
     .bind(&req.status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.db)
     .await
     {
@@ -567,14 +624,19 @@ pub async fn update_uom(
 
 pub async fn delete_uom(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     match sqlx::query(
-        "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .execute(&state.db)
     .await
     {
@@ -654,6 +716,7 @@ pub struct SampleListResponse {
 pub async fn list_samples(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<SampleQuery>,
 ) -> ApiResponse<SampleListResponse> {
     let page = query.page.unwrap_or(1).max(1);
@@ -661,18 +724,26 @@ pub async fn list_samples(
     let offset = (page - 1) * page_size;
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let total: i64 = match sqlx::query_scalar(
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(&claims, "master-data.samples.list", "master_data.samples")
+    {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
+    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.samples
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR sample_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR sample_code ILIKE '%' || $3 || '%' OR sample_name ILIKE '%' || $3 || '%')
-             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
-    )
+             AND {}"#,
+        scope.sql_predicate("tenant_id", "$4")
+    )))
     .bind(query.sample_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.db)
     .await
     {
@@ -691,10 +762,11 @@ pub async fn list_samples(
              AND ($1::text IS NULL OR sample_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR sample_code ILIKE '%' || $3 || '%' OR sample_name ILIKE '%' || $3 || '%')
-             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
+             AND {}
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
-        sample_columns(&locale)
+        sample_columns(&locale),
+        scope.sql_predicate("tenant_id", "$6")
     );
 
     let items: Vec<Sample> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
@@ -703,7 +775,7 @@ pub async fn list_samples(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.db)
         .await
     {
@@ -725,16 +797,25 @@ pub async fn list_samples(
 pub async fn get_sample(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Sample> {
     let locale = Locale::from_headers(&headers).as_sql();
+
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(&claims, "master-data.samples.get", "master_data.samples") {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     let sql = format!(
-        r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
-        sample_columns(&locale)
+        r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND {}"#,
+        sample_columns(&locale),
+        scope.sql_predicate("tenant_id", "$2")
     );
     let row: Option<Sample> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .bind(req_tenant_id(&headers))
+        .bind_tenant_scope(&scope)
         .fetch_optional(&state.db)
         .await
     {
@@ -752,10 +833,16 @@ pub async fn get_sample(
 
 pub async fn create_sample(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSampleRequest>,
 ) -> ApiResponse<Sample> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
+    // 创建路径：租户已知时写入真实租户；确实无上下文（服务令牌）时写 nil。
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let row: Option<Sample> = match sqlx::query_as(
         r#"INSERT INTO master_data.samples
             (sample_code, sample_name, name_en, sample_type, source, status, description, tenant_id, created_by)
@@ -769,7 +856,7 @@ pub async fn create_sample(
     .bind(&req.source)
     .bind(&status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     {
@@ -790,10 +877,15 @@ pub async fn create_sample(
 
 pub async fn update_sample(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSampleRequest>,
 ) -> ApiResponse<Sample> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     let row: Option<Sample> = match sqlx::query_as(
         r#"UPDATE master_data.samples SET
              sample_name = COALESCE($2, sample_name),
@@ -804,7 +896,7 @@ pub async fn update_sample(
              description = COALESCE($7, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
+             AND tenant_id = $8::uuid
            RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at, updated_at"#,
     )
     .bind(id)
@@ -814,7 +906,7 @@ pub async fn update_sample(
     .bind(&req.source)
     .bind(&req.status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.db)
     .await
     {
@@ -835,14 +927,19 @@ pub async fn update_sample(
 
 pub async fn delete_sample(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     match sqlx::query(
-        "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+        "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
-    .bind(req_tenant_id(&headers))
+    .bind_tenant_scope(&scope)
     .execute(&state.db)
     .await
     {

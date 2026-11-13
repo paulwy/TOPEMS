@@ -14,14 +14,25 @@ use std::path::Path;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use uuid::Uuid;
+
+/// C 类：文件读取必须携带真实租户，缺失即 400（不存在跨租户读文件的理由）。
+fn tenant_scope_or_400(
+    claims: &Claims,
+) -> Result<TenantScope, (StatusCode, Json<serde_json::Value>)> {
+    TenantScope::require_tenant(claims).map_err(|(_, message)| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({
+                "success": false,
+                "message": message,
+                "data": null,
+                "code": 400
+            })),
+        )
+    })
+}
 
 /// 下载文件
 pub async fn download_file(
@@ -52,12 +63,15 @@ pub async fn download_file(
         }
     };
 
+    let scope = tenant_scope_or_400(&claims)?;
+
     // 查询文件信息
-    let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .bind(get_tenant_id(&claims))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.pool)
     .await
     {
@@ -192,12 +206,15 @@ pub async fn preview_file(
         }
     };
 
+    let scope = tenant_scope_or_400(&claims)?;
+
     // 查询文件信息
-    let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .bind(get_tenant_id(&claims))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.pool)
     .await
     {
@@ -332,12 +349,15 @@ pub async fn get_thumbnail(
         }
     };
 
+    let scope = tenant_scope_or_400(&claims)?;
+
     // 查询文件信息
-    let row = match sqlx::query(
-        "SELECT name, path, mime_type, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT name, path, mime_type, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .bind(get_tenant_id(&claims))
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.pool)
     .await
     {

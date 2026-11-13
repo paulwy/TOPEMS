@@ -14,13 +14,7 @@ use uuid::Uuid;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::{BindTenantScope, SystemChannel, TenantScope};
 
 #[derive(Debug, Clone, Serialize)]
 struct FileInfo {
@@ -94,11 +88,35 @@ pub async fn list_files(
         }
     };
 
+    // A 类：超管显式跨租户查看文件列表（走系统通道，落日志与计数）；
+    // 其余身份按 Claims 严格解析：普通用户缺租户即 400，服务令牌走服务通道。
+    let scope = if claims.is_superuser {
+        TenantScope::system(
+            SystemChannel::Superuser,
+            "unified-core.file.list_files",
+            "core_files",
+        )
+    } else {
+        match TenantScope::from_claims(&claims, "unified-core.file.list_files", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }));
+            }
+        }
+    };
+
     // 构建查询条件 - 简化版本，避免动态参数问题
-    let base_query =
+    let base_query = format!(
         "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, original_name
          FROM public.core_files
-         WHERE deleted_at IS NULL";
+         WHERE deleted_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    );
 
     let _count_query = "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL";
 
@@ -116,7 +134,8 @@ pub async fn list_files(
             chrono::DateTime<chrono::Utc>,
             Option<String>,
         ),
-    >(base_query)
+    >(sqlx::AssertSqlSafe(base_query))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await;
 
@@ -152,20 +171,22 @@ pub async fn list_files(
                 )
                 .collect();
 
-            // 获取总数
-            let tenant_uuid = get_tenant_id(&claims);
-            let count_query = if claims.is_superuser || claims.has_permission("file:admin") {
-                "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)"
+            // 获取总数（与列表共用同一租户作用域，避免"总数全量、列表本租户"错位）
+            let uploader_filter = if claims.is_superuser || claims.has_permission("file:admin") {
+                None
             } else {
-                "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND uploader_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
+                Some(user_id)
             };
+            let total = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR uploader_id = $1) AND {}",
+                scope.sql_predicate("tenant_id", "$2")
+            )))
+            .bind(uploader_filter)
+            .bind_tenant_scope(&scope)
+            .fetch_one(&state.pool)
+            .await;
 
-            let total = match sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
-                .bind(user_id)
-                .bind(tenant_uuid)
-                .fetch_one(&state.pool)
-                .await
-            {
+            let total = match total {
                 Ok(c) => c,
                 Err(e) => {
                     tracing::error!("Failed to count files: {}", e);

@@ -105,6 +105,36 @@ pub fn record_service_call(service_name: &str, target_path: &str) {
         .record(service_name);
 }
 
+static SYSTEM_CHANNEL_REQUESTS: OnceLock<IntCounterVec> = OnceLock::new();
+
+#[allow(clippy::expect_used)]
+fn system_channel_metric() -> &'static IntCounterVec {
+    SYSTEM_CHANNEL_REQUESTS.get_or_init(|| {
+        register_int_counter_vec!(
+            "topems_system_channel_requests_total",
+            "系统通道请求次数（按调用方服务）",
+            &["caller"]
+        )
+        .expect("failed to register topems_system_channel_requests_total")
+    })
+}
+
+/// 记录一次显式系统通道请求（`x-system-channel`）。
+///
+/// 只按调用方服务打点，原因是 `x-system-reason` 为自由文本，直接做标签会放大基数；
+/// 具体原因写入 tracing 日志，与 `caller`、`path` 一起可追溯。
+pub fn record_system_channel(caller: &str) {
+    system_channel_metric().with_label_values(&[caller]).inc();
+}
+
+/// 校验系统通道声明是否合法：只有 `service_token` 通道 + 服务身份才允许。
+///
+/// 普通用户即使伪造 `x-system-channel` 头也会被拒绝（403），避免把系统通道
+/// 当成绕过租户隔离的开关。
+pub fn system_channel_allowed(channel: &str, claims: &Claims) -> bool {
+    channel == "service_token" && is_service_claims(claims)
+}
+
 /// 记录一次下游服务调用降级/失败（如搜索源 5xx / 网络错误 / 不可用）。
 ///
 /// 打点 `topems_service_calls_degraded_total{service=下游}` 并触发降级告警
@@ -215,6 +245,40 @@ mod tests {
             .expect("签发成功");
         let claims = verify_jwt_token(&token, TEST_SECRET).expect("验证成功");
         assert_eq!(claims.exp - claims.iat, 60);
+    }
+
+    #[test]
+    fn system_channel_only_allowed_for_service_token_identity() {
+        let service = issue_service_token(TEST_SECRET, "scm-service", &["hrm:read"], None)
+            .and_then(|t| verify_jwt_token(&t, TEST_SECRET))
+            .expect("service claims");
+        assert!(system_channel_allowed("service_token", &service));
+        assert!(
+            !system_channel_allowed("superuser", &service),
+            "通道类型必须与身份匹配"
+        );
+
+        let user = Claims {
+            sub: "123e4567-e89b-12d3-a456-426614174000".to_string(),
+            username: "alice".to_string(),
+            role: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9_999_999_999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: Some("123e4567-e89b-12d3-a456-426614174001".to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        };
+        assert!(
+            !system_channel_allowed("service_token", &user),
+            "普通用户伪造系统通道头必须被拒"
+        );
     }
 
     #[test]

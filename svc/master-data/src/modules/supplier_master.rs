@@ -31,27 +31,21 @@
 //!   * 下一步（待拍板）：若确认零读零写，迁移 0035+ 可 DROP COLUMN。
 
 use axum::{
-    extract::{Path, Query, State},
-    http::HeaderMap,
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::modules::supplier_sync::{spawn_mdm_to_downstream, SupplierSyncPayload, SyncOp};
-use crate::shared::AppState;
+use crate::shared::{tenant_read_scope, tenant_write_scope, AppState};
 
 /// 请求级租户上下文（对齐 rls_middleware 同源：读 x-tenant-id 头；缺失/非法 → nil 全放行）
-fn req_tenant_id(headers: &HeaderMap) -> Uuid {
-    headers
-        .get("x-tenant-id")
-        .and_then(|h| h.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil)
-}
 
 /// 供应商权威行（list/get/create/patch 共用同一形状；uuid 列 ::text 化为字符串对外）。
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -125,25 +119,35 @@ const SUPPLIER_FILTER: &str = r#"deleted_at IS NULL
 /// GET /api/master-data/suppliers —— 分页只读列表（可选 keyword/status/category 过滤）
 pub async fn list_suppliers(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<SupplierQuery>,
 ) -> ApiResponse<SupplierListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    let tenant = req_tenant_id(&headers);
+
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.suppliers.list",
+        "master_data.mdm_suppliers",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
 
     let count_sql = format!(
         r#"SELECT COUNT(*) FROM master_data.mdm_suppliers
            WHERE {}
-             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
-        SUPPLIER_FILTER
+             AND {}"#,
+        SUPPLIER_FILTER,
+        scope.sql_predicate("tenant_id", "$4")
     );
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
         .bind(query.status.clone())
         .bind(query.category.clone())
         .bind(query.keyword.clone())
-        .bind(tenant)
+        .bind_tenant_scope(&scope)
         .fetch_one(&state.db)
         .await
     {
@@ -157,10 +161,12 @@ pub async fn list_suppliers(
     let list_sql = format!(
         r#"SELECT {} FROM master_data.mdm_suppliers
            WHERE {}
-             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
+             AND {}
            ORDER BY updated_at DESC NULLS LAST, supplier_no
            LIMIT $4 OFFSET $5"#,
-        SUPPLIER_COLUMNS, SUPPLIER_FILTER
+        SUPPLIER_COLUMNS,
+        SUPPLIER_FILTER,
+        scope.sql_predicate("tenant_id", "$6")
     );
     let items: Vec<Supplier> = match sqlx::query_as(sqlx::AssertSqlSafe(list_sql))
         .bind(query.status)
@@ -168,7 +174,7 @@ pub async fn list_suppliers(
         .bind(query.keyword)
         .bind(page_size)
         .bind(offset)
-        .bind(tenant)
+        .bind_tenant_scope(&scope)
         .fetch_all(&state.db)
         .await
     {
@@ -190,19 +196,28 @@ pub async fn list_suppliers(
 /// GET /api/master-data/suppliers/:id —— 按主键读单条
 pub async fn get_supplier(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Supplier> {
-    let tenant = req_tenant_id(&headers);
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.suppliers.get",
+        "master_data.mdm_suppliers",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     let sql = format!(
         r#"SELECT {} FROM master_data.mdm_suppliers
            WHERE deleted_at IS NULL AND id = $1
-             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
-        SUPPLIER_COLUMNS
+             AND {}"#,
+        SUPPLIER_COLUMNS,
+        scope.sql_predicate("tenant_id", "$2")
     );
     let row: Option<Supplier> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .bind(tenant)
+        .bind_tenant_scope(&scope)
         .fetch_optional(&state.db)
         .await
     {
@@ -324,7 +339,7 @@ fn map_write_error(e: sqlx::Error, ctx: &str) -> TopemsError {
 /// `source_system` 强制写死为 `'mdm'`，`source_id` 为 NULL（本接口直接在权威表建档）。
 pub async fn create_supplier(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
     // 必填字段校验（与表 NOT NULL 对齐，提前返回 400，不撞 DB 约束报 500）
@@ -364,7 +379,11 @@ pub async fn create_supplier(
 
     // 租户解析：超管（x-tenant-id 缺失/全零）允许用 body 里的 tenant_id；
     // 非超管强制使用请求头租户，body 里的 tenant_id 直接忽略（不允许跨租户创建）。
-    let header_tenant = req_tenant_id(&headers);
+    let header_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let tenant_id = if header_tenant.is_nil() {
         req.tenant_id.unwrap_or_else(Uuid::nil)
     } else {
@@ -461,7 +480,7 @@ pub async fn create_supplier(
 /// PATCH /api/master-data/suppliers/:id —— 部分更新（只更新请求里给出的字段）。
 pub async fn update_supplier(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -493,7 +512,11 @@ pub async fn update_supplier(
         return ApiResponse::from(e);
     }
 
-    let tenant = req_tenant_id(&headers);
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     let row: Result<Option<Supplier>, sqlx::Error> = sqlx::query_as(
         r#"UPDATE master_data.mdm_suppliers SET
              name = COALESCE($2, name),
@@ -516,7 +539,7 @@ pub async fn update_supplier(
              lead_time_days = COALESCE($19, lead_time_days),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($20::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $20::uuid)
+             AND tenant_id = $20::uuid
            RETURNING id::text, supplier_no, name, legal_name, category, category_code, status,
                      tax_id, address, contact_person, phone, email, website,
                      credit_rating, risk_level, bank_name, bank_account, remarks,
@@ -542,7 +565,7 @@ pub async fn update_supplier(
     .bind(req.remarks)
     .bind(req.name_en)
     .bind(req.lead_time_days)
-    .bind(tenant)
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.db)
     .await;
 
@@ -593,20 +616,24 @@ pub async fn update_supplier(
 /// DELETE /api/master-data/suppliers/:id —— 软删（只置 deleted_at，绝不物理删除）。
 pub async fn delete_supplier(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let tenant = req_tenant_id(&headers);
+    // D 类写路径：只允许租户通道，缺租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
     // RETURNING 拿到 supplier_no + tenant_id，用于后台同步软删 scm/srm
     let deleted: Result<Option<(String, Option<Uuid>)>, sqlx::Error> = sqlx::query_as(
         r#"UPDATE master_data.mdm_suppliers
            SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+             AND tenant_id = $2::uuid
            RETURNING supplier_no, tenant_id"#,
     )
     .bind(id)
-    .bind(tenant)
+    .bind_tenant_scope(&scope)
     .fetch_optional(&state.db)
     .await;
 

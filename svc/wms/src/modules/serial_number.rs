@@ -15,6 +15,7 @@ use crate::models::{
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
@@ -506,6 +507,14 @@ pub async fn update_serial_number(
 
     let now = Utc::now();
 
+    // C 类写路径：序列号更新只允许本租户用户，缺租户即 400。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
     let result = sqlx::query_as::<_, SerialNumber>(only_own_schema_query!(
         "wms",
         r#"
@@ -553,9 +562,7 @@ pub async fn update_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(serial_id)
-    .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(
-        &claims,
-    ))
+    .bind_tenant_scope(&tenant_scope)
     .fetch_one(&mut **txn)
     .await;
 
@@ -811,6 +818,14 @@ pub async fn get_trace(
         }
     };
 
+    // C 类：追踪查询只允许本租户用户，缺租户即 400。
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
     // S2：接真实 serial_number 表返回追踪记录（非空）
     // fail-closed RLS 后必须复用请求事务（带 app.tenant_id），裸池会读 0 行
     let row = sqlx::query(only_own_schema_query!(
@@ -820,9 +835,7 @@ pub async fn get_trace(
         "core"
     ))
     .bind(serial_id)
-    .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(
-        &claims,
-    ))
+    .bind_tenant_scope(&tenant_scope)
     .fetch_optional(&mut **txn)
     .await;
 

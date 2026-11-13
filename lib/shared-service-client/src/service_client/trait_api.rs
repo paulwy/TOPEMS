@@ -202,12 +202,22 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     ) -> Result<(), TopemsError> {
         let token = issue_service_token(jwt_secret, service_name, permissions, None)?;
         self.inner.set_auth_token(token);
-        // RLS 受限用户切换铺路：service 间调用（service token 无租户）默认带 nil 租户上下文，
-        // 配合 RLS 策略豁免条件（current = nil → 全量放行），使目标服务在受限 DB 用户下仍可全量访问。
-        // 仅影响 service token 调用（with_service_token）；转发用户 token（set_auth_token）不受影响。
-        // 注意：若同一 client 后续混用 set_auth_token(用户 token)，需显式 add_header 覆盖或清除该 header。
-        self.inner
-            .add_header("x-tenant-id", "00000000-0000-0000-0000-000000000000");
+        // 显式系统通道标记（W7 阶段三 P0）。
+        //
+        // 历史实现注入 `x-tenant-id: 000…`，靠"nil 租户 = 全量放行"的哨兵让目标服务跨租户
+        // 可见；目标端一旦 fail-closed，这种暗号既会静默失效，也无法追溯调用方。现在改为
+        // 三个显式头：通道类型、调用方身份、为什么需要系统通道（申请的最小权限）。
+        // 目标端 `auth_middleware` 会校验身份、落 `tracing::warn!` 并计数。
+        //
+        // 目标端的租户/RLS 上下文由 service claims 推导（nil + `app.rls_system='on'`），
+        // 不依赖 `x-tenant-id`。若同一 client 后续混用 `set_auth_token(用户 token)`，
+        // 需显式 `add_header` 覆盖这些标记或改用新 client。
+        self.inner.add_header("x-system-channel", "service_token");
+        self.inner.add_header("x-caller-service", service_name);
+        self.inner.add_header(
+            "x-system-reason",
+            format!("permissions={}", permissions.join(",")),
+        );
         Ok(())
     }
 
@@ -464,6 +474,31 @@ mod tests {
     fn test_fallback_url() {
         let api = FakeApi;
         assert_eq!(api.fallback_url(), "http://localhost:9999");
+    }
+
+    #[test]
+    fn service_token_marks_explicit_system_channel_without_nil_tenant_header() {
+        let client = TypedServiceClient::new(FakeApi, "http://localhost:9999")
+            .expect("client")
+            .with_service_token("test-secret", "scm-service", &["hrm:read", "wms:read"])
+            .expect("service token");
+        assert_eq!(
+            client.inner.header_value("x-system-channel"),
+            Some("service_token")
+        );
+        assert_eq!(
+            client.inner.header_value("x-caller-service"),
+            Some("scm-service")
+        );
+        assert_eq!(
+            client.inner.header_value("x-system-reason"),
+            Some("permissions=hrm:read,wms:read")
+        );
+        assert_eq!(
+            client.inner.header_value("x-tenant-id"),
+            None,
+            "不得再用 nil x-tenant-id 当全量暗号"
+        );
     }
 
     #[test]

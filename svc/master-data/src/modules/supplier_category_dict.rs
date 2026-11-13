@@ -6,23 +6,16 @@
 //! 租户隔离与同服务其它主数据域一致：读 x-tenant-id 头；nil/全零视为超管放行，
 //! 其余按 tenant_id 过滤；RLS 在连接层兜底。
 
-use axum::{extract::State, http::HeaderMap};
+use axum::extract::{Extension, State};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::types::Json as SqlJson;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
-use uuid::Uuid;
 
-use crate::shared::AppState;
-
-fn req_tenant_id(headers: &HeaderMap) -> Uuid {
-    headers
-        .get("x-tenant-id")
-        .and_then(|h| h.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil)
-}
+use crate::shared::{tenant_read_scope, AppState};
 
 /// 供应商类别字典行（只读）。
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -45,20 +38,30 @@ pub struct SupplierCategory {
 /// GET /api/master-data/supplier-categories —— 只读列表（未软删、按 sort_order/code 排序）。
 pub async fn list_supplier_categories(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<SupplierCategory>> {
-    let tenant = req_tenant_id(&headers);
-    let rows: Result<Vec<SupplierCategory>, sqlx::Error> = sqlx::query_as(
-        r#"SELECT id::text, code, name_zh, name_en, source_values, description,
+    // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.supplier_categories.list",
+        "master_data.mdm_supplier_categories",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+    let rows: Result<Vec<SupplierCategory>, sqlx::Error> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            r#"SELECT id::text, code, name_zh, name_en, source_values, description,
                   sort_order, status, created_at, updated_at
            FROM master_data.mdm_supplier_categories
            WHERE deleted_at IS NULL
-             AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+             AND {}
            ORDER BY sort_order NULLS LAST, code"#,
-    )
-    .bind(tenant)
-    .fetch_all(&state.db)
-    .await;
+            scope.sql_predicate("tenant_id", "$1")
+        )))
+        .bind_tenant_scope(&scope)
+        .fetch_all(&state.db)
+        .await;
     match rows {
         Ok(v) => api_success(v),
         Err(e) => {
