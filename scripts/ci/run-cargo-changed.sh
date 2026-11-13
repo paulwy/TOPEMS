@@ -8,13 +8,48 @@
 # 用法: run-cargo-changed.sh <check|clippy>（由 lefthook pre-push 调用）
 set -u
 MODE="${1:-check}"
+case "$MODE" in
+  check|clippy) ;;
+  *)
+    echo "[cargo-changed] 非法 MODE：'$MODE'（仅支持 check|clippy）" >&2
+    exit 2
+    ;;
+esac
 export SQLX_OFFLINE=true
 export RUSTFLAGS="-D warnings"
 
-# 1) 本次 push 变更文件（优先 origin/main 差集，origin/main 不存在时回退 HEAD~1）
-FILES="$(git diff --name-only origin/main HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+# 1) 本次 push 变更文件。基线用 merge-base(远端, HEAD)：只算本地新增提交，
+#    不会把远端已并入的历史算进来；origin/main 不可用时依次尝试 @{upstream}、HEAD~1。
+#    HEAD~1 仅覆盖最后一笔提交，多提交 push 会漏检，故显式告警。
+BASE_SRC=""
+resolve_base() {
+  local ref mb
+  for ref in origin/main '@{upstream}'; do
+    git rev-parse --verify -q "$ref" >/dev/null 2>&1 || continue
+    if mb="$(git merge-base "$ref" HEAD 2>/dev/null)"; then
+      BASE_SRC="$ref"
+      printf '%s\n' "$mb"
+      return 0
+    fi
+  done
+  if git rev-parse --verify -q 'HEAD~1' >/dev/null 2>&1; then
+    BASE_SRC="HEAD~1"
+    echo "[cargo-changed] 警告：origin/main 与 @{upstream} 均不可用，回退 HEAD~1（仅覆盖最后一笔提交，多提交 push 可能漏检）" >&2
+    git rev-parse HEAD~1
+    return 0
+  fi
+  return 1
+}
+if ! BASE="$(resolve_base)"; then
+  echo "[cargo-changed] 无法确定变更基线（origin/main / @{upstream} / HEAD~1 均不可用），门禁失败" >&2
+  exit 1
+fi
+if ! FILES="$(git diff --name-only "$BASE" HEAD)"; then
+  echo "[cargo-changed] git diff 失败（${BASE_SRC} ${BASE:0:12}..HEAD），门禁失败" >&2
+  exit 1
+fi
 if [ -z "$FILES" ]; then
-  echo "[cargo-changed] 无法取得变更文件，SKIP"
+  echo "[cargo-changed] 无变更（${BASE_SRC} ${BASE:0:12}..HEAD）→ SKIP（${MODE}）"
   exit 0
 fi
 
@@ -23,11 +58,6 @@ if [ -z "$RS_FILES" ]; then
   echo "[cargo-changed] 无 .rs 变更 → SKIP（${MODE}）"
   exit 0
 fi
-
-# 2) 归属：svc/<dir> 或 lib/<dir>；其他路径视为 workspace 级（触发全量兜底）
-#    注：不能用正则字面量 [^/]，macOS/BSD awk 的词法在转义外的 / 处截断正则，
-#        导致 "nonterminated character class"，包名列表为空而退化为全量。改用字段判定。
-CRATE_DIRS="$(printf '%s\n' "$RS_FILES" | awk -F/ '$1=="svc"||$1=="lib"{if(NF>=3&&$2!="")print $1"/"$2;else print "WORKSPACE";next}{print "WORKSPACE"}')"
 
 run_full() {
   echo "[cargo-changed] workspace 级变更 → 全量 ${MODE}"
@@ -38,6 +68,28 @@ run_full() {
     cargo check --workspace
   fi
 }
+
+# 2) 归属：svc/<dir> 或 lib/<dir>；lib 根 crate 的 src/tests/examples 归到 lib；
+#    其他路径视为 workspace 级（触发全量兜底）。
+#    注：不能用正则字面量 [^/]，macOS/BSD awk 的词法在转义外的 / 处截断正则，
+#        导致 "nonterminated character class"，包名列表为空而退化为全量。改用字段判定。
+if ! CRATE_DIRS="$(printf '%s\n' "$RS_FILES" | awk -F/ '
+  $1=="svc"||$1=="lib" {
+    if ($1=="lib" && ($2=="src"||$2=="tests"||$2=="examples")) { print "lib"; next }
+    if (NF>=3 && $2!="") { print $1"/"$2; next }
+    print "WORKSPACE"; next
+  }
+  { print "WORKSPACE" }
+')"; then
+  echo "[cargo-changed] .rs 归属解析失败（awk 异常）→ 显式全量 ${MODE}" >&2
+  run_full
+  exit $?
+fi
+if [ -z "$CRATE_DIRS" ]; then
+  echo "[cargo-changed] 警告：变更 .rs 未解析出任何 crate 归属 → 显式全量 ${MODE}" >&2
+  run_full
+  exit $?
+fi
 
 if printf '%s\n' "$CRATE_DIRS" | grep -qx WORKSPACE; then
   run_full
