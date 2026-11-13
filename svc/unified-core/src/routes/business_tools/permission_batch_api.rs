@@ -10,6 +10,7 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 use topems_shared_core::error::TopemsError;
+use topems_shared_core::response::ApiResponse;
 
 use super::permission_api::{ErrorResponse, PermissionRequest, PermissionResponse};
 use super::permission_store::PermissionStore;
@@ -249,33 +250,45 @@ async fn execute_batch_delete(
 }
 
 /// `POST /api/business-tools/permissions/batch` — Batch create permissions.
+///
+/// 响应结构破坏性变更：批量结果已改为标准 `ApiResponse` 外层包裹。
+/// `total` / `succeeded` / `failed` / `created` / `errors` 现在位于 `data` 内
+/// （即 `res.data.total`），不再位于顶层；顶层新增 `success` 与 `code`。
 pub async fn batch_create_permissions(
     State(state): State<AppState>,
     Json(request): Json<BatchCreateRequest>,
-) -> Result<Json<BatchCreateResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<ApiResponse<BatchCreateResponse>, (StatusCode, Json<ErrorResponse>)> {
     let response =
         execute_batch_create(state.permission_store.as_ref(), &request.permissions).await;
-    Ok(Json(response))
+    Ok(ApiResponse::success(response, "批量创建完成"))
 }
 
 /// `PUT /api/business-tools/permissions/batch` — Batch update permissions.
+///
+/// 响应结构破坏性变更：批量结果已改为标准 `ApiResponse` 外层包裹。
+/// `total` / `succeeded` / `failed` / `updated` / `errors` 现在位于 `data` 内
+/// （即 `res.data.total`），不再位于顶层；顶层新增 `success` 与 `code`。
 pub async fn batch_update_permissions(
     State(state): State<AppState>,
     Json(request): Json<BatchUpdateRequest>,
-) -> Result<Json<BatchUpdateResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<ApiResponse<BatchUpdateResponse>, (StatusCode, Json<ErrorResponse>)> {
     let response =
         execute_batch_update(state.permission_store.as_ref(), &request.permissions).await;
-    Ok(Json(response))
+    Ok(ApiResponse::success(response, "批量更新完成"))
 }
 
 /// `DELETE /api/business-tools/permissions/batch` — Batch delete permissions.
+///
+/// 响应结构破坏性变更：批量结果已改为标准 `ApiResponse` 外层包裹。
+/// `total` / `succeeded` / `failed` / `errors` 现在位于 `data` 内
+/// （即 `res.data.total`），不再位于顶层；顶层新增 `success` 与 `code`。
 pub async fn batch_delete_permissions(
     State(state): State<AppState>,
     Json(request): Json<BatchDeleteRequest>,
-) -> Result<Json<BatchDeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<ApiResponse<BatchDeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
     let response =
         execute_batch_delete(state.permission_store.as_ref(), &request.permissions).await;
-    Ok(Json(response))
+    Ok(ApiResponse::success(response, "批量删除完成"))
 }
 
 // ===== Route Registration =====
@@ -345,6 +358,25 @@ mod tests {
         assert!(json.contains("\"succeeded\":2"));
         assert!(json.contains("\"failed\":1"));
         assert!(json.contains("Already exists"));
+    }
+
+    #[test]
+    fn test_batch_create_handler_response_has_success_field() {
+        // 回归：handler 外层必须带 ApiResponse.success，前端 `if (!res.success)` 才能正确判断。
+        let response = BatchCreateResponse {
+            total: 1,
+            succeeded: 1,
+            failed: 0,
+            created: vec![],
+            errors: vec![],
+        };
+        let outer = ApiResponse::success(response, "批量创建完成");
+        let json =
+            serde_json::to_value(&outer).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        assert_eq!(json["success"], true);
+        assert_eq!(json["code"], 200);
+        assert_eq!(json["data"]["total"], 1);
+        assert_eq!(json["data"]["succeeded"], 1);
     }
 
     #[test]

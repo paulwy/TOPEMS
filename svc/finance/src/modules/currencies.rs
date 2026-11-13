@@ -67,6 +67,7 @@ pub struct PaginatedCurrencies {
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T: Serialize> {
     pub success: bool,
+    pub code: u16,
     pub data: Option<T>,
     pub message: String,
 }
@@ -75,14 +76,20 @@ impl<T: Serialize> ApiResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
             success: true,
+            code: 200,
             data: Some(data),
             message: "操作成功".to_string(),
         }
     }
 
     pub fn error(message: &str) -> Self {
+        Self::error_with_code(400, message)
+    }
+
+    pub fn error_with_code(code: u16, message: &str) -> Self {
         Self {
             success: false,
+            code,
             data: None,
             message: message.to_string(),
         }
@@ -243,7 +250,10 @@ pub async fn create_currency(
             if e.to_string()
                 .contains("uk_core_finance_currencies_tenant_code")
             {
-                Json(ApiResponse::error(&format!("币种代码 {} 已存在", code)))
+                Json(ApiResponse::error_with_code(
+                    409,
+                    &format!("币种代码 {} 已存在", code),
+                ))
             } else {
                 Json(ApiResponse::error("创建失败"))
             }
@@ -297,7 +307,7 @@ pub async fn update_currency(
     }
     match result {
         Ok(Some(c)) => Json(ApiResponse::success(c)),
-        Ok(None) => Json(ApiResponse::error("币种不存在")),
+        Ok(None) => Json(ApiResponse::error_with_code(404, "币种不存在")),
         Err(e) => {
             tracing::error!("更新币种失败: {}", e);
             Json(ApiResponse::error("更新失败"))
@@ -360,3 +370,34 @@ pub fn create_routes() -> axum::Router<AppState> {
 }
 
 use utoipa::ToSchema;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_response_carries_code_field() {
+        let json = serde_json::to_value(ApiResponse::<()>::error("币种代码不能为空"))
+            .expect("response should serialize");
+        assert_eq!(json.get("success"), Some(&serde_json::json!(false)));
+        assert_eq!(json.get("code"), Some(&serde_json::json!(400)));
+        assert_eq!(
+            json.get("message"),
+            Some(&serde_json::json!("币种代码不能为空"))
+        );
+    }
+
+    #[test]
+    fn test_conflict_and_not_found_codes() {
+        let conflict = serde_json::to_value(ApiResponse::<()>::error_with_code(409, "已存在"))
+            .expect("response should serialize");
+        assert_eq!(conflict.get("success"), Some(&serde_json::json!(false)));
+        assert_eq!(conflict.get("code"), Some(&serde_json::json!(409)));
+
+        let not_found = serde_json::to_value(ApiResponse::<()>::error_with_code(404, "不存在"))
+            .expect("response should serialize");
+        assert_eq!(not_found.get("success"), Some(&serde_json::json!(false)));
+        assert_eq!(not_found.get("code"), Some(&serde_json::json!(404)));
+    }
+}
