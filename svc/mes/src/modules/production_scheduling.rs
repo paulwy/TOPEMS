@@ -1009,6 +1009,53 @@ mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};
 
+    fn claims_with_tenant(tenant_id: Option<&str>) -> Claims {
+        serde_json::from_value(serde_json::json!({
+            "sub": "00000000-0000-0000-0000-000000000001",
+            "username": "tester",
+            "role": "user",
+            "roles": [],
+            "permissions": [],
+            "is_superuser": false,
+            "exp": 0,
+            "iat": 0,
+            "email": null,
+            "department": null,
+            "tenant_id": tenant_id,
+            "department_id": null,
+            "position_id": null,
+            "position_code": null,
+            "must_change_password": false
+        }))
+        .expect("构造测试 Claims 失败")
+    }
+
+    #[test]
+    fn schedule_tenant_accepts_valid_uuid() {
+        let claims = claims_with_tenant(Some("550e8400-e29b-41d4-a716-446655440000"));
+        assert_eq!(
+            get_schedule_tenant_id(&claims),
+            Some(Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap())
+        );
+    }
+
+    #[test]
+    fn schedule_tenant_rejects_missing() {
+        assert_eq!(get_schedule_tenant_id(&claims_with_tenant(None)), None);
+    }
+
+    #[test]
+    fn schedule_tenant_rejects_nil_uuid() {
+        let claims = claims_with_tenant(Some("00000000-0000-0000-0000-000000000000"));
+        assert_eq!(get_schedule_tenant_id(&claims), None);
+    }
+
+    #[test]
+    fn schedule_tenant_rejects_malformed() {
+        let claims = claims_with_tenant(Some("not-a-uuid"));
+        assert_eq!(get_schedule_tenant_id(&claims), None);
+    }
+
     // ---- naive_to_utc ----
     #[test]
     fn naive_to_utc_some_keeps_value() {
@@ -1095,7 +1142,13 @@ async fn transition_schedule(
         return e;
     }
 
-    let tenant_id = get_schedule_tenant_id(claims);
+    let Some(tenant_id) = get_schedule_tenant_id(claims) else {
+        tracing::warn!(
+            "缺少租户上下文：拒绝排程状态流转（is_superuser={}）",
+            claims.is_superuser
+        );
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
 
     let existing: Option<(String,)> = match sqlx::query_as(
         "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
@@ -1153,13 +1206,12 @@ async fn transition_schedule(
     }
 }
 
-#[allow(clippy::unwrap_used)]
-fn get_schedule_tenant_id(claims: &Claims) -> Uuid {
-    match &claims.tenant_id {
-        Some(t) => Uuid::parse_str(t)
-            .unwrap_or_else(|_| Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap()),
-        None => Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap(),
-    }
+fn get_schedule_tenant_id(claims: &Claims) -> Option<Uuid> {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
 }
 
 #[utoipa::path(
