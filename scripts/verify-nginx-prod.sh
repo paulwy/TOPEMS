@@ -68,12 +68,12 @@ if [[ -f "$CONF" && -f "$REPO_CONF" ]]; then
   repo_up="$(extract_upstream "$REPO_CONF")"
   if [[ -z "$prod_up" ]]; then
     echo "UPSTREAM_MISSING (生产 conf 未找到 upstream server_service——可能不是 topems.conf)"; FAIL=1
-  elif ! grep -q 'server localhost:8099' <<<"$prod_up"; then
-    echo "UPSTREAM_PORT_MISMATCH (server_service 未指向 localhost:8099)"; FAIL=1
+  elif ! grep -qE 'server (localhost|127\.0\.0\.1):8099' <<<"$prod_up"; then
+    echo "UPSTREAM_PORT_MISMATCH (server_service 未指向 127.0.0.1:8099)"; FAIL=1
   elif grep -vE '^[[:space:]]*#' "$CONF" | grep -qF "map \$request_uri \$api_upstream"; then
     echo "LEGACY_MAP_PRESENT (P0-3 后应无 \$request_uri -> \$api_upstream 前缀 map 路由表)"; FAIL=1
   elif [[ "$prod_up" == "$repo_up" ]]; then
-    echo "UPSTREAM_OK (server_service -> localhost:8099，与仓库事实源一致)"
+    echo "UPSTREAM_OK (server_service -> 127.0.0.1:8099，与仓库事实源一致)"
   else
     echo "UPSTREAM_DIFF:"; diff <(echo "$repo_up") <(echo "$prod_up") | head -20; FAIL=1
   fi

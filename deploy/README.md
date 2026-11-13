@@ -24,7 +24,11 @@
 - `topems-server` 的 HTTP 监听地址由环境变量 `BIND_ADDR` 决定，**默认 `127.0.0.1`**（单一信源：`lib/shared-bootstrap` 的 `DEFAULT_BIND_ADDR`）；端口仍由 `SERVER_PORT` 决定（默认 `8099`）。
 - 生产 plist（`~/Library/LaunchAgents/com.topems.server.plist`）**不设** `BIND_ADDR`，所以进程只监听回环：局域网无法绕过 nginx 直连 8099，明文 HTTP、TLS 与 access_log 不会被绕开。
 - 对外入口统一是 nginx：本机 macOS 生产 80/443 直接 `proxy_pass http://127.0.0.1:8099`（**无 upstream 块**），nginx 配置不在本仓库改动范围内。
-- 只有确实需要全部网卡的场景（例如容器内端口映射）才显式设置 `BIND_ADDR=0.0.0.0`，并在部署记录里写明原因；默认配置不得放开。
+- 只有确实需要全部网卡的场景才显式设置 `BIND_ADDR=0.0.0.0`，并在部署记录里写明原因；默认配置不得放开。已知容器路径均已显式设置：
+  - `deploy/docker/docker-compose.yml`：`x-common-env` 与 unified-core / erp…plugin-registry 各服务；
+  - `deploy/k8s/base/configmap.yaml`：`topems-config` 注入全部 21 个 service Deployment；
+  - `deploy/k8s/_archive/`：未部署，重新启用时必须自行补 `BIND_ADDR: "0.0.0.0"`（README 已标注）；
+  - 自行 `docker run` 本仓库镜像时加 `-e BIND_ADDR=0.0.0.0`。
 - 核验方式：
   ```bash
   lsof -nP -iTCP:8099 -sTCP:LISTEN        # 期望仅 127.0.0.1:8099，不得为 *:8099

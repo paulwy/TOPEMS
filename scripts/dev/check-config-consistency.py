@@ -37,6 +37,8 @@ NGINX_DIRECT_FILES = [
 ]
 SHARED_BOOTSTRAP = ROOT / "lib" / "shared-bootstrap" / "src" / "lib.rs"
 SERVER_MAIN = ROOT / "svc" / "server" / "src" / "main.rs"
+DOCKER_COMPOSE = ROOT / "deploy" / "docker" / "docker-compose.yml"
+K8S_CONFIGMAP = ROOT / "deploy" / "k8s" / "base" / "configmap.yaml"
 MONOLITH_PORT = "8099"
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
 
@@ -75,7 +77,7 @@ def load_ports():
     return ports
 
 def check_nginx_upstream():
-    """校验 dev/生产两份 nginx conf：server_service -> localhost:8099，且无遗留前缀 map。"""
+    """校验 dev/生产两份 nginx conf：server_service -> 回环:8099，且无遗留前缀 map。"""
     errs = []
     for conf in NGINX_FILES:
         if not conf.exists():
@@ -89,8 +91,8 @@ def check_nginx_upstream():
         upstream = re.search(r"upstream\s+server_service\s*\{([^}]*)\}", text)
         if upstream is None:
             errs.append(f"[nginx→8099] {label} 未找到 upstream server_service")
-        elif not re.search(r"server\s+localhost:8099\b", upstream.group(1)):
-            errs.append(f"[nginx→8099] {label} server_service 未指向 localhost:8099")
+        elif not re.search(r"server\s+(?:localhost|127\.0\.0\.1):8099\b", upstream.group(1)):
+            errs.append(f"[nginx→8099] {label} server_service 未指向 127.0.0.1:8099")
         # 非注释行不得残留 $request_uri -> $api_upstream 前缀 map
         for lineno, line in enumerate(text.splitlines(), 1):
             stripped = line.strip()
@@ -154,6 +156,16 @@ def check_bind_addr():
                     errs.append(
                         f"[bind→nginx] {label}:{lineno} proxy_pass 端口 {port} ≠ {MONOLITH_PORT}"
                     )
+
+    # 容器路径必须显式放开监听地址，否则宿主端口映射/集群互访会断（默认回环）。
+    for path, needle, hint in [
+        (DOCKER_COMPOSE, 'BIND_ADDR: "0.0.0.0"', "x-common-env 缺少 BIND_ADDR"),
+        (K8S_CONFIGMAP, 'BIND_ADDR: "0.0.0.0"', "topems-config 缺少 BIND_ADDR"),
+    ]:
+        if not path.exists():
+            errs.append(f"[bind→container] 缺失 {path.relative_to(ROOT)}")
+        elif needle not in path.read_text():
+            errs.append(f"[bind→container] {path.relative_to(ROOT)} {hint}")
     return errs
 
 
