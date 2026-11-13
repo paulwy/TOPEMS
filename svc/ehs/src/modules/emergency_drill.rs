@@ -455,7 +455,7 @@ pub async fn create_drill_plan(
             plan_no, title, description, drill_type, plan_date, location,
             participants, estimated_duration, content, organizer, status,
             related_plan_id, tenant_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11, 'planned'), $12, $13, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5::date, $6, $7, $8, $9, $10, COALESCE($11, 'planned'), $12::uuid, $13, NOW(), NOW())
         RETURNING
             id::text AS id, plan_no, title, description, drill_type,
             plan_date::text AS plan_date, location, participants, estimated_duration,
@@ -474,6 +474,7 @@ pub async fn create_drill_plan(
     .bind(req.estimated_duration)
     .bind(req.content.as_deref())
     .bind(req.organizer.as_deref())
+    .bind("planned")
     .bind(req.related_plan_id.as_deref())
     .bind(tenant)
     .fetch_one(&mut scope)
@@ -544,22 +545,23 @@ pub async fn submit_drill_evaluation(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let tenant_scope = match crate::shared::permission::dual_scope(
+        &claims,
+        "ehs.drill.submit_evaluation",
+        "ehs.qa_ehs_drill_evaluations",
+    ) {
         Ok(s) => s,
-        Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
-            return ApiResponse::server_error("数据库事务不可用");
-        }
+        Err(resp) => return resp,
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
+    let mut scope =
+        match crate::shared::permission::open_write_scope(&state.db, &tenant_scope).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("Failed to open drill evaluation write scope: {}", e);
+                return ApiResponse::server_error("数据库事务不可用");
+            }
+        };
+    let tenant_id = tenant;
 
     // drill_id 有外键指向 ehs.qa_ehs_drill_records：先校验存在性，避免直接 INSERT 触发 500 外键违约
     match sqlx::query_scalar::<_, Uuid>(
@@ -789,7 +791,7 @@ pub async fn create_drill_record(
             (record_no, plan_id, title, started_at, duration, participant_list,
              location, actual_content, issues_found, improvements, attachments,
              status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2::uuid, $3, $4::timestamptz, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
                   started_at AS drill_date, participant_list AS participants,
                   duration::float8 AS duration_hours, location, actual_content AS summary,

@@ -115,7 +115,7 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
 
     /// 全链路端口排查日志的默认级别配置（与 shared-core/logging 保持一致）
     const PORT_DIAGNOSTIC_DIRECTIVES: &str =
-        "service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
+        "tenant_scope=warn,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
 
     let service_name_clone = service_name;
     let default_env_filter = || {
