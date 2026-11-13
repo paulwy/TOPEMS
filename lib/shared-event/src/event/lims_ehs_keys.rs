@@ -56,7 +56,7 @@ mod tests {
     /// 编号确定性、有界、ASCII；同一任务下不同检测项不合并。
     #[test]
     fn hazard_no_is_stable_bounded_and_item_scoped() {
-        let task_id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").expect("task id");
+        let task_id = Uuid::from_u128(0x1111_1111_2222_3333_4444_5555_5555_5555);
         let items = [
             "外观检查",
             "尺寸测量",
@@ -91,7 +91,7 @@ mod tests {
         );
 
         // 同一检测项、不同任务必须区分（任务维度独立）。
-        let other_task = Uuid::parse_str("99999999-8888-7777-6666-555555555555").expect("task id");
+        let other_task = Uuid::from_u128(0x9999_9999_8888_7777_6666_5555_5555_5555);
         assert_ne!(
             lims_abnormal_hazard_no(task_id, "外观检查"),
             lims_abnormal_hazard_no(other_task, "外观检查")
