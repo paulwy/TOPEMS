@@ -343,6 +343,9 @@ run_service_tests() {
 
     # 编译测试（如果需要）
     if [ "$NO_BUILD" = false ]; then
+        # shellcheck source=../lib/swagger-ui.sh
+        source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+        topems_ensure_swagger_ui_archive || exit 1
         info "编译 $service_name 集成测试..."
         cd "$PROJECT_ROOT"
         if ! cargo test --package "$package_name" --no-run -- --ignored 2>&1; then

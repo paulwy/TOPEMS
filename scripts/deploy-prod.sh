@@ -190,12 +190,10 @@ if [ -n "$BIN_OVERRIDE" ]; then
   [ -f "$BIN_OVERRIDE" ] || error "--bin 指定的文件不存在：$BIN_OVERRIDE"
   LOCAL_BIN="$BIN_OVERRIDE"
 elif [ "$DO_BUILD" = true ]; then
-  # 网络受限环境兜底：utoipa-swagger-ui 构建期需从 GitHub 下载 swagger-ui，
-  # 若本地 vendor 包存在则改用 file:// （2026-11-05 首次遇到 curl exit 16 下载失败）
-  if [ -z "${SWAGGER_UI_DOWNLOAD_URL:-}" ] && [ -f "$RELEASE_DIR/vendor/swagger-ui-v5.32.6.zip" ]; then
-    export SWAGGER_UI_DOWNLOAD_URL="file://$RELEASE_DIR/vendor/swagger-ui-v5.32.6.zip"
-    info "使用本地 swagger-ui 包: $SWAGGER_UI_DOWNLOAD_URL"
-  fi
+  # 网络受限环境兜底：统一探测本地 swagger-ui 离线包（禁止联网下载）
+  # shellcheck source=lib/swagger-ui.sh
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || error "swagger-ui 离线包缺失，编译中止（见上方指引）"
   info "本地编译 release（cargo build --release -p topems-server）..."
   cargo build --release -p topems-server 2>&1 | tail -5
   [ -f "$LOCAL_BIN" ] || error "编译失败，二进制不存在：$LOCAL_BIN"

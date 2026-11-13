@@ -93,6 +93,9 @@ cmd_dev() {
 
     # 启动后端
     log_info "启动后端服务..."
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+    topems_ensure_swagger_ui_archive || exit 1
     cargo run -p topems-unified-core &
     BACKEND_PID=$!
 
@@ -139,6 +142,9 @@ cmd_test() {
 
     # 后端测试
     log_info "运行后端测试..."
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+    topems_ensure_swagger_ui_archive || exit 1
     if [ "$VERBOSE" = true ]; then
         cargo test -p topems-unified-core -- --nocapture
     else

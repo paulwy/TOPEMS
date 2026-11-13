@@ -3,12 +3,20 @@
 # TOPEMS lib/build.sh（自 scripts/topems.sh 拆分，2026-11-02）
 # =============================================
 
+# 统一 swagger-ui 离线包探测（直接 source 本文件时也能使用）
+if ! declare -F topems_ensure_swagger_ui_archive >/dev/null 2>&1; then
+    # shellcheck source=./swagger-ui.sh
+    source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/swagger-ui.sh"
+fi
+
 build_service() {
     local service_name=$1
     shift
     local -a extra_opts=("$@")
     local service_path
     service_path=$(get_service_path "$service_name")
+
+    topems_ensure_swagger_ui_archive || return 1
 
     # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
     local _orig_cargo_jobs="${CARGO_BUILD_JOBS:-}"
@@ -550,6 +558,7 @@ build_all() {
 test_backend() {
     _preflight_check "$@" || return 1
     info "运行后端测试..."
+    topems_ensure_swagger_ui_archive || return 1
 
     # 前置：确保 DB schema 就绪（迁移 + 应用自建表；失败仅告警，由测试内 init 兜底）
     info "测试前执行数据库迁移（db_migrate）..."

@@ -374,6 +374,8 @@ db_defense_check() {
     info "[$svc] 编译检查..."
     if [ -x "$bin_path" ]; then
         detail_parts+=("build=SKIP（预热二进制已就绪 ${bin_path}）")
+    elif ! topems_ensure_swagger_ui_archive >/dev/null 2>&1; then
+        detail_parts+=("build=SKIP（swagger-ui 离线包缺失，见 scripts/lib/swagger-ui.sh）")
     elif (cd "$PROJECT_ROOT" && cargo check --offline -p "$pkg_name" 2>&1) \
         >/tmp/defense-check-${svc}-build.log 2>&1; then
         detail_parts+=("build=OK")

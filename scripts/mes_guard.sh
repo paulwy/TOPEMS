@@ -216,6 +216,11 @@ cd "$MES_DIR" || die "目录不存在: $MES_DIR"
 export SQLX_OFFLINE=false
 export DATABASE_URL="$DB_URL"
 
+# 统一 swagger-ui 离线包探测（禁止联网下载）
+# shellcheck source=lib/swagger-ui.sh
+source "$ROOT/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
+
 if ! cargo check --lib > "${LOG}" 2>&1; then
   ERR_COUNT="$(grep -c '^error\[E' "${LOG}" || true)"
   say "编译失败：$ERR_COUNT 个错误（详见 ${LOG}）"

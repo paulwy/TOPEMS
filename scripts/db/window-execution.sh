@@ -281,6 +281,9 @@ stage_artifacts() {
   echo "RELEASE|batch25_batch26|included_via_commits_6816f37d3_6bf524b2f" | tee -a "$OUT_DIR/release_commit.txt"
 
   if [[ "$BUILD_SEED" == "1" ]]; then
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$ROOT/scripts/lib/swagger-ui.sh"
+    topems_ensure_swagger_ui_archive || return 1
     echo "[artifacts] cargo build seed_dict_replay @ $commit"
     ( cd "$ROOT" && cargo build -p topems-master-data --example seed_dict_replay ) || return 1
   fi

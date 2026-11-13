@@ -368,3 +368,6 @@ backups/
 # 一次性审计导出与截图产物（2026-11-05 菜单权威收口清理；保留脚本，忽略输出）
 scripts/audit/type-only-*.json
 _shots/
+
+# 本地 swagger-ui 离线包（体积原因禁止提交进仓库，供 scripts/lib/swagger-ui.sh 探测）
+/vendor/swagger-ui-v*.zip

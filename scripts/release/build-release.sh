@@ -15,6 +15,11 @@ OUT="${1:-$HOME/topems-release}"
 mkdir -p "$OUT"
 cd "$REPO"
 
+# 统一 swagger-ui 离线包探测（禁止联网下载）
+# shellcheck source=../lib/swagger-ui.sh
+source "$REPO/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
+
 # 版本注记（tag 优先，无 tag 用短 commit）
 VERSION="$(git describe --tags --always 2>/dev/null || git rev-parse --short HEAD)"
 COMMIT="$(git rev-parse --short HEAD)"

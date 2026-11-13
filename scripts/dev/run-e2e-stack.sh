@@ -80,6 +80,9 @@ up() {
     # debug 二进制缺失检测：run_monolith.sh 依赖 target/debug/topems-server
     if [ ! -x "$PROJECT_ROOT/target/debug/topems-server" ]; then
       warn "未找到 target/debug/topems-server，自动 cargo build（首次约 10+ 分钟）..."
+      # shellcheck source=../lib/swagger-ui.sh
+      source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+      topems_ensure_swagger_ui_archive || exit 1
       SQLX_OFFLINE=true cargo build -p topems-server
     fi
     info "启动模块化单体（后台，日志 ${LOG}）..."

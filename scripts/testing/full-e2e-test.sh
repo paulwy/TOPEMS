@@ -24,6 +24,11 @@ NC='\033[0m'
 
 # 配置
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# 统一 swagger-ui 离线包探测（后续 cargo test 编包需要，禁止联网下载）
+# shellcheck source=../lib/swagger-ui.sh
+source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
 REPORT_DIR="${PROJECT_ROOT}/test-results/full-e2e"
 LOG_DIR="${PROJECT_ROOT}/logs/e2e"
 VERBOSE=false

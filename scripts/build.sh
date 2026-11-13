@@ -7,6 +7,12 @@
 
 # 注意：此文件由 topems.sh source 引入，不要直接执行
 
+# 统一 swagger-ui 离线包探测（直接 source 本文件时也能使用）
+if ! declare -F topems_ensure_swagger_ui_archive >/dev/null 2>&1; then
+    # shellcheck source=lib/swagger-ui.sh
+    source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/swagger-ui.sh"
+fi
+
 # 编译服务（V70+ 增加内存自适应 & 构建锁；V3xx 统一离线优先 + SQLx 缓存门禁）
 build_service() {
     local service_name=$1
@@ -14,6 +20,8 @@ build_service() {
     local -a extra_opts=("$@")
     local service_path
     service_path=$(get_service_path "$service_name")
+
+    topems_ensure_swagger_ui_archive || return 1
 
     # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
     local _orig_cargo_jobs="${CARGO_BUILD_JOBS:-}"

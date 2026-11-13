@@ -5,6 +5,10 @@
 #       错误文件与 HEAD..origin/main 的改动文件，提示正确处置，杜绝傻修。
 # 用法：替代原 lefthook pre-push 的 cargo-check-workspace 内联命令。
 set -u
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/swagger-ui.sh
+source "$SCRIPT_DIR/../lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
 
 # [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用；
 # 与 .cargo/config.toml 注释结论一致（2026-10-02 已移除，此处曾遗漏）

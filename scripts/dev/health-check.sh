@@ -213,7 +213,11 @@ fi
 
 # 11.4 快速 cargo check 抽样（最新 Batch-5）
 if command -v cargo &>/dev/null; then
-    if cargo check -p topems-gis -p topems-mobile -p topems-portal 2>/dev/null | tail -1 | grep -q "Finished"; then
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+    if ! topems_ensure_swagger_ui_archive; then
+        print_fail "swagger-ui 离线包缺失，跳过 Batch-5 cargo check 抽样"
+    elif cargo check -p topems-gis -p topems-mobile -p topems-portal 2>/dev/null | tail -1 | grep -q "Finished"; then
         print_ok "Batch-5（gis/mobile/portal）cargo check 通过"
     else
         print_info "跳过 Batch-5 cargo check（需首次编译）"

@@ -51,6 +51,10 @@ if [ "$MODE" = "online" ]; then
   export DATABASE_URL="$DB_URL"
   export SQLX_OFFLINE=false
 fi
+# 统一 swagger-ui 离线包探测（禁止联网下载）
+# shellcheck source=../lib/swagger-ui.sh
+source "$(cd "$SCRIPT_DIR/../.." && pwd)/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
 BUILD_OUT=$(cargo build --release 2>&1)
 ERR_COUNT=$(echo "$BUILD_OUT" | grep -c "error\[" || true)
 

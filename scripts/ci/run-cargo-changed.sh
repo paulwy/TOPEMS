@@ -7,6 +7,9 @@
 #       门禁恢复可用；RUSTFLAGS=-D warnings 仅作用于变更 crate（存量 warning 不误伤）。
 # 用法: run-cargo-changed.sh <check|clippy>（由 lefthook pre-push 调用）
 set -u
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/swagger-ui.sh
+source "$SCRIPT_DIR/../lib/swagger-ui.sh"
 MODE="${1:-check}"
 case "$MODE" in
   check|clippy) ;;
@@ -62,7 +65,7 @@ fi
 
 run_full() {
   echo "[cargo-changed] workspace 级变更 → 全量 ${MODE}"
-  echo "[cargo-changed] 注：全量可能触发 utoipa-swagger-ui build.rs 网络下载失败，见下方输出"
+  topems_ensure_swagger_ui_archive || exit 1
   if [ "$MODE" = clippy ]; then
     cargo clippy --workspace --all-targets -- -D warnings
   else
@@ -115,6 +118,7 @@ for d in $(printf '%s\n' "$CRATE_DIRS" | sort -u); do
 done
 
 echo "[cargo-changed] 增量 ${MODE}: ${PKGS}"
+topems_ensure_swagger_ui_archive || exit 1
 if [ "$MODE" = clippy ]; then
   cargo clippy $PKGS --all-targets -- -D warnings
 else

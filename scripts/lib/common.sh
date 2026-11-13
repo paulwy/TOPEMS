@@ -86,6 +86,11 @@ fi
 if [ -f "$SCRIPT_DIR/utils.sh" ]; then
     source "$SCRIPT_DIR/utils.sh"
 fi
+# 统一 swagger-ui 离线包探测（供 build/test 等 cargo 入口复用）
+if [ -f "$SCRIPT_DIR/lib/swagger-ui.sh" ]; then
+    # shellcheck source=./swagger-ui.sh
+    source "$SCRIPT_DIR/lib/swagger-ui.sh"
+fi
 
 # 服务管理函数
 

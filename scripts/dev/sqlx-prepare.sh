@@ -200,6 +200,9 @@ fi
 # 语义：如果根 .sqlx 缺缓存 → 宏编译报错 → check 失败。
 if [ "$MODE" == "check" ]; then
   log "执行 sqlx 缓存 --check（通过 SQLX_OFFLINE cargo check 一组核心包）..."
+  # shellcheck source=../lib/swagger-ui.sh
+  source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || exit 1
   # 有 query! 宏使用且正常可编译的包清单（来自 grep 统计）
   # V300：纳入 topems-mes——它是 sqlx 宏查询最多的服务（165），且缓存不入库、
   #       历史上被排除在 check 之外，是"离线缓存反复缺失"的直接肇事者。

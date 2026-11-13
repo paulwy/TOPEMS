@@ -579,6 +579,9 @@ pre-push:
           if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
           if [ -n "$DATABASE_URL" ]; then export DATABASE_URL; fi
         fi
+        # 统一 swagger-ui 离线包探测：缺失时立即失败并给出指引，避免联网空转
+        source scripts/lib/swagger-ui.sh
+        topems_ensure_swagger_ui_archive || exit 1
         cargo test --workspace --lib
 
     # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）

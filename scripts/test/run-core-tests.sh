@@ -13,6 +13,11 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+# 统一 swagger-ui 离线包探测（cargo test 编包需要，禁止联网下载）
+# shellcheck source=../lib/swagger-ui.sh
+source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
 cd "$PROJECT_ROOT"
 
 # 颜色定义

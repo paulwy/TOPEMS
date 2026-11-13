@@ -79,6 +79,9 @@ fi
 
 if [ "${1:-}" = "--offline" ]; then
   echo "[audit-date-types] 全 workspace 离线 cargo check..."
+  # shellcheck source=../lib/swagger-ui.sh
+  source "${ROOT}/scripts/lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || exit 1
   ( cd "${ROOT}" && DATABASE_URL='' SQLX_OFFLINE=true cargo check --workspace --message-format=short )
 fi
 echo "[audit-date-types] 完成 ✓"

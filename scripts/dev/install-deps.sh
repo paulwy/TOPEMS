@@ -204,7 +204,13 @@ build_backend() {
   
   local success_count=0
   local fail_count=0
-  
+
+  # 统一 swagger-ui 离线包探测（禁止联网下载）
+  # shellcheck source=../lib/swagger-ui.sh
+  # shellcheck disable=SC1091
+  source "$SCRIPT_DIR/../lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || exit 1
+
   for exe in $services; do
     info "编译 $exe..."
     if SQLX_OFFLINE=true cargo build --release --bin "$exe" 2>&1; then

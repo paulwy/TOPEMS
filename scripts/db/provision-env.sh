@@ -812,6 +812,9 @@ admin_tool() {
   else
     command -v cargo >/dev/null 2>&1 \
       || die "未找到 cargo；无法构建 topems-admin-pass（可用 TOPEMS_ADMIN_PASS_BIN 指定已构建二进制）"
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$ROOT/scripts/lib/swagger-ui.sh"
+    topems_ensure_swagger_ui_archive || die "swagger-ui 离线包缺失，构建 topems-admin-pass 中止"
     SQLX_OFFLINE=true cargo run --quiet --manifest-path "$ROOT/Cargo.toml" \
       -p topems-unified-core --bin topems-admin-pass -- "$@"
   fi

@@ -195,6 +195,10 @@ extract_specs() {
   fi
 
   log_info ">>> 通过 cargo test extract_openapi_spec 提取各服务 spec..."
+  # 统一 swagger-ui 离线包探测（禁止联网下载）
+  # shellcheck source=../lib/swagger-ui.sh
+  source "$(cd "$SCRIPT_DIR/../.." && pwd)/scripts/lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || exit 1
   echo ""
 
   # 清理可能残留的旧 spec 文件，避免聚合到过期数据

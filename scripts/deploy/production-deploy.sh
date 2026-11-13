@@ -347,6 +347,10 @@ main() {
 
   # 编译后端（unified-core + ai 两个 systemd unit 都需要；失败即中止，不吞错）
   log "编译后端（release 模式：topems-unified-core + topems-ai）..."
+  # 统一 swagger-ui 离线包探测：缺失时立即失败并给出指引，避免联网下载空转
+  # shellcheck source=../lib/swagger-ui.sh
+  source "$PROJECT_DIR/scripts/lib/swagger-ui.sh"
+  topems_ensure_swagger_ui_archive || error "swagger-ui 离线包缺失，部署中止"
   cd "$PROJECT_DIR"
   SQLX_OFFLINE=true cargo build --release -p topems-unified-core || \
     error "topems-unified-core 编译失败，部署中止（上方为实际编译错误输出）"

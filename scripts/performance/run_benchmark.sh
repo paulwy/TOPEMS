@@ -113,6 +113,9 @@ start_service() {
     fi
 
     # Fallback: cargo run for services without a topems.sh entry (master-data).
+    # shellcheck source=../lib/swagger-ui.sh
+    source "$PROJECT_ROOT/scripts/lib/swagger-ui.sh"
+    topems_ensure_swagger_ui_archive || exit 1
     local bin="topems-master-data"
     log "starting ${bin} via cargo run (port ${port}) ..."
     (

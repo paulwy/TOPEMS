@@ -153,6 +153,10 @@ echo ""
         cd "${SCRIPT_DIR}"
 
         # Build release binaries
+        # 统一 swagger-ui 离线包探测（禁止联网下载）
+        # shellcheck source=../lib/swagger-ui.sh
+        source "${SCRIPT_DIR}/scripts/lib/swagger-ui.sh"
+        topems_ensure_swagger_ui_archive || exit 1
         if [[ "$DRY_RUN" == "true" ]]; then
             echo -e "${YELLOW}[dry-run]${NC} 跳过 cargo build --release"
         else

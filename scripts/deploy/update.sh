@@ -92,6 +92,10 @@ fi
 
 # Build backend
 echo -e "${YELLOW}Building backend services...${NC}"
+# 统一 swagger-ui 离线包探测（禁止联网下载）
+# shellcheck source=../lib/swagger-ui.sh
+source "$SCRIPT_DIR/scripts/lib/swagger-ui.sh"
+topems_ensure_swagger_ui_archive || exit 1
 # dry-run 预演模式跳过构建（构建非破坏性动作，干跑只验证部署动作流）
 if [[ "$DRY_RUN" != "true" ]]; then
     cargo build --release
