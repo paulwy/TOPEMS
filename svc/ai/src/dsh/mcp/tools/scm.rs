@@ -6,28 +6,46 @@
 //! - scm.list_purchase_orders — 查询采购订单列表
 //! - scm.create_purchase_order — 创建采购订单
 //!
-//! 当前版本使用 mock 数据，后续版本将通过 shared-service-client 连接真实 SCM API。
+//! ## 接通状态：未接通（2026-11-13 起明确禁用，禁止 mock 兜底）
+//!
+//! 历史实现是「HTTP 失败 → 静默返回常量 mock 数据」，调用方无法分辨真假。
+//! 复核结论：生产未监听独立 SCM `:8040`；单体 `:8099` 上的 `/api/scm/*` 虽然存在，
+//! 但要求 `scm:read` / `scm:write` 权限且处理器强制 `claims.tenant_id`，
+//! 而 `http_call` 使用的是权限集合为空、无租户上下文的 ai-service service token，
+//! 同时 4 个工具的请求/响应契约与真实 SCM API 不一致。
+//! 因此仅改 URL/权限无法接通，工具保留注册以便调用方看到明确错误，
+//! 但一律返回 [`SCM_NOT_CONNECTED_CODE`]，不返回任何业务数据。
 
-use serde_json::{json, Value};
+use serde_json::json;
 
-use topems_shared_mcp::protocol::{McpContent, McpToolResult, SensitiveOutput};
 use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
-use super::super::tools::{http_call, service_base_url, url_encode};
 
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+/// 未接通错误码（稳定标识，调用方据此区分「未接通」与普通执行失败）。
+pub const SCM_NOT_CONNECTED_CODE: &str = "SCM_MCP_NOT_CONNECTED";
+
+/// 未接通原因（写入错误文案，避免调用方误以为查询成功）。
+const NOT_CONNECTED_REASON: &str = "生产未监听独立 SCM :8040；单体 :8099 的 /api/scm/* 要求 scm:read/scm:write 权限与 claims.tenant_id，ai-service service token 权限为空且无租户上下文；现有工具请求/响应契约也与真实 SCM API 不一致";
+
+/// 构造统一的「未接通」错误：不含任何业务数据，禁止 mock 兜底。
+fn not_connected(tool: &str, endpoint: &str) -> ToolExecutionError {
+    ToolExecutionError::Execution(format!(
+        "{SCM_NOT_CONNECTED_CODE}: {tool} 未接通真实 SCM 服务（{endpoint}），已禁用，不会返回 mock 数据。原因：{NOT_CONNECTED_REASON}。接通前请勿依赖该工具。"
+    ))
+}
+
 /// 注册 SCM 业务工具到 MCP Server
 ///
 /// # 参数
 /// - `server`: MCP Server 实例
 ///
 /// # 注册的工具
-/// - scm.list_suppliers — 查询供应商列表（支持分页、等级筛选、状态筛选）
-/// - scm.get_supplier — 获取供应商详情（按ID）
-/// - scm.list_purchase_orders — 查询采购订单列表（支持分页、状态筛选、供应商筛选）
-/// - scm.create_purchase_order — 创建采购订单（供应商、物料、数量、价格）
+/// - scm.list_suppliers — 查询供应商列表（当前未接通，fail-closed）
+/// - scm.get_supplier — 获取供应商详情（当前未接通，fail-closed）
+/// - scm.list_purchase_orders — 查询采购订单列表（当前未接通，fail-closed）
+/// - scm.create_purchase_order — 创建采购订单（当前未接通，fail-closed）
 pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
@@ -35,7 +53,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     registry
         .register_with_permission(
             "scm.list_suppliers",
-            "查询SCM供应商列表，支持分页、等级筛选和状态筛选。返回供应商的基本信息列表，包括供应商编号、名称、联系人、等级、状态、行业、评分、合作年限等。",
+            "[未接通] 查询SCM供应商列表。当前未接通真实 SCM 服务，调用将返回 SCM_MCP_NOT_CONNECTED 错误，不会返回 mock 数据。",
             SchemaBuilder::object()
                 .property(
                     "page",
@@ -75,44 +93,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .required(&["page"])
                 .build(),            "scm:read",
 
-            |params| {
-                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
-                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
-                let supplier_level = params.get("supplier_level").and_then(|v| v.as_str()).unwrap_or("");
-                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
-                let category = params.get("category").and_then(|v| v.as_str()).unwrap_or("");
-                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
-
-                // 真实调用 SCM API（GET /api/scm/suppliers，降级 mock）
-                let mut path = format!("/api/scm/suppliers?page={}&page_size={}", page, page_size);
-                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
-                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
-                let base = service_base_url("SCM_SERVICE_URL", 8040);
-                if let Some(data) = http_call(&base, "GET", &path, None) {
-                    let items = data.get("suppliers").cloned().unwrap_or(json!([]));
-                    let total = data.get("total").cloned().unwrap_or(json!(0));
-                    let result = json!({ "total": total, "page": page, "page_size": page_size, "suppliers": items });
-                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
-                }
-
-                let suppliers = generate_mock_suppliers(supplier_level, status, category, keyword);
-                let total = suppliers.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_suppliers = suppliers.get(start.min(total)..end);
-
-                let result = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "suppliers": page_suppliers,
-                });
-
-                Ok(McpToolResult {
-                    content: vec![McpContent::text(result.to_string())],
-                    is_error: None,
-                })
-            },
+            |_params| Err(not_connected("scm.list_suppliers", "GET /api/scm/suppliers")),
         )
         .await;
 
@@ -120,7 +101,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     registry
         .register_with_permission(
             "scm.get_supplier",
-            "获取SCM供应商详情，按供应商ID查询。返回供应商的完整信息，包括基本信息、联系人、银行账户、资质证书、评分、物料供应、采购历史、合同信息等。",
+            "[未接通] 获取SCM供应商详情。当前未接通真实 SCM 服务，调用将返回 SCM_MCP_NOT_CONNECTED 错误，不会返回 mock 数据。",
             SchemaBuilder::object()
                 .property(
                     "supplier_id",
@@ -129,38 +110,16 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .required(&["supplier_id"])
                 .build(),            "scm:read",
 
-            |params| {
-                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
-
-                if supplier_id.is_empty() {
-                    return Err(ToolExecutionError::Validation("supplier_id is required".to_string()));
-                }
-
-                // 真实调用 SCM API（GET /api/scm/suppliers/{id}，降级 mock）
-                let base = service_base_url("SCM_SERVICE_URL", 8040);
-                let path = format!("/api/scm/suppliers/{}", url_encode(supplier_id));
-                if let Some(data) = http_call(&base, "GET", &path, None) {
-                    let result = json!({ "supplier": data });
-                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
-                }
-
-                let supplier = generate_mock_supplier_detail(supplier_id);
-
-                Ok(McpToolResult {
-                    content: vec![McpContent::text(supplier.to_string())],
-                    is_error: None,
-                })
-            },
+            |_params| Err(not_connected("scm.get_supplier", "GET /api/scm/suppliers/{id}")),
         )
         .await;
 
-    // Phase D 收尾：敏感输出声明——scm.get_supplier 返回供应商银行账户
-    // （bank_account.account_number + swift_code，真实数据形态，含 mock 降级路径），
-    // 输出层按前3后4 掩码；业务联系方式（contact_phone/contact_email/address）按 P2-4 保留。
+    // Phase D 收尾：敏感输出声明——scm.get_supplier 返回供应商银行账户。
+    // 该声明为「接通后」的真实数据形态预留；当前工具 fail-closed，不返回任何数据。
     registry
         .declare_sensitive_output(
             "scm.get_supplier",
-            SensitiveOutput {
+            topems_shared_mcp::protocol::SensitiveOutput {
                 fields: vec!["account_number".to_string(), "swift_code".to_string()],
                 contains_sensitive: Some(true),
             },
@@ -171,7 +130,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     registry
         .register_with_permission(
             "scm.list_purchase_orders",
-            "查询SCM采购订单列表，支持分页、状态筛选和供应商筛选。返回采购订单的基本信息列表，包括订单编号、供应商、状态、总金额、创建时间、预计交货时间等。",
+            "[未接通] 查询SCM采购订单列表。当前未接通真实 SCM 服务，调用将返回 SCM_MCP_NOT_CONNECTED 错误，不会返回 mock 数据。",
             SchemaBuilder::object()
                 .property(
                     "page",
@@ -213,43 +172,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .required(&["page"])
                 .build(),            "scm:read",
 
-            |params| {
-                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
-                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
-                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
-                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
-                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
-
-                // 真实调用 SCM API（GET /api/scm/purchase-orders，降级 mock）
-                let mut path = format!("/api/scm/purchase-orders?page={}&page_size={}", page, page_size);
-                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
-                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
-                let base = service_base_url("SCM_SERVICE_URL", 8040);
-                if let Some(data) = http_call(&base, "GET", &path, None) {
-                    let items = data.get("orders").cloned().unwrap_or(json!([]));
-                    let total = data.get("total").cloned().unwrap_or(json!(0));
-                    let result = json!({ "total": total, "page": page, "page_size": page_size, "orders": items });
-                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
-                }
-
-                let orders = generate_mock_purchase_orders(status, supplier_id, keyword);
-                let total = orders.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_orders = orders.get(start.min(total)..end);
-
-                let result = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "purchase_orders": page_orders,
-                });
-
-                Ok(McpToolResult {
-                    content: vec![McpContent::text(result.to_string())],
-                    is_error: None,
-                })
-            },
+            |_params| Err(not_connected("scm.list_purchase_orders", "GET /api/scm/purchase-orders")),
         )
         .await;
 
@@ -257,7 +180,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     registry
         .register_with_permission(
             "scm.create_purchase_order",
-            "创建SCM采购订单。需要提供供应商ID和物料明细，返回新创建的采购订单ID和订单编号。",
+            "[未接通] 创建SCM采购订单。当前未接通真实 SCM 服务，调用将返回 SCM_MCP_NOT_CONNECTED 错误，不会返回 mock 数据。",
             SchemaBuilder::object()
                 .property(
                     "supplier_id",
@@ -295,275 +218,27 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .required(&["supplier_id", "items"])
                 .build(),            "scm:write",
 
-            |params| {
-                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
-                let items = params.get("items").and_then(|v| v.as_array());
-
-                if supplier_id.is_empty() {
-                    return Err(ToolExecutionError::Validation("supplier_id is required".to_string()));
-                }
-                let items = match items {
-                    Some(items) if !items.is_empty() => items,
-                    _ => {
-                        return Err(ToolExecutionError::Validation(
-                            "items must contain at least one item".to_string(),
-                        ))
-                    }
-                };
-                let mut total_amount = 0.0;
-                for item in items {
-                    let qty = item.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    let price = item.get("unit_price").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    total_amount += qty * price;
-                }
-
-                // 真实调用 SCM API（POST /api/scm/purchase-orders，降级 mock）
-                let base = service_base_url("SCM_SERVICE_URL", 8040);
-                let body = json!({
-                    "supplier_id": params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or(""),
-                    "items": params.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default(),
-                    "expected_delivery_date": params.get("expected_delivery_date").and_then(|v| v.as_str()).unwrap_or(""),
-                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
-                });
-                if let Some(data) = http_call(&base, "POST", "/api/scm/purchase-orders", Some(body)) {
-                    let result = json!({ "order": data, "message": "采购订单创建成功" });
-                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
-                }
-
-                let order_id = format!("PO-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let order_number = format!("PO{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
-
-                let result = json!({
-                    "order_id": order_id,
-                    "order_number": order_number,
-                    "supplier_id": supplier_id,
-                    "items": items,
-                    "total_amount": total_amount,
-                    "expected_delivery_date": params.get("expected_delivery_date").and_then(|v| v.as_str()).unwrap_or(""),
-                    "payment_terms": params.get("payment_terms").and_then(|v| v.as_str()).unwrap_or(""),
-                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
-                    "creator": params.get("creator").and_then(|v| v.as_str()).unwrap_or(""),
-                    "status": "draft",
-                    "created_at": chrono::Utc::now().to_rfc3339(),
-                    "message": "采购订单创建成功，已分配订单编号，等待审批",
-                });
-
-                Ok(McpToolResult {
-                    content: vec![McpContent::text(result.to_string())],
-                    is_error: None,
-                })
-            },
+            |_params| Err(not_connected("scm.create_purchase_order", "POST /api/scm/purchase-orders")),
         )
         .await;
 
-    tracing::info!("SCM MCP Tools registered: 4 tools (scm.list_suppliers, scm.get_supplier, scm.list_purchase_orders, scm.create_purchase_order)");
-}
-
-// ============ Mock 数据生成 ============
-
-/// 生成 Mock 供应商列表
-#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
-fn generate_mock_suppliers(
-    level_filter: &str,
-    status_filter: &str,
-    category_filter: &str,
-    keyword_filter: &str,
-) -> Vec<Value> {
-    let levels = [
-        "strategic",
-        "preferred",
-        "approved",
-        "qualified",
-        "pending",
-        "blacklisted",
-    ];
-    let statuses = [
-        "active",
-        "active",
-        "active",
-        "inactive",
-        "suspended",
-        "terminated",
-    ];
-    let categories = [
-        "原材料",
-        "电子元件",
-        "包装材料",
-        "机械设备",
-        "办公用品",
-        "物流服务",
-    ];
-
-    (0..80)
-        .map(|i| {
-            let level = levels[i % levels.len()];
-            let status = statuses[i % statuses.len()];
-            let category = categories[i % categories.len()];
-
-            json!({
-                "supplier_id": format!("SUP-{:04}", i + 1),
-                "supplier_code": format!("S{:06}", i + 1),
-                "supplier_name": format!("供应商{:03}", i + 1),
-                "contact_person": format!("联系人{:02}", (i % 10) + 1),
-                "contact_phone": format!("138{:08}", (i % 100) + 1),
-                "contact_email": format!("contact{}@supplier.com", i + 1),
-                "supplier_level": level,
-                "status": status,
-                "category": category,
-                "address": format!("广东省深圳市{}区{}路{}号", (i % 5) + 1, (i % 10) + 1, (i % 100) + 1),
-                "rating": 3 + (i % 3),
-                "cooperation_years": 1 + (i % 10),
-                "total_orders": 10 + (i % 50),
-                "total_amount": 100000 + (i % 20) * 50000,
-                "on_time_delivery_rate": 85 + (i % 15),
-                "quality_pass_rate": 90 + (i % 10),
-                "created_at": format!("202{}-{:02}-{:02}", (i % 5) + 1, (i % 12) + 1, (i % 28) + 1),
-            })
-        })
-        .filter(|s| {
-            (level_filter.is_empty() || s.get("supplier_level").and_then(|v| v.as_str()) == Some(level_filter))
-                && (status_filter.is_empty() || s.get("status").and_then(|v| v.as_str()) == Some(status_filter))
-                && (category_filter.is_empty() || s.get("category").and_then(|v| v.as_str()) == Some(category_filter))
-                && (keyword_filter.is_empty()
-                    || s.get("supplier_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
-                    || s.get("supplier_name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
-        })
-        .collect()
-}
-
-/// 生成 Mock 供应商详情
-#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
-fn generate_mock_supplier_detail(supplier_id: &str) -> Value {
-    json!({
-        "supplier_id": supplier_id,
-        "supplier_code": "S000001",
-        "supplier_name": "深圳某电子有限公司",
-        "short_name": "深圳某电子",
-        "contact_person": "张经理",
-        "contact_phone": "13800138001",
-        "contact_email": "zhang@supplier.com",
-        "supplier_level": "strategic",
-        "status": "active",
-        "category": "电子元件",
-        "address": "广东省深圳市南山区科技园路1号",
-        "bank_account": {
-            "bank_name": "中国工商银行深圳分行",
-            "account_number": "4000020009000123456",
-            "account_name": "深圳某电子有限公司",
-            "swift_code": "ICBKCNBJSZN",
-        },
-        "certificates": [
-            {"id": "CERT-001", "name": "ISO9001质量管理体系认证", "valid_until": "2027-12-31", "status": "valid"},
-            {"id": "CERT-002", "name": "ISO14001环境管理体系认证", "valid_until": "2027-06-30", "status": "valid"},
-            {"id": "CERT-003", "name": "RoHS认证", "valid_until": "2026-12-31", "status": "expiring_soon"},
-        ],
-        "rating": {
-            "overall": 4.5,
-            "quality": 4.6,
-            "delivery": 4.4,
-            "price": 4.3,
-            "service": 4.7,
-        },
-        "performance": {
-            "on_time_delivery_rate": 95,
-            "quality_pass_rate": 98,
-            "average_response_time": "4小时",
-            "cooperation_years": 5,
-            "total_orders": 156,
-            "total_amount": 8500000,
-        },
-        "supplied_materials": [
-            {"material_id": "MAT-0001", "material_code": "M000001", "material_name": "智能传感器A1", "unit_price": 50.0, "moq": 100, "lead_time": 7},
-            {"material_id": "MAT-0002", "material_code": "M000002", "material_name": "控制模块B2", "unit_price": 120.0, "moq": 50, "lead_time": 14},
-            {"material_id": "MAT-0003", "material_code": "M000003", "material_name": "电源模块C3", "unit_price": 80.0, "moq": 200, "lead_time": 10},
-        ],
-        "recent_orders": [
-            {"order_id": "PO-00000001", "order_number": "PO202608001", "amount": 50000, "status": "received", "created_at": "2026-08-01"},
-            {"order_id": "PO-00000002", "order_number": "PO202608002", "amount": 35000, "status": "partial_received", "created_at": "2026-08-10"},
-            {"order_id": "PO-00000003", "order_number": "PO202608003", "amount": 80000, "status": "sent", "created_at": "2026-08-20"},
-        ],
-        "contracts": [
-            {"id": "CON-001", "name": "2026年度框架协议", "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "active"},
-        ],
-        "created_at": "2021-03-15T10:00:00Z",
-        "updated_at": "2026-08-25T14:00:00Z",
-    })
-}
-
-/// 生成 Mock 采购订单列表
-#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
-fn generate_mock_purchase_orders(
-    status_filter: &str,
-    supplier_filter: &str,
-    keyword_filter: &str,
-) -> Vec<Value> {
-    let statuses = [
-        "draft",
-        "pending_approval",
-        "approved",
-        "sent",
-        "partial_received",
-        "received",
-        "closed",
-        "cancelled",
-    ];
-
-    (0..120)
-        .map(|i| {
-            let status = statuses[i % statuses.len()];
-
-            json!({
-                "order_id": format!("PO-{:08}", i + 1),
-                "order_number": format!("PO2026{:06}", i + 1),
-                "supplier_id": format!("SUP-{:04}", (i % 20) + 1),
-                "supplier_name": format!("供应商{:03}", (i % 20) + 1),
-                "status": status,
-                "total_amount": 5000 + (i % 20) * 5000,
-                "currency": "CNY",
-                "item_count": 1 + (i % 5),
-                "creator": format!("采购员{:02}", (i % 5) + 1),
-                "approver": if status != "draft" && status != "cancelled" { Some(format!("采购经理{:02}", (i % 3) + 1)) } else { None },
-                "created_at": format!("2026-08-{:02}T{:02}:{:02}:00Z", (i % 26) + 1, (i % 24), (i % 60)),
-                "expected_delivery_date": format!("2026-09-{:02}", (i % 28) + 1),
-                "actual_delivery_date": if status == "received" || status == "closed" { Some(format!("2026-09-{:02}", (i % 28) + 1)) } else { None },
-            })
-        })
-        .filter(|o| {
-            (status_filter.is_empty() || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
-                && (supplier_filter.is_empty() || o.get("supplier_id").and_then(|v| v.as_str()) == Some(supplier_filter))
-                && (keyword_filter.is_empty() || o.get("order_number").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
-        })
-        .collect()
+    tracing::info!(
+        "SCM MCP Tools registered: 4 tools (NOT CONNECTED, fail-closed: no mock fallback)"
+    );
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use super::*;
-    use topems_shared_mcp::protocol::McpContent;
+    use topems_shared_mcp::protocol::McpToolResult;
 
-    #[tokio::test]
-    #[ignore = "需要 SCM_SERVICE_URL 指向真实服务时手动运行"]
-    async fn test_scm_list_suppliers_real_api() {
-        if std::env::var("SCM_SERVICE_URL").is_err() {
-            eprintln!("SKIP: 未设置 SCM_SERVICE_URL");
-            return;
+    use super::*;
+
+    fn execution_message(result: Result<McpToolResult, ToolExecutionError>) -> String {
+        match result.expect_err("未接通工具不得返回成功结果") {
+            ToolExecutionError::Execution(msg) => msg,
+            other => panic!("期望 Execution 错误，实际: {other:?}"),
         }
-        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        register_scm_tools(&server, "test-secret").await;
-        let result = server
-            .tool_registry()
-            .call_tool("scm.list_suppliers", json!({"page": 1, "page_size": 5}))
-            .await
-            .unwrap();
-        let text = match &result.content[0] {
-            McpContent::Text { text } => text.clone(),
-            _ => String::new(),
-        };
-        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
-        assert!(total > 0, "真实 API 应返回数据，total={}", total);
-        eprintln!("scm.list_suppliers 真实调用返回 total = {}", total);
     }
 
     #[tokio::test]
@@ -579,64 +254,65 @@ mod tests {
         assert_eq!(registry.len().await, 4);
     }
 
+    /// 锁定底线：4 个 SCM 工具一律返回「未接通」，不得返回任何成功结果/mock 数据。
     #[tokio::test]
-    async fn test_list_suppliers() {
+    async fn test_scm_tools_fail_closed_not_connected() {
         let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
-        let result = server
-            .tool_registry()
-            .call_tool("scm.list_suppliers", json!({"page": 1, "page_size": 5}))
-            .await
-            .unwrap();
+        let calls = vec![
+            ("scm.list_suppliers", json!({"page": 1})),
+            ("scm.get_supplier", json!({"supplier_id": "SUP-0001"})),
+            ("scm.list_purchase_orders", json!({"page": 1})),
+            (
+                "scm.create_purchase_order",
+                json!({
+                    "supplier_id": "SUP-0001",
+                    "items": [{"material_id": "MAT-0001", "quantity": 1, "unit_price": 1.0}]
+                }),
+            ),
+        ];
 
-        assert_eq!(result.content.len(), 1);
-        if let McpContent::Text { text } = &result.content[0] {
-            let parsed: Value = serde_json::from_str(text).unwrap();
-            assert_eq!(parsed["page"], 1);
-            assert_eq!(parsed["page_size"], 5);
-            assert!(parsed["suppliers"].is_array());
-        } else {
-            panic!("Expected text content");
+        for (tool, args) in calls {
+            let msg = execution_message(server.tool_registry().call_tool(tool, args).await);
+            assert!(
+                msg.contains(SCM_NOT_CONNECTED_CODE),
+                "{tool} 错误必须包含错误码 {SCM_NOT_CONNECTED_CODE}: {msg}"
+            );
+            assert!(msg.contains("未接通"), "{tool} 错误必须说明未接通: {msg}");
+            assert!(
+                !msg.contains("供应商001") && !msg.contains("PO2026"),
+                "{tool} 不得夹带任何 mock 业务数据: {msg}"
+            );
         }
     }
 
-    #[tokio::test]
-    async fn test_get_supplier() {
-        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        register_scm_tools(&server, "test-secret").await;
+    /// 静态回归锁：生产代码中不得重新出现 mock 兜底实现。
+    #[test]
+    fn test_scm_tools_source_has_no_mock_fallback() {
+        let src = include_str!("scm.rs");
+        let production = src
+            .split("#[cfg(test)]")
+            .next()
+            .expect("源码应包含生产代码段");
 
-        let result = server
-            .tool_registry()
-            .call_tool("scm.get_supplier", json!({"supplier_id": "SUP-0001"}))
-            .await
-            .unwrap();
-
-        if let McpContent::Text { text } = &result.content[0] {
-            let parsed: Value = serde_json::from_str(text).unwrap();
-            assert_eq!(parsed["supplier_id"], "SUP-0001");
-            assert!(parsed["bank_account"].is_object());
-            assert!(parsed["certificates"].is_array());
-            assert!(parsed["rating"].is_object());
-            assert!(parsed["performance"].is_object());
-            assert!(parsed["supplied_materials"].is_array());
-            assert!(parsed["recent_orders"].is_array());
-        } else {
-            panic!("Expected text content");
+        for forbidden in ["generate_mock", "mock_fallback"] {
+            assert!(
+                !production.contains(forbidden),
+                "禁止重新引入 mock 兜底：生产代码命中 {forbidden}"
+            );
         }
+        assert!(
+            production.contains(SCM_NOT_CONNECTED_CODE),
+            "生产代码必须保留 {SCM_NOT_CONNECTED_CODE} 错误码"
+        );
     }
 
     #[tokio::test]
-    async fn test_get_supplier_sensitive_output_masked() {
-        // Phase D 收尾：scm.get_supplier 声明敏感输出后，输出层对降级 mock 路径
-        // 的银行账号按前3后4 掩码（真实 API 同结构）；业务联系方式按 P2-4 保留。
-        use crate::dsh::mcp::security::AuthenticatedUser;
-        use topems_shared_mcp::jsonrpc::JsonRpcRequest;
-
+    async fn test_get_supplier_sensitive_output_declared() {
         let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
-        // 声明已注册且字段正确
         let decl = server
             .tool_registry()
             .sensitive_output("scm.get_supplier")
@@ -646,160 +322,5 @@ mod tests {
             decl.unwrap().fields,
             vec!["account_number".to_string(), "swift_code".to_string()]
         );
-
-        // 全链路：初始化 + 带身份调用（走输出层脱敏接线）
-        server
-            .handle_request(
-                JsonRpcRequest::new(
-                    "initialize",
-                    json!(1),
-                    Some(json!({
-                        "protocolVersion": "2025-03-26",
-                        "capabilities": {},
-                        "clientInfo": { "name": "test", "version": "1.0" }
-                    })),
-                ),
-                None,
-            )
-            .await;
-        server
-            .handle_request(
-                JsonRpcRequest::notification("notifications/initialized", None),
-                None,
-            )
-            .await;
-        let resp = server
-            .handle_request(
-                JsonRpcRequest::new(
-                    "tools/call",
-                    json!(2),
-                    Some(json!({
-                        "name": "scm.get_supplier",
-                        "arguments": { "supplier_id": "SUP-0001" }
-                    })),
-                ),
-                Some(AuthenticatedUser::new(
-                    "scm_user",
-                    "tenant1",
-                    vec!["scm:read".to_string()],
-                )),
-            )
-            .await
-            .unwrap();
-        assert!(resp.is_success(), "工具调用应成功: {:?}", resp.error);
-        let body = resp.result.unwrap();
-        let text = body["content"][0]["text"].as_str().unwrap();
-        // mock 值 4000020009000123456 → 400****3456；swift ICBKCNBJSZN → ICB****JSZN
-        assert!(
-            text.contains("400****3456"),
-            "应掩码 account_number: {}",
-            text
-        );
-        assert!(
-            !text.contains("4000020009000123456"),
-            "明文账号泄漏: {}",
-            text
-        );
-        assert!(text.contains("ICB****JSZN"), "应掩码 swift_code: {}", text);
-        assert!(
-            text.contains("13800138001"),
-            "contact_phone 应保留（P2-4）: {}",
-            text
-        );
-    }
-
-    #[tokio::test]
-    async fn test_list_purchase_orders() {
-        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        register_scm_tools(&server, "test-secret").await;
-
-        let result = server
-            .tool_registry()
-            .call_tool(
-                "scm.list_purchase_orders",
-                json!({"page": 1, "page_size": 10, "status": "approved"}),
-            )
-            .await
-            .unwrap();
-
-        if let McpContent::Text { text } = &result.content[0] {
-            let parsed: Value = serde_json::from_str(text).unwrap();
-            assert_eq!(parsed["page"], 1);
-            assert!(parsed["purchase_orders"].is_array());
-        } else {
-            panic!("Expected text content");
-        }
-    }
-
-    #[tokio::test]
-    async fn test_create_purchase_order() {
-        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        register_scm_tools(&server, "test-secret").await;
-
-        let result = server
-            .tool_registry()
-            .call_tool("scm.create_purchase_order", json!({
-                "supplier_id": "SUP-0001",
-                "items": [
-                    {"material_id": "MAT-0001", "material_code": "M000001", "material_name": "智能传感器A1", "quantity": 100, "unit_price": 50.0, "unit": "个"},
-                    {"material_id": "MAT-0002", "material_code": "M000002", "material_name": "控制模块B2", "quantity": 50, "unit_price": 120.0, "unit": "个"}
-                ],
-                "expected_delivery_date": "2026-09-15",
-                "payment_terms": "月结30天",
-                "remark": "紧急订单",
-                "creator": "张三"
-            }))
-            .await
-            .unwrap();
-
-        if let McpContent::Text { text } = &result.content[0] {
-            let parsed: Value = serde_json::from_str(text).unwrap();
-            assert_eq!(parsed["supplier_id"], "SUP-0001");
-            assert_eq!(parsed["total_amount"], 11000.0);
-            assert_eq!(parsed["status"], "draft");
-            assert!(parsed["items"].is_array());
-            assert_eq!(
-                parsed
-                    .get("items")
-                    .and_then(|v| v.as_array())
-                    .unwrap()
-                    .len(),
-                2
-            );
-            assert!(parsed["order_id"].is_string());
-        } else {
-            panic!("Expected text content");
-        }
-    }
-
-    #[tokio::test]
-    async fn test_create_purchase_order_validation() {
-        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        register_scm_tools(&server, "test-secret").await;
-
-        // 缺少 supplier_id
-        let result = server
-            .tool_registry()
-            .call_tool(
-                "scm.create_purchase_order",
-                json!({
-                    "items": [{"material_id": "MAT-0001", "quantity": 100, "unit_price": 50.0}]
-                }),
-            )
-            .await;
-        assert!(result.is_err());
-
-        // items 为空
-        let result = server
-            .tool_registry()
-            .call_tool(
-                "scm.create_purchase_order",
-                json!({
-                    "supplier_id": "SUP-0001",
-                    "items": []
-                }),
-            )
-            .await;
-        assert!(result.is_err());
     }
 }

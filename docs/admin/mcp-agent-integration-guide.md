@@ -1,13 +1,13 @@
 # TOPEMS MCP 外部 Agent 对接指南
 
-> 版本：2026-08-30 | 适用范围：Cursor、Claude Desktop 等外部 AI Agent 通过 MCP 协议对接 TOPEMS
+> 版本：2026-11-13 | 适用范围：Cursor、Claude Desktop 等外部 AI Agent 通过 MCP 协议对接 TOPEMS
 
 ## 1. 概述
 
 TOPEMS 通过 **MCP（Model Context Protocol）** 向外部 Agent 开放业务能力。外部 Agent（如 Cursor、Claude Desktop）可通过 MCP stdio 传输连接 `mcp-stdio` 二进制，直接调用 TOPEMS 的业务工具（CRM / ERP / 财务 / HR / QMS / SCM / WMS / APS / PM 等 16 个业务域）。
 
 **核心能力：**
-- 68 个业务工具（真实业务 API 调用，服务不可达时自动降级 mock）
+- 68 个业务工具（真实业务 API 调用；SCM 4 个工具当前未接通，调用返回明确错误，不返回 mock）
 - 3 个业务资源（`crm://customers/{id}`、`erp://sales_orders/{id}`、`finance://vouchers/{id}`）
 - 权限继承（受限工具要求特定权限，无权限用户被拒绝）
 - 输入校验（注入检测）+ 输出脱敏
@@ -39,11 +39,22 @@ target/debug/mcp-stdio
 | 财务 | `finance.list_transactions` / `finance.get_transaction` / `finance.create_invoice`* | 交易/发票 |
 | HR | `hr.list_employees` / `hr.get_employee` / `hr.create_employee` / `hr.update_employee` | 员工管理 |
 | QMS | `qms.list_inspections` / `qms.get_inspection` / `qms.create_inspection` / `qms.list_nonconformances` | 质量检验 |
-| SCM | `scm.list_suppliers` / `scm.get_supplier` / ... | 供应商/采购 |
+| SCM | `scm.list_suppliers` / `scm.get_supplier` / ... | 供应商/采购（**未接通**，fail-closed） |
 | WMS | `wms.list_inventory` / `wms.list_warehouses` / `wms.list_transfers` | 仓储库存 |
 | 其他 | APS / PM / MES / EHS / LIMS / BI / 客户服务 / 物联网 / OA | 各业务域 4 工具 |
 
 > *`finance.create_invoice` 为受限工具（要求 `finance:write` 权限），是权限继承机制的示例。
+
+### 3.1 未接通工具：SCM（fail-closed）
+
+`scm.list_suppliers`、`scm.get_supplier`、`scm.list_purchase_orders`、`scm.create_purchase_order` 目前**未接通真实 SCM 服务**。自 2026-11-13 起已移除 mock 兜底：任何调用都会返回错误码 `SCM_MCP_NOT_CONNECTED` 的 `Execution` 错误（JSON-RPC `-32000`），不会返回任何业务数据。
+
+未接通原因：
+1. 生产未监听独立 SCM 端口 `:8040`，而工具默认 `SCM_SERVICE_URL=http://localhost:8040`。
+2. 模块化单体 `:8099` 上的 `/api/scm/*` 存在，但要求 `scm:read` / `scm:write` 权限且处理器强制 `claims.tenant_id`；MCP 使用的 ai-service service token 权限集合为空且无租户上下文，请求会分别得到 403 / 400。
+3. 现有 4 个工具的请求/响应契约（列表字段、供应商 ID 类型、创建订单字段）与真实 SCM API 不一致，无法只靠配置对齐。
+
+接通需要同时改动 shared-auth 的 service 租户语义、为 service token 授予 SCM 权限，并按真实 API 重写工具契约；在此之前禁止添加 mock 或静默降级。回归测试见 `svc/ai/src/dsh/mcp/tools/scm.rs` 的 `test_scm_tools_fail_closed_not_connected` 与 `test_scm_tools_source_has_no_mock_fallback`。
 
 **业务资源：**
 - `crm://customers/{id}` — CRM 客户详情
@@ -127,7 +138,7 @@ cd /path/to/TOPEMS && source .env && target/debug/topems-server &
 env \
   CRM_SERVICE_URL=http://localhost:8099 ERP_SERVICE_URL=http://localhost:8099 \
   FINANCE_SERVICE_URL=http://localhost:8099 QMS_SERVICE_URL=http://localhost:8099 \
-  SCM_SERVICE_URL=http://localhost:8099 WMS_SERVICE_URL=http://localhost:8099 \
+  WMS_SERVICE_URL=http://localhost:8099 \
   HRM_SERVICE_URL=http://localhost:8099 APS_SERVICE_URL=http://localhost:8099 \
   PM_SERVICE_URL=http://localhost:8099 \
   CRM_SAMPLE_CUSTOMER_ID=<dev-tenant-customer-id> \
@@ -150,7 +161,7 @@ cargo test -p topems-ai --test mcp_stdio_integration
 | `FINANCE_SERVICE_URL` | `http://localhost:8011` | 财务服务/网关地址 |
 | `QMS_SERVICE_URL` | `http://localhost:8050` | QMS 服务/网关地址 |
 | `HRM_SERVICE_URL` | `http://localhost:8020` | HR 服务/网关地址 |
-| `SCM_SERVICE_URL` | `http://localhost:8021` | SCM 服务/网关地址 |
+| `SCM_SERVICE_URL` | `http://localhost:8040` | SCM 服务地址；当前 SCM 工具未接通，不会发起请求 |
 | `WMS_SERVICE_URL` | `http://localhost:8022` | WMS 服务/网关地址 |
 | `APS_SERVICE_URL` / `PM_SERVICE_URL` | 各自端口 | APS / PM 服务地址 |
 | `RUNTIME_URL` | `http://localhost:8060` | 插件运行时地址 |
@@ -159,7 +170,8 @@ cargo test -p topems-ai --test mcp_stdio_integration
 
 ## 9. 常见问题
 
-- **工具返回 mock 数据**：对应 `*_SERVICE_URL` 不可达，工具自动降级 mock。启动网关/服务后即返回真实数据。
+- **SCM 工具返回 `SCM_MCP_NOT_CONNECTED`**：属预期行为。SCM 工具未接通真实服务且已移除 mock 兜底，详见 3.1；其他业务域在服务不可达时仍会降级 mock。
+- **工具返回 mock 数据（SCM 以外）**：对应 `*_SERVICE_URL` 不可达，工具自动降级 mock。启动网关/服务后即返回真实数据。
 - **调用受限工具被拒（-32001）**：需先通过 `McpServer::set_user` 注入具备对应权限的角色用户。
 - **`resources/read` 返回空**：确认 URI 中的 id 属于当前租户（DEV_TENANT）。
 - **构建 mcp-stdio**：`cargo build -p topems-ai --bin mcp-stdio`（无外部依赖，纯 Rust）。
