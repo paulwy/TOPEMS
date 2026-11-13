@@ -647,9 +647,13 @@ async fn iam_role_create_duplicate_and_user_permission_cases() {
     let suffix = Uuid::new_v4().simple().to_string()[..8].to_string();
     let fx = seed(&pool, &suffix).await;
     let client = Client::new();
-    let token = login(&client, &fx.tenant_admin_username, &fx.tenant_admin_password)
-        .await
-        .expect("tenant_admin 登录失败");
+    let token = login(
+        &client,
+        &fx.tenant_admin_username,
+        &fx.tenant_admin_password,
+    )
+    .await
+    .expect("tenant_admin 登录失败");
 
     let role_name = format!("e2e_iam_fix_{suffix}");
 
@@ -792,7 +796,10 @@ async fn iam_role_create_duplicate_and_user_permission_cases() {
     .fetch_one(&pool)
     .await
     .expect("统计实际权限码数失败");
-    assert!(n_roles > 0 && n_perms > 0, "fixture 应至少持有 1 角色 1 权限码");
+    assert!(
+        n_roles > 0 && n_perms > 0,
+        "fixture 应至少持有 1 角色 1 权限码"
+    );
     assert_eq!(
         i64::try_from(roles.len()).expect("角色数超出 i64"),
         n_roles,
