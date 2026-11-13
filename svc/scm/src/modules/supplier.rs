@@ -264,7 +264,7 @@ fn spawn_scm_supplier_to_mdm(db: PgPool, scm_supplier_id: Uuid) {
                 row.supplier_no,
                 e
             );
-            let _ = sqlx::query(only_own_schema_query!(
+            let dlq_result = sqlx::query(only_own_schema_query!(
                 "scm",
                 r#"
                     INSERT INTO master_data.mdm_sync_dead_letter
@@ -278,6 +278,14 @@ fn spawn_scm_supplier_to_mdm(db: PgPool, scm_supplier_id: Uuid) {
             .bind(row.tenant_id)
             .execute(&db)
             .await;
+
+            if let Err(dlq_err) = dlq_result {
+                tracing::error!(
+                    "[scm→mdm] 写死信队列失败，主数据同步错误可能丢失: supplier_no={}, err={}",
+                    row.supplier_no,
+                    dlq_err
+                );
+            }
         }
     });
 }
