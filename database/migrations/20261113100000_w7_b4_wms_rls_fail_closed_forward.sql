@@ -21,7 +21,7 @@
 -- 缺列集恰为 {schema_defense_ledger, wms_master_data_refs}、tenant_id 全为 uuid。
 -- 断言失败即 RAISE EXCEPTION，整笔回滚。
 --
--- 可重复执行。形状不符时整笔 ROLLBACK。
+-- 可重复执行。形状不符或存在 tenant_id IS NULL 行时整笔 ROLLBACK。
 --
 -- 回滚：database/rollback/20261113100000_w7_b4_wms_rls_fail_closed_forward.rollback.sql
 --   （按生产基线快照逐表重建原策略；不提供 DISABLE RLS 路径）
@@ -258,7 +258,7 @@ BEGIN
 END
 $w7b4wms_verify$;
 
--- ---------- 租户归属自查（只读，不修改数据） ----------
+-- ---------- 租户归属自查（只读；出现 NULL 即中止，禁止静默回填） ----------
 DO $w7b4wms_audit$
 DECLARE
     t record;
@@ -284,10 +284,10 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF msg = '' THEN
-        RAISE NOTICE 'B4-WMS 租户自查：全部租户表 tenant_id IS NULL 行数 = 0';
-    ELSE
-        RAISE NOTICE 'B4-WMS 租户自查（tenant_id IS NULL 行数）：%', msg;
+    IF msg <> '' THEN
+        RAISE EXCEPTION 'B4-WMS 租户自查失败：存在 tenant_id IS NULL 行 → %（需人工裁决，禁止自动回填）', msg;
     END IF;
+
+    RAISE NOTICE 'B4-WMS 租户自查：全部租户表 tenant_id IS NULL 行数 = 0';
 END
 $w7b4wms_audit$;
