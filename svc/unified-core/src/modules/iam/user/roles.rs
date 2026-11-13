@@ -92,21 +92,54 @@ pub async fn get_user_permissions(
         }
     }
 
-    let user: Option<UserRow> = sqlx::query_as(
+    // `core_roles` 是 FORCE RLS 表：裸池没有租户上下文，严格策略下租户域角色
+    // 一律不可见，导致响应里的角色（以及由角色推导权限的消费方）少报。
+    // 读取必须走调用者作用域：平台管理员用系统读，租户管理员用本租户读
+    // （目标用户的租户可见性已由 check_user_target 校验）。
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_read_system().await,
+        IamScope::Tenant(tenant) => state.db.scope_read_for_tenant(tenant).await,
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始用户权限读事务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户权限失败: {}", e),
+                )),
+            );
+        }
+    };
+
+    let user: Option<UserRow> = match sqlx::query_as(
         "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx)
     .await
-    .unwrap_or_else(|e| {
-        tracing::error!("Database query failed: {}", e);
-        None
-    });
+    {
+        Ok(user) => user,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询用户失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
 
     let u = match user {
         Some(u) => u,
         None => {
+            let _ = tx.rollback().await;
             tracing::warn!("User not found: {}", user_id);
             // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
             return (
@@ -116,13 +149,12 @@ pub async fn get_user_permissions(
         }
     };
 
-    let roles: Vec<UserRoleRow> = if u.is_superuser {
+    let roles_result: sqlx::Result<Vec<UserRoleRow>> = if u.is_superuser {
         sqlx::query_as::<_, UserRoleRow>(
             "SELECT id, name, description, created_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY name",
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut tx)
         .await
-        .unwrap_or_default()
     } else {
         sqlx::query_as::<_, UserRoleRow>(
             r#"
@@ -134,18 +166,30 @@ pub async fn get_user_permissions(
             "#,
         )
         .bind(user_uuid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut tx)
         .await
-        .unwrap_or_default()
+    };
+    let roles = match roles_result {
+        Ok(roles) => roles,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询用户角色失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户角色失败: {}", e),
+                )),
+            );
+        }
     };
 
-    let permissions: Vec<UserPermissionRow> = if u.is_superuser {
+    let permissions_result: sqlx::Result<Vec<UserPermissionRow>> = if u.is_superuser {
         sqlx::query_as::<_, UserPermissionRow>(
             "SELECT id as permission_id, code, name, description, resource, action FROM public.core_permissions ORDER BY code",
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut tx)
         .await
-        .unwrap_or_default()
     } else {
         sqlx::query_as::<_, UserPermissionRow>(
             r#"
@@ -158,10 +202,34 @@ pub async fn get_user_permissions(
             "#,
         )
         .bind(user_uuid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut tx)
         .await
-        .unwrap_or_default()
     };
+    let permissions = match permissions_result {
+        Ok(permissions) => permissions,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询用户权限失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户权限失败: {}", e),
+                )),
+            );
+        }
+    };
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("提交用户权限读事务失败: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询用户权限失败: {}", e),
+            )),
+        );
+    }
 
     let role_names: Vec<String> = roles.iter().map(|r| r.name.clone()).collect();
     let permission_codes: Vec<String> = permissions.iter().map(|p| p.code.clone()).collect();
@@ -269,22 +337,63 @@ pub async fn get_user_roles(
         }
     }
 
-    let roles: Vec<UserRoleRow> = sqlx::query_as::<_, UserRoleRow>(
+    // 同 get_user_permissions：`core_roles` 严格 RLS 下裸池读不到租户域角色。
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_read_system().await,
+        IamScope::Tenant(tenant) => state.db.scope_read_for_tenant(tenant).await,
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始用户角色读事务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户角色失败: {}", e),
+                )),
+            );
+        }
+    };
+
+    let roles_result: sqlx::Result<Vec<UserRoleRow>> = sqlx::query_as::<_, UserRoleRow>(
         r#"
         SELECT r.id, r.name, r.description, r.created_at
         FROM public.core_roles r
         INNER JOIN public.core_user_roles ur ON r.id = ur.role_id
-        WHERE ur.user_id = $1
+        WHERE r.deleted_at IS NULL AND ur.user_id = $1
         ORDER BY r.name
         "#,
     )
     .bind(user_uuid)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::error!("Failed to fetch user roles: {}", e);
-        vec![]
-    });
+    .fetch_all(&mut tx)
+    .await;
+
+    let roles = match roles_result {
+        Ok(roles) => roles,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("Failed to fetch user roles: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户角色失败: {}", e),
+                )),
+            );
+        }
+    };
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("提交用户角色读事务失败: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询用户角色失败: {}", e),
+            )),
+        );
+    }
 
     let roles_json: Vec<serde_json::Value> = roles
         .iter()

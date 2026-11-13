@@ -94,6 +94,7 @@ async fn call(
 struct Fixtures {
     tenant_admin_username: String,
     tenant_admin_password: String,
+    other_tenant: Uuid,
     other_tenant_user: Uuid,
     superuser_in_tenant: Uuid,
     platform_role: Uuid,
@@ -298,6 +299,7 @@ async fn seed(pool: &PgPool, suffix: &str) -> Fixtures {
     Fixtures {
         tenant_admin_username,
         tenant_admin_password: plain_password,
+        other_tenant,
         other_tenant_user,
         superuser_in_tenant,
         platform_role,
@@ -632,4 +634,175 @@ async fn tenant_admin_scope_matrix() {
     assert!(is_success(&body), "admin list permissions: {body}");
     let (status, body) = call(&client, &admin_token, "GET", "/iam/positions", None).await;
     assert_eq!(status, 200, "admin 平台端点不应被收紧: {body}");
+}
+
+/// IAM 缺陷回归：
+/// 1. 创建角色成功；同租户重名与跨租户重名都返回 4xx，不得 500；
+/// 2. 租户域角色授予后，用户权限详情必须同时报出角色和权限码（N=M）。
+#[tokio::test]
+#[ignore = "需要本地真实库 + 运行中的服务"]
+async fn iam_role_create_duplicate_and_user_permission_cases() {
+    let db_url = std::env::var("DATABASE_URL").expect("需要 DATABASE_URL");
+    let pool = PgPool::connect(&db_url).await.expect("连接数据库失败");
+    let suffix = Uuid::new_v4().simple().to_string()[..8].to_string();
+    let fx = seed(&pool, &suffix).await;
+    let client = Client::new();
+    let token = login(&client, &fx.tenant_admin_username, &fx.tenant_admin_password)
+        .await
+        .expect("tenant_admin 登录失败");
+
+    let role_name = format!("e2e_iam_fix_{suffix}");
+
+    // 1) 创建成功
+    let (_, body) = call(
+        &client,
+        &token,
+        "POST",
+        "/iam/roles",
+        Some(json!({
+            "name": role_name,
+            "description": "e2e iam fix",
+            "permission_ids": [fx.tenant_permission.to_string()]
+        })),
+    )
+    .await;
+    assert!(is_success(&body), "创建角色失败: {body}");
+    let role_id = body["data"]["id"]
+        .as_str()
+        .expect("创建角色应返回 id")
+        .to_string();
+
+    // 2) 同租户重名：4xx（内层 409），不能 500
+    let (status, body) = call(
+        &client,
+        &token,
+        "POST",
+        "/iam/roles",
+        Some(json!({"name": role_name})),
+    )
+    .await;
+    assert_ne!(status, 500, "同租户重名不应 HTTP 500: {body}");
+    assert_eq!(inner_code(&body), Some(409), "同租户重名应 409: {body}");
+
+    // 3) 跨租户重名：core_roles.name 为全局唯一约束，作用域内 EXISTS 看不到
+    // 他租户同名角色，INSERT 会报 SQLSTATE 23505，必须映射为 409 而非 500。
+    let cross_role_name = format!("e2e_iam_cross_{suffix}");
+    {
+        let mut tx = pool.begin().await.expect("开始事务失败");
+        sqlx::query("SET LOCAL app.rls_system = 'on'")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query(
+            "INSERT INTO public.core_roles (id, name, description, tenant_id, created_at, updated_at) VALUES ($1, $2, 'e2e cross tenant', $3, now(), now())",
+        )
+        .bind(Uuid::new_v4())
+        .bind(&cross_role_name)
+        .bind(fx.other_tenant)
+        .execute(&mut *tx)
+        .await
+        .expect("写入他租户同名角色失败");
+        tx.commit().await.unwrap();
+    }
+    let (status, body) = call(
+        &client,
+        &token,
+        "POST",
+        "/iam/roles",
+        Some(json!({"name": cross_role_name})),
+    )
+    .await;
+    assert_ne!(status, 500, "跨租户重名不应 HTTP 500: {body}");
+    assert_eq!(
+        inner_code(&body),
+        Some(409),
+        "跨租户重名应命中唯一约束并返回 409: {body}"
+    );
+
+    // 4) 租户域角色授予后，用户权限详情中的角色与权限码必须与用户实际持有集合一致
+    let username = format!("e2e_iam_user_{suffix}");
+    let (_, body) = call(
+        &client,
+        &token,
+        "POST",
+        "/iam/users",
+        Some(json!({
+            "username": username,
+            "email": format!("{username}@example.com"),
+            "password": "IamFixPass123!",
+            "full_name": "E2E IAM Fix User"
+        })),
+    )
+    .await;
+    assert!(is_success(&body), "创建用户失败: {body}");
+    let user_id = body["data"]["id"]
+        .as_str()
+        .expect("创建用户应返回 id")
+        .to_string();
+
+    let (_, body) = call(
+        &client,
+        &token,
+        "POST",
+        &format!("/iam/users/{user_id}/roles/{role_id}"),
+        None,
+    )
+    .await;
+    assert!(is_success(&body), "授予本租户角色失败: {body}");
+
+    let (status, body) = call(
+        &client,
+        &token,
+        "GET",
+        &format!("/iam/users/{user_id}/permissions"),
+        None,
+    )
+    .await;
+    assert_eq!(status, 200);
+    let roles = body["data"]["roles"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let perms = body["data"]["permissions"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert!(
+        roles.iter().any(|r| r["name"] == role_name.as_str()),
+        "用户权限详情少报租户域角色: {body}"
+    );
+    assert!(
+        perms.iter().any(|p| p["code"] == "tenant:iam:user:read"),
+        "用户权限详情少报租户角色权限码: {body}"
+    );
+
+    // 5) N=M：接口返回的角色数/权限码数应等于库内实际持有数（fixture 连接绕过 RLS 取真值）
+    let uid = Uuid::parse_str(&user_id).expect("user_id 非法");
+    let n_roles: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM public.core_roles r JOIN public.core_user_roles ur ON r.id = ur.role_id WHERE r.deleted_at IS NULL AND ur.user_id = $1",
+    )
+    .bind(uid)
+    .fetch_one(&pool)
+    .await
+    .expect("统计实际角色数失败");
+    let n_perms: i64 = sqlx::query_scalar(
+        "SELECT count(DISTINCT p.code) FROM public.core_permissions p JOIN public.core_role_permissions rp ON p.id = rp.permission_id JOIN public.core_user_roles ur ON rp.role_id = ur.role_id WHERE p.deleted_at IS NULL AND ur.user_id = $1",
+    )
+    .bind(uid)
+    .fetch_one(&pool)
+    .await
+    .expect("统计实际权限码数失败");
+    assert!(n_roles > 0 && n_perms > 0, "fixture 应至少持有 1 角色 1 权限码");
+    assert_eq!(
+        roles.len() as i64,
+        n_roles,
+        "角色数 N={n_roles} M={} 不一致",
+        roles.len()
+    );
+    assert_eq!(
+        perms.len() as i64,
+        n_perms,
+        "权限码数 N={n_perms} M={} 不一致",
+        perms.len()
+    );
 }
