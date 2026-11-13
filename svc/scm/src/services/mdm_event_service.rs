@@ -65,11 +65,25 @@ impl MdmEventService {
             if status == "active" {
                 let mut activate_event = event.clone();
                 activate_event.action = MasterDataAction::Activated;
-                let _ = activate_event.publish_to_rabbitmq().await;
+                if let Err(e) = activate_event.publish_to_rabbitmq().await {
+                    tracing::error!(
+                        "[scm-mdm] 供应商激活事件 RabbitMQ 发布失败: supplier_id={}, master_data_id={}, err={}",
+                        supplier_id,
+                        master_data_id,
+                        e
+                    );
+                }
             } else if status == "inactive" {
                 let mut deactivate_event = event.clone();
                 deactivate_event.action = MasterDataAction::Deactivated;
-                let _ = deactivate_event.publish_to_rabbitmq().await;
+                if let Err(e) = deactivate_event.publish_to_rabbitmq().await {
+                    tracing::error!(
+                        "[scm-mdm] 供应商停用事件 RabbitMQ 发布失败: supplier_id={}, master_data_id={}, err={}",
+                        supplier_id,
+                        master_data_id,
+                        e
+                    );
+                }
             }
         }
 
