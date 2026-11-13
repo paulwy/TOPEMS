@@ -2,18 +2,22 @@
 -- 回滚：20261113100000_w7_b4_wms_rls_fail_closed_forward.sql
 --       （前向承接 20261112105000_w7_b4_wms_rls_fail_closed.sql）
 --
--- 口径：按生产基线（w7_s1_txn，39 表 / 37 租户表 / 42 条策略）逐表重建原策略，
---       不提供 DISABLE ROW LEVEL SECURITY 路径。
+-- 口径：精确退回生产基线 fail-open
+--       （生产基线 w7_s1_txn：wms 表 39 / 带 tenant_id 表 37 / 策略 42 /
+--        USING true 且 WITH CHECK true 的策略 16 / RLS 开启 37 / FORCE 37）。
+--       逐表恢复 RLS 开关、FORCE 状态与策略集合，四项指标与基线逐项相等。
 --   1. 先 DROP 每张 wms 表的全部当前策略（含 rls_tenant_isolation）；
 --   2. 按下方静态快照重建 42 条原策略（permissive / ALL / PUBLIC，USING 与 WITH CHECK 原值）；
---   3. safety_stock_settings：变更前 RLS 关闭且无策略。回滚保持 ENABLE + NO FORCE，
---      并重建等价开放策略（USING true / WITH CHECK true），只恢复可见性、不关闭 RLS；
---   4. schema_defense_ledger：变更前无 RLS。回滚保持 ENABLE + NO FORCE 且不建策略
---      （租户不可见，属主工具因 NO FORCE 不受影响），比变更前更强，不退回无保护；
---   5. 恢复 FORCE 状态：除 ledger / safety_stock_settings 外全部 FORCE。
+--   3. safety_stock_settings：基线为 RLS 关闭 / 无 FORCE / 0 策略，
+--      回滚逐项恢复为 DISABLE ROW LEVEL SECURITY + NO FORCE + 0 策略；
+--   4. schema_defense_ledger：基线同为 RLS 关闭 / 无 FORCE / 0 策略，
+--      回滚同样恢复为 DISABLE ROW LEVEL SECURITY + NO FORCE + 0 策略；
+--   5. 其余 37 张表：逐表 ENABLE + FORCE ROW LEVEL SECURITY。
 --
--- 用于生产急停：
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/rollback/20261113100000_w7_b4_wms_rls_fail_closed_forward.rollback.sql
+-- 用于生产急停（必须带 --single-transaction：脚本本身不发 BEGIN/COMMIT，
+-- 由 psql 把整份文件包成单事务；任一步失败即整体回退，不留半套策略）：
+--   psql "$DATABASE_URL" --single-transaction -v ON_ERROR_STOP=1 \
+--     -f database/rollback/20261113100000_w7_b4_wms_rls_fail_closed_forward.rollback.sql
 --
 -- 注意：快照取自生产基线。若目标库 wms_master_data_refs 已有 tenant_id 等历史漂移，
 --       本脚本只恢复基线中的 42 条策略，漂移策略不会重建（先人工核对 pg_policies）。
@@ -244,18 +248,14 @@ CREATE POLICY wms_allow_all_wms_master_data_refs ON wms.wms_master_data_refs FOR
     USING (true)
     WITH CHECK (true);
 
--- ---------- 3. 特殊表 ----------
-ALTER TABLE wms.safety_stock_settings ENABLE ROW LEVEL SECURITY;
+-- ---------- 3. 特殊表：基线为 RLS 关闭 / 无 FORCE / 0 策略 ----------
 ALTER TABLE wms.safety_stock_settings NO FORCE ROW LEVEL SECURITY;
-CREATE POLICY wms_rollback_allow_all_safety_stock_settings ON wms.safety_stock_settings
-    FOR ALL TO PUBLIC
-    USING (true)
-    WITH CHECK (true);
+ALTER TABLE wms.safety_stock_settings DISABLE ROW LEVEL SECURITY;
 
-ALTER TABLE wms.schema_defense_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wms.schema_defense_ledger NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE wms.schema_defense_ledger DISABLE ROW LEVEL SECURITY;
 
--- ---------- 4. 恢复 FORCE ----------
+-- ---------- 4. 恢复其余 37 张表的 RLS + FORCE ----------
 DO $w7b4wms_rb_force$
 DECLARE
     t record;
@@ -267,44 +267,94 @@ BEGIN
          WHERE ns.nspname = 'wms' AND c.relkind = 'r'
            AND c.relname NOT IN ('schema_defense_ledger', 'safety_stock_settings')
     LOOP
+        EXECUTE format('ALTER TABLE wms.%I ENABLE ROW LEVEL SECURITY', t.relname);
         EXECUTE format('ALTER TABLE wms.%I FORCE ROW LEVEL SECURITY', t.relname);
     END LOOP;
 END
 $w7b4wms_rb_force$;
 
--- ---------- 5. 校验 ----------
+-- ---------- 5. 校验：四项指标与逐表状态必须等于基线 ----------
 DO $w7b4wms_rb_verify$
 DECLARE
+    n_tables int;
+    n_rls int;
+    n_force int;
     n_pol int;
+    n_open int;
     n_bad int;
+    expected_pols int;
+    r record;
 BEGIN
+    SELECT count(*),
+           count(*) FILTER (WHERE c.relrowsecurity),
+           count(*) FILTER (WHERE c.relforcerowsecurity)
+      INTO n_tables, n_rls, n_force
+      FROM pg_class c
+      JOIN pg_namespace ns ON ns.oid = c.relnamespace
+     WHERE ns.nspname = 'wms' AND c.relkind = 'r';
+
     SELECT count(*) INTO n_pol FROM pg_policies WHERE schemaname = 'wms';
+    SELECT count(*) INTO n_open FROM pg_policies
+     WHERE schemaname = 'wms' AND qual = 'true' AND with_check = 'true';
     -- 新形状的判据是策略里出现 app.rls_system；原策略（基线）不含该 GUC。
     SELECT count(*) INTO n_bad FROM pg_policies
      WHERE schemaname = 'wms'
        AND (coalesce(qual, '') LIKE '%app.rls_system%'
             OR coalesce(with_check, '') LIKE '%app.rls_system%');
 
+    IF n_tables <> 39 THEN
+        RAISE EXCEPTION 'B4-WMS 回滚校验失败：wms 表数 %，期望 39', n_tables;
+    END IF;
+    IF n_rls <> 37 THEN
+        RAISE EXCEPTION 'B4-WMS 回滚校验失败：RLS 开启表数 %，期望 37', n_rls;
+    END IF;
+    IF n_force <> 37 THEN
+        RAISE EXCEPTION 'B4-WMS 回滚校验失败：FORCE 表数 %，期望 37', n_force;
+    END IF;
+    IF n_pol <> 42 THEN
+        RAISE EXCEPTION 'B4-WMS 回滚校验失败：策略数 %，期望 42', n_pol;
+    END IF;
+    IF n_open <> 16 THEN
+        RAISE EXCEPTION 'B4-WMS 回滚校验失败：USING/WITH CHECK 均为 true 的策略 % 条，期望 16', n_open;
+    END IF;
     IF n_bad > 0 THEN
         RAISE EXCEPTION 'B4-WMS 回滚失败：仍有 % 条 fail-closed 新形状策略', n_bad;
     END IF;
-    IF n_pol <> 43 THEN
-        RAISE EXCEPTION 'B4-WMS 回滚校验失败：策略数 %，期望 43（42 原策略 + safety_stock_settings 1）', n_pol;
-    END IF;
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-         WHERE schemaname = 'wms' AND tablename = 'safety_stock_settings'
-           AND policyname = 'wms_rollback_allow_all_safety_stock_settings'
-    ) THEN
-        RAISE EXCEPTION 'B4-WMS 回滚校验失败：safety_stock_settings 开放策略缺失';
-    END IF;
-    IF EXISTS (
-        SELECT 1 FROM pg_policies
-         WHERE schemaname = 'wms' AND tablename = 'schema_defense_ledger'
-    ) THEN
-        RAISE EXCEPTION 'B4-WMS 回滚校验失败：schema_defense_ledger 不应有策略';
-    END IF;
 
-    RAISE NOTICE 'B4-WMS 回滚完成：42 条原策略 + safety_stock_settings 开放策略，ledger 仅 NO FORCE';
+    FOR r IN
+        SELECT c.relname,
+               c.relrowsecurity,
+               c.relforcerowsecurity,
+               (SELECT count(*) FROM pg_policies p
+                 WHERE p.schemaname = 'wms' AND p.tablename = c.relname) AS pols
+          FROM pg_class c
+          JOIN pg_namespace ns ON ns.oid = c.relnamespace
+         WHERE ns.nspname = 'wms' AND c.relkind = 'r'
+         ORDER BY c.relname
+    LOOP
+        expected_pols := CASE
+            WHEN r.relname IN ('safety_stock_settings', 'schema_defense_ledger') THEN 0
+            WHEN r.relname IN ('inventory', 'inventory_movements',
+                               'slotting_rules', 'slotting_suggestions', 'slotting_zones') THEN 2
+            ELSE 1
+        END;
+
+        IF r.pols <> expected_pols THEN
+            RAISE EXCEPTION 'B4-WMS 回滚校验失败：% 策略数 %，期望 %',
+                r.relname, r.pols, expected_pols;
+        END IF;
+
+        IF r.relname IN ('safety_stock_settings', 'schema_defense_ledger') THEN
+            IF r.relrowsecurity OR r.relforcerowsecurity THEN
+                RAISE EXCEPTION 'B4-WMS 回滚校验失败：% 应 RLS 关闭且无 FORCE', r.relname;
+            END IF;
+        ELSE
+            IF NOT r.relrowsecurity OR NOT r.relforcerowsecurity THEN
+                RAISE EXCEPTION 'B4-WMS 回滚校验失败：% 应 ENABLE + FORCE', r.relname;
+            END IF;
+        END IF;
+    END LOOP;
+
+    RAISE NOTICE 'B4-WMS 回滚完成：39 表 / 42 策略 / 16 条 true-true，逐表 RLS+FORCE 与基线一致';
 END
 $w7b4wms_rb_verify$;
