@@ -543,7 +543,7 @@ mod tests {
         let appearance = lims_abnormal_hazard_no(task_id, "外观检查");
         assert_eq!(appearance, lims_abnormal_hazard_no(task_id, "外观检查"));
         assert_ne!(appearance, lims_abnormal_hazard_no(task_id, "尺寸测量"));
-        assert!(appearance.chars().all(|c| c.is_ascii()), "{appearance}");
+        assert!(appearance.is_ascii(), "{appearance}");
         assert!(appearance.len() <= 64, "{appearance}");
 
         let reagent_id =
