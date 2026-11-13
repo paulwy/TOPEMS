@@ -644,7 +644,6 @@ pub async fn delete_accident(
 pub async fn start_investigation(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateInvestigationRequest>,
@@ -654,14 +653,8 @@ pub async fn start_investigation(
         Err(resp) => return resp,
     };
     let tenant_id = tenant;
-    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return ApiResponse::server_error("数据库事务不可用");
-    };
-    let mut scope = match db.scope_with(txn).await {
+    // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
@@ -690,6 +683,10 @@ pub async fn start_investigation(
             return ApiResponse::server_error("调查启动失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit investigation: {}", e);
+        return ApiResponse::server_error("调查启动失败");
+    }
     ApiResponse::success(investigation_from_row(&row), "调查已启动")
 }
 
@@ -1196,7 +1193,6 @@ pub async fn complete_treatment(
 pub async fn create_review(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateReviewRequest>,
@@ -1206,14 +1202,8 @@ pub async fn create_review(
         Err(resp) => return resp,
     };
     let tenant_id = tenant;
-    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return ApiResponse::server_error("数据库事务不可用");
-    };
-    let mut scope = match db.scope_with(txn).await {
+    // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
@@ -1243,6 +1233,10 @@ pub async fn create_review(
             return ApiResponse::server_error("复盘创建失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit review: {}", e);
+        return ApiResponse::server_error("复盘创建失败");
+    }
     ApiResponse::success(
         Review {
             id: row.try_get("id").unwrap_or_default(),
@@ -1323,7 +1317,6 @@ pub async fn list_incident_actions(
 pub async fn create_incident_action(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
@@ -1333,14 +1326,8 @@ pub async fn create_incident_action(
         Err(resp) => return resp,
     };
     let tenant_id = tenant;
-    // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return ApiResponse::server_error("数据库事务不可用");
-    };
-    let mut scope = match db.scope_with(txn).await {
+    // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
@@ -1364,6 +1351,10 @@ pub async fn create_incident_action(
     .await
     {
         tracing::error!("Failed to insert incident action: {}", e);
+        return ApiResponse::server_error("事故行动创建失败");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit incident action: {}", e);
         return ApiResponse::server_error("事故行动创建失败");
     }
     ApiResponse::success(

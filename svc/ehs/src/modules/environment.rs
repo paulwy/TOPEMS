@@ -169,7 +169,6 @@ pub async fn list_records(
 pub async fn create_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<EnvironmentMonitor> {
@@ -179,15 +178,10 @@ pub async fn create_record(
     };
     let tenant_id = tenant;
 
-    // 连接级租户上下文：复用请求级 RLS 事务（tenant_middleware 已写入 app.tenant_id），
-    // 裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return ApiResponse::server_error("数据库事务不可用");
-    };
-    let mut scope = match db.scope_with(txn).await {
+    // 显式租户写作用域：单条连接，租户 GUC 在事务级设置（scope_for_tenant）。
+    // 不再复用请求级事务，也不再额外预开一条请求事务连接（紧池下 3 条会自锁）。
+    // 提交由本函数显式完成，不再依赖中间件 commit。
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create environment monitor scope: {}", e);
@@ -266,6 +260,10 @@ pub async fn create_record(
     .await;
     if let Err(e) = res {
         tracing::error!("Failed to insert environment monitor: {}", e);
+        return ApiResponse::server_error("环境监测点创建失败");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit environment monitor: {}", e);
         return ApiResponse::server_error("环境监测点创建失败");
     }
     ApiResponse::success(

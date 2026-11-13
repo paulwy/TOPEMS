@@ -98,7 +98,6 @@ use topems_shared_db::database::{
 /// + 批次 2（tms / ticket / gis / pm / mobile / search，6）
 /// + 批次 3（portal / pdm / integration / ai / communication，5）。
 pub const SHARED_POOL_MODULE_WEIGHT: u32 = 14;
-use topems_shared_db::rls::rls_middleware;
 
 use topems_shared_auth::auth::{auth_middleware, AuthState};
 use topems_shared_auth::permission_center::PermissionCenterClient;
@@ -1136,12 +1135,13 @@ pub fn build_application(
         auth_middleware,
     ));
 
-    if config.enable_rls {
-        protected = protected.layer(axum::middleware::from_fn_with_state(
-            ctx.db.clone(),
-            rls_middleware,
-        ));
-    }
+    // 租户隔离不再依赖一条“每请求独占会话连接”的 RLS 层：请求租户上下文由
+    // auth_middleware 写入 task-local，Db::scope* / scope_with 在事务级
+    // set_config('app.tenant_id'/'app.rls_system', ..., true) 落库。
+    // 旧实现（rls_middleware 独占连接 + 会话级 GUC）对隔离零贡献，却让紧池
+    // （嵌入模式 max=2）下的 hold-and-wait 从 2 条扩到 3 条，单请求即超时
+    // （W7-B4-EHS-FOLLOWUP-1）。`enable_rls` 保留为配置兼容位，不再挂层。
+    let _ = config.enable_rls;
 
     protected = protected.layer(rate_limit_layer);
 

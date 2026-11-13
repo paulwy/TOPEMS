@@ -276,60 +276,32 @@ pub async fn apply_rls_middleware<B>(
     Ok(req)
 }
 
+/// 请求级 RLS 预处理（**不申请连接**）。
+///
+/// # 为什么不在这里持有连接
+///
+/// B6 版本为“保证 GUC 与业务查询落在同一连接”，acquire 了本请求独占连接、会话级
+/// `set_config('app.tenant_id', $1, false)` 后一直持有到响应结束。但这条连接
+/// **从未交给下游**（既不进 extensions，也不作为 Executor 传下去），下游所有租户
+/// 数据访问都走 `Db::scope*` / `scope_with`，在各自事务里用事务级
+/// `set_config(..., true)` 设置 `app.tenant_id` / `app.rls_system`。因此：
+///
+/// - 该连接对隔离**零贡献**（它的 GUC 没有任何语句能读到）；
+/// - 但它每请求白占一条连接，且在紧池（嵌入模式 `max=2`）下与本请求的事务连接
+///   形成 hold-and-wait：`rls(1) + 请求事务(1) + 作用域事务(1) = 3 > 2`，
+///   单请求即 acquire 超时（W7-B4-EHS-FOLLOWUP-1 根因）。
+///
+/// 现在租户上下文只有一条真相源：`auth_middleware` 写入 task-local 的
+/// [`RlsRequestTenant`]，由 `Db::scope*` 在事务级落库；服务身份的系统通道
+/// （nil + `app.rls_system='on'`）同样由 `Db::scope_system` / 请求事务设置。
+///
+/// 保留本函数是为了兼容既有装配与文档引用；`build_application` 已不再把它挂到
+/// 受保护路由上（挂一层空操作层只会让人误以为这里还负责隔离）。
 pub async fn rls_middleware(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    let tenant_id_str = req
-        .headers()
-        .get("x-tenant-id")
-        .and_then(|h| h.to_str().ok());
-
-    if let Some(tenant_id_str) = tenant_id_str {
-        if let Ok(tenant_id) = Uuid::parse_str(tenant_id_str) {
-            // B6（CORE-06 同源修复，对齐 unified-core tenant_rls）：旧实现直接在 &PgPool 上
-            // set_config 会话级 GUC——(a) sqlx 随机借取一条池连接，业务 handler 后续查询可能
-            // 借到另一条连接，GUC 不生效；(b) 会话级 GUC 在该连接归还后残留，污染后续请求。
-            // 修复：acquire 独占本请求连接，在其上 set；请求结束后在【同一连接】显式 RESET
-            // 再归还连接池 → 归还连接不残留会话租户状态。
-            match pool.acquire().await {
-                Ok(mut conn) => {
-                    match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-                        .bind(tenant_id.to_string())
-                        .execute(&mut *conn)
-                        .await
-                    {
-                        Ok(_) => {
-                            let resp = next.run(req).await;
-
-                            // 归还前显式清空：保证连接归还连接池时 app.tenant_id 干净，不残留上一位租户
-                            if let Err(e) =
-                                sqlx::query("RESET app.tenant_id").execute(&mut *conn).await
-                            {
-                                error!("Failed to reset RLS context on connection return: {}", e);
-                            }
-                            drop(conn); // 归还连接池（此时已清空会话租户状态）
-
-                            return resp;
-                        }
-                        Err(e) => {
-                            error!("Failed to set RLS context: {}", e);
-                            drop(conn);
-                        }
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to acquire DB connection for RLS: {}", e);
-                }
-            }
-        }
-    }
-
-    // 兜底分支（无租户头 / 非法 UUID / acquire 失败 / set 失败）：不触碰连接池。
-    // 带租户请求已在其独占连接上 set→run→RESET→归还，归还连接均为干净状态；
-    // 此处再对 &PgPool 随机借连接 RESET 只清一条随机连接、既无效又重新引入池化借连接反模式，
-    // 与 unified-core tenant_rls 无租户分支语义对齐（不随机借连接"清场"）。
     next.run(req).await
 }
 

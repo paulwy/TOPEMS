@@ -39,9 +39,9 @@ async fn main() -> anyhow::Result<()> {
         name: "topems-ehs",
         port: 8052,
         port_env_var: Some("EHS_PORT"),
-        // 连接池上限可由 DB_MAX_CONNECTIONS 覆盖（默认 10）。请求链路同时持有
-        // tenant_middleware 请求事务与 handler 作用域事务两条连接，容量上限为池大小的一半，
-        // 因此并发压测/生产需要按预期并发显式上调（仍受进程级 DB_TOTAL_CONNECTION_BUDGET 约束）。
+        // 连接池上限可由 DB_MAX_CONNECTIONS 覆盖（默认 10）。本服务使用
+        // tenant_middleware_no_txn：请求只占 handler 的 1 条作用域事务连接，
+        // 不预开请求事务，因此池大小直接等于可并发请求数（不再需要一半的余量）。
         max_db_connections: std::env::var("DB_MAX_CONNECTIONS")
             .ok()
             .and_then(|v| v.parse::<u32>().ok())
@@ -248,12 +248,13 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(api_state.clone());
 
-    // Protected routes（先 merge 业务路由，然后 tenant_middleware → build_application 再加 auth/rls/rate_limit）
+    // Protected routes（先 merge 业务路由，然后 tenant_middleware_no_txn → build_application 再加 auth/rate_limit）
+    // 注意：不再挂 rls_middleware（它只白占一条会话连接，租户 GUC 由 Db::scope* 事务级设置）。
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
         .layer(axum::middleware::from_fn_with_state(
             api_state.pool.clone(),
-            topems_shared_auth::tenant_middleware(),
+            topems_shared_auth::tenant_middleware_no_txn(),
         ))
         .layer(axum::middleware::from_fn(require_module_access("ehs")))
         .with_state(api_state.clone());

@@ -35,16 +35,11 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const BASELINE_PATH = path.join(__dirname, 'tenant-context-baseline.json');
 const ANNOTATION = /\/\/\s*tenant-system\s*:/;
 
-// W7-B4-EHS 定案（D5）：只豁免 `Db::new(pool.clone()).scope_with(...)` 这一种形态
-// （复用 tenant_middleware 已开启的请求级 RLS 事务），其余 `state.pool` 一律计入 R2。
-// 5 处位置显式登记，代码漂移（行号失效）即红；命中数不得超过白名单长度。
-const SCOPED_CONSTRUCTION_WHITELIST = [
-  'svc/ehs/src/modules/environment.rs:184',
-  'svc/ehs/src/modules/accident.rs:658',
-  'svc/ehs/src/modules/accident.rs:1210',
-  'svc/ehs/src/modules/accident.rs:1337',
-  'svc/ehs/src/modules/training.rs:1837',
-];
+// W7-B4-EHS 定案（D5）：曾豁免 `Db::new(pool.clone()).scope_with(...)` 这一种形态
+// （复用 tenant_middleware 已开启的请求级 RLS 事务）。W7-B4-EHS-FOLLOWUP-1 已把这
+// 5 处改为 `state.db.scope_for_tenant(...)` 自开作用域（不再引用 state.pool、也不再
+// 预开请求事务），因此白名单清空；本轮起该形态一律计入 R2，命中数不得超过 0。
+const SCOPED_CONSTRUCTION_WHITELIST = [];
 
 function isScopedConstruction(lines, idx) {
   const line = lines[idx];

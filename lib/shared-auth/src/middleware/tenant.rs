@@ -385,6 +385,96 @@ impl TenantDataAccess {
     }
 }
 
+/// 请求租户前置解析（**不申请数据库连接**）。
+///
+/// 返回 `(claims 已改写后的请求, tenant_id, user_id, system)`；任何校验失败直接返回响应。
+/// `system=true` 表示服务身份：nil 租户 + `app.rls_system='on'`。
+///
+/// 抽出来的目的：`tenant_middleware` 与 `tenant_middleware_no_txn` 共享同一份
+/// 身份/租户判定，避免两套实现漂移（尤其超管 `x-tenant-id` 显式选租户这条）。
+async fn prepare_tenant_request(
+    mut req: Request<Body>,
+) -> Result<(Request<Body>, Uuid, Uuid, bool), Response> {
+    let mut claims = match req.extensions().get::<Claims>() {
+        Some(c) => c.clone(),
+        None => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response());
+        }
+    };
+
+    // 超管必须显式选择租户（`x-tenant-id`）：显式选择即按该租户身份读写，
+    // 不做隐式跨租户。未携带租户头直接 400，不再抹成 None 走系统通道。
+    // 普通用户的租户恒取自 Claims，忽略该头（防止伪造头越权）。
+    if claims.is_superuser && !is_service_claims(&claims) {
+        let header_tenant = req
+            .headers()
+            .get("x-tenant-id")
+            .and_then(|v| v.to_str().ok())
+            .map(str::trim)
+            .filter(|s| !s.is_empty());
+        let tenant_id = match header_tenant {
+            None => return Err(bad_request("缺少租户上下文")),
+            Some(raw) => match Uuid::parse_str(raw) {
+                Ok(id) => id,
+                Err(_) => return Err(bad_request("无效的租户ID格式")),
+            },
+        };
+        claims.tenant_id = Some(tenant_id.to_string());
+        req.extensions_mut().insert(claims.clone());
+    }
+
+    // 服务身份（service token）豁免租户上下文：服务间调用是全局基础设施，
+    // 无租户维度（service token 不携带 tenant_id），固定 nil 租户并打开系统通道。
+    if is_service_claims(&claims) {
+        tracing::debug!(
+            "service claims: set nil tenant context for {}",
+            claims.username
+        );
+        return Ok((req, Uuid::nil(), Uuid::nil(), true));
+    }
+
+    let tenant_id_str = match claims.tenant_id.as_ref() {
+        Some(id) => id,
+        None => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"缺少租户ID","code":400}"#,
+            )
+                .into_response());
+        }
+    };
+    let tenant_id = match Uuid::parse_str(tenant_id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"无效的租户ID格式","code":400}"#,
+            )
+                .into_response());
+        }
+    };
+    let user_id = match claims.user_id() {
+        Ok(id) => id,
+        Err(_) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"无效的用户ID","code":400}"#,
+            )
+                .into_response());
+        }
+    };
+
+    Ok((req, tenant_id, user_id, false))
+}
+
 pub fn tenant_middleware() -> impl Fn(
     axum::extract::State<PgPool>,
     Request<Body>,
@@ -403,111 +493,9 @@ pub fn tenant_middleware() -> impl Fn(
             if is_public_path(req.uri().path()) {
                 return next.run(req).await;
             }
-            let mut claims = match req.extensions().get::<Claims>() {
-                Some(c) => c.clone(),
-                None => {
-                    return (
-                        StatusCode::UNAUTHORIZED,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
-                    )
-                        .into_response();
-                }
-            };
-
-            let mut req = req;
-
-            // 超管必须显式选择租户（`x-tenant-id`）：显式选择即按该租户身份读写，
-            // 不做隐式跨租户。未携带租户头直接 400，不再抹成 None 走系统通道。
-            // 普通用户的租户恒取自 Claims，忽略该头（防止伪造头越权）。
-            if claims.is_superuser && !is_service_claims(&claims) {
-                let header_tenant = req
-                    .headers()
-                    .get("x-tenant-id")
-                    .and_then(|v| v.to_str().ok())
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty());
-                let tenant_id = match header_tenant {
-                    None => return bad_request("缺少租户上下文"),
-                    Some(raw) => match Uuid::parse_str(raw) {
-                        Ok(id) => id,
-                        Err(_) => return bad_request("无效的租户ID格式"),
-                    },
-                };
-                claims.tenant_id = Some(tenant_id.to_string());
-                req.extensions_mut().insert(claims.clone());
-            }
-
-            // 服务身份（service token）豁免租户上下文：服务间调用是全局
-            // 基础设施，无租户维度（service token 不携带 tenant_id）。
-            // 其事务固定 nil 租户并打开显式系统通道 `app.rls_system='on'` ——
-            // 新策略只认这一开关做全量放行；普通租户请求维持租户隔离。
-            if is_service_claims(&claims) {
-                tracing::debug!(
-                    "service claims: set nil tenant context for {}",
-                    claims.username
-                );
-                let mut txn = match pool.begin().await {
-                    Ok(t) => t,
-                    Err(e) => {
-                        tracing::error!("Failed to begin RLS txn: {}", e);
-                        return internal_error("事务开启失败");
-                    }
-                };
-                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                    .bind(Uuid::nil().to_string())
-                    .execute(&mut *txn)
-                    .await
-                {
-                    tracing::error!("Failed to set nil RLS context: {}", e);
-                    let _ = txn.rollback().await;
-                    return internal_error("租户上下文设置失败");
-                }
-                if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
-                    .execute(&mut *txn)
-                    .await
-                {
-                    tracing::error!("Failed to enable RLS system channel: {}", e);
-                    let _ = txn.rollback().await;
-                    return internal_error("系统通道设置失败");
-                }
-                let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
-                req.extensions_mut().insert(txn_cell.clone());
-                req.extensions_mut().insert(TenantContext {
-                    tenant_id: Uuid::nil(),
-                    user_id: Uuid::nil(),
-                });
-                let method = req.method().clone();
-                let path = req.uri().path().to_string();
-                let finalizers = RequestFinalizers::new();
-                let resp = REQUEST_FINALIZERS
-                    .scope(finalizers.clone(), next.run(req))
-                    .await;
-                return finish_response(resp, txn_cell, &method, &path, finalizers).await;
-            }
-
-            let tenant_id_str = match claims.tenant_id.as_ref() {
-                Some(id) => id,
-                None => {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"缺少租户ID","code":400}"#,
-                    )
-                        .into_response();
-                }
-            };
-
-            let tenant_id = match Uuid::parse_str(tenant_id_str) {
-                Ok(id) => id,
-                Err(_) => {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"无效的租户ID格式","code":400}"#,
-                    )
-                        .into_response();
-                }
+            let (mut req, tenant_id, user_id, system) = match prepare_tenant_request(req).await {
+                Ok(v) => v,
+                Err(resp) => return resp,
             };
 
             let mut txn = match pool.begin().await {
@@ -517,47 +505,27 @@ pub fn tenant_middleware() -> impl Fn(
                     return internal_error("事务开启失败");
                 }
             };
-            // 普通租户请求：RLS 使用 claims 中的真实租户；超管/service 已在上面
-            // 的系统通道分支返回，不会走到这里。
-            let rls_tenant = tenant_id;
-            match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                .bind(rls_tenant.to_string())
-                .execute(&mut *txn)
-                .await
+            // 事务级租户上下文：service 身份走 nil + 系统通道，普通租户走真实租户 +
+            // 关闭系统通道（即使连接上有残留会话级开关也不会被提升为跨租户放行）。
+            // 两个 GUC 合成一条语句设置，省一次往返；均为 set_config(..., true) 仅本事务生效。
+            if let Err(e) = sqlx::query(
+                "SELECT set_config('app.tenant_id', $1, true), \
+                        set_config('app.rls_system', $2, true)",
+            )
+            .bind(tenant_id.to_string())
+            .bind(if system { "on" } else { "off" })
+            .execute(&mut *txn)
+            .await
             {
-                Ok(_) => tracing::debug!(
-                    "Applied RLS context for tenant: {} (rls: {})",
-                    tenant_id,
-                    rls_tenant
-                ),
-                Err(e) => {
-                    tracing::error!("Failed to set RLS context: {}", e);
-                    let _ = txn.rollback().await;
-                    return internal_error("租户上下文设置失败");
-                }
-            }
-            // 普通租户请求显式关闭系统通道：即使连接上有残留会话级开关，
-            // 也不会把本请求提升为跨租户放行。
-            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'off', true)")
-                .execute(&mut *txn)
-                .await
-            {
-                tracing::error!("Failed to disable RLS system channel: {}", e);
+                tracing::error!("Failed to set RLS context: {}", e);
                 let _ = txn.rollback().await;
-                return internal_error("系统通道设置失败");
+                return internal_error("租户上下文设置失败");
             }
-
-            let user_id = match claims.user_id() {
-                Ok(id) => id,
-                Err(_) => {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"无效的用户ID","code":400}"#,
-                    )
-                        .into_response();
-                }
-            };
+            tracing::debug!(
+                "Applied RLS context for tenant: {} (system: {})",
+                tenant_id,
+                system
+            );
 
             let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
             req.extensions_mut().insert(txn_cell.clone());
@@ -571,6 +539,49 @@ pub fn tenant_middleware() -> impl Fn(
                 .scope(finalizers.clone(), next.run(req))
                 .await;
             finish_response(resp, txn_cell, &method, &path, finalizers).await
+        })
+    }
+}
+
+/// 无请求事务的租户中间件：只做身份/租户判定与 `TenantContext` 注入，**不申请连接**。
+///
+/// 适用前提：该服务的所有 handler 都经 `Db::scope*` 自行开启作用域事务（租户 GUC 由
+/// `Db::scope*` 在事务级设置）。此时再为每个请求预先 `BEGIN` 一条事务连接，会让每个
+/// 请求同时占住「请求事务 + 作用域事务」两条连接；生产嵌入池 `max=2` 下两个并发请求
+/// 即互相等待到 `acquire_timeout`（W7-B4-EHS-FOLLOWUP-1）。
+///
+/// 仍需要请求级事务的服务（handler 取 `RlsTxnCell` 用 `scope_with` 复用）继续使用
+/// [`tenant_middleware`]。
+pub fn tenant_middleware_no_txn() -> impl Fn(
+    axum::extract::State<PgPool>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
+    move |axum::extract::State(_pool): axum::extract::State<PgPool>,
+          req: Request<Body>,
+          next: Next| {
+        Box::pin(async move {
+            // 与 tenant_middleware 对齐：public 路径豁免（Claims 不注入）。
+            if is_public_path(req.uri().path()) {
+                return next.run(req).await;
+            }
+            let (mut req, tenant_id, user_id, _system) = match prepare_tenant_request(req).await {
+                Ok(v) => v,
+                Err(resp) => return resp,
+            };
+            req.extensions_mut()
+                .insert(TenantContext { tenant_id, user_id });
+
+            let finalizers = RequestFinalizers::new();
+            let resp = REQUEST_FINALIZERS
+                .scope(finalizers.clone(), next.run(req))
+                .await;
+            // handler 内 ScopedTxn 的后台回滚仍需在响应写回前收尾。
+            finalizers.drain().await;
+            resp
         })
     }
 }
@@ -744,6 +755,18 @@ mod tests {
 #[cfg(test)]
 mod request_finalizer_tests {
     use super::*;
+
+    /// 无请求事务中间件的前置解析不依赖数据库：缺 Claims 时直接 401，
+    /// 证明拒绝路径不会申请连接（紧池下这一点决定了并发是否自锁）。
+    #[tokio::test]
+    async fn prepare_tenant_request_rejects_without_claims() {
+        let req = Request::new(Body::empty());
+        let resp = match prepare_tenant_request(req).await {
+            Ok(_) => panic!("缺少 Claims 时应拒绝"),
+            Err(resp) => resp,
+        };
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
     use std::sync::atomic::{AtomicBool, Ordering};
 
     #[tokio::test]

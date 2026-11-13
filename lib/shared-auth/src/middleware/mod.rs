@@ -13,5 +13,5 @@ pub use permission::{
 pub use service_identity::{service_identity_middleware, ServiceIdentity};
 pub use tenant::{
     get_tenant_id, get_tenant_id_from_claims, require_tenant, require_tenant_status,
-    resolve_create_tenant, tenant_middleware,
+    resolve_create_tenant, tenant_middleware, tenant_middleware_no_txn,
 };
