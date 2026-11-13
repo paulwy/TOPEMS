@@ -4,8 +4,9 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, super_claims};
+use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
@@ -76,12 +77,13 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let mut params = empty_params();
     params.status = status;
     let resp = list_batches(
         State(state),
         Extension(claims),
+        HeaderMap::new(),
         Query(params),
         Extension(txn_arc),
     )
@@ -96,7 +98,7 @@ async fn insert_batch(pool: &sqlx::PgPool, batch_no: &str, status: &str) {
         "INSERT INTO wms.batches (id, tenant_id, org_id, batch_no, sku, material_name, quantity, available_quantity, warehouse_id, quality_status, status) VALUES ($1, $2, $2, $3, $4, $5, 100, 80, $6, 'qualified', $7)",
     )
     .bind(uuid::Uuid::new_v4())
-    .bind(uuid::Uuid::new_v4())
+    .bind(test_tenant())
     .bind(batch_no)
     .bind(format!("SKU-{batch_no}"))
     .bind(format!("物料-{batch_no}"))

@@ -4,8 +4,9 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, super_claims};
+use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
@@ -63,13 +64,14 @@ async fn body_of(pool: sqlx::PgPool, adjustment_status: Option<String>) -> Value
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let mut params = empty_params();
     params.adjustment_status = adjustment_status;
     let resp = list_discrepancies(
         State(state),
         Extension(claims),
         Query(params),
+        HeaderMap::new(),
         Extension(txn_arc),
     )
     .await;
@@ -83,7 +85,7 @@ async fn insert_disc(pool: &sqlx::PgPool, material_code: &str, adjustment_status
         "INSERT INTO wms.discrepancy_records (id, tenant_id, org_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name, system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type, adjustment_status) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 100, 95, -5, 'quantity_diff', $8)",
     )
     .bind(uuid::Uuid::new_v4())
-    .bind(uuid::Uuid::new_v4())
+    .bind(test_tenant())
     .bind(uuid::Uuid::new_v4())
     .bind(uuid::Uuid::new_v4())
     .bind(uuid::Uuid::new_v4())

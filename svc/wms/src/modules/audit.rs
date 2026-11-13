@@ -12,6 +12,8 @@ use uuid::Uuid;
 
 use crate::models::AuditLog;
 use crate::modules::ApiState;
+use crate::shared::scope::tenant_of;
+use topems_shared_auth::auth::Claims;
 use topems_shared_db::SchemaAwareAuditLogService;
 
 pub fn create_routes<S>() -> Router<S>
@@ -58,10 +60,16 @@ pub struct ListAuditLogsQuery {
 pub async fn list_audit_logs(
     State(_state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -98,6 +106,7 @@ pub async fn list_audit_logs(
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+          AND tenant_id = $9::uuid
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
         "#
@@ -110,6 +119,7 @@ pub async fn list_audit_logs(
     .bind(params.end_date.clone())
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -127,6 +137,7 @@ pub async fn list_audit_logs(
                   AND ($4::text IS NULL OR status = $4)
                   AND ($5::text IS NULL OR created_at >= $5::timestamptz)
                   AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+                  AND tenant_id = $7::uuid
                 "#
             ))
             .bind(&params.action)
@@ -135,6 +146,7 @@ pub async fn list_audit_logs(
             .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await;
 
@@ -168,10 +180,16 @@ pub async fn get_audit_log(
     State(_state): State<ApiState>,
     // 2026-10-06 修复：id 为 Uuid（AuditLog.id），原 i64 致 UUID 路径 400（get 端点不可用）
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<AuditLog> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -186,10 +204,11 @@ pub async fn get_audit_log(
         -- U12b: 读归位 wms.audit_logs（见 list_audit_logs 注释）
         -- R-5: user_id::text、补 tenant_id（对齐 crm，见 list 注释）
         -- A3: COALESCE(entity_type,'') + ip_address::text（见 list 注释，防御 NULL/inet 行 500）
-        FROM wms.audit_logs WHERE id = $1
+        FROM wms.audit_logs WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 

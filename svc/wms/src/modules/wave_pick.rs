@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -12,6 +13,7 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -94,10 +96,15 @@ pub async fn list_wave_picks(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<PaginatedResponse<WavePick>> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -125,6 +132,7 @@ pub async fn list_wave_picks(
         WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND deleted_at IS NULL
+          AND tenant_id = $5::uuid
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -133,6 +141,7 @@ pub async fn list_wave_picks(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -145,10 +154,12 @@ pub async fn list_wave_picks(
                 WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
+                  AND tenant_id = $3::uuid
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -579,10 +590,15 @@ pub async fn list_wave_pick_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -601,11 +617,12 @@ pub async fn list_wave_pick_items(
                planned_quantity::float8, picked_quantity::float8, status, remarks,
                created_at, updated_at
         FROM wms.wave_pick_items
-        WHERE wave_pick_id = $1 AND deleted_at IS NULL
+        WHERE wave_pick_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
         ORDER BY created_at DESC
         "#
     ))
     .bind(id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1083,11 +1100,16 @@ pub async fn pick_line(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1107,7 +1129,7 @@ pub async fn pick_line(
                 status = 'picked',
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
-            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND tenant_id = $6::uuid
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity::float8, picked_quantity::float8, status, remarks
@@ -1118,6 +1140,7 @@ pub async fn pick_line(
     .bind(req.quantity.unwrap_or(-1.0))
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1161,11 +1184,16 @@ pub async fn short_pick_line(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1185,7 +1213,7 @@ pub async fn short_pick_line(
                 status = 'short_picked',
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
-            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND tenant_id = $6::uuid
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity::float8, picked_quantity::float8, status, remarks
@@ -1196,6 +1224,7 @@ pub async fn short_pick_line(
     .bind(req.quantity.unwrap_or(0.0))
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 

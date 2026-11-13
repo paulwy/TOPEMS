@@ -833,10 +833,15 @@ pub async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -858,11 +863,12 @@ pub async fn list_stock_take_items(
                discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
                adjustment_status, notes as remarks, created_at, updated_at
         FROM wms.stock_take_items
-        WHERE stock_take_id = $1 AND deleted_at IS NULL
+        WHERE stock_take_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
         ORDER BY line_number ASC
         "#
     ))
     .bind(id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1416,6 +1422,10 @@ pub async fn delete_stock_take_item(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<String> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1425,9 +1435,10 @@ pub async fn delete_stock_take_item(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#))
+    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL AND tenant_id = $3::uuid"#))
         .bind(id)
         .bind(item_id)
+        .bind(tenant)
         .execute(&mut **txn)
         .await;
 

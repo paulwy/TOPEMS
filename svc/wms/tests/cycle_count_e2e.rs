@@ -4,8 +4,9 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, super_claims};
+use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
@@ -54,12 +55,13 @@ async fn body_of(pool: sqlx::PgPool, is_active: Option<bool>) -> Value {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let mut params = empty_params();
     params.is_active = is_active;
     let resp = list_cycle_count_configs(
         State(state),
         Extension(claims),
+        HeaderMap::new(),
         Query(params),
         Extension(txn_arc),
     )
@@ -74,7 +76,7 @@ async fn insert_config(pool: &sqlx::PgPool, material_category: &str, is_active: 
         "INSERT INTO wms.cycle_count_configs (id, org_id, tenant_id, organization_id, warehouse_id, material_category, count_frequency, priority_level, next_count_date, is_active) VALUES ($1, $2, $2, $2, $3, $4, 'monthly', 'high', NOW(), $5)",
     )
     .bind(uuid::Uuid::new_v4())
-    .bind(uuid::Uuid::new_v4())
+    .bind(test_tenant())
     .bind(uuid::Uuid::new_v4())
     .bind(material_category)
     .bind(is_active)

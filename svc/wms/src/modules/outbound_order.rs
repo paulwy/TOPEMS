@@ -657,10 +657,15 @@ pub async fn list_outbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -678,11 +683,12 @@ pub async fn list_outbound_order_items(
                unit_price, total_value, picking_status, packing_status, notes as remarks,
                created_at, updated_at
         FROM wms.outbound_order_items
-        WHERE order_id = $1 AND deleted_at IS NULL
+        WHERE order_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
         ORDER BY line_number ASC
         "#),
     )
     .bind(id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 

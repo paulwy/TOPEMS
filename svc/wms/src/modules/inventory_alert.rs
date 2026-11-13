@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -895,10 +896,15 @@ pub async fn list_alert_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -920,6 +926,7 @@ pub async fn list_alert_rules(
         FROM wms.inventory_alert_rules
         WHERE ($1::text IS NULL OR rule_name ILIKE $1)
           AND ($2::text IS NULL OR alert_type = $2)
+          AND tenant_id = $5::uuid
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -928,6 +935,7 @@ pub async fn list_alert_rules(
     .bind(params.alert_type.as_deref())
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -939,10 +947,12 @@ pub async fn list_alert_rules(
                 SELECT COUNT(*) FROM wms.inventory_alert_rules
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR rule_name ILIKE $1)
                   AND ($2::text IS NULL OR alert_type = $2)
+                  AND tenant_id = $3::uuid
                 "#
             ))
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.alert_type.as_deref())
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -1421,10 +1431,15 @@ pub async fn list_alert_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1445,6 +1460,7 @@ pub async fn list_alert_records(
           AND ($2::text IS NULL OR severity = $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR warehouse_id = $4)
+          AND tenant_id = $7::uuid
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#),
@@ -1455,6 +1471,7 @@ pub async fn list_alert_records(
     .bind(params.warehouse_id)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1468,12 +1485,14 @@ pub async fn list_alert_records(
                   AND ($2::text IS NULL OR severity = $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR warehouse_id = $4)
+                  AND tenant_id = $5::uuid
                 "#
             ))
             .bind(params.alert_type.as_deref())
             .bind(params.severity.as_deref())
             .bind(params.status.as_deref())
             .bind(params.warehouse_id)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);

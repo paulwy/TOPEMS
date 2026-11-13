@@ -13,6 +13,7 @@ use crate::models::inventory_alert::{CreateCycleCountConfigRequest, CycleCountCo
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -59,11 +60,16 @@ where
 pub async fn list_cycle_count_configs(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<CycleCountQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -89,6 +95,7 @@ pub async fn list_cycle_count_configs(
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::boolean IS NULL OR is_active = $2)
           AND deleted_at IS NULL
+          AND tenant_id = $5::uuid
         ORDER BY priority_level, next_count_date
         LIMIT $3 OFFSET $4
         "#
@@ -97,6 +104,7 @@ pub async fn list_cycle_count_configs(
     .bind(is_active)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -109,10 +117,12 @@ pub async fn list_cycle_count_configs(
                 WHERE ($1::uuid IS NULL OR warehouse_id = $1)
                   AND ($2::boolean IS NULL OR is_active = $2)
                   AND deleted_at IS NULL
+                  AND tenant_id = $3::uuid
                 "#
             ))
             .bind(warehouse_id)
             .bind(is_active)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await;
 
@@ -266,11 +276,16 @@ pub async fn create_cycle_count_config(
 pub async fn get_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<CycleCountConfig> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -287,10 +302,11 @@ pub async fn get_cycle_count_config(
         SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -533,6 +549,10 @@ pub async fn generate_cycle_count(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -550,10 +570,11 @@ pub async fn generate_cycle_count(
         SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
-        WHERE id = $1 AND is_active = true AND deleted_at IS NULL
+        WHERE id = $1 AND is_active = true AND deleted_at IS NULL AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -721,10 +742,12 @@ pub async fn generate_all_cycle_counts(
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE is_active = true AND next_count_date <= $1 AND deleted_at IS NULL
+          AND tenant_id = $2::uuid
         ORDER BY priority_level DESC, next_count_date
         "#
     ))
     .bind(now)
+    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await;
 

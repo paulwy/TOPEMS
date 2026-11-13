@@ -6,7 +6,7 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::api_state;
+use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::Extension;
@@ -102,11 +102,12 @@ fn empty_params() -> ListAuditLogsQuery {
 
 async fn insert_log(pool: &sqlx::PgPool, action: &str, status: &str) -> uuid::Uuid {
     let row: (uuid::Uuid,) = sqlx::query_as(
-        r#"INSERT INTO wms.audit_logs (action, entity_type, status, user_name, user_id)
-           VALUES ($1, 'inventory', $2, '张三', 'user-1') RETURNING id"#,
+        r#"INSERT INTO wms.audit_logs (action, entity_type, status, user_name, user_id, tenant_id)
+           VALUES ($1, 'inventory', $2, '张三', 'user-1', $3) RETURNING id"#,
     )
     .bind(action)
     .bind(status)
+    .bind(test_tenant())
     .fetch_one(pool)
     .await
     .unwrap();
@@ -117,7 +118,14 @@ async fn list_body(pool: sqlx::PgPool) -> Value {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let resp = list_audit_logs(State(state), Query(empty_params()), Extension(txn_arc)).await;
+    let resp = list_audit_logs(
+        State(state),
+        Query(empty_params()),
+        Extension(tenant_claims()),
+        HeaderMap::new(),
+        Extension(txn_arc),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -150,7 +158,14 @@ async fn get_returns_log(pool: sqlx::PgPool) {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let resp = get_audit_log(State(state), Path(id), Extension(txn_arc)).await;
+    let resp = get_audit_log(
+        State(state),
+        Path(id),
+        Extension(tenant_claims()),
+        HeaderMap::new(),
+        Extension(txn_arc),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));

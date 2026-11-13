@@ -12,6 +12,7 @@ use crate::models::{
 };
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -44,11 +45,16 @@ where
 pub async fn list_batches(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<BatchQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -71,6 +77,7 @@ pub async fn list_batches(
           AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
           AND ($5::text IS NULL OR quality_status = $5)
           AND ($6::text IS NULL OR status = $6)
+          AND tenant_id = $9::uuid
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
         "#),
@@ -83,6 +90,7 @@ pub async fn list_batches(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -98,6 +106,7 @@ pub async fn list_batches(
                   AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
                   AND ($5::text IS NULL OR quality_status = $5)
                   AND ($6::text IS NULL OR status = $6)
+                  AND tenant_id = $7::uuid
                 "#
             ))
             .bind(&params.warehouse_id)
@@ -106,6 +115,7 @@ pub async fn list_batches(
             .bind(params.supplier_id)
             .bind(&params.quality_status)
             .bind(&params.status)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -245,11 +255,16 @@ pub async fn create_batch(
 pub async fn get_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<Batch> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -268,9 +283,10 @@ pub async fn get_batch(
     };
 
     let result = sqlx::query_as::<_, Batch>(
-        only_own_schema_query!("wms", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
     )
     .bind(batch_id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -560,11 +576,16 @@ pub async fn get_batch_statistics(
 pub async fn get_expiring_soon(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<Vec<Batch>> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -586,11 +607,13 @@ pub async fn get_expiring_soon(
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
+          AND tenant_id = $3::uuid
         ORDER BY remaining_days ASC
         "#),
     )
     .bind(days)
     .bind(warehouse_id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -616,11 +639,16 @@ pub async fn get_expiring_soon(
 pub async fn get_expired(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> ApiResponse<Vec<Batch>> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -641,10 +669,12 @@ pub async fn get_expired(
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1::uuid OR $1 IS NULL)
+          AND tenant_id = $2::uuid
         ORDER BY remaining_days ASC
         "#),
     )
     .bind(warehouse_id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 

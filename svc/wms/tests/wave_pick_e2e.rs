@@ -5,8 +5,9 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, super_claims};
+use api_state::{api_state, empty_params, tenant_claims, test_tenant};
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
@@ -53,13 +54,14 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let mut params = empty_params();
     params.status = status;
     let resp = list_wave_picks(
         State(state),
         Extension(claims),
         Query(params),
+        HeaderMap::new(),
         Extension(txn_arc),
     )
     .await;
@@ -72,13 +74,14 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
 async fn insert_wave(pool: &sqlx::PgPool, number: &str, status: &str) {
     let tid = uuid::Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO wms.wave_picks (id, org_id, wave_pick_number, wave_pick_type, warehouse_id, status, total_items, picked_items, total_quantity, picked_quantity) VALUES ($1, $2, $3, 'standard', $4, $5, 10, 4, 100.5, 40.25)",
+        "INSERT INTO wms.wave_picks (id, org_id, tenant_id, wave_pick_number, wave_pick_type, warehouse_id, status, total_items, picked_items, total_quantity, picked_quantity) VALUES ($1, $2, $6, $3, 'standard', $4, $5, 10, 4, 100.5, 40.25)",
     )
     .bind(uuid::Uuid::new_v4())
     .bind(tid)
     .bind(number)
     .bind(uuid::Uuid::new_v4())
     .bind(status)
+    .bind(test_tenant())
     .execute(pool)
     .await
     .unwrap();

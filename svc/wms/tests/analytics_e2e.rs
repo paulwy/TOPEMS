@@ -5,7 +5,7 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, super_claims};
+use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::State;
 use axum::Extension;
 use serde_json::Value;
@@ -19,27 +19,27 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     for (table, ddl) in [
         (
             "warehouses",
-            "id UUID PRIMARY KEY, name VARCHAR(200), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, name VARCHAR(200), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
         (
             "inventory",
-            "id UUID PRIMARY KEY, material_code VARCHAR(100), quantity NUMERIC(15,2), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, material_code VARCHAR(100), quantity NUMERIC(15,2), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
         (
             "inbound_orders",
-            "id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
         (
             "outbound_orders",
-            "id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
         (
             "alerts",
-            "id UUID PRIMARY KEY, status VARCHAR(20), severity VARCHAR(20), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, status VARCHAR(20), severity VARCHAR(20), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
         (
             "locations",
-            "id UUID PRIMARY KEY, status VARCHAR(20), deleted_at TIMESTAMPTZ",
+            "id UUID PRIMARY KEY, status VARCHAR(20), tenant_id UUID, deleted_at TIMESTAMPTZ",
         ),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -55,39 +55,45 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    sqlx::query("INSERT INTO wms.warehouses (id, name) VALUES (gen_random_uuid(), 'W1')")
+    sqlx::query("INSERT INTO wms.warehouses (id, name, tenant_id) VALUES (gen_random_uuid(), 'W1', $1)")
+        .bind(test_tenant())
         .execute(&pool)
         .await
         .unwrap();
     sqlx::query(
-        "INSERT INTO wms.inventory (id, material_code, quantity) VALUES (gen_random_uuid(), 'A001', 100), (gen_random_uuid(), 'B002', 50)",
+        "INSERT INTO wms.inventory (id, material_code, quantity, tenant_id) VALUES (gen_random_uuid(), 'A001', 100, $1), (gen_random_uuid(), 'B002', 50, $1)",
     )
+    .bind(test_tenant())
     .execute(&pool)
     .await
     .unwrap();
-    sqlx::query("INSERT INTO wms.inbound_orders (id) VALUES (gen_random_uuid())")
+    sqlx::query("INSERT INTO wms.inbound_orders (id, tenant_id) VALUES (gen_random_uuid(), $1)")
+        .bind(test_tenant())
         .execute(&pool)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO wms.outbound_orders (id) VALUES (gen_random_uuid())")
+    sqlx::query("INSERT INTO wms.outbound_orders (id, tenant_id) VALUES (gen_random_uuid(), $1)")
+        .bind(test_tenant())
         .execute(&pool)
         .await
         .unwrap();
     sqlx::query(
-        "INSERT INTO wms.alerts (id, status, severity) VALUES (gen_random_uuid(), 'active', 'critical'), (gen_random_uuid(), 'active', 'warning')",
+        "INSERT INTO wms.alerts (id, status, severity, tenant_id) VALUES (gen_random_uuid(), 'active', 'critical', $1), (gen_random_uuid(), 'active', 'warning', $1)",
     )
+    .bind(test_tenant())
     .execute(&pool)
     .await
     .unwrap();
     sqlx::query(
-        "INSERT INTO wms.locations (id, status) VALUES (gen_random_uuid(), 'occupied'), (gen_random_uuid(), 'empty')",
+        "INSERT INTO wms.locations (id, status, tenant_id) VALUES (gen_random_uuid(), 'occupied', $1), (gen_random_uuid(), 'empty', $1)",
     )
+    .bind(test_tenant())
     .execute(&pool)
     .await
     .unwrap();
 
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = get_dashboard_summary(State(state), Extension(claims)).await;
     let data = resp
         .data

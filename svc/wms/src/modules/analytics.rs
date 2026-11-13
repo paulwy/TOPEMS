@@ -1023,53 +1023,65 @@ pub struct DashboardSummary {
 )]
 pub async fn get_dashboard_summary(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<DashboardSummary> {
     tracing::info!("获取WMS Dashboard汇总数据");
 
+    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词，否则会静默读 0 行
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+
     // 仓库数
     let warehouse_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL AND tenant_id = $1::uuid")
+            .bind(tenant)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
     // 库存总量和SKU数
     let inventory_row: (Option<f64>, Option<i64>) = sqlx::query_as(
-        "SELECT COALESCE(SUM(quantity), 0)::float8 as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory"
+        "SELECT COALESCE(SUM(quantity), 0)::float8 as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory WHERE tenant_id = $1::uuid"
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or((Some(0.0), Some(0)));
 
     // 今日入库数
     let inbound_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM wms.inbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM wms.inbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     // 今日出库数
     let outbound_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM wms.outbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM wms.outbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     // 告警数
     let alert_row: (Option<i64>, Option<i64>) = sqlx::query_as(
-        "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE severity = 'critical') as critical FROM wms.alerts WHERE status = 'active' AND deleted_at IS NULL"
+        "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE severity = 'critical') as critical FROM wms.alerts WHERE status = 'active' AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or((Some(0), Some(0)));
 
     // 库位利用率（简化：已使用库位/总库位）
     let location_util: f64 = sqlx::query_scalar(
-        "SELECT CASE WHEN COUNT(*) > 0 THEN (COUNT(*) FILTER (WHERE status = 'occupied')::float / COUNT(*)::float) * 100 ELSE 0 END FROM wms.locations WHERE deleted_at IS NULL"
+        "SELECT CASE WHEN COUNT(*) > 0 THEN (COUNT(*) FILTER (WHERE status = 'occupied')::float / COUNT(*)::float) * 100 ELSE 0 END FROM wms.locations WHERE deleted_at IS NULL AND tenant_id = $1::uuid"
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0.0);
@@ -1124,11 +1136,16 @@ pub struct DailyTrendItem {
 )]
 pub async fn get_inventory_distribution(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<InventoryDistributionItem>> {
     tracing::info!("获取WMS库存分布数据");
 
+    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(String, Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
         "SELECT i.warehouse_id::text as warehouse_id,
@@ -1137,12 +1154,13 @@ pub async fn get_inventory_distribution(
                 COUNT(DISTINCT i.material_code) as sku_count
          FROM wms.inventory i
          LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
-         WHERE i.deleted_at IS NULL
+         WHERE i.deleted_at IS NULL AND i.tenant_id = $2::uuid
          GROUP BY i.warehouse_id, w.warehouse_name, w.warehouse_name_en
          ORDER BY quantity DESC
          LIMIT 10",
     )
     .bind(locale)
+    .bind(tenant)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1174,13 +1192,20 @@ pub async fn get_inventory_distribution(
 )]
 pub async fn get_inventory_types(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<InventoryTypeItem>> {
     tracing::info!("获取WMS库存类型分布");
 
+    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+
     let total: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL",
+        "SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL AND tenant_id = $1::uuid",
     )
+    .bind(tenant)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0.0);
@@ -1189,11 +1214,12 @@ pub async fn get_inventory_types(
         "SELECT COALESCE(material_type, '未分类') as material_type, 
                 COALESCE(SUM(quantity), 0) as quantity
          FROM wms.inventory
-         WHERE deleted_at IS NULL
+         WHERE deleted_at IS NULL AND tenant_id = $1::uuid
          GROUP BY material_type
          ORDER BY quantity DESC
          LIMIT 8",
     )
+    .bind(tenant)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1230,9 +1256,15 @@ pub async fn get_inventory_types(
 )]
 pub async fn get_daily_trend(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<DailyTrendItem>> {
     tracing::info!("获取WMS每日出入库趋势");
+
+    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
 
     let rows: Vec<(Option<String>, Option<i64>, Option<i64>)> = sqlx::query_as(
         "SELECT 
@@ -1245,17 +1277,18 @@ pub async fn get_daily_trend(
          LEFT JOIN (
              SELECT DATE(created_at) as date, COUNT(*) as count
              FROM wms.inbound_orders
-             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days' AND tenant_id = $1::uuid
              GROUP BY DATE(created_at)
          ) inbound ON dates.date = inbound.date
          LEFT JOIN (
              SELECT DATE(created_at) as date, COUNT(*) as count
              FROM wms.outbound_orders
-             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days' AND tenant_id = $1::uuid
              GROUP BY DATE(created_at)
          ) outbound ON dates.date = outbound.date
          ORDER BY dates.date"
     )
+    .bind(tenant)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();

@@ -26,6 +26,18 @@ pub fn api_state(pool: sqlx::PgPool) -> ApiState {
     }
 }
 
+/// 测试固定租户：RLS fail-closed 后列表/详情与种子数据需使用同一租户。
+pub fn test_tenant() -> uuid::Uuid {
+    uuid::Uuid::parse_str("00000000-0000-0000-0000-0000000000a1").unwrap()
+}
+
+/// 带租户的 Claims（普通请求形态）。
+pub fn tenant_claims() -> Claims {
+    let mut claims = super_claims();
+    claims.tenant_id = Some(test_tenant().to_string());
+    claims
+}
+
 pub fn super_claims() -> Claims {
     Claims {
         sub: "00000000-0000-0000-0000-000000000001".to_string(),
