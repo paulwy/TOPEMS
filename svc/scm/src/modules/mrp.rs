@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -271,7 +271,10 @@ pub async fn list_suggestions(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -370,7 +373,10 @@ pub async fn get_suggestion(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -416,7 +422,10 @@ pub async fn update_suggestion(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let now = Utc::now();
 
     let result = sqlx::query(only_own_schema_query!(
@@ -480,7 +489,10 @@ pub async fn delete_suggestion(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -529,7 +541,10 @@ pub async fn compute_mrp(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let request_data = serde_json::to_value(&req).ok();
     let forecast_days = req.forecast_days.unwrap_or(30);
@@ -724,7 +739,10 @@ pub async fn confirm_suggestion(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
@@ -870,7 +888,10 @@ pub async fn material_requirement_summary(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

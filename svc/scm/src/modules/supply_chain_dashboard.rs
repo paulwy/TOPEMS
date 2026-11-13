@@ -10,7 +10,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -61,7 +61,10 @@ pub async fn overview(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(30);
@@ -248,7 +251,10 @@ pub async fn purchase_inbound_outbound_stats(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -422,7 +428,10 @@ pub async fn supplier_performance(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
@@ -622,7 +631,10 @@ pub async fn real_time_status(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let pending_purchase = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",

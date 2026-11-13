@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::audit_log::AuditLog;
-use crate::shared::permission::tenant_bind_value;
+use crate::shared::permission::require_tenant_bind;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::current_request_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -59,7 +59,10 @@ pub async fn list_audit_logs(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -162,7 +165,10 @@ pub async fn get_audit_log(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "scm",
         r#"

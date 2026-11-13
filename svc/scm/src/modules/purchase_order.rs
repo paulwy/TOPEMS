@@ -15,7 +15,7 @@ use crate::models::purchase_order::{
     CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest,
 };
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -61,7 +61,10 @@ pub async fn list_orders(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -152,7 +155,10 @@ pub async fn create_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -256,7 +262,10 @@ pub async fn get_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
@@ -311,7 +320,10 @@ pub async fn update_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
@@ -436,7 +448,10 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
@@ -540,7 +555,10 @@ pub async fn approve_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
@@ -737,7 +755,10 @@ pub async fn reject_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
@@ -873,7 +894,10 @@ async fn transition_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 
 use crate::modules::ApiState;
-use crate::shared::permission::tenant_bind_value;
+use crate::shared::permission::require_tenant_bind;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -125,7 +125,10 @@ pub async fn list_sync_records(
     Query(params): Query<ListSyncRecordParams>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -231,7 +234,10 @@ pub async fn get_sync_record(
     Path(id): Path<uuid::Uuid>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<SyncRecord> {
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -275,7 +281,10 @@ pub async fn create_sync_record(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> ApiResponse<SyncRecord> {
-    let tenant_id = tenant_bind_value(&claims);
+    let tenant_id = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
@@ -375,7 +384,10 @@ pub async fn retry_sync_record(
     Path(id): Path<uuid::Uuid>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<SyncResult> {
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let now = Utc::now();
     let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
     let mut guard = txn_arc.lock().await;
@@ -450,7 +462,10 @@ pub async fn list_sync_details(
     Query(params): Query<ListSyncRecordParams>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -522,7 +537,10 @@ async fn trigger_sync(
     source: &str,
     target: &str,
 ) -> ApiResponse<SyncResult> {
-    let tenant_id = tenant_bind_value(&claims);
+    let tenant_id = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。

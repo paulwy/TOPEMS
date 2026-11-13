@@ -14,7 +14,7 @@ use crate::models::supplier_evaluation::{
     CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -73,7 +73,10 @@ pub async fn list_evaluations(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -153,7 +156,10 @@ pub async fn create_evaluation(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let evaluation_no = format!("EVAL-{}", &id.simple().to_string()[..12]);
@@ -269,7 +275,10 @@ pub async fn get_evaluation(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
         SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
@@ -318,7 +327,10 @@ pub async fn update_evaluation(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
@@ -443,7 +455,10 @@ pub async fn delete_evaluation(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         "UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"

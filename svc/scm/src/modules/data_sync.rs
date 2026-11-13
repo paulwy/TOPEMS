@@ -48,7 +48,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
-use crate::shared::permission::tenant_bind_value;
+use crate::shared::permission::require_tenant_bind;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::{EventType, InboundOrderRequestedPayload};
 
@@ -146,7 +146,10 @@ pub async fn purchase_to_inbound(
     if guard.is_none() {
         return ApiResponse::server_error("rls transaction unavailable");
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("采购订单ID格式错误"),
@@ -227,7 +230,10 @@ pub async fn create_inbound_from_purchase(
     if guard.is_none() {
         return ApiResponse::server_error("rls transaction unavailable");
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let (result, to_emit, insert_error) = {
         let txn = match guard.as_mut() {
@@ -903,7 +909,10 @@ pub async fn sync_supplier_from_srm(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
         Err(_) => {
@@ -1186,7 +1195,10 @@ pub async fn sync_all_suppliers_from_srm(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let srm_suppliers = sqlx::query_as::<
         _,
         (
@@ -1366,7 +1378,10 @@ pub async fn get_sync_logs(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1454,7 +1469,10 @@ pub async fn retry_failed_syncs(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let sync_type_filter = req.sync_type.clone();
     let max_retries = req.max_retries.unwrap_or(3);
     let now = Utc::now();
@@ -1599,7 +1617,10 @@ pub async fn get_sync_statistics(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
@@ -1692,7 +1713,10 @@ pub async fn batch_sync_purchase_to_wms(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
@@ -2032,7 +2056,10 @@ pub async fn check_consistency(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let mut results: Vec<ConsistencyCheckResult> = Vec::new();
 
     let purchase_inbound_result = check_purchase_inbound_consistency(&mut *txn, tenant_bind).await;

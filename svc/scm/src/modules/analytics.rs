@@ -11,7 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::modules::ApiState;
-use crate::shared::permission::tenant_bind_value;
+use crate::shared::permission::require_tenant_bind;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -60,7 +60,10 @@ pub async fn get_purchase_trend(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<PurchaseTrendItem>> {
     tracing::info!("获取SCM采购趋势数据");
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     // B-2 之后 scm 全表 fail-closed：裸池读会 0 行，必须走带租户 GUC 的读作用域。
     let db = Db::new(state.db.clone(), "scm, public, shared");
@@ -136,7 +139,10 @@ pub async fn get_purchase_status(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<PurchaseStatusItem>> {
     tracing::info!("获取SCM采购状态分布");
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let db = Db::new(state.db.clone(), "scm, public, shared");
     let mut scope = match db.scope_read().await {
@@ -222,7 +228,10 @@ pub async fn get_supplier_ranking(
     headers: HeaderMap,
 ) -> ApiResponse<Vec<SupplierRankingItem>> {
     tracing::info!("获取SCM供应商采购排名");
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let db = Db::new(state.db.clone(), "scm, public, shared");
     let mut scope = match db.scope_read().await {

@@ -9,7 +9,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
@@ -275,7 +275,10 @@ pub async fn calculate_turnover(
     let page = pagination.page.unwrap_or(1).max(1);
     let page_size = pagination.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
@@ -468,7 +471,10 @@ pub async fn turnover_days(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -595,7 +601,10 @@ pub async fn abc_analysis(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -739,7 +748,10 @@ pub async fn turnover_trend(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(180);
@@ -854,7 +866,10 @@ pub async fn get_turnover_detail(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();

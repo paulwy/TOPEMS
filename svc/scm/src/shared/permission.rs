@@ -86,19 +86,25 @@ impl std::fmt::Display for ScmPermission {
 
 pub type ModulePermission = ScmPermission;
 
-/// 计算租户绑定值（写入 `tenant_id` 或作为查询租户谓词）：
-/// - `tenant_middleware` 在 `tenant_middleware` 阶段已把超管的 `x-tenant-id`
-///   解析并**回填进 Claims**（`req.extensions` 里的是回填后的副本），因此这里
-///   直接读 `claims.tenant_id` 即可覆盖两类身份：
-///   * 超管：等于显式选择的租户（缺失时中间件已 400，不会走到业务层）；
-///   * 普通用户：等于自身租户（忽略伪造的 `x-tenant-id`）。
-/// - 缺失/非法 → nil uuid（最严隔离；同时与 RLS 系统通道的 nil 语义一致）。
-pub fn tenant_bind_value(claims: &Claims) -> Uuid {
-    claims
+/// 解析当前请求的租户绑定值（用于写入 `tenant_id` 或作为查询租户谓词）。
+///
+/// `tenant_middleware` 已把超管的 `x-tenant-id` 解析并**回填进 Claims**，
+/// 因此这里只需读 `claims.tenant_id`，即可覆盖两类身份：
+/// - 超管：等于显式选择的租户（缺失时中间件已 400，不会走到业务层）；
+/// - 普通用户：等于自身租户（忽略伪造的 `x-tenant-id`）。
+///
+/// 缺失、非法或 nil uuid 一律返回 400，不再回退到 nil。"nil = 全量"的语义
+/// 已在 SQL 谓词中清除，本函数是唯一的租户绑定入口。
+pub fn require_tenant_bind<T>(claims: &Claims) -> Result<Uuid, axum::Json<ApiResponse<T>>> {
+    let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil)
+        .filter(|tid| !tid.is_nil());
+    match tenant_id {
+        Some(tid) => Ok(tid),
+        None => Err(axum::Json(ApiResponse::bad_request("缺少租户上下文"))),
+    }
 }
 
 pub async fn check_permission<T>(
@@ -273,5 +279,57 @@ mod tests {
     fn module_permission_type_alias_resolves() {
         let p: ModulePermission = ScmPermission::PurchaseOrderApprove;
         assert_eq!(p.to_shared().action, PermissionAction::Approve);
+    }
+
+    fn claims_with_tenant(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: Uuid::new_v4().to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: vec!["user".to_string()],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(str::to_string),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        }
+    }
+
+    #[test]
+    fn require_tenant_bind_rejects_missing_tenant() {
+        let err = require_tenant_bind::<serde_json::Value>(&claims_with_tenant(None))
+            .expect_err("缺少 tenant_id 必须返回错误");
+        assert_eq!(err.0.code, 400);
+        assert_eq!(err.0.message, "缺少租户上下文");
+    }
+
+    #[test]
+    fn require_tenant_bind_rejects_invalid_tenant() {
+        let err = require_tenant_bind::<serde_json::Value>(&claims_with_tenant(Some("not-a-uuid")))
+            .expect_err("非法 tenant_id 必须返回错误");
+        assert_eq!(err.0.code, 400);
+    }
+
+    #[test]
+    fn require_tenant_bind_rejects_nil_tenant() {
+        let err = require_tenant_bind::<serde_json::Value>(&claims_with_tenant(Some(
+            "00000000-0000-0000-0000-000000000000",
+        )))
+        .expect_err("nil tenant_id 必须返回错误");
+        assert_eq!(err.0.code, 400);
+    }
+
+    #[test]
+    fn require_tenant_bind_returns_tenant() {
+        let tenant = "11111111-2222-3333-4444-555555555555";
+        let bound = require_tenant_bind::<serde_json::Value>(&claims_with_tenant(Some(tenant)))
+            .expect("合法 tenant_id 应成功");
+        assert_eq!(bound, Uuid::parse_str(tenant).unwrap());
     }
 }

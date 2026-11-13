@@ -12,7 +12,7 @@ use crate::models::purchase_requisition::{
     CreatePurchaseRequisitionRequest, PurchaseRequisition, PurchaseRequisitionQueryParams,
     UpdatePurchaseRequisitionRequest,
 };
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -78,7 +78,10 @@ pub async fn list_requisitions(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
@@ -136,7 +139,10 @@ pub async fn create_requisition(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let request_date = DateTime::parse_from_rfc3339(&data.request_date)
         .unwrap_or_else(|_| chrono::Utc::now().into())
@@ -247,7 +253,10 @@ pub async fn get_requisition(
         }
     };
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
         only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, applicant_id, applicant_name, department_id, department_name, request_date, required_date, total_amount, currency, status, priority, supplier_id, supplier_name, approval_status, approver, approved_at, remarks, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)")
     )
@@ -295,7 +304,10 @@ pub async fn update_requisition(
             ))
         }
     };
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let required_date = data.required_date.as_ref().map(|d| {
         DateTime::parse_from_rfc3339(d)
@@ -380,7 +392,10 @@ pub async fn delete_requisition(
         }
     };
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)")
     )
@@ -453,7 +468,10 @@ pub async fn submit_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING *"),
     )
@@ -529,7 +547,10 @@ pub async fn approve_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
         r#"
@@ -613,7 +634,10 @@ pub async fn reject_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
         r#"
@@ -697,7 +721,10 @@ pub async fn cancel_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING *"),
     )
@@ -767,7 +794,10 @@ pub async fn convert_to_order(
         }
     };
 
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) RETURNING *"),
     )

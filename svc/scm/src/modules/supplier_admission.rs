@@ -11,7 +11,7 @@ use crate::models::supplier_admission::{
     AuditRequest, CreateSupplierAdmissionRequest, SupplierAdmission, SupplierAdmissionQueryParams,
     UpdateSupplierAdmissionRequest,
 };
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -65,7 +65,10 @@ pub async fn list_admissions(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
@@ -123,7 +126,10 @@ pub async fn create_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
         only_own_schema_query!("scm", r#"
@@ -205,7 +211,10 @@ pub async fn get_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -254,7 +263,10 @@ pub async fn update_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -350,7 +362,10 @@ pub async fn delete_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -420,7 +435,10 @@ pub async fn submit_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -496,7 +514,10 @@ pub async fn approve_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -581,7 +602,10 @@ pub async fn reject_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -666,7 +690,10 @@ pub async fn audit_admission(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -786,7 +813,10 @@ pub async fn activate_supplier(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,

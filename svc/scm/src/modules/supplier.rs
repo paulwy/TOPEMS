@@ -21,7 +21,7 @@ use super::ApiState;
 use crate::models::supplier::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::resolve_create_tenant;
 
@@ -356,7 +356,10 @@ pub async fn list_suppliers(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -684,7 +687,10 @@ pub async fn get_supplier(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     // 从 claims 中获取 tenant_id，用于多租户缓存隔离
     let tenant_id = claims
@@ -787,7 +793,10 @@ pub async fn update_supplier(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Supplier>(
@@ -1004,7 +1013,10 @@ pub async fn delete_supplier(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     // RETURNING 拿到 supplier_no + tenant_id，用于后台软删 mdm
     let result = sqlx::query_as::<_, (String, Option<Uuid>)>(only_own_schema_query!(
         "scm",

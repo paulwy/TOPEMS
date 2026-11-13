@@ -16,7 +16,7 @@ use super::ApiState;
 use crate::models::price_comparison::{
     CreatePriceComparisonRequest, CreateSupplierQuoteRequest, UpdatePriceComparisonRequest,
 };
-use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
+use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -372,7 +372,10 @@ pub async fn list_quotes(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -459,7 +462,10 @@ pub async fn create_quote(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let id = Uuid::new_v4();
     let quote_no = format!("QT-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -532,7 +538,10 @@ pub async fn get_quote(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
@@ -601,7 +610,10 @@ pub async fn update_quote(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -668,7 +680,10 @@ pub async fn submit_quote(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -729,7 +744,10 @@ pub async fn list_comparisons(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -810,7 +828,10 @@ pub async fn create_comparison(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let id = Uuid::new_v4();
     let comparison_no = format!("PC-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -936,7 +957,10 @@ pub async fn get_comparison(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ComparisonListRecord>(
         only_own_schema_query!("scm", r#"
@@ -1021,7 +1045,10 @@ pub async fn approve_comparison(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let now_str = Utc::now().to_rfc3339();
     let now = Utc::now();
 
@@ -1074,7 +1101,10 @@ pub async fn update_comparison(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
     let now = Utc::now();
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1142,7 +1172,10 @@ pub async fn delete_comparison(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
 
     let item_result = sqlx::query(only_own_schema_query!(
         "scm",
