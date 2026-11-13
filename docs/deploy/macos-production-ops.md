@@ -136,7 +136,8 @@ dropdb topems_restore_test
 | nginx 语法检查 | `/opt/homebrew/bin/nginx -t`（当前生效配置 `/opt/homebrew/etc/nginx/nginx.conf`，include `servers/topems.conf`、`servers/topems-ssl.conf`；非登录 SSH 的 PATH 不含 `/opt/homebrew/bin`，裸 `nginx` 会 command not found） |
 | nginx reload | `/opt/homebrew/bin/nginx -s reload`（平滑）；或 `launchctl kickstart -k gui/$(id -u)/com.topems.nginx`（整进程重启） |
 | nginx 访问日志 | `/Users/xingzhai/topems/nginx/logs/access.log`（`~/topems/logs/nginx.out`、`nginx.err` 为 launchd 捕获的进程输出） |
-| health 探针 | `curl -k https://localhost/health` 与 `curl http://localhost:8099/health` |
+| health 探针 | `curl -k https://localhost/health` 与 `curl http://127.0.0.1:8099/health` |
+| 监听地址核验 | `lsof -nP -iTCP:8099 -sTCP:LISTEN` —— 期望仅 `127.0.0.1:8099`，**不得出现 `*:8099`**。监听地址由 `BIND_ADDR` 决定、默认回环（生产 plist 不设该变量）；对外统一走 nginx |
 
 ### 升级流程（新 main 拉取后）
 ```bash
@@ -144,6 +145,7 @@ cd ~/topems/repo && git fetch origin && git reset --hard origin/main   # 仅限�
 cargo build --release -p topems-server                                  # 或拉取预编译产物
 cp target/release/topems-server ~/topems/bin/                           # 替换二进制
 launchctl kickstart -k gui/$(id -u)/com.topems.server                   # 重启生效
+lsof -nP -iTCP:8099 -sTCP:LISTEN                                        # 期望 127.0.0.1:8099（不是 *:8099）
 # 若含迁移：生产禁止 sqlx migrate run → 按 DDL 运维流程逐条执行（database-half-migration-ops.md）
 ```
 ### 回滚

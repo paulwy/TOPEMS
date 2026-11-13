@@ -45,6 +45,6 @@ ENV TOPEMS_MONOLITH=1
 
 # 健康检查：monolith HTTP 健康端点
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://localhost:8099/api/server/health >/dev/null || exit 1
+    CMD curl -fsS http://127.0.0.1:8099/api/server/health >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/topems-server"]

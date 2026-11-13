@@ -538,13 +538,15 @@ ssh xingzhai@192.168.110.115 "launchctl bootstrap gui/\$(id -u) ~/Library/Launch
 
 * **前端页面**：[http://192.168.110.115/](http://192.168.110.115/)
 
-* **后端 API**：[http://192.168.110.115:8099/api/](http://192.168.110.115:8099/api/)...
+* **后端 API**：[http://192.168.110.115/api/](http://192.168.110.115/api/)...（经 nginx 反代；8099 只监听 `127.0.0.1`，**不可直连**）
 
-* **健康检查**：[http://192.168.110.115:8099/api/server/health](http://192.168.110.115:8099/api/server/health)
+* **健康检查**：[http://192.168.110.115/api/server/health](http://192.168.110.115/api/server/health)
 
 ### 为什么通过 nginx 而不是直连 8099？
 
 
+
+* **8099 只监听回环**：`topems-server` 的监听地址由 `BIND_ADDR` 决定，默认 `127.0.0.1`（生产 plist 不设该变量）；局域网直连 `:8099` 会被拒绝，唯一对外入口是 nginx 的 80/443
 
 * CORS 白名单只允许 [localhost](https://localhost)—— 浏览器从其他机器直连 8099 会被跨域拦截
 

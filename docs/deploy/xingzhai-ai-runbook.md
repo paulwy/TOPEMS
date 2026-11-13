@@ -106,10 +106,12 @@ cat > ~/Library/LaunchAgents/com.topems.server.plist <<'PLIST'
 </dict></plist>
 PLIST
 launchctl load ~/Library/LaunchAgents/com.topems.server.plist
-sleep 3 && curl -s -m 5 http://localhost:8099/health && echo " <- BFF OK"
+sleep 3 && curl -s -m 5 http://127.0.0.1:8099/health && echo " <- BFF OK"
 ```
 
 > 若配置管理用 `config/env/` 模板：模板内 `DATABASE_URL` 同样替换为本机连接串（密码来自 secret 文件）。
+> **不要在该 plist 里设置 `BIND_ADDR`**：不设即默认监听 `127.0.0.1:8099`（进程只听回环，对外统一走 nginx）；
+> 显式设 `BIND_ADDR=0.0.0.0` 会让局域网绕过 nginx 直连明文端口，务必避免。
 > 其余服务（erp/finance/hrm…）**不单独启动**——单体已内嵌；确需独立服务时按 `deploy/systemd/*.service` 的 ExecStart 逐条对照写 plist。
 
 ## 6. nginx（drill 适配版）

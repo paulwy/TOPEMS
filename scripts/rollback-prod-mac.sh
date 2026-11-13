@@ -73,7 +73,7 @@ do_run sleep 5
 # 5. 验证
 say "5. 验证: /health 200 + 迁移计数"
 if [ "$MODE" = "real" ]; then
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 http://localhost:8099/health 2>/dev/null || echo 000)
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 http://127.0.0.1:8099/health 2>/dev/null || echo 000)
   echo "  /health -> $code"
   env PGPASSWORD="$DB_PASS" "$PG18/psql" -h "$DSN_HOST" -p "$DSN_PORT" -U "$DSN_USER" -d "$DSN_DB" -tAc "SELECT 'migrations='||COUNT(*) FROM _sqlx_migrations;" 2>&1 | head -1
 else

@@ -4,7 +4,7 @@
 
 > **当前本机生产实际是 macOS launchd，不是 systemd。**
 > - 服务：LaunchAgent `gui/501/com.topems.server`（`~/Library/LaunchAgents/com.topems.server.plist`，`KeepAlive=true`、`RunAtLoad=true`）
-> - 二进制：`/Users/xingzhai/topems/bin/topems-server`，监听 `:8099`（lsof 实测 `*:8099`）
+> - 二进制：`/Users/xingzhai/topems/bin/topems-server`，监听 `127.0.0.1:8099`（代码默认回环；2026-11-13 实测生产旧二进制仍为 `*:8099`，换件后收敛）
 > - nginx：LaunchAgent `gui/501/com.topems.nginx`，配置 `/opt/homebrew/etc/nginx/nginx.conf` + `servers/topems.conf`、`servers/topems-ssl.conf`；80/443 全部**直接** `proxy_pass http://127.0.0.1:8099`，**无 upstream 块**
 > - 生产库：`topems_prod`（`ehs` schema 71 表）；旧库 `topems`（65 表）**不是生产**
 > - 迁移账本：`_sqlx_migrations` **667** 条成功、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）
@@ -18,6 +18,21 @@
 | **Docker Compose** | **已弃用**（临时验证/历史参考，非生产） | 一次性测试/演示；生产数据禁入容器 | `docker/`（DEPRECATED，见其 README） |
 | **Kubernetes** | 可选（当前未启用） | 多节点集群、云原生部署 | `k8s/` |
 | **Nginx** | 反向代理（通用） | 本机 macOS：直连 `proxy_pass` → :8099；Linux 模板：upstream → :8099 | `nginx/` |
+
+## 监听地址口径（进程只听回环，对外统一走 nginx）
+
+- `topems-server` 的 HTTP 监听地址由环境变量 `BIND_ADDR` 决定，**默认 `127.0.0.1`**（单一信源：`lib/shared-bootstrap` 的 `DEFAULT_BIND_ADDR`）；端口仍由 `SERVER_PORT` 决定（默认 `8099`）。
+- 生产 plist（`~/Library/LaunchAgents/com.topems.server.plist`）**不设** `BIND_ADDR`，所以进程只监听回环：局域网无法绕过 nginx 直连 8099，明文 HTTP、TLS 与 access_log 不会被绕开。
+- 对外入口统一是 nginx：本机 macOS 生产 80/443 直接 `proxy_pass http://127.0.0.1:8099`（**无 upstream 块**），nginx 配置不在本仓库改动范围内。
+- 只有确实需要全部网卡的场景（例如容器内端口映射）才显式设置 `BIND_ADDR=0.0.0.0`，并在部署记录里写明原因；默认配置不得放开。
+- 核验方式：
+  ```bash
+  lsof -nP -iTCP:8099 -sTCP:LISTEN        # 期望仅 127.0.0.1:8099，不得为 *:8099
+  curl -sf http://127.0.0.1:8099/api/server/health   # 本机探活正常
+  # 从局域网另一台机器执行（期望连接被拒，证明无法绕过 nginx）
+  curl -m 3 http://<生产机IP>:8099/api/server/health
+  ```
+- 防回退：`python3 scripts/dev/check-config-consistency.py` 校验「默认监听地址回环 + 入口不硬编码 `0.0.0.0` + nginx 直代目标为回环」；`cargo test -p topems-shared-bootstrap bind_addr` 覆盖默认值单测。
 
 ## 目录结构
 

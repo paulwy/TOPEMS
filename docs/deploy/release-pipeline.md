@@ -45,7 +45,7 @@ cp topems-server ~/topems/bin/topems-server
 launchctl kickstart -k gui/$(id -u)/com.topems.server
 # ④ 探针
 sleep 2
-curl -fsS http://localhost:8099/health && echo " BFF OK"
+curl -fsS http://127.0.0.1:8099/health && echo " BFF OK"
 curl -fsS https://localhost/health --insecure && echo " nginx OK"
 ```
 
