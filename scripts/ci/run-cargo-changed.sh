@@ -25,7 +25,9 @@ if [ -z "$RS_FILES" ]; then
 fi
 
 # 2) 归属：svc/<dir> 或 lib/<dir>；其他路径视为 workspace 级（触发全量兜底）
-CRATE_DIRS="$(printf '%s\n' "$RS_FILES" | awk -F/ '/^(svc|lib)\/[^/]+\//{print $1"/"$2; next}{print "WORKSPACE"}')"
+#    注：不能用正则字面量 [^/]，macOS/BSD awk 的词法在转义外的 / 处截断正则，
+#        导致 "nonterminated character class"，包名列表为空而退化为全量。改用字段判定。
+CRATE_DIRS="$(printf '%s\n' "$RS_FILES" | awk -F/ '$1=="svc"||$1=="lib"{if(NF>=3&&$2!="")print $1"/"$2;else print "WORKSPACE";next}{print "WORKSPACE"}')"
 
 run_full() {
   echo "[cargo-changed] workspace 级变更 → 全量 ${MODE}"
