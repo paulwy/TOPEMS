@@ -734,7 +734,7 @@ impl ScmEventHandlers {
         })?;
 
         // 同步写入入库库存移动历史（供 turnover 趋势查询）
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"INSERT INTO scm.wms_inventory_movement_snapshots
                 (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                  quantity, unit, total_value, reference_type, reference_id,
@@ -753,17 +753,33 @@ impl ScmEventHandlers {
         .bind(payload.received_at.unwrap_or(now))
         .bind(now)
         .execute(&self.db)
-        .await;
+        .await
+        {
+            tracing::error!(
+                "[scm] 写入入库库存移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
+                payload.inbound_no,
+                payload.warehouse_id,
+                e
+            );
+        }
 
-        // 同步更新采购订单状态
+        // 同步更新采购订单状态（订单状态丢失必须上抛让事件重试，不能吞错）
         if let Some(po_id) = payload.reference_order_id {
-            let _ = sqlx::query(
+            sqlx::query(
                 "UPDATE scm.purchase_orders SET status = 'receiving', updated_at = $1 WHERE id = $2 AND status IN ('approved', 'partially_received')",
             )
             .bind(now)
             .bind(po_id)
             .execute(&self.db)
-            .await;
+            .await
+            .map_err(|e| {
+                tracing::error!(
+                    "[scm] 更新采购订单收货状态失败: po_id={}, err={}",
+                    po_id,
+                    e
+                );
+                TopemsError::DatabaseQuery(format!("更新采购订单状态失败: {}", e))
+            })?;
         }
 
         Ok(())
@@ -815,7 +831,7 @@ impl ScmEventHandlers {
         })?;
 
         // 同步写入出库库存移动历史（供 turnover 趋势查询）
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"INSERT INTO scm.wms_inventory_movement_snapshots
                 (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                  quantity, unit, total_value, reference_type, reference_id,
@@ -834,7 +850,15 @@ impl ScmEventHandlers {
         .bind(payload.shipped_at.unwrap_or(now))
         .bind(now)
         .execute(&self.db)
-        .await;
+        .await
+        {
+            tracing::error!(
+                "[scm] 写取出库库存移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
+                payload.outbound_no,
+                payload.warehouse_id,
+                e
+            );
+        }
 
         Ok(())
     }
@@ -907,7 +931,7 @@ impl ScmEventHandlers {
 
             // 同步写入库存移动历史（供 turnover 趋势查询）
             if payload.delta.abs() > f64::EPSILON {
-                let _ = sqlx::query(
+                let movement_result = sqlx::query(
                     r#"INSERT INTO scm.wms_inventory_movement_snapshots
                         (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                          quantity, unit, total_value, reference_type, reference_id,
@@ -932,6 +956,15 @@ impl ScmEventHandlers {
                 .bind(now)
                 .execute(&self.db)
                 .await;
+
+                if let Err(e) = movement_result {
+                    tracing::error!(
+                        "[scm] 写入库存调整移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
+                        format!("INV-{}", payload.inventory_id),
+                        payload.warehouse_id,
+                        e
+                    );
+                }
             }
         }
 
