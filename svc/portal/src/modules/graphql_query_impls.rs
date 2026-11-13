@@ -94,37 +94,48 @@ pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<
     }
 
     // V34.0: 修复 portal_todos 查询（使用正确的 schema 和 completed 列）
-    if let Ok(mut scope) = state.db.scope_read().await {
-        let rows = sqlx::query(
-            r#"SELECT id, title, created_at FROM portal.portal_todos
-               WHERE deleted_at IS NULL AND completed = FALSE
+    // 租户隔离：portal_todos 是逐租户个人数据，必须带 tenant_id 谓词。
+    // 租户取自 auth_middleware 写入 task-local 的请求上下文（既有机制），
+    // 缺失/系统身份时不查本地待办（fail-closed），不得无谓词读全表。
+    let tenant = topems_shared_auth::middleware::tenant::current_request_tenant()
+        .filter(|ctx| !ctx.system && !ctx.tenant.is_nil())
+        .map(|ctx| ctx.tenant);
+    if let Some(tenant) = tenant {
+        if let Ok(mut scope) = state.db.scope_read().await {
+            let rows = sqlx::query(
+                r#"SELECT id, title, created_at FROM portal.portal_todos
+               WHERE tenant_id = $1 AND deleted_at IS NULL AND completed = FALSE
                ORDER BY created_at DESC LIMIT 10"#,
-        )
-        .fetch_all(&mut scope)
-        .await;
-        if let Err(e) = scope.commit().await {
-            tracing::warn!("提交待办只读作用域失败: {}", e);
-        }
-        if let Ok(rows) = rows {
-            use sqlx::Row;
-            for row in rows {
-                let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
-                let title: String = row.try_get("title").unwrap_or_default();
-                let created_at: chrono::DateTime<chrono::Utc> = row
-                    .try_get("created_at")
-                    .unwrap_or_else(|_| chrono::Utc::now());
-                if !title.is_empty() {
-                    todos.push(UnifiedTodoGql {
-                        id: id.to_string(),
-                        title,
-                        source: "portal".into(),
-                        priority: 0,
-                        status: "pending".into(),
-                        created_at,
-                    });
+            )
+            .bind(tenant)
+            .fetch_all(&mut scope)
+            .await;
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("提交待办只读作用域失败: {}", e);
+            }
+            if let Ok(rows) = rows {
+                use sqlx::Row;
+                for row in rows {
+                    let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
+                    let title: String = row.try_get("title").unwrap_or_default();
+                    let created_at: chrono::DateTime<chrono::Utc> = row
+                        .try_get("created_at")
+                        .unwrap_or_else(|_| chrono::Utc::now());
+                    if !title.is_empty() {
+                        todos.push(UnifiedTodoGql {
+                            id: id.to_string(),
+                            title,
+                            source: "portal".into(),
+                            priority: 0,
+                            status: "pending".into(),
+                            created_at,
+                        });
+                    }
                 }
             }
         }
+    } else {
+        tracing::warn!("portal_todos: 缺少请求租户上下文，跳过本地待办查询（fail-closed）");
     }
 
     // 从 notification 服务获取未读通知
