@@ -109,7 +109,7 @@ impl EhsRealModule {
         let protected_routes = modules::create_api_routes()
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),
-                topems_shared_auth::tenant_middleware(),
+                topems_shared_auth::tenant_middleware_no_txn(),
             ))
             .layer(axum::middleware::from_fn(require_module_access("ehs")))
             .with_state(state);
