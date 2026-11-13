@@ -11,7 +11,9 @@
        upstream server_service 必须指向 localhost:8099；
      - 不得残留非注释的 `map $request_uri $api_upstream` 前缀分发段。
   3. ports.env 中每个 *_PORT 键应能对应 services.yaml 中某个服务（或注释声明的虚拟服务/基础设施）。
-  4. 输出差异清单并以非零退出码结束（供 CI/lefthook 门禁使用）。
+  4. 进程监听地址默认必须回环（`DEFAULT_BIND_ADDR`），且入口不得硬编码 `0.0.0.0`；
+     nginx 反代目标主机也必须是回环 —— 保证「进程只听回环，对外统一走 nginx」不退化。
+  5. 输出差异清单并以非零退出码结束（供 CI/lefthook 门禁使用）。
 
 用法：python3 scripts/dev/check-config-consistency.py
 """
@@ -28,6 +30,15 @@ NGINX_FILES = [
     ROOT / "apps" / "web" / "nginx.conf",
     ROOT / "deploy" / "nginx" / "topems.conf",
 ]
+# macOS 生产镜像模板：80/443 直接 proxy_pass 到本机 BFF，不经 upstream 块。
+NGINX_DIRECT_FILES = [
+    ROOT / "deploy" / "nginx" / "macos" / "servers" / "topems.conf",
+    ROOT / "deploy" / "nginx" / "macos" / "servers" / "topems-ssl.conf",
+]
+SHARED_BOOTSTRAP = ROOT / "lib" / "shared-bootstrap" / "src" / "lib.rs"
+SERVER_MAIN = ROOT / "svc" / "server" / "src" / "main.rs"
+MONOLITH_PORT = "8099"
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
 
 # ports.env 中允许的基础设施/虚拟端口键（不要求有对应 services.yaml 服务）
 KNOWN_INFRA = {
@@ -89,6 +100,63 @@ def check_nginx_upstream():
                 errs.append(f"[nginx→8099] {label}:{lineno} 残留 P0-3 前前缀 map（应移除）")
     return errs
 
+def check_bind_addr():
+    """校验「进程只听回环，对外统一走 nginx」口径不被回退。
+
+    - shared-bootstrap 的 `DEFAULT_BIND_ADDR` 必须是回环地址（默认值单一信源）；
+    - topems-server 入口不得硬编码未指定地址（0.0.0.0 / 0,0,0,0）；
+    - nginx 直代 conf 的 proxy_pass 目标主机必须是回环、端口为 :8099。
+    """
+    errs = []
+
+    if not SHARED_BOOTSTRAP.exists():
+        errs.append(f"[bind] 缺失 {SHARED_BOOTSTRAP.relative_to(ROOT)}")
+    else:
+        m = re.search(
+            r'pub const DEFAULT_BIND_ADDR: &str = "([^"]+)"', SHARED_BOOTSTRAP.read_text()
+        )
+        if m is None:
+            errs.append("[bind] shared-bootstrap 未声明 DEFAULT_BIND_ADDR（默认监听地址必须显式可查）")
+        elif m.group(1) not in {"127.0.0.1", "::1"}:
+            errs.append(
+                f"[bind] DEFAULT_BIND_ADDR={m.group(1)!r} 不是回环：默认必须 127.0.0.1，"
+                "放开全部网卡需显式设 BIND_ADDR"
+            )
+
+    if not SERVER_MAIN.exists():
+        errs.append(f"[bind] 缺失 {SERVER_MAIN.relative_to(ROOT)}")
+    else:
+        for lineno, line in enumerate(SERVER_MAIN.read_text().splitlines(), 1):
+            if line.strip().startswith("//"):
+                continue
+            if re.search(r"0,\s*0,\s*0,\s*0|0\.0\.0\.0", line):
+                errs.append(
+                    f"[bind] svc/server/src/main.rs:{lineno} 硬编码未指定监听地址"
+                    "（应走 BIND_ADDR，默认回环）"
+                )
+
+    for conf in NGINX_DIRECT_FILES:
+        if not conf.exists():
+            errs.append(f"[bind→nginx] 缺失 conf 文件 {conf.relative_to(ROOT)}")
+            continue
+        label = str(conf.relative_to(ROOT))
+        for lineno, line in enumerate(conf.read_text().splitlines(), 1):
+            if line.strip().startswith("#"):
+                continue
+            for target in re.findall(r"proxy_pass\s+http://([^/;\s]+)", line):
+                host, _, port = target.rpartition(":")
+                if host not in LOOPBACK_HOSTS:
+                    errs.append(
+                        f"[bind→nginx] {label}:{lineno} proxy_pass 目标 {target} 不是回环"
+                        "（进程只监听 127.0.0.1）"
+                    )
+                elif port != MONOLITH_PORT:
+                    errs.append(
+                        f"[bind→nginx] {label}:{lineno} proxy_pass 端口 {port} ≠ {MONOLITH_PORT}"
+                    )
+    return errs
+
+
 def main():
     errors = []
     services = load_services()
@@ -103,7 +171,10 @@ def main():
     # 2. nginx upstream server_service -> 8099 直代校验（dev + 生产两份 conf）
     errors.extend(check_nginx_upstream())
 
-    # 3. ports.env → services.yaml（非基础设施键应能对应服务 env_var）
+    # 3. 监听地址口径：默认回环 + nginx 目标回环
+    errors.extend(check_bind_addr())
+
+    # 4. ports.env → services.yaml（非基础设施键应能对应服务 env_var）
     for key in sorted(ports):
         if key in KNOWN_INFRA:
             continue
@@ -117,7 +188,7 @@ def main():
         for e in errors:
             print("   -", e)
         sys.exit(1)
-    print(f"✅ 配置一致性校验通过：services.yaml {len(services)} 服务 ↔ ports.env {len(ports)} 项 ↔ nginx upstream 8099 {len(NGINX_FILES)} 份 conf")
+    print(f"✅ 配置一致性校验通过：services.yaml {len(services)} 服务 ↔ ports.env {len(ports)} 项 ↔ nginx upstream 8099 {len(NGINX_FILES)} 份 conf ↔ 监听地址默认回环（nginx 直代 {len(NGINX_DIRECT_FILES)} 份 conf）")
 
 if __name__ == "__main__":
     main()
