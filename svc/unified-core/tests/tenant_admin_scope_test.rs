@@ -794,13 +794,13 @@ async fn iam_role_create_duplicate_and_user_permission_cases() {
     .expect("统计实际权限码数失败");
     assert!(n_roles > 0 && n_perms > 0, "fixture 应至少持有 1 角色 1 权限码");
     assert_eq!(
-        roles.len() as i64,
+        i64::try_from(roles.len()).expect("角色数超出 i64"),
         n_roles,
         "角色数 N={n_roles} M={} 不一致",
         roles.len()
     );
     assert_eq!(
-        perms.len() as i64,
+        i64::try_from(perms.len()).expect("权限码数超出 i64"),
         n_perms,
         "权限码数 N={n_perms} M={} 不一致",
         perms.len()
