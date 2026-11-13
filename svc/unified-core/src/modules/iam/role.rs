@@ -15,6 +15,15 @@ fn json_error(code: u16, message: &str) -> Json<serde_json::Value> {
     Json(topems_shared_core::response::error_value(code, message))
 }
 
+/// 唯一约束冲突（SQLSTATE 23505）。
+///
+/// `core_roles.name` 上的唯一约束是全局的：租户通道内的 `EXISTS` 只能看到
+/// 本租户 + 全局角色，看不到其他租户同名角色，因此跨租户重名或重名已软删
+/// 角色只会在 INSERT 时暴露为 23505，必须映射为 409 而不是 500。
+fn is_unique_violation(err: &sqlx::Error) -> bool {
+    matches!(err, sqlx::Error::Database(db) if db.code().as_deref() == Some("23505"))
+}
+
 /// 解析并校验待授予的权限 ID：
 /// - 非法/不存在的 ID -> 400；
 /// - 超出操作者自身权限集或平台层码 -> 403（租户管理员提权边界）。
@@ -244,13 +253,23 @@ pub async fn create_role(
     };
 
     // 检查角色名是否已存在（在作用域内检查：租户通道能看到本租户角色 + 全局角色）
-    let exists: bool = sqlx::query_scalar(
+    let exists: bool = match sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1)",
     )
     .bind(&name)
     .fetch_one(&mut tx)
     .await
-    .unwrap_or(false);
+    {
+        Ok(exists) => exists,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("检查角色名失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("创建角色失败: {}", e),
+            ));
+        }
+    };
 
     if exists {
         let _ = tx.rollback().await;
@@ -272,6 +291,10 @@ pub async fn create_role(
     .await
     {
         let _ = tx.rollback().await;
+        if is_unique_violation(&e) {
+            tracing::warn!("创建角色名称冲突: {}", e);
+            return Json(topems_shared_core::response::error_value(409, "角色名已存在"));
+        }
         tracing::error!("创建角色失败: {}", e);
         return Json(topems_shared_core::response::error_value(500, &format!("创建角色失败: {}", e)));
     }
