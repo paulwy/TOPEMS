@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "lefthook install && node scripts/patch-react-transition-group.cjs",
+    "prepare": "bash scripts/ci/install-git-hooks.sh && node scripts/patch-react-transition-group.cjs",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
     "dev:backend": "./scripts/topems.sh start iam",
