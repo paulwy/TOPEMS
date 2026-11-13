@@ -610,6 +610,12 @@ pub struct LimsRecordCompletedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimsReagentAlertPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 该字段为新增必填语义；`serde(default)` 仅用于兼容改动前已在流/DLQ 里的旧消息
+    /// （反序列化为 nil），消费端 `dispatch` 会把 nil 判为非法并拒收 + 计数，
+    /// 与扩展前“整类事件一律拒收”的行为保持一致，不会让历史事件变成合法。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub reagent_id: Uuid,
     pub reagent_no: String,
     pub reagent_name: String,

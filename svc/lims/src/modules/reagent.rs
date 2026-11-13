@@ -250,12 +250,14 @@ pub async fn create_reagent(
                     if let Some(ref publisher) = state.event_publisher {
                         let publisher = publisher.clone();
                         let rid = Uuid::parse_str(&reagent.id).unwrap_or_else(|_| Uuid::nil());
+                        let tid = tenant_id;
                         let rno = reagent.reagent_no.clone();
                         let rname = reagent.name.clone();
                         let stock = reagent.quantity.map(|q| q as i32);
                         let expiry = Some(expired.to_rfc3339());
                         tokio::spawn(async move {
                             let payload = topems_shared_event::event::LimsReagentAlertPayload {
+                                tenant_id: tid,
                                 reagent_id: rid,
                                 reagent_no: rno,
                                 reagent_name: rname,

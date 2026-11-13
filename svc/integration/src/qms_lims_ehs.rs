@@ -43,6 +43,42 @@ fn rand_suffix(n: usize) -> String {
         .collect()
 }
 
+/// QMS 质量问题 → EHS 隐患的确定性编号。
+///
+/// `qa_quality_issues.issue_no` 有全局 UNIQUE 约束，且仅由 QMS 以 `QI-{8hex}` 生成，
+/// 因此 `HAZ-QMS-{issue_no}`（当前 19 字符）在同一来源重投时恒等，且远小于
+/// `ehs.qa_ehs_hazards.hazard_no` 的 64 字符上限。
+fn quality_issue_hazard_no(issue_no: &str) -> String {
+    format!("HAZ-QMS-{}", issue_no)
+}
+
+/// LIMS 检测异常 → EHS 隐患的确定性编号。
+///
+/// 该事件 payload 不含 inspection_no；`task_no` 是 varchar(64) 的可变文本，
+/// 加前缀后可能超过 `hazard_no` 的 64 字符上限。因此改用有界的 `task_id`
+/// （UUID，全局唯一），并用 `test_item` 的短摘要区分同一任务下的多个异常检测项，
+/// 避免不同检测项被 `ON CONFLICT` 合并覆盖。整体长度 54 字符。
+fn lims_abnormal_hazard_no(task_id: Uuid, test_item: &str) -> String {
+    let digest = format!("{:x}", md5::compute(test_item.trim().as_bytes()));
+    let short: String = digest.chars().take(8).collect();
+    format!("HAZ-LIMS-{task_id}-{short}")
+}
+
+/// LIMS 试剂告警 → EHS 告警的确定性编号。
+///
+/// `alert_type` 只由 LIMS 发布端写入（expired / low_stock），未知值统一归入 `other`：
+/// 既避免自由文本进入编号，又让同一试剂的不同告警类型各自收敛成一行。
+/// 长度上限 55 字符（`ALR-LIMS-` 9 + UUID 36 + `-` 1 + kind 9），小于
+/// `ehs.qa_ehs_alerts.alert_no` 的 64 字符上限。
+fn reagent_alert_no(reagent_id: Uuid, alert_type: Option<&str>) -> String {
+    let kind = match alert_type.map(str::trim) {
+        Some("expired") => "expired",
+        Some("low_stock") => "low_stock",
+        _ => "other",
+    };
+    format!("ALR-LIMS-{reagent_id}-{kind}")
+}
+
 async fn post_json(url: &str, body: &Value) -> Result<(), TopemsError> {
     let client = topems_shared_core::shared_http_client();
     let resp = client
@@ -158,7 +194,7 @@ pub async fn handle_qms_quality_issue_created(
         payload.issue_no
     );
 
-    let hazard_no = format!("HAZ-QMS-{}", rand_suffix(8));
+    let hazard_no = quality_issue_hazard_no(&payload.issue_no);
     let level = match payload.severity.as_deref() {
         Some("critical") | Some("high") => "high",
         Some("medium") => "medium",
@@ -292,7 +328,7 @@ pub async fn handle_lims_inspection_abnormal(
         payload.abnormal_data,
         payload.conclusion
     );
-    let hazard_no = format!("HAZ-LIMS-{}", rand_suffix(8));
+    let hazard_no = lims_abnormal_hazard_no(payload.task_id, &payload.test_item);
     let level = if payload.conclusion.contains("严重") || payload.conclusion.contains("超标") {
         "high"
     } else {
@@ -363,12 +399,13 @@ pub async fn handle_lims_record_completed(
 pub async fn handle_lims_reagent_alert(
     payload: &LimsReagentAlertPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "LimsReagentAlert")?;
     info!(
         "处理LIMS试剂告警事件 - 编排到EHS告警: {}",
         payload.reagent_no
     );
 
-    let alert_no = format!("ALERT-RGT-{}", rand_suffix(8));
+    let alert_no = reagent_alert_no(payload.reagent_id, payload.alert_type.as_deref());
     let alert_type = match payload.alert_type.as_deref() {
         Some("expired") => "过期告警",
         Some("low_stock") => "低库存告警",
@@ -378,6 +415,7 @@ pub async fn handle_lims_reagent_alert(
     post_json(
         &format!("{}/api/internal/ehs/alerts/integration", ehs_base_url()),
         &serde_json::json!({
+            "tenant_id": tenant_id,
             "alert_no": alert_no,
             "title": format!("试剂告警: {}", payload.reagent_name),
             "alert_type": alert_type,
@@ -429,14 +467,191 @@ pub async fn dispatch(event_type: EventType, payload: &Value) -> Result<(), Tope
             handle_lims_record_completed(&parsed).await?;
         }
         EventType::LimsReagentAlert => {
-            // 该 payload 无 tenant_id 字段，无法安全落库；明确拒收并计数，
-            // 待下一窗口扩展 payload 后再恢复（绝不落 NULL 业务行）。
-            return Err(reject_event_tenant(
-                "LimsReagentAlert",
-                "payload 无 tenant_id 字段",
-            ));
+            // payload 已扩展 tenant_id：缺失/空串/nil/解析失败仍拒收并计数，
+            // 通过后按事件租户编排到 EHS（绝不落 NULL 业务行）。
+            require_raw_payload_tenant(payload, "LimsReagentAlert")?;
+            let parsed = serde_json::from_value::<LimsReagentAlertPayload>(payload.clone())?;
+            handle_lims_reagent_alert(&parsed).await?;
         }
         _ => warn!("未处理的事件类型: {:?}", event_type),
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{extract::State, routing::post, Json, Router};
+    use std::sync::{Arc, Mutex};
+
+    #[derive(Clone, Default)]
+    struct Captured(Arc<Mutex<Vec<Value>>>);
+
+    async fn capture(
+        State(captured): State<Captured>,
+        Json(body): Json<Value>,
+    ) -> axum::http::StatusCode {
+        captured.0.lock().expect("capture lock").push(body);
+        axum::http::StatusCode::OK
+    }
+
+    /// 本地 mock EHS internal 端点：记录 integration 实际发出的请求体。
+    async fn start_mock_ehs() -> (String, Captured) {
+        let captured = Captured::default();
+        let app = Router::new()
+            .route("/api/internal/ehs/alerts/integration", post(capture))
+            .with_state(captured.clone());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind mock ehs");
+        let addr = listener.local_addr().expect("mock ehs addr");
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("mock ehs serve");
+        });
+        (format!("http://{}", addr), captured)
+    }
+
+    fn reagent_payload(tenant_id: Uuid) -> LimsReagentAlertPayload {
+        LimsReagentAlertPayload {
+            tenant_id,
+            reagent_id: Uuid::parse_str("0b9d5c1e-6a7f-4c2b-9d3e-2f1a4b5c6d7e")
+                .expect("reagent id"),
+            reagent_no: "RGT-0001".to_string(),
+            reagent_name: "无水乙醇".to_string(),
+            alert_type: Some("expired".to_string()),
+            severity: Some("high".to_string()),
+            description: Some("试剂已过期".to_string()),
+            current_stock: Some(2),
+            min_stock: None,
+            expiry_date: Some("2026-01-01T00:00:00+00:00".to_string()),
+        }
+    }
+
+    /// 三类事件来源编号：同来源恒等、来源不同则不同、长度不超过目标列 64 字符、ASCII 有界。
+    #[test]
+    fn event_source_keys_are_deterministic_and_bounded() {
+        assert_eq!(
+            quality_issue_hazard_no("QI-1234ABCD"),
+            "HAZ-QMS-QI-1234ABCD"
+        );
+        assert_eq!(
+            quality_issue_hazard_no("QI-1234ABCD"),
+            quality_issue_hazard_no("QI-1234ABCD")
+        );
+
+        let task_id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").expect("task id");
+        let appearance = lims_abnormal_hazard_no(task_id, "外观检查");
+        assert_eq!(appearance, lims_abnormal_hazard_no(task_id, "外观检查"));
+        assert_ne!(appearance, lims_abnormal_hazard_no(task_id, "尺寸测量"));
+        assert!(appearance.chars().all(|c| c.is_ascii()), "{appearance}");
+        assert!(appearance.len() <= 64, "{appearance}");
+
+        let reagent_id =
+            Uuid::parse_str("0b9d5c1e-6a7f-4c2b-9d3e-2f1a4b5c6d7e").expect("reagent id");
+        assert_eq!(
+            reagent_alert_no(reagent_id, Some("expired")),
+            format!("ALR-LIMS-{reagent_id}-expired")
+        );
+        assert_eq!(
+            reagent_alert_no(reagent_id, Some("expired")),
+            reagent_alert_no(reagent_id, Some("expired"))
+        );
+        assert_eq!(
+            reagent_alert_no(reagent_id, Some("low_stock")),
+            format!("ALR-LIMS-{reagent_id}-low_stock")
+        );
+        assert_eq!(
+            reagent_alert_no(reagent_id, Some("legacy_free_text")),
+            format!("ALR-LIMS-{reagent_id}-other")
+        );
+        assert!(reagent_alert_no(reagent_id, None).len() <= 64);
+    }
+
+    /// LIMS 发布 → integration 编排：事件租户透传、编号确定；重投请求体完全一致；
+    /// 缺失/非法租户拒收且计数递增。
+    #[tokio::test]
+    async fn reagent_alert_forwarding_is_tenant_scoped_and_redelivery_stable() {
+        let (base_url, captured) = start_mock_ehs().await;
+        let prev = std::env::var("EHS_SERVICE_URL").ok();
+        std::env::set_var("EHS_SERVICE_URL", &base_url);
+
+        let tenant_id = Uuid::parse_str("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee").expect("tenant");
+        let payload = reagent_payload(tenant_id);
+        let expected_alert_no = reagent_alert_no(payload.reagent_id, Some("expired"));
+
+        // 首次投递 + 原样重投：必须发出同一 alert_no / 同一租户。
+        handle_lims_reagent_alert(&payload)
+            .await
+            .expect("首次编排应成功");
+        handle_lims_reagent_alert(&payload)
+            .await
+            .expect("重投编排应成功");
+
+        {
+            let bodies = captured.0.lock().expect("capture lock");
+            assert_eq!(bodies.len(), 2, "两次投递都应发出请求");
+            assert_eq!(bodies[0], bodies[1], "重投请求体必须完全一致（幂等键收敛）");
+            assert_eq!(bodies[0]["alert_no"], serde_json::json!(expected_alert_no));
+            assert_eq!(
+                bodies[0]["tenant_id"],
+                serde_json::json!(tenant_id.to_string())
+            );
+            assert_eq!(bodies[0]["source_system"], serde_json::json!("LIMS"));
+            assert_eq!(
+                bodies[0]["source_id"],
+                serde_json::json!(payload.reagent_id.to_string())
+            );
+        }
+
+        // 经 dispatch 走完整反序列化路径，租户照样透传。
+        dispatch(
+            EventType::LimsReagentAlert,
+            &serde_json::to_value(&payload).expect("serialize payload"),
+        )
+        .await
+        .expect("合法租户经 dispatch 应成功");
+        {
+            let bodies = captured.0.lock().expect("capture lock");
+            assert_eq!(bodies.len(), 3);
+            assert_eq!(bodies[2], bodies[0]);
+        }
+
+        // 缺失/空串/nil/非法租户：拒收 + 计数递增，且不再发出请求。
+        let before = EVENT_TENANT_REJECTS.load(Ordering::Relaxed);
+        let mut illegal = serde_json::to_value(&payload).expect("serialize payload");
+        for bad in [
+            serde_json::Value::Null,
+            serde_json::json!(""),
+            serde_json::json!(Uuid::nil().to_string()),
+            serde_json::json!("not-a-uuid"),
+        ] {
+            illegal["tenant_id"] = bad.clone();
+            let err = dispatch(EventType::LimsReagentAlert, &illegal)
+                .await
+                .expect_err("非法租户必须拒收");
+            assert!(err.to_string().contains("tenant_ctx:reject"), "{err}");
+        }
+        // 历史事件（旧 payload 不含 tenant_id 字段）同样拒收，不得变成合法。
+        let mut legacy = serde_json::to_value(&payload).expect("serialize payload");
+        legacy
+            .as_object_mut()
+            .expect("payload object")
+            .remove("tenant_id");
+        dispatch(EventType::LimsReagentAlert, &legacy)
+            .await
+            .expect_err("旧 payload 缺失 tenant_id 必须拒收");
+
+        let after = EVENT_TENANT_REJECTS.load(Ordering::Relaxed);
+        assert_eq!(after - before, 5, "5 次非法事件均应计数");
+        assert_eq!(
+            captured.0.lock().expect("capture lock").len(),
+            3,
+            "非法租户不得触发下游请求"
+        );
+
+        match prev {
+            Some(v) => std::env::set_var("EHS_SERVICE_URL", v),
+            None => std::env::remove_var("EHS_SERVICE_URL"),
+        }
+    }
 }
