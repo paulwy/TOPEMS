@@ -145,6 +145,18 @@ SELECT current_database(),
 COMMIT;
 ```
 
+### 1.0.3 系统账本可见性口径（2026-11-12 起，所有窗口一律适用）
+
+> 起因：W7-B 验收时以表属主 `topems_prod` 查询 `scm.schema_defense_ledger` 得 1 行，一度被误判为“租户隔离泄漏”。
+
+| 项 | 口径 |
+| --- | --- |
+| 设计预期 | `scm.schema_defense_ledger` 是系统账本，**ENABLE RLS 但不 FORCE**；表属主查询会绕过 RLS 看到全部行，这是设计行为，**不是泄漏** |
+| 验收身份 | 断言该账本可见性必须用**非属主探针角色**（事务内 `CREATE ROLE` → `GRANT USAGE` + `GRANT SELECT,INSERT ON ALL TABLES IN SCHEMA scm` → `SET LOCAL ROLE`），期望 `0` 行 |
+| 判定 | 用属主角色查到非 0 行**不得**判为泄漏；只有非属主探针角色查到非 0 行才算失败 |
+| 收尾 | 探针角色与授权必须在同一事务内 `ROLLBACK`，并复查 `pg_roles` 无残留；跨租户 `INSERT` 期望 `42501` 也复用该角色 |
+| 实测 | 2026-11-12 W7-B 窗口：非属主探针 `LEDGER_AS_PROBE=0`、`PROBE_READ_T2=0`、跨租户 INSERT `42501`；`ROLLBACK` 后角色残留 0 |
+
 9 张备份表：
 
 `public.core_dict_types`、`public.core_dict_items`、`crm.crm_master_data_refs`、
