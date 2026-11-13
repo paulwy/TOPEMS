@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -683,19 +684,33 @@ pub async fn get_department_stats(
 /// GET /monitor/logs — query from public.core_workflow_tasks as process log proxy
 pub async fn list_logs(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_tasks")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.list_logs",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
 
-    let items: Vec<ProcessLog> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks t WHERE {}",
+        scope.sql_predicate("t.tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let items: Vec<ProcessLog> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -706,10 +721,13 @@ pub async fn list_logs(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
+           WHERE {}
            ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"#,
-    )
+        scope.sql_predicate("t.tenant_id", "$3")
+    )))
     .bind(page_size)
     .bind(offset)
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -723,10 +741,20 @@ pub async fn list_logs(
 /// GET /monitor/logs/{id}
 pub async fn get_log(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProcessLog> {
-    let log: Result<ProcessLog, _> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_log",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let log: Result<ProcessLog, _> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -737,9 +765,11 @@ pub async fn get_log(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
-           WHERE t.id = $1"#,
-    )
+           WHERE t.id = $1 AND {}"#,
+        scope.sql_predicate("t.tenant_id", "$2")
+    )))
     .bind(id)
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await;
 
@@ -759,6 +789,7 @@ pub async fn get_log(
 /// GET /monitor/logs/instance/{instance_id}
 pub async fn get_logs_by_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(instance_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
@@ -766,16 +797,27 @@ pub async fn get_logs_by_instance(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE instance_id = $1",
-    )
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_logs_by_instance",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks t WHERE t.instance_id = $1 AND {}",
+        scope.sql_predicate("t.tenant_id", "$2")
+    )))
     .bind(instance_id)
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let items: Vec<ProcessLog> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let items: Vec<ProcessLog> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -786,12 +828,14 @@ pub async fn get_logs_by_instance(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
-           WHERE t.instance_id = $1
+           WHERE t.instance_id = $1 AND {}
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
-    )
+        scope.sql_predicate("t.tenant_id", "$4")
+    )))
     .bind(instance_id)
     .bind(page_size)
     .bind(offset)
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -805,6 +849,7 @@ pub async fn get_logs_by_instance(
 /// GET /monitor/logs/workflow/{workflow_id}
 pub async fn get_logs_by_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
@@ -812,18 +857,29 @@ pub async fn get_logs_by_workflow(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar(
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_logs_by_workflow",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
-           WHERE i.workflow_id = $1"#,
-    )
+           WHERE i.workflow_id = $1 AND {}"#,
+        scope.sql_predicate("t.tenant_id", "$2")
+    )))
     .bind(workflow_id)
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let items: Vec<ProcessLog> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let items: Vec<ProcessLog> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -834,12 +890,14 @@ pub async fn get_logs_by_workflow(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
-           WHERE i.workflow_id = $1
+           WHERE i.workflow_id = $1 AND {}
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
-    )
+        scope.sql_predicate("t.tenant_id", "$4")
+    )))
     .bind(workflow_id)
     .bind(page_size)
     .bind(offset)
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -853,6 +911,7 @@ pub async fn get_logs_by_workflow(
 /// GET /monitor/logs/node/{workflow_id}/{node_id}
 pub async fn get_logs_by_node(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((workflow_id, node_id)): Path<(Uuid, String)>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
@@ -860,19 +919,30 @@ pub async fn get_logs_by_node(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar(
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_logs_by_node",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
-           WHERE i.workflow_id = $1 AND t.node_id = $2"#,
-    )
+           WHERE i.workflow_id = $1 AND t.node_id = $2 AND {}"#,
+        scope.sql_predicate("t.tenant_id", "$3")
+    )))
     .bind(workflow_id)
     .bind(&node_id)
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let items: Vec<ProcessLog> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let items: Vec<ProcessLog> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -883,13 +953,15 @@ pub async fn get_logs_by_node(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
-           WHERE i.workflow_id = $1 AND t.node_id = $2
+           WHERE i.workflow_id = $1 AND t.node_id = $2 AND {}
            ORDER BY t.created_at DESC LIMIT $3 OFFSET $4"#,
-    )
+        scope.sql_predicate("t.tenant_id", "$5")
+    )))
     .bind(workflow_id)
     .bind(&node_id)
     .bind(page_size)
     .bind(offset)
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -903,6 +975,7 @@ pub async fn get_logs_by_node(
 /// GET /monitor/logs/user/{user_id}
 pub async fn get_logs_by_user(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
@@ -910,16 +983,27 @@ pub async fn get_logs_by_user(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE assignee_id = $1",
-    )
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_logs_by_user",
+        "core_workflow_tasks",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks t WHERE t.assignee_id = $1 AND {}",
+        scope.sql_predicate("t.tenant_id", "$2")
+    )))
     .bind(user_id)
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let items: Vec<ProcessLog> = sqlx::query_as(
-        r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let items: Vec<ProcessLog> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT t.id, t.tenant_id as tenant_id,
                   t.instance_id as workflow_instance_id,
                   i.workflow_id, w.name as workflow_name,
                   t.node_id, NULL as node_name,
@@ -930,12 +1014,14 @@ pub async fn get_logs_by_user(
            FROM public.core_workflow_tasks t
            JOIN public.core_workflow_instances i ON i.id = t.instance_id
            JOIN public.core_workflows w ON w.id = i.workflow_id
-           WHERE t.assignee_id = $1
+           WHERE t.assignee_id = $1 AND {}
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
-    )
+        scope.sql_predicate("t.tenant_id", "$4")
+    )))
     .bind(user_id)
     .bind(page_size)
     .bind(offset)
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -994,48 +1080,75 @@ pub async fn get_realtime_stats(State(state): State<AppState>) -> ApiResponse<Re
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/dashboard
-pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<MonitorDashboard> {
+pub async fn get_dashboard_data(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<MonitorDashboard> {
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_dashboard_data",
+        "core_workflow_instances",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
     // Reuse statistics logic inline
-    let total_instances: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-    let running: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
-    )
+    let total_instances: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
-    )
+    let running: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending') AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let rejected: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
-    )
+    let completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let suspended: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'suspended'",
-    )
+    let rejected: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let error: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
-    )
+    let suspended: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'suspended' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let error: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let avg_duration: f64 = sqlx::query_scalar(
+    let avg_duration: f64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
-    )
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL AND {}"#,
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
@@ -1046,42 +1159,56 @@ pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<Mo
         0.0
     };
 
-    let by_status: Vec<StatusCount> = sqlx::query_as(
-        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances GROUP BY status ORDER BY count DESC",
-    )
+    let by_status: Vec<StatusCount> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances WHERE {} GROUP BY status ORDER BY count DESC",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
-    let by_workflow: Vec<WorkflowCount> = sqlx::query_as(
+    let by_workflow: Vec<WorkflowCount> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT w.id::text as workflow_id, w.name as workflow_name, COUNT(i.id) as count
-           FROM public.core_workflows w LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id AND {instance_pred}
+           WHERE {workflow_pred}
            GROUP BY w.id, w.name ORDER BY count DESC LIMIT 10"#,
-    )
+        instance_pred = scope.sql_predicate("i.tenant_id", "$1"),
+        workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
-    let recent: Vec<WorkflowInstance> = sqlx::query_as(
-        r#"SELECT id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+    let recent: Vec<WorkflowInstance> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        r#"SELECT id, tenant_id,
                   workflow_id, title, initiator_id, current_node_id, status, variables,
                   started_at, completed_at, created_at, updated_at
-           FROM public.core_workflow_instances ORDER BY created_at DESC LIMIT 10"#,
-    )
+           FROM public.core_workflow_instances WHERE {}
+           ORDER BY created_at DESC LIMIT 10"#,
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
-    let pending_tasks: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
-    )
+    let pending_tasks: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let completed_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE",
-    )
+    let completed_today: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -1270,28 +1397,95 @@ pub async fn get_sla_compliance(
 
 // ─── Handlers: Instance actions (skip / force-complete / force-terminate) ───
 
+/// 强制干预流程必须留痕：与实例更新同事务写入 public.audit_logs。
+async fn insert_force_audit(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant: Uuid,
+    claims: &Claims,
+    action: &str,
+    instance: &WorkflowInstance,
+    request_details: serde_json::Value,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"INSERT INTO public.audit_logs
+               (tenant_id, user_id, user_name, action, entity_type, entity_id,
+                request_details, response_details, status)
+           VALUES ($1, $2, $3, $4, 'workflow_instance', $5, $6, $7, 'success')"#,
+    )
+    .bind(tenant)
+    .bind(claims.user_id().ok())
+    .bind(&claims.username)
+    .bind(action)
+    .bind(instance.id)
+    .bind(request_details)
+    .bind(serde_json::json!({
+        "status": instance.status,
+        "current_node_id": instance.current_node_id,
+    }))
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
 /// POST /monitor/instances/{id}/skip
 pub async fn skip_node(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<SkipNodeRequest>,
 ) -> ApiResponse<WorkflowInstance> {
+    let scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+    let Some(tenant) = scope.tenant_id() else {
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
+
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启事务失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
+        }
+    };
+
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE public.core_workflow_instances
            SET current_node_id = CASE WHEN current_node_id = $2 THEN NULL ELSE current_node_id END,
                updated_at = NOW()
-           WHERE id = $1
-           RETURNING id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+           WHERE id = $1 AND tenant_id = $3::uuid
+           RETURNING id, tenant_id,
                      workflow_id, title, initiator_id, current_node_id, status, variables,
                      started_at, completed_at, created_at, updated_at"#,
     )
     .bind(id)
     .bind(&payload.node_id)
-    .fetch_one(&state.pool)
+    .bind(tenant)
+    .fetch_one(&mut *tx)
     .await;
 
     match instance {
-        Ok(v) => ApiResponse::success(v, "跳过节点成功"),
+        Ok(v) => {
+            let audit = insert_force_audit(
+                &mut tx,
+                tenant,
+                &claims,
+                "skip_node",
+                &v,
+                serde_json::json!({ "node_id": payload.node_id }),
+            )
+            .await;
+            if let Err(e) = audit {
+                tracing::error!("跳过节点审计写入失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
+            }
+            if let Err(e) = tx.commit().await {
+                tracing::error!("跳过节点提交失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
+            }
+            ApiResponse::success(v, "跳过节点成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 ApiResponse::from(TopemsError::ResourceNotFound(
@@ -1308,23 +1502,61 @@ pub async fn skip_node(
 /// POST /monitor/instances/{id}/force-complete
 pub async fn force_complete(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(_payload): Json<Option<ForceActionRequest>>,
+    Json(payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
+    let scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+    let Some(tenant) = scope.tenant_id() else {
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
+
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启事务失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
+        }
+    };
+
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE public.core_workflow_instances
            SET status = 'completed', completed_at = NOW(), updated_at = NOW()
-           WHERE id = $1
-           RETURNING id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+           WHERE id = $1 AND tenant_id = $2::uuid
+           RETURNING id, tenant_id,
                      workflow_id, title, initiator_id, current_node_id, status, variables,
                      started_at, completed_at, created_at, updated_at"#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind(tenant)
+    .fetch_one(&mut *tx)
     .await;
 
     match instance {
-        Ok(v) => ApiResponse::success(v, "强制完成成功"),
+        Ok(v) => {
+            let reason = payload.and_then(|p| p.reason);
+            let audit = insert_force_audit(
+                &mut tx,
+                tenant,
+                &claims,
+                "force_complete",
+                &v,
+                serde_json::json!({ "reason": reason }),
+            )
+            .await;
+            if let Err(e) = audit {
+                tracing::error!("强制完成审计写入失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
+            }
+            if let Err(e) = tx.commit().await {
+                tracing::error!("强制完成提交失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
+            }
+            ApiResponse::success(v, "强制完成成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 ApiResponse::from(TopemsError::ResourceNotFound(
@@ -1341,23 +1573,61 @@ pub async fn force_complete(
 /// POST /monitor/instances/{id}/force-terminate
 pub async fn force_terminate(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(_payload): Json<Option<ForceActionRequest>>,
+    Json(payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
+    let scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+    let Some(tenant) = scope.tenant_id() else {
+        return ApiResponse::bad_request("缺少租户上下文");
+    };
+
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启事务失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
+        }
+    };
+
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE public.core_workflow_instances
            SET status = 'terminated', completed_at = NOW(), updated_at = NOW()
-           WHERE id = $1
-           RETURNING id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
+           WHERE id = $1 AND tenant_id = $2::uuid
+           RETURNING id, tenant_id,
                      workflow_id, title, initiator_id, current_node_id, status, variables,
                      started_at, completed_at, created_at, updated_at"#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind(tenant)
+    .fetch_one(&mut *tx)
     .await;
 
     match instance {
-        Ok(v) => ApiResponse::success(v, "强制终止成功"),
+        Ok(v) => {
+            let reason = payload.and_then(|p| p.reason);
+            let audit = insert_force_audit(
+                &mut tx,
+                tenant,
+                &claims,
+                "force_terminate",
+                &v,
+                serde_json::json!({ "reason": reason }),
+            )
+            .await;
+            if let Err(e) = audit {
+                tracing::error!("强制终止审计写入失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
+            }
+            if let Err(e) = tx.commit().await {
+                tracing::error!("强制终止提交失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
+            }
+            ApiResponse::success(v, "强制终止成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 ApiResponse::from(TopemsError::ResourceNotFound(
