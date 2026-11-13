@@ -21,26 +21,27 @@ export RUSTFLAGS="-D warnings"
 # 1) 本次 push 变更文件。基线用 merge-base(远端, HEAD)：只算本地新增提交，
 #    不会把远端已并入的历史算进来；origin/main 不可用时依次尝试 @{upstream}、HEAD~1。
 #    HEAD~1 仅覆盖最后一笔提交，多提交 push 会漏检，故显式告警。
+BASE=""
 BASE_SRC=""
 resolve_base() {
   local ref mb
   for ref in origin/main '@{upstream}'; do
     git rev-parse --verify -q "$ref" >/dev/null 2>&1 || continue
     if mb="$(git merge-base "$ref" HEAD 2>/dev/null)"; then
+      BASE="$mb"
       BASE_SRC="$ref"
-      printf '%s\n' "$mb"
       return 0
     fi
   done
   if git rev-parse --verify -q 'HEAD~1' >/dev/null 2>&1; then
+    BASE="$(git rev-parse HEAD~1)"
     BASE_SRC="HEAD~1"
     echo "[cargo-changed] 警告：origin/main 与 @{upstream} 均不可用，回退 HEAD~1（仅覆盖最后一笔提交，多提交 push 可能漏检）" >&2
-    git rev-parse HEAD~1
     return 0
   fi
   return 1
 }
-if ! BASE="$(resolve_base)"; then
+if ! resolve_base; then
   echo "[cargo-changed] 无法确定变更基线（origin/main / @{upstream} / HEAD~1 均不可用），门禁失败" >&2
   exit 1
 fi
