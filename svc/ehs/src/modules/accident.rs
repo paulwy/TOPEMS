@@ -594,7 +594,10 @@ pub async fn delete_accident(
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant write scope for accident delete: {}", e);
+            tracing::error!(
+                "Failed to open tenant write scope for accident delete: {}",
+                e
+            );
             return ApiResponse::server_error("事故删除失败");
         }
     };
@@ -1101,7 +1104,10 @@ pub async fn complete_treatment(
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant write scope for complete treatment: {}", e);
+            tracing::error!(
+                "Failed to open tenant write scope for complete treatment: {}",
+                e
+            );
             return ApiResponse::server_error("处理完成失败");
         }
     };

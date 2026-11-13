@@ -40,9 +40,9 @@ const ANNOTATION = /\/\/\s*tenant-system\s*:/;
 // 5 处位置显式登记，代码漂移（行号失效）即红；命中数不得超过白名单长度。
 const SCOPED_CONSTRUCTION_WHITELIST = [
   'svc/ehs/src/modules/environment.rs:184',
-  'svc/ehs/src/modules/accident.rs:655',
-  'svc/ehs/src/modules/accident.rs:1204',
-  'svc/ehs/src/modules/accident.rs:1331',
+  'svc/ehs/src/modules/accident.rs:658',
+  'svc/ehs/src/modules/accident.rs:1210',
+  'svc/ehs/src/modules/accident.rs:1337',
   'svc/ehs/src/modules/training.rs:1837',
 ];
 
@@ -163,7 +163,13 @@ function main() {
 
   // 上限断言：5 处白名单必须逐一命中（形态/行号漂移即红），且命中数不得超出白名单。
   const scopedHits = results.flatMap((r) => r.scopedHits || []);
-  const staleWhitelist = SCOPED_CONSTRUCTION_WHITELIST.filter((k) => !scopedHits.includes(k));
+  // changed-only 只扫描暂存文件：仅校验本次扫描覆盖到的白名单条目，
+  // 否则部分提交时未暂存文件的白名单条目会被误判为"行号漂移"。
+  // 全量模式 scanned 覆盖全部 svc，5 条仍须逐一命中（语义不变）。
+  const scanned = new Set(results.map((r) => r.rel));
+  const staleWhitelist = SCOPED_CONSTRUCTION_WHITELIST.filter(
+    (k) => !scopedHits.includes(k) && (!changedOnly || scanned.has(k.split(':')[0])),
+  );
   if (staleWhitelist.length) {
     console.error('[tenant-context] 作用域构造白名单失效（行号漂移或形态变更）:');
     for (const k of staleWhitelist) console.error(`  - ${k}`);

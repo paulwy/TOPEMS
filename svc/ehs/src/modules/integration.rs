@@ -95,9 +95,7 @@ pub async fn create_integration_hazard(
     State(_state): State<AppState>,
     Json(req): Json<CreateIntegrationHazardRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(resp) =
-        require_integration_tenant(req.tenant_id.as_deref(), "hazards/integration")
-    {
+    if let Err(resp) = require_integration_tenant(req.tenant_id.as_deref(), "hazards/integration") {
         return resp;
     }
     tracing::warn!(
@@ -139,9 +137,7 @@ pub async fn create_integration_alert(
     State(_state): State<AppState>,
     Json(req): Json<CreateIntegrationAlertRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(resp) =
-        require_integration_tenant(req.tenant_id.as_deref(), "alerts/integration")
-    {
+    if let Err(resp) = require_integration_tenant(req.tenant_id.as_deref(), "alerts/integration") {
         return resp;
     }
     tracing::warn!(

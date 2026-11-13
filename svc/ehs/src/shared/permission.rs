@@ -79,9 +79,10 @@ pub fn has_permission(claims: &Claims, permission: EhsPermission) -> bool {
 /// 因此这里一视同仁：缺失、空串、非法 UUID、nil 一律 400，**绝不降级为 nil 租户**，
 /// 也不回落到系统通道。写入侧拿不到租户时由调用方拒写并告警。
 pub fn require_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiResponse<T>> {
-    let raw = claims.tenant_id.as_deref().ok_or_else(|| {
-        ApiResponse::bad_request("缺少租户上下文：请提供 x-tenant-id，拒绝写入")
-    })?;
+    let raw = claims
+        .tenant_id
+        .as_deref()
+        .ok_or_else(|| ApiResponse::bad_request("缺少租户上下文：请提供 x-tenant-id，拒绝写入"))?;
     let tenant = uuid::Uuid::parse_str(raw.trim())
         .map_err(|_| ApiResponse::bad_request("租户上下文非法：x-tenant-id 不是合法 UUID"))?;
     if tenant.is_nil() {

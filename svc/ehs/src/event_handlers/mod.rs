@@ -355,9 +355,8 @@ fn require_event_tenant(
     handler: &'static str,
 ) -> Option<uuid::Uuid> {
     if tenant_id.is_nil() {
-        let dropped = EHS_EVENT_DROPPED_MISSING_TENANT
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-            + 1;
+        let dropped =
+            EHS_EVENT_DROPPED_MISSING_TENANT.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         tracing::warn!(
             "[ehs] 丢弃事件：payload.tenant_id 缺失/nil（handler={}, event_type={:?}, trace_id={:?}, dropped_total={}）",
             handler,

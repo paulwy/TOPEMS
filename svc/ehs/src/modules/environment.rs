@@ -499,7 +499,10 @@ pub async fn delete_record(
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant write scope for monitor delete: {}", e);
+            tracing::error!(
+                "Failed to open tenant write scope for monitor delete: {}",
+                e
+            );
             return ApiResponse::server_error("环境监测点删除失败");
         }
     };

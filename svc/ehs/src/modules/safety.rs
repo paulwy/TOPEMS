@@ -413,22 +413,22 @@ pub async fn create_safety_check(
                 return ApiResponse::server_error("提交事务失败");
             }
             ApiResponse::success(
-            serde_json::json!({
-                "id": r.get::<uuid::Uuid, _>("id"),
-                "check_no": r.get::<String, _>("check_no"),
-                "check_type": r.get::<String, _>("check_type"),
-                "inspector": r.get::<String, _>("inspector"),
-                "check_date": r.get::<Option<String>, _>("check_date"),
-                "location": r.get::<Option<String>, _>("location"),
-                "result": r.get::<String, _>("result"),
-                "issues": r.get::<serde_json::Value, _>("issues"),
-                "attachments": r.get::<Option<serde_json::Value>, _>("attachments"),
-                "status": r.get::<String, _>("status"),
-                "created_at": r.get::<String, _>("created_at"),
-                "updated_at": r.get::<String, _>("updated_at"),
-            }),
-            "安全检查创建成功",
-        )
+                serde_json::json!({
+                    "id": r.get::<uuid::Uuid, _>("id"),
+                    "check_no": r.get::<String, _>("check_no"),
+                    "check_type": r.get::<String, _>("check_type"),
+                    "inspector": r.get::<String, _>("inspector"),
+                    "check_date": r.get::<Option<String>, _>("check_date"),
+                    "location": r.get::<Option<String>, _>("location"),
+                    "result": r.get::<String, _>("result"),
+                    "issues": r.get::<serde_json::Value, _>("issues"),
+                    "attachments": r.get::<Option<serde_json::Value>, _>("attachments"),
+                    "status": r.get::<String, _>("status"),
+                    "created_at": r.get::<String, _>("created_at"),
+                    "updated_at": r.get::<String, _>("updated_at"),
+                }),
+                "安全检查创建成功",
+            )
         }
         Err(e) => {
             tracing::error!("创建安全检查失败: {}", e);
@@ -889,7 +889,10 @@ pub async fn create_record_db(
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant write scope for inspection record: {}", e);
+            tracing::error!(
+                "Failed to open tenant write scope for inspection record: {}",
+                e
+            );
             return ApiResponse::server_error("检查记录创建失败");
         }
     };
