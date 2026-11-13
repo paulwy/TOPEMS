@@ -420,26 +420,27 @@ pub async fn create_drill_plan(
     _headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> ApiResponse<DrillPlan> {
+    // 写入目标租户必须显式给出：缺失/非法/nil 一律 400，绝不写 tenant_id = nil 的行。
     let tenant = match crate::shared::permission::require_tenant(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let tenant_scope = match crate::shared::permission::dual_scope(
+        &claims,
+        "ehs.drill.create_plan",
+        "ehs.qa_ehs_drill_plans",
+    ) {
         Ok(s) => s,
-        Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
-            return ApiResponse::server_error("数据库事务不可用");
-        }
+        Err(resp) => return resp,
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
+    let mut scope =
+        match crate::shared::permission::open_write_scope(&state.db, &tenant_scope).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("Failed to open drill plan write scope: {}", e);
+                return ApiResponse::server_error("数据库事务不可用");
+            }
+        };
 
     let now = chrono::Utc::now();
     let plan_no = format!(
@@ -474,7 +475,7 @@ pub async fn create_drill_plan(
     .bind(req.content.as_deref())
     .bind(req.organizer.as_deref())
     .bind(req.related_plan_id.as_deref())
-    .bind(tenant_id)
+    .bind(tenant)
     .fetch_one(&mut scope)
     .await;
 
