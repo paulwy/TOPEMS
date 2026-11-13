@@ -15,6 +15,7 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::modules::ApiState;
+use crate::shared::scope::wms_db;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -1027,17 +1028,26 @@ pub async fn get_dashboard_summary(
 ) -> ApiResponse<DashboardSummary> {
     tracing::info!("获取WMS Dashboard汇总数据");
 
-    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词，否则会静默读 0 行
+    // fail-closed RLS 后裸池无租户 GUC，必须开显式租户只读作用域，
+    // 否则 RLS 会把所有行过滤掉（显式谓词无法绕过 RLS）。
     let tenant = match resolve_tenant_id(&claims) {
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启 Dashboard 只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取 Dashboard 数据失败");
+        }
     };
 
     // 仓库数
     let warehouse_count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL AND tenant_id = $1::uuid")
             .bind(tenant)
-            .fetch_one(&state.db)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -1046,7 +1056,7 @@ pub async fn get_dashboard_summary(
         "SELECT COALESCE(SUM(quantity), 0)::float8 as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory WHERE tenant_id = $1::uuid"
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or((Some(0.0), Some(0)));
 
@@ -1055,7 +1065,7 @@ pub async fn get_dashboard_summary(
         "SELECT COUNT(*) FROM wms.inbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1064,7 +1074,7 @@ pub async fn get_dashboard_summary(
         "SELECT COUNT(*) FROM wms.outbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1073,7 +1083,7 @@ pub async fn get_dashboard_summary(
         "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE severity = 'critical') as critical FROM wms.alerts WHERE status = 'active' AND deleted_at IS NULL AND tenant_id = $1::uuid"
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or((Some(0), Some(0)));
 
@@ -1082,7 +1092,7 @@ pub async fn get_dashboard_summary(
         "SELECT CASE WHEN COUNT(*) > 0 THEN (COUNT(*) FILTER (WHERE status = 'occupied')::float / COUNT(*)::float) * 100 ELSE 0 END FROM wms.locations WHERE deleted_at IS NULL AND tenant_id = $1::uuid"
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1141,10 +1151,18 @@ pub async fn get_inventory_distribution(
 ) -> ApiResponse<Vec<InventoryDistributionItem>> {
     tracing::info!("获取WMS库存分布数据");
 
-    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    // fail-closed RLS 后裸池无租户 GUC，必须开显式租户只读作用域
     let tenant = match resolve_tenant_id(&claims) {
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启库存分布只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取库存分布失败");
+        }
     };
     let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(String, Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
@@ -1161,7 +1179,7 @@ pub async fn get_inventory_distribution(
     )
     .bind(locale)
     .bind(tenant)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -1196,17 +1214,25 @@ pub async fn get_inventory_types(
 ) -> ApiResponse<Vec<InventoryTypeItem>> {
     tracing::info!("获取WMS库存类型分布");
 
-    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    // fail-closed RLS 后裸池无租户 GUC，必须开显式租户只读作用域
     let tenant = match resolve_tenant_id(&claims) {
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启库存类型只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取库存类型分布失败");
+        }
     };
 
     let total: f64 = sqlx::query_scalar(
         "SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL AND tenant_id = $1::uuid",
     )
     .bind(tenant)
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0.0);
 
@@ -1220,7 +1246,7 @@ pub async fn get_inventory_types(
          LIMIT 8",
     )
     .bind(tenant)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -1260,10 +1286,18 @@ pub async fn get_daily_trend(
 ) -> ApiResponse<Vec<DailyTrendItem>> {
     tracing::info!("获取WMS每日出入库趋势");
 
-    // fail-closed RLS 后裸池无租户 GUC，必须显式带租户谓词
+    // fail-closed RLS 后裸池无租户 GUC，必须开显式租户只读作用域
     let tenant = match resolve_tenant_id(&claims) {
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启每日趋势只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取每日趋势失败");
+        }
     };
 
     let rows: Vec<(Option<String>, Option<i64>, Option<i64>)> = sqlx::query_as(
@@ -1289,7 +1323,7 @@ pub async fn get_daily_trend(
          ORDER BY dates.date"
     )
     .bind(tenant)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 

@@ -280,6 +280,15 @@ pub async fn emit_low_stock_alerts(
         None => return Ok(0),
     };
 
+    // 该任务按设计跨租户扫描全部低库存项；没有请求租户上下文，
+    // fail-closed 后必须走系统只读通道，否则会静默读到 0 行。
+    let scope_db = topems_shared_db::scope::Db::new(db.clone(), "wms, public");
+    let mut scope = scope_db
+        // tenant-system: 低库存事件按设计跨租户扫描全部租户，无请求租户上下文
+        .scope_read_system()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("开启低库存扫描系统作用域失败: {}", e)))?;
+
     let rows = sqlx::query(
         r#"
         SELECT
@@ -312,7 +321,7 @@ pub async fn emit_low_stock_alerts(
           )
         "#,
     )
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("查询低库存项失败: {}", e)))?;
 

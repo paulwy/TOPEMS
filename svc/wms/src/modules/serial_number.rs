@@ -480,12 +480,22 @@ pub async fn update_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSerialNumberRequest>,
 ) -> ApiResponse<SerialNumber> {
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
     }
+
+    // fail-closed RLS 后必须复用请求事务（带 app.tenant_id），裸池会读 0 行
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -519,7 +529,7 @@ pub async fn update_serial_number(
             unit_price = COALESCE($17, unit_price),
             remark = COALESCE($18, remark),
             updated_at = $19
-        WHERE id = $20 AND ($21::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $21::uuid)
+        WHERE id = $20 AND tenant_id = $21::uuid
         RETURNING *
         "#
     ))
@@ -544,7 +554,7 @@ pub async fn update_serial_number(
     .bind(now)
     .bind(serial_id)
     .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(&claims))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -783,7 +793,7 @@ pub async fn get_trace(
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
+    let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
@@ -800,15 +810,16 @@ pub async fn get_trace(
     };
 
     // S2：接真实 serial_number 表返回追踪记录（非空）
+    // fail-closed RLS 后必须复用请求事务（带 app.tenant_id），裸池会读 0 行
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
-           FROM serial_numbers WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+           FROM serial_numbers WHERE id = $1 AND tenant_id = $2::uuid"#,
         "core"
     ))
     .bind(serial_id)
     .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(&claims))
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
