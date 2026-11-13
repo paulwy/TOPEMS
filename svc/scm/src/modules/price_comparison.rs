@@ -855,7 +855,7 @@ pub async fn create_comparison(
                     + item.delivery_score * 0.2
                     + item.service_score * 0.1;
 
-                let _ = sqlx::query(
+                if let Err(e) = sqlx::query(
                     only_own_schema_query!("scm", r#"
                     INSERT INTO scm.price_comparison_items (id, comparison_id, supplier_id, quote_id, quality_score, 
                                                         price_score, delivery_score, service_score, total_score, rank, remarks, tenant_id)
@@ -875,7 +875,16 @@ pub async fn create_comparison(
                 .bind(&item.remarks)
                 .bind(tenant_bind)
                 .execute(&mut **txn)
-                .await;
+                .await
+                {
+                    tracing::error!(
+                        "写入比价明细失败: comparison_id={}, supplier_id={}, err={}",
+                        id,
+                        item.supplier_id,
+                        e
+                    );
+                    return ApiResponse::from(TopemsError::internal("创建比价明细失败", e));
+                }
 
                 rank += 1;
             }
