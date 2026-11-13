@@ -500,22 +500,32 @@ pub async fn supplier_performance(
 
     match result {
         Ok(rows) => {
-            let suppliers: Vec<SupplierPerformanceItem> = rows
+            let suppliers_result: Result<Vec<SupplierPerformanceItem>, sqlx::Error> = rows
                 .iter()
-                .map(|row| SupplierPerformanceItem {
-                    id: row.try_get("id").unwrap_or_default(),
-                    name: row.try_get("name").unwrap_or_default(),
-                    code: row.try_get("code").unwrap_or_default(),
-                    category: row.try_get("category").unwrap_or_default(),
-                    total_orders: row.try_get("total_orders").unwrap_or(0),
-                    total_amount: row.try_get("total_amount").unwrap_or(0.0),
-                    on_time_delivery_rate: row.try_get("on_time_delivery_rate").unwrap_or(0.0),
-                    quality_pass_rate: row.try_get("quality_pass_rate").unwrap_or(0.0),
-                    avg_response_time_hours: row.try_get("avg_response_time_hours").unwrap_or(0.0),
-                    overall_score: row.try_get("overall_score").unwrap_or(0.0),
-                    level: row.try_get("level").unwrap_or_default(),
+                .map(|row| {
+                    Ok(SupplierPerformanceItem {
+                        id: row.try_get("id")?,
+                        name: row.try_get("name")?,
+                        code: row.try_get("code")?,
+                        category: row.try_get("category")?,
+                        total_orders: row.try_get("total_orders")?,
+                        total_amount: row.try_get("total_amount")?,
+                        on_time_delivery_rate: row.try_get("on_time_delivery_rate")?,
+                        quality_pass_rate: row.try_get("quality_pass_rate")?,
+                        avg_response_time_hours: row.try_get("avg_response_time_hours")?,
+                        overall_score: row.try_get("overall_score")?,
+                        level: row.try_get("level")?,
+                    })
                 })
                 .collect();
+
+            let suppliers = match suppliers_result {
+                Ok(suppliers) => suppliers,
+                Err(e) => {
+                    tracing::error!("解析供应商绩效排行失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析供应商绩效排行失败", e));
+                }
+            };
 
             let category_distribution = sqlx::query(only_own_schema_query!(
                 "scm",

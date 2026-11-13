@@ -386,25 +386,41 @@ pub async fn calculate_turnover(
             .await;
 
             let total = count_result.unwrap_or(0);
-            let items: Vec<InventoryTurnoverItem> = rows
+            let items_result: Result<Vec<InventoryTurnoverItem>, sqlx::Error> = rows
                 .iter()
-                .map(|row| InventoryTurnoverItem {
-                    material_code: row.try_get("material_code").unwrap_or_default(),
-                    material_name: row.try_get("material_name").unwrap_or_default(),
-                    specification: row.try_get("specification").unwrap_or_default(),
-                    unit: row.try_get("unit").unwrap_or_default(),
-                    category: row.try_get("category").unwrap_or_default(),
-                    warehouse_id: row.try_get("warehouse_id").unwrap_or_default(),
-                    warehouse_name: row.try_get("warehouse_name").unwrap_or_default(),
-                    beginning_inventory: row.try_get("beginning_inventory").unwrap_or(0.0),
-                    ending_inventory: row.try_get("ending_inventory").unwrap_or(0.0),
-                    average_inventory: row.try_get("average_inventory").unwrap_or(0.0),
-                    cost_of_goods_sold: row.try_get("cost_of_goods_sold").unwrap_or(0.0),
-                    turnover_rate: row.try_get("turnover_rate").unwrap_or(0.0),
-                    turnover_days: row.try_get("turnover_days").unwrap_or(0.0),
-                    inventory_value: row.try_get("inventory_value").unwrap_or(0.0),
+                .map(|row| {
+                    Ok(InventoryTurnoverItem {
+                        // item_code/item_name 列可为 NULL：显式按 Option 解码后降级为空串，
+                        // 解码失败则上抛，避免"字段类型不对也返回空串"。
+                        material_code: row
+                            .try_get::<Option<String>, _>("material_code")?
+                            .unwrap_or_default(),
+                        material_name: row
+                            .try_get::<Option<String>, _>("material_name")?
+                            .unwrap_or_default(),
+                        specification: row.try_get("specification")?,
+                        unit: row.try_get("unit")?,
+                        category: row.try_get("category")?,
+                        warehouse_id: row.try_get("warehouse_id")?,
+                        warehouse_name: row.try_get("warehouse_name")?,
+                        beginning_inventory: row.try_get("beginning_inventory").unwrap_or(0.0),
+                        ending_inventory: row.try_get("ending_inventory").unwrap_or(0.0),
+                        average_inventory: row.try_get("average_inventory").unwrap_or(0.0),
+                        cost_of_goods_sold: row.try_get("cost_of_goods_sold").unwrap_or(0.0),
+                        turnover_rate: row.try_get("turnover_rate").unwrap_or(0.0),
+                        turnover_days: row.try_get("turnover_days").unwrap_or(0.0),
+                        inventory_value: row.try_get("inventory_value").unwrap_or(0.0),
+                    })
                 })
                 .collect();
+
+            let items = match items_result {
+                Ok(items) => items,
+                Err(e) => {
+                    tracing::error!("解析库存周转率结果失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析库存周转率结果失败", e));
+                }
+            };
 
             ApiResponse::success(
                 serde_json::json!({
@@ -657,18 +673,28 @@ pub async fn abc_analysis(
 
     match result {
         Ok(rows) => {
-            let results: Vec<AbcAnalysisResult> = rows
+            let results_result: Result<Vec<AbcAnalysisResult>, sqlx::Error> = rows
                 .iter()
-                .map(|row| AbcAnalysisResult {
-                    category: row.try_get("category").unwrap_or_default(),
-                    sku_count: row.try_get("sku_count").unwrap_or(0),
-                    sku_percentage: row.try_get("sku_percentage").unwrap_or(0.0),
-                    inventory_value: row.try_get("inventory_value").unwrap_or(0.0),
-                    value_percentage: row.try_get("value_percentage").unwrap_or(0.0),
-                    avg_turnover_rate: row.try_get("avg_turnover_rate").unwrap_or(0.0),
-                    avg_turnover_days: row.try_get("avg_turnover_days").unwrap_or(0.0),
+                .map(|row| {
+                    Ok(AbcAnalysisResult {
+                        category: row.try_get("category")?,
+                        sku_count: row.try_get("sku_count").unwrap_or(0),
+                        sku_percentage: row.try_get("sku_percentage").unwrap_or(0.0),
+                        inventory_value: row.try_get("inventory_value").unwrap_or(0.0),
+                        value_percentage: row.try_get("value_percentage").unwrap_or(0.0),
+                        avg_turnover_rate: row.try_get("avg_turnover_rate").unwrap_or(0.0),
+                        avg_turnover_days: row.try_get("avg_turnover_days").unwrap_or(0.0),
+                    })
                 })
                 .collect();
+
+            let results = match results_result {
+                Ok(results) => results,
+                Err(e) => {
+                    tracing::error!("解析ABC分类分析结果失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析ABC分类分析结果失败", e));
+                }
+            };
 
             ApiResponse::success(
                 serde_json::json!({
@@ -904,10 +930,25 @@ pub async fn get_turnover_detail(
 
     match result {
         Ok(Some(row)) => {
+            // item_code/item_name 列可为 NULL：显式按 Option 解码后降级为空串，解码失败则上抛。
+            let (product_code, product_name) = match (
+                row.try_get::<Option<String>, _>("material_code"),
+                row.try_get::<Option<String>, _>("material_name"),
+            ) {
+                (Ok(code), Ok(name)) => (code.unwrap_or_default(), name.unwrap_or_default()),
+                (Err(e), _) | (_, Err(e)) => {
+                    tracing::error!(
+                        "解析单物料周转统计失败: material_code={}, err={}",
+                        material_code,
+                        e
+                    );
+                    return ApiResponse::from(TopemsError::internal("解析单物料周转统计失败", e));
+                }
+            };
             let stat = serde_json::json!({
                 "id": material_code,
-                "product_code": row.try_get::<String, _>("material_code").unwrap_or_default(),
-                "product_name": row.try_get::<String, _>("material_name").unwrap_or_default(),
+                "product_code": product_code,
+                "product_name": product_name,
                 "specification": row.try_get::<Option<String>, _>("specification").ok().flatten(),
                 "unit": row.try_get::<Option<String>, _>("unit").ok().flatten(),
                 "category": row.try_get::<Option<String>, _>("category").ok().flatten(),

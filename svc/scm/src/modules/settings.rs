@@ -79,8 +79,25 @@ pub async fn get_settings(
         Ok(rows) => {
             let mut settings = HashMap::new();
             for row in rows {
-                let key: String = row.try_get("key").unwrap_or_default();
-                let value: String = row.try_get("value").unwrap_or_default();
+                let key: String = match row.try_get("key") {
+                    Ok(key) => key,
+                    Err(e) => {
+                        tracing::error!("解析模块设置 key 失败: category={}, err={}", category, e);
+                        return ApiResponse::from(TopemsError::internal("解析模块设置失败", e));
+                    }
+                };
+                let value: String = match row.try_get("value") {
+                    Ok(value) => value,
+                    Err(e) => {
+                        tracing::error!(
+                            "解析模块设置 value 失败: category={}, key={}, err={}",
+                            category,
+                            key,
+                            e
+                        );
+                        return ApiResponse::from(TopemsError::internal("解析模块设置失败", e));
+                    }
+                };
                 settings.insert(key, value);
             }
             ApiResponse::success(

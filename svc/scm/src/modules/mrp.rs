@@ -751,7 +751,13 @@ pub async fn confirm_suggestion(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询MRP建议失败", e)),
     };
 
-    let status: String = existing.try_get("status").unwrap_or_default();
+    let status: String = match existing.try_get("status") {
+        Ok(status) => status,
+        Err(e) => {
+            tracing::error!("解析MRP建议状态失败: suggestion_id={}, err={}", id, e);
+            return ApiResponse::from(TopemsError::internal("解析MRP建议状态失败", e));
+        }
+    };
     if status != "draft" {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "MRP建议当前状态为{}，无法确认",
@@ -918,20 +924,36 @@ pub async fn material_requirement_summary(
             .await;
 
             let total = count_result.unwrap_or(0);
-            let summaries: Vec<MaterialRequirementSummary> = rows
+            let summaries_result: Result<Vec<MaterialRequirementSummary>, sqlx::Error> = rows
                 .iter()
-                .map(|row| MaterialRequirementSummary {
-                    material_code: row.try_get("material_code").unwrap_or_default(),
-                    material_name: row.try_get("material_name").unwrap_or_default(),
-                    specification: row.try_get("specification").unwrap_or_default(),
-                    unit: row.try_get("unit").unwrap_or_default(),
-                    total_required: row.try_get("total_required").unwrap_or(0.0),
-                    current_stock: row.try_get("current_stock").unwrap_or(0.0),
-                    shortage: row.try_get("shortage").unwrap_or(0.0),
-                    suggestion_count: row.try_get("suggestion_count").unwrap_or(0),
-                    suggested_total: row.try_get("suggested_total").unwrap_or(0.0),
+                .map(|row| {
+                    Ok(MaterialRequirementSummary {
+                        // material_code/material_name 列可为 NULL：显式按 Option 解码后降级为空串，
+                        // 解码失败则上抛，避免"字段类型不对也返回空串"。
+                        material_code: row
+                            .try_get::<Option<String>, _>("material_code")?
+                            .unwrap_or_default(),
+                        material_name: row
+                            .try_get::<Option<String>, _>("material_name")?
+                            .unwrap_or_default(),
+                        specification: row.try_get("specification")?,
+                        unit: row.try_get("unit")?,
+                        total_required: row.try_get("total_required").unwrap_or(0.0),
+                        current_stock: row.try_get("current_stock").unwrap_or(0.0),
+                        shortage: row.try_get("shortage").unwrap_or(0.0),
+                        suggestion_count: row.try_get("suggestion_count").unwrap_or(0),
+                        suggested_total: row.try_get("suggested_total").unwrap_or(0.0),
+                    })
                 })
                 .collect();
+
+            let summaries = match summaries_result {
+                Ok(summaries) => summaries,
+                Err(e) => {
+                    tracing::error!("解析物料需求汇总结果失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析物料需求汇总结果失败", e));
+                }
+            };
 
             ApiResponse::success(
                 serde_json::json!({

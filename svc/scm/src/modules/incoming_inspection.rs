@@ -1106,7 +1106,13 @@ pub async fn inspection_pass(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询检验记录失败", e)),
     };
 
-    let status: String = existing.try_get("status").unwrap_or_default();
+    let status: String = match existing.try_get("status") {
+        Ok(status) => status,
+        Err(e) => {
+            tracing::error!("解析检验记录状态失败: inspection_id={}, err={}", id, e);
+            return ApiResponse::from(TopemsError::internal("解析检验记录状态失败", e));
+        }
+    };
     if status == "passed" || status == "failed" {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "检验记录已完成，无法重复操作".to_string(),
@@ -1245,7 +1251,13 @@ pub async fn inspection_fail(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询检验记录失败", e)),
     };
 
-    let status: String = existing.try_get("status").unwrap_or_default();
+    let status: String = match existing.try_get("status") {
+        Ok(status) => status,
+        Err(e) => {
+            tracing::error!("解析检验记录状态失败: inspection_id={}, err={}", id, e);
+            return ApiResponse::from(TopemsError::internal("解析检验记录状态失败", e));
+        }
+    };
     if status == "passed" || status == "failed" {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "检验记录已完成，无法重复操作".to_string(),
