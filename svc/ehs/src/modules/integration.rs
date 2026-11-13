@@ -450,4 +450,63 @@ mod tests {
             "累计拒绝计数应至少 +4: {before} -> {after}"
         );
     }
+
+    /// LIMS 异常幂等键端到端（本地副本库）：integration 路径与 ehs handler 共用
+    /// 同一编号实现；同事件重投只落 1 行且 `updated_at` 前进；不同 `test_item`
+    /// 各自成行；编号长度不超 64。
+    #[tokio::test]
+    async fn lims_abnormal_shared_key_is_idempotent_and_item_scoped() {
+        let Some(db) = test_db().await else { return };
+
+        let tenant_id = Uuid::new_v4();
+        let task_id = Uuid::new_v4();
+        let key_a = topems_shared_event::event::lims_abnormal_hazard_no(task_id, "重金属检测");
+        let key_b = topems_shared_event::event::lims_abnormal_hazard_no(task_id, "微生物限度");
+        assert!(key_a.len() <= 64, "{key_a} 超限");
+        assert!(key_b.len() <= 64, "{key_b} 超限");
+        assert_ne!(key_a, key_b, "同一任务下不同检测项不得合并");
+
+        let tenant = Some(tenant_id.to_string());
+        let first = handle_integration_hazard(&db, hazard_req(tenant.clone(), &key_a)).await;
+        assert_eq!(first.code, 200, "首次写入应成功: {}", first.message);
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        let second = handle_integration_hazard(&db, hazard_req(tenant.clone(), &key_a)).await;
+        assert_eq!(second.code, 200, "重投写入应成功: {}", second.message);
+        let other = handle_integration_hazard(&db, hazard_req(tenant, &key_b)).await;
+        assert_eq!(other.code, 200, "不同检测项写入应成功: {}", other.message);
+
+        let mut scope = db.scope_for_tenant(tenant_id).await.expect("打开回读事务");
+        let (count_a, created_a, updated_a): (
+            i64,
+            chrono::DateTime<chrono::Utc>,
+            chrono::DateTime<chrono::Utc>,
+        ) = sqlx::query_as(
+            "SELECT COUNT(*), MIN(created_at), MAX(updated_at) \
+             FROM ehs.qa_ehs_hazards WHERE hazard_no = $1",
+        )
+        .bind(&key_a)
+        .fetch_one(&mut scope)
+        .await
+        .expect("回读幂等键 A");
+        assert_eq!(count_a, 1, "同事件重投只应落 1 行");
+        assert!(
+            updated_a > created_a,
+            "重投后 updated_at 必须前进: created={created_a}, updated={updated_a}"
+        );
+
+        let count_b: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM ehs.qa_ehs_hazards WHERE hazard_no = $1")
+                .bind(&key_b)
+                .fetch_one(&mut scope)
+                .await
+                .expect("回读幂等键 B");
+        assert_eq!(count_b, 1, "不同 test_item 必须各自成行");
+
+        sqlx::query("DELETE FROM ehs.qa_ehs_hazards WHERE hazard_no = ANY($1)")
+            .bind(vec![key_a, key_b])
+            .execute(&mut scope)
+            .await
+            .expect("清理测试数据");
+        scope.commit().await.expect("提交清理");
+    }
 }

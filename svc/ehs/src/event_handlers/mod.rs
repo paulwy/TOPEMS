@@ -4,12 +4,33 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
+    lims_abnormal_hazard_no, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     QmsCorrectiveActionCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
+
+/// EHS 侧 `LimsInspectionAbnormalDetected` 写入开关（显式、默认关闭）。
+const LIMS_ABNORMAL_HANDLER_ENABLED_ENV: &str = "EHS_LIMS_ABNORMAL_HANDLER_ENABLED";
+
+/// 是否允许 EHS 侧 handler 写入 LIMS 检测异常隐患。
+///
+/// **默认关闭（未设置或非真值一律关闭）**。原因：该事件当前无生产方，
+/// LIMS 检测异常 → EHS 隐患的唯一写入者是 integration 编排路径
+/// （`svc/integration/src/qms_lims_ehs.rs` → `/api/internal/ehs/hazards/integration`，
+/// 编号 `HAZ-LIMS-...`）。若本开关启用且 integration 同时消费同一事件，两条路径
+/// 会各写一行且都不收敛（双写）。启用前必须确保只有 integration 一个写入者。
+fn lims_abnormal_handler_enabled() -> bool {
+    std::env::var(LIMS_ABNORMAL_HANDLER_ENABLED_ENV)
+        .map(|v| {
+            matches!(
+                v.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
+        .unwrap_or(false)
+}
 
 #[derive(Clone)]
 pub struct EhsEventHandlers {
@@ -54,6 +75,17 @@ impl EhsEventHandlers {
     }
 
     async fn handle_lims_abnormal_detected(&self, event: Event) -> HandlerResult {
+        // 写入开关默认关闭：该事件当前无生产方，唯一写入者是 integration 编排路径。
+        // 这里直接返回，不解析 payload、不打开事务、不写库（证明“开关关闭不写”）。
+        if !lims_abnormal_handler_enabled() {
+            tracing::warn!(
+                "[ehs] 跳过 LIMS 异常检测事件：EHS 侧写入开关未启用（默认关闭，环境变量 {}），\
+                 写入由 integration 单一路径负责",
+                LIMS_ABNORMAL_HANDLER_ENABLED_ENV
+            );
+            return Ok(());
+        }
+
         tracing::info!(
             "[ehs] LIMS 异常检测事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
@@ -81,7 +113,9 @@ impl EhsEventHandlers {
             return Ok(());
         };
 
-        let hazard_no = format!("EHS-HZ-{}", Utc::now().timestamp_subsec_millis());
+        // 编号与 integration 路径共用单一实现（FNV-1a 64 位低 32 位），
+        // 不再使用 `EHS-HZ-{毫秒}`：后者每次重投都会生成新编号，无法收敛。
+        let hazard_no = lims_abnormal_hazard_no(payload.task_id, &payload.test_item);
         let now = Utc::now();
 
         // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
@@ -385,4 +419,60 @@ pub async fn start_event_subscribers(
         }
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgPoolOptions;
+    use std::time::Duration;
+
+    fn abnormal_event() -> Event {
+        Event::new(
+            EventType::LimsInspectionAbnormalDetected,
+            "ehs-test",
+            serde_json::json!({
+                "tenant_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                "task_id": "11111111-2222-3333-4444-555555555555",
+                "task_no": "LIMS-TASK-001",
+                "sample_id": "22222222-3333-4444-5555-666666666666",
+                "sample_no": "SMP-001",
+                "test_item": "重金属检测",
+                "abnormal_data": {"value": 0.85, "limit": 0.50},
+                "conclusion": "不合格"
+            }),
+        )
+    }
+
+    /// 指向不可达地址的懒连接池：handler 一旦尝试落库就会因获取连接超时返回 Err。
+    fn unreachable_pool() -> PgPool {
+        PgPoolOptions::new()
+            .max_connections(1)
+            .acquire_timeout(Duration::from_millis(100))
+            .connect_lazy("postgres://topems:topems_secret@127.0.0.1:1/topems_never")
+            .expect("lazy pool")
+    }
+
+    /// 开关默认关闭：handler 直接返回 Ok，不解析 payload、不打开事务、不写库。
+    /// 开关只认显式真值，其余取值一律关闭（fail-closed）。
+    #[tokio::test]
+    async fn lims_abnormal_handler_is_switch_gated_and_off_by_default() {
+        std::env::remove_var(LIMS_ABNORMAL_HANDLER_ENABLED_ENV);
+        assert!(!lims_abnormal_handler_enabled(), "未设置时必须默认关闭");
+
+        let handlers = EhsEventHandlers::new(unreachable_pool(), None);
+        handlers
+            .handle_lims_abnormal_detected(abnormal_event())
+            .await
+            .expect("开关关闭时必须无写库、直接 Ok");
+
+        std::env::set_var(LIMS_ABNORMAL_HANDLER_ENABLED_ENV, "  TRUE ");
+        assert!(lims_abnormal_handler_enabled(), "真值应启用");
+        for off in ["0", "false", "off", "", "enabled", "2"] {
+            std::env::set_var(LIMS_ABNORMAL_HANDLER_ENABLED_ENV, off);
+            assert!(!lims_abnormal_handler_enabled(), "{off:?} 必须视为关闭");
+        }
+        std::env::remove_var(LIMS_ABNORMAL_HANDLER_ENABLED_ENV);
+        assert!(!lims_abnormal_handler_enabled());
+    }
 }
