@@ -224,8 +224,10 @@ pub struct DbPoolStats {
 }
 
 enum TxRef<'a> {
-    Owned(Transaction<'a, Postgres>),
+    Owned(Transaction<'static, Postgres>),
     Borrowed(&'a mut Transaction<'static, Postgres>),
+    /// `commit` / `rollback` / `Drop` 已接管，避免二次收尾。
+    Consumed,
 }
 
 /// 带 schema 作用域的事务视图。
@@ -244,6 +246,7 @@ impl ScopedTxn<'_> {
         match &mut self.inner {
             TxRef::Owned(tx) => &mut **tx,
             TxRef::Borrowed(tx) => &mut ***tx,
+            TxRef::Consumed => unreachable!("ScopedTxn 已收尾，不能再访问连接"),
         }
     }
 
@@ -292,19 +295,47 @@ impl ScopedTxn<'_> {
     }
 
     /// 提交（仅自有事务生效；借用的事务由请求中间件统一提交）。
-    pub async fn commit(self) -> sqlx::Result<()> {
-        match self.inner {
+    pub async fn commit(mut self) -> sqlx::Result<()> {
+        match std::mem::replace(&mut self.inner, TxRef::Consumed) {
             TxRef::Owned(tx) => tx.commit().await,
-            TxRef::Borrowed(_) => Ok(()),
+            TxRef::Borrowed(_) | TxRef::Consumed => Ok(()),
         }
     }
 
-    /// 显式回滚（Drop 时 sqlx 也会自动回滚自有事务）。
-    pub async fn rollback(self) -> sqlx::Result<()> {
-        match self.inner {
+    /// 显式回滚（未显式收尾的自有事务由 `Drop` 交给后台 driver 回滚）。
+    pub async fn rollback(mut self) -> sqlx::Result<()> {
+        match std::mem::replace(&mut self.inner, TxRef::Consumed) {
             TxRef::Owned(tx) => tx.rollback().await,
-            TxRef::Borrowed(_) => Ok(()),
+            TxRef::Borrowed(_) | TxRef::Consumed => Ok(()),
         }
+    }
+}
+
+/// 未显式收尾时，同步摘出自有事务并交给后台 driver 立即回滚。
+///
+/// sqlx 的 `Transaction::drop` 只把 `ROLLBACK` 写进连接写缓冲，真正 flush 依赖
+/// `PoolConnection::drop` 里 `rt::spawn` 的归还任务执行 `ping`——调度时机不在请求
+/// 控制范围内。请求结束到该任务被轮询之间，PG 侧连接仍是 `idle in transaction`；
+/// 紧池下会与下一个请求的事务重叠（W7-B4-EHS-FOLLOWUP-1）。
+///
+/// 这里把「排队」变成「显式驱动」：Drop 内同步取走事务（不阻塞），并登记到当前请求的
+/// 收尾表；`tenant_middleware` 在响应交回 hyper 之前等待，保证响应返回时事务已收尾。
+/// 无请求上下文（后台任务/脚本/CLI）时任务自行 detach，与原行为一致。
+impl Drop for ScopedTxn<'_> {
+    fn drop(&mut self) {
+        let TxRef::Owned(tx) = std::mem::replace(&mut self.inner, TxRef::Consumed) else {
+            return;
+        };
+        let task = tokio::spawn(async move {
+            if let Err(e) = tx.rollback().await {
+                tracing::warn!(
+                    target: "scoped_txn",
+                    error = %e,
+                    "作用域事务后台回滚失败"
+                );
+            }
+        });
+        let _ = topems_shared_auth::middleware::tenant::register_request_finalizer(task);
     }
 }
 

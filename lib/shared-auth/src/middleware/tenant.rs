@@ -93,6 +93,66 @@ fn bad_request(message: &str) -> Response {
         .into_response()
 }
 
+/// 请求级收尾任务表：收集本请求内 `ScopedTxn::drop` 派生的后台回滚任务。
+///
+/// sqlx 的 `Transaction::drop` 只把 `ROLLBACK` 排队进连接写缓冲，真正 flush 由
+/// `PoolConnection::drop` 里 spawn 的归还任务驱动，调度时机不受请求控制；若响应先
+/// 写回客户端，PG 侧会看到「响应已返回、连接仍 idle in transaction」。中间件在把响应
+/// 交回 hyper 之前 `drain()` 等待这些任务，保证「响应返回 ⇒ 请求内事务已收尾」。
+#[derive(Default)]
+pub struct RequestFinalizers {
+    tasks: std::sync::Mutex<Vec<tokio::task::JoinHandle<()>>>,
+}
+
+tokio::task_local! {
+    static REQUEST_FINALIZERS: std::sync::Arc<RequestFinalizers>;
+}
+
+impl RequestFinalizers {
+    pub fn new() -> std::sync::Arc<Self> {
+        std::sync::Arc::new(Self::default())
+    }
+
+    fn push(&self, task: tokio::task::JoinHandle<()>) {
+        // 锁中毒只影响「是否等待」，不影响任务本身执行；此时丢弃句柄即 detach。
+        if let Ok(mut tasks) = self.tasks.lock() {
+            tasks.push(task);
+        }
+    }
+
+    /// 等待所有已登记的收尾任务结束；等待期间新登记的任务会在下一轮被取走。
+    pub async fn drain(&self) {
+        loop {
+            let pending: Vec<_> = match self.tasks.lock() {
+                Ok(mut tasks) => std::mem::take(&mut *tasks),
+                Err(_) => return,
+            };
+            if pending.is_empty() {
+                return;
+            }
+            for task in pending {
+                if let Err(e) = task.await {
+                    tracing::warn!(
+                        target: "rls_txn",
+                        error = %e,
+                        "请求级事务收尾任务异常结束"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// 把 `ScopedTxn` 的后台回滚任务登记到当前请求。
+///
+/// 返回 `false` 表示当前不在 `tenant_middleware` 作用域内（后台任务/脚本/CLI），
+/// 任务自行 detach 执行，与改造前的行为一致。
+pub fn register_request_finalizer(task: tokio::task::JoinHandle<()>) -> bool {
+    REQUEST_FINALIZERS
+        .try_with(|finalizers| finalizers.push(task))
+        .is_ok()
+}
+
 /// 请求收尾统一处理：2xx 提交，非 2xx 回滚。
 ///
 /// `sqlx::Transaction` 未显式 commit 时 drop 即 ROLLBACK（写丢失）。handler 可能
@@ -128,9 +188,13 @@ async fn finish_response(
     cell: RlsTxnCell,
     method: &axum::http::Method,
     path: &str,
+    finalizers: std::sync::Arc<RequestFinalizers>,
 ) -> Response {
     let status = resp.status();
-    match finalize_request_txn(cell, status, method, path).await {
+    let finalize_result = finalize_request_txn(cell, status, method, path).await;
+    // handler 内 `ScopedTxn` 的回滚必须在这里等完：否则响应先返回，连接还开着事务。
+    finalizers.drain().await;
+    match finalize_result {
         Ok(()) => resp,
         Err(e) => {
             tracing::error!(
@@ -415,8 +479,11 @@ pub fn tenant_middleware() -> impl Fn(
                 });
                 let method = req.method().clone();
                 let path = req.uri().path().to_string();
-                let resp = next.run(req).await;
-                return finish_response(resp, txn_cell, &method, &path).await;
+                let finalizers = RequestFinalizers::new();
+                let resp = REQUEST_FINALIZERS
+                    .scope(finalizers.clone(), next.run(req))
+                    .await;
+                return finish_response(resp, txn_cell, &method, &path, finalizers).await;
             }
 
             let tenant_id_str = match claims.tenant_id.as_ref() {
@@ -499,8 +566,11 @@ pub fn tenant_middleware() -> impl Fn(
 
             let method = req.method().clone();
             let path = req.uri().path().to_string();
-            let resp = next.run(req).await;
-            finish_response(resp, txn_cell, &method, &path).await
+            let finalizers = RequestFinalizers::new();
+            let resp = REQUEST_FINALIZERS
+                .scope(finalizers.clone(), next.run(req))
+                .await;
+            finish_response(resp, txn_cell, &method, &path, finalizers).await
         })
     }
 }
@@ -668,5 +738,46 @@ mod tests {
         let claims = make_claims(Some(TENANT_ID), USER_ID, false);
         let status = send_require_tenant_status(Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
+    }
+}
+
+#[cfg(test)]
+mod request_finalizer_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    #[tokio::test]
+    async fn drain_waits_registered_task() {
+        let finalizers = RequestFinalizers::new();
+        let done = std::sync::Arc::new(AtomicBool::new(false));
+        let flag = done.clone();
+        let task = tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            flag.store(true, Ordering::SeqCst);
+        });
+        finalizers.push(task);
+        finalizers.drain().await;
+        assert!(done.load(Ordering::SeqCst), "drain 必须等待已登记任务结束");
+    }
+
+    #[tokio::test]
+    async fn drain_returns_immediately_when_empty() {
+        RequestFinalizers::new().drain().await;
+    }
+
+    #[tokio::test]
+    async fn register_requires_request_scope() {
+        assert!(
+            !register_request_finalizer(tokio::spawn(async {})),
+            "无请求作用域时不应登记"
+        );
+        let finalizers = RequestFinalizers::new();
+        let inside = REQUEST_FINALIZERS
+            .scope(finalizers.clone(), async {
+                register_request_finalizer(tokio::spawn(async {}))
+            })
+            .await;
+        assert!(inside, "请求作用域内应登记成功");
+        finalizers.drain().await;
     }
 }
