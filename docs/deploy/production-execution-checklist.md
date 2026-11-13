@@ -1,5 +1,7 @@
 # 生产任务执行清单（部署收尾）
 
+> **适用范围（2026-11-13 更正）**：本文是 **Linux + systemd 目标机**的执行清单，**不适用于当前本机生产**。本机生产实际为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`。macOS 生产部署/验收见 `docs/deploy-production.md` 与 `docs/deploy/macos-production-ops.md`；下文保留作为 Linux 迁移目标清单。
+
 > 来源：`TODO.md` 未勾选的生产环境任务（2026-10-22 整理）。所有任务均阻塞于**生产机/外部环境**，本机工具与演练已就绪，到环境后逐项执行并勾选回写。
 > 依据文档：`docs/deploy/nginx-prod-first-deploy-runbook.md`、`docs/deploy/windows-deployment.md`、`scripts/deploy/*`、`scripts/verify-nginx-prod.sh`。
 
@@ -7,8 +9,8 @@
 
 | 编号 | 任务 | 阻塞点 | 关键工具 | 参考文档 |
 |---|---|---|---|---|
-| P-1 | 生产机 install.sh / update.sh / rollback.sh 实跑 | systemd 环境未就绪 | `scripts/deploy/install.sh` `update.sh` `rollback.sh` | `docs/deploy/windows-deployment.md` |
-| P-2 | systemd 服务启用后各服务 /health 绿 | 本机无 systemd | `scripts/verify-nginx-prod.sh`（生产路径） | `nginx-prod-first-deploy-runbook.md` |
+| P-1 | Linux 目标机 install.sh / update.sh / rollback.sh 实跑 | systemd 环境未就绪 | `scripts/deploy/install.sh` `update.sh` `rollback.sh` | `docs/deploy/windows-deployment.md` |
+| P-2 | Linux 目标机 systemd 服务启用后各服务 /health 绿 | macOS 生产无 systemd（本机为 launchd） | `scripts/verify-nginx-prod.sh`（生产路径） | `nginx-prod-first-deploy-runbook.md` |
 | P-3 | 生产服务 /health 全绿 | 生产机 | `scripts/verify-nginx-prod.sh --probe /health` | 同上 |
 | P-4 | 生产机 smoke-prod.sh 全项 PASS | 生产数据/事件编排 | `scripts/deploy/smoke-prod.sh` | 脚本头注释（TODO 2.3） |
 | P-5 | nginx 生产验证（nginx -t + 6 域冒烟） | 需生产 Linux | `scripts/verify-nginx-prod.sh` | `nginx-prod-first-deploy-runbook.md` |
@@ -121,7 +123,7 @@ SKIP_ROOT_CHECK=1 PGPASSWORD='<db-password>' ./scripts/deploy/rollback.sh /opt/t
 
 **现状**：本机无 systemd，无法验证；`scripts/dev/health-check.sh` 已就绪。
 
-> ⚠️ **重要口径**：`scripts/dev/health-check.sh` 头部自述为 **LEGACY-DEV 非生产脚本**（直连旧端口 8000/8020/8010），并明确"生产唯一入口为 nginx upstream → :8099，**生产验收请使用 scripts/verify-nginx-prod.sh，勿用本脚本判定生产健康**"。生产 /health 验收以 P-3 为准。
+> ⚠️ **重要口径**：`scripts/dev/health-check.sh` 头部自述为 **LEGACY-DEV 非生产脚本**（直连旧端口 8000/8020/8010），并明确"生产唯一入口为 nginx upstream → :8099，**生产验收请使用 scripts/verify-nginx-prod.sh，勿用本脚本判定生产健康**"。生产 /health 验收以 P-3 为准。（注：本机 macOS 生产为 80/443 直连 `proxy_pass http://127.0.0.1:8099`，**无 upstream 块**；上述 upstream 表述属 Linux 模板口径。）
 
 ### P-2.0 · 前置检查（服务启动前）
 
@@ -132,7 +134,7 @@ SKIP_ROOT_CHECK=1 PGPASSWORD='<db-password>' ./scripts/deploy/rollback.sh /opt/t
 | 2.0.3 | 服务二进制存在 | `ls /opt/topems/bin/*-service` | 29 个二进制文件 | ☐ |
 | 2.0.4 | per-service 工作目录 | `ls /opt/topems/svc/` | 29 个服务目录 | ☐ |
 | 2.0.5 | per-service 环境文件 | `ls /opt/topems/config/*.env` | 29 个 .env 文件（非空或模板） | ☐ |
-| 2.0.6 | 数据库连接（每服务） | `grep DATABASE_URL /opt/topems/config/*.env` | 各服务 DATABASE_URL 指向生产库 | ☐ |
+| 2.0.6 | 数据库连接（每服务） | `grep DATABASE_URL /opt/topems/config/*.env` | 各服务 DATABASE_URL 指向生产库（本机 macOS 生产为 `topems_prod`） | ☐ |
 | 2.0.7 | 端口冲突检查 | `ss -tlnp \| grep -E ':(8000\|8010\|8020\|8099)'` | 8099 未被占用（旧端口 8000/8010/8020 不应监听） | ☐ |
 | 2.0.8 | 日志目录可写 | `ls -ld /opt/topems/logs/` | drwxr-xr-x topems:topems | ☐ |
 
@@ -388,17 +390,17 @@ curl -s -X POST "http://<portal-url>/api/mes/v1/work-orders/<wo-id>/start" \
 ## P-4.5 · RLS 租户隔离验证（生产部署后必做）
 
 > 依据：`docs/onboarding/system-onboarding-and-gap-tracker.md` v1.39（17 real_module 批量补挂 RLS 请求层中间件）+ `database/scripts/verify_rls_coverage_production.sql` + `scripts/audit/audit-force-rls-no-policy.sql`。
-> **前置**：已用 `topems`（owner）或 `topems_app`（受限业务用户）连接生产库。
-> **连接串示例**：`psql "postgres://topems:password@prod-host:5432/topems"`
+> **前置**：已用 `topems_prod`（owner）或 `topems_app`（受限业务用户）连接生产库。
+> **连接串示例**：`psql "postgres://topems_prod:password@prod-host:5432/topems_prod"`（Linux 模板主机名；本机 macOS 生产为 xingzhai 机 `topems_prod`）
 
 ### R0 · 连接与角色确认
 
 ```bash
 # 用 owner 连接（执行 DDL/审计）
-psql "postgres://topems:topems_secret@prod-host:5432/topems"
+psql "postgres://topems_prod:topems_secret@prod-host:5432/topems_prod"
 
 # 或用受限业务用户连接（验证 RLS 过滤）
-psql "postgres://topems_app:topems_app_secret@prod-host:5432/topems"
+psql "postgres://topems_app:topems_app_secret@prod-host:5432/topems_prod"
 ```
 
 ```sql
@@ -407,14 +409,14 @@ SELECT current_user, current_database(), version();
 
 -- 确认 topems_app 角色存在且属性正确（RLS 对 superuser 不生效）
 SELECT rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin
-FROM pg_roles WHERE rolname IN ('topems', 'topems_app');
+FROM pg_roles WHERE rolname IN ('topems_prod', 'topems_app');
 -- 预期：topems_app rolsuper=false
 ```
 
 ### R1 · RLS 覆盖率静态审计（只读）
 
 ```bash
-psql "postgres://topems:topems_secret@prod-host:5432/topems" \
+psql "postgres://topems_prod:topems_secret@prod-host:5432/topems_prod" \
   -v ON_ERROR_STOP=1 \
   -f database/scripts/verify_rls_coverage_production.sql
 ```
@@ -428,19 +430,19 @@ psql "postgres://topems:topems_secret@prod-host:5432/topems" \
 
 ```bash
 # 2.1 审计「RLS=ON 但无 policy」的表
-psql "postgres://topems:topems_secret@prod-host:5432/topems" \
+psql "postgres://topems_prod:topems_secret@prod-host:5432/topems_prod" \
   -v ON_ERROR_STOP=1 \
   -f scripts/audit/audit-force-rls-no-policy.sql
 # 关注结果 3 汇总：with_tenant_id 数量即为需补策略的目标表数
 
 # 2.2 统一补建/重建策略（幂等，可重复执行）
-psql "postgres://topems:topems_secret@prod-host:5432/topems" \
+psql "postgres://topems_prod:topems_secret@prod-host:5432/topems_prod" \
   -v ON_ERROR_STOP=1 \
   -f scripts/db/rls-policy-unify.sql
 # 输出 rebuilt <schema>.<table> policy <name> (<cmd>) 明细
 
 # 2.3 补建后复跑 R1 验证（应全部归零）
-psql "postgres://topems:topems_secret@prod-host:5432/topems" \
+psql "postgres://topems_prod:topems_secret@prod-host:5432/topems_prod" \
   -v ON_ERROR_STOP=1 \
   -f database/scripts/verify_rls_coverage_production.sql
 ```
@@ -449,7 +451,7 @@ psql "postgres://topems:topems_secret@prod-host:5432/topems" \
 
 ```bash
 # 用受限业务用户连接
-psql "postgres://topems_app:topems_app_secret@prod-host:5432/topems"
+psql "postgres://topems_app:topems_app_secret@prod-host:5432/topems_prod"
 ```
 
 ```sql

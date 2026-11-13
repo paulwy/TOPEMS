@@ -1,6 +1,8 @@
 # 主库半迁移运维模式约定（2026-10-01 收口）
 
-> 本文档定义 TOPEMS 生产主库 `topems` 的既有"半迁移状态"处置决策与后续结构演进的**强制运维模式**，作为 `database-primary-instance.md` 的补充约定。凡涉及生产主库结构变更，**一律以本文档为准**。
+> **2026-11-13 实测更正**：当前生产库是 xingzhai 机 **`topems_prod`**，`_sqlx_migrations` **667** 条 success、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）。本文所称"生产主库 `topems` / 280 条记录 / 298 个迁移文件"是 **2026-10-01 的时点记录**，该库（`ehs` 65 表）**不是当前生产**；当前生产账本与操作口径以 `database-primary-instance.md` 与 `docs/deploy-production.md` 为准。下文历史数字保留不改写。
+
+> 本文档定义 TOPEMS 本机旧库 `topems`（2026-10-01 时点，**非当前生产**）的既有"半迁移状态"处置决策与后续结构演进的**强制运维模式**，作为 `database-primary-instance.md` 的补充约定。凡涉及生产主库结构变更，**一律以本文档为准**。
 
 ## 1. 背景与决策（唯一权威）
 
@@ -13,9 +15,11 @@
 
 ## 2. 运维模式约定（强制）
 
-### 2.1 生产主库：结构演进 = 直接 DDL 运维
+### 2.1 旧库 `topems`：结构演进 = 直接 DDL 运维（历史口径）
 
-生产主库 `topems` **禁止** `sqlx migrate run`（含 `migrate.sh run`）。结构变更一律按以下流程：
+> 历史口径（2026-10-01）：对象为当时的本机 `topems` 库，**非当前生产**；当前生产 `topems_prod` 的账本已收敛为 667 条 success（2026-11-13 实测）。
+
+本机旧库 `topems` **禁止** `sqlx migrate run`（含 `migrate.sh run`）。结构变更一律按以下流程：
 
 1. **编写变更**：在 `database/migrations/` 新增迁移文件（`YYYYMMDDHHMMSS__描述.sql`），保持迁移清单单一事实源、与离线缓存口径一致；
 2. **预演**：在临时/测试库（空库）执行 `sqlx migrate run --dry-run` 或 migrate-verify 流程，确认 SQL 正确；
@@ -46,7 +50,7 @@
 
 | 场景 | 允许方式 |
 |---|---|
-| 生产主库 `topems`（半迁移状态） | **直接 DDL 运维**（2.1 流程）；`sqlx migrate run` 默认被防护拦截 |
+| 本机旧库 `topems`（2026-10-01 半迁移状态，**非当前生产**） | **直接 DDL 运维**（2.1 流程）；`sqlx migrate run` 默认被防护拦截 |
 | 新库 / 空库 / 测试库 / 开发库 | `sqlx migrate run` 正常全量（防护自动放行） |
 | 显式全量补跑（不推荐生产） | `MIGRATE_ALLOW_STALE=1 migrate.sh run`——需人工确认补跑 258 个历史版本的风险 |
 | 未来新功能结构演进 | 一律走 2.1 直接 DDL 流程，**不得**用补跑机制"顺手带上" |

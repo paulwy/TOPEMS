@@ -1,5 +1,7 @@
 # TopEMS nginx 生产首部署复核 Runbook（P0-3 单上游口径）
 
+> **2026-11-13 实测边界**：当前本机生产 nginx 是 macOS Homebrew 版，配置 `/opt/homebrew/etc/nginx/nginx.conf`（include `servers/topems.conf`、`servers/topems-ssl.conf`），80/443 **直接** `proxy_pass http://127.0.0.1:8099`，**没有 upstream 块**；排障用绝对路径 `/opt/homebrew/bin/nginx -t|-T`（非登录 SSH 的 PATH 不含 brew，裸 `nginx` 会 command not found）。本文 §1-§5 的 `upstream server_service` / `/etc/nginx/conf.d` 路径是 **Linux 模板**口径，不适用于当前 macOS 生产；Linux 目标机仍按本文执行。
+
 > 状态：**流程固化 ✅（2026-10-07）｜生产加载验证 ⏳ 待生产/容器 Linux 环境**
 > 拓扑（P0-3 双轨合一后）：**唯一对外入口 = `upstream server_service → localhost:8099`**
 > （topems-server 模块化单体 BFF）。`/api/*` 由 `location /api/` 直代 `server_service`，

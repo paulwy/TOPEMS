@@ -1,5 +1,7 @@
 # TOPEMS 故障排查速查表
 
+> **环境边界（2026-11-13 实测）**：本文命令按 **Linux + systemd** 模板编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）；文中 `topems` 库、`/etc/systemd`、`/var/log/nginx` 等为 Linux 模板/历史示例。当前生产排障以 `docs/deploy-production.md` 为准（nginx 用 `/opt/homebrew/bin/nginx -t|-T`，日志在 `~/topems/nginx/logs/`）。
+
 ## 快速索引
 
 | 问题类型 | 快速定位 | 解决方案 |
@@ -120,6 +122,16 @@ tail -50 /var/log/nginx/error.log
 
 # 检查端口
 netstat -tlnp | grep 8013
+```
+
+**macOS 生产（当前实际，2026-11-13 实测）：**
+```bash
+# 服务是 launchd，不是 systemd；nginx 用 brew 绝对路径，日志在项目目录
+launchctl print gui/$(id -u)/com.topems.server | grep -E "state|pid"
+curl -s http://127.0.0.1:8099/health
+/opt/homebrew/bin/nginx -t
+tail -50 /Users/xingzhai/topems/nginx/logs/error.log
+lsof -nP -iTCP:8099 -sTCP:LISTEN
 ```
 
 **504 Gateway Timeout 排查：**

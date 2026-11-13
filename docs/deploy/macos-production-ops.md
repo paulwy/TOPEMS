@@ -3,7 +3,7 @@
 > 本文档为 **airdeair 侧起草的决策材料 + 运维参考**，对应 `go-live-checklist §0.3` 待决策 4 项
 > （① 证书 ② DB 备份 ③ 外网开放 ④ 首次登录换密），并补充日常运维/升级/回滚流程。
 > 受众：xingzhai 机执行 AI + 两侧用户。所有命令在 **xingzhai 机** 上执行（本机为 airdeair 开发机，不直接操作生产机）。
-> 生效前提：已按 `xingzhai-ai-runbook.md` 完成方案 B 部署（launchd `com.topems.server` + nginx drill conf，2026-10-26 验收 6/6）。
+> 生效前提：已按 `xingzhai-ai-runbook.md` 完成方案 B 部署（launchd `com.topems.server` + `com.topems.nginx` 托管的 brew nginx，2026-10-26 验收 6/6）。
 
 ---
 
@@ -100,7 +100,7 @@ dropdb topems_restore_test
 ## 3. 外网开放（待决策 ③）
 
 ### 默认建议
-- **不直接暴露公网**：先保持内网/本机（launchd 监听 127.0.0.1:8099，nginx 监听内网 80/443）。
+- **不直接暴露公网**：先保持内网/本机（topems-server 监听 `*:8099`，lsof 实测为 IPv4 全部接口，并非仅回环；对外暴露面由 macOS 防火墙 + nginx 80/443 控制）。
 - 对外前必须：受信证书（§1 选项 C）+ 只开 443 + 关 80（或 80→443）+ 弱口令清除 + 密钥轮换。
 
 ### 最小开放矩阵（确需对外时）
@@ -131,10 +131,11 @@ dropdb topems_restore_test
 | 操作 | 命令 |
 |---|---|
 | 查看服务状态 | `launchctl list | grep topems` / `ps aux | grep topems-server` |
-| 查看日志 | `tail -f ~/topems/logs/topems-server.log`（或 plist StandardOutPath 指定路径） |
+| 查看日志 | `tail -f ~/topems/logs/server.out`（标准输出）/ `~/topems/logs/server.err`（错误），由 plist 的 `StandardOutPath`/`StandardErrorPath` 指定 |
 | 重启服务 | `launchctl kickstart -k gui/$(id -u)/com.topems.server` |
-| nginx 语法检查 | `nginx -t -c ~/topems/nginx/topems-drill.conf` |
-| nginx reload | `kill -HUP $(cat ~/topems/nginx/nginx.pid 2>/dev/null)` 或 `launchctl kickstart -k gui/$(id -u)/com.topems.nginx` |
+| nginx 语法检查 | `/opt/homebrew/bin/nginx -t`（当前生效配置 `/opt/homebrew/etc/nginx/nginx.conf`，include `servers/topems.conf`、`servers/topems-ssl.conf`；非登录 SSH 的 PATH 不含 `/opt/homebrew/bin`，裸 `nginx` 会 command not found） |
+| nginx reload | `/opt/homebrew/bin/nginx -s reload`（平滑）；或 `launchctl kickstart -k gui/$(id -u)/com.topems.nginx`（整进程重启） |
+| nginx 访问日志 | `/Users/xingzhai/topems/nginx/logs/access.log`（`~/topems/logs/nginx.out`、`nginx.err` 为 launchd 捕获的进程输出） |
 | health 探针 | `curl -k https://localhost/health` 与 `curl http://localhost:8099/health` |
 
 ### 升级流程（新 main 拉取后）

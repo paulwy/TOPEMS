@@ -416,7 +416,7 @@ curl http://localhost:8000/health
 # 2. 初始化数据库
 cargo run --bin topems-unified-core -- --migrate
 
-# 3. 生产部署（systemd 范式）
+# 3. 生产部署（本机 macOS launchd 用 scripts/deploy-prod.sh；Linux 目标才用 systemd 范式）
 ./scripts/topems.sh deploy
 ```
 

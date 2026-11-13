@@ -1,5 +1,7 @@
 # TOPEMS 部署指南
 
+> **环境边界（2026-11-13 实测）**：本文命令按 **Linux + systemd** 模板编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）；文中 `topems` 库、`/etc/systemd`、`/var/log/nginx` 等为 Linux 模板/历史示例。当前生产操作以 `docs/deploy-production.md` 为准。
+
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，支持多种部署方式，适用于不同的环境和需求。
@@ -85,7 +87,7 @@ cd apps/core && pnpm install && pnpm dev # 启动 core
 
 ```bash
 # 1. 启动所有服务（含数据库）
-> ⚠️ **2026-10-08 起 docker 部署已弃用**（Docker 卸载，生产走 systemd 模型）：启动/查看/日志请用 `systemctl start topems.target` / `systemctl list-units 'topems*'` / `journalctl -u topems-<svc>`（详见 docs/deploy/container-strategy.md）。以下 docker 命令为历史参考。
+> ⚠️ **2026-10-08 起 docker 部署已弃用**（Docker 卸载；本机生产走 macOS launchd，Linux 目标机用 systemd 模板）：Linux 目标机启动/查看/日志请用 `systemctl start topems.target` / `systemctl list-units 'topems*'` / `journalctl -u topems-<svc>`（详见 docs/deploy/container-strategy.md）。以下 docker 命令为历史参考。
 docker compose up -d
 
 # 2. 检查状态

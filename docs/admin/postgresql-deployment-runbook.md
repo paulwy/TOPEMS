@@ -6,6 +6,8 @@
 **执行人员**：DBA / 运维工程师
 **预计耗时**：30-60 分钟（含验证）
 
+> **环境/库身份（2026-11-13 实测）**：生产库在 xingzhai 机，库名 **`topems_prod`**（`ehs` 71 表，`_sqlx_migrations` 667 success / max `20261112190000`）；本机旧库 `topems`（`ehs` 65 表）**不是生产**。本文其余内容按 **Linux + systemd** 模板编写，`topems` 库名与 `/etc/systemd`、`/var/log` 路径均为模板示例，不是当前 macOS launchd 生产现状。
+
 ---
 
 ## 一、部署概述

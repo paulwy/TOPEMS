@@ -5,14 +5,16 @@
 > `docs/deploy/nginx-prod-first-deploy-runbook.md`（nginx 首部署复核）、
 > `docs/project/go-live-checklist.md §0.3`（剩余外部阻塞 1 项：生产部署三件套实跑）。
 
-## 0. 结论先行：Mac 可以当生产机
+## 0. 结论先行：Mac 可以当生产机（当前已采用方案 B）
 
-**可以，但必须选对路径**。项目生产治理定案为 **systemd 模型**（`scripts/deploy/install.sh` / `update.sh` / `rollback.sh`，`deploy/systemd/` 31 单元 + topems.target），`deploy/docker` 已于 2026-10-08 弃用（生产数据禁入容器）。
+**当前生产实际走方案 B（原生 macOS + launchd）**：2026-10-26 起 xingzhai 机以 LaunchAgent `com.topems.server`（KeepAlive=true、RunAtLoad=true）运行 `/Users/xingzhai/topems/bin/topems-server`（监听 `:8099`），nginx 由 LaunchAgent `com.topems.nginx` 托管，80/443 直接 `proxy_pass http://127.0.0.1:8099`（无 upstream 块）；生产库 `topems_prod`。`deploy/docker` 已于 2026-10-08 弃用（生产数据禁入容器）。
+
+项目通用治理模型仍是 systemd（`scripts/deploy/install.sh` / `update.sh` / `rollback.sh`，`deploy/systemd/` 31 单元 + topems.target），但**本机生产未使用 systemd**——方案 A 保留为备选/迁移目标。
 
 | 路径 | 是否推荐 | 说明 |
 |---|---|---|
-| **A. Linux 虚拟机 + systemd**（UTM/lima/OrbStack 跑 Ubuntu VM） | ✅ **推荐（生产）** | Linux 环境原样运行 install.sh + systemd 单元 + `deploy/nginx/topems.conf`（epoll/www-data/brotli 全部满足），与真实 Linux 生产机**零差异**；等效 Windows 版 WSL2 思路的 macOS 对应 |
-| **B. 原生 macOS 适配**（brew + launchd + drill conf） | ⚠️ 备选/演练 | 无 systemd → launchd 替代；nginx conf 需剥离 epoll/brotli/www-data（`scripts/gen-nginx-drill-conf.sh` 已有 macOS 适配）；与 Linux 生产存在差异，不推荐作为正式生产形态 |
+| **A. Linux 虚拟机 + systemd**（UTM/lima/OrbStack 跑 Ubuntu VM） | 备选（非本机现用） | Linux 环境原样运行 install.sh + systemd 单元 + `deploy/nginx/topems.conf`（epoll/www-data/brotli 全部满足），与真实 Linux 生产机**零差异**；等效 Windows 版 WSL2 思路的 macOS 对应 |
+| **B. 原生 macOS 适配**（brew + launchd + brew nginx） | ✅ **本机生产（现用，2026-10-26 起）** | LaunchAgent `com.topems.server` + `com.topems.nginx`；nginx conf 剥离 epoll/brotli/www-data，80/443 直接反代 `127.0.0.1:8099` |
 | **C. Docker 容器** | ❌ 不推荐 | `deploy/docker` 已弃用（2026-10-08 定案：生产数据禁入容器、Docker daemon 本机僵死史）；仅限临时验证 |
 
 **xingzhai 作为生产机的前提**（全部满足才能算数）：常开 + 电源策略（不休眠）+ 固定内网 IP（路由器 DHCP 保留或静态）+ 22/80/443 端口在宿主机可达 + 资源 ≥ 16GB 内存 / ≥ 100GB 空闲磁盘。
@@ -32,7 +34,7 @@ sw_vers && sysctl -n machdep.cpu.brand_string hw.memsize 2>/dev/null
 df -h /
 ```
 
-## 2. 方案 A：Linux 虚拟机 + systemd（推荐）
+## 2. 方案 A：Linux 虚拟机 + systemd（备选/迁移目标）
 
 ### 2.1 选 VM 工具（三选一，任选）
 
@@ -94,8 +96,8 @@ systemctl status topems-server --no-pager
 # airdeair 侧：备份
 PGPASSWORD=<PWD> pg_dump -h 127.0.0.1 -U topems_app -d topems -F p -f topems_backup.sql
 
-# 拷入 VM → 恢复（标准流程：ON_ERROR_STOP + 空态核验）
-PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems \
+# 拷入 VM → 恢复（标准流程：ON_ERROR_STOP + 空态核验；目标库为生产库 topems_prod）
+PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems_prod -d topems_prod \
   -v ON_ERROR_STOP=1 -f /tmp/topems_backup.sql
 
 # 迁移链校验（应有 0 errors / 0 checksum errors）
@@ -176,9 +178,9 @@ python3 scripts/web_contract_smoke.py
 - mobile 若误用测试环境变量打 prod，第 1b 层会在建立连接前拦截；授权后也只会跑 GET，不会写库；
 - 强行 `--no-verify` 提交绕开本钩子属违规操作，需在变更单登记并复核；本门禁不承诺拦截 `--no-verify`。
 
-## 3. 方案 B：原生 macOS 适配（备选/演练）
+## 3. 方案 B：原生 macOS 适配（当前生产）
 
-> 仅当 xingzhai 不便跑 VM 时使用；**与 Linux 生产存在差异，正式上线仍建议方案 A**。
+> 2026-10-26 起 xingzhai 已按本方案落地并作为生产运行；方案 A 保留为迁移备选。B 与 Linux 模板的差异见 §5。
 
 ```bash
 # 1) brew 依赖
@@ -188,20 +190,24 @@ brew install postgresql@16 nginx
 # 2) 构建
 cargo build --release -p topems-server --bin topems-server
 
+# 当前生产实际：brew nginx 默认配置 /opt/homebrew/etc/nginx/nginx.conf
+# （include servers/topems.conf、servers/topems-ssl.conf；80/443 直接 proxy_pass
+#   http://127.0.0.1:8099，无 upstream 块）。以下 drill conf 为演练/备用口径。
+
 # 3) 数据库
-# 建用户/库后运行 setup-db.sh（同 2.3 步 2）
+# 建用户/库后运行 setup-db.sh（同 2.3 步 2；生产库名 topems_prod）
 
 # 4) nginx 适配（gen-nginx-drill-conf.sh 已含 macOS 适配：去 epoll/brotli/www-data、
-#    pid 前缀、自签证书、upstream 统一 8099）
+#    pid 前缀、自签证书、直连 8099）
 bash scripts/gen-nginx-drill-conf.sh /opt/topems-nginx
-nginx -t -c /opt/topems-nginx/topems-drill.conf && nginx -c /opt/topems-nginx/topems-drill.conf
+/opt/homebrew/bin/nginx -t -c /opt/topems-nginx/topems-drill.conf && /opt/homebrew/bin/nginx -c /opt/topems-nginx/topems-drill.conf
 
 # 5) 服务常驻：systemd → launchd（deploy/systemd/topems-server.service 的 ExecStart
 #    对应 ~/Library/LaunchAgents/com.topems.server.plist；keep-alive + RunAtLoad）
 # 6) 验证同 2.6
 ```
 
-**B 与 Linux 生产差异对照**：systemd（target/依赖/restart）↔ launchd（KeepAlive/LimitLoadToSessionType）；`www-data` ↔ 本机用户；`use epoll` ↔ kqueue（drill 已剥离）；`/run/nginx.pid` ↔ 本机前缀；brotli ↔ 无（drill 已剥离）；证书 ↔ 自签/Let's Encrypt。
+**B 与 Linux 模板差异对照**：systemd（target/依赖/restart）↔ launchd（KeepAlive/LimitLoadToSessionType）；`www-data` ↔ 本机用户；`use epoll` ↔ kqueue（drill 已剥离）；`/run/nginx.pid` ↔ 本机前缀；brotli ↔ 无（drill 已剥离）；证书 ↔ 自签/Let's Encrypt。
 
 ## 4. 运维要点
 
@@ -214,7 +220,7 @@ nginx -t -c /opt/topems-nginx/topems-drill.conf && nginx -c /opt/topems-nginx/to
 | 日志 | `journalctl -u topems-server`（VM）；原生 macOS 用 launchd stdout 重定向 |
 | 迁移 | 新迁移文件应用后跑 `scripts/migration/validate.sh`（0 errors 才可发布） |
 
-## 5. 与 Linux 生产机差异总表（方案 A 为 0 差异）
+## 5. 与 Linux 模板差异总表（方案 A 为 0 差异；方案 B 为当前生产）
 
 | 维度 | 方案 A（Linux VM） | 方案 B（原生 macOS） |
 |---|---|---|

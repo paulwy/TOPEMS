@@ -1,5 +1,7 @@
 # TOPEMS 生产环境部署验证清单
 
+> **环境边界（2026-11-13 实测）**：本文按 **Linux + systemd** 模板编写，**不适用于当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）。macOS 生产验收见 `docs/deploy-production.md` 与 `docs/deploy/macos-production-ops.md`。
+
 ## 概述
 
 本文档是 TOPEMS 系统生产环境部署的完整验证清单，用于确保部署过程的每个环节都经过验证，系统可以安全、稳定地运行在生产环境中。
@@ -220,7 +222,7 @@
 - [部署指南](./AI_BUSINESS_INTELLIGENCE_DEPLOYMENT_GUIDE.md)
 - [健康检查脚本](../../scripts/deploy/ai-health-check.sh)
 - [性能测试指南](../testing/AI_BUSINESS_INTELLIGENCE_PERFORMANCE_GUIDE.md)
-> ⚠️ 2026-10-08 起 deploy/docker/ 已弃用（生产 systemd 部署，见 docs/deploy/container-strategy.md）；此条目为历史参考。
+> ⚠️ 2026-10-08 起 deploy/docker/ 已弃用（本机生产已改为 macOS launchd，systemd 为 Linux 模板，见 docs/deploy/container-strategy.md）；此条目为历史参考。
 - [Docker Compose 配置](../../deploy/docker/docker-compose.yml)
 - [Nginx 配置](../../deploy/nginx/topems.conf)
 - [Systemd 服务配置](../../deploy/systemd/)

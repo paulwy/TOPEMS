@@ -4,6 +4,8 @@
 > 更新日期：2026-09-16
 > 适用版本：TOPEMS v5.15.0+
 
+> **环境边界（2026-11-13 实测）**：本文为 2026-09 的部署方式记录（docker/systemd 口径），**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`），生产库 `topems_prod`。当前部署以 `docs/deploy-production.md` 为准。
+
 ---
 
 ## 概述
@@ -75,7 +77,7 @@ vi /opt/topems/config/.env
 
 ```bash
 # 使用 Docker Compose 启动数据库基础设施
-> ⚠️ **2026-10-08 起 docker-compose 部署已弃用**（Docker 卸载，生产走 systemd 模型 `scripts/deploy/install.sh`）；本节为历史部署方式参考。
+> ⚠️ **2026-10-08 起 docker-compose 部署已弃用**（Docker 卸载；本机生产走 macOS launchd `scripts/deploy-prod.sh`，Linux 目标机用 systemd 模板 `scripts/deploy/install.sh`）；本节为历史部署方式参考。
 cd deploy/docker
 docker-compose up -d postgres redis rabbitmq
 ```

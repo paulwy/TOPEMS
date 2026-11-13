@@ -724,7 +724,7 @@ python3 -m topems_cli db migrate
 | `scripts/dev/update-admin-password.sh` | 重置管理员密码 | `./scripts/dev/update-admin-password.sh [用户名] [密码]` |
 | `scripts/dev/health-check.sh` | 健康检查 | `./scripts/dev/health-check.sh` |
 | `scripts/dev/verify-route-matrix.sh` | 路由验证 | `./scripts/dev/verify-route-matrix.sh` |
-| `scripts/deploy/production-deploy.sh` | 生产部署（systemd 范式） | `./scripts/deploy/production-deploy.sh` |
+| `scripts/deploy/production-deploy.sh` | Linux/systemd 模板部署（**非本机现用**；本机 macOS launchd 用 `scripts/deploy-prod.sh`） | `./scripts/deploy/production-deploy.sh` |
 | `scripts/deploy/install.sh` | Linux 服务器安装 | `./scripts/deploy/install.sh` |
 | `scripts/deploy/setup-db.sh` | 数据库设置 | `./scripts/deploy/setup-db.sh` |
 

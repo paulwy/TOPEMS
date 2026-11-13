@@ -1,5 +1,7 @@
 # 数据库主库口径与实例治理（2026-09-22 收口）
 
+> **2026-11-13 生产库指纹更正**：实际生产库在 xingzhai 生产机，库名 **`topems_prod`**（`ehs` schema **71** 表；`_sqlx_migrations` **667** 条 success、0 失败、无重复，max `20261112190000`，统计时点 2026-11-13）。本机旧库 **`topems`**（`ehs` **65** 表）**不是生产**。本文 §1/§6/§7 中把 5432 `topems` 标为"生产"的表述是 2026-10 的本机历史口径，已按此更正；开发/验证仍可用 `topems`，但不得当作生产。
+
 > 本文档定义 TOPEMS 本地开发与 docker 部署两套 PostgreSQL 实例的口径关系、版本一致性要求与日常操作约定。
 > 背景：2026-09-01 起宿主机 5432 被 Homebrew postgres 占用，postgres 容器改映射 5433；两套实例长期并存，
 > 需明确"哪个是主、如何保持一致、何时用哪个"。
@@ -34,9 +36,11 @@
 
 | 操作 | 命令 |
 |---|---|
-| 本地 psql（生产主库） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
+| 本机 psql（旧库，**非生产**） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
+| 生产 psql（xingzhai 机） | `ssh xingzhai@192.168.110.115 "psql -d topems_prod"`（库 `topems_prod`，`ehs` 71 表） |
 | 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6）✅ **2026-11-02 起该实例已恢复**（数据目录 `/opt/homebrew/var/postgresql@18_5433`），可直接连接 |
-| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（原 `topems_dev` 用同名 5432 库覆盖 `DATABASE_URL` 的做法**已失效**：该库 2026-10-16 核实不存在） |
+| 迁移执行（本机旧库/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（本机旧库，**非生产**；原 `topems_dev` 同 5432 库覆盖的做法已失效） |
+| 迁移执行（生产） | 在 xingzhai 机以 `DATABASE_URL=postgres://topems_prod:***@localhost:5432/topems_prod` 执行；当前账本 667 条 success、max `20261112190000`（2026-11-13 实测） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
 ## 5. 相关文件
@@ -113,7 +117,7 @@ bash scripts/db/check-consistency.sh
 ### 6.5 相关文件
 
 - `database/README.md` — 空库建库标准流程（B14 固化）
-- `docs/database/database-half-migration-ops.md` — 生产主库半迁移运维模式
+- `docs/database/database-half-migration-ops.md` — 旧库半迁移运维模式（历史口径）
 - `scripts/ensure-empty-db-prereqs.sh` / `scripts/migrate-verify-empty.sh` / `scripts/migration/validate.sh` / `scripts/db/check-consistency.sh`
 
 ---
@@ -127,7 +131,8 @@ bash scripts/db/check-consistency.sh
 
 | 库 | 端口 | 运行方式 | 角色 | 数据基线 |
 |---|---|---|---|---|
-| **生产库 `topems`** | `5432` | Homebrew PostgreSQL **18.4**（`/opt/homebrew/opt/postgresql@18`，`/opt/homebrew/var/postgresql@18`） | **生产权威库** | **纯净**：231 表 / 850 权限 / 1 用户（= 5433 原数据全量一致） |
+| **生产库 `topems_prod`**（xingzhai 生产机） | `5432` | Homebrew PostgreSQL **18.4** | **生产权威库** | `ehs` 71 表；`_sqlx_migrations` 667 success、max `20261112190000`（2026-11-13 实测） |
+| **旧库 `topems`**（本机 air） | `5432` | Homebrew PostgreSQL 18.4 | 历史/开发库，**非生产** | `ehs` 65 表（2026-11-13 实测） |
 | ~~**开发库 `topems_dev`**~~ | `5432` | 同实例 | 开发/验证基线 | **2026-10-16 核实：该库已不存在**；原基线 235 表 / 955 权限（含 4 个开发独有 public 表 + 19 个模块表 + 开发数据）需从 `backups/topems_pre_clean_20261008.sql` 重建（该 dump 亦缺失，见 §7.4） |
 | **验证库 `topems`（5433）** | `5433` | Homebrew PostgreSQL 18.4（`/opt/homebrew/var/postgres5433`）——**2026-10-16 起实例已不存在**（数据目录缺失、端口无监听） | 迁移链重放 / 双库账本核对（§6） | 与生产一致（数据已复制）；复用需重建 |
 
@@ -142,7 +147,8 @@ bash scripts/db/check-consistency.sh
 
 ### 7.3 连接口径（应用/脚本）
 
-- **生产/部署**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（脚本默认 PGPORT=5432 已对齐）
+- **生产/部署（xingzhai 机）**：`postgres://topems_prod:***@localhost:5432/topems_prod`（口令在 launchd plist 环境变量，禁止明文落盘/入库）
+- **本机历史/开发（air 机）**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（旧库，`ehs` 65 表，**非生产**）
 - **开发**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）⚠️ **2026-10-16 核实 `topems_dev` 不存在**，该口径当前不可用；且本机 `.env.local` 的 `DATABASE_URL` 仍指向已消失的 **5433**，使用前须改为 5432 的 `topems` 或重建 `topems_dev`
 - **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用；**2026-10-16 起该实例已不存在，执行前须先重建（§6.3）**
 

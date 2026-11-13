@@ -1,16 +1,23 @@
 # TOPEMS 部署配置
 
-## 部署体系说明
+## 部署体系说明（2026-11-13 实测）
 
-> 2026-10-08 容器策略定案（见 `docs/deploy/container-strategy.md`）：**生产走 systemd 模型，
-> 生产数据禁入容器**。Docker Compose 已弃用、仅作临时验证/历史参考；Kubernetes 为可选、当前未启用。
+> **当前本机生产实际是 macOS launchd，不是 systemd。**
+> - 服务：LaunchAgent `gui/501/com.topems.server`（`~/Library/LaunchAgents/com.topems.server.plist`，`KeepAlive=true`、`RunAtLoad=true`）
+> - 二进制：`/Users/xingzhai/topems/bin/topems-server`，监听 `:8099`（lsof 实测 `*:8099`）
+> - nginx：LaunchAgent `gui/501/com.topems.nginx`，配置 `/opt/homebrew/etc/nginx/nginx.conf` + `servers/topems.conf`、`servers/topems-ssl.conf`；80/443 全部**直接** `proxy_pass http://127.0.0.1:8099`，**无 upstream 块**
+> - 生产库：`topems_prod`（`ehs` schema 71 表）；旧库 `topems`（65 表）**不是生产**
+> - 迁移账本：`_sqlx_migrations` **667** 条成功、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）
+>
+> 下文 `systemd/`、Linux nginx 模板、Docker/K8s 均保留为**通用模板/历史参考**；本机现用生产链路是 `scripts/deploy-prod.sh` + launchd。
 
-| 方案 | 定位 | 适用场景 | 目录 |
-|------|------|---------|------|
-| **systemd** | **生产主路径**（现用） | 裸机 Linux 生产服务管理（`scripts/deploy/install.sh`/`update.sh`/`rollback.sh`） | `systemd/` |
+| 方案 | 定位 | 适用场景 | 目录/入口 |
+|------|------|---------|-----------|
+| **macOS launchd** | **本机生产（现用）** | xingzhai 生产机（macOS + brew nginx） | `scripts/deploy-prod.sh`；plist 在 `~/Library/LaunchAgents/`（不入库） |
+| **systemd** | Linux 生产模板（**非本机现用**） | 裸机 Linux 目标机（`scripts/deploy/install.sh`/`update.sh`/`rollback.sh`） | `systemd/` |
 | **Docker Compose** | **已弃用**（临时验证/历史参考，非生产） | 一次性测试/演示；生产数据禁入容器 | `docker/`（DEPRECATED，见其 README） |
 | **Kubernetes** | 可选（当前未启用） | 多节点集群、云原生部署 | `k8s/` |
-| **Nginx** | 反向代理（通用） | 配合生产 systemd 方案使用，唯一入口 upstream → :8099 | `nginx/` |
+| **Nginx** | 反向代理（通用） | 本机 macOS：直连 `proxy_pass` → :8099；Linux 模板：upstream → :8099 | `nginx/` |
 
 ## 目录结构
 
@@ -37,7 +44,7 @@ deploy/
 │   ├── kustomization.yaml
 │   ├── base/                 # 基础资源（ConfigMap/Secret/Ingress/Postgres/Redis）
 │   └── services/             # 各服务 Deployment
-├── systemd/                  # systemd 服务单元（生产主路径）
+├── systemd/                  # systemd 服务单元（Linux 模板，非本机现用）
 │   └── *.service             # 各服务的 systemd unit 文件
 └── nginx/                    # Nginx 反向代理配置（通用 + macOS 生产镜像模板）
     ├── topems.conf           # Linux 反向代理/TLS 入口模板（topems_safe access_log）
@@ -47,6 +54,8 @@ deploy/
 
 ## Nginx 日志策略（access_log / topems_safe）
 
+- **本机生产实际日志**：`/Users/xingzhai/topems/nginx/logs/access.log`（归档 `access.log.*`；`~/topems/logs/nginx.out`、`nginx.err` 为 launchd 捕获的 nginx 进程输出）。Homebrew 默认 `/opt/homebrew/var/log/nginx/access.log` 已停在 2026-11-08，**不是当前入口日志**。
+- **本机 nginx 排障必须用绝对路径**：`/opt/homebrew/bin/nginx -t` / `-T`。非登录 SSH 的 `PATH` 不含 `/opt/homebrew/bin`，裸 `nginx -T` 会 `command not found`；`sudo` 又需口令，同样不可用。实际加载配置是 `/opt/homebrew/etc/nginx/nginx.conf`（include `servers/topems.conf`、`servers/topems-ssl.conf`）。
 - 所有 nginx 模板统一使用 `log_format topems_safe`：只记录 `method + $uri + $server_protocol`，**不落 query string**，避免 token/password 类参数写入日志。
 - `nginx/topems.conf`（Linux 模板）：`http` 块定义 `topems_safe`，80/443 server 级写 `/var/log/nginx/topems_access.log`；`/health`、`/metrics` 保持 `access_log off`。
 - `nginx/macos/`（macOS 生产镜像模板，对应 `/opt/homebrew/etc/nginx/`）：
@@ -80,10 +89,13 @@ deploy/
   - CA 证书仅作为**信任锚分发**（安装到客户端信任库），**不入库**；`.gitignore` 已按具体文件精确忽略 `/deploy/nginx/topems-ca.crt`，不使用 `*.crt` 全局规则。
 - **客户端信任**：将 `<ca-crt-path>` 导入客户端信任库（macOS Keychain 或 Linux `update-ca-certificates`）；生产入口证书仍按现有 `/etc/nginx/certs/` 路径部署，见本文件「生产部署」与 `scripts/deploy/` 脚本。
 
-## 生产部署（systemd 主路径）
+## 生产部署（本机 macOS launchd；Linux 模板见下）
 
-生产使用 `scripts/deploy/` 下的 systemd 范式脚本（install/update/rollback/start-production 等，
-见下方「部署脚本」），**不使用 docker-compose**。生产数据直连 PostgreSQL（5432），禁入容器。
+本机生产使用 `scripts/deploy-prod.sh`（编译 → scp → launchd `com.topems.server` 重启 → 健康检查，库 `topems_prod`）；
+回滚用 `scripts/rollback-prod-mac.sh`。**不使用 docker-compose**，生产数据直连 PostgreSQL（5432），禁入容器。
+
+`scripts/deploy/` 下的 systemd 范式脚本（install/update/rollback/start-production 等）是 **Linux 目标机模板**，
+不是本机现用链路；对应执行清单见 `docs/deploy/production-execution-checklist.md`（Linux 目标清单）。
 
 ## Docker Compose（DEPRECATED，仅临时演练/参考）
 
@@ -116,7 +128,7 @@ bash deploy/docker/build-service.sh finance --tag latest
 部署和运维脚本统一放在 `scripts/deploy/` 目录下，包括：
 - `install.sh` / `uninstall.sh` / `update.sh` — Linux 服务器安装/卸载/更新
 - `setup-db.sh` — 数据库初始化
-- `production-deploy.sh` — 一键部署（现用，systemd 范式）；`deploy.sh` 已 **DEPRECATED**（docker run 离线范式 C，2026-10-03 弃用，勿用于新部署）
+- `production-deploy.sh` — Linux/systemd 模板一键部署（**非本机现用**；本机 macOS launchd 用 `scripts/deploy-prod.sh`）；`deploy.sh` 已 **DEPRECATED**（docker run 离线范式 C，2026-10-03 弃用，勿用于新部署）
 - `production-verify.sh` — 生产环境验证
 - `rollback.sh` — 回滚
 - `start-production.sh` — 生产环境启停
@@ -140,7 +152,7 @@ bash deploy/docker/build-service.sh finance --tag latest
 ### 数据库回滚策略
 - 结构演进 = **直接 DDL 运维**（`psql "$DATABASE_URL" -f <迁移文件>`），`sqlx migrate run` 默认被防护拦截，不做补跑/回滚依赖
 - 破坏性变更（drop 列/表、改约束）前必须拍板并文档化，DDL 先备份受影响数据
-- 数据层回滚兜底：`rollback.sh` 全量 pg_dump/restore（docker 部署）；systemd 部署下等价操作为 `pg_dump` + `psql` 导入
+- 数据层回滚兜底：`rollback.sh` 全量 pg_dump/restore（docker 部署）；systemd/Linux 模板部署下等价操作为 `pg_dump` + `psql` 导入；本机 macOS launchd 回滚见 `scripts/rollback-prod-mac.sh`
 
 ### 验证回滚
 - `rollback.sh --dry-run` 预演完整计划（本机可跑，2026-10-08 已验证计划完整）

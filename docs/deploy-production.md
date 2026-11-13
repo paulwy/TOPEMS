@@ -412,12 +412,14 @@ gunzip -c /Users/xingzhai/topems/backups/topems_prod_20261104_030000.sql.gz | \
 
 | 日志 | 路径 |
 |---|---|
-| 后端服务日志 | `/Users/xingzhai/topems/logs/server.log` |
-| 后端错误日志 | `/Users/xingzhai/topems/logs/server.err.log` |
-| Nginx 访问日志 | `/opt/homebrew/var/log/nginx/access.log` |
-| Nginx 错误日志 | `/opt/homebrew/var/log/nginx/error.log` |
+| 后端服务日志 | `/Users/xingzhai/topems/logs/server.out` |
+| 后端错误日志 | `/Users/xingzhai/topems/logs/server.err` |
+| Nginx 访问日志 | `/Users/xingzhai/topems/nginx/logs/access.log` |
+| Nginx 错误日志 | `/Users/xingzhai/topems/nginx/logs/error.log` |
 | 数据库备份日志 | `/Users/xingzhai/topems/logs/backup-db.log` |
 | 日志轮转日志 | `/Users/xingzhai/topems/logs/log-rotate.log` |
+
+> 注：`/opt/homebrew/var/log/nginx/access.log` 是 Homebrew 默认日志，当前已停在 2026-11-08，**不是**生产入口日志；入口日志以上表 `~/topems/nginx/logs/` 为准。
 
 ### 5.3 日志轮转
 
@@ -455,7 +457,7 @@ ssh xingzhai@192.168.110.115 "launchctl kickstart -k gui/$(id -u)/com.topems.ser
 ssh xingzhai@192.168.110.115 "launchctl kickstart -k gui/$(id -u)/com.topems.nginx"
 
 # 实时查看后端日志
-ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/logs/server.log"
+ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/logs/server.out"
 ```
 
 
@@ -566,7 +568,7 @@ ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/logs/server.out"
 ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/logs/server.err"
 
 # nginx 访问日志
-ssh xingzhai@192.168.110.115 "tail -f /opt/homebrew/var/log/nginx/access.log"
+ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/nginx/logs/access.log"
 ```
 
 
@@ -662,6 +664,16 @@ A: 旧进程没杀干净。launchd 模式下不会出现 —— 如果手动 noh
 ### Q: nginx 改了配置不生效
 
 A: `ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/nginx -t && /opt/homebrew/bin/nginx -s reload"`
+
+### Q: 为什么 `nginx -T` 取不到配置 / 报 command not found？
+
+A: 非登录 SSH 的 `PATH` 只有 `/usr/bin:/bin:/usr/sbin:/sbin`，不含 `/opt/homebrew/bin`，裸 `nginx -T` 会 `command not found`；`sudo nginx -T` 又需要口令。统一用绝对路径：
+
+```bash
+ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/nginx -T"
+```
+
+实际加载的是 `/opt/homebrew/etc/nginx/nginx.conf`（include `servers/topems.conf`、`servers/topems-ssl.conf`）；80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块。
 
 ### Q: 生产机重启了服务会自启吗？
 

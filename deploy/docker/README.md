@@ -17,4 +17,4 @@
 1. Docker Desktop daemon 长期僵死（API 无响应），无法稳定承载部署
 2. Colima 双后端（VZ/qemu）本机硬性不可行
 3. 生产数据已迁移至 Homebrew PostgreSQL（5432），脱离容器 runtime
-4. 生产部署走 systemd 模型（`scripts/deploy/install.sh` / `update.sh` / `rollback.sh`）
+4. 本机生产走 macOS launchd（`scripts/deploy-prod.sh` + `com.topems.server`）；`scripts/deploy/install.sh` / `update.sh` / `rollback.sh` 是 Linux/systemd 模板，非本机现用

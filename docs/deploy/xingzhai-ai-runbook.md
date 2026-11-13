@@ -10,7 +10,9 @@
 ## 0. 任务上下文（先完整读一遍再动手）
 
 - **TOPEMS**：模块化单体 ERP/EMS 系统。对外唯一入口 = `topems-server` BFF（**端口 8099**），约 30 个服务适配器内嵌于单体，全仓部署以该单体为核心。
-- **生产治理模型**：systemd（Linux 专用：`deploy/systemd/` 31 单元 + topems.target + `scripts/deploy/install.sh`）。**macOS 无 systemd** → 本任务书主线 = **原生 macOS + launchd 适配**；若本机具备 Linux 虚拟机（UTM/lima/OrbStack），优先切换 §7 方案 A（与原生产零差异）。
+- **生产治理模型（通用模板）**：systemd（Linux 专用：`deploy/systemd/` 31 单元 + topems.target + `scripts/deploy/install.sh`）。
+- **本机现状（2026-11-13 实测）**：xingzhai 生产已按 **方案 B（原生 macOS + launchd）** 落地——LaunchAgent `gui/501/com.topems.server`（KeepAlive+RunAtLoad，二进制 `/Users/xingzhai/topems/bin/topems-server`，监听 `:8099`）+ `com.topems.nginx`（brew nginx，80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块）；生产库 `topems_prod`。
+- **方案 A（Linux VM + systemd）未采用**，仅保留为迁移备选；下文 §7 的方案 A 迁移步骤按备选理解。
 - **仓库**：`git clone git@github.com:paulwy/TOPEMS.git`（需 SSH key 或 HTTPS PAT）。
 - **约定**：下文 `<VARS>` 需要你按本机实际填写；改动端口/路径时必须全局一致并在 §8 验收清单注明。
 
@@ -95,7 +97,7 @@ cat > ~/Library/LaunchAgents/com.topems.server.plist <<'PLIST'
     <string>/Users/<USER>/TOPEMS/target/release/topems-server</string>
   </array>
   <key>EnvironmentVariables</key><dict>
-    <key>DATABASE_URL</key><string>postgres://topems:<实际PG密码>@localhost:5432/topems</string>
+    <key>DATABASE_URL</key><string>postgres://topems_prod:<实际PG密码>@localhost:5432/topems_prod</string>
   </dict>
   <key>KeepAlive</key><true/>
   <key>RunAtLoad</key><true/>
@@ -115,19 +117,19 @@ sleep 3 && curl -s -m 5 http://localhost:8099/health && echo " <- BFF OK"
 ```bash
 bash scripts/gen-nginx-drill-conf.sh /opt/topems-nginx
 # 生成物为 macOS 可加载 conf：已剥离 epoll/brotli/www-data，pid 用本机前缀，
-# 证书为自签，upstream 统一 localhost:8099（生产口径）
+# 证书为自签，80/443 直接 proxy_pass http://127.0.0.1:8099（无 upstream 块）
 
-nginx -t -c /opt/topems-nginx/topems-drill.conf && nginx -c /opt/topems-nginx/topems-drill.conf
+/opt/homebrew/bin/nginx -t -c /opt/topems-nginx/topems-drill.conf && /opt/homebrew/bin/nginx -c /opt/topems-nginx/topems-drill.conf
 curl -sk -m 5 https://localhost/health && echo " <- NGINX OK"
 ```
 
-## 7. 方案切换决策（Linux 虚拟机优先）
+## 7. 方案切换决策（方案 B 已落地；方案 A 为备选）
 
-- **若本机已装 UTM / lima / OrbStack 且资源充足（≥8GB 可分配 VM）** → 改用**方案 A**（与 Linux 生产零差异）：
+- **当前生产已按方案 B 运行**（launchd + brew nginx，见 §0）。如需与 Linux 生产零差异，可迁移到方案 A：
   - 建 Ubuntu 22.04 VM（systemd 完整），宿主端口转发 22/80/443/5432 → VM。
   - VM 内：`install.sh` + systemd 单元 + `deploy/nginx/topems.conf` **原样**（epoll/www-data/brotli 满足）。
   - 细节见 `docs/deploy/macos-deployment.md §2`。
-- **否则**按本任务书 §2-§6 原生路径执行（B 方案，差异对照见 macos-deployment.md §3/§5）。
+- 不迁移则继续按本任务书 §2-§6 原生路径维护（B 方案）。
 
 ## 8. 验收清单（全部 ✅ 才算完成）
 
@@ -167,9 +169,9 @@ curl -sk -m 5 https://localhost/health && echo " <- NGINX OK"
 ## 3. 构建与部署
 - 仓库 HEAD：`<git rev-parse HEAD>`
 - 二进制：`target/release/topems-server` `<存在/大小>`
-- 数据库：库 `topems`、角色 `topems`、迁移 validate.sh `0 errors / 0 checksum errors`（附输出行）
+- 数据库：库 `topems_prod`、角色 `topems_prod`、迁移 validate.sh `0 errors / 0 checksum errors`（附输出行）；旧库 `topems`（65 表）不是生产
 - 服务：launchd label `<com.topems.server 等>` 运行中 `是/否`；日志尾 5 行摘要
-- nginx：conf `<路径>`，`nginx -t` 输出，证书 `<自签/LE/其他>`
+- nginx：conf `<路径>`，`/opt/homebrew/bin/nginx -t` 输出，证书 `<自签/LE/其他>`
 
 ## 4. 验证证据（§8 逐项）
 - BFF health：`curl http://localhost:8099/health` → `<状态码/body>`

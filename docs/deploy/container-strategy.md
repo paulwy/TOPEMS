@@ -54,7 +54,7 @@ brew services stop docker  # 或 Docker Desktop 设置中关闭开机自启
 | `svc/unified-core/Dockerfile` | 应用容器化资产 | 保留（无运行时依赖） |
 | 11 个脚本中的 docker 引用 | 检测/分支为主，无生产依赖 | 保留（不影响 systemd 部署路径） |
 
-> 结论：生产默认走 systemd（`topems.sh deploy`）；docker 部署路径以 `scripts/deploy/docker/topems-docker.sh` 为现用入口，`deploy/docker/` 资产随之一并恢复使用。
+> 结论：本机生产默认走 **macOS launchd**（`scripts/deploy-prod.sh` + `com.topems.server` + `com.topems.nginx`）；systemd（`topems.sh deploy`）是 **Linux 目标机模板**，非本机现用。docker 部署路径以 `scripts/deploy/docker/topems-docker.sh` 为现用入口，`deploy/docker/` 资产随之一并恢复使用。
 
 ## 6. 版本一致性（2026-10-08 核对）
 
