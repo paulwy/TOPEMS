@@ -54,6 +54,7 @@ async fn test_ehs_hrm_employee_event_roundtrip() {
     let publish_task = tokio::spawn(async move {
         publisher
             .publish_hrm_employee_created(
+                Uuid::new_v4(),
                 employee_id,
                 &publish_name,
                 "ehs-test@topems.local",
@@ -109,6 +110,7 @@ async fn test_ehs_lims_abnormal_event_roundtrip() {
             .publish_event(
                 EventType::LimsInspectionAbnormalDetected,
                 LimsInspectionAbnormalDetectedPayload {
+                    tenant_id: Uuid::new_v4(),
                     task_id,
                     task_no: "LIMS-TASK-001".to_string(),
                     sample_id,
@@ -166,6 +168,7 @@ async fn test_ehs_qms_corrective_action_event_roundtrip() {
             .publish_event(
                 EventType::QmsCorrectiveActionCreated,
                 QmsCorrectiveActionCreatedPayload {
+                    tenant_id: Uuid::new_v4(),
                     action_id,
                     issue_id,
                     title: "EHS 纠正措施测试".to_string(),
@@ -230,6 +233,7 @@ async fn test_ehs_concurrent_events_no_crosstalk() {
             let (received, pub_res) = tokio::join!(
                 sub.wait_for_match(),
                 publisher.publish_hrm_employee_created(
+                    Uuid::new_v4(),
                     emp_id,
                     &pub_name,
                     &pub_email,

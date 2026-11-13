@@ -16,6 +16,8 @@ use topems_shared_core::l2_cache::AsyncL2Cache;
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
+    /// 租户作用域句柄：模块层统一经 `state.db.scope*` 取连接，禁止直连 `state.pool`。
+    pub db: topems_shared_db::scope::Db,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,

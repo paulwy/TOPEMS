@@ -35,6 +35,29 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const BASELINE_PATH = path.join(__dirname, 'tenant-context-baseline.json');
 const ANNOTATION = /\/\/\s*tenant-system\s*:/;
 
+// W7-B4-EHS 定案（D5）：只豁免 `Db::new(pool.clone()).scope_with(...)` 这一种形态
+// （复用 tenant_middleware 已开启的请求级 RLS 事务），其余 `state.pool` 一律计入 R2。
+// 5 处位置显式登记，代码漂移（行号失效）即红；命中数不得超过白名单长度。
+const SCOPED_CONSTRUCTION_WHITELIST = [
+  'svc/ehs/src/modules/environment.rs:184',
+  'svc/ehs/src/modules/accident.rs:655',
+  'svc/ehs/src/modules/accident.rs:1204',
+  'svc/ehs/src/modules/accident.rs:1331',
+  'svc/ehs/src/modules/training.rs:1837',
+];
+
+function isScopedConstruction(lines, idx) {
+  const line = lines[idx];
+  if (!/Db\s*::\s*new\s*\(/.test(line) || !/state\s*\.\s*pool\s*\.\s*clone\s*\(\s*\)/.test(line)) {
+    return false;
+  }
+  const end = Math.min(lines.length, idx + 16);
+  for (let k = idx; k < end; k++) {
+    if (/\.\s*scope_with\s*\(/.test(lines[k])) return true;
+  }
+  return false;
+}
+
 const args = new Set(process.argv.slice(2));
 const changedOnly = args.has('--changed-only');
 const updateBaseline = args.has('--update-baseline');
@@ -89,6 +112,7 @@ function scanFile(rel) {
   const isModule = /^svc\/[^/]+\/src\/modules\//.test(rel);
   const r1 = [];
   const r2 = [];
+  const scopedHits = [];
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
     const code = stripLineComment(raw);
@@ -96,10 +120,15 @@ function scanFile(rel) {
       r1.push({ line: i + 1, text: raw.trim() });
     }
     if (isModule && /\bstate\s*\.\s*pool\b/.test(code) && !hasAnnotation(lines, i)) {
-      r2.push({ line: i + 1, text: raw.trim() });
+      const key = `${rel}:${i + 1}`;
+      if (SCOPED_CONSTRUCTION_WHITELIST.includes(key) && isScopedConstruction(lines, i)) {
+        scopedHits.push(key);
+      } else {
+        r2.push({ line: i + 1, text: raw.trim() });
+      }
     }
   }
-  return { rel, r1, r2 };
+  return { rel, r1, r2, scopedHits };
 }
 
 function serviceOf(rel) {
@@ -131,6 +160,22 @@ function main() {
 
   const current = { r1: {}, r2: {} };
   const total = { r1: 0, r2: 0 };
+
+  // 上限断言：5 处白名单必须逐一命中（形态/行号漂移即红），且命中数不得超出白名单。
+  const scopedHits = results.flatMap((r) => r.scopedHits || []);
+  const staleWhitelist = SCOPED_CONSTRUCTION_WHITELIST.filter((k) => !scopedHits.includes(k));
+  if (staleWhitelist.length) {
+    console.error('[tenant-context] 作用域构造白名单失效（行号漂移或形态变更）:');
+    for (const k of staleWhitelist) console.error(`  - ${k}`);
+    process.exit(1);
+  }
+  if (scopedHits.length > SCOPED_CONSTRUCTION_WHITELIST.length) {
+    console.error(
+      `[tenant-context] 作用域构造命中数 ${scopedHits.length} 超过上限 ${SCOPED_CONSTRUCTION_WHITELIST.length}`,
+    );
+    process.exit(1);
+  }
+
   for (const r of results) {
     if (r.r1.length) {
       current.r1[r.rel] = r.r1.length;

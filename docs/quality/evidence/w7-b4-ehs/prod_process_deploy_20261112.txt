@@ -1,0 +1,95 @@
+# 生产进程与部署形态原始输出（只读）
+# 采集时间：2026-11-12（Asia/Shanghai）
+# 采集身份：ssh xingzhai@192.168.110.115（uid=501(xingzhai)）
+# 主机：Mac.lan / Darwin 25.6.0 / arm64（macOS）
+
+=== hostname; uname -a ===
+Mac.lan
+Darwin Mac.lan 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132 arm64
+
+=== ps aux | grep -i topems | grep -v grep ===
+xingzhai         97708   0.7  1.9 435625712 469776   ??  S     4:37下午   6:33.57 /Users/xingzhai/topems/bin/topems-server
+xingzhai         39156   0.0  0.0 435508832  12464   ??  Ss   11:29下午   0:00.01 postgres: topems_prod topems_prod ::1(54498) idle
+xingzhai         39155   0.0  0.0 435508832  11920   ??  Ss   11:29下午   0:00.01 postgres: topems_prod topems_prod ::1(54497) idle
+xingzhai         39145   0.0  0.0 435508832  11504   ??  Ss   11:29下午   0:00.01 postgres: topems_prod topems_prod ::1(54496) idle
+xingzhai         35990   0.0  0.0 435508832  12016   ??  Ss   11:19下午   0:00.02 postgres: topems_prod topems_prod ::1(54365) idle
+xingzhai         35989   0.0  0.0 435508832  12000   ??  Ss   11:19下午   0:00.03 postgres: topems_prod topems_prod ::1(54364) idle
+xingzhai         32145   0.0  0.4 435508832  99248   ??  Ss   11:08下午   0:03.23 postgres: topems_prod topems_prod ::1(54207) idle
+xingzhai         32132   0.0  0.2 435508832  46224   ??  Ss   11:08下午   0:01.21 postgres: topems_prod topems_prod ::1(54206) idle
+xingzhai         31275   0.0  0.1 435508832  12608   ??  Ss   11:05下午   0:00.05 postgres: topems_prod topems_prod ::1(54169) idle
+
+=== launchctl list | grep -i topems ===
+-	0	com.topems.be08-observe
+-	0	com.topems.nginx-logrotate
+-	0	com.topems.backup
+1239	0	com.topems.nginx
+97708	0	com.topems.server
+
+（无 com.topems.ehs）
+
+=== ps -o pid,ppid,user,command -p 97708 ===
+  PID  PPID USER     COMMAND
+97708     1 xingzhai /Users/xingzhai/topems/bin/topems-server
+
+=== launchctl print gui/501/com.topems.server ===
+path = /Users/xingzhai/Library/LaunchAgents/com.topems.server.plist
+state = running
+program = /Users/xingzhai/topems/bin/topems-server
+stdout path = /Users/xingzhai/topems/logs/server.out
+stderr path = /Users/xingzhai/topems/logs/server.err
+pid = 97708
+properties = keepalive | runatload | inferred program
+
+=== PlistBuddy ===
+ProgramArguments: /Users/xingzhai/topems/bin/topems-server
+KeepAlive: true
+RunAtLoad: true
+Label: com.topems.server
+
+=== lsof -nP -iTCP -sTCP:LISTEN（过滤 nginx/topems/8099/80/443） ===
+nginx      1239 xingzhai    6u  IPv4 0xcd26f706890d0c55      0t0  TCP *:8080 (LISTEN)
+nginx      1239 xingzhai    7u  IPv4 0xf2d8793eac7fe446      0t0  TCP *:443 (LISTEN)
+nginx      1239 xingzhai    8u  IPv4 0xafb785c7a9ea16a2      0t0  TCP *:80 (LISTEN)
+nginx     64081 xingzhai    6u  IPv4 0xcd26f706890d0c55      0t0  TCP *:8080 (LISTEN)
+nginx     64081 xingzhai    7u  IPv4 0xf2d8793eac7fe446      0t0  TCP *:443 (LISTEN)
+nginx     64081 xingzhai    8u  IPv4 0xafb785c7a9ea16a2      0t0  TCP *:80 (LISTEN)
+topems-se 97708 xingzhai   70u  IPv4 0x3375ffb8b5480f71      0t0  TCP *:8099 (LISTEN)
+
+=== ls -la /Users/xingzhai/topems/bin/ | grep -iE "ehs|server" ===
+-rwxr-xr-x@   1 xingzhai  staff  207757200 11月 12 16:37 topems-server
+（其余均为 topems-server 的 .bak 历史备份；不存在 ehs-service）
+
+=== nginx 二进制与配置 ===
+/opt/homebrew/bin/nginx -> ../Cellar/nginx/1.31.1/bin/nginx
+/opt/homebrew/etc/nginx/servers/topems-ssl.conf
+/opt/homebrew/etc/nginx/servers/topems.conf
+
+=== /opt/homebrew/etc/nginx/servers/topems-ssl.conf（cat -n，节选） ===
+     2	    listen       443 ssl;
+     4	    server_name  _;
+    27	    # API 反代到 Rust 后端
+    28	    location /api/ {
+    29	        proxy_pass http://127.0.0.1:8099;
+    40	        proxy_pass http://127.0.0.1:8099;      # /ws/
+    53	        proxy_pass http://127.0.0.1:8099/health;
+    58	        proxy_pass http://127.0.0.1:8099/metrics;
+    63	        proxy_pass http://127.0.0.1:8099;      # /swagger-ui/
+
+=== /opt/homebrew/etc/nginx/servers/topems.conf（cat -n，节选） ===
+     2	    listen       80;
+     3	    server_name  _;
+    14	    location /api/ {
+    15	        proxy_pass http://127.0.0.1:8099;
+    26	        proxy_pass http://127.0.0.1:8099;      # /ws/
+    36	        proxy_pass http://127.0.0.1:8099/health;
+    41	        proxy_pass http://127.0.0.1:8099/metrics;
+    47	        proxy_pass http://127.0.0.1:8099;      # /swagger-ui/
+
+=== plist EnvironmentVariables（节选） ===
+DATABASE_URL  = postgres://topems_prod:***@localhost:5432/topems_prod
+MIGRATE_URL   = postgres://topems_prod:***@localhost:5432/topems_prod
+PROFILE       = production
+SERVER_PORT   = 8099
+EHS_SERVICE_URL = http://localhost:8099
+DB_MAX_CONNECTIONS = 8
+SEARCH_PATH = flow, mobile, rs, erp, public, iam, shared

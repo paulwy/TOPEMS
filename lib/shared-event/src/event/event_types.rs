@@ -294,6 +294,10 @@ pub struct SearchableEntityChangedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HrmEmployeeCreatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 旧消息反序列化为 nil，消费端必须判 nil 并丢弃（不落 NULL 业务行）。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub name: String,
     pub email: String,
@@ -302,6 +306,10 @@ pub struct HrmEmployeeCreatedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HrmEmployeeUpdatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 旧消息反序列化为 nil，消费端必须判 nil 并丢弃（不落 NULL 业务行）。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub updated_fields: Vec<String>,
     pub old_data: Option<serde_json::Value>,
@@ -489,6 +497,10 @@ pub struct LimsInspectionResultSubmittedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimsInspectionAbnormalDetectedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 旧消息反序列化为 nil，消费端必须判 nil 并丢弃（不落 NULL 业务行）。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub task_id: Uuid,
     pub task_no: String,
     pub sample_id: Uuid,
@@ -519,6 +531,10 @@ pub struct QmsInspectionCompletedPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QmsCorrectiveActionCreatedPayload {
+    /// 租户上下文：事件消费者的唯一合法来源，必须由生产端写入。
+    /// 旧消息反序列化为 nil，消费端必须判 nil 并丢弃（不落 NULL 业务行）。
+    #[serde(default)]
+    pub tenant_id: Uuid,
     pub action_id: Uuid,
     pub issue_id: Uuid,
     pub title: String,

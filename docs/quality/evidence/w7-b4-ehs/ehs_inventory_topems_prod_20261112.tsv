@@ -1,0 +1,71 @@
+audit_logs|0|0|-|(no created_at)
+drill_records|0|0|-|(no created_at)
+emergency_plans|0|0|-|(no created_at)
+environmental_alerts|0|0|-|(no created_at)
+environmental_data|0|0|-|(no created_at)
+hazard_control_measures|0|0|-|-
+hazard_risk_assessments|0|0|-|-
+health_checkups|0|0|-|(no created_at)
+health_records|0|0|-|-
+monitoring_points|0|0|-|(no created_at)
+qa_ehs_accident_investigations|0|0|-|-
+qa_ehs_accident_reviews|0|0|-|-
+qa_ehs_accident_treatments|0|0|-|-
+qa_ehs_accidents|0|0|-|-
+qa_ehs_alerts|0|0|-|-
+qa_ehs_compliance_evaluations|0|0|-|-
+qa_ehs_compliance_items|0|0|-|-
+qa_ehs_contraindications|0|0|-|-
+qa_ehs_detection_records|0|0|-|-
+qa_ehs_discharge_permits|0|0|-|-
+qa_ehs_disease_cases|0|0|-|-
+qa_ehs_drill_evaluations|0|0|-|-
+qa_ehs_drill_plans|0|0|-|-
+qa_ehs_drill_problems|0|0|-|-
+qa_ehs_drill_records|0|0|-|-
+qa_ehs_emergency_plan_approvals|0|0|-|-
+qa_ehs_emergency_plan_supplies|0|0|-|-
+qa_ehs_emergency_plan_versions|0|0|-|-
+qa_ehs_emergency_plans|0|0|-|-
+qa_ehs_employees|0|0|-|-
+qa_ehs_env_monitor_records|0|0|-|-
+qa_ehs_environment|0|0|-|-
+qa_ehs_environment_incidents|0|0|-|-
+qa_ehs_environment_monitors|0|0|-|-
+qa_ehs_environmental_regulations|0|0|-|-
+qa_ehs_hazard_factors|0|0|-|-
+qa_ehs_hazard_rectifications|0|0|-|-
+qa_ehs_hazard_verifications|0|0|-|-
+qa_ehs_hazardous_materials|0|0|-|-
+qa_ehs_hazards|0|0|-|-
+qa_ehs_health_abnormalities|0|0|-|-
+qa_ehs_health_exam_plans|0|0|-|-
+qa_ehs_health_exam_records|0|0|-|-
+qa_ehs_health_trainings|0|0|-|-
+qa_ehs_incident_actions|0|0|-|-
+qa_ehs_inspection_items|0|0|-|-
+qa_ehs_inspection_plans|0|0|-|-
+qa_ehs_inspection_record_items|0|0|-|-
+qa_ehs_inspection_records|0|0|-|-
+qa_ehs_investigations|0|0|-|-
+qa_ehs_material_stocks|0|0|-|-
+qa_ehs_msds|0|0|-|(no created_at)
+qa_ehs_protection_measures|0|0|-|-
+qa_ehs_reviews|0|0|-|-
+qa_ehs_risk_controls|0|0|-|-
+qa_ehs_risks|0|0|-|-
+qa_ehs_stock_records|0|0|-|-
+qa_ehs_sync_records|0|0|-|-
+qa_ehs_training_certificates|0|0|-|-
+qa_ehs_trainings|0|0|-|-
+qa_ehs_treatment_actions|0|0|-|-
+qa_ehs_treatments|0|0|-|-
+risk_assessments|0|0|-|(no created_at)
+risk_controls|0|0|-|(no created_at)
+safety_checks|0|0|-|-
+safety_hazards|1|0|00000000-0000-0000-0000-000000000001:1|2026-11-11 07:50:02.720714+08
+safety_incidents|0|0|-|(no created_at)
+schema_defense_ledger|0||(no tenant_id)|(no created_at)
+training_programs|0|0|-|-
+training_records|0|0|-|-
+vaccination_records|0|0|-|(no created_at)

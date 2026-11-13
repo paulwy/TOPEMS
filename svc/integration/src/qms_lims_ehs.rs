@@ -13,6 +13,7 @@
 
 use serde_json::Value;
 use sqlx::types::Uuid;
+use std::sync::atomic::{AtomicU64, Ordering};
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
@@ -61,13 +62,47 @@ async fn post_json(url: &str, body: &Value) -> Result<(), TopemsError> {
     Ok(())
 }
 
+/// 事件租户非法（缺失/空串/nil/解析失败）的累计拒绝数。
+static EVENT_TENANT_REJECTS: AtomicU64 = AtomicU64::new(0);
+
+fn reject_event_tenant(event: &str, detail: &str) -> TopemsError {
+    let total = EVENT_TENANT_REJECTS.fetch_add(1, Ordering::Relaxed) + 1;
+    tracing::error!(
+        "[tenant_ctx] {event} 事件租户非法（{detail}），拒收；累计拒绝={}",
+        total
+    );
+    TopemsError::ValidationFailed(format!(
+        "[tenant_ctx:reject] {event} 事件 payload.tenant_id 非法（{detail}），拒绝下游编排"
+    ))
+}
+
+/// 原始 payload 层校验：覆盖缺失、空串、nil-uuid、解析失败四种形态。
+fn require_raw_payload_tenant(payload: &Value, event: &str) -> Result<Uuid, TopemsError> {
+    let raw = payload.get("tenant_id");
+    let parsed = raw
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s.trim()).ok());
+    match parsed {
+        Some(t) if !t.is_nil() => Ok(t),
+        Some(_) => Err(reject_event_tenant(event, "nil-uuid")),
+        None => Err(reject_event_tenant(
+            event,
+            match raw {
+                None => "缺少 tenant_id",
+                Some(v) if v.as_str().map(|s| s.trim().is_empty()).unwrap_or(false) => {
+                    "tenant_id 为空串"
+                }
+                Some(_) => "tenant_id 解析失败",
+            },
+        )),
+    }
+}
+
 /// 事件 payload 必须携带非 nil 租户；缺失即拒绝下游编排。
 /// 禁止回退请求上下文、全局常量或 nil —— 下游 internal 端点会把该值直接写库。
 fn require_event_payload_tenant(tenant_id: Uuid, event: &str) -> Result<Uuid, TopemsError> {
     if tenant_id.is_nil() {
-        return Err(TopemsError::ValidationFailed(format!(
-            "[tenant_ctx:nil] {event} 事件 payload.tenant_id 为 nil，拒绝下游编排"
-        )));
+        return Err(reject_event_tenant(event, "nil-uuid"));
     }
     Ok(tenant_id)
 }
@@ -117,6 +152,7 @@ pub async fn handle_qms_inspection_completed(
 pub async fn handle_qms_quality_issue_created(
     payload: &QmsQualityIssueCreatedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id = require_event_payload_tenant(payload.tenant_id, "QmsQualityIssueCreated")?;
     info!(
         "处理QMS质量问题创建事件 - 编排到EHS隐患: {}",
         payload.issue_no
@@ -132,6 +168,7 @@ pub async fn handle_qms_quality_issue_created(
     post_json(
         &format!("{}/api/internal/ehs/hazards/integration", ehs_base_url()),
         &serde_json::json!({
+            "tenant_id": tenant_id,
             "hazard_no": hazard_no,
             "title": payload.title,
             "category": "质量相关",
@@ -242,6 +279,8 @@ pub async fn handle_ehs_accident_reported(
 pub async fn handle_lims_inspection_abnormal(
     payload: &LimsInspectionAbnormalDetectedPayload,
 ) -> Result<(), TopemsError> {
+    let tenant_id =
+        require_event_payload_tenant(payload.tenant_id, "LimsInspectionAbnormalDetected")?;
     info!("处理LIMS检测异常事件 - 编排到EHS: {}", payload.task_no);
 
     let hazard_title = format!("LIMS检测异常: {}", payload.test_item);
@@ -263,6 +302,7 @@ pub async fn handle_lims_inspection_abnormal(
     post_json(
         &format!("{}/api/internal/ehs/hazards/integration", ehs_base_url()),
         &serde_json::json!({
+            "tenant_id": tenant_id,
             "hazard_no": hazard_no,
             "title": hazard_title,
             "category": "化学品/实验室",
@@ -358,33 +398,43 @@ pub async fn handle_lims_reagent_alert(
 pub async fn dispatch(event_type: EventType, payload: &Value) -> Result<(), TopemsError> {
     match event_type {
         EventType::QmsInspectionCompleted => {
+            require_raw_payload_tenant(payload, "QmsInspectionCompleted")?;
             let parsed = serde_json::from_value::<QmsInspectionCompletedPayload>(payload.clone())?;
             handle_qms_inspection_completed(&parsed).await?;
         }
         EventType::QmsQualityIssueCreated => {
+            require_raw_payload_tenant(payload, "QmsQualityIssueCreated")?;
             let parsed = serde_json::from_value::<QmsQualityIssueCreatedPayload>(payload.clone())?;
             handle_qms_quality_issue_created(&parsed).await?;
         }
         EventType::EhsHazardReported => {
+            require_raw_payload_tenant(payload, "EhsHazardReported")?;
             let parsed = serde_json::from_value::<EhsHazardReportedPayload>(payload.clone())?;
             handle_ehs_hazard_reported(&parsed).await?;
         }
         EventType::EhsAccidentReported => {
+            require_raw_payload_tenant(payload, "EhsAccidentReported")?;
             let parsed = serde_json::from_value::<EhsAccidentReportedPayload>(payload.clone())?;
             handle_ehs_accident_reported(&parsed).await?;
         }
         EventType::LimsInspectionAbnormalDetected => {
+            require_raw_payload_tenant(payload, "LimsInspectionAbnormalDetected")?;
             let parsed =
                 serde_json::from_value::<LimsInspectionAbnormalDetectedPayload>(payload.clone())?;
             handle_lims_inspection_abnormal(&parsed).await?;
         }
         EventType::LimsRecordCompleted => {
+            require_raw_payload_tenant(payload, "LimsRecordCompleted")?;
             let parsed = serde_json::from_value::<LimsRecordCompletedPayload>(payload.clone())?;
             handle_lims_record_completed(&parsed).await?;
         }
         EventType::LimsReagentAlert => {
-            let parsed = serde_json::from_value::<LimsReagentAlertPayload>(payload.clone())?;
-            handle_lims_reagent_alert(&parsed).await?;
+            // 该 payload 无 tenant_id 字段，无法安全落库；明确拒收并计数，
+            // 待下一窗口扩展 payload 后再恢复（绝不落 NULL 业务行）。
+            return Err(reject_event_tenant(
+                "LimsReagentAlert",
+                "payload 无 tenant_id 字段",
+            ));
         }
         _ => warn!("未处理的事件类型: {:?}", event_type),
     }

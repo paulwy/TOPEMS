@@ -1,28 +1,26 @@
 //! EHS Data Sync module - Sync safety data with QMS and LIMS
 //!
-//! 租户隔离判定（P2 制造域 B 审计豁免登记，2026-10-24）：
-//! `ehs.qa_ehs_sync_records` 为**系统级跨服务集成同步日志**（EHS→QMS/LIMS 编排工具
-//! 运维记录），表结构自始无 `tenant_id` 列、无 RLS 策略（见 database/init/10_ehs_schema.sql
-//! 与全部 selfheal 迁移，仅补 deleted_at）。20261006000003_u3_fake_sync_records_cleanup
-//! 已正式下线手动假同步写通道：sync_hazard_to_qms / sync_accident_to_lims / 配置 CRUD /
-//! 批量重试一律返回 501，本模块现存的 list/get/retry/delete 仅用于历史同步记录的运维
-//! 浏览与清理，属全局运维视角而非租户业务数据。
-//! 故此处**不补假租户过滤**（引用不存在的 tenant_id 列会直接破坏查询）；操作面已由
-//! ehs:read / ehs:write / ehs:delete 权限点收敛（运维级），与 lims/qms 同族
-//! qa_*_sync_records 表治理口径一致。
+//! 租户隔离（W7-B4 收口，2026-11-12）：
+//! `ehs.qa_ehs_sync_records` 带可空 `tenant_id` 列，已按租户收口为 fail-closed RLS。
+//! QMS/LIMS 对该表的写入点为 0（它们只写各自的 `qa_qms_sync_records` /
+//! `qa_lims_sync_records`）；本模块的 list/get/retry/delete 一律按请求租户过滤，
+//! 超管必须携带 `x-tenant-id`，缺失/非法由 [`require_tenant`] 返回 400，
+//! **不落 NULL、不走系统通道**。
 
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
+use crate::shared::permission::require_tenant;
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -92,28 +90,34 @@ pub struct SyncAccidentToLimsRequest {
 )]
 pub async fn list_sync_records(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
 ) -> ApiResponse<Vec<SyncRecord>> {
+    let tenant = match require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE tenant_id = $1 AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
         }
         (Some(_), None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE tenant_id = $1 AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
     };
 
-    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant);
     match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(ty), Some(st)) => {
             query_builder = query_builder.bind(ty).bind(st).bind(page_size).bind(offset);
@@ -129,7 +133,15 @@ pub async fn list_sync_records(
         }
     }
 
-    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope for sync records: {}", e);
+            return ApiResponse::server_error("获取同步记录列表失败");
+        }
+    };
+
+    let records = query_builder.fetch_all(&mut scope).await.map(|rows| {
         rows.into_iter()
             .map(|row| SyncRecord {
                 id: row.get("id"),
@@ -147,6 +159,10 @@ pub async fn list_sync_records(
             })
             .collect()
     });
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit sync record read scope: {}", e);
+    }
 
     match records {
         Ok(data) => ApiResponse::success(data, "获取同步记录列表成功"),
@@ -170,22 +186,41 @@ pub async fn list_sync_records(
 )]
 pub async fn get_sync_record(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SyncRecord> {
+    let tenant = match require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope for sync record: {}", e);
+            return ApiResponse::server_error("获取同步记录失败");
+        }
+    };
+
     let row = sqlx::query(
-        only_own_schema_query!("ehs", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE id = $1")
+        only_own_schema_query!("ehs", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE id = $1 AND tenant_id = $2")
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit sync record read scope: {}", e);
+    }
+
     match row {
-        Ok(r) => ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
                 sync_no: r.get("sync_no"),
@@ -202,7 +237,7 @@ pub async fn get_sync_record(
             },
             "获取同步记录成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("同步记录不存在"),
+        Ok(None) => ApiResponse::not_found("同步记录不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
             ApiResponse::server_error("获取同步记录失败")
@@ -256,22 +291,47 @@ pub async fn sync_accident_to_lims(
 )]
 pub async fn retry_sync(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SyncRecord> {
+    let tenant = match require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope for retry: {}", e);
+            return ApiResponse::server_error("同步重试失败");
+        }
+    };
+
     let row = sqlx::query(
-        only_own_schema_query!("ehs", "UPDATE ehs.qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at")
+        only_own_schema_query!("ehs", "UPDATE ehs.qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at")
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind(tenant)
+    .fetch_optional(&mut scope)
     .await;
 
+    if row.is_err() {
+        tracing::error!("Failed to retry sync: {:?}", row.as_ref().err());
+        return ApiResponse::server_error("同步重试失败");
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit retry sync: {}", e);
+        return ApiResponse::server_error("同步重试失败");
+    }
+
     match row {
-        Ok(r) => ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
                 sync_no: r.get("sync_no"),
@@ -288,11 +348,8 @@ pub async fn retry_sync(
             },
             "同步记录已重置为待处理",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("同步记录不存在"),
-        Err(e) => {
-            tracing::error!("Failed to retry sync: {}", e);
-            ApiResponse::server_error("同步重试失败")
-        }
+        Ok(None) => ApiResponse::not_found("同步记录不存在"),
+        Err(_) => ApiResponse::server_error("同步重试失败"),
     }
 }
 
@@ -309,28 +366,54 @@ pub async fn retry_sync(
 )]
 pub async fn delete_sync_record(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
+    let tenant = match require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope for delete: {}", e);
+            return ApiResponse::server_error("同步记录删除失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "ehs",
-        "DELETE FROM ehs.qa_ehs_sync_records WHERE id = $1"
+        "DELETE FROM ehs.qa_ehs_sync_records WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .bind(tenant)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(_) => ApiResponse::success(true, "同步记录删除成功"),
+    let result = match result {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
-            ApiResponse::server_error("同步记录删除失败")
+            return ApiResponse::server_error("同步记录删除失败");
         }
+    };
+
+    if result.rows_affected() == 0 {
+        return ApiResponse::not_found("同步记录不存在");
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit delete sync record: {}", e);
+        return ApiResponse::server_error("同步记录删除失败");
+    }
+
+    ApiResponse::success(true, "同步记录删除成功")
 }
 
 #[derive(Debug, Serialize)]

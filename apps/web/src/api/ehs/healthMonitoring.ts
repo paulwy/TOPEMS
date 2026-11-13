@@ -69,32 +69,34 @@ export const healthMonitoringApi = {
     if (params?.employee_id) qs.set('employee_id', params.employee_id);
     if (params?.keyword) qs.set('q', params.keyword);
     const s = qs.toString();
-    return apiClient.ehs.get<PaginatedResponse<HealthRecordItem>>(`/health${s ? `?${s}` : ''}`);
+    return apiClient.ehs.get<PaginatedResponse<HealthRecordItem>>(
+      `/health-monitor${s ? `?${s}` : ''}`
+    );
   },
 
   async getHealthRecord(id: string): Promise<ApiResponse<HealthRecordItem>> {
-    return apiClient.ehs.get<HealthRecordItem>(`/health/${id}`);
+    return apiClient.ehs.get<HealthRecordItem>(`/health-monitor/${id}`);
   },
 
   async createHealthRecord(
     data: CreateHealthRecordRequest
   ): Promise<ApiResponse<HealthRecordItem>> {
-    // 后端 /health 仅注册 GET（liveness/list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
-    return apiClient.ehs.get<HealthRecordItem>('/health', { params: data });
+    // 后端 /health-monitor 集合路由支持 POST；写语义恢复前保持 GET+query 兼容。
+    return apiClient.ehs.get<HealthRecordItem>('/health-monitor', { params: data });
   },
 
   async updateHealthRecord(
     id: string,
     data: UpdateHealthRecordRequest
   ): Promise<ApiResponse<HealthRecordItem>> {
-    return apiClient.ehs.put<HealthRecordItem>(`/health/${id}`, data);
+    return apiClient.ehs.put<HealthRecordItem>(`/health-monitor/${id}`, data);
   },
 
   async deleteHealthRecord(id: string): Promise<ApiResponse<null>> {
-    return apiClient.ehs.delete<null>(`/health/${id}`);
+    return apiClient.ehs.delete<null>(`/health-monitor/${id}`);
   },
 
   async getHealthStatistics(): Promise<ApiResponse<HealthStatistics>> {
-    return apiClient.ehs.get<HealthStatistics>('/health/statistics');
+    return apiClient.ehs.get<HealthStatistics>('/health-monitor/statistics');
   },
 };

@@ -153,12 +153,14 @@ impl EventPublisher {
     /// 发布 HRM 员工创建事件
     pub async fn publish_hrm_employee_created(
         &self,
+        tenant_id: uuid::Uuid,
         employee_id: uuid::Uuid,
         name: &str,
         email: &str,
         department_id: Option<uuid::Uuid>,
     ) -> EventResult<()> {
         let payload = HrmEmployeeCreatedPayload {
+            tenant_id,
             employee_id,
             name: name.to_string(),
             email: email.to_string(),
@@ -345,6 +347,7 @@ impl EventPublisher {
 
     pub async fn publish_qms_corrective_action_created(
         &self,
+        tenant_id: uuid::Uuid,
         action_id: uuid::Uuid,
         issue_id: uuid::Uuid,
         title: &str,
@@ -352,6 +355,7 @@ impl EventPublisher {
         assigned_to: &str,
     ) -> EventResult<()> {
         let payload = QmsCorrectiveActionCreatedPayload {
+            tenant_id,
             action_id,
             issue_id,
             title: title.to_string(),
@@ -803,6 +807,7 @@ mod tests {
         assert!(json.contains("\"x\""));
 
         let hrm = HrmEmployeeCreatedPayload {
+            tenant_id: Uuid::new_v4(),
             employee_id: Uuid::nil(),
             name: "张三".into(),
             email: "a@b.c".into(),
@@ -963,7 +968,7 @@ mod tests {
         }
         let publisher = EventPublisher::new("test-service").expect("lazy construction succeeds");
         let result = publisher
-            .publish_hrm_employee_created(Uuid::new_v4(), "张三", "z@x.c", None)
+            .publish_hrm_employee_created(Uuid::new_v4(), Uuid::new_v4(), "张三", "z@x.c", None)
             .await;
         assert!(
             result.is_err(),

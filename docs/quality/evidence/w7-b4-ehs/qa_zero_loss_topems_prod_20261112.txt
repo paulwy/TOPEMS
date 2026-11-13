@@ -1,0 +1,10 @@
+不使用分页器.
+qa_ehs_hazards|0|0|-
+null_rows_by_table|qa_ehs_hazards|0
+null_rows_by_table|qa_ehs_accidents|0
+null_rows_by_table|qa_ehs_risks|0
+qa_ehs_alerts|0
+lims.qa_lab_reagent_alerts|0
+lims.qa_lims_sync_records|0
+ehs.qa_ehs_sync_records|0
+hazards_range||

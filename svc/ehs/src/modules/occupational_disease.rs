@@ -338,6 +338,17 @@ pub async fn list_hazard_factors(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<HazardFactor>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -366,7 +377,7 @@ pub async fn list_hazard_factors(
     )
     .bind(locale)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -467,6 +478,17 @@ pub async fn get_hazard_factor(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HazardFactor> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -494,7 +516,7 @@ pub async fn get_hazard_factor(
     .bind(&id)
     .bind(locale)
     .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -708,7 +730,18 @@ pub async fn list_disease_cases(
     _headers: HeaderMap,
     Query(q): Query<DiseaseCaseQuery>,
 ) -> ApiResponse<Vec<DiseaseCase>> {
-    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -761,7 +794,7 @@ pub async fn list_disease_cases(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list disease cases: {}", e);
@@ -785,7 +818,18 @@ pub async fn create_disease_case(
     _headers: HeaderMap,
     Json(req): Json<CreateDiseaseCaseRequest>,
 ) -> ApiResponse<DiseaseCase> {
-    let tenant_id = resolve_disease_tenant(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let case_no = format!("DC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let status = req
         .status
@@ -838,7 +882,7 @@ pub async fn create_disease_case(
         .bind(attachments)
         .bind(&req.reported_at)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -848,6 +892,10 @@ pub async fn create_disease_case(
         }
     };
     let record = disease_case_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "职业病案例创建成功")
 }
 #[utoipa::path(
@@ -867,7 +915,18 @@ pub async fn get_disease_case(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DiseaseCase> {
-    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
                department, position, disease_type, disease_name, hazard_factor,
@@ -884,7 +943,7 @@ pub async fn get_disease_case(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -916,7 +975,18 @@ pub async fn update_disease_case(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDiseaseCaseRequest>,
 ) -> ApiResponse<DiseaseCase> {
-    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = &req.employee_name {
@@ -1015,7 +1085,7 @@ pub async fn update_disease_case(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1026,6 +1096,10 @@ pub async fn update_disease_case(
         }
     };
     let record = disease_case_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "职业病案例更新成功")
 }
 #[utoipa::path(
@@ -1045,7 +1119,18 @@ pub async fn delete_disease_case(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_disease_cases
         SET deleted_at = now()
@@ -1056,7 +1141,7 @@ pub async fn delete_disease_case(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1067,6 +1152,10 @@ pub async fn delete_disease_case(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("职业病案例不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "职业病案例删除成功")
 }
@@ -1194,19 +1283,6 @@ pub async fn update_detection_record(
 ) -> ApiResponse<serde_json::Value> {
     tracing::warn!("Occupational disease module not yet enabled");
     ApiResponse::not_implemented("职业危害数据源尚未启用")
-}
-
-/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
-fn resolve_disease_tenant(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// qa_ehs_disease_cases 行 → DiseaseCase（表列名 → 前端字段名）

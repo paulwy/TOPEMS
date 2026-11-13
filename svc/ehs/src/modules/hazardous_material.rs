@@ -269,7 +269,18 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<HazardousMaterial>> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
@@ -289,7 +300,7 @@ pub async fn list_materials(
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&tenant_bind)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -315,7 +326,18 @@ pub async fn create_material(
     _headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> ApiResponse<HazardousMaterial> {
-    let tenant_id = resolve_material_tenant(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let material_no = format!("HM-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let status = req.status.clone().unwrap_or_else(|| "active".to_string());
     let hazards: serde_json::Value = req
@@ -359,7 +381,7 @@ pub async fn create_material(
         .bind(&req.msds_url)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -369,6 +391,10 @@ pub async fn create_material(
         }
     };
     let record = material_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "危险品创建成功")
 }
 #[utoipa::path(
@@ -388,7 +414,18 @@ pub async fn get_material(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<MaterialDetail> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
@@ -409,7 +446,7 @@ pub async fn get_material(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -450,7 +487,18 @@ pub async fn update_material(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> ApiResponse<HazardousMaterial> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = &req.name {
@@ -537,7 +585,7 @@ pub async fn update_material(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -548,6 +596,10 @@ pub async fn update_material(
         }
     };
     let record = material_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "危险品更新成功")
 }
 #[utoipa::path(
@@ -567,7 +619,18 @@ pub async fn delete_material(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_hazardous_materials
         SET deleted_at = now()
@@ -578,7 +641,7 @@ pub async fn delete_material(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -589,6 +652,10 @@ pub async fn delete_material(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("危险品不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "危险品删除成功")
 }
@@ -604,6 +671,17 @@ pub async fn list_stock_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<StockRecord>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -623,7 +701,7 @@ pub async fn list_stock_records(
         tenant_filter
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -678,6 +756,17 @@ pub async fn get_stock_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<StockRecord> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -698,7 +787,7 @@ pub async fn get_stock_record(
     );
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -751,7 +840,18 @@ pub async fn get_material_msds(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<MsdsData> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, material_id::text AS material_id, material_name, version,
                product_name, manufacturer, emergency_phone, hazard_identification,
@@ -771,7 +871,7 @@ pub async fn get_material_msds(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -796,7 +896,18 @@ pub async fn get_material_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<MaterialStatistics> {
-    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
     let total_materials: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -804,7 +915,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -814,7 +925,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -824,7 +935,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -834,7 +945,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -844,7 +955,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .iter()
@@ -861,7 +972,7 @@ pub async fn get_material_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .iter()
@@ -891,7 +1002,7 @@ pub async fn get_material_statistics(
             by_category,
             by_hazard_level,
             monthly_in_out,
-            tenant_id: resolve_material_tenant(&claims),
+            tenant_id: tenant,
         },
         "获取危险品统计成功",
     )
@@ -1117,19 +1228,6 @@ pub async fn delete_material_category(
 ) -> ApiResponse<()> {
     tracing::warn!("Material category delete called but data source not yet enabled");
     ApiResponse::not_implemented("危险品分类数据源尚未启用，删除操作暂不可用")
-}
-
-/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
-fn resolve_material_tenant(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// qa_ehs_hazardous_materials 行 → HazardousMaterial（jsonb 字段宽容解析）

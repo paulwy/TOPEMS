@@ -444,6 +444,7 @@ pub async fn create_employee(
                 let dept_id = employee.department_id;
                 tokio::spawn(async move {
                     let payload = HrmEmployeeCreatedPayload {
+                        tenant_id,
                         employee_id: emp_id,
                         name: emp_name,
                         email: emp_email,
