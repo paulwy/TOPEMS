@@ -22,6 +22,21 @@ use utoipa::ToSchema;
 
 use crate::models::{generate_ticket_number, Ticket};
 
+/// 从 Claims 解析请求租户。
+///
+/// feedback 详情/回复/删除三条路径都必须带租户谓词：缺失或非法 `tenant_id` 一律
+/// fail-closed（返回 400），不得退回 nil 租户或用默认租户放行。
+fn require_request_tenant(claims: &Claims) -> Result<Uuid, &'static str> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(tenant) if !tenant.is_nil() => Ok(tenant),
+        _ => Err("缺少租户上下文"),
+    }
+}
+
 /// Feedback 兼容响应结构（保持与原 feedback 服务 API 兼容）
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct FeedbackCompat {
@@ -192,8 +207,13 @@ pub async fn create_feedback(
 )]
 pub async fn get_feedback(
     State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<FeedbackCompat> {
+    let tenant_id = match require_request_tenant(&claims) {
+        Ok(t) => t,
+        Err(msg) => return ApiResponse::bad_request(msg),
+    };
     let mut scope = match db.scope_read().await {
         Ok(s) => s,
         Err(e) => {
@@ -203,9 +223,10 @@ pub async fn get_feedback(
     };
     let result = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
-           FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
+           FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -329,6 +350,11 @@ pub async fn response_feedback(
         return ApiResponse::forbidden("无权限回复反馈");
     }
 
+    let tenant_id = match require_request_tenant(&claims) {
+        Ok(t) => t,
+        Err(msg) => return ApiResponse::bad_request(msg),
+    };
+
     let mut scope = match db.scope().await {
         Ok(s) => s,
         Err(e) => {
@@ -345,11 +371,12 @@ pub async fn response_feedback(
                    '{responded_by}', to_jsonb($2::text)
                ),
                updated_at = NOW()
-           WHERE id = $3 AND ticket_type = 'customer_feedback'"#,
+           WHERE id = $3 AND tenant_id = $4 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(&payload.response)
     .bind(&claims.sub)
     .bind(id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -372,6 +399,11 @@ pub async fn delete_feedback(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
+    let tenant_id = match require_request_tenant(&claims) {
+        Ok(t) => t,
+        Err(msg) => return ApiResponse::bad_request(msg),
+    };
+
     let mut scope = match db.scope().await {
         Ok(s) => s,
         Err(e) => {
@@ -381,9 +413,10 @@ pub async fn delete_feedback(
     };
     let ticket = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
-           FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
+           FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -397,9 +430,10 @@ pub async fn delete_feedback(
 
             let result = sqlx::query(
                 r#"UPDATE ticket.core_tickets SET status = 'cancelled', closed_at = NOW(), updated_at = NOW()
-                   WHERE id = $1"#,
+                   WHERE id = $1 AND tenant_id = $2"#,
             )
             .bind(id)
+            .bind(tenant_id)
             .execute(&mut scope)
             .await;
 
