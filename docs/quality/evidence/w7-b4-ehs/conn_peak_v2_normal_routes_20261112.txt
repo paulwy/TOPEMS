@@ -1,0 +1,185 @@
+# W7-B4 EHS 单请求连接峰值 v2（普通路由对照，2026-11-12）
+
+> v1（conn_peak_before_after_20261112.txt）用 `/api/ehs/health` 做对照。该路由在基线命中
+> `is_public_path` 的 `ends_with("/health")` 早退，auth/tenant 中间件整体跳过，1 条连接是
+> “绕过安全省下来的”，不能代表模块基线。本文件为 v2 重测：改用四条受保护普通路由，
+> 同方法、同放大量，基线 `cc78fcae6` 与当前工作树各测一遍。
+
+## 0. 环境与二进制校验
+
+```
+主机          : macOS Darwin arm64（本地），PostgreSQL 18（/opt/homebrew/bin/psql）
+副本库        : topems_conn_bench（createdb -T topems 克隆，ehs 表 71 张）
+连接串        : postgres://air@%2Ftmp/topems_conn_bench?application_name=ehs-base|ehs-cur
+池上限        : DB_MAX_CONNECTIONS=10（两边一致）
+JWT           : 自签 HS256，secret w7b4-ehs-test-secret-0123456789abcdef
+认证头        : Authorization: Bearer <super token>, x-tenant-id: 11111111-1111-1111-1111-111111111111
+
+sha256(ehs-base) = afe9990a7ab26821fd66fe3639a8d39ade610e2b6a7821dae63b52b124abdd9b   # 基线 cc78fcae6
+sha256(ehs-cur)  = dc278fee80495ca51e10d93c7879a26bbd6ab36d953a59d9273328894b3b2a61   # 当前工作树
+strings: "health-monitor" 出现次数  base=0  cur=2    # 排除共享 target 串味
+git: /tmp/topems-ehs HEAD = cc78fcae6（工作树含本次改动）
+```
+
+## 1. 采样方法（与 v1 同一口径，仅提高采样频率）
+
+```sql
+-- /tmp/ehs_conn_bench/watch_fast.sql，psql -At 从 stdin 喂入
+select clock_timestamp()::text || '|' || count(*) || '|'
+     || count(*) filter (where state='active') || '|'
+     || count(*) filter (where state like 'idle in transaction%') || '|'
+     || coalesce(string_agg(pid::text || ':' || state, ',' order by pid), '')
+  from pg_stat_activity
+ where datname='topems_conn_bench'
+   and pid<>pg_backend_pid()
+   and backend_type='client backend';
+\watch 0.001
+```
+
+- `peak_inflight` 取**同一条采样行**的 `active + idle_tx`，不做分别取最大值相加。
+- 只统计 `backend_type='client backend'`：排除 parallel worker（会继承 application_name 且 state=active）与采样自身。
+- 每条路由：预热 2 次 → 启动采样 → 顺序发 30 次（health 系 200 次）→ 停止采样 → 解析。
+- 本库未额外放大（不做 20 万行 ILIKE、不加 pg_sleep 触发器），改以“1ms 采样 + 多次重复 + 命中样本可复核”保证可观测性；命中样本行（peak_sample）随各用例给出。
+
+驱动脚本：`/tmp/ehs_conn_bench/run_case.sh`；解析：`/tmp/ehs_conn_bench/parse2.py`。
+
+## 2. 原始输出
+
+### 2.1 基线 cc78fcae6（ehs-base，:18061）
+
+```
+== base_get_issues (GET /api/ehs/issues?page=1&page_size=5) port=18061 n=30
+codes:   30 200
+latency_avg_ms: 2.5
+samples=1516 peak_conns=3 peak_active=1 peak_idle_tx=1 peak_inflight=2 hold_samples=21
+hold_window=2026-11-12 23:55:35.021359+08 .. 2026-11-12 23:55:35.523694+08
+peak_sample=2026-11-12 23:55:35.126409+08|3|1|1|62481:idle,62482:active,62505:idle in transaction
+
+== base_get_accidents (GET /api/ehs/accidents?page=1&page_size=5) port=18061 n=30
+codes:   30 200
+latency_avg_ms: 2.5
+samples=1489 peak_conns=3 peak_active=1 peak_idle_tx=1 peak_inflight=2 hold_samples=21
+hold_window=2026-11-12 23:55:37.171766+08 .. 2026-11-12 23:55:37.65391+08
+peak_sample=2026-11-12 23:55:37.208673+08|3|1|1|62481:idle,62482:active,62505:idle in transaction
+
+== base_get_training (GET /api/ehs/training?page=1&page_size=5) port=18061 n=30
+codes:   30 200
+latency_avg_ms: 3.2
+samples=1515 peak_conns=3 peak_active=1 peak_idle_tx=1 peak_inflight=2 hold_samples=45
+hold_window=2026-11-12 23:55:39.306957+08 .. 2026-11-12 23:55:39.820113+08
+peak_sample=2026-11-12 23:55:39.306957+08|3|1|1|62481:idle,62482:active,62505:idle in transaction
+
+== base_post_issues (POST /api/ehs/issues) port=18061 n=30
+codes:   30 200
+latency_avg_ms: 2.6
+samples=1522 peak_conns=3 peak_active=1 peak_idle_tx=1 peak_inflight=2 hold_samples=22
+hold_window=2026-11-12 23:55:45.043043+08 .. 2026-11-12 23:55:45.521169+08
+peak_sample=2026-11-12 23:55:45.043043+08|3|1|1|62481:idle in transaction,62482:idle,62505:active
+
+== base_get_health200 (GET /health) port=18061 n=200
+codes:  200 200
+latency_avg_ms: 1.6
+samples=4175 peak_conns=3 peak_active=1 peak_idle_tx=0 peak_inflight=1 hold_samples=8
+hold_window=2026-11-12 23:55:54.453653+08 .. 2026-11-12 23:55:57.068048+08
+peak_sample=2026-11-12 23:55:54.453653+08|3|1|0|62481:active,62482:idle,62505:idle
+```
+
+### 2.2 当前工作树（ehs-cur，:18062）
+
+```
+== cur_get_issues (GET /api/ehs/issues?page=1&page_size=5) port=18062 n=30
+codes:   30 200
+latency_avg_ms: 2.9
+samples=1517 peak_conns=3 peak_active=1 peak_idle_tx=2 peak_inflight=2 hold_samples=33
+hold_window=2026-11-12 23:56:16.429316+08 .. 2026-11-12 23:56:16.934231+08
+peak_sample=2026-11-12 23:56:16.445226+08|3|1|1|63645:active,63646:idle,63669:idle in transaction
+
+== cur_get_accidents (GET /api/ehs/accidents?page=1&page_size=5) port=18062 n=30
+codes:   30 200
+latency_avg_ms: 2.9
+samples=1489 peak_conns=3 peak_active=1 peak_idle_tx=2 peak_inflight=2 hold_samples=29
+hold_window=2026-11-12 23:56:18.597193+08 .. 2026-11-12 23:56:19.073544+08
+peak_sample=2026-11-12 23:56:18.598222+08|3|1|1|63645:idle,63646:idle in transaction,63669:active
+
+== cur_get_training (GET /api/ehs/training?page=1&page_size=5) port=18062 n=30
+codes:   30 200
+latency_avg_ms: 3.7
+samples=1532 peak_conns=3 peak_active=1 peak_idle_tx=2 peak_inflight=2 hold_samples=53
+hold_window=2026-11-12 23:56:20.718679+08 .. 2026-11-12 23:56:21.241655+08
+peak_sample=2026-11-12 23:56:20.719646+08|3|0|2|63645:idle in transaction,63646:idle,63669:idle in transaction
+
+== cur_post_issues (POST /api/ehs/issues) port=18062 n=30
+codes:   30 200
+latency_avg_ms: 3.0
+samples=1530 peak_conns=3 peak_active=1 peak_idle_tx=2 peak_inflight=2 hold_samples=37
+hold_window=2026-11-12 23:56:22.925676+08 .. 2026-11-12 23:56:23.445739+08
+peak_sample=2026-11-12 23:56:22.925676+08|3|0|2|63645:idle in transaction,63646:idle,63669:idle in transaction
+
+== cur_get_healthmon (GET /api/ehs/health-monitor?page=1&page_size=5) port=18062 n=200
+codes:   66 200  134 429        # 200 次/2s 触发现有全局限流，429 不影响连接峰值判定
+latency_avg_ms: 2.0
+samples=4266 peak_conns=3 peak_active=1 peak_idle_tx=2 peak_inflight=2 hold_samples=62
+hold_window=2026-11-12 23:56:30.200137+08 .. 2026-11-12 23:56:31.358119+08
+peak_sample=2026-11-12 23:56:30.246106+08|3|1|1|63645:idle,63646:active,63669:idle in transaction
+
+== cur_get_health (GET /health) port=18062 n=200
+codes:  200 200
+latency_avg_ms: 1.6
+samples=4204 peak_conns=3 peak_active=1 peak_idle_tx=0 peak_inflight=1 hold_samples=6
+hold_window=2026-11-12 23:56:35.26879+08 .. 2026-11-12 23:56:38.021894+08
+peak_sample=2026-11-12 23:56:35.26879+08|3|1|0|63645:active,63646:idle,63669:idle
+```
+
+## 3. 逐路由对照
+
+| 路由（实际路径）        | 基线峰值 conns/active/idle_tx/inflight | 当前峰值 conns/active/idle_tx/inflight | 基线 N → 当前 M | 判定 |
+|-------------------------|----------------------------------------|----------------------------------------|-----------------|------|
+| GET /api/ehs/issues     | 3 / 1 / 1 / **2**                      | 3 / 1 / 2 / **2**                      | 2 → 2           | 无变化（2→2） |
+| GET /api/ehs/accidents  | 3 / 1 / 1 / **2**                      | 3 / 1 / 2 / **2**                      | 2 → 2           | 无变化（2→2） |
+| GET /api/ehs/training   | 3 / 1 / 1 / **2**                      | 3 / 1 / 2 / **2**                      | 2 → 2           | 无变化（2→2） |
+| POST /api/ehs/issues    | 3 / 1 / 1 / **2**                      | 3 / 1 / 2 / **2**                      | 2 → 2           | 无变化（2→2） |
+| GET /api/ehs/health-monitor | 不存在（公共 /health 早退）        | 3 / 1 / 2 / **2**                      | —（新增受保护路由） | 仅此路由为 2 条 |
+| GET /health（公共）     | 3 / 1 / 0 / **1**                      | 3 / 1 / 0 / **1**                      | 1 → 1           | 无变化 |
+
+要点：
+
+- 四条普通业务路由基线**本来就是 2 条**：`tenant_middleware` 的请求事务（`idle in transaction`）+ handler 自己的查询连接（`active`）。当前版本只是把 handler 连接从“池直连”换成“只读作用域事务”，条数不变。
+- 当前版本采样到 `peak_idle_tx=2`（如 `cur_get_training`、`cur_post_issues` 的峰值样本为 `0 active + 2 idle in transaction`）：`ScopedTxn` 未自定义 Drop，drop 后由 sqlx 异步 rollback，上一请求的只读事务在响应返回后仍短暂占连接，与下一请求的中间件事务重叠。**顺序压测下同时持有峰值仍为 2**，未出现 3。
+- `GET /health` 两边都是 1 条：该路径仍在 `public_routes`、仍命中 `is_public_path` 早退，没有被本次改动影响。真正变成 2 条的只有改名为 `/api/ehs/health-monitor` 的受保护路由。
+
+## 4. 生产近 24h 请求量（nginx access log 按 path 聚合）
+
+来源：生产 `192.168.110.115`，`/Users/xingzhai/TOPEMS/nginx/logs/access.log`（格式 `topems_safe`，`$request_method $uri`）。
+
+命令（脚本 `/tmp/ehs_pathcount.pl` 用 scp 上传，跑完即删）：
+
+```bash
+scp /tmp/ehs_conn_bench/pathcount.pl xingzhai@192.168.110.115:/tmp/ehs_pathcount.pl
+ssh xingzhai@192.168.110.115 'perl /tmp/ehs_pathcount.pl /Users/xingzhai/TOPEMS/nginx/logs/access.log'
+ssh xingzhai@192.168.110.115 'cd /Users/xingzhai/TOPEMS/nginx/logs; for f in access.log access.log.2026*; do \
+  printf "%s|%s|%s\n" "$f" "$(wc -l < "$f" | tr -d " ")" "$(grep -c "/api/ehs/" "$f")"; done'
+```
+
+原始输出：
+
+```
+cutoff=Wed Nov 11 23:56:53 2026 now=Thu Nov 12 23:56:53 2026
+lines_total=6146 lines_in_24h=6146
+     1  GET /api/ehs/dashboard  [200:1]  Thu Nov 12 15:14:44 2026 .. Thu Nov 12 15:14:44 2026
+
+file|lines|ehs_hits
+access.log|6146|1
+access.log.20261107-040005|0|0
+access.log.20261108-040001|0|0
+access.log.20261108-214359|3|0
+access.log.20261109-040003|17|0
+access.log.20261110-040003|410|0
+access.log.20261111-040001|94|0
+access.log.20261112-040001|0|0
+```
+
+结论：
+
+- `/api/ehs/health`：近 24h **0 次**（保留的全部 11/07–11/12 日志里也是 0 次）。
+- `/api/ehs/hazards`：实际路由为 `/api/ehs/issues`，近 24h **0 次**（全部日志 0 次）。
+- EHS 全部 `/api/ehs/*` 近 24h 仅 **1 次**：`GET /api/ehs/dashboard`，200，15:14:44。

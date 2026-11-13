@@ -436,7 +436,18 @@ pub async fn list_regulations(
     _headers: HeaderMap,
     Query(q): Query<RegulationQuery>,
 ) -> ApiResponse<Vec<EnvironmentalRegulation>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -483,7 +494,7 @@ pub async fn list_regulations(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list environmental regulations: {}", e);
@@ -510,7 +521,18 @@ pub async fn create_regulation(
     _headers: HeaderMap,
     Json(req): Json<CreateRegulationRequest>,
 ) -> ApiResponse<EnvironmentalRegulation> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let reg_no = format!("ER-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let keywords: serde_json::Value = req
         .keywords
@@ -554,7 +576,7 @@ pub async fn create_regulation(
         .bind(attachments)
         .bind(req.version)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -564,6 +586,10 @@ pub async fn create_regulation(
         }
     };
     let regulation = environmental_regulation_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(regulation, "环保法规创建成功")
 }
 
@@ -581,7 +607,18 @@ pub async fn get_regulation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentalRegulation> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
                issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
@@ -597,7 +634,7 @@ pub async fn get_regulation(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -627,7 +664,18 @@ pub async fn update_regulation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
 ) -> ApiResponse<EnvironmentalRegulation> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -708,7 +756,7 @@ pub async fn update_regulation(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -719,6 +767,10 @@ pub async fn update_regulation(
         }
     };
     let regulation = environmental_regulation_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(regulation, "环保法规更新成功")
 }
 
@@ -736,7 +788,18 @@ pub async fn delete_regulation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_environmental_regulations
         SET deleted_at = now()
@@ -747,7 +810,7 @@ pub async fn delete_regulation(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -758,6 +821,10 @@ pub async fn delete_regulation(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("环保法规不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "环保法规删除成功")
 }
@@ -778,7 +845,18 @@ pub async fn update_monitor_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut add = |field: &str, val: Option<String>| {
@@ -835,13 +913,17 @@ pub async fn update_monitor_record(
         query = query.bind(p);
     }
     query = query.bind(&id).bind(&tenant_bind);
-    let row = match query.fetch_one(&state.pool).await {
+    let row = match query.fetch_one(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update monitor record: {}", e);
             return ApiResponse::not_found("监测记录不存在或更新失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(monitor_record_from_row(&row), "更新监测记录成功")
 }
 #[utoipa::path(
@@ -858,7 +940,18 @@ pub async fn get_permit(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DischargePermit> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
                holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
@@ -874,7 +967,7 @@ pub async fn get_permit(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -904,7 +997,18 @@ pub async fn update_permit(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
 ) -> ApiResponse<DischargePermit> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -989,7 +1093,7 @@ pub async fn update_permit(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1000,6 +1104,10 @@ pub async fn update_permit(
         }
     };
     let permit = discharge_permit_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(permit, "排污许可更新成功")
 }
 
@@ -1017,7 +1125,18 @@ pub async fn delete_permit(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_discharge_permits
         SET deleted_at = now()
@@ -1028,7 +1147,7 @@ pub async fn delete_permit(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1039,6 +1158,10 @@ pub async fn delete_permit(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("排污许可不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "排污许可删除成功")
 }
@@ -1066,7 +1189,18 @@ pub async fn list_evaluations(
     _headers: HeaderMap,
     Query(q): Query<AssessmentQuery>,
 ) -> ApiResponse<Vec<ComplianceAssessment>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1117,7 +1251,7 @@ pub async fn list_evaluations(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list compliance assessments: {}", e);
@@ -1142,7 +1276,18 @@ pub async fn create_evaluation(
     _headers: HeaderMap,
     Json(req): Json<CreateEvaluationRequest>,
 ) -> ApiResponse<ComplianceAssessment> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let eval_no = format!("CE-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let non_complianceitems: serde_json::Value = req
         .non_complianceitems
@@ -1184,7 +1329,7 @@ pub async fn create_evaluation(
         .bind(req.status.unwrap_or_else(|| "in_progress".to_string()))
         .bind(attachments)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1194,6 +1339,10 @@ pub async fn create_evaluation(
         }
     };
     let assessment = compliance_assessment_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(assessment, "合规性评价创建成功")
 }
 
@@ -1214,7 +1363,18 @@ pub async fn get_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ComplianceAssessment> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
@@ -1231,7 +1391,7 @@ pub async fn get_evaluation(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1264,7 +1424,18 @@ pub async fn update_evaluation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> ApiResponse<ComplianceAssessment> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -1350,7 +1521,7 @@ pub async fn update_evaluation(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1361,6 +1532,10 @@ pub async fn update_evaluation(
         }
     };
     let assessment = compliance_assessment_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(assessment, "评价更新成功")
 }
 
@@ -1381,7 +1556,18 @@ pub async fn delete_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
         SET deleted_at = now()
@@ -1392,7 +1578,7 @@ pub async fn delete_evaluation(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1403,6 +1589,10 @@ pub async fn delete_evaluation(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("合规性评价不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "评价删除成功")
 }
@@ -1420,7 +1610,18 @@ pub async fn list_monitor_records(
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> ApiResponse<Vec<EnvironmentMonitor>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1454,7 +1655,7 @@ pub async fn list_monitor_records(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list monitor records: {}", e);
@@ -1478,7 +1679,18 @@ pub async fn create_monitor_record(
     _headers: HeaderMap,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let now = chrono::Utc::now();
     let record_no = format!(
         "EM-{}-{}",
@@ -1516,7 +1728,7 @@ pub async fn create_monitor_record(
     .bind(req.emission_rate.as_deref())
     .bind(req.remarks.as_deref())
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -1526,6 +1738,10 @@ pub async fn create_monitor_record(
             return ApiResponse::server_error("创建环境监测记录失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(monitor_record_from_row(&row), "监测记录创建成功")
 }
 #[derive(Debug, Deserialize)]
@@ -1551,7 +1767,18 @@ pub async fn list_permits(
     _headers: HeaderMap,
     Query(q): Query<PermitQuery>,
 ) -> ApiResponse<Vec<DischargePermit>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1601,7 +1828,7 @@ pub async fn list_permits(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list discharge permits: {}", e);
@@ -1627,7 +1854,18 @@ pub async fn create_permit(
     _headers: HeaderMap,
     Json(req): Json<CreatePermitRequest>,
 ) -> ApiResponse<DischargePermit> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let permit_no = format!("DP-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let discharge_limits: serde_json::Value = req
         .discharge_limits
@@ -1668,7 +1906,7 @@ pub async fn create_permit(
         .bind(req.status.unwrap_or_else(|| "valid".to_string()))
         .bind(attachments)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1678,6 +1916,10 @@ pub async fn create_permit(
         }
     };
     let permit = discharge_permit_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(permit, "排污许可创建成功")
 }
 
@@ -1694,7 +1936,18 @@ pub async fn list_incidents(
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> ApiResponse<Vec<EnvironmentIncident>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1737,7 +1990,7 @@ pub async fn list_incidents(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list incidents: {}", e);
@@ -1761,7 +2014,18 @@ pub async fn create_incident(
     _headers: HeaderMap,
     Json(req): Json<CreateIncidentRequest>,
 ) -> ApiResponse<EnvironmentIncident> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let now = chrono::Utc::now();
     let incident_no = format!(
         "EI-{}-{}",
@@ -1798,7 +2062,7 @@ pub async fn create_incident(
     .bind(req.immediate_measures.as_deref())
     .bind(req.responsible_person.as_deref())
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -1808,6 +2072,10 @@ pub async fn create_incident(
             return ApiResponse::server_error("创建环境事件失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(incident_from_row(&row), "环境事件创建成功")
 }
 #[utoipa::path(
@@ -1827,7 +2095,18 @@ pub async fn get_incident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentIncident> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let result = sqlx::query(
         r#"
         SELECT id::text AS id, incident_no, title, incident_type, level, location,
@@ -1844,7 +2123,7 @@ pub async fn get_incident(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -1875,7 +2154,18 @@ pub async fn update_incident(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> ApiResponse<EnvironmentIncident> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut add = |field: &str, val: Option<String>| {
@@ -1922,13 +2212,17 @@ pub async fn update_incident(
         query = query.bind(p);
     }
     query = query.bind(&id).bind(&tenant_bind);
-    let row = match query.fetch_one(&state.pool).await {
+    let row = match query.fetch_one(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update incident: {}", e);
             return ApiResponse::not_found("环境事件不存在或更新失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(incident_from_row(&row), "更新环境事件成功")
 }
 #[utoipa::path(
@@ -1948,7 +2242,18 @@ pub async fn delete_incident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let result = sqlx::query(
         r#"
         UPDATE ehs.qa_ehs_environment_incidents
@@ -1960,11 +2265,17 @@ pub async fn delete_incident(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "环境事件删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success((), "环境事件删除成功")
+        }
         Ok(_) => ApiResponse::not_found("环境事件不存在"),
         Err(e) => {
             tracing::error!("Failed to delete incident: {}", e);
@@ -1984,7 +2295,18 @@ pub async fn get_compliance_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<ComplianceStatistics> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let tenant_bind = tenant_id.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -1993,7 +2315,7 @@ pub async fn get_compliance_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let active_regulations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -2001,7 +2323,7 @@ pub async fn get_compliance_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_evaluations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -2009,50 +2331,50 @@ pub async fn get_compliance_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let average_compliance_rate: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT AVG(compliance_rate)::float8 FROM ehs.qa_ehs_compliance_evaluations WHERE {} AND compliance_rate IS NOT NULL", tc
-    ))).bind(&tenant_bind).fetch_one(&state.pool).await.ok().flatten();
+    ))).bind(&tenant_bind).fetch_one(&mut scope).await.ok().flatten();
     let total_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {}",
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let qualified_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {} AND result IN ('合格','达标')", tc
-    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
     let total_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {}",
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let expiring_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {} AND valid_to BETWEEN NOW() AND NOW() + INTERVAL '30 days'", tc
-    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
     let total_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {}",
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let open_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {} AND status NOT IN ('closed','resolved')", tc
-    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
 
     let mut by_monitor_type: Vec<serde_json::Value> = Vec::new();
     if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(monitor_type, '未分类') AS mt, COUNT(*)::int8 AS cnt, COUNT(*) FILTER (WHERE result IN ('合格','达标'))::int8 AS qc FROM ehs.qa_ehs_env_monitor_records WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    ))).bind(&tenant_bind).fetch_all(&state.pool).await {
+    ))).bind(&tenant_bind).fetch_all(&mut scope).await {
         for r in rows {
             by_monitor_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("mt").unwrap_or_default(),
@@ -2064,7 +2386,7 @@ pub async fn get_compliance_statistics(
     let mut by_incident_type: Vec<serde_json::Value> = Vec::new();
     if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(incident_type, '未分类') AS it, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_environment_incidents WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    ))).bind(&tenant_bind).fetch_all(&state.pool).await {
+    ))).bind(&tenant_bind).fetch_all(&mut scope).await {
         for r in rows {
             by_incident_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("it").unwrap_or_default(),
@@ -2123,19 +2445,6 @@ pub async fn list_monitor_types(
 ) -> ApiResponse<Vec<serde_json::Value>> {
     tracing::warn!("Environmental monitor types data source not yet enabled");
     ApiResponse::not_implemented("监测类型数据源尚未启用")
-}
-
-/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// qa_ehs_environmental_regulations 行 → EnvironmentalRegulation（SELECT 列别名对齐本函数字段）

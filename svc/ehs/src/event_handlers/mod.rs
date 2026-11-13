@@ -73,14 +73,31 @@ impl EhsEventHandlers {
             payload.conclusion
         );
 
+        let Some(tenant_id) = require_event_tenant(
+            payload.tenant_id,
+            &event,
+            "lims_inspection_abnormal_detected",
+        ) else {
+            return Ok(());
+        };
+
         let hazard_no = format!("EHS-HZ-{}", Utc::now().timestamp_subsec_millis());
         let now = Utc::now();
 
-        // 事件总线消费者无 HTTP 会话/租户上下文，落全局集成行（tenant_id=nil，与
-        // /api/internal 编排端点 P1-4 契约一致），超管/运维经 nil 豁免可见
+        // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(TopemsError::DatabaseTransaction(format!(
+                    "LIMS 异常事件打开租户事务失败: {e}"
+                )))
+            }
+        };
+
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
-             VALUES ($1, $2, 'environment', 'high', $3, 'reported', 'lims_abnormal', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
+             VALUES ($1, $2, 'environment', 'high', $3, 'reported', 'lims_abnormal', 'system', $5, $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
              RETURNING id"),
         )
@@ -91,7 +108,8 @@ impl EhsEventHandlers {
             payload.task_no, payload.sample_no, payload.test_item, payload.conclusion
         ))
         .bind(now)
-        .fetch_optional(&self.db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
@@ -107,7 +125,16 @@ impl EhsEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[ehs] 环境安全隐患记录创建失败: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "LIMS 异常事件写入隐患失败: {e}"
+                )));
             }
+        }
+
+        if let Err(e) = scope.commit().await {
+            return Err(TopemsError::DatabaseTransaction(format!(
+                "LIMS 异常事件提交失败: {e}"
+            )));
         }
 
         Ok(())
@@ -131,13 +158,29 @@ impl EhsEventHandlers {
             payload.assigned_to
         );
 
+        let Some(tenant_id) =
+            require_event_tenant(payload.tenant_id, &event, "qms_corrective_action_created")
+        else {
+            return Ok(());
+        };
+
         let hazard_no = format!("CA-QMS-{}", payload.action_id);
         let now = Utc::now();
 
-        // 事件总线消费者无 HTTP 会话/租户上下文，落全局集成行（tenant_id=nil，同 lims 异常处理器）
+        // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(TopemsError::DatabaseTransaction(format!(
+                    "QMS 纠正措施事件打开租户事务失败: {e}"
+                )))
+            }
+        };
+
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
-             VALUES ($1, $2, 'quality_corrective', 'medium', $3, 'reported', 'qms_corrective', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
+             VALUES ($1, $2, 'quality_corrective', 'medium', $3, 'reported', 'qms_corrective', 'system', $5, $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
              RETURNING id"),
         )
@@ -145,7 +188,8 @@ impl EhsEventHandlers {
         .bind(&payload.title)
         .bind(payload.description.unwrap_or_default())
         .bind(now)
-        .fetch_optional(&self.db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
@@ -164,7 +208,16 @@ impl EhsEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[ehs] 纠正措施同步失败: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "QMS 纠正措施事件写入隐患失败: {e}"
+                )));
             }
+        }
+
+        if let Err(e) = scope.commit().await {
+            return Err(TopemsError::DatabaseTransaction(format!(
+                "QMS 纠正措施事件提交失败: {e}"
+            )));
         }
 
         Ok(())
@@ -181,12 +234,14 @@ impl EhsEventHandlers {
         let mut name = None;
         let mut email = None;
         let mut department_id = None;
+        let payload_tenant_id;
 
         match event.event_type {
             EventType::HrmEmployeeCreated => {
                 let payload: HrmEmployeeCreatedPayload = event.parse_payload().map_err(|e| {
                     TopemsError::ValidationFailed(format!("解析员工创建事件 payload 失败: {}", e))
                 })?;
+                payload_tenant_id = payload.tenant_id;
                 employee_id = payload.employee_id;
                 name = Some(payload.name);
                 email = Some(payload.email);
@@ -201,6 +256,7 @@ impl EhsEventHandlers {
                 let payload: HrmEmployeeUpdatedPayload = event.parse_payload().map_err(|e| {
                     TopemsError::ValidationFailed(format!("解析员工更新事件 payload 失败: {}", e))
                 })?;
+                payload_tenant_id = payload.tenant_id;
                 employee_id = payload.employee_id;
                 if let Some(new_data) = payload.new_data {
                     name = new_data
@@ -225,7 +281,24 @@ impl EhsEventHandlers {
             _ => return Ok(()),
         }
 
+        let Some(tenant_id) =
+            require_event_tenant(payload_tenant_id, &event, "hrm_employee_changed")
+        else {
+            return Ok(());
+        };
+
         let now = Utc::now();
+
+        // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(TopemsError::DatabaseTransaction(format!(
+                    "HRM 员工事件打开租户事务失败: {e}"
+                )))
+            }
+        };
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at, tenant_id)
@@ -242,9 +315,8 @@ impl EhsEventHandlers {
         .bind(email)
         .bind(department_id)
         .bind(now)
-        // HRM 员工事件跨域同步落全局行（事件消费者无租户会话，同本模块其他处理器契约）
-        .bind(uuid::Uuid::nil())
-        .fetch_optional(&self.db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
@@ -256,11 +328,46 @@ impl EhsEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[ehs] 员工信息同步失败: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "HRM 员工事件写入失败: {e}"
+                )));
             }
+        }
+
+        if let Err(e) = scope.commit().await {
+            return Err(TopemsError::DatabaseTransaction(format!(
+                "HRM 员工事件提交失败: {e}"
+            )));
         }
 
         Ok(())
     }
+}
+
+/// D4：事件消费者唯一的租户来源是 `payload.tenant_id`。
+/// 缺失/nil → 丢弃事件并累计告警计数；非法由反序列化阶段拦截。
+static EHS_EVENT_DROPPED_MISSING_TENANT: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+fn require_event_tenant(
+    tenant_id: uuid::Uuid,
+    event: &Event,
+    handler: &'static str,
+) -> Option<uuid::Uuid> {
+    if tenant_id.is_nil() {
+        let dropped = EHS_EVENT_DROPPED_MISSING_TENANT
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            + 1;
+        tracing::warn!(
+            "[ehs] 丢弃事件：payload.tenant_id 缺失/nil（handler={}, event_type={:?}, trace_id={:?}, dropped_total={}）",
+            handler,
+            event.event_type,
+            event.trace_id,
+            dropped
+        );
+        return None;
+    }
+    Some(tenant_id)
 }
 
 pub async fn start_event_subscribers(

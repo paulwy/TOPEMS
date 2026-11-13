@@ -385,6 +385,17 @@ pub async fn list_exam_plans(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<HealthExamPlan>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -404,7 +415,7 @@ pub async fn list_exam_plans(
         tenant_filter
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -476,6 +487,17 @@ pub async fn get_exam_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HealthExamPlan> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -496,7 +518,7 @@ pub async fn get_exam_plan(
     );
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -586,6 +608,17 @@ pub async fn list_exam_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<HealthExamRecord>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -607,7 +640,7 @@ pub async fn list_exam_records(
         tenant_filter
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -694,6 +727,17 @@ pub async fn get_exam_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HealthExamRecord> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -716,7 +760,7 @@ pub async fn get_exam_record(
     );
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -822,6 +866,17 @@ pub async fn list_contraindications(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<Contraindication>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -842,7 +897,7 @@ pub async fn list_contraindications(
         tenant_filter
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -911,6 +966,17 @@ pub async fn get_contraindication(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Contraindication> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -932,7 +998,7 @@ pub async fn get_contraindication(
     );
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1019,7 +1085,18 @@ pub async fn get_health_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<HealthStatistics> {
-    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
     let total_employees: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1027,7 +1104,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let exam_planned: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1035,7 +1112,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let exam_completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1043,7 +1120,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let normal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1051,7 +1128,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let abnormal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1059,7 +1136,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let contraindication_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1067,7 +1144,7 @@ pub async fn get_health_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1087,7 +1164,7 @@ pub async fn get_health_statistics(
             by_department: Vec::new(),
             by_abnormality_type: Vec::new(),
 
-            tenant_id: resolve_health_tenant(&claims),
+            tenant_id: tenant,
         },
         "获取健康统计成功",
     )
@@ -1108,7 +1185,18 @@ pub async fn list_health_records(
     _headers: HeaderMap,
     Query(q): Query<HealthQuery>,
 ) -> ApiResponse<Vec<HealthRecord>> {
-    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1161,7 +1249,7 @@ pub async fn list_health_records(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
@@ -1186,7 +1274,18 @@ pub async fn create_health_record(
     _headers: HeaderMap,
     Json(req): Json<CreateHealthRecordRequest>,
 ) -> ApiResponse<HealthRecord> {
-    let tenant_id = resolve_health_tenant(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let record_no = format!("HR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let hazard_factors: serde_json::Value = req
         .hazard_factors
@@ -1222,7 +1321,7 @@ pub async fn create_health_record(
         .bind(&req.contact_info)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1232,6 +1331,10 @@ pub async fn create_health_record(
         }
     };
     let record = health_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "健康档案创建成功")
 }
 
@@ -1249,7 +1352,18 @@ pub async fn get_health_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HealthRecord> {
-    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, record_no, employee_id, employee_name, gender,
                birth_date::text AS birthday, department, position, workplace,
@@ -1264,7 +1378,7 @@ pub async fn get_health_record(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1294,7 +1408,18 @@ pub async fn update_health_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateHealthRecordRequest>,
 ) -> ApiResponse<HealthRecord> {
-    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.employee_name {
@@ -1370,7 +1495,7 @@ pub async fn update_health_record(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1381,6 +1506,10 @@ pub async fn update_health_record(
         }
     };
     let record = health_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "健康档案更新成功")
 }
 
@@ -1398,7 +1527,18 @@ pub async fn delete_health_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.health_records
         SET deleted_at = now()
@@ -1409,7 +1549,7 @@ pub async fn delete_health_record(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1421,20 +1561,11 @@ pub async fn delete_health_record(
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("健康档案不存在");
     }
-    ApiResponse::success((), "健康档案删除成功")
-}
-
-/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
-fn resolve_health_tenant(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
+    ApiResponse::success((), "健康档案删除成功")
 }
 
 /// ehs.health_records 行 → HealthRecord

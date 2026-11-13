@@ -9,22 +9,46 @@
 //!   且含不存在的 tenant_id/related_inspection_id 列 → 修正为实际列，hazard_no UNIQUE 幂等）
 //! - 告警集成创建：ehs.qa_ehs_alerts（原直写表不存在 → 20260831191100 已建表，alert_no UNIQUE 幂等）
 //!
-//! 租户来源（P2 制造域 B 审计，对齐 qms P1-4 跨租户写修复口径）：
+//! 租户来源（W7-B4 EHS RLS fail-closed 收口）：
 //! 本类 `/api/internal/` 端点为免 JWT 的内网服务间调用——`is_public_path` 对
-//! `/api/internal/` 放行，auth_middleware 不注入 Claims，tenant_middleware 亦跳过
-//! （无会话租户可绑，无法套用 JWT 端点的 Extension<Claims> 派生模式）；编排侧
-//! integration/src/qms_lims_ehs.rs 业务事件 payload 亦不携带 tenant 维度。
-//! 故租户键服务端固定落 `Uuid::nil()`（全局集成行，跨租户基础设施记录，配合 RLS
-//! 的 nil 豁免条件由超管/运维可见），**不信任请求体 tenant_id**（DTO 不接收该字段，
-//! 调用方多余字段由 serde 忽略）——与 qms integration.rs P1-4 契约一致。
-//! 审计项 integration.rs:82 写死 Uuid::nil() 即属此既定契约，非残留缺陷，登记豁免。
+//! `/api/internal/` 放行，auth_middleware 不注入 Claims，tenant_middleware 亦跳过。
+//! 因此要求调用方在请求体显式传 `tenant_id`：缺失、空串、nil-uuid、解析失败一律
+//! 400 拒收 + 计数告警，绝不落 NULL 业务行；校验通过后仍返回 503，写入恢复留待
+//! 下一窗口（届时接 `scope_for_tenant` 落库，不开系统通道）。
 
 use crate::shared::AppState;
 use axum::{extract::State, routing::post, Json, Router};
 use serde::Deserialize;
 use sqlx::types::Uuid;
-use sqlx::Row;
+use std::sync::atomic::{AtomicU64, Ordering};
 use topems_shared_core::response::ApiResponse;
+
+/// 缺少/非法 tenant_id 的集成请求累计拒绝数（用于告警与审计）。
+static INTEGRATION_TENANT_REJECTS: AtomicU64 = AtomicU64::new(0);
+
+/// 集成端点租户守卫：缺失、空串、nil-uuid、解析失败一律拒收，绝不落 NULL 业务行。
+fn require_integration_tenant(
+    raw: Option<&str>,
+    endpoint: &str,
+) -> Result<Uuid, ApiResponse<serde_json::Value>> {
+    let parsed = raw.and_then(|v| Uuid::parse_str(v.trim()).ok());
+    match parsed {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => {
+            let total = INTEGRATION_TENANT_REJECTS.fetch_add(1, Ordering::Relaxed) + 1;
+            tracing::error!(
+                "[tenant_ctx] /api/internal/ehs/{} 缺少合法 tenant_id（raw={:?}），拒收；累计拒绝={}",
+                endpoint,
+                raw,
+                total
+            );
+            Err(ApiResponse::error(
+                400,
+                "缺少合法租户标识 tenant_id，拒绝集成写入",
+            ))
+        }
+    }
+}
 
 pub fn integration_routes() -> Router<AppState> {
     Router::new()
@@ -40,6 +64,8 @@ pub fn integration_routes() -> Router<AppState> {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateIntegrationHazardRequest {
+    /// 服务间调用方必须显式传递；缺失/空串/nil/非法一律拒收（不信任请求上下文回退）。
+    pub tenant_id: Option<String>,
     pub hazard_no: String,
     pub title: String,
     pub category: Option<String>,
@@ -59,60 +85,34 @@ pub struct CreateIntegrationHazardRequest {
     path = "/api/internal/ehs/hazards/integration",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "缺少合法 tenant_id"),
+        (status = 503, description = "集成写入恢复中"),
         (status = 500, description = "Internal server error")
     ),
     tag = "Integration"
 )]
 pub async fn create_integration_hazard(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(req): Json<CreateIntegrationHazardRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let category = req.category.unwrap_or_else(|| "通用".to_string());
-    let level = req.level.unwrap_or_else(|| "medium".to_string());
-    let status = req.status.unwrap_or_else(|| "reported".to_string());
-    let reported_by = req.reported_by.unwrap_or_else(|| "system".to_string());
-    let source = req.source.unwrap_or_else(|| "系统集成".to_string());
-
-    let result = sqlx::query(
-        "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, location, description, status, reported_by, inspection_id, source, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-         ON CONFLICT (hazard_no) DO UPDATE SET updated_at = NOW()
-         RETURNING id, hazard_no, title, status",
-    )
-    .bind(&req.hazard_no)
-    .bind(&req.title)
-    .bind(&category)
-    .bind(&level)
-    .bind(&req.location)
-    .bind(&req.description)
-    .bind(&status)
-    .bind(&reported_by)
-    .bind(req.inspection_id)
-    .bind(&source)
-    // 全局集成行（免 JWT internal 端点无会话租户，P1-4 契约固定 nil），勿改读请求体 tenant_id
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
-    .await;
-
-    match result {
-        Ok(row) => ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "hazard_no": row.try_get::<String, _>("hazard_no").ok(),
-                "title": row.try_get::<String, _>("title").ok(),
-                "status": row.try_get::<String, _>("status").ok(),
-            }),
-            "集成隐患创建成功",
-        ),
-        Err(e) => {
-            tracing::error!("[integration] 创建隐患失败: {}", e);
-            ApiResponse::server_error("集成隐患创建失败")
-        }
+    if let Err(resp) =
+        require_integration_tenant(req.tenant_id.as_deref(), "hazards/integration")
+    {
+        return resp;
     }
+    tracing::warn!(
+        "[tenant_ctx] /api/internal/ehs/hazards/integration 租户校验通过，但集成写恢复留待下一窗口，继续 fail-closed"
+    );
+    ApiResponse::error(
+        503,
+        "集成隐患写入暂不可用：租户校验已就绪，写入恢复待下一窗口",
+    )
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CreateIntegrationAlertRequest {
+    /// 服务间调用方必须显式传递；缺失/空串/nil/非法一律拒收（不信任请求上下文回退）。
+    pub tenant_id: Option<String>,
     pub alert_no: String,
     pub title: String,
     pub alert_type: Option<String>,
@@ -129,50 +129,26 @@ pub struct CreateIntegrationAlertRequest {
     path = "/api/internal/ehs/alerts/integration",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "缺少合法 tenant_id"),
+        (status = 503, description = "集成写入恢复中"),
         (status = 500, description = "Internal server error")
     ),
     tag = "Integration"
 )]
 pub async fn create_integration_alert(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(req): Json<CreateIntegrationAlertRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let alert_type = req.alert_type.unwrap_or_else(|| "其他告警".to_string());
-    let severity = req.severity.unwrap_or_else(|| "medium".to_string());
-    let status = req.status.unwrap_or_else(|| "active".to_string());
-    let source_system = req.source_system.unwrap_or_else(|| "系统".to_string());
-
-    let result = sqlx::query(
-        // tenant_id 内联常量同属 P1-4 全局集成行契约（与上方隐患端点一致）
-        "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
-         ON CONFLICT (alert_no) DO UPDATE SET updated_at = NOW()
-         RETURNING id, alert_no, title, status",
-    )
-    .bind(&req.alert_no)
-    .bind(&req.title)
-    .bind(&alert_type)
-    .bind(&severity)
-    .bind(&req.description)
-    .bind(&status)
-    .bind(&source_system)
-    .bind(req.source_id)
-    .fetch_one(&state.pool)
-    .await;
-
-    match result {
-        Ok(row) => ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "alert_no": row.try_get::<String, _>("alert_no").ok(),
-                "title": row.try_get::<String, _>("title").ok(),
-                "status": row.try_get::<String, _>("status").ok(),
-            }),
-            "集成告警创建成功",
-        ),
-        Err(e) => {
-            tracing::error!("[integration] 创建告警失败: {}", e);
-            ApiResponse::server_error("集成告警创建失败")
-        }
+    if let Err(resp) =
+        require_integration_tenant(req.tenant_id.as_deref(), "alerts/integration")
+    {
+        return resp;
     }
+    tracing::warn!(
+        "[tenant_ctx] /api/internal/ehs/alerts/integration 租户校验通过，但集成写恢复留待下一窗口，继续 fail-closed"
+    );
+    ApiResponse::error(
+        503,
+        "集成告警写入暂不可用：租户校验已就绪，写入恢复待下一窗口",
+    )
 }

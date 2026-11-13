@@ -151,6 +151,17 @@ pub async fn list_trainings(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<Training>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     // 接真 ehs.qa_ehs_trainings；超管全量可见，普通用户强制 tenant 过滤
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
@@ -172,7 +183,7 @@ pub async fn list_trainings(
         tenant_filter
     );
     let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -220,7 +231,18 @@ pub async fn create_training(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Training> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let training_no = format!("TRN-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let title = req
         .get("title")
@@ -267,7 +289,7 @@ pub async fn create_training(
         .bind(duration_hours)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -294,6 +316,10 @@ pub async fn create_training(
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(training, "培训创建成功")
 }
 
@@ -311,6 +337,17 @@ pub async fn get_training(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Training> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -332,7 +369,7 @@ pub async fn get_training(
     );
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -380,6 +417,17 @@ pub async fn update_training(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Training> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("")
     } else {
@@ -440,7 +488,7 @@ pub async fn update_training(
         .bind(duration_hours)
         .bind(status)
         .bind(&id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -468,6 +516,10 @@ pub async fn update_training(
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(training, "培训更新成功")
 }
 
@@ -485,6 +537,17 @@ pub async fn delete_training(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_clause = if claims.is_superuser {
         String::from("")
     } else {
@@ -503,7 +566,7 @@ pub async fn delete_training(
     );
     let res = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -514,6 +577,10 @@ pub async fn delete_training(
     };
     if res.rows_affected() == 0 {
         return ApiResponse::not_found("培训不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "培训删除成功")
 }
@@ -532,7 +599,18 @@ pub async fn get_training_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingPlan> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting training plan: {}", id);
     let sql = r#"
         SELECT id::text AS id, program_no AS plan_no, title, content AS description,
@@ -546,7 +624,7 @@ pub async fn get_training_plan(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -576,7 +654,18 @@ pub async fn update_training_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingPlan> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("title").and_then(|v| v.as_str()) {
@@ -626,7 +715,7 @@ pub async fn update_training_plan(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -637,6 +726,10 @@ pub async fn update_training_plan(
         }
     };
     let plan = training_plan_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(plan, "培训计划更新成功")
 }
 
@@ -654,7 +747,18 @@ pub async fn delete_training_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.training_programs
         SET deleted_at = now()
@@ -665,7 +769,7 @@ pub async fn delete_training_plan(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -676,6 +780,10 @@ pub async fn delete_training_plan(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("培训计划不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "培训计划删除成功")
 }
@@ -694,7 +802,18 @@ pub async fn get_training_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingRecord> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting training record: {}", id);
     let sql = r#"
         SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
@@ -710,7 +829,7 @@ pub async fn get_training_record(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -745,7 +864,18 @@ pub async fn update_training_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingRecord> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("title").and_then(|v| v.as_str()) {
@@ -828,7 +958,7 @@ pub async fn update_training_record(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -839,6 +969,10 @@ pub async fn update_training_record(
         }
     };
     let record = training_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "培训记录更新成功")
 }
 
@@ -856,7 +990,18 @@ pub async fn delete_training_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.training_records
         SET deleted_at = now()
@@ -867,7 +1012,7 @@ pub async fn delete_training_record(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -878,6 +1023,10 @@ pub async fn delete_training_record(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("培训记录不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "培训记录删除成功")
 }
@@ -896,7 +1045,18 @@ pub async fn get_certificate(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingCertificate> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting certificate: {}", id);
     let sql = r#"
         SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
@@ -912,7 +1072,7 @@ pub async fn get_certificate(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -942,7 +1102,18 @@ pub async fn update_certificate(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingCertificate> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("employee_name").and_then(|v| v.as_str()) {
@@ -1002,7 +1173,7 @@ pub async fn update_certificate(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -1013,6 +1184,10 @@ pub async fn update_certificate(
         }
     };
     let certificate = training_certificate_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(certificate, "培训证书更新成功")
 }
 
@@ -1030,7 +1205,18 @@ pub async fn delete_certificate(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_training_certificates
         SET deleted_at = now()
@@ -1041,7 +1227,7 @@ pub async fn delete_certificate(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1053,6 +1239,10 @@ pub async fn delete_certificate(
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("培训证书不存在");
     }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success((), "培训证书删除成功")
 }
 
@@ -1062,7 +1252,18 @@ pub async fn get_training_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
     let total_trainings: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1070,7 +1271,7 @@ pub async fn get_training_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_plans: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1078,7 +1279,7 @@ pub async fn get_training_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1086,7 +1287,7 @@ pub async fn get_training_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_certificates: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1094,7 +1295,7 @@ pub async fn get_training_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1137,7 +1338,18 @@ pub async fn list_training_plans(
     _headers: HeaderMap,
     Query(q): Query<TrainingPlanQuery>,
 ) -> ApiResponse<Vec<TrainingPlan>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1175,7 +1387,7 @@ pub async fn list_training_plans(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training plans: {}", e);
@@ -1201,7 +1413,18 @@ pub async fn create_training_plan(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingPlan> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let program_no = format!("TPL-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let title = req
         .get("title")
@@ -1249,7 +1472,7 @@ pub async fn create_training_plan(
         .bind(start_date)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1259,6 +1482,10 @@ pub async fn create_training_plan(
         }
     };
     let plan = training_plan_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(plan, "培训计划创建成功")
 }
 
@@ -1285,7 +1512,18 @@ pub async fn list_training_records(
     _headers: HeaderMap,
     Query(q): Query<TrainingRecordQuery>,
 ) -> ApiResponse<Vec<TrainingRecord>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1337,7 +1575,7 @@ pub async fn list_training_records(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training records: {}", e);
@@ -1364,7 +1602,18 @@ pub async fn create_training_record(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingRecord> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let record_no = format!("TRC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let plan_id = req
         .get("plan_id")
@@ -1450,7 +1699,7 @@ pub async fn create_training_record(
         .bind(pass_rate)
         .bind(&status)
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -1460,6 +1709,10 @@ pub async fn create_training_record(
         }
     };
     let record = training_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "培训记录创建成功")
 }
 
@@ -1486,7 +1739,18 @@ pub async fn list_certificates(
     _headers: HeaderMap,
     Query(q): Query<TrainingCertificateQuery>,
 ) -> ApiResponse<Vec<TrainingCertificate>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1536,7 +1800,7 @@ pub async fn list_certificates(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training certificates: {}", e);
@@ -1564,7 +1828,11 @@ pub async fn create_certificate(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingCertificate> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_id = tenant;
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
     let mut guard = txn_arc.lock().await;
@@ -1661,19 +1929,6 @@ pub async fn create_certificate(
     };
     let certificate = training_certificate_from_row(&row);
     ApiResponse::success(certificate, "证书创建成功")
-}
-
-/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// training_programs 行 → TrainingPlan（SELECT 列别名对齐本函数字段）

@@ -83,6 +83,17 @@ pub async fn list_risks(
     _headers: HeaderMap,
     Query(query): Query<RiskQuery>,
 ) -> ApiResponse<Vec<Risk>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -151,7 +162,7 @@ pub async fn list_risks(
         fetch_query = fetch_query.bind(p);
     }
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list risks: {}", e);
@@ -204,37 +215,9 @@ pub async fn create_risk(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Risk> {
-    let _tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
-        }
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!("Creating risk: {:?}", req);
 
@@ -250,21 +233,13 @@ pub async fn create_risk(
         .unwrap_or("未命名风险")
         .to_string();
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("创建风险失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for risk create: {}", e);
-        return ApiResponse::server_error("创建风险失败");
-    }
     let result = sqlx::query(
         r#"
         INSERT INTO ehs.qa_ehs_risks (id, risk_no, title, description, risk_type, hazard_factor,
@@ -287,7 +262,7 @@ pub async fn create_risk(
     .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("identified").to_string())
     .bind(tenant_id)
-    .fetch_one(&mut *txn)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -297,7 +272,7 @@ pub async fn create_risk(
             return ApiResponse::server_error("创建风险失败");
         }
     };
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk create: {}", e);
         return ApiResponse::server_error("创建风险失败");
     }
@@ -353,6 +328,17 @@ pub async fn get_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Risk> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -400,7 +386,7 @@ pub async fn get_risk(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -479,45 +465,19 @@ pub async fn update_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
-        }
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!("Updating risk {}: {:?}", id, req);
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return ApiResponse::server_error("风险操作失败");
-    }
     let result = sqlx::query(
         r#"
         UPDATE ehs.qa_ehs_risks SET
@@ -548,7 +508,7 @@ pub async fn update_risk(
     .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -562,7 +522,7 @@ pub async fn update_risk(
         Some(r) => r,
         None => return ApiResponse::not_found("风险不存在或无权访问"),
     };
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk update: {}", e);
         return ApiResponse::server_error("更新风险失败");
     }
@@ -631,46 +591,20 @@ pub async fn assess_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
-        }
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!("Assessing risk {}: {:?}", id, req);
     let assessed_by = claims.username.clone();
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return ApiResponse::server_error("风险操作失败");
-    }
     let result = sqlx::query(
         r#"
         UPDATE ehs.qa_ehs_risks SET
@@ -697,7 +631,7 @@ pub async fn assess_risk(
     .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(assessed_by)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -711,7 +645,7 @@ pub async fn assess_risk(
         Some(r) => r,
         None => return ApiResponse::not_found("风险不存在或无权访问"),
     };
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk assess: {}", e);
         return ApiResponse::server_error("风险评估失败");
     }
@@ -797,45 +731,19 @@ pub async fn delete_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
-        }
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!("Deleting risk: {}", id);
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return ApiResponse::server_error("风险操作失败");
-    }
     let result = sqlx::query(
         r#"
         UPDATE ehs.qa_ehs_risks SET deleted_at = NOW(), updated_at = NOW()
@@ -845,7 +753,7 @@ pub async fn delete_risk(
     )
     .bind(&tenant_bind)
     .bind(&id)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -856,7 +764,7 @@ pub async fn delete_risk(
             return ApiResponse::server_error("删除风险失败");
         }
     }
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk delete: {}", e);
         return ApiResponse::server_error("删除风险失败");
     }
@@ -880,6 +788,17 @@ pub async fn list_control_measures(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<RiskControlMeasure>> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -917,7 +836,7 @@ pub async fn list_control_measures(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -984,19 +903,9 @@ pub async fn create_control_measure(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    };
-    let rls_tenant = if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        tenant_id
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     let title = req
         .get("title")
@@ -1009,21 +918,13 @@ pub async fn create_control_measure(
     );
     tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control measure txn: {}", e);
             return ApiResponse::server_error("创建控制措施失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for control create: {}", e);
-        return ApiResponse::server_error("创建控制措施失败");
-    }
 
     let owned = sqlx::query_as::<_, (String,)>(
         r#"
@@ -1034,7 +935,7 @@ pub async fn create_control_measure(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let owned = match owned {
@@ -1061,7 +962,7 @@ pub async fn create_control_measure(
     .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(tenant_id.to_string())
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -1075,7 +976,7 @@ pub async fn create_control_measure(
         Some(r) => r,
         None => return ApiResponse::server_error("创建控制措施失败"),
     };
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit control create: {}", e);
         return ApiResponse::server_error("创建控制措施失败");
     }
@@ -1139,19 +1040,9 @@ pub async fn update_control_measure(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    };
-    let rls_tenant = if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        tenant_id
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!(
         "Updating control measure {} for risk {}: {:?}",
@@ -1160,21 +1051,13 @@ pub async fn update_control_measure(
         req
     );
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control update txn: {}", e);
             return ApiResponse::server_error("更新控制措施失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for control update: {}", e);
-        return ApiResponse::server_error("更新控制措施失败");
-    }
 
     let result = sqlx::query(
         r#"
@@ -1196,7 +1079,7 @@ pub async fn update_control_measure(
     .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(&tenant_bind)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
@@ -1210,7 +1093,7 @@ pub async fn update_control_measure(
         Some(r) => r,
         None => return ApiResponse::not_found("控制措施不存在或无权访问"),
     };
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit control update: {}", e);
         return ApiResponse::server_error("更新控制措施失败");
     }
@@ -1272,37 +1155,19 @@ pub async fn delete_control_measure(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    };
-    let rls_tenant = if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        tenant_id
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
     tracing::debug!("Deleting control measure {} for risk {}", measure_id, id);
 
-    let mut txn = match state.pool.begin().await {
-        Ok(t) => t,
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control delete txn: {}", e);
             return ApiResponse::server_error("删除控制措施失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context for control delete: {}", e);
-        return ApiResponse::server_error("删除控制措施失败");
-    }
 
     let result = sqlx::query(
         r#"
@@ -1315,7 +1180,7 @@ pub async fn delete_control_measure(
     .bind(&id)
     .bind(&measure_id)
     .bind(&tenant_bind)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -1326,7 +1191,7 @@ pub async fn delete_control_measure(
             return ApiResponse::server_error("删除控制措施失败");
         }
     }
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit control delete: {}", e);
         return ApiResponse::server_error("删除控制措施失败");
     }

@@ -293,7 +293,18 @@ pub async fn list_drill_plans(
     _headers: HeaderMap,
     Query(q): Query<DrillPlanQuery>,
 ) -> ApiResponse<Vec<DrillPlan>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -345,7 +356,7 @@ pub async fn list_drill_plans(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill plans: {}", e);
@@ -409,6 +420,17 @@ pub async fn create_drill_plan(
     _headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> ApiResponse<DrillPlan> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -453,7 +475,7 @@ pub async fn create_drill_plan(
     .bind(req.organizer.as_deref())
     .bind(req.related_plan_id.as_deref())
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -504,6 +526,10 @@ pub async fn create_drill_plan(
             .unwrap_or_default(),
     };
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(plan, "创建演练计划成功")
 }
 pub async fn submit_drill_evaluation(
@@ -513,6 +539,17 @@ pub async fn submit_drill_evaluation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateDrillEvaluationRequest>,
 ) -> ApiResponse<DrillEvaluation> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -528,7 +565,7 @@ pub async fn submit_drill_evaluation(
         "SELECT id FROM ehs.qa_ehs_drill_records WHERE id = $1::uuid AND deleted_at IS NULL",
     )
     .bind(&id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(_)) => {}
@@ -563,7 +600,7 @@ pub async fn submit_drill_evaluation(
     .bind(req.procedure_score)
     .bind(req.equipment_score)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -621,6 +658,10 @@ pub async fn submit_drill_evaluation(
             .unwrap_or_default(),
     };
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(eval, "提交演练评估成功")
 }
 #[utoipa::path(
@@ -636,7 +677,18 @@ pub async fn list_drill_records(
     _headers: HeaderMap,
     Query(q): Query<DrillQuery>,
 ) -> ApiResponse<Vec<DrillRecord>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -682,7 +734,7 @@ pub async fn list_drill_records(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill records: {}", e);
@@ -707,7 +759,18 @@ pub async fn create_drill_record(
     _headers: HeaderMap,
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> ApiResponse<DrillRecord> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let record_no = format!("DR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let participants: serde_json::Value = req
         .participants
@@ -747,7 +810,7 @@ pub async fn create_drill_record(
         .bind(attachments)
         .bind("in_progress")
         .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -757,6 +820,10 @@ pub async fn create_drill_record(
         }
     };
     let record = drill_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "演练记录创建成功")
 }
 
@@ -777,7 +844,18 @@ pub async fn get_drill_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DrillRecord> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
                started_at AS drill_date, participant_list AS participants,
@@ -793,7 +871,7 @@ pub async fn get_drill_record(
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -826,7 +904,18 @@ pub async fn update_drill_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> ApiResponse<DrillRecord> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.drill_name {
@@ -896,7 +985,7 @@ pub async fn update_drill_record(
     let row = match query
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -907,6 +996,10 @@ pub async fn update_drill_record(
         }
     };
     let record = drill_record_from_row(&row);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(record, "演练记录更新成功")
 }
 
@@ -927,7 +1020,18 @@ pub async fn delete_drill_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_drill_records
         SET deleted_at = now()
@@ -938,7 +1042,7 @@ pub async fn delete_drill_record(
     let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -949,6 +1053,10 @@ pub async fn delete_drill_record(
     };
     if result.rows_affected() == 0 {
         return ApiResponse::not_found("演练记录不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success((), "演练记录删除成功")
 }
@@ -965,7 +1073,18 @@ pub async fn get_drill_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<DrillStatistics> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
     let total_drills: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -973,7 +1092,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let planned_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -981,7 +1100,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let completed_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -989,7 +1108,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let average_score: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -997,7 +1116,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(None);
     let problem_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1005,7 +1124,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let rectified_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1013,7 +1132,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -1023,7 +1142,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         for r in rows {
@@ -1041,7 +1160,7 @@ pub async fn get_drill_statistics(
         tc
     )))
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         for r in rows {
@@ -1080,7 +1199,18 @@ pub async fn list_drill_types(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<DrillType>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
     let mut types: Vec<DrillType> = Vec::new();
@@ -1089,7 +1219,7 @@ pub async fn list_drill_types(
     );
     if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&tenant_bind)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         for r in rows {
@@ -1102,18 +1232,6 @@ pub async fn list_drill_types(
     }
 
     ApiResponse::success(types, "获取演练类型成功")
-}
-
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// qa_ehs_drill_records 行 → DrillRecord（SELECT 列别名对齐本函数字段）

@@ -210,7 +210,18 @@ pub async fn list_plans(
     _headers: HeaderMap,
     Query(q): Query<PlanQuery>,
 ) -> ApiResponse<Vec<EmergencyPlan>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -239,7 +250,7 @@ pub async fn list_plans(
     for p in &params {
         qb = qb.bind(p);
     }
-    match qb.fetch_all(&state.pool).await {
+    match qb.fetch_all(&mut scope).await {
         Ok(rows) => {
             let items: Vec<EmergencyPlan> = rows.iter().map(plan_from_row).collect();
             ApiResponse::success(items, "获取应急预案列表成功")
@@ -265,7 +276,18 @@ pub async fn create_plan(
     _headers: HeaderMap,
     Json(req): Json<CreatePlanRequest>,
 ) -> ApiResponse<EmergencyPlan> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let responsible_person = req
         .responsible_persons
         .clone()
@@ -299,10 +321,16 @@ pub async fn create_plan(
         .bind(&req.effective_date)
         .bind(&req.expiry_date)
         .bind(tenant_id.to_string())
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
-        Ok(r) => ApiResponse::success(plan_from_row(&r), "创建应急预案成功"),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success(plan_from_row(&r), "创建应急预案成功")
+        }
         Err(e) => {
             tracing::error!("create_plan error: {}", e);
             ApiResponse::from(TopemsError::internal("创建应急预案失败", e))
@@ -323,12 +351,23 @@ pub async fn get_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<PlanDetail> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let plan_sql = "SELECT id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
     let plan_row = match sqlx::query(sqlx::AssertSqlSafe(plan_sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -347,7 +386,7 @@ pub async fn get_plan(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows.iter().map(plan_supply_from_row).collect(),
@@ -362,7 +401,7 @@ pub async fn get_plan(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows.iter().map(plan_version_from_row).collect(),
@@ -377,7 +416,7 @@ pub async fn get_plan(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows.iter().map(plan_approval_from_row).collect(),
@@ -412,7 +451,18 @@ pub async fn update_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> ApiResponse<EmergencyPlan> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let mut set_clauses: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut push = |val: String, col: &str| {
@@ -476,8 +526,14 @@ pub async fn update_plan(
         qb = qb.bind(p);
     }
     qb = qb.bind(&tenant_bind);
-    match qb.fetch_optional(&state.pool).await {
-        Ok(Some(r)) => ApiResponse::success(plan_from_row(&r), "更新应急预案成功"),
+    match qb.fetch_optional(&mut scope).await {
+        Ok(Some(r)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success(plan_from_row(&r), "更新应急预案成功")
+        }
         Ok(None) => ApiResponse::not_found("应急预案不存在"),
         Err(e) => {
             tracing::error!("update_plan error: {}", e);
@@ -499,15 +555,32 @@ pub async fn delete_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => ApiResponse::success((), "删除应急预案成功"),
+        Ok(res) if res.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success((), "删除应急预案成功")
+        }
         Ok(_) => ApiResponse::not_found("应急预案不存在"),
         Err(e) => {
             tracing::error!("delete_plan error: {}", e);
@@ -529,12 +602,23 @@ pub async fn list_plan_versions(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<PlanVersion>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let sql = "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => {
@@ -562,7 +646,18 @@ pub async fn create_new_version(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<PlanVersion> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     let change_description = req
         .get("change_description")
         .and_then(|v| v.as_str())
@@ -578,10 +673,16 @@ pub async fn create_new_version(
         .bind(claims.username.clone())
         .bind(&content)
         .bind(tenant_id.to_string())
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
-        Ok(r) => ApiResponse::success(plan_version_from_row(&r), "创建预案版本成功"),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success(plan_version_from_row(&r), "创建预案版本成功")
+        }
         Err(e) => {
             tracing::error!("create_new_version error: {}", e);
             ApiResponse::from(TopemsError::internal("创建预案版本失败", e))
@@ -604,19 +705,6 @@ pub async fn list_plan_categories(
     // 预案分类无持久化字典表，声明式 501。
     tracing::warn!("Emergency plan categories data source not yet enabled");
     ApiResponse::not_implemented("预案分类数据源尚未启用")
-}
-
-/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
 }
 
 /// qa_ehs_emergency_plans 行 → EmergencyPlan（serde rename 输出前端契约键）

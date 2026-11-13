@@ -37,18 +37,6 @@ pub struct EnvironmentQuery {
     pub status: Option<String>,
 }
 
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
-}
-
 /// 对齐前端 EnvironmentMonitor（apps/web/src/api/ehs/types/environment.ts:4-20）。
 #[derive(Debug, Serialize)]
 pub struct EnvironmentMonitor {
@@ -81,7 +69,18 @@ pub async fn list_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<EnvironmentMonitor>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let rows = sqlx::query(
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
                   description, monitor_frequency, standard_value,
@@ -95,7 +94,7 @@ pub async fn list_records(
            ORDER BY created_at DESC"#,
     )
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match rows {
         Ok(r) => {
@@ -174,7 +173,11 @@ pub async fn create_record(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_id = tenant;
 
     // 连接级租户上下文：复用请求级 RLS 事务（tenant_middleware 已写入 app.tenant_id），
     // 裸池写入在严格 RLS 策略下会被拒绝。
@@ -293,7 +296,18 @@ pub async fn get_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let row = sqlx::query(
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
                   description, monitor_frequency, standard_value,
@@ -307,7 +321,7 @@ pub async fn get_record(
     )
     .bind(&tenant_bind)
     .bind(&id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -367,7 +381,18 @@ pub async fn update_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     // 先取现有行，再按请求字段 COALESCE 保留原值。
     let existing = sqlx::query(
         r#"SELECT name, monitor_type, location, status, description, monitor_frequency,
@@ -378,7 +403,7 @@ pub async fn update_record(
     )
     .bind(&tenant_bind)
     .bind(&id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     let _existing = match existing {
         Ok(Some(r)) => r,
@@ -428,11 +453,15 @@ pub async fn update_record(
     .bind(unit)
     .bind(&tenant_bind)
     .bind(&id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     if let Err(e) = r {
         tracing::error!("Failed to update environment monitor: {}", e);
         return ApiResponse::server_error("更新环境监测点失败");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
     ApiResponse::success(
         EnvironmentMonitor {
@@ -462,21 +491,44 @@ pub async fn delete_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope for monitor delete: {}", e);
+            return ApiResponse::server_error("环境监测点删除失败");
+        }
+    };
+
     let r = sqlx::query(
         "UPDATE ehs.qa_ehs_environment_monitors SET deleted_at = now() \
-         WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) \
-           AND id = $2::uuid AND deleted_at IS NULL",
+         WHERE tenant_id = $1 AND id = $2::uuid AND deleted_at IS NULL",
     )
-    .bind(&tenant_bind)
+    .bind(tenant_id)
     .bind(&id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
-    match r {
-        Ok(_) => ApiResponse::success((), "环境监测点删除成功"),
+
+    let r = match r {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete environment monitor: {}", e);
-            ApiResponse::server_error("环境监测点删除失败")
+            return ApiResponse::server_error("环境监测点删除失败");
         }
+    };
+
+    if r.rows_affected() == 0 {
+        return ApiResponse::not_found("环境监测点不存在");
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit monitor delete: {}", e);
+        return ApiResponse::server_error("环境监测点删除失败");
+    }
+
+    ApiResponse::success((), "环境监测点删除成功")
 }

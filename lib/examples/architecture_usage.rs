@@ -42,6 +42,7 @@ async fn main() {
     publisher
         .publish_hrm_employee_created(
             uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
             "张三",
             "zhangsan@example.com",
             Some(uuid::Uuid::new_v4()),

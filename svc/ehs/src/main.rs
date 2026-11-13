@@ -39,7 +39,14 @@ async fn main() -> anyhow::Result<()> {
         name: "topems-ehs",
         port: 8052,
         port_env_var: Some("EHS_PORT"),
-        max_db_connections: 10,
+        // 连接池上限可由 DB_MAX_CONNECTIONS 覆盖（默认 10）。请求链路同时持有
+        // tenant_middleware 请求事务与 handler 作用域事务两条连接，容量上限为池大小的一半，
+        // 因此并发压测/生产需要按预期并发显式上调（仍受进程级 DB_TOTAL_CONNECTION_BUDGET 约束）。
+        max_db_connections: std::env::var("DB_MAX_CONNECTIONS")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(10),
         enable_events: true,
         enable_rls: true,
         enable_request_context: true,
@@ -217,6 +224,7 @@ async fn main() -> anyhow::Result<()> {
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "ehs, public, shared"),
         health_config: SimpleHealthConfig::new("topems-ehs").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         workflow_client,
@@ -307,10 +315,10 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    use topems_shared_bootstrap::build_detailed_health_response;
+    use topems_shared_bootstrap::build_detailed_health_response_db;
     let modules = serde_json::json!({ "ehs": "active" });
-    let resp = build_detailed_health_response(
-        &state.pool,
+    let resp = build_detailed_health_response_db(
+        &state.db,
         "ehs-service",
         modules,
         "1.0.0",

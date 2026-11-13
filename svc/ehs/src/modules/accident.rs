@@ -227,7 +227,18 @@ pub async fn list_accidents(
     _headers: HeaderMap,
     Query(q): Query<AccidentQuery>,
 ) -> ApiResponse<Vec<Accident>> {
-    let tenant_bind: String = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind: String = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -263,7 +274,7 @@ pub async fn list_accidents(
     for p in &params {
         query = query.bind(p);
     }
-    let rows = match query.fetch_all(&state.pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list accidents: {}", e);
@@ -323,6 +334,13 @@ pub async fn report_accident(
         Ok(None) => return ApiResponse::bad_request("缺少租户上下文，拒绝上报事故"),
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     tracing::debug!("Reporting accident: {:?}", req);
     let accident_no = format!(
         "ACC-{}",
@@ -372,9 +390,13 @@ pub async fn report_accident(
     .bind(&accident.status)
     .bind(&accident.reported_by)
     .bind(tenant_id);
-    if let Err(e) = insert.execute(&state.pool).await {
+    if let Err(e) = insert.execute(&mut scope).await {
         tracing::error!("Failed to insert accident: {}", e);
         return ApiResponse::server_error("事故上报失败");
+    }
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
     }
 
     // 发布端补全：EhsAccidentReported（→ integration → LIMS 建样/任务联动）
@@ -408,18 +430,6 @@ pub async fn report_accident(
     ApiResponse::success(accident, "事故报告成功")
 }
 
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
-}
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -434,7 +444,18 @@ pub async fn get_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AccidentDetail> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting accident detail: {}", id);
 
     let row = sqlx::query(
@@ -449,7 +470,7 @@ pub async fn get_accident(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match row {
@@ -495,7 +516,18 @@ pub async fn update_accident(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateAccidentRequest>,
 ) -> ApiResponse<Accident> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating accident {}: {:?}", id, req);
 
     let result = sqlx::query(
@@ -524,7 +556,7 @@ pub async fn update_accident(
     .bind(req.economic_loss.unwrap_or(0.0))
     .bind(&tenant_bind)
     .bind(&id);
-    let row = match result.fetch_optional(&state.pool).await {
+    let row = match result.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("事故不存在"),
         Err(e) => {
@@ -532,6 +564,10 @@ pub async fn update_accident(
             return ApiResponse::server_error("事故更新失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(accident_from_row(&row), "事故更新成功")
 }
 
@@ -549,23 +585,47 @@ pub async fn delete_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     tracing::debug!("Deleting accident: {}", id);
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope for accident delete: {}", e);
+            return ApiResponse::server_error("事故删除失败");
+        }
+    };
+
     let r = sqlx::query(
         "UPDATE ehs.qa_ehs_accidents SET deleted_at=now() \
-         WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND id = $1::uuid AND deleted_at IS NULL",
+         WHERE id = $1::uuid AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&id)
-    .bind(&tenant_bind)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
-    match r {
-        Ok(_) => ApiResponse::success(serde_json::json!({}), "事故删除成功"),
+
+    let r = match r {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete accident: {}", e);
-            ApiResponse::server_error("事故删除失败")
+            return ApiResponse::server_error("事故删除失败");
         }
+    };
+
+    if r.rows_affected() == 0 {
+        return ApiResponse::not_found("事故不存在");
     }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit accident delete: {}", e);
+        return ApiResponse::server_error("事故删除失败");
+    }
+
+    ApiResponse::success(serde_json::json!({}), "事故删除成功")
 }
 
 // gate: admin-only
@@ -586,7 +646,11 @@ pub async fn start_investigation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateInvestigationRequest>,
 ) -> ApiResponse<Investigation> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_id = tenant;
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
     let mut guard = txn_arc.lock().await;
@@ -671,7 +735,18 @@ pub async fn update_investigation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInvestigationRequest>,
 ) -> ApiResponse<Investigation> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
     let row = sqlx::query(
         r#"UPDATE ehs.qa_ehs_investigations
@@ -689,7 +764,7 @@ pub async fn update_investigation(
     .bind(&req.status)
     .bind(&tenant_bind)
     .bind(&id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     let row = match row {
         Ok(Some(r)) => r,
@@ -699,6 +774,10 @@ pub async fn update_investigation(
             return ApiResponse::server_error("调查更新失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(investigation_from_row(&row), "调查更新成功")
 }
 
@@ -718,7 +797,18 @@ pub async fn create_treatment(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateTreatmentRequest>,
 ) -> ApiResponse<Treatment> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_id = tenant;
     tracing::debug!("Creating treatment for accident {}: {:?}", id, req);
     let tx_id = uuid::Uuid::new_v4();
     let accident_uuid = Uuid::parse_str(&id).unwrap_or_default();
@@ -732,7 +822,7 @@ pub async fn create_treatment(
     .bind(accident_uuid)
     .bind(&req.responsible)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("Failed to insert treatment: {}", e);
@@ -753,7 +843,7 @@ pub async fn create_treatment(
         .bind(&a.responsible)
         .bind(a.deadline.clone().and_then(|d| chrono::DateTime::parse_from_rfc3339(&d).ok().map(|t| t.with_timezone(&chrono::Utc))))
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
             tracing::error!("Failed to insert treatment action: {}", e);
@@ -769,6 +859,10 @@ pub async fn create_treatment(
         });
     }
 
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(
         Treatment {
             id: tx_id.to_string(),
@@ -805,7 +899,18 @@ pub async fn update_treatment_action(
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> ApiResponse<TreatmentAction> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
     let row = sqlx::query(
         r#"UPDATE ehs.qa_ehs_treatment_actions
@@ -823,7 +928,7 @@ pub async fn update_treatment_action(
     }))
     .bind(&tenant_bind)
     .bind(&action_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     let row = match row {
         Ok(Some(r)) => r,
@@ -833,6 +938,10 @@ pub async fn update_treatment_action(
             return ApiResponse::server_error("处置行动更新失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(
         TreatmentAction {
             id: row.try_get("id").unwrap_or_default(),
@@ -864,9 +973,20 @@ pub async fn close_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Accident> {
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
     tracing::info!("Closing accident: {}", id);
 
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant_bind = tenant.to_string();
     let row = sqlx::query(
         r#"UPDATE ehs.qa_ehs_accidents SET status='closed', updated_at=now()
            WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -879,7 +999,7 @@ pub async fn close_accident(
     )
     .bind(&id)
     .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     let row = match row {
         Ok(Some(r)) => r,
@@ -889,6 +1009,10 @@ pub async fn close_accident(
             return ApiResponse::server_error("事故关闭失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(accident_from_row(&row), "事故已关闭")
 }
 #[utoipa::path(
@@ -909,7 +1033,18 @@ pub async fn complete_investigation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Investigation> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     tracing::info!("Completing investigation for accident: {}", id);
     let row = sqlx::query(
         r#"UPDATE ehs.qa_ehs_investigations
@@ -923,7 +1058,7 @@ pub async fn complete_investigation(
     .bind(&id)
     .bind(&tenant_bind)
     .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
     let row = match row {
         Ok(Some(r)) => r,
@@ -933,6 +1068,10 @@ pub async fn complete_investigation(
             return ApiResponse::server_error("调查完成失败");
         }
     };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     ApiResponse::success(investigation_from_row(&row), "调查完成")
 }
 
@@ -953,20 +1092,32 @@ pub async fn complete_treatment(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Treatment> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     tracing::info!("Completing treatment for accident: {}", id);
-    // UPDATE treatments 主行 + 其下 actions 全部置 completed
+
+    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant write scope for complete treatment: {}", e);
+            return ApiResponse::server_error("处理完成失败");
+        }
+    };
+
+    // UPDATE treatments 主行 + 其下 actions 全部置 completed（同一事务）
     let result = sqlx::query(
         r#"UPDATE ehs.qa_ehs_treatments SET status='completed', completed_at=now(), updated_at=now()
-           WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+           WHERE tenant_id = $2
              AND accident_id = $1::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, responsible, status,
                      started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await;
     let row = match result {
         Ok(Some(r)) => r,
@@ -976,14 +1127,34 @@ pub async fn complete_treatment(
             return ApiResponse::server_error("处理完成失败");
         }
     };
-    let _ = sqlx::query(
+
+    let actions = sqlx::query(
         "UPDATE ehs.qa_ehs_treatment_actions SET status='completed', completed_at=now() \
-         WHERE treatment_id = (SELECT id FROM ehs.qa_ehs_treatments WHERE accident_id=$1::uuid AND deleted_at IS NULL LIMIT 1) \
-           AND deleted_at IS NULL",
+         WHERE treatment_id = (SELECT id FROM ehs.qa_ehs_treatments \
+                               WHERE accident_id=$1::uuid AND tenant_id=$2 AND deleted_at IS NULL LIMIT 1) \
+           AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&id)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
+
+    match actions {
+        Ok(r) if r.rows_affected() == 0 => {
+            return ApiResponse::error(409, "处理动作状态已变化，请刷新后重试");
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to complete treatment actions: {}", e);
+            return ApiResponse::server_error("处理完成失败");
+        }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit complete treatment: {}", e);
+        return ApiResponse::server_error("处理完成失败");
+    }
+
     ApiResponse::success(
         Treatment {
             id: row.try_get("id").unwrap_or_default(),
@@ -1024,7 +1195,11 @@ pub async fn create_review(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateReviewRequest>,
 ) -> ApiResponse<Review> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_id = tenant;
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
     let mut guard = txn_arc.lock().await;
@@ -1093,7 +1268,18 @@ pub async fn list_incident_actions(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let rows = sqlx::query(
         r#"SELECT id::text AS id, title, status, created_at AS created_at
            FROM ehs.qa_ehs_incident_actions
@@ -1104,7 +1290,7 @@ pub async fn list_incident_actions(
     .bind(&id)
     .bind(&tenant_bind)
     .bind(&tenant_bind)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
     match rows {
         Ok(r) => {
@@ -1136,7 +1322,11 @@ pub async fn create_incident_action(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_id = tenant;
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let db = topems_shared_db::scope::Db::new(state.pool.clone(), "ehs, public, shared");
     let mut guard = txn_arc.lock().await;
@@ -1190,7 +1380,18 @@ pub async fn update_incident_action(
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tenant = match crate::shared::permission::require_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let mut scope = match state.db.scope_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open tenant scope: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+    let tenant_bind = tenant.to_string();
     let status = req
         .get("status")
         .and_then(|v| v.as_str())
@@ -1203,8 +1404,12 @@ pub async fn update_incident_action(
     .bind(status)
     .bind(&tenant_bind)
     .bind(&action_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("Failed to commit tenant write: {}", e);
+        return ApiResponse::server_error("提交事务失败");
+    }
     match r {
         Ok(_) => ApiResponse::success(
             serde_json::json!({
