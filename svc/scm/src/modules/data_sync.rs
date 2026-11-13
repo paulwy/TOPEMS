@@ -1513,7 +1513,7 @@ pub async fn retry_failed_syncs(
 
                     if sync_entity == "purchase_order" {
                         if let Some(source_id) = sync_source_id {
-                            let _ = sqlx::query(only_own_schema_query!(
+                            if let Err(e) = sqlx::query(only_own_schema_query!(
                                 "scm",
                                 r#"
                                 UPDATE scm.purchase_orders 
@@ -1526,7 +1526,26 @@ pub async fn retry_failed_syncs(
                             .bind(now)
                             .bind(tenant_bind)
                             .execute(&mut **txn)
-                            .await;
+                            .await
+                            {
+                                // 重试计数没落库会让同一订单无限重试并重复推送，必须上抛。
+                                tracing::error!(
+                                    "重置采购订单同步重试计数失败: po_id={}, sync_log_id={}, err={}",
+                                    source_id,
+                                    sync_id,
+                                    e
+                                );
+                                // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
+                                if let Some(t) = guard.take() {
+                                    if let Err(re) = t.rollback().await {
+                                        tracing::error!("回滚同步重试事务失败: {}", re);
+                                    }
+                                }
+                                return ApiResponse::from(TopemsError::Internal(format!(
+                                    "重置采购订单 {} 同步重试计数失败: {}",
+                                    source_id, e
+                                )));
+                            }
                         }
                     }
                 } else {
@@ -1711,14 +1730,33 @@ pub async fn batch_sync_purchase_to_wms(
                 .unwrap_or(0);
 
                 if existing_inbound > 0 {
-                    let _ = sqlx::query(
+                    if let Err(e) = sqlx::query(
                         only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)")
                     )
                     .bind(po.id)
                     .bind(now)
                     .bind(tenant_bind)
                     .execute(&mut **txn)
-                    .await;
+                    .await
+                    {
+                        // 标记已同步失败会让同一采购订单在下一批被重复推送，必须上抛而非计成功。
+                        tracing::error!(
+                            "标记采购订单已同步 WMS 失败: po_id={}, po_no={}, err={}",
+                            po.id,
+                            po.order_number,
+                            e
+                        );
+                        // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
+                        if let Some(t) = guard.take() {
+                            if let Err(re) = t.rollback().await {
+                                tracing::error!("回滚采购订单同步事务失败: {}", re);
+                            }
+                        }
+                        return ApiResponse::from(TopemsError::Internal(format!(
+                            "标记采购订单 {} 同步状态失败: {}",
+                            po.order_number, e
+                        )));
+                    }
                     success_count += 1;
                     continue;
                 }
@@ -1769,7 +1807,7 @@ pub async fn batch_sync_purchase_to_wms(
                             tenant_id,
                         });
 
-                        let _ = sqlx::query(only_own_schema_query!(
+                        if let Err(e) = sqlx::query(only_own_schema_query!(
                             "scm",
                             r#"
                             UPDATE scm.purchase_orders 
@@ -1786,7 +1824,27 @@ pub async fn batch_sync_purchase_to_wms(
                         .bind(now)
                         .bind(tenant_bind)
                         .execute(&mut **txn)
-                        .await;
+                        .await
+                        {
+                            // 同步标记没落库会让订单在下一批被重复推送，必须上抛而非计成功。
+                            tracing::error!(
+                                "更新采购订单同步状态失败: po_id={}, po_no={}, inbound_no={}, err={}",
+                                po.id,
+                                po.order_number,
+                                inbound_order_number,
+                                e
+                            );
+                            // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
+                            if let Some(t) = guard.take() {
+                                if let Err(re) = t.rollback().await {
+                                    tracing::error!("回滚采购订单同步事务失败: {}", re);
+                                }
+                            }
+                            return ApiResponse::from(TopemsError::Internal(format!(
+                                "更新采购订单 {} 同步状态失败: {}",
+                                po.order_number, e
+                            )));
+                        }
 
                         let _ = record_sync_log(
                             &state,
@@ -1847,7 +1905,7 @@ pub async fn batch_sync_purchase_to_wms(
                             .await;
                         } else {
                             retry_count += 1;
-                            let _ = sqlx::query(
+                            if let Err(update_err) = sqlx::query(
                                 only_own_schema_query!("scm", r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
@@ -1860,7 +1918,26 @@ pub async fn batch_sync_purchase_to_wms(
                             .bind(now)
                             .bind(tenant_bind)
                             .execute(&mut **txn)
-                            .await;
+                            .await
+                            {
+                                // 重试次数/错误没落库会让订单永远停在 0 次重试并反复推送，必须上抛。
+                                tracing::error!(
+                                    "记录采购订单同步失败信息失败: po_id={}, po_no={}, err={}",
+                                    po.id,
+                                    po.order_number,
+                                    update_err
+                                );
+                                // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
+                                if let Some(t) = guard.take() {
+                                    if let Err(re) = t.rollback().await {
+                                        tracing::error!("回滚采购订单同步事务失败: {}", re);
+                                    }
+                                }
+                                return ApiResponse::from(TopemsError::Internal(format!(
+                                    "记录采购订单 {} 同步失败信息失败: {}",
+                                    po.order_number, update_err
+                                )));
+                            }
 
                             let _ = record_sync_log(
                                 &state,
