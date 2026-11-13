@@ -4,8 +4,8 @@ use std::sync::Arc;
 use topems_shared_core::TopemsError;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::{
-    AfterSalesTicketCreatedPayload, EmployeeOnboardedPayload, Event, EventPublisher, EventResult,
-    EventSubscriber, EventType, PmProjectCreatedPayload,
+    require_event_tenant, AfterSalesTicketCreatedPayload, EmployeeOnboardedPayload, Event,
+    EventPublisher, EventResult, EventSubscriber, EventType, PmProjectCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -48,6 +48,7 @@ impl PortalEventHandlers {
 
     async fn create_notification(
         &self,
+        tenant_id: uuid::Uuid,
         title: &str,
         content: &str,
         service: &str,
@@ -61,7 +62,7 @@ impl PortalEventHandlers {
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO portal_notifications (id, title, content, service, service_name, notification_type, read, created_at, link_url, target_user, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8, $9, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8, $9, $10)
              RETURNING id",
         )
         .bind(notif_id)
@@ -73,6 +74,7 @@ impl PortalEventHandlers {
         .bind(now)
         .bind(link_url)
         .bind(target_user)
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await;
 
@@ -139,6 +141,10 @@ impl PortalEventHandlers {
             event.trace_id
         );
 
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?
+            .get();
+
         let payload: EmployeeOnboardedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析员工入职事件 payload 失败: {}", e))
         })?;
@@ -161,7 +167,16 @@ impl PortalEventHandlers {
         );
 
         let _ = self
-            .create_notification(&title, &content, "hrm", "人力资源", "welcome", None, None)
+            .create_notification(
+                tenant_id,
+                &title,
+                &content,
+                "hrm",
+                "人力资源",
+                "welcome",
+                None,
+                None,
+            )
             .await;
 
         Ok(())
@@ -173,6 +188,10 @@ impl PortalEventHandlers {
             event.event_type,
             event.trace_id
         );
+
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?
+            .get();
 
         let payload: PmProjectCreatedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析项目创建事件 payload 失败: {}", e))
@@ -186,21 +205,23 @@ impl PortalEventHandlers {
         );
 
         let project_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM portal_dashboard_stats WHERE stat_key = 'total_projects'",
+            "SELECT COUNT(*) FROM portal_dashboard_stats WHERE stat_key = 'total_projects' AND tenant_id = $1",
         )
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await
         .unwrap_or(0);
 
         let result = sqlx::query(
             "INSERT INTO portal_dashboard_stats (stat_key, stat_value, stat_label, updated_at, tenant_id)
-             VALUES ('total_projects', $1, '项目总数', $2, '00000000-0000-0000-0000-000000000000')
+             VALUES ('total_projects', $1, '项目总数', $2, $3)
              ON CONFLICT (stat_key, tenant_id) DO UPDATE SET
                  stat_value = portal_dashboard_stats.stat_value + 1,
                  updated_at = EXCLUDED.updated_at",
         )
         .bind(project_count + 1)
         .bind(Utc::now())
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -224,6 +245,7 @@ impl PortalEventHandlers {
 
         let _ = self
             .create_notification(
+                tenant_id,
                 &title,
                 &content,
                 "pm",
@@ -243,6 +265,10 @@ impl PortalEventHandlers {
             event.event_type,
             event.trace_id
         );
+
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?
+            .get();
 
         let payload: AfterSalesTicketCreatedPayload = event.parse_payload().map_err(|e| {
             TopemsError::ValidationFailed(format!("解析售后工单事件 payload 失败: {}", e))
@@ -279,6 +305,7 @@ impl PortalEventHandlers {
 
         let _ = self
             .create_notification(
+                tenant_id,
                 &title,
                 &content,
                 "crm",

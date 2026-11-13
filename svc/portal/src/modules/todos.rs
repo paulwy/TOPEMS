@@ -10,7 +10,6 @@
 use axum::{
     extract::{Extension, Json, Path, State},
     http::HeaderMap,
-    Json as AxumJson,
 };
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -26,7 +25,22 @@ use crate::{
 type RequestTxn =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-async fn load_local_todos(db: &Db, txn_arc: &RequestTxn, user_id: &str) -> Vec<Todo> {
+/// 待办读写一律要求请求令牌中带有合法非 nil 租户，不从 header 回退。
+fn require_todo_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiResponse<T>> {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+        .ok_or_else(|| ApiResponse::error(400, "缺少租户上下文：拒绝待办操作"))
+}
+
+async fn load_local_todos(
+    db: &Db,
+    txn_arc: &RequestTxn,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+) -> Vec<Todo> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -45,7 +59,7 @@ async fn load_local_todos(db: &Db, txn_arc: &RequestTxn, user_id: &str) -> Vec<T
         SELECT id, title, service_code, service_name, due_date, priority,
                completed, todo_type, link_url
         FROM portal.portal_todos
-        WHERE user_id = $1 AND deleted_at IS NULL
+        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         ORDER BY completed ASC,
                  CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END ASC,
                  due_date ASC NULLS LAST,
@@ -53,6 +67,7 @@ async fn load_local_todos(db: &Db, txn_arc: &RequestTxn, user_id: &str) -> Vec<T
         "#,
     )
     .bind(user_id)
+    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
 
@@ -118,6 +133,7 @@ async fn add_local_todo(
     db: &Db,
     txn_arc: &RequestTxn,
     user_id: &str,
+    tenant_id: uuid::Uuid,
     todo: NewTodo,
 ) -> Option<Todo> {
     let service_name = get_service_name(&todo.service);
@@ -144,9 +160,7 @@ async fn add_local_todo(
         r#"
         INSERT INTO portal.portal_todos
             (user_id, title, service_code, service_name, due_date, priority, todo_type, tenant_id)
-        VALUES ($1::uuid, $2, $3, $4, $5, $6, 'personal',
-                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                         '00000000-0000-0000-0000-000000000000'::uuid))
+        VALUES ($1::uuid, $2, $3, $4, $5, $6, 'personal', $7)
         RETURNING id, title, service_code, service_name, due_date, priority, completed, todo_type, link_url
         "#
     )
@@ -156,6 +170,7 @@ async fn add_local_todo(
     .bind(service_name)
     .bind(due_date)
     .bind(&todo.priority)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -174,7 +189,13 @@ async fn add_local_todo(
     }
 }
 
-async fn complete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &str) -> bool {
+async fn complete_local_todo(
+    db: &Db,
+    txn_arc: &RequestTxn,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+    id: &str,
+) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
@@ -197,11 +218,12 @@ async fn complete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &
         r#"
         UPDATE portal.portal_todos
         SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND tenant_id = $3 AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(user_id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -220,7 +242,13 @@ async fn complete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &
     }
 }
 
-async fn delete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &str) -> bool {
+async fn delete_local_todo(
+    db: &Db,
+    txn_arc: &RequestTxn,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+    id: &str,
+) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
@@ -243,11 +271,12 @@ async fn delete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &st
         r#"
         UPDATE portal.portal_todos
         SET deleted_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND tenant_id = $3 AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(user_id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -297,12 +326,16 @@ pub async fn get_todos(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RequestTxn>,
-) -> AxumJson<ApiResponse<Vec<Todo>>> {
+) -> ApiResponse<Vec<Todo>> {
+    let tenant_id = match require_todo_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = &claims.sub;
     let token = extract_bearer_token(&headers);
 
     // 本地待办走请求级 RLS 事务（SQL 依赖 app.tenant_id）；HTTP 聚合再并发执行。
-    let local_todos = load_local_todos(&state.db, &txn_arc, user_id).await;
+    let local_todos = load_local_todos(&state.db, &txn_arc, user_id, tenant_id).await;
     let (notification_todos, workflow_todos) = tokio::join!(
         fetch_notification_todos(&state, token.as_deref()),
         fetch_workflow_todos(&state, token.as_deref()),
@@ -319,7 +352,7 @@ pub async fn get_todos(
             .then_with(|| a.due_date.cmp(&b.due_date))
     });
 
-    AxumJson(ApiResponse::success(all_todos, "待办事项获取成功"))
+    ApiResponse::success(all_todos, "待办事项获取成功")
 }
 
 fn priority_order(priority: &str) -> u8 {
@@ -448,11 +481,15 @@ pub async fn add_todo(
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RequestTxn>,
     Json(todo): Json<NewTodo>,
-) -> AxumJson<ApiResponse<Todo>> {
+) -> ApiResponse<Todo> {
+    let tenant_id = match require_todo_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = &claims.sub;
-    match add_local_todo(&state.db, &txn_arc, user_id, todo).await {
-        Some(new_todo) => AxumJson(ApiResponse::success(new_todo, "待办事项添加成功")),
-        None => AxumJson(ApiResponse::server_error("待办事项添加失败")),
+    match add_local_todo(&state.db, &txn_arc, user_id, tenant_id, todo).await {
+        Some(new_todo) => ApiResponse::success(new_todo, "待办事项添加成功"),
+        None => ApiResponse::server_error("待办事项添加失败"),
     }
 }
 
@@ -471,16 +508,20 @@ pub async fn complete_todo(
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RequestTxn>,
     Path(id): Path<String>,
-) -> AxumJson<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
+    let tenant_id = match require_todo_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = &claims.sub;
-    let success = complete_local_todo(&state.db, &txn_arc, user_id, &id).await;
+    let success = complete_local_todo(&state.db, &txn_arc, user_id, tenant_id, &id).await;
     if success {
-        AxumJson(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "id": id, "completed": true }),
             "待办事项完成成功",
-        ))
+        )
     } else {
-        AxumJson(ApiResponse::not_found("待办事项不存在"))
+        ApiResponse::not_found("待办事项不存在")
     }
 }
 
@@ -499,15 +540,77 @@ pub async fn delete_todo(
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RequestTxn>,
     Path(id): Path<String>,
-) -> AxumJson<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
+    let tenant_id = match require_todo_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = &claims.sub;
-    let success = delete_local_todo(&state.db, &txn_arc, user_id, &id).await;
+    let success = delete_local_todo(&state.db, &txn_arc, user_id, tenant_id, &id).await;
     if success {
-        AxumJson(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),
             "待办事项删除成功",
-        ))
+        )
     } else {
-        AxumJson(ApiResponse::not_found("待办事项不存在"))
+        ApiResponse::not_found("待办事项不存在")
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    fn claims_with_tenant(tenant_id: Option<&str>) -> Claims {
+        serde_json::from_value(serde_json::json!({
+            "sub": "00000000-0000-0000-0000-000000000001",
+            "username": "tester",
+            "role": "user",
+            "roles": [],
+            "permissions": [],
+            "is_superuser": false,
+            "exp": 0,
+            "iat": 0,
+            "email": null,
+            "department": null,
+            "tenant_id": tenant_id,
+            "department_id": null,
+            "position_id": null,
+            "position_code": null,
+            "must_change_password": false
+        }))
+        .expect("构造测试 Claims 失败")
+    }
+
+    #[test]
+    fn todo_tenant_accepts_valid_uuid() {
+        let claims = claims_with_tenant(Some("550e8400-e29b-41d4-a716-446655440000"));
+        assert_eq!(
+            require_todo_tenant::<serde_json::Value>(&claims).unwrap(),
+            uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn todo_tenant_rejects_missing() {
+        let err = require_todo_tenant::<serde_json::Value>(&claims_with_tenant(None)).unwrap_err();
+        assert_eq!(err.code, 400);
+    }
+
+    #[test]
+    fn todo_tenant_rejects_nil_uuid() {
+        let err = require_todo_tenant::<serde_json::Value>(&claims_with_tenant(Some(
+            "00000000-0000-0000-0000-000000000000",
+        )))
+        .unwrap_err();
+        assert_eq!(err.code, 400);
+    }
+
+    #[test]
+    fn todo_tenant_rejects_malformed() {
+        let err = require_todo_tenant::<serde_json::Value>(&claims_with_tenant(Some("not-a-uuid")))
+            .unwrap_err();
+        assert_eq!(err.code, 400);
     }
 }
