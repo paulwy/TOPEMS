@@ -81,7 +81,7 @@ pub async fn list_audit_logs(
           AND ($3::text IS NULL OR changed_by::text = $3)
           AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
           AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
-          AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8::uuid)
+          AND tenant_id = $8::uuid
         ORDER BY changed_at DESC
         LIMIT $6 OFFSET $7
         "#
@@ -108,7 +108,7 @@ pub async fn list_audit_logs(
                   AND ($3::text IS NULL OR changed_by::text = $3)
                   AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
                   AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
-                  AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+                  AND tenant_id = $6::uuid
                 "#
             ))
             .bind(&params.action)
@@ -177,7 +177,7 @@ pub async fn get_audit_log(
                old_values as request_details, new_values as response_details,
                'success' as status, NULL as error_message, ip_address, user_agent, 
                changed_at as created_at
-        FROM scm.audit_logs WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FROM scm.audit_logs WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)

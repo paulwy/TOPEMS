@@ -361,7 +361,7 @@ pub async fn create_inbound_from_purchase_internal(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         FOR UPDATE
         "#),
     )
@@ -451,7 +451,7 @@ pub async fn create_inbound_from_purchase_internal(
         r#"
         SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots
         WHERE purchase_order_id = $1 AND deleted_at IS NULL
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+          AND tenant_id = $2::uuid
         "#
     ))
     .bind(purchase_order_id)
@@ -543,7 +543,7 @@ pub async fn create_inbound_from_purchase_internal(
                     inbound_order_number = $3, is_synced_to_wms = TRUE, 
                     sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
                     updated_at = $4
-                WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+                WHERE id = $1 AND tenant_id = $5::uuid
                 "#
             ))
             .bind(purchase_order_id)
@@ -556,7 +556,9 @@ pub async fn create_inbound_from_purchase_internal(
             {
                 tracing::error!(target: "scm_sync", "回写采购订单同步状态失败: {}", e);
                 return (
-                    ApiResponse::from(TopemsError::Internal("回写采购订单同步状态失败".to_string())),
+                    ApiResponse::from(TopemsError::Internal(
+                        "回写采购订单同步状态失败".to_string(),
+                    )),
                     None,
                     None,
                 );
@@ -799,7 +801,7 @@ async fn record_failed_sync_attempt(
         r#"
         SELECT sync_retry_count, po_no
         FROM scm.purchase_orders
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         FOR UPDATE
         "#
     ))
@@ -832,7 +834,7 @@ async fn record_failed_sync_attempt(
         r#"
         UPDATE scm.purchase_orders
         SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
-        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+        WHERE id = $1 AND tenant_id = $5::uuid
         "#
     ))
     .bind(purchase_order_id)
@@ -946,7 +948,7 @@ pub async fn sync_supplier_from_srm(
         only_own_schema_query!("scm", r#"
         SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
         FROM scm.srm_supplier_snapshots
-        WHERE id = $1 AND status != 'deleted' AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND status != 'deleted' AND deleted_at IS NULL AND tenant_id = $2::uuid
         "#),
     )
     .bind(supplier_id)
@@ -982,7 +984,7 @@ pub async fn sync_supplier_from_srm(
 
     let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(id)
     .bind(tenant_bind)
@@ -1006,7 +1008,7 @@ pub async fn sync_supplier_from_srm(
                                  tax_id = $8, status = $9, sync_from_srm = TRUE,
                                  srm_supplier_id = $10, sync_retry_count = 0, 
                                  sync_error = NULL, last_sync_at = $11, updated_at = $11
-            WHERE id = $1 AND ($12 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $12::uuid)
+            WHERE id = $1 AND tenant_id = $12::uuid
             "#
         ))
         .bind(id)
@@ -1217,7 +1219,7 @@ pub async fn sync_all_suppliers_from_srm(
         only_own_schema_query!("scm", r#"
         SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
         FROM scm.srm_supplier_snapshots
-        WHERE status != 'deleted' AND deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+        WHERE status != 'deleted' AND deleted_at IS NULL AND tenant_id = $1::uuid
         "#),
     )
     .bind(tenant_bind)
@@ -1253,7 +1255,7 @@ pub async fn sync_all_suppliers_from_srm(
     {
         let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "scm",
-            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1 AND tenant_id = $2::uuid"
         ))
         .bind(id)
         .bind(tenant_bind)
@@ -1269,7 +1271,7 @@ pub async fn sync_all_suppliers_from_srm(
                                      tax_id = $8, status = $9, sync_from_srm = TRUE,
                                      srm_supplier_id = $10, sync_retry_count = 0, 
                                      sync_error = NULL, last_sync_at = $11, updated_at = $11
-                WHERE id = $1 AND ($12 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $12::uuid)
+                WHERE id = $1 AND tenant_id = $12::uuid
                 "#
             ))
             .bind(id)
@@ -1396,7 +1398,7 @@ pub async fn get_sync_logs(
         WHERE ($1::text IS NULL OR sync_type = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR source_module = $3)
-          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+          AND tenant_id = $6::uuid
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#
@@ -1486,7 +1488,7 @@ pub async fn retry_failed_syncs(
         WHERE status = 'failed'
           AND ($1::text IS NULL OR sync_type = $1)
           AND retry_count < $2
-          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
+          AND tenant_id = $3::uuid
         ORDER BY created_at DESC
         "#
     ))
@@ -1515,7 +1517,7 @@ pub async fn retry_failed_syncs(
                     UPDATE scm.sync_logs 
                     SET status = 'pending', retry_count = $2, 
                         next_retry_at = $3, updated_at = $4
-                    WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+                    WHERE id = $1 AND tenant_id = $5::uuid
                     "#
                 ))
                 .bind(sync_id)
@@ -1536,7 +1538,7 @@ pub async fn retry_failed_syncs(
                                 r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_retry_count = $2, sync_error = NULL, last_sync_at = $3
-                                WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+                                WHERE id = $1 AND tenant_id = $4::uuid
                                 "#
                             ))
                             .bind(source_id)
@@ -1623,7 +1625,7 @@ pub async fn get_sync_statistics(
     };
     let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -1632,7 +1634,7 @@ pub async fn get_sync_statistics(
 
     let success_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success' AND tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -1641,7 +1643,7 @@ pub async fn get_sync_statistics(
 
     let failed_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed' AND tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -1650,7 +1652,7 @@ pub async fn get_sync_statistics(
 
     let pending_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending' AND tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -1659,7 +1661,7 @@ pub async fn get_sync_statistics(
 
     let in_progress_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress' AND tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -1671,7 +1673,7 @@ pub async fn get_sync_statistics(
         r#"
         SELECT COUNT(*) FROM scm.sync_logs 
         WHERE status = 'pending' AND next_retry_at IS NOT NULL AND next_retry_at <= NOW()
-          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+          AND tenant_id = $1::uuid
         "#
     ))
     .bind(tenant_bind)
@@ -1721,7 +1723,7 @@ pub async fn batch_sync_purchase_to_wms(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
-        WHERE status = 'approved' AND is_synced_to_wms = FALSE AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
+        WHERE status = 'approved' AND is_synced_to_wms = FALSE AND tenant_id = $1::uuid
         ORDER BY created_at ASC
         "#),
     )
@@ -1745,7 +1747,7 @@ pub async fn batch_sync_purchase_to_wms(
                 // 旧实现拿 po_no 比 order_number 永不命中）。
                 let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                     "scm",
-                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE purchase_order_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE purchase_order_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"
                 ))
                 .bind(po.id)
                 .bind(tenant_bind)
@@ -1755,7 +1757,7 @@ pub async fn batch_sync_purchase_to_wms(
 
                 if existing_inbound > 0 {
                     if let Err(e) = sqlx::query(
-                        only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)")
+                        only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1 AND tenant_id = $3::uuid")
                     )
                     .bind(po.id)
                     .bind(now)
@@ -1839,7 +1841,7 @@ pub async fn batch_sync_purchase_to_wms(
                                 inbound_order_number = $3, is_synced_to_wms = TRUE, 
                                 sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
                                 updated_at = $4
-                            WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+                            WHERE id = $1 AND tenant_id = $5::uuid
                             "#
                         ))
                         .bind(po.id)
@@ -1893,7 +1895,7 @@ pub async fn batch_sync_purchase_to_wms(
                     Err(e) => {
                         let po_retry_count = sqlx::query_scalar::<_, i32>(only_own_schema_query!(
                             "scm",
-                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1 AND tenant_id = $2::uuid"
                         ))
                         .bind(po.id)
                         .fetch_one(&mut **txn)
@@ -1933,7 +1935,7 @@ pub async fn batch_sync_purchase_to_wms(
                                 only_own_schema_query!("scm", r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
-                                WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+                                WHERE id = $1 AND tenant_id = $5::uuid
                                 "#),
                             )
                             .bind(po.id)
@@ -2085,7 +2087,7 @@ pub async fn check_purchase_inbound_consistency(
         FROM scm.purchase_orders po
         LEFT JOIN scm.wms_inbound_order_snapshots io ON po.inbound_order_id = io.id
         WHERE po.status IN ('in_transit', 'delivered')
-          AND ($1 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $1::uuid)
+          AND po.tenant_id = $1::uuid
         ORDER BY po.created_at DESC
         "#
     ))
@@ -2154,8 +2156,8 @@ pub async fn check_supplier_sync_consistency(
         FULL OUTER JOIN scm.srm_supplier_snapshots ssn ON s.id = ssn.id
         WHERE (s.id IS NOT NULL OR ssn.id IS NOT NULL)
           AND s.status != 'deleted' AND (ssn.status IS NULL OR ssn.status != 'deleted')
-          AND ($1 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $1::uuid OR s.id IS NULL)
-          AND ($1 = '00000000-0000-0000-0000-000000000000' OR ssn.tenant_id = $1::uuid OR ssn.id IS NULL)
+          AND (s.tenant_id = $1::uuid OR s.id IS NULL)
+          AND (ssn.tenant_id = $1::uuid OR ssn.id IS NULL)
         ORDER BY COALESCE(s.created_at, ssn.synced_at) DESC
         "#
     ))

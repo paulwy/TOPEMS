@@ -294,7 +294,7 @@ pub async fn list_notices(
         FROM scm.incoming_notices
         WHERE ($1::text IS NULL OR notice_number ILIKE $1 OR supplier_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+          AND tenant_id = $5::uuid
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -315,7 +315,7 @@ pub async fn list_notices(
                 SELECT COUNT(*) FROM scm.incoming_notices
                 WHERE ($1::text IS NULL OR notice_number ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
+                  AND tenant_id = $3::uuid
                 "#
             ))
             .bind(&search_pattern)
@@ -504,7 +504,7 @@ pub async fn get_notice(
                supplier_id, supplier_name, warehouse_id, warehouse_name,
                expected_arrival_date, actual_arrival_date, status,
                total_quantity::float8, inspection_required, remarks, created_at, updated_at
-        FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FROM scm.incoming_notices WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
@@ -561,7 +561,7 @@ pub async fn update_notice(
         "scm",
         r#"
         SELECT id, notice_number, status, actual_arrival_date, remarks
-        FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FROM scm.incoming_notices WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
@@ -592,7 +592,7 @@ pub async fn update_notice(
                 ELSE COALESCE(remarks, $4::text)
             END,
             updated_at = $5
-        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+        WHERE id = $1 AND tenant_id = $6::uuid
         RETURNING id, notice_number, purchase_order_id, purchase_order_number,
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
@@ -700,7 +700,7 @@ pub async fn list_inspections(
         FROM scm.incoming_inspections
         WHERE ($1::text IS NULL OR inspection_number ILIKE $1 OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+          AND tenant_id = $5::uuid
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -720,7 +720,7 @@ pub async fn list_inspections(
                 SELECT COUNT(*) FROM scm.incoming_inspections
                 WHERE ($1::text IS NULL OR inspection_number ILIKE $1 OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
+                  AND tenant_id = $3::uuid
                 "#),
             )
             .bind(&search_pattern)
@@ -793,7 +793,7 @@ pub async fn create_inspection(
 
     let notice_info = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(req.notice_id)
     .bind(tenant_bind)
@@ -926,7 +926,7 @@ pub async fn get_inspection(
                batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
                sampling_quantity::float8, inspection_result,
                status, inspection_items, remarks, created_at, updated_at
-        FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FROM scm.incoming_inspections WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
@@ -980,7 +980,7 @@ pub async fn update_inspection(
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(id)
     .bind(tenant_bind)
@@ -1007,7 +1007,7 @@ pub async fn update_inspection(
                 ELSE COALESCE(remarks, $5::text)
             END,
             updated_at = $6
-        WHERE id = $1 AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
+        WHERE id = $1 AND tenant_id = $7::uuid
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
                   batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
@@ -1118,7 +1118,7 @@ pub async fn inspection_pass(
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(id)
     .bind(tenant_bind)
@@ -1164,7 +1164,7 @@ pub async fn inspection_pass(
                 ELSE '检验合格'
             END || CASE WHEN $4::text IS NOT NULL THEN ': ' || $4::text ELSE '' END,
             updated_at = $5
-        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+        WHERE id = $1 AND tenant_id = $6::uuid
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
                   batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
@@ -1266,7 +1266,7 @@ pub async fn inspection_fail(
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(id)
     .bind(tenant_bind)
@@ -1313,7 +1313,7 @@ pub async fn inspection_fail(
                 ELSE '检验不合格'
             END || CASE WHEN $4::text IS NOT NULL THEN ': ' || $4::text ELSE '' END,
             updated_at = $5
-        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+        WHERE id = $1 AND tenant_id = $6::uuid
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
                   batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
@@ -1459,7 +1459,7 @@ pub async fn list_inspection_records(
                batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                inspection_standard, result, defect_details, created_at, updated_at
         FROM scm.inspection_records
-        WHERE inspection_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE inspection_id = $1 AND tenant_id = $2::uuid
         ORDER BY created_at DESC
         "#
     ))
@@ -1608,7 +1608,7 @@ pub async fn get_inspection_record(
                batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                inspection_standard, result, defect_details, created_at, updated_at
         FROM scm.inspection_records
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)
@@ -1671,7 +1671,7 @@ pub async fn update_inspection_record(
             result = COALESCE($12, result),
             defect_details = $13,
             updated_at = NOW()
-        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14::uuid)
+        WHERE id = $1 AND tenant_id = $14::uuid
         RETURNING id, inspection_id, item_code, item_name, specification, unit,
                   batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                   inspection_standard, result, defect_details, created_at, updated_at
@@ -1741,7 +1741,7 @@ pub async fn delete_inspection_record(
         "scm",
         r#"
         DELETE FROM scm.inspection_records
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        WHERE id = $1 AND tenant_id = $2::uuid
         "#
     ))
     .bind(id)

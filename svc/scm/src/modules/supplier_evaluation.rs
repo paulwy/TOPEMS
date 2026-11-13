@@ -86,7 +86,7 @@ pub async fn list_evaluations(
         SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
         FROM scm.supplier_evaluations
         WHERE ($1::uuid IS NULL OR supplier_id = $1)
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+          AND tenant_id = $4::uuid
         ORDER BY evaluation_date DESC
         LIMIT $2 OFFSET $3
         "#),
@@ -105,7 +105,7 @@ pub async fn list_evaluations(
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_evaluations
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR supplier_id = $1)
-                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+                  AND tenant_id = $2::uuid
                 "#
             ))
             .bind(params.supplier_id)
@@ -282,7 +282,7 @@ pub async fn get_evaluation(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
         SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
-        FROM scm.supplier_evaluations WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
+        FROM scm.supplier_evaluations WHERE id = $1 AND tenant_id = $2::uuid
         "#),
     )
     .bind(id)
@@ -334,7 +334,7 @@ pub async fn update_evaluation(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
     )
     .bind(id)
     .bind(tenant_bind)
@@ -364,7 +364,7 @@ pub async fn update_evaluation(
         only_own_schema_query!("scm", r#"
         UPDATE scm.supplier_evaluations SET
             quality_score = $2::numeric, delivery_score = $3::numeric, service_score = $4::numeric, price_score = $5::numeric, overall_score = $6::numeric, comments = $7, evaluator = $8, updated_at = $9
-        WHERE id = $1 AND ($10 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $10::uuid)
+        WHERE id = $1 AND tenant_id = $10::uuid
         RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
         "#),
     )
@@ -461,7 +461,7 @@ pub async fn delete_evaluation(
     };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
+        "UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid"
     ))
     .bind(id)
     .bind(tenant_bind)

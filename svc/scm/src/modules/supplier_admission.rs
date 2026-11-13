@@ -75,7 +75,7 @@ pub async fn list_admissions(
     let offset = (page - 1) * page_size;
 
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND tenant_id = $3::uuid ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
@@ -85,7 +85,7 @@ pub async fn list_admissions(
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND tenant_id = $1::uuid"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -226,7 +226,7 @@ pub async fn get_admission(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"),
     )
     .bind(admission_id)
     .bind(tenant_bind)
@@ -299,7 +299,7 @@ pub async fn update_admission(
             status = COALESCE($16, status),
             remarks = COALESCE($17, remarks)
         WHERE id = $18 AND deleted_at IS NULL
-          AND ($19 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $19::uuid)
+          AND tenant_id = $19::uuid
         RETURNING *
         "#
     ))
@@ -377,7 +377,7 @@ pub async fn delete_admission(
     };
 
     let result = sqlx::query(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"),
     )
     .bind(admission_id)
     .bind(tenant_bind)
@@ -455,7 +455,7 @@ pub async fn submit_admission(
         .map(|s| s.to_string());
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND tenant_id = $3::uuid RETURNING *"),
     )
     .bind(remarks)
     .bind(admission_id)
@@ -540,7 +540,7 @@ pub async fn approve_admission(
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+          AND tenant_id = $4::uuid
         RETURNING *
         "#
     ))
@@ -628,7 +628,7 @@ pub async fn reject_admission(
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+          AND tenant_id = $4::uuid
         RETURNING *
         "#
     ))
@@ -751,7 +751,7 @@ pub async fn audit_admission(
             status = $1, approval_status = $2, 
             approver = $3, approved_at = NOW()
         WHERE id = $4 AND deleted_at IS NULL 
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+          AND tenant_id = $5::uuid
         RETURNING *
         "#
     ))
@@ -828,7 +828,7 @@ pub async fn activate_supplier(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND tenant_id = $2::uuid RETURNING *"),
     )
     .bind(admission_id)
     .bind(tenant_bind)

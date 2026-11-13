@@ -409,7 +409,7 @@ pub async fn list_suppliers(
         FROM scm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+          AND tenant_id = $6::uuid
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -430,7 +430,7 @@ pub async fn list_suppliers(
                 SELECT COUNT(*) FROM scm.suppliers
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
+                  AND tenant_id = $3::uuid
                 "#),
             )
             .bind(&search_pattern)
@@ -729,7 +729,7 @@ pub async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
         SELECT id, supplier_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
-        FROM scm.suppliers WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
+        FROM scm.suppliers WHERE id = $1 AND tenant_id = $3::uuid
         "#),
     )
     .bind(id)
@@ -800,7 +800,7 @@ pub async fn update_supplier(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("scm", "SELECT id, supplier_no, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("scm", "SELECT id, supplier_no, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
     )
     .bind(id)
     .bind(tenant_bind)
@@ -830,7 +830,7 @@ pub async fn update_supplier(
         only_own_schema_query!("scm", r#"
         UPDATE scm.suppliers SET
             name = $2, legal_name = $3, contact_person = $4, phone = $5, email = $6, address = $7, bank_account = $8, tax_id = $9, status = $10, updated_at = $11, name_en = COALESCE($12, name_en)
-        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14::uuid)
+        WHERE id = $1 AND tenant_id = $14::uuid
         RETURNING id, supplier_no, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
@@ -1020,7 +1020,7 @@ pub async fn delete_supplier(
     // RETURNING 拿到 supplier_no + tenant_id，用于后台软删 mdm
     let result = sqlx::query_as::<_, (String, Option<Uuid>)>(only_own_schema_query!(
         "scm",
-        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) RETURNING supplier_no, tenant_id"
+        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid RETURNING supplier_no, tenant_id"
     ))
     .bind(id)
     .bind(tenant_bind)
