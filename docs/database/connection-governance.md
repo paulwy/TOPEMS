@@ -54,6 +54,23 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
 - 不超 `max_connections=100`：62 为上限，PG 另有 3 条 superuser reserved，剩余约 35 条
   留给迁移/运维/其他进程，满足「含运维余量」。
 
+#### A.2.1 单池「有效 max」怎么来的（以 EHS 为例）
+
+```text
+有效 max = min(模块 ServiceConfig.max_db_connections,
+               DB_MODULE_MAX_CONNECTIONS（默认 3）,
+               预算公平份额（62 / 31 = 2）)
+         = min(10, 3, 2) = 2
+```
+
+- 嵌入 V2 路径**不读** `DB_MAX_CONNECTIONS`（只有 `legacy_bootstrap` 读）。生产 plist 里写
+  `DB_MAX_CONNECTIONS=8` 时 EHS 实际仍是 2 —— 这就是「设了 8，实际 2」的来源。
+- 独立部署（单服务进程）走 `is_embedded=false` 分支，有效 max = 服务自身配置值，不受预算分摊。
+- **并发能力 = 有效 max ÷ 每请求连接数**。EHS 改造前每条受保护请求同时持有 3 条
+  （rls 专用连接 + 请求事务 + 作用域事务）→ `2 ÷ 3 < 1`，任何真实业务请求都会在
+  `acquire_timeout`（10s）后 500；W7-B4-EHS-FOLLOWUP-1 已把该路径降到 1 条，`2 ÷ 1 = 2`
+  并发才成立。判断容量时请用本公式，不要直接拿 `DB_MAX_CONNECTIONS` 当有效值。
+
 ### A.3 实现位置
 
 | 位置 | 作用 |
