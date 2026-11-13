@@ -1044,12 +1044,13 @@ pub async fn get_dashboard_summary(
     };
 
     // 仓库数
-    let warehouse_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL AND tenant_id = $1::uuid")
-            .bind(tenant)
-            .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+    let warehouse_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL AND tenant_id = $1::uuid",
+    )
+    .bind(tenant)
+    .fetch_one(&mut scope)
+    .await
+    .unwrap_or(0);
 
     // 库存总量和SKU数
     let inventory_row: (Option<f64>, Option<i64>) = sqlx::query_as(

@@ -55,11 +55,13 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    sqlx::query("INSERT INTO wms.warehouses (id, name, tenant_id) VALUES (gen_random_uuid(), 'W1', $1)")
-        .bind(test_tenant())
-        .execute(&pool)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO wms.warehouses (id, name, tenant_id) VALUES (gen_random_uuid(), 'W1', $1)",
+    )
+    .bind(test_tenant())
+    .execute(&pool)
+    .await
+    .unwrap();
     sqlx::query(
         "INSERT INTO wms.inventory (id, material_code, quantity, tenant_id) VALUES (gen_random_uuid(), 'A001', 100, $1), (gen_random_uuid(), 'B002', 50, $1)",
     )
