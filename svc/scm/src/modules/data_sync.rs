@@ -89,12 +89,22 @@ pub struct SyncStatistics {
     pub retry_needed_count: i64,
 }
 
+/// 批量采购→WMS 同步的结果汇总。
+///
+/// 逐条隔离后一批里可能同时存在成功、待重试与最终失败：
+///   * `success_count`：已提交落库的条目；
+///   * `retry_count`：本次失败但已记重试计数、等待下一批重试的条目；
+///   * `failed_count`：失败次数达到 [`MAX_SYNC_RETRIES`]、不再自动重试的条目；
+///   * `errors`：所有失败条目的原因（含待重试条目）；
+///   * `partial_failure`：部分失败（0 < success_count < total_count）。全部失败时
+///     `success_count = 0` 且本字段为 false。
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BatchSyncResult {
     pub total_count: usize,
     pub success_count: usize,
     pub failed_count: usize,
     pub retry_count: usize,
+    pub partial_failure: bool,
     pub errors: Vec<SyncErrorDetail>,
 }
 
@@ -1693,6 +1703,107 @@ pub async fn get_sync_statistics(
     ApiResponse::success(statistics, "获取同步统计成功")
 }
 
+/// 单条采购订单同步的写入结果（由调用方用 SAVEPOINT 包裹）。
+enum PurchaseSyncOutcome {
+    /// 新建入库快照并回写采购单同步状态。
+    Created {
+        inbound_id: Uuid,
+        inbound_order_number: String,
+        tenant_id: Option<Uuid>,
+    },
+    /// 快照已存在，只补写采购单的已同步标记。
+    AlreadySynced,
+}
+
+/// 单条采购订单的写入。
+///
+/// 调用方必须用 `SAVEPOINT` 包裹：任一语句失败会让 Postgres 把整个事务置为
+/// aborted，只有 `ROLLBACK TO SAVEPOINT` 能把事务恢复到该条之前并继续使用；
+/// 因此这里把失败原样上抛，由调用方回滚到保存点后再记账。
+async fn sync_single_purchase_order(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    po: &PurchaseOrder,
+    tenant_bind: Uuid,
+    now: chrono::DateTime<chrono::Utc>,
+) -> Result<PurchaseSyncOutcome, sqlx::Error> {
+    // B-0：判重键与单条链路一致，用 purchase_order_id（写入的是 'INB-'||po_no，
+    // 旧实现拿 po_no 比 order_number 永不命中）。
+    let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE purchase_order_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"
+    ))
+    .bind(po.id)
+    .bind(tenant_bind)
+    .fetch_one(&mut **txn)
+    .await?;
+
+    if existing_inbound > 0 {
+        sqlx::query(only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1 AND tenant_id = $3::uuid"))
+            .bind(po.id)
+            .bind(now)
+            .bind(tenant_bind)
+            .execute(&mut **txn)
+            .await?;
+        return Ok(PurchaseSyncOutcome::AlreadySynced);
+    }
+
+    let inbound_id = Uuid::new_v4();
+    let inbound_order_number = format!("INB-{}", po.order_number);
+
+    sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        INSERT INTO scm.wms_inbound_order_snapshots
+            (id, order_number, warehouse_id, supplier_id,
+             order_type, status, purchase_order_id, purchase_order_number,
+             received_at, tenant_id, synced_at, created_at, updated_at)
+        VALUES ($1, $2, NULL, $3, 'purchase', 'pending', $4, $5,
+                NULL, $7, $6, $6, $6)
+        "#
+    ))
+    .bind(inbound_id)
+    .bind(&inbound_order_number)
+    .bind(po.supplier_id)
+    .bind(po.id)
+    .bind(&po.order_number)
+    .bind(now)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await?;
+
+    let tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
+
+    sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        UPDATE scm.purchase_orders 
+        SET status = 'in_transit', inbound_order_id = $2, 
+            inbound_order_number = $3, is_synced_to_wms = TRUE, 
+            sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
+            updated_at = $4
+        WHERE id = $1 AND tenant_id = $5::uuid
+        "#
+    ))
+    .bind(po.id)
+    .bind(inbound_id)
+    .bind(&inbound_order_number)
+    .bind(now)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await?;
+
+    Ok(PurchaseSyncOutcome::Created {
+        inbound_id,
+        inbound_order_number,
+        tenant_id,
+    })
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["scm:sync:write"])),
@@ -1741,176 +1852,144 @@ pub async fn batch_sync_purchase_to_wms(
             let now = Utc::now();
             // D6：事务内不 emit，收集待发布事件，commit 成功后统一发布。
             let mut pending_events: Vec<InboundOrderRequestedPayload> = Vec::new();
+            // 保存点/记账本身失败说明事务已不可用，必须中止整批并回滚，不再谎报部分成功。
+            let mut fatal_error: Option<String> = None;
 
             for po in purchase_orders {
-                // B-0：判重键与单条链路一致，用 purchase_order_id（写入的是 'INB-'||po_no，
-                // 旧实现拿 po_no 比 order_number 永不命中）。
-                let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                    "scm",
-                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE purchase_order_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid"
-                ))
-                .bind(po.id)
-                .bind(tenant_bind)
-                .fetch_one(&mut **txn)
-                .await
-                .unwrap_or(0);
-
-                if existing_inbound > 0 {
-                    if let Err(e) = sqlx::query(
-                        only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1 AND tenant_id = $3::uuid")
-                    )
-                    .bind(po.id)
-                    .bind(now)
-                    .bind(tenant_bind)
+                // 每条采购订单一个保存点（同名复用：每次都在下一条开始前 release，
+                // 栈里最多只有一个）。单条失败只回滚该条，外层事务继续可用。
+                if let Err(e) = sqlx::query("SAVEPOINT purchase_sync_item")
                     .execute(&mut **txn)
                     .await
-                    {
-                        // 标记已同步失败会让同一采购订单在下一批被重复推送，必须上抛而非计成功。
-                        tracing::error!(
-                            "标记采购订单已同步 WMS 失败: po_id={}, po_no={}, err={}",
-                            po.id,
-                            po.order_number,
-                            e
-                        );
-                        // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
-                        if let Some(t) = guard.take() {
-                            if let Err(re) = t.rollback().await {
-                                tracing::error!("回滚采购订单同步事务失败: {}", re);
-                            }
-                        }
-                        return ApiResponse::from(TopemsError::Internal(format!(
-                            "标记采购订单 {} 同步状态失败: {}",
-                            po.order_number, e
-                        )));
-                    }
-                    success_count += 1;
-                    continue;
+                {
+                    fatal_error = Some(format!(
+                        "建立保存点失败（采购订单 {}）: {}",
+                        po.order_number, e
+                    ));
+                    break;
                 }
 
-                let inbound_id = Uuid::new_v4();
-                let inbound_order_number = format!("INB-{}", po.order_number);
-
-                let result = sqlx::query(only_own_schema_query!(
-                    "scm",
-                    r#"
-                    INSERT INTO scm.wms_inbound_order_snapshots
-                        (id, order_number, warehouse_id, supplier_id,
-                         order_type, status, purchase_order_id, purchase_order_number,
-                         received_at, tenant_id, synced_at, created_at, updated_at)
-                    VALUES ($1, $2, NULL, $3, 'purchase', 'pending', $4, $5,
-                            NULL, $7, $6, $6, $6)
-                    "#
-                ))
-                .bind(inbound_id)
-                .bind(&inbound_order_number)
-                .bind(po.supplier_id)
-                .bind(po.id)
-                .bind(&po.order_number)
-                .bind(now)
-                .bind(tenant_bind)
-                .execute(&mut **txn)
-                .await;
-
-                let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-                )
-                .fetch_optional(&mut **txn)
-                .await
-                .ok()
-                .flatten();
-
-                match result {
-                    Ok(_) => {
-                        // D6：收集 payload，事务 commit 成功后统一发布（此处不 emit）。
-                        pending_events.push(InboundOrderRequestedPayload {
-                            inbound_order_id: inbound_id,
-                            inbound_order_number: inbound_order_number.clone(),
-                            warehouse_id: None,
-                            supplier_id: po.supplier_id,
-                            purchase_order_id: po.id,
-                            purchase_order_number: po.order_number.clone(),
-                            requested_at: now,
-                            tenant_id,
-                        });
-
-                        if let Err(e) = sqlx::query(only_own_schema_query!(
-                            "scm",
-                            r#"
-                            UPDATE scm.purchase_orders 
-                            SET status = 'in_transit', inbound_order_id = $2, 
-                                inbound_order_number = $3, is_synced_to_wms = TRUE, 
-                                sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
-                                updated_at = $4
-                            WHERE id = $1 AND tenant_id = $5::uuid
-                            "#
-                        ))
-                        .bind(po.id)
-                        .bind(inbound_id)
-                        .bind(&inbound_order_number)
-                        .bind(now)
-                        .bind(tenant_bind)
-                        .execute(&mut **txn)
-                        .await
+                match sync_single_purchase_order(&mut *txn, &po, tenant_bind, now).await {
+                    Ok(outcome) => {
+                        if let Err(e) = sqlx::query("RELEASE SAVEPOINT purchase_sync_item")
+                            .execute(&mut **txn)
+                            .await
                         {
-                            // 同步标记没落库会让订单在下一批被重复推送，必须上抛而非计成功。
-                            tracing::error!(
-                                "更新采购订单同步状态失败: po_id={}, po_no={}, inbound_no={}, err={}",
-                                po.id,
-                                po.order_number,
-                                inbound_order_number,
-                                e
-                            );
-                            // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
-                            if let Some(t) = guard.take() {
-                                if let Err(re) = t.rollback().await {
-                                    tracing::error!("回滚采购订单同步事务失败: {}", re);
-                                }
-                            }
-                            return ApiResponse::from(TopemsError::Internal(format!(
-                                "更新采购订单 {} 同步状态失败: {}",
+                            fatal_error = Some(format!(
+                                "释放保存点失败（采购订单 {}）: {}",
                                 po.order_number, e
-                            )));
+                            ));
+                            break;
                         }
 
-                        let _ = record_sync_log(
-                            &state,
-                            "purchase_to_inbound",
-                            "scm",
-                            "wms",
-                            "purchase_order",
-                            po.id,
-                            &po.order_number,
-                            Some(inbound_id),
-                            &inbound_order_number,
-                            "create",
-                            "success",
-                            None,
-                            0,
-                            tenant_bind,
-                        )
-                        .await;
+                        if let PurchaseSyncOutcome::Created {
+                            inbound_id,
+                            inbound_order_number,
+                            tenant_id,
+                        } = outcome
+                        {
+                            // D6：收集 payload，事务 commit 成功后统一发布（此处不 emit）。
+                            pending_events.push(InboundOrderRequestedPayload {
+                                inbound_order_id: inbound_id,
+                                inbound_order_number: inbound_order_number.clone(),
+                                warehouse_id: None,
+                                supplier_id: po.supplier_id,
+                                purchase_order_id: po.id,
+                                purchase_order_number: po.order_number.clone(),
+                                requested_at: now,
+                                tenant_id,
+                            });
+
+                            let _ = record_sync_log(
+                                &state,
+                                "purchase_to_inbound",
+                                "scm",
+                                "wms",
+                                "purchase_order",
+                                po.id,
+                                &po.order_number,
+                                Some(inbound_id),
+                                &inbound_order_number,
+                                "create",
+                                "success",
+                                None,
+                                0,
+                                tenant_bind,
+                            )
+                            .await;
+                        }
 
                         success_count += 1;
                     }
-                    Err(e) => {
-                        let po_retry_count = sqlx::query_scalar::<_, i32>(only_own_schema_query!(
-                            "scm",
-                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1 AND tenant_id = $2::uuid"
-                        ))
+                    Err(item_err) => {
+                        // 该条写入失败后事务已被 Postgres 置为 aborted，必须先回滚到保存点，
+                        // 否则下面写 sync_retry_count 的语句根本执行不了（会被直接拒绝）。
+                        if let Err(e) = sqlx::query("ROLLBACK TO SAVEPOINT purchase_sync_item")
+                            .execute(&mut **txn)
+                            .await
+                        {
+                            fatal_error = Some(format!(
+                                "回滚保存点失败（采购订单 {}）: {}",
+                                po.order_number, e
+                            ));
+                            break;
+                        }
+                        if let Err(e) = sqlx::query("RELEASE SAVEPOINT purchase_sync_item")
+                            .execute(&mut **txn)
+                            .await
+                        {
+                            fatal_error = Some(format!(
+                                "释放保存点失败（采购订单 {}）: {}",
+                                po.order_number, e
+                            ));
+                            break;
+                        }
+
+                        let po_retry_count = match sqlx::query_scalar::<_, i32>(
+                            only_own_schema_query!(
+                                "scm",
+                                "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1 AND tenant_id = $2::uuid"
+                            ),
+                        )
                         .bind(po.id)
-                        .fetch_one(&mut **txn)
+                        .bind(tenant_bind)
+                        .fetch_optional(&mut **txn)
                         .await
-                        .unwrap_or(0);
+                        {
+                            Ok(Some(v)) => v,
+                            Ok(None) => {
+                                // 该行已被并发删除：无法记账，按最终失败上报，不再自动重试。
+                                failed_count += 1;
+                                errors.push(SyncErrorDetail {
+                                    source_id: po.id.to_string(),
+                                    source_code: Some(po.order_number.clone()),
+                                    error: format!(
+                                        "{}（采购订单已不存在，无法记录重试计数）",
+                                        item_err
+                                    ),
+                                });
+                                continue;
+                            }
+                            Err(e) => {
+                                fatal_error = Some(format!(
+                                    "读取采购订单 {} 重试计数失败: {}",
+                                    po.order_number, e
+                                ));
+                                break;
+                            }
+                        };
 
                         let new_retry_count = po_retry_count + 1;
 
-                        if new_retry_count >= 3 {
+                        // 失败条必须如实计入返回体，并带上真实原因（含待重试的条目）。
+                        errors.push(SyncErrorDetail {
+                            source_id: po.id.to_string(),
+                            source_code: Some(po.order_number.clone()),
+                            error: item_err.to_string(),
+                        });
+
+                        if new_retry_count >= MAX_SYNC_RETRIES {
                             failed_count += 1;
-                            errors.push(SyncErrorDetail {
-                                source_id: po.id.to_string(),
-                                source_code: Some(po.order_number.clone()),
-                                error: e.to_string(),
-                            });
 
                             let _ = record_sync_log(
                                 &state,
@@ -1924,45 +2003,37 @@ pub async fn batch_sync_purchase_to_wms(
                                 "",
                                 "create",
                                 "failed",
-                                Some(e.to_string()),
+                                Some(item_err.to_string()),
                                 new_retry_count,
                                 tenant_bind,
                             )
                             .await;
                         } else {
                             retry_count += 1;
-                            if let Err(update_err) = sqlx::query(
-                                only_own_schema_query!("scm", r#"
+
+                            // 在已恢复到保存点之前状态的外层事务里记账；
+                            // 这里再失败说明事务真的不可用，必须上抛而不是静默假成功。
+                            if let Err(e) = sqlx::query(only_own_schema_query!(
+                                "scm",
+                                r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
                                 WHERE id = $1 AND tenant_id = $5::uuid
-                                "#),
-                            )
+                                "#
+                            ))
                             .bind(po.id)
-                            .bind(e.to_string())
+                            .bind(item_err.to_string())
                             .bind(new_retry_count)
                             .bind(now)
                             .bind(tenant_bind)
                             .execute(&mut **txn)
                             .await
                             {
-                                // 重试次数/错误没落库会让订单永远停在 0 次重试并反复推送，必须上抛。
-                                tracing::error!(
-                                    "记录采购订单同步失败信息失败: po_id={}, po_no={}, err={}",
-                                    po.id,
-                                    po.order_number,
-                                    update_err
-                                );
-                                // 主动回滚，避免本批已写入的部分被中间件静默丢弃。
-                                if let Some(t) = guard.take() {
-                                    if let Err(re) = t.rollback().await {
-                                        tracing::error!("回滚采购订单同步事务失败: {}", re);
-                                    }
-                                }
-                                return ApiResponse::from(TopemsError::Internal(format!(
+                                fatal_error = Some(format!(
                                     "记录采购订单 {} 同步失败信息失败: {}",
-                                    po.order_number, update_err
-                                )));
+                                    po.order_number, e
+                                ));
+                                break;
                             }
 
                             let _ = record_sync_log(
@@ -1977,7 +2048,7 @@ pub async fn batch_sync_purchase_to_wms(
                                 "",
                                 "create",
                                 "pending",
-                                Some(e.to_string()),
+                                Some(item_err.to_string()),
                                 new_retry_count,
                                 tenant_bind,
                             )
@@ -1985,6 +2056,16 @@ pub async fn batch_sync_purchase_to_wms(
                         }
                     }
                 }
+            }
+
+            if let Some(message) = fatal_error {
+                // 主动回滚，避免本批已写入的部分被中间件静默丢弃或半截提交。
+                if let Some(t) = guard.take() {
+                    if let Err(re) = t.rollback().await {
+                        tracing::error!("回滚采购订单同步事务失败: {}", re);
+                    }
+                }
+                return ApiResponse::from(TopemsError::Internal(message));
             }
 
             if let Some(t) = guard.take() {
@@ -2005,6 +2086,8 @@ pub async fn batch_sync_purchase_to_wms(
                     success_count,
                     failed_count,
                     retry_count,
+                    // 部分失败 = 有条目失败但其余条目已提交；全失败时 success_count = 0。
+                    partial_failure: success_count > 0 && success_count < total_count,
                     errors,
                 },
                 "批量同步完成",
@@ -2340,6 +2423,7 @@ mod tests {
             success_count: 4,
             failed_count: 1,
             retry_count: 0,
+            partial_failure: true,
             errors: vec![err],
         });
     }
