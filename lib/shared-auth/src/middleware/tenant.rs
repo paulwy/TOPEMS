@@ -313,6 +313,14 @@ pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 /// 使用 `scope_system` / `scope_read_system`，并在调用处标注
 /// `// tenant-system: <原因>`；其余路径一律要求请求携带租户上下文。
 pub fn require_tenant(claims: &Claims, headers: &HeaderMap) -> Result<Uuid, (u16, String)> {
+    try_tenant_id(claims, headers)
+}
+
+/// 严格租户解析的具名实现（W7 阶段三 B0）：与 [`require_tenant`] 完全等价。
+///
+/// 单独成函数是为了让迁移中的调用点一眼看出「这是严格路径」，避免和
+/// `get_tenant_id` 混读；后续阶段四删除宽松 API 时，只需保留本函数。
+pub fn try_tenant_id(claims: &Claims, headers: &HeaderMap) -> Result<Uuid, (u16, String)> {
     if let Some(tenant) = claims
         .tenant_id
         .as_deref()
@@ -342,6 +350,20 @@ pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
         .as_ref()
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_default()
+}
+
+/// 仅从 claims 严格解析租户（W7 阶段三 B0）。
+///
+/// 缺失、非法或 nil 一律返回 `Err((400, 说明))`，供没有 `HeaderMap` 的
+/// service/handler 使用；与 [`try_tenant_id`] 的差异只是不回退 `x-tenant-id`。
+pub fn try_tenant_id_from_claims(claims: &Claims) -> Result<Uuid, (u16, String)> {
+    match claims.tenant_id.as_deref() {
+        None => Err((400, "缺少租户上下文".to_string())),
+        Some(raw) => Uuid::parse_str(raw)
+            .ok()
+            .filter(|t| !t.is_nil())
+            .ok_or_else(|| (400, "无效的租户ID".to_string())),
+    }
 }
 
 /// 解析创建行要落库的 tenant_id：
@@ -749,6 +771,68 @@ mod tests {
         let claims = make_claims(Some(TENANT_ID), USER_ID, false);
         let status = send_require_tenant_status(Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
+    }
+
+    // ===== try_tenant_id / try_tenant_id_from_claims（阶段三 B0） =====
+    fn headers_with_tenant(value: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-tenant-id", value.parse().unwrap());
+        headers
+    }
+
+    #[test]
+    fn test_try_tenant_id_prefers_claims() {
+        let claims = make_claims(Some(TENANT_ID), USER_ID, false);
+        let headers = headers_with_tenant("123e4567-e89b-12d3-a456-426614174999");
+        let tenant = try_tenant_id(&claims, &headers).expect("claims 有租户");
+        assert_eq!(tenant.to_string(), TENANT_ID);
+    }
+
+    #[test]
+    fn test_try_tenant_id_falls_back_to_header() {
+        let claims = make_claims(None, USER_ID, false);
+        let headers = headers_with_tenant(TENANT_ID);
+        let tenant = try_tenant_id(&claims, &headers).expect("header 有租户");
+        assert_eq!(tenant.to_string(), TENANT_ID);
+    }
+
+    #[test]
+    fn test_try_tenant_id_rejects_missing_context() {
+        let claims = make_claims(None, USER_ID, false);
+        let err = try_tenant_id(&claims, &HeaderMap::new()).expect_err("缺少租户必须报错");
+        assert_eq!(err.0, 400);
+    }
+
+    #[test]
+    fn test_try_tenant_id_rejects_nil_uuid() {
+        let claims = make_claims(Some("00000000-0000-0000-0000-000000000000"), USER_ID, false);
+        let err = try_tenant_id(&claims, &HeaderMap::new()).expect_err("nil 不是有效租户");
+        assert_eq!(err.0, 400);
+    }
+
+    #[test]
+    fn test_try_tenant_id_from_claims_ok() {
+        let claims = make_claims(Some(TENANT_ID), USER_ID, false);
+        let tenant = try_tenant_id_from_claims(&claims).expect("claims 有租户");
+        assert_eq!(tenant.to_string(), TENANT_ID);
+    }
+
+    #[test]
+    fn test_try_tenant_id_from_claims_rejects_missing_and_invalid() {
+        let missing = make_claims(None, USER_ID, false);
+        assert_eq!(
+            try_tenant_id_from_claims(&missing)
+                .expect_err("缺失必须报错")
+                .0,
+            400
+        );
+        let invalid = make_claims(Some("garbage"), USER_ID, false);
+        assert_eq!(
+            try_tenant_id_from_claims(&invalid)
+                .expect_err("非法必须报错")
+                .0,
+            400
+        );
     }
 }
 
