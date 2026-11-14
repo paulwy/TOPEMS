@@ -10,7 +10,21 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
+
+/// 统计查询：租户通道显式绑定 tenant_id，系统通道显式不带 tenant_id 谓词。
+async fn material_count(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> i32 {
+    let mut q = sqlx::query_scalar::<_, i32>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(0)
+}
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -269,18 +283,26 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<HazardousMaterial>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.list_materials",
+        "ehs.qa_ehs_hazardous_materials",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open material scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
+    let where_clause = if tenant_scope.tenant_id().is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
@@ -293,16 +315,16 @@ pub async fn list_materials(
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL
+        WHERE {where_clause}
         ORDER BY created_at DESC
         LIMIT 200
         "#
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&tenant_bind)
-        .fetch_all(&mut scope)
-        .await
-    {
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list materials: {}", e);
@@ -414,18 +436,26 @@ pub async fn get_material(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<MaterialDetail> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.get_material",
+        "ehs.qa_ehs_hazardous_materials",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open material scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        " AND tenant_id = $2::uuid"
+    } else {
+        ""
+    };
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
@@ -438,17 +468,15 @@ pub async fn get_material(
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+        WHERE id::text = $1{tenant_filter}
           AND deleted_at IS NULL
         "#
     );
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("危险品不存在"),
         Err(e) => {
@@ -487,18 +515,21 @@ pub async fn update_material(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> ApiResponse<HazardousMaterial> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.update_material",
+        "ehs.qa_ehs_hazardous_materials",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open material scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = &req.name {
@@ -561,13 +592,16 @@ pub async fn update_material(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_hazardous_materials
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, material_no, name, category,
                   hazard_class::text AS hazard_class,
@@ -582,12 +616,11 @@ pub async fn update_material(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("危险品不存在"),
         Err(e) => {
@@ -619,31 +652,39 @@ pub async fn delete_material(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.delete_material",
+        "ehs.qa_ehs_hazardous_materials",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open material scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.qa_ehs_hazardous_materials
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_hazardous_materials
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete material: {}", e);
@@ -840,19 +881,28 @@ pub async fn get_material_msds(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<MsdsData> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.get_material_msds",
+        "ehs.qa_ehs_msds",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open msds scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        " AND tenant_id = $2::uuid"
+    } else {
+        ""
+    };
+    let sql = format!(
+        r#"
         SELECT id::text AS id, material_id::text AS material_id, material_name, version,
                product_name, manufacturer, emergency_phone, hazard_identification,
                ingredients AS composition_info, first_aid_measures, fire_fighting_measures,
@@ -862,18 +912,17 @@ pub async fn get_material_msds(
                disposal_considerations, transport_info, regulatory_info, other_info,
                updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_msds
-        WHERE material_id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+        WHERE material_id::text = $1{tenant_filter}
           AND deleted_at IS NULL
         ORDER BY updated_at DESC
         LIMIT 1
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    "#
+    );
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("该危险品暂无 MSDS"),
         Err(e) => {
@@ -896,92 +945,112 @@ pub async fn get_material_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<MaterialStatistics> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.hazardous_material.get_statistics",
+        "ehs.qa_ehs_hazardous_materials",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open material scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    let tenant_id = tenant.unwrap_or_default();
+    // 租户通道显式绑定 tenant_id；系统通道显式不带租户谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
-    let total_materials: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let total_materials = material_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     // low_stock: current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock
-    let low_stock_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let low_stock_count = material_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     // over_stock: current_stock > max_stock
-    let over_stock_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND max_stock IS NOT NULL AND current_stock > max_stock",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let over_stock_count = material_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND max_stock IS NOT NULL AND current_stock > max_stock",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     // expired: materials with status = 'expired' (status column)
-    let expired_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND status = 'expired'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let expired_count = material_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND status = 'expired'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     // by_category GROUP BY
-    let by_category: Vec<serde_json::Value> = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut category_query = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT category, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} GROUP BY category ORDER BY cnt DESC",
         tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default()
-    .iter()
-    .map(|r| {
-        let cat: String = r.try_get("category").unwrap_or_default();
-        let cnt: i32 = r.try_get("cnt").unwrap_or(0);
-        serde_json::json!({ "category": cat, "count": cnt })
-    })
-    .collect();
+    )));
+    if let Some(t) = tenant {
+        category_query = category_query.bind(t);
+    }
+    let by_category: Vec<serde_json::Value> = category_query
+        .fetch_all(&mut scope)
+        .await
+        .unwrap_or_default()
+        .iter()
+        .map(|r| {
+            let cat: String = r.try_get("category").unwrap_or_default();
+            let cnt: i32 = r.try_get("cnt").unwrap_or(0);
+            serde_json::json!({ "category": cat, "count": cnt })
+        })
+        .collect();
 
     // by_hazard_level GROUP BY
-    let by_hazard_level: Vec<serde_json::Value> = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut level_query = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT hazard_level, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} AND hazard_level IS NOT NULL GROUP BY hazard_level ORDER BY cnt DESC",
         tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default()
-    .iter()
-    .map(|r| {
-        let level: String = r.try_get("hazard_level").unwrap_or_default();
-        let cnt: i32 = r.try_get("cnt").unwrap_or(0);
-        serde_json::json!({ "level": level, "count": cnt })
-    })
-    .collect();
+    )));
+    if let Some(t) = tenant {
+        level_query = level_query.bind(t);
+    }
+    let by_hazard_level: Vec<serde_json::Value> = level_query
+        .fetch_all(&mut scope)
+        .await
+        .unwrap_or_default()
+        .iter()
+        .map(|r| {
+            let level: String = r.try_get("hazard_level").unwrap_or_default();
+            let cnt: i32 = r.try_get("cnt").unwrap_or(0);
+            serde_json::json!({ "level": level, "count": cnt })
+        })
+        .collect();
 
     // monthly_in_out: qa_ehs_stock_records 0 行空 → 诚实空数组
     let monthly_in_out: Vec<serde_json::Value> = Vec::new();
@@ -1002,7 +1071,7 @@ pub async fn get_material_statistics(
             by_category,
             by_hazard_level,
             monthly_in_out,
-            tenant_id: tenant,
+            tenant_id,
         },
         "获取危险品统计成功",
     )
