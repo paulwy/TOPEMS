@@ -602,16 +602,33 @@ pre-push:
         fi
         bash scripts/dev/domain-probe.sh
 
-    # [Gate DC] decode 契约扫描（W6-D）：交叉比对 prod 列目录与 Rust 动态解码类型
-    # 依赖 /tmp/prod_cols.psv（prod 列目录只读导出）；本仓库工作流约束禁止访问生产库。
-    # [2026-11-14 修订] 缺列目录时不再一律放行：
-    #   - 本次变更涉及 svc/*/src/modules/**.rs → FAILED（解码契约无法校验，exit 1）
-    #   - 不涉及上述路径 → SKIP（与动态解码无关）
-    # 扫描命中项本身仍为报告输出（high 需人工复核），区别于“缺少输入时阻断”。
+    # [Gate DC] decode 契约扫描（W6-D）：交叉比对列目录与 Rust 动态解码类型
+    # 输入优先级：PROD_COLS_CATALOG（显式覆盖，可指向 /tmp）> 仓库快照
+    #             scripts/ci/data/prod_cols.psv > /tmp/prod_cols.psv（兼容旧路径）。
+    # 快照由 scripts/ci/refresh-prod-cols.sh 只读导出并随仓库提交，不依赖 /tmp 存活。
+    # 缺快照：涉及 svc/*/src/modules/**.rs 才 FAIL（报错含恢复/刷新方法）；否则 SKIP。
+    # 陈旧判定：快照超过 max_age_days（默认 7）或账本 max 与当前不一致 → WARN 放行。
+    # 账本比对仅在提供 PROD_COLS_LEDGER_MAX 或 PROD_COLS_LEDGER_DB_URL 时执行（不默认连库）。
     decode-contract:
       tags: database rust contract
       run: |
-        if [ ! -f /tmp/prod_cols.psv ]; then
+        SNAPSHOT="scripts/ci/data/prod_cols.psv"
+        META_DEFAULT="scripts/ci/data/prod_cols.meta.json"
+        if [ -n "${PROD_COLS_CATALOG:-}" ]; then
+          CATALOG="$PROD_COLS_CATALOG"
+          META="${PROD_COLS_META:-$(dirname "$CATALOG")/prod_cols.meta.json}"
+        elif [ -f "$SNAPSHOT" ]; then
+          CATALOG="$SNAPSHOT"
+          META="${PROD_COLS_META:-$META_DEFAULT}"
+        elif [ -f /tmp/prod_cols.psv ]; then
+          CATALOG="/tmp/prod_cols.psv"
+          META="${PROD_COLS_META:-/tmp/prod_cols.meta.json}"
+        else
+          CATALOG=""
+          META=""
+        fi
+
+        if [ -z "$CATALOG" ] || [ ! -f "$CATALOG" ]; then
           BASE="$(git merge-base origin/main HEAD 2>/dev/null || true)"
           if [ -z "$BASE" ]; then
             BASE="$(git merge-base '@{upstream}' HEAD 2>/dev/null || true)"
@@ -622,12 +639,46 @@ pre-push:
             exit 1
           fi
           if git diff --name-only "$BASE" HEAD | grep -Eq '^svc/[^/]+/src/modules/.*\.rs$'; then
-            printf '\033[31m[Gate DC] FAILED\033[0m 本次变更涉及 svc/*/src/modules/**.rs，但缺少 /tmp/prod_cols.psv，解码契约无法校验。\n'
-            printf '  修复：按 scripts/ci/check-decode-contract.mjs 文件头注释的命令只读导出 prod 列目录到 /tmp/prod_cols.psv，然后重跑本 gate。\n'
-            printf '  不要用 --no-verify 绕过；若本次并未改动态解码，请把无关的 modules/*.rs 变更拆出。\n'
+            if [ -n "${PROD_COLS_CATALOG:-}" ]; then
+              printf '\033[31m[Gate DC] FAILED\033[0m 本次变更涉及 svc/*/src/modules/**.rs，但指定列目录不存在（PROD_COLS_CATALOG=%s）。\n' "$PROD_COLS_CATALOG"
+            else
+              printf '\033[31m[Gate DC] FAILED\033[0m 本次变更涉及 svc/*/src/modules/**.rs，但列目录快照不存在（%s 与 /tmp/prod_cols.psv 均缺失）。\n' "$SNAPSHOT"
+            fi
+            printf '  修复：git checkout -- %s %s 恢复仓库快照；或 bash scripts/ci/refresh-prod-cols.sh 只读重导（不需要生产写权限）。\n' "$SNAPSHOT" "$META_DEFAULT"
+            printf '  不要用 --no-verify 绕过；若本次未改动态解码，请把无关的 modules/*.rs 变更拆出。\n'
             exit 1
           fi
-          printf '\033[33m[Gate DC] SKIP\033[0m 缺少 /tmp/prod_cols.psv，且本次变更不涉及 svc/*/src/modules/**.rs（无需解码契约校验）\n'
+          printf '\033[33m[Gate DC] SKIP\033[0m 列目录快照缺失，但本次变更不涉及 svc/*/src/modules/**.rs（无需解码契约校验）\n'
           exit 0
         fi
-        node scripts/ci/check-decode-contract.mjs /tmp/prod_cols.psv
+
+        # 陈旧判定：只 WARN，不阻断（缺文件才 FAIL）
+        AGE_DAYS=""
+        SNAP_LEDGER=""
+        if [ -f "$META" ]; then
+          AGE_DAYS="$(node -e 'try{const m=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const t=Date.parse(m.exported_at);if(Number.isFinite(t))process.stdout.write(String(Math.floor((Date.now()-t)/86400000)))}catch(e){}' "$META" 2>/dev/null || true)"
+          SNAP_LEDGER="$(node -e 'try{const m=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(m.ledger_max||""))}catch(e){}' "$META" 2>/dev/null || true)"
+        fi
+        MAX_AGE="${PROD_COLS_MAX_AGE_DAYS:-7}"
+        if [ -n "$AGE_DAYS" ] && [ "$AGE_DAYS" -gt "$MAX_AGE" ] 2>/dev/null; then
+          printf '\033[33m[Gate DC] WARN\033[0m 列目录快照已 %s 天未刷新（阈值 %s 天，导出时间见 %s）。\n' "$AGE_DAYS" "$MAX_AGE" "$META"
+          printf '  建议：合并前或每周执行 bash scripts/ci/refresh-prod-cols.sh 并提交快照；本 gate 继续放行，不阻断。\n'
+        elif [ -z "$AGE_DAYS" ]; then
+          printf '\033[33m[Gate DC] WARN\033[0m 无法读取快照时效（%s 缺失或 exported_at 非法），继续扫描。\n' "$META"
+        fi
+        CURRENT_LEDGER="${PROD_COLS_LEDGER_MAX:-}"
+        if [ -z "$CURRENT_LEDGER" ] && [ -n "${PROD_COLS_LEDGER_DB_URL:-}" ] && command -v psql >/dev/null 2>&1; then
+          CURRENT_LEDGER="$(PGOPTIONS='-c default_transaction_read_only=on' psql "$PROD_COLS_LEDGER_DB_URL" -tA -c 'SELECT COALESCE(max(version)::TEXT, 0) FROM _sqlx_migrations' 2>/dev/null | tr -d '[:space:]' || true)"
+        fi
+        if [ -n "$CURRENT_LEDGER" ] && [ -n "$SNAP_LEDGER" ] && [ "$CURRENT_LEDGER" != "$SNAP_LEDGER" ]; then
+          printf '\033[33m[Gate DC] WARN\033[0m 快照账本 max=%s 与当前=%s 不一致，快照可能滞后。\n' "$SNAP_LEDGER" "$CURRENT_LEDGER"
+          printf '  建议：执行 bash scripts/ci/refresh-prod-cols.sh 刷新快照；本 gate 继续放行，不阻断。\n'
+        fi
+
+        if ! command -v node >/dev/null 2>&1; then
+          printf '\033[31m[Gate DC] FAILED\033[0m 未找到 node（缺少运行环境，不允许静默跳过）。\n'
+          printf '  修复：安装 Node.js（brew install node）或确认 PATH 包含 node。\n'
+          exit 1
+        fi
+        node scripts/ci/check-decode-contract.mjs "$CATALOG"
+        printf '\033[32m[Gate DC] OK\033[0m 已用 %s 完成解码契约扫描（report-only；high 命中需人工复核）。\n' "$CATALOG"

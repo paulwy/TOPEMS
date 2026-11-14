@@ -8,20 +8,18 @@
 // `query!` / `query_as!` 宏路径由 SQLX_OFFLINE 编译门禁保证，不在本脚本范围。
 //
 // 用法：
-//   1) 生成列目录（只读，第 5/6 列可空性与 relkind 用于 medium 分级）：
-//      ssh <host> "psql -d topems_prod -tA -F'|' -c \"SELECT n.nspname, c.relname,
-//        a.attname, format_type(a.atttypid,a.atttypmod), a.attnotnull, c.relkind
-//        FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid
-//        JOIN pg_namespace n ON n.oid=c.relnamespace
-//        WHERE c.relkind IN ('r','p','v','m') AND a.attnum>0 AND NOT a.attisdropped
-//        AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')\"" \
-//        > /tmp/prod_cols.psv
-//   2) node scripts/ci/check-decode-contract.mjs /tmp/prod_cols.psv
+//   1) 刷新快照（只读，复用既有只读通道；不改任何库对象）：
+//      bash scripts/ci/refresh-prod-cols.sh
+//      输出 scripts/ci/data/prod_cols.psv（6 列：schema|table|column|type|
+//      attnotnull|relkind，第 5/6 列用于 medium 分级）与 prod_cols.meta.json。
+//   2) 扫描：node scripts/ci/check-decode-contract.mjs [catalog]
+//      默认读仓库快照 scripts/ci/data/prod_cols.psv；
+//      可用环境变量 PROD_COLS_CATALOG 覆盖（例如指向 /tmp/prod_cols.psv）。
 //
 // 输出：`risk|file:line|subject:RustType|table.column:DBType|reason`
 // 退出码：缺少列目录时 exit 2；扫描命中项默认仅报告，不改变退出码（high 需人工复核后再修）。
-// 阻断语义：pre-push 包装层（lefthook decode-contract）在缺少 /tmp/prod_cols.psv 且本次变更
-//           涉及 svc/*/src/modules/**.rs 时 exit 1，避免“缺少输入”被当成通过。
+// 阻断语义：pre-push 包装层（lefthook decode-contract）负责——缺快照且本次变更涉及
+//           svc/*/src/modules/**.rs 时 exit 1；快照陈旧（>7 天 / 账本 max 不一致）只 WARN。
 //
 // 已知边界（保守跳过，不会误报）：
 //   - 解码列名不是字面量（变量/拼接）无法定位；
@@ -31,7 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const catalogPath = process.argv[2] || '/tmp/prod_cols.psv';
+const catalogPath = process.argv[2] || 'scripts/ci/data/prod_cols.psv';
 if (!fs.existsSync(catalogPath)) {
   console.error(`缺少列目录 ${catalogPath}，请按文件头注释生成`);
   process.exit(2);

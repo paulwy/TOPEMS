@@ -1,0 +1,10 @@
+{
+  "exported_at": "2026-11-14T03:32:46Z",
+  "database": "topems_prod",
+  "ledger_max": "20261113100000",
+  "source_host": "xingzhai@192.168.110.115",
+  "row_count": 17260,
+  "sha256": "9db481f4801f90bb9a6225f402dc76a3efe187ecf0a373d23ee6ec30d3df468e",
+  "max_age_days": 7,
+  "generator": "scripts/ci/refresh-prod-cols.sh"
+}
