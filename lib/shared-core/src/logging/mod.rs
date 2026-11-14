@@ -323,27 +323,37 @@ pub fn format_log_entry(mut w: Writer<'_>, entry: &LogEntry) -> std::fmt::Result
 const PORT_DIAGNOSTIC_DIRECTIVES: &str =
     "tenant_scope=warn,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
 
-pub fn create_log_filter(service: &str, level: &str) -> EnvFilter {
-    EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new(format!(
-            "{service}={level},{directives}",
-            service = service,
-            level = level,
-            directives = PORT_DIAGNOSTIC_DIRECTIVES
-        ))
-    })
+/// 业务 crate 的 EnvFilter target 前缀。
+///
+/// EnvFilter 的 target 匹配是 `metadata.target().starts_with(directive_target)`，
+/// 而 Rust 的 target 取 crate 名（`-` 会转成 `_`：包 `topems-server` 的 target 是
+/// `topems_server`）。因此用 `topems-server` / `iam-service` 这类带连字符的服务名
+/// 作为 directive target 永远不会命中；EnvFilter 又对未列出的 target 默认 OFF，
+/// 结果是应用日志被整片静默。统一用 `topems` 前缀可覆盖 `topems_server`、
+/// `topems_shared_*`、`topems_erp` 等全部业务 crate，同时不影响 sqlx / hyper 等依赖。
+const BUSINESS_CRATE_FILTER_TARGET: &str = "topems";
+
+/// 构造默认 EnvFilter（仅在 RUST_LOG 未设置时使用）。
+fn default_env_filter(level: &str) -> EnvFilter {
+    EnvFilter::new(format!(
+        "{target}={level},{directives}",
+        target = BUSINESS_CRATE_FILTER_TARGET,
+        level = level,
+        directives = PORT_DIAGNOSTIC_DIRECTIVES
+    ))
+}
+
+/// `service` 仅保留既有调用签名；过滤 target 统一使用业务 crate 前缀，
+/// 避免带连字符的服务名生成永不命中的 directive。
+pub fn create_log_filter(_service: &str, level: &str) -> EnvFilter {
+    EnvFilter::try_from_default_env().unwrap_or_else(|_| default_env_filter(level))
 }
 
 pub fn init_logging(service_name: &str) {
     let log_format = LogFormat::from_env();
 
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new(format!(
-            "{service_name}=info,{directives}",
-            service_name = service_name,
-            directives = PORT_DIAGNOSTIC_DIRECTIVES
-        ))
-    });
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| default_env_filter("info"));
 
     match log_format {
         LogFormat::Json => {
@@ -395,9 +405,9 @@ fn install_panic_file_hook(service_name: &str) {
     let service = service_name.to_string();
     let default_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
-        let log_dir = std::env::var("LOG_DIR").unwrap_or_else(|_| "./logs".to_string());
+        let log_dir = resolve_log_dir();
         let _ = std::fs::create_dir_all(&log_dir);
-        let path = format!("{log_dir}/panic-{service}.log");
+        let path = log_dir.join(format!("panic-{service}.log"));
         let backtrace = std::backtrace::Backtrace::force_capture();
         let entry = format!(
             "=== panic @ {} (service: {service}) ===\n{info}\n{backtrace}\n",
@@ -413,6 +423,36 @@ fn install_panic_file_hook(service_name: &str) {
         }
         default_hook(info);
     }));
+}
+
+/// 解析日志目录的绝对路径。
+///
+/// launchd 拉起时 CWD=`/`，相对路径 `./logs` 会落到 `/logs` 而写入失败；
+/// 因此优先使用绝对 LOG_DIR，其次把相对 LOG_DIR 或默认值锚定到可执行文件目录，
+/// 生产布局（`<root>/bin/topems-server`）下即 `<root>/logs`。
+fn resolve_log_dir() -> std::path::PathBuf {
+    use std::path::{Path, PathBuf};
+
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(Path::to_path_buf));
+
+    if let Ok(dir) = std::env::var("LOG_DIR") {
+        let trimmed = dir.trim();
+        if !trimmed.is_empty() {
+            let configured = PathBuf::from(trimmed);
+            if configured.is_absolute() {
+                return configured;
+            }
+            if let Some(exe_dir) = exe_dir {
+                return exe_dir.join(configured);
+            }
+        }
+    }
+
+    exe_dir
+        .and_then(|dir| dir.parent().map(|base| base.join("logs")))
+        .unwrap_or_else(|| PathBuf::from("/tmp/topems-logs"))
 }
 
 #[macro_export]
@@ -799,5 +839,88 @@ mod tests {
         let _filter = create_log_filter("my-svc", "debug");
         // Successful construction without panic is the contract;
         // EnvFilter is opaque so we just ensure it builds.
+    }
+
+    /// 过滤器必须真的放行应用 crate，同时不打开依赖的 debug。
+    /// 用真实 tracing 事件走一遍 EnvFilter，避免只断言字符串拼装。
+    #[test]
+    fn test_default_filter_enables_business_crates_and_suppresses_dependency_debug() {
+        use std::sync::{Arc, Mutex};
+        use tracing::field::{Field, Visit};
+        use tracing::{Level, Subscriber};
+        use tracing_subscriber::layer::{Context, Layer};
+        use tracing_subscriber::registry;
+
+        struct CapturingLayer {
+            events: Arc<Mutex<Vec<(String, Level, String)>>>,
+        }
+
+        struct MessageVisitor(String);
+
+        impl Visit for MessageVisitor {
+            fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+                if field.name() == "message" {
+                    self.0 = format!("{value:?}");
+                }
+            }
+
+            fn record_str(&mut self, field: &Field, value: &str) {
+                if field.name() == "message" {
+                    self.0 = value.to_string();
+                }
+            }
+        }
+
+        impl<S: Subscriber> Layer<S> for CapturingLayer {
+            fn on_event(&self, event: &tracing::Event<'_>, _ctx: Context<'_, S>) {
+                let mut visitor = MessageVisitor(String::new());
+                event.record(&mut visitor);
+                let metadata = event.metadata();
+                self.events.lock().unwrap().push((
+                    metadata.target().to_string(),
+                    *metadata.level(),
+                    visitor.0,
+                ));
+            }
+        }
+
+        let layer = CapturingLayer {
+            events: Arc::new(Mutex::new(Vec::new())),
+        };
+        let captured = layer.events.clone();
+        let subscriber = registry().with(default_env_filter("info")).with(layer);
+
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(target: "topems_server::modules::x", "app-info");
+            tracing::error!(target: "topems_server::modules::x", "app-error");
+            tracing::debug!(target: "sqlx::query", "sqlx-debug");
+            tracing::debug!(target: "hyper::proto", "hyper-debug");
+        });
+
+        let events = captured.lock().unwrap();
+        assert!(
+            events.iter().any(|(target, level, message)| {
+                target == "topems_server::modules::x"
+                    && *level == Level::INFO
+                    && message.contains("app-info")
+            }),
+            "应用 crate 的 info 事件未被放行: {events:?}"
+        );
+        assert!(
+            events.iter().any(|(target, level, message)| {
+                target == "topems_server::modules::x"
+                    && *level == Level::ERROR
+                    && message.contains("app-error")
+            }),
+            "应用 crate 的 error 事件未被放行: {events:?}"
+        );
+        assert!(
+            !events.iter().any(|(target, _, _)| target == "sqlx::query"),
+            "sqlx 的 debug 事件不应被放行: {events:?}"
+        );
+        assert!(
+            !events.iter().any(|(target, _, _)| target == "hyper::proto"),
+            "hyper 的 debug 事件不应被放行: {events:?}"
+        );
     }
 }

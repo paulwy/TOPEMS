@@ -7,8 +7,10 @@
 #   launchd 每日自动执行（见 com.topems.log-rotate.plist）
 #
 # 策略：
-#   - 日志文件超过 MAX_SIZE_MB 即 gzip 归档（不中断应用写入，清空原文件）
+#   - 日志文件超过 MAX_SIZE_MB 即 gzip 复制归档（gzip -c，等价 cp）+ 原地 truncate
+#     （`: > file`，保持 inode 不变；launchd 持有 fd，禁止 mv，否则进程会继续写旧 inode）
 #   - 每个日志保留最近 KEEP_ARCHIVES 个归档，自动清理更早的
+#   - 幂等：未达阈值或刚轮转完（size=0）时不做任何改动，可重复执行
 # 支持环境变量覆盖（便于本地验证/自定义）：LOG_DIR / MAX_SIZE_MB / KEEP_ARCHIVES
 # =============================================
 
@@ -51,6 +53,11 @@ rotate() {
 mkdir -p "$LOG_DIR"
 rotate "$LOG_DIR/server.log"
 rotate "$LOG_DIR/server.err.log"
+# launchd StandardOutPath / StandardErrorPath 实际落盘文件
+# （com.topems.server.plist 写的是 server.out / server.err；fd 由 launchd 持有，
+#   必须原地 truncate，mv 会让进程继续写已改名的旧 inode）
+rotate "$LOG_DIR/server.out"
+rotate "$LOG_DIR/server.err"
 
 # ── 汇总 ──
 # shellcheck disable=SC2012
