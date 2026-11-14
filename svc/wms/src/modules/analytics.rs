@@ -15,6 +15,7 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::modules::ApiState;
+use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::wms_db;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
@@ -454,6 +455,12 @@ pub async fn get_flow_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<FlowTrendResponse> {
+    // 报表读权限：与 /api/wms/analytics/* 的 OpenAPI security 声明
+    // （wms:read）及同模块其它读接口一致，DashboardRead → wms:read。
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::DashboardRead).await {
+        return e.0;
+    }
+
     let group_by = params.group_by.as_deref().unwrap_or("month");
     let date_trunc = match group_by {
         "day" => "day",
