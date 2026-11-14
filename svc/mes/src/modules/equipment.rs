@@ -336,6 +336,7 @@ pub async fn list_equipment(
     request_body = CreateEquipmentRequest,
     responses(
         (status = 200, description = "设备创建成功", body = ApiResponse<EquipmentResponse>),
+        (status = 400, description = "参数错误"),
         (status = 500, description = "服务器内部错误"),
     ),
 )]
@@ -349,6 +350,16 @@ pub async fn create_equipment(
     {
         return e;
     }
+
+    // mes.equipment.description 在生产库为 NOT NULL，缺少描述直接拒绝，避免落库时 23502 打成 500
+    let Some(description) = req
+        .description
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    else {
+        return ApiResponse::bad_request("设备描述不能为空");
+    };
 
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
@@ -398,7 +409,7 @@ pub async fn create_equipment(
     .bind(req.warranty_expiry_date)
     .bind(maintenance_frequency_days)
     .bind(next_maintenance_date)
-    .bind(&req.description)
+    .bind(description)
     .bind(now)
     .bind(tenant_id)
     .fetch_one(&mut scope)

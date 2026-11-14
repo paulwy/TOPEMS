@@ -8,9 +8,11 @@ mod app_state;
 
 use app_state::{super_claims, test_app_state};
 use axum::extract::{Query, State};
-use axum::Extension;
+use axum::{Extension, Json};
 use serde_json::{json, Value};
-use topems_mes::modules::equipment::{list_equipment, ListEquipmentQuery};
+use topems_mes::modules::equipment::{
+    create_equipment, list_equipment, CreateEquipmentRequest, ListEquipmentQuery,
+};
 
 fn empty_query() -> ListEquipmentQuery {
     serde_json::from_value(json!({})).unwrap()
@@ -103,4 +105,29 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
     let body = body_of(pool, Some("maintenance")).await;
     assert_eq!(body["total"], 1);
     assert_eq!(body["equipments"][0]["equipment_no"], "EQ-B");
+}
+
+/// mes.equipment.description 在生产库为 NOT NULL：同租户建机台不传 description 必须是
+/// 400 参数错误，而不是落库触发 23502 后打成 500。
+#[sqlx::test(migrations = false)]
+async fn create_equipment_without_description_returns_400(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let state = test_app_state(pool);
+    let mut claims = super_claims();
+    claims.tenant_id = Some(uuid::Uuid::new_v4().to_string());
+
+    let req: CreateEquipmentRequest =
+        serde_json::from_value(json!({ "name": "无描述机台" })).unwrap();
+    let resp = create_equipment(State(state), Extension(claims), Json(req)).await;
+
+    assert_eq!(
+        resp.code, 400,
+        "缺少 description 应返回 400 而不是 500；实际 code={}, message={}",
+        resp.code, resp.message
+    );
+    assert!(
+        resp.message.contains("设备描述不能为空"),
+        "错误提示应明确说明设备描述不能为空，实际: {}",
+        resp.message
+    );
 }
