@@ -120,9 +120,9 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
     let service_name_clone = service_name;
     let default_env_filter = || {
         EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-            EnvFilter::new(format!(
-                "{service_name_clone}=info,{PORT_DIAGNOSTIC_DIRECTIVES}",
-            ))
+            // 与 shared-core/logging 保持一致：EnvFilter 按 target 前缀匹配，
+            // 而 Rust target 是 crate 名（连字符转下划线），带连字符的服务名永不命中。
+            EnvFilter::new(format!("topems=info,{PORT_DIAGNOSTIC_DIRECTIVES}"))
         })
     };
 

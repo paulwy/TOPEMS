@@ -36,6 +36,8 @@ unset _lib
 # ── 精简辅助（2026-11-02 P3）──
 _require_service() {
   [ -z "$1" ] && { error "请指定服务名"; show_help; exit 1; }
+  # 上面的 && 链在参数非空时返回 1，set -e 下会让调用方直接退出，必须显式归零
+  return 0
 }
 _unknown_subcmd() {  # 用法: _unknown_subcmd <子命令> <顶层命令> <可用列表>
   error "未知 $2 命令: $1"
