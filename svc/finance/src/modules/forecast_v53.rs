@@ -349,13 +349,19 @@ impl CashFlowPredictor {
         entity_id: Option<Uuid>,
     ) -> Result<(Vec<(f64, f64)>, bool), sqlx::Error> {
         let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        // K5：已核生产库（topems_prod）实际列型：finance.vouchers.entity_id 为 text（可空）、
+        // tenant_id 为 uuid、voucher_lines.amount 为 numeric、account_code 为 text。
+        // 按 uuid 绑定 entity_id 会触发 `operator does not exist: text = uuid` 让 predict 500，
+        // 这里统一按 text 比较；沿用上游「entity_id=None 时不过滤」的语义。
+        // 聚合列来自 NUMERIC，Rust 侧按 (f64, f64) 解码，必须显式转 float8，
+        // 否则同为 predict 500 的第二层原因（NUMERIC 无法解码进 f64）。
         let rows: Vec<(f64, f64)> = sqlx::query_as(
             only_own_schema_query!("finance", r#"SELECT
-                COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0) as inflow,
-                COALESCE(SUM(CASE WHEN vl.account_code LIKE '4%' OR vl.account_code LIKE '5%' THEN vl.amount ELSE 0 END), 0) as outflow
+                COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0)::float8 as inflow,
+                COALESCE(SUM(CASE WHEN vl.account_code LIKE '4%' OR vl.account_code LIKE '5%' THEN vl.amount ELSE 0 END), 0)::float8 as outflow
             FROM vouchers v
             JOIN voucher_lines vl ON vl.voucher_id = v.id
-            WHERE v.tenant_id = $1 AND ($2::uuid IS NULL OR v.entity_id = $2)
+            WHERE v.tenant_id = $1 AND ($2::text IS NULL OR v.entity_id = $2::text)
             AND v.status NOT IN ('draft', 'cancelled')
             AND v.created_at > NOW() - INTERVAL '12 months'
             GROUP BY DATE_TRUNC('month', v.created_at)
@@ -363,7 +369,7 @@ impl CashFlowPredictor {
             LIMIT 24"#),
         )
         .bind(tenant_id)
-        .bind(entity_id)
+        .bind(entity_id.map(|e| e.to_string()))
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1818,5 +1824,108 @@ mod tests {
             recommendations: vec!["监控".into()],
         };
         roundtrip(&v);
+    }
+
+    /// K5 回归：`finance.vouchers.entity_id` 为 text（生产实际形状），predict 必须能
+    /// 命中真实历史凭证而不是 500，也不能回落到合成数据。
+    #[sqlx::test(migrations = false)]
+    async fn predict_matches_text_entity_id(pool: sqlx::PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS finance")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS finance.vouchers (
+                id UUID PRIMARY KEY,
+                tenant_id UUID,
+                entity_id TEXT,
+                status TEXT,
+                created_at TIMESTAMPTZ
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS finance.voucher_lines (
+                id UUID PRIMARY KEY,
+                voucher_id UUID,
+                account_code TEXT,
+                amount NUMERIC
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS finance.finance_cash_flow_predictions_v53 (
+                id UUID PRIMARY KEY,
+                entity_id UUID,
+                period TEXT,
+                predicted_inflow NUMERIC,
+                predicted_outflow NUMERIC,
+                predicted_net NUMERIC,
+                confidence NUMERIC,
+                scenario TEXT,
+                model_version TEXT,
+                created_at TIMESTAMPTZ,
+                updated_at TIMESTAMPTZ,
+                tenant_id UUID,
+                is_synthetic BOOLEAN NOT NULL DEFAULT false
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let tenant_id = Uuid::new_v4();
+        let entity_id = Uuid::new_v4();
+        let voucher_id = Uuid::new_v4();
+        sqlx::query(
+            r#"INSERT INTO finance.vouchers (id, tenant_id, entity_id, status, created_at)
+               VALUES ($1, $2, $3, 'posted', NOW() - INTERVAL '1 month')"#,
+        )
+        .bind(voucher_id)
+        .bind(tenant_id)
+        .bind(entity_id.to_string())
+        .execute(&pool)
+        .await
+        .unwrap();
+        for (account, amount) in [("6001", 1000_i64), ("4001", 400_i64)] {
+            sqlx::query(
+                r#"INSERT INTO finance.voucher_lines (id, voucher_id, account_code, amount)
+                   VALUES ($1, $2, $3, $4)"#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(voucher_id)
+            .bind(account)
+            .bind(amount)
+            .execute(&pool)
+            .await
+            .unwrap();
+        }
+
+        let db = Db::new(pool.clone(), "finance, public, shared");
+        let result = CashFlowPredictor::predict(
+            &db,
+            tenant_id,
+            PredictCashFlowRequest {
+                entity_id: entity_id.to_string(),
+                period: "2026-11".into(),
+                model: Some("exponential_smoothing".into()),
+                scenario: Some("realistic".into()),
+                horizon_months: Some(1),
+            },
+        )
+        .await
+        .expect("entity_id 为 text 时 predict 应成功");
+
+        let inflow = result.prediction.predicted_inflow.to_f64().unwrap();
+        let outflow = result.prediction.predicted_outflow.to_f64().unwrap();
+        assert!(
+            (inflow - 1000.0).abs() < 0.01,
+            "应使用真实历史数据（流入 1000），实际 {inflow}；出现大额说明落回了合成数据"
+        );
+        assert!((outflow - 400.0).abs() < 0.01, "流出应为 400，实际 {outflow}");
     }
 }
