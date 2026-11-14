@@ -5,6 +5,16 @@
 # git 会视为门禁通过并放行推送（fail-open）。曾有兜底路径指向 /private/tmp 下 worktree，
 # 目录清理后所有推送在无门禁状态下静默通过。这里在安装源头统一加护栏：
 # 任何找不到 lefthook 的钩子一律 exit 1。
+#
+# ⚠️ 脆弱点（已知，未修）：下面的加固是靠正则匹配 lefthook 生成的固定文案
+# `echo "Can't find lefthook in PATH"` 再改写实现的，与 lefthook 的输出文本强耦合。
+# 一旦升级 lefthook 后这句文案发生变化，匹配会落空、脚本只打印"无需改动"而静默跳过，
+# 钩子退回 fail-open，等于洞又回来了（且不会有任何报错）。
+# 失效如何发现：临时把 lefthook 二进制目录改名隐藏（如
+# node_modules/.pnpm/lefthook-darwin-arm64@*），在 PATH 里也找不到它的情况下执行一次
+# `git push`（可推到临时裸库）；期望被拒绝且输出含 [FAIL-CLOSED]，退出码非 0。
+# 若打印 "Can't find lefthook in PATH" 后仍然推送成功，即说明本 patch 已失效，
+# 需要先比对新的 lefthook 钩子模板文案再更新正则。
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
