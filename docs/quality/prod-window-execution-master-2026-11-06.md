@@ -1207,3 +1207,85 @@ real 6.175s
 - 证据目录 `/tmp/topems_window_b3_20261106_203254/`：`perm_grants.dump`、`codes_before.csv` / `codes_after.csv`、
   `grants_before.csv` / `grants_after.csv`、`ledger_before.txt` / `ledger_after.txt`；
   `apply.log`（本地 `/tmp/b3_apply.log`）与 sha256 投递清单。
+
+---
+
+## 17. 2026-11-14 追加：两条 W7-B4 迁移的**强制投递顺序**
+
+### 17.1 库身份与账本水位
+
+- 本地核对库：`topems @ 127.0.0.1:5432`，PostgreSQL 18.4。本地账本 `20261109101400 / 572 行`，**是滞后快照**，不能替代 prod 事实。
+- prod 事实（窗口单口径）：`max(version)=20261113100000`，账本 668 行。**本次未直连 prod 复核**。
+- 本地最近演练库 `topems_six_rls_reh_20261114`：`max=20261112095000 / 661 行`，同样不含下面两条。
+
+### 17.2 版本区间清单（2026-11-14，全 refs）
+
+| 区间 | 命中 |
+|---|---|
+| `(20261113100000, 20261114100000)` | **无** |
+| `(20261114100000, 20261114120000)` | **无** |
+| 全 refs 同号重复 | **0**（两条各 1 份文件） |
+
+| 版本 | 文件 | 所在分支 / 提交 |
+|---|---|---|
+| `20261114100000` | `database/migrations/20261114100000_w7_b4_status_check_widen_business_states.sql` | `fix/ehs-tenant-scope-20261114-r2` @ `f0afa31b6` |
+| `20261114120000` | `database/migrations/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql` | `fix/rls-six-schema-failclosed-20261114` @ `25d8aca34` |
+
+`origin/main` 的迁移顶端仍是 `20261113100000`（main 上无这两条）。
+
+### 17.3 强制投递顺序
+
+1. **`20261114100000`（status 约束扩容）**
+2. **`20261114120000`（六 schema RLS fail-closed）**
+
+- 推荐**一次调用两条**，由 `apply-forward.sh` 按版本升序执行：
+
+```bash
+bash scripts/migration/apply-forward.sh ... \
+  --anchor 20261113100000 \
+  --only 20261114100000,20261114120000
+```
+
+本地实测输出：`== OK：应用 2 条，无失败`，账本按 `14100000 → 14120000` 落库。
+
+- 分两次调用也可以，但必须升序：第一次 `--anchor 20261113100000 --only 20261114100000`；第二次 `--anchor 20261114100000 --only 20261114120000`。
+- 两条**互不依赖**：`14100000` 只对 18 张表 `DROP/ADD CHECK`；`14120000` 只对 28 张表 `DROP/CREATE POLICY` + `ENABLE/FORCE RLS`；对象零交集，双方 manifest 均只声明「前向 > 20261113100000」。
+
+### 17.4 各自前置条件
+
+**`20261114100000`**
+- 18 张表与 18 条 `ck_*_status_standard` 均存在（缺失即 `RAISE EXCEPTION`，整笔回滚）。
+- 以表 owner 执行；18 张表存量 `status` 必须落在目标集合内（本地核实：14 张空表，4 张仅 `active`）。
+- 目标值 = 现状三值 ∪ 代码字面量；现状定义若含目标外值会 `RAISE`，防静默收窄。
+- 回滚：`database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql`。**写入过 draft/suspected 等新值后回滚会失败**（`check constraint ... is violated by some row`），回滚前必须先清理新值。
+
+**`20261114120000`**
+- 28 张表存在、`tenant_id` 为 uuid、既有策略恰 29 条、28 张表已 `ENABLE+FORCE`、`tenant_id IS NULL` 与子表孤儿均为 0（任一不符即 `RAISE`）。
+- 以表 owner 执行（策略 DDL 需要 owner 权限）。
+- **必须与同一分支的代码同批发布**：`lib/shared-db` 审计系统通道及 `svc/{crm,erp,hrm}/src/modules/audit.rs` 等改动；只落库不发代码会让审计写入被 fail-closed 挡住。
+- 回滚：`database/rollback/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.rollback.sql`（恢复 29 条原策略）。
+
+### 17.5 反序风险（先落 `14120000`）
+
+若先落 `14120000`，账本 max 变为 `20261114120000`，之后再投 `14100000`：
+
+- `apply-forward.sh` 只扫描 `version > anchor` 的迁移，`14100000` 被直接过滤，不会进入待应用队列；
+- 白名单 fail-closed 检查随后中止，**exit 1、零 DDL**。原始输出：
+
+```
+== 拒绝：白名单版本 20261114100000 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL
+```
+
+- 本地 scratch 库实测：反序调用 `exit=1`，`to_regclass('gate_v1') = NULL`（确实没产生 DDL）。
+- **不要用裸 `sqlx migrate run` 绕过**：sqlx-cli 0.8.6 实测**不会**拒绝乱序（v2 已应用后仍会应用 v1），会绕过锚点与白名单守卫。
+- 补救：不要手工改版本号或删账本行；按 manifest 用 `> 20261114120000` 的前向补丁承接，或走审批后的恢复流程。
+
+### 17.6 已知噪声（未修改）
+
+手工传错 `--anchor` 时，`apply-forward.sh:145` 的中文全角逗号紧邻 `$ANCHOR`，在当前 bash 下会触发 `ANCHOR…: unbound variable`；仍然 `exit 1` 且零 DDL，但报错信息不友好。本批只做核对与文档，未改脚本。
+
+### 17.7 演练证据
+
+- scratch 库 `topems_order_gate`（已 DROP），迁移目录为两条同名版本的桩文件。
+- 正序：`== OK：应用 2 条，无失败`，账本顺序 `20261114100000 → 20261114120000`。
+- 反序：`exit=1` + 上述拒绝原文，零 DDL。
