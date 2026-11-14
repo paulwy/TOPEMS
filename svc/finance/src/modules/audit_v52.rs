@@ -25,9 +25,11 @@ use axum::{
     Router,
 };
 use chrono::{DateTime, Duration, Timelike, Utc};
+use prometheus::{register_int_counter, IntCounter};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::OnceLock;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
@@ -292,6 +294,42 @@ pub struct RunAuditRequest {
 }
 
 // ==================== 1. 自动审计引擎 ====================
+
+/// amount_mismatch 规则的扫描计数：用于区分「比过了没有差异」与「源表为空/没有可比数据」。
+/// 后者只返回空列表会被误读为审计通过，因此单独计数并配 warn 日志。
+/// 计数走 Prometheus 默认 registry，由 `/metrics` 的 `prometheus::gather()` 导出。
+fn amount_mismatch_scans() -> &'static IntCounter {
+    static METRIC: OnceLock<IntCounter> = OnceLock::new();
+    METRIC.get_or_init(|| {
+        register_int_counter!(
+            "finance_audit_amount_mismatch_scans_total",
+            "amount_mismatch 规则执行次数（含源表为空的空扫描）"
+        )
+        .expect("failed to register finance_audit_amount_mismatch_scans_total")
+    })
+}
+
+fn amount_mismatch_empty_source() -> &'static IntCounter {
+    static METRIC: OnceLock<IntCounter> = OnceLock::new();
+    METRIC.get_or_init(|| {
+        register_int_counter!(
+            "finance_audit_amount_mismatch_empty_source_total",
+            "amount_mismatch 规则因源表无任何可比凭证而未执行金额勾稽的次数"
+        )
+        .expect("failed to register finance_audit_amount_mismatch_empty_source_total")
+    })
+}
+
+fn amount_mismatch_findings() -> &'static IntCounter {
+    static METRIC: OnceLock<IntCounter> = OnceLock::new();
+    METRIC.get_or_init(|| {
+        register_int_counter!(
+            "finance_audit_amount_mismatch_findings_total",
+            "amount_mismatch 规则检出的差异条数"
+        )
+        .expect("failed to register finance_audit_amount_mismatch_findings_total")
+    })
+}
 
 pub struct AutoAuditEngine;
 
@@ -614,45 +652,128 @@ impl AutoAuditEngine {
             .get("tolerance")
             .and_then(|v| v.as_f64())
             .unwrap_or(0.01);
+        let tolerance_dec = Decimal::from_f64_retain(tolerance).unwrap_or(Decimal::ZERO);
 
         let mut scope = db.scope_read_for_tenant(tenant_id).await?;
-        let rows: Vec<(Uuid, String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
+
+        // 先确认源表是否有可比凭证：为 0 时「空结果」不代表勾稽通过。
+        let scanned: i64 = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            r#"SELECT v.id, v.voucher_no, v.total_amount,
-                      COALESCE(SUM(vl.amount), 0) as line_total
-               FROM finance.core_finance_vouchers v
-               LEFT JOIN voucher_lines vl ON vl.voucher_id = v.id
-               WHERE v.tenant_id = $1 AND v.status NOT IN ('draft', 'cancelled')
-               GROUP BY v.id, v.voucher_no, v.total_amount
-               HAVING ABS(v.total_amount - COALESCE(SUM(vl.amount), 0)) > $2
-               LIMIT 100"#
+            r#"SELECT COUNT(*)
+               FROM finance.core_finance_vouchers
+               WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')"#
         ))
         .bind(tenant_id)
-        .bind(tolerance)
-        .fetch_all(&mut scope)
+        .fetch_one(&mut scope)
         .await?;
+
+        amount_mismatch_scans().inc();
+        if scanned == 0 {
+            amount_mismatch_empty_source().inc();
+            tracing::warn!(
+                tenant_id = %tenant_id,
+                rule_id = %rule.id,
+                scanned,
+                scans_total = amount_mismatch_scans().get(),
+                empty_source_total = amount_mismatch_empty_source().get(),
+                "amount_mismatch 规则没有可比凭证（源表为空），本次未执行金额勾稽，不能视为审计通过"
+            );
+            scope.commit().await?;
+            return Ok(Vec::new());
+        }
+
+        // 借贷两侧分别与分录勾稽，另外校验分录自身借贷平衡：
+        // - header_lines_debit/credit 抓「凭证头金额与分录不一致」（分录缺失、被改、串户）；
+        // - line_balance 抓「分录自身借贷不平」（头部两边都错或两边都为空时也能暴露）。
+        let rows: Vec<(Uuid, String, Decimal, Decimal, Decimal, Decimal)> =
+            sqlx::query_as(only_own_schema_query!(
+                "finance",
+                r#"SELECT v.id, v.voucher_no, v.total_debit, v.total_credit,
+                          COALESCE(SUM(vl.debit), 0) as line_debit,
+                          COALESCE(SUM(vl.credit), 0) as line_credit
+                   FROM finance.core_finance_vouchers v
+                   LEFT JOIN finance.core_finance_voucher_lines vl
+                          ON vl.voucher_id = v.id
+                         AND vl.tenant_id = v.tenant_id
+                         AND vl.deleted_at IS NULL
+                   WHERE v.tenant_id = $1 AND v.status NOT IN ('draft', 'cancelled')
+                   GROUP BY v.id, v.voucher_no, v.total_debit, v.total_credit
+                   HAVING ABS(v.total_debit - COALESCE(SUM(vl.debit), 0)) > $2
+                       OR ABS(v.total_credit - COALESCE(SUM(vl.credit), 0)) > $2
+                       OR ABS(COALESCE(SUM(vl.debit), 0) - COALESCE(SUM(vl.credit), 0)) > $2
+                   LIMIT 100"#
+            ))
+            .bind(tenant_id)
+            .bind(tolerance)
+            .fetch_all(&mut scope)
+            .await?;
         scope.commit().await?;
 
         let mut findings = Vec::new();
-        for (voucher_id, voucher_no, total, line_total) in &rows {
-            findings.push(Self::create_finding(
-                tenant_id,
-                rule.id,
-                "voucher",
-                &voucher_id.to_string(),
-                "amount_mismatch",
-                &rule.severity,
-                &format!(
-                    "凭证 {} 头部金额 {:.2} 与分录合计 {:.2} 不一致",
-                    voucher_no, total, line_total
+        for (voucher_id, voucher_no, total_debit, total_credit, line_debit, line_credit) in &rows {
+            let checks = [
+                (
+                    total_debit - line_debit,
+                    format!(
+                        "凭证 {} 头部借方合计 {:.2} 与分录借方合计 {:.2} 不一致",
+                        voucher_no, total_debit, line_debit
+                    ),
+                    serde_json::json!({
+                        "check": "header_lines_debit",
+                        "voucher_no": voucher_no,
+                        "header_total": total_debit,
+                        "line_total": line_debit,
+                        "difference": total_debit - line_debit,
+                    }),
                 ),
-                serde_json::json!({
-                    "voucher_no": voucher_no,
-                    "header_total": total,
-                    "line_total": line_total,
-                    "difference": total - line_total,
-                }),
-            ));
+                (
+                    total_credit - line_credit,
+                    format!(
+                        "凭证 {} 头部贷方合计 {:.2} 与分录贷方合计 {:.2} 不一致",
+                        voucher_no, total_credit, line_credit
+                    ),
+                    serde_json::json!({
+                        "check": "header_lines_credit",
+                        "voucher_no": voucher_no,
+                        "header_total": total_credit,
+                        "line_total": line_credit,
+                        "difference": total_credit - line_credit,
+                    }),
+                ),
+                (
+                    line_debit - line_credit,
+                    format!(
+                        "凭证 {} 分录借贷不平（借 {:.2} / 贷 {:.2}）",
+                        voucher_no, line_debit, line_credit
+                    ),
+                    serde_json::json!({
+                        "check": "line_balance",
+                        "voucher_no": voucher_no,
+                        "line_debit": line_debit,
+                        "line_credit": line_credit,
+                        "difference": line_debit - line_credit,
+                    }),
+                ),
+            ];
+
+            for (difference, description, evidence) in checks {
+                if difference.abs() > tolerance_dec {
+                    findings.push(Self::create_finding(
+                        tenant_id,
+                        rule.id,
+                        "voucher",
+                        &voucher_id.to_string(),
+                        "amount_mismatch",
+                        &rule.severity,
+                        &description,
+                        evidence,
+                    ));
+                }
+            }
+        }
+
+        if !findings.is_empty() {
+            amount_mismatch_findings().inc_by(u64::try_from(findings.len()).unwrap_or(0));
         }
         Ok(findings)
     }

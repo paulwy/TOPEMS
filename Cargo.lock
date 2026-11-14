@@ -5755,6 +5755,7 @@ dependencies = [
  "axum",
  "chrono",
  "csv",
+ "prometheus",
  "reqwest",
  "rust_decimal",
  "serde",

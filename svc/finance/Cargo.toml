@@ -29,6 +29,7 @@ topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 utoipa.workspace = true
+prometheus.workspace = true
 async-trait.workspace = true
 rust_decimal = { workspace = true, features = ["serde"] }
 csv.workspace = true
