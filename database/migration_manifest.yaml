@@ -1040,3 +1040,24 @@ pending_forward_patches:
     destructive_scan: "DROP POLICY / ALTER TABLE RLS / CREATE POLICY；无 DELETE/UPDATE/TRUNCATE；前置断言失败即 RAISE EXCEPTION"
     replaces: [ "20261112105000" ]
     note: "前向补丁 > 20261112190000，不改已推送历史；配 database/rollback/20261113100000_w7_b4_wms_rls_fail_closed_forward.rollback.sql"
+
+  - version: "20261114120000"
+    file: "database/migrations/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql"
+    status: to_apply
+    effect: >-
+      erp / mes / ticket / portal / crm / hrm 六 schema 中 28 张 fail-open 表收敛为 fail-closed：
+      20 张真租户表（tenant_id = app.tenant_id）、5 张子表（父单租户 EXISTS 校验）、
+      3 张审计表（仅 app.rls_system='on' 系统通道），共 28 条 rls_tenant_isolation；DROP 29 条原策略
+    destructive_scan: >-
+      DROP POLICY / ALTER TABLE RLS / CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/ADD COLUMN；
+      前置形状断言（28 表 / 29 策略 / 缺列集）与 NULL 行、子表孤儿自查非 0 即 RAISE EXCEPTION 整笔回滚
+    excludes:
+      - "8 张合并域表：erp.company_relations / consolidation_scopes / consolidation_scope_companies / elimination_rules / internal_transactions / consolidation_reports / consolidation_report_lines、mes.quality_standards（业务口径待定，本批不动）"
+      - "erp.dict_types / erp.dict_items（全局 NULL 默认 + 租户覆盖混合语义；需 (tenant_id, code) 唯一约束 + 全局行部分唯一索引 + 租户行优先取值规则，单列 batch）"
+      - "12 张无 tenant_id 表：crm.core_crm_customers；erp.core_erp_materials / core_erp_suppliers / expenses / holidays / meeting_bookings / meeting_rooms / vehicle_requests / vehicles；portal.portal_announcements / portal_quick_actions / user_preferences（补列或登记全局表另议）"
+      - "hrm.initialization_logs（语义单独判定后再定，未并入本批）"
+    note: >-
+      前向补丁 > 20261113100000，不改已推送历史；幂等（28 表已收敛时跳过原策略形状断言）；
+      配 database/rollback/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.rollback.sql；
+      副本库 topems_six_rls_reh_20261114 已演练成功/失败/回滚三路径，回滚后 29 条策略与基线逐字节一致；
+      审计表代码侧改为显式系统通道（lib/shared-db SchemaAwareAuditLogService::new_system_channel + 读侧 set_system_channel）

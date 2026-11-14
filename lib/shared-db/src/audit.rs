@@ -483,6 +483,22 @@ pub struct SchemaAwareAuditLogService {
     /// `audit_logs` table names). `Some("plugin_crm")` means write
     /// `plugin_crm.audit_logs`.
     schema_prefix: Option<String>,
+    /// 目标审计表是否只保留系统通道（`app.rls_system='on'`）。
+    /// erp / crm / hrm 的 audit_logs 已收敛为仅系统通道，读写都必须显式走系统作用域。
+    system_channel: bool,
+}
+
+/// 在既有请求事务上显式打开系统通道。
+///
+/// 仅用于策略只保留系统通道的审计表：请求中间件事务默认是租户通道
+/// （`app.rls_system='off'`），读取会被 fail-closed 过滤成 0 行、写入会违反 WITH CHECK。
+pub async fn set_system_channel(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> sqlx::Result<()> {
+    sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut **txn)
+        .await?;
+    Ok(())
 }
 
 impl SchemaAwareAuditLogService {
@@ -497,22 +513,31 @@ impl SchemaAwareAuditLogService {
             pool: pool.clone(),
             db: Db::new(pool.clone(), search_path),
             schema_prefix: schema_prefix.map(|s| s.to_string()),
+            system_channel: false,
+        }
+    }
+
+    /// 目标表的策略只保留系统通道时使用：读写都显式走系统作用域。
+    pub fn new_system_channel(pool: &PgPool, schema_prefix: Option<&str>) -> Self {
+        Self {
+            system_channel: true,
+            ..Self::new(pool, schema_prefix)
         }
     }
 
     async fn write_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
-        if current_request_tenant().is_some() {
-            self.db.scope().await
-        } else {
+        if self.system_channel || current_request_tenant().is_none() {
             self.db.scope_system().await
+        } else {
+            self.db.scope().await
         }
     }
 
     async fn read_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
-        if current_request_tenant().is_some() {
-            self.db.scope_read().await
-        } else {
+        if self.system_channel || current_request_tenant().is_none() {
             self.db.scope_read_system().await
+        } else {
+            self.db.scope_read().await
         }
     }
 

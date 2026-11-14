@@ -498,6 +498,17 @@ fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)>
     }
 }
 
+/// 解析写路径（update/delete）必须绑定的 tenant_id。
+/// 写路径一律要求携带可解析的 claims.tenant_id；缺失/非法直接 400，
+/// 超管也不例外——禁止在无租户上下文时按 id 跨租户改删。
+fn resolve_write_tenant(claims: &Claims) -> Result<Uuid, (u16, String)> {
+    claims
+        .tenant_id
+        .as_deref()
+        .ok_or_else(|| (400, "缺少租户ID".to_string()))
+        .and_then(|raw| Uuid::parse_str(raw).map_err(|_| (400, "无效的租户ID".to_string())))
+}
+
 /// 金额字段双兼容：JSON 字符串（"888888.00"）与 JSON 数值（888888）都接受，
 /// 统一转为 Decimal；解析失败回退 None（调用方按 0 处理）。
 fn json_amount_to_decimal(v: &Value) -> Option<rust_decimal::Decimal> {
@@ -995,10 +1006,14 @@ pub async fn get_receivable(
 
 pub async fn update_receivable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
@@ -1010,7 +1025,7 @@ pub async fn update_receivable(
               customer_name = $2, project_name = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, received_amount = $8, payment_schedule = $9,
               updated_at = $10
-           WHERE id = $1
+           WHERE id = $1 AND tenant_id = $11
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1041,6 +1056,7 @@ pub async fn update_receivable(
     .bind(amount_decimal(&req, "received_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -1068,18 +1084,23 @@ pub async fn update_receivable(
 )]
 pub async fn delete_receivable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE receivables SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE receivables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     let r = match result {
@@ -1327,10 +1348,14 @@ pub async fn get_payable(
 
 pub async fn update_payable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
@@ -1342,7 +1367,7 @@ pub async fn update_payable(
               supplier_name = $2, category = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, paid_amount = $8, payment_schedule = $9,
               updated_at = $10
-           WHERE id = $1
+           WHERE id = $1 AND tenant_id = $11
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1373,6 +1398,7 @@ pub async fn update_payable(
     .bind(amount_decimal(&req, "paid_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -1400,18 +1426,23 @@ pub async fn update_payable(
 )]
 pub async fn delete_payable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut scope = match state.db.scope().await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE payables SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE payables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     let r = match result {

@@ -451,7 +451,7 @@ pub struct FlowTrendResponse {
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_flow_trend(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<FlowTrendResponse> {
     let group_by = params.group_by.as_deref().unwrap_or("month");
@@ -459,6 +459,21 @@ pub async fn get_flow_trend(
         "day" => "day",
         "week" => "week",
         _ => "month",
+    };
+
+    // fail-closed RLS 后裸池无租户 GUC，必须开显式租户只读作用域，
+    // 否则 RLS 会把所有行过滤掉（显式谓词无法绕过 RLS）。
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启流量趋势只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取流量趋势失败");
+        }
     };
 
     // 入库统计
@@ -470,6 +485,7 @@ pub async fn get_flow_trend(
             COUNT(*) as order_count
         FROM wms.inbound_orders
         WHERE deleted_at IS NULL
+          AND tenant_id = $5::uuid
           AND ($2::date IS NULL OR created_at >= $2::date)
           AND ($3::date IS NULL OR created_at <= $3::date)
           AND ($4::uuid IS NULL OR warehouse_id = $4::uuid)
@@ -481,7 +497,8 @@ pub async fn get_flow_trend(
     .bind(params.start_date.as_deref())
     .bind(params.end_date.as_deref())
     .bind(params.warehouse_id.as_deref())
-    .fetch_all(&state.db)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
     // 出库统计
@@ -493,6 +510,7 @@ pub async fn get_flow_trend(
             COUNT(*) as order_count
         FROM wms.outbound_orders
         WHERE deleted_at IS NULL
+          AND tenant_id = $5::uuid
           AND ($2::date IS NULL OR created_at >= $2::date)
           AND ($3::date IS NULL OR created_at <= $3::date)
           AND ($4::uuid IS NULL OR warehouse_id = $4::uuid)
@@ -504,7 +522,8 @@ pub async fn get_flow_trend(
     .bind(params.start_date.as_deref())
     .bind(params.end_date.as_deref())
     .bind(params.warehouse_id.as_deref())
-    .fetch_all(&state.db)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
     let mut data = Vec::new();
