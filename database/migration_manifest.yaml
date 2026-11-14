@@ -1080,3 +1080,25 @@ pending_forward_patches:
     effect: "mes.teams.leader_id 单列 varchar(64) -> uuid（空串/纯空白 NULLIF 为 NULL），对齐 team.rs 的 Option<Uuid> 解码；不含 db10 其余 17 列"
     destructive_scan: "ALTER COLUMN TYPE（DO 块按 information_schema 类型守卫，已是 uuid 跳过）；无 DELETE/UPDATE/TRUNCATE/DROP；非法 uuid 文本转换即报错中止"
     note: "前向补丁 > 20261113100000，不改已推送历史；刻意不整包投 db10 20261103230000（会顺带改 18 列）；14130000 已由 master-data 分支 starts_at 占用，本文件改用 14140000；配 database/rollback/20261114140000_mes_teams_leader_id_uuid.rollback.sql，回滚只恢复类型、不恢复空串"
+
+  - version: "20261114170000"
+    file: "database/migrations/20261114170000_drop_finance_dead_tables_shells.sql"
+    status: to_apply
+    effect: >-
+      删除 6 张 finance 空壳死表：finance.finance_u / finance.finance_v /
+      finance.finance_audit_rules_v / finance.finance_budget_variances_v /
+      finance.finance_cash_flow_predictions_v / finance.finance_prediction_models_v
+    destructive_scan: >-
+      DROP TABLE IF EXISTS ×6（显式 schema、无 CASCADE、逐条 destructive 标记）；
+      前置断言（存在则 0 行 / 无外部外键 / 无视图依赖）与后置断言（6 表均不存在），
+      任一失败 RAISE EXCEPTION 整事务回滚；rollback 逐表保留完整 CREATE TABLE DDL
+    evidence:
+      - { kind: code, ref: "rg -n -w <table> svc/", detail: "6 张均 0 命中" }
+      - { kind: code, ref: "rg -n -w <table> database/", detail: "仅 20260725000000 自身 CREATE；finance_audit_rules_v 另有 20261109160000:43-46 守卫式 RENAME（_v52 存在时恒不触发）；无使用型引用" }
+      - { kind: data, ref: "prod/dev 只读 count(*)", detail: "prod 6/6 = 0 行；dev 6/6 = 0 行" }
+      - { kind: catalog, ref: "pg_constraint.confrelid", detail: "外部外键引用 0（prod/dev）" }
+      - { kind: catalog, ref: "pg_rewrite ⋈ pg_depend", detail: "视图/物化视图依赖 0（prod/dev）；pg_statistic_ext 0；pg_publication_rel 0" }
+    note: >-
+      前向补丁 > 20261114160000，不改已推送历史；幂等（表不存在时 DROP IF EXISTS 为 no-op）；
+      配 database/rollback/20261114170000_drop_finance_dead_tables_shells.rollback.sql；
+      本任务只写不投；投产后需跑 scripts/ci/refresh-prod-cols.sh 刷新 prod_cols.psv
