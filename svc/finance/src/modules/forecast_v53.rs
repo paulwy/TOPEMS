@@ -267,7 +267,16 @@ impl CashFlowPredictor {
             ))
         })?;
 
-        let historical = Self::fetch_historical_data(db, tenant_id, entity_id).await?;
+        let (historical, is_synthetic) =
+            Self::fetch_historical_data(db, tenant_id, Some(entity_id)).await?;
+        // 无真实历史凭证时，旧实现会静默用合成序列（500k 基数 + 正弦噪声）生成预测并落库，
+        // 让"预测"看起来正常。合成数据不可用于决策，这里直接拒绝，不落任何行。
+        if is_synthetic {
+            return Err(sqlx::Error::Protocol(
+                "无真实历史凭证数据（近 12 个月 0 行），forecast_v53 拒绝用合成数据生成预测：合成数据不可用于决策"
+                    .to_string(),
+            ));
+        }
 
         let (inflow, outflow) = Self::apply_model(&historical, &model_type, horizon, &scenario);
 
@@ -286,8 +295,8 @@ impl CashFlowPredictor {
         let mut scope = db.scope_for_tenant(tenant_id).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
-                (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id, is_synthetic)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
             ON CONFLICT DO NOTHING"#),
         )
         .bind(prediction_id)
@@ -330,11 +339,15 @@ impl CashFlowPredictor {
         })
     }
 
+    /// 读取真实历史凭证的月度流入/流出。
+    ///
+    /// 返回值第二个元素为 `is_synthetic`：仅在查询结果为空（无真实历史）时为 true，
+    /// 此时第一个元素为空集合——不再伪造历史序列。调用方必须据此拒绝生成预测/精度。
     async fn fetch_historical_data(
         db: &Db,
         tenant_id: Uuid,
-        entity_uuid: Uuid,
-    ) -> Result<Vec<(f64, f64)>, sqlx::Error> {
+        entity_id: Option<Uuid>,
+    ) -> Result<(Vec<(f64, f64)>, bool), sqlx::Error> {
         let mut scope = db.scope_read_for_tenant(tenant_id).await?;
         let rows: Vec<(f64, f64)> = sqlx::query_as(
             only_own_schema_query!("finance", r#"SELECT
@@ -342,7 +355,7 @@ impl CashFlowPredictor {
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '4%' OR vl.account_code LIKE '5%' THEN vl.amount ELSE 0 END), 0) as outflow
             FROM vouchers v
             JOIN voucher_lines vl ON vl.voucher_id = v.id
-            WHERE v.tenant_id = $1 AND v.entity_id = $2
+            WHERE v.tenant_id = $1 AND ($2::uuid IS NULL OR v.entity_id = $2)
             AND v.status NOT IN ('draft', 'cancelled')
             AND v.created_at > NOW() - INTERVAL '12 months'
             GROUP BY DATE_TRUNC('month', v.created_at)
@@ -350,30 +363,13 @@ impl CashFlowPredictor {
             LIMIT 24"#),
         )
         .bind(tenant_id)
-        .bind(entity_uuid)
+        .bind(entity_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
 
-        if rows.is_empty() {
-            Ok(Self::generate_synthetic_history())
-        } else {
-            Ok(rows)
-        }
-    }
-
-    #[allow(clippy::as_conversions)]
-    fn generate_synthetic_history() -> Vec<(f64, f64)> {
-        let mut data = Vec::new();
-        for i in 0..12 {
-            let base = 500_000.0 + (i as f64 * 15_000.0);
-            let season = ((i as f64 * std::f64::consts::PI) / 6.0).sin() * 80_000.0;
-            let noise = (i as f64 * 37.0).sin() * 20_000.0;
-            let inflow = base + season + noise;
-            let outflow = base * 0.85 + season * 0.7 + noise * 0.5;
-            data.push((inflow, outflow));
-        }
-        data
+        let is_synthetic = rows.is_empty();
+        Ok((rows, is_synthetic))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -585,10 +581,11 @@ impl CashFlowPredictor {
         let offset = (page - 1) * page_size;
         let mut scope = db.scope_read().await?;
 
-        let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_cash_flow_predictions_v53 WHERE 1=1");
+        let mut count_query = String::from(
+            "SELECT COUNT(*) FROM finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
+        );
         let mut data_query = String::from(
-            "SELECT id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at FROM finance_cash_flow_predictions_v53 WHERE 1=1",
+            "SELECT id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at FROM finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
         );
 
         if entity_id.is_some() {
@@ -639,18 +636,20 @@ impl CashFlowPredictor {
         let now = Utc::now();
         let model_str = model_type.as_str();
 
-        let accuracy =
-            decimal_from_f64(Self::compute_retrain_accuracy(db, tenant_id, &model_type).await);
+        let (accuracy_value, sample_months) =
+            Self::compute_retrain_accuracy(db, tenant_id, &model_type).await?;
+        let accuracy = decimal_from_f64(accuracy_value);
 
         let mut scope = db.scope_for_tenant(tenant_id).await?;
         let record = sqlx::query_as::<_, PredictionModelRecord>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
-                (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id, is_synthetic)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false)
             ON CONFLICT (model_type) DO UPDATE
             SET accuracy = EXCLUDED.accuracy,
                 trained_at = EXCLUDED.trained_at,
-                updated_at = EXCLUDED.updated_at
+                updated_at = EXCLUDED.updated_at,
+                is_synthetic = false
             RETURNING id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at"#),
         )
         .bind(Uuid::new_v4())
@@ -661,6 +660,8 @@ impl CashFlowPredictor {
             "window_size": 6,
             "alpha": 0.3,
             "season_period": 12,
+            // 真实参与训练的月数，供精度接口如实返回 sample_count（旧实现硬编码 120）
+            "sample_months": sample_months,
         }))
         .bind(accuracy)
         .bind(true)
@@ -676,8 +677,21 @@ impl CashFlowPredictor {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn compute_retrain_accuracy(_db: &Db, _tenant_id: Uuid, model: &PredictionModel) -> f64 {
-        let sample = Self::generate_synthetic_history();
+    async fn compute_retrain_accuracy(
+        db: &Db,
+        tenant_id: Uuid,
+        model: &PredictionModel,
+    ) -> Result<(f64, usize), sqlx::Error> {
+        // 精度必须基于真实历史凭证；旧实现在此处无条件使用合成序列，等价于把伪造样本
+        // 包装成可信精度。无真实历史时直接报错，不落模型行。
+        let (sample, is_synthetic) = Self::fetch_historical_data(db, tenant_id, None).await?;
+        if is_synthetic {
+            return Err(sqlx::Error::Protocol(
+                "无真实历史凭证数据，拒绝用合成样本计算模型精度：合成数据不可用于决策"
+                    .to_string(),
+            ));
+        }
+
         let (errors_inflow, errors_outflow) = Self::compute_prediction_errors(&sample, model);
 
         let inflow_acc = if errors_inflow.is_empty() {
@@ -691,7 +705,7 @@ impl CashFlowPredictor {
             (1.0 - errors_outflow.iter().sum::<f64>() / errors_outflow.len() as f64).max(0.3)
         };
 
-        (inflow_acc + outflow_acc) / 2.0
+        Ok(((inflow_acc + outflow_acc) / 2.0, sample.len()))
     }
 
     pub async fn get_accuracy(
@@ -699,16 +713,17 @@ impl CashFlowPredictor {
         model_type: Option<String>,
     ) -> Result<Vec<PredictionAccuracy>, sqlx::Error> {
         let mut scope = db.scope_read().await?;
+        // 只返回基于真实历史训练的模型精度；is_synthetic=true 的历史合成行一律排除。
         let records: Vec<PredictionModelRecord> = if let Some(ref mt) = model_type {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE model_type = $1 ORDER BY trained_at DESC"),
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE is_synthetic = false AND model_type = $1 ORDER BY trained_at DESC"),
             )
             .bind(mt)
             .fetch_all(&mut scope)
             .await?
         } else {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 ORDER BY trained_at DESC"),
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE is_synthetic = false ORDER BY trained_at DESC"),
             )
             .fetch_all(&mut scope)
             .await?
@@ -724,23 +739,17 @@ impl CashFlowPredictor {
                 inflow_accuracy: accuracy * 1.05,
                 outflow_accuracy: accuracy * 0.95,
                 mean_absolute_error: (1.0 - accuracy) * 100.0,
-                sample_count: 120,
+                sample_count: record
+                    .parameters
+                    .get("sample_months")
+                    .and_then(|v| v.as_i64())
+                    .unwrap_or(0),
                 last_trained: Some(record.trained_at),
             });
         }
 
-        if accuracies.is_empty() {
-            accuracies.push(PredictionAccuracy {
-                model_type: "exponential_smoothing".to_string(),
-                overall_accuracy: 0.85,
-                inflow_accuracy: 0.88,
-                outflow_accuracy: 0.82,
-                mean_absolute_error: 15.0,
-                sample_count: 120,
-                last_trained: Some(Utc::now()),
-            });
-        }
-
+        // 不再用硬编码 0.85 / sample_count=120 的假精度兜底：无真实训练模型时返回空集，
+        // 由调用方按"无可用模型"处理，而不是把合成数据包装成可信指标。
         Ok(accuracies)
     }
 }
