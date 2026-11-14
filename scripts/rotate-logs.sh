@@ -50,8 +50,11 @@ rotate() {
   fi
 
   # 清理旧归档（保留最近 KEEP_ARCHIVES 个）
+  # 不用 xargs -r：BSD xargs 无 -r，改用 while read 保证 macOS/Linux 行为一致
   # shellcheck disable=SC2012
-  ls -1t "${file}".*.gz 2>/dev/null | tail -n +$((KEEP_ARCHIVES + 1)) | xargs -r rm -f
+  ls -1t "${file}".*.gz 2>/dev/null | tail -n +$((KEEP_ARCHIVES + 1)) | while IFS= read -r old; do
+    rm -f "$old"
+  done
 }
 
 # ── 轮转目标 ──
