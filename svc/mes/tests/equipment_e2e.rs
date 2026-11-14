@@ -2,6 +2,10 @@
 //! P1 补测（2026-10-07）：mes equipment list handler 集成测试。
 //! 复用 common/app_state.rs 工厂；暴露生产缺陷：SELECT 列 warranty_expiry_date/
 //! maintenance_frequency_days 不存在（表列 warranty_end_date/maintenance_cycle）已修复。
+//!
+//! K1（2026-11-15）：handler 走 `Db::scope_read()`，无租户上下文时按设计报错，
+//! 因此用例必须像中间件一样先注入 task-local 租户上下文（`scope_request_tenant`），
+//! 并插入第二个租户的数据证明列表只返回本租户行。
 
 #[path = "common/app_state.rs"]
 mod app_state;
@@ -13,9 +17,16 @@ use serde_json::{json, Value};
 use topems_mes::modules::equipment::{
     create_equipment, list_equipment, CreateEquipmentRequest, ListEquipmentQuery,
 };
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
+use uuid::Uuid;
 
-fn empty_query() -> ListEquipmentQuery {
-    serde_json::from_value(json!({})).unwrap()
+/// 本用例的租户 A；租户 B 用于验证跨租户行不可见。
+fn tenant_a() -> Uuid {
+    Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap()
+}
+
+fn tenant_b() -> Uuid {
+    Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap()
 }
 
 async fn setup_schema(pool: &sqlx::PgPool) {
@@ -52,15 +63,25 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .unwrap();
 }
 
-async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
+/// 以租户 `tenant` 的身份调用 handler：Claims 与 task-local RLS 上下文一致，
+/// 与生产 `auth_middleware` → `Db::scope_read()` 的取数路径相同。
+async fn body_of(pool: sqlx::PgPool, tenant: Uuid, status: Option<&str>) -> Value {
     let state = test_app_state(pool);
-    let claims = super_claims();
+    let mut claims = super_claims();
+    claims.tenant_id = Some(tenant.to_string());
     let mut query: Value = json!({});
     if let Some(s) = status {
         query = json!({ "status": s });
     }
     let q: ListEquipmentQuery = serde_json::from_value(query).unwrap();
-    let resp = list_equipment(State(state), Extension(claims), Query(q)).await;
+    let resp = scope_request_tenant(
+        RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        async move { list_equipment(State(state), Extension(claims), Query(q)).await },
+    )
+    .await;
     serde_json::to_value(
         resp.data
             .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),
@@ -68,30 +89,36 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
     .unwrap()
 }
 
-async fn insert_equipment(pool: &sqlx::PgPool, code: &str, status: &str) {
+async fn insert_equipment(pool: &sqlx::PgPool, tenant: Uuid, code: &str, status: &str) {
     sqlx::query(
-        "INSERT INTO equipment (id, equipment_code, equipment_name, status, description) VALUES ($1, $2, $3, $4, '')",
+        "INSERT INTO equipment (id, equipment_code, equipment_name, status, description, tenant_id) VALUES ($1, $2, $3, $4, '', $5)",
     )
     .bind(uuid::Uuid::new_v4())
     .bind(code)
     .bind(format!("设备-{code}"))
     .bind(status)
+    .bind(tenant)
     .execute(pool).await.unwrap();
 }
 
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let body = body_of(pool, None).await;
+    // 另一租户有数据，但本租户列表必须仍为空
+    insert_equipment(&pool, tenant_b(), "EQ-B-ONLY", "active").await;
+
+    let body = body_of(pool, tenant_a(), None).await;
     assert_eq!(body["total"], 0);
+    assert_eq!(body["equipments"].as_array().map(Vec::len), Some(0));
 }
 
 #[sqlx::test(migrations = false)]
 async fn list_returns_inserted_row(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    insert_equipment(&pool, "EQ-001", "active").await;
+    insert_equipment(&pool, tenant_a(), "EQ-001", "active").await;
+    insert_equipment(&pool, tenant_b(), "EQ-OTHER", "active").await;
 
-    let body = body_of(pool, None).await;
+    let body = body_of(pool, tenant_a(), None).await;
     assert_eq!(body["total"], 1);
     assert_eq!(body["equipments"][0]["equipment_no"], "EQ-001");
 }
@@ -99,10 +126,12 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn list_filters_by_status(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    insert_equipment(&pool, "EQ-A", "active").await;
-    insert_equipment(&pool, "EQ-B", "maintenance").await;
+    insert_equipment(&pool, tenant_a(), "EQ-A", "active").await;
+    insert_equipment(&pool, tenant_a(), "EQ-B", "maintenance").await;
+    // 另一租户的 maintenance 行不得被本租户筛选命中
+    insert_equipment(&pool, tenant_b(), "EQ-B-OTHER", "maintenance").await;
 
-    let body = body_of(pool, Some("maintenance")).await;
+    let body = body_of(pool, tenant_a(), Some("maintenance")).await;
     assert_eq!(body["total"], 1);
     assert_eq!(body["equipments"][0]["equipment_no"], "EQ-B");
 }
