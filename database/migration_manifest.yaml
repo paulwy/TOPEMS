@@ -1102,3 +1102,50 @@ pending_forward_patches:
       前向补丁 > 20261114160000，不改已推送历史；幂等（表不存在时 DROP IF EXISTS 为 no-op）；
       配 database/rollback/20261114170000_drop_finance_dead_tables_shells.rollback.sql；
       本任务只写不投；投产后需跑 scripts/ci/refresh-prod-cols.sh 刷新 prod_cols.psv
+
+  - version: "20261114180000"
+    file: "database/migrations/20261114180000_erp_consolidation_group_tenant_rls.sql"
+    status: to_apply
+    effect: >-
+      erp 合并域 8 张表（company_relations / internal_transactions / consolidation_scopes /
+      consolidation_scope_companies / consolidation_reports / consolidation_report_lines /
+      elimination_rules / elimination_candidates）由 USING(true) 全放行改为集团租户 fail-closed：
+      新建 STABLE 函数 erp.group_tenant_of(uuid)（GUC 空/NULL/nil -> NULL；合法租户 -> 自身），
+      每表一条 FOR ALL 策略，USING 与 WITH CHECK 均绑 tenant_id = erp.group_tenant_of(...)，
+      先删除全部既有策略（含 erp_allow_all_* 与 elimination_candidates 的 GUC 兜底 tenant_isolation），
+      并 FORCE ROW LEVEL SECURITY
+    destructive_scan: >-
+      DROP POLICY IF EXISTS（按 pg_policies 枚举，仅限上述 8 表）；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；
+      形状自检：每表策略数必须为 1、qual 必须引用 group_tenant_of、必须 relforcerowsecurity，
+      任一不满足 RAISE EXCEPTION 整事务回滚
+    evidence:
+      - { kind: catalog, ref: "prod pg_policies (只读)", detail: "7 表 erp_allow_all_* qual=true；elimination_candidates tenant_isolation 为 GUC 兜底放行；8 表均 relforcerowsecurity=true，owner=topems_prod" }
+      - { kind: data, ref: "prod/dev count(*)", detail: "8 表 prod 均 0 行；收紧不涉及数据搬迁" }
+      - { kind: catalog, ref: "pg_constraint on erp.company_relations", detail: "(tenant_id,parent_company_id)/(tenant_id,child_company_id) -> hrm.companies(tenant_id,id)，母子公司必同租户，故 tenant 即集团边界" }
+      - { kind: drill, ref: "topems_group_drill_20261114（prod 克隆）", detail: "四场景实跑：A 读可见 / B 读 0 / 无 GUC 0 / A 写落 A；跨集团写、nil 写、无 GUC 写均 42501；rollback 后策略与基线 diff 为空；迁移重复执行两次通过" }
+    note: >-
+      前向补丁 > 20261114160000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261114180000_erp_consolidation_group_tenant_rls.rollback.sql；
+      代码侧 6 处 INSERT 的 nil 兜底同步改为 erp.group_tenant_of(...)，缺 GUC 直接失败；
+      本任务只合 main、不投生产
+
+  - version: "20261114190000"
+    file: "database/migrations/20261114190000_forecast_v53_mark_synthetic.sql"
+    status: to_apply
+    effect: >-
+      finance.finance_cash_flow_predictions_v53 / finance.finance_prediction_models_v53
+      新增 is_synthetic boolean NOT NULL DEFAULT true（既有行回填 true），并写表注释与列注释：
+      合成数据、不可用于决策；不改动 finance_budget_variances_v53（其数据来自请求，非本模块合成）
+    destructive_scan: >-
+      ADD COLUMN ... NOT NULL DEFAULT true（既有行按默认值回填，无 UPDATE/DELETE/TRUNCATE/DROP）；
+      形状自检：默认值必须为 true、必须 NOT NULL、必须无 NULL 行，
+      任一不满足 RAISE EXCEPTION 整事务回滚
+    evidence:
+      - { kind: data, ref: "prod/dev count(*)", detail: "finance_cash_flow_predictions_v53=0、finance_prediction_models_v53=0、finance_budget_variances_v53=0；回填不涉及真实数据" }
+      - { kind: code, ref: "svc/finance/src/modules/forecast_v53.rs", detail: "旧实现 generate_synthetic_history() 在无历史凭证时静默返回合成序列，predict/retrain/get_accuracy 均使用；get_accuracy 另有硬编码 0.85 兜底" }
+      - { kind: code, ref: "apps/web 全仓库检索", detail: "forecast-v53 前端 0 引用，其他 crate 0 引用" }
+      - { kind: drill, ref: "topems_group_drill_20261114（prod 克隆）", detail: "旧行回填 true；显式 false 新行保留且读路径可见；重复执行幂等；rollback 删列并清注释后再应用通过" }
+    note: >-
+      前向补丁 > 20261114160000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261114190000_forecast_v53_mark_synthetic.rollback.sql；
+      说明文档 docs/quality/forecast-v53-synthetic-data-2026-11-14.md；本任务不删数据、只合 main、不投生产
