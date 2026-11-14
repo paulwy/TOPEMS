@@ -1210,13 +1210,13 @@ real 6.175s
 
 ---
 
-## 17. 2026-11-14 追加：两条 W7-B4 迁移的**强制投递顺序**
+## 17. 2026-11-14 追加：W7-B4 迁移的**强制投递顺序**（14100000 / 14120000 / 14130000）
 
 ### 17.1 库身份与账本水位
 
 - 本地核对库：`topems @ 127.0.0.1:5432`，PostgreSQL 18.4。本地账本 `20261109101400 / 572 行`，**是滞后快照**，不能替代 prod 事实。
 - prod 事实（窗口单口径）：`max(version)=20261113100000`，账本 668 行。**本次未直连 prod 复核**。
-- 本地最近演练库 `topems_six_rls_reh_20261114`：`max=20261112095000 / 661 行`，同样不含下面两条。
+- 本地最近演练库 `topems_six_rls_reh_20261114`：`max=20261112095000 / 661 行`，同样不含下面三条。
 
 ### 17.2 版本区间清单（2026-11-14，全 refs）
 
@@ -1224,32 +1224,35 @@ real 6.175s
 |---|---|
 | `(20261113100000, 20261114100000)` | **无** |
 | `(20261114100000, 20261114120000)` | **无** |
-| 全 refs 同号重复 | **0**（两条各 1 份文件） |
+| `(20261114120000, 20261114130000)` | **无**（本批新增的账本守卫） |
+| 全 refs 同号重复 | **0**（三条各 1 份文件） |
 
 | 版本 | 文件 | 所在分支 / 提交 |
 |---|---|---|
 | `20261114100000` | `database/migrations/20261114100000_w7_b4_status_check_widen_business_states.sql` | `fix/ehs-tenant-scope-20261114-r2` @ `f0afa31b6` |
 | `20261114120000` | `database/migrations/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql` | `fix/rls-six-schema-failclosed-20261114` @ `25d8aca34` |
+| `20261114130000` | `database/migrations/20261114130000_w7_b4_ledger_monotonic_guard.sql` | `fix/ehs-tenant-scope-20261114-r2`（本批提交） |
 
-`origin/main` 的迁移顶端仍是 `20261113100000`（main 上无这两条）。
+`origin/main` 的迁移顶端仍是 `20261113100000`（main 上无这三条）。
 
 ### 17.3 强制投递顺序
 
 1. **`20261114100000`（status 约束扩容）**
 2. **`20261114120000`（六 schema RLS fail-closed）**
+3. **`20261114130000`（账本单调守卫，本批新增；必须最后落）**
 
-- 推荐**一次调用两条**，由 `apply-forward.sh` 按版本升序执行：
+- 推荐**一次调用三条**，由 `apply-forward.sh` 按版本升序执行：
 
 ```bash
 bash scripts/migration/apply-forward.sh ... \
   --anchor 20261113100000 \
-  --only 20261114100000,20261114120000
+  --only 20261114100000,20261114120000,20261114130000
 ```
 
-本地实测输出：`== OK：应用 2 条，无失败`，账本按 `14100000 → 14120000` 落库。
+本地 scratch 实测（本分支可用的两条 `14100000 + 14130000`）：`== OK：应用 2 条，无失败`，账本按 `14100000 → 14130000` 落库；随后以新水位 `--anchor 20261114130000` 复跑为 `== 无待应用迁移`。`14120000` 的反序拒绝见 17.7。
 
-- 分两次调用也可以，但必须升序：第一次 `--anchor 20261113100000 --only 20261114100000`；第二次 `--anchor 20261114100000 --only 20261114120000`。
-- 两条**互不依赖**：`14100000` 只对 18 张表 `DROP/ADD CHECK`；`14120000` 只对 28 张表 `DROP/CREATE POLICY` + `ENABLE/FORCE RLS`；对象零交集，双方 manifest 均只声明「前向 > 20261113100000」。
+- 分两次调用也可以，但必须升序：第一次 `--anchor 20261113100000 --only 20261114100000`；第二次 `--anchor 20261114100000 --only 20261114120000`；第三次 `--anchor 20261114120000 --only 20261114130000`。
+- 三条**互不依赖**：`14100000` 只对 18 张表 `DROP/ADD CHECK`；`14120000` 只对 28 张表 `DROP/CREATE POLICY` + `ENABLE/FORCE RLS`；`14130000` 只装 `public._sqlx_migrations` 的触发器；前两条对象零交集，第三条与业务表零交集。
 
 ### 17.4 各自前置条件
 
@@ -1265,6 +1268,12 @@ bash scripts/migration/apply-forward.sh ... \
 - **必须与同一分支的代码同批发布**：`lib/shared-db` 审计系统通道及 `svc/{crm,erp,hrm}/src/modules/audit.rs` 等改动；只落库不发代码会让审计写入被 fail-closed 挡住。
 - 回滚：`database/rollback/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.rollback.sql`（恢复 29 条原策略）。
 
+**`20261114130000`**
+- 前置：`public._sqlx_migrations` 存在（不存在则 `NOTICE SKIP`，不影响非 sqlx 管理的库）；执行角色需该表 owner 权限（`CREATE TRIGGER`）。
+- 作用：`BEFORE INSERT` 触发器，`NEW.version < 账本 max(success)` 时 `RAISE EXCEPTION`（P0001）。升序应用、基线 `prod_ledger_<anchor>.sql` 的 `ORDER BY version` 重放均不受影响。
+- 这是**脚本之外的第二道防线**：裸 `sqlx migrate run`、`psql -f` + 手写账本等绕过 `apply-forward.sh` 的路径，乱序落库同样失败。
+- 回滚：`database/rollback/20261114130000_w7_b4_ledger_monotonic_guard.rollback.sql`（DROP TRIGGER + FUNCTION）；回滚后裸 sqlx 恢复接受乱序。
+
 ### 17.5 反序风险（先落 `14120000`）
 
 若先落 `14120000`，账本 max 变为 `20261114120000`，之后再投 `14100000`：
@@ -1277,15 +1286,23 @@ bash scripts/migration/apply-forward.sh ... \
 ```
 
 - 本地 scratch 库实测：反序调用 `exit=1`，`to_regclass('gate_v1') = NULL`（确实没产生 DDL）。
-- **不要用裸 `sqlx migrate run` 绕过**：sqlx-cli 0.8.6 实测**不会**拒绝乱序（v2 已应用后仍会应用 v1），会绕过锚点与白名单守卫。
-- 补救：不要手工改版本号或删账本行；按 manifest 用 `> 20261114120000` 的前向补丁承接，或走审批后的恢复流程。
+- **裸 `sqlx migrate run` 也不能再绕过**：sqlx-cli 0.8.6 本身接受乱序（v2 已应用后仍会应用 v1），但落库 `14130000` 后，`public._sqlx_migrations` 的 `BEFORE INSERT` 触发器会拒绝并整笔回滚。实测原始输出：
 
-### 17.6 已知噪声（未修改）
+```
+error: while executing migrations: error returned from database: ledger-guard：拒绝乱序迁移 version=20261114100000 < 账本水位 20261114120000（public._sqlx_migrations）
+```
 
-手工传错 `--anchor` 时，`apply-forward.sh:145` 的中文全角逗号紧邻 `$ANCHOR`，在当前 bash 下会触发 `ANCHOR…: unbound variable`；仍然 `exit 1` 且零 DDL，但报错信息不友好。本批只做核对与文档，未改脚本。
+  `sqlx` exit 1；`to_regclass('public.gate_v1') = NULL`，账本 `version=20261114100000` 行数 0。执行回滚文件移除触发器后，同一条命令才应用成功（证明拦截点就是该触发器）。
+- 补救：不要手工改版本号或删账本行；按 manifest 用 `> 20261114120000` 的前向补丁承接，或走审批后的恢复流程（需先移除账本守卫并登记原因）。
+
+### 17.6 已修复：错 anchor 报错不可读（`apply-forward.sh:145`）
+
+- 原因：中文全角逗号紧邻 `$ANCHOR` / `$LEDGER_MAX`，bash 3.2 把多字节字符并入变量名，`set -u` 下报 `ANCHOR…: unbound variable`（仍然 exit 1、零 DDL，但指向错误位置）。
+- 修复：改为 `${ANCHOR}` / `${LEDGER_MAX}` / `${PROD_CHANGE_TICKET}`（同文件 145、156 行），未改任何判定逻辑。
+- 实测（scratch `topems_guard_drill`，账本 max=`20261114130000`）：`== 拒绝：锚点偏离账本水位（--anchor=20261112190000，账本 max=20261114130000）`，`exit=1`、零 DDL。
 
 ### 17.7 演练证据
 
-- scratch 库 `topems_order_gate`（已 DROP），迁移目录为两条同名版本的桩文件。
-- 正序：`== OK：应用 2 条，无失败`，账本顺序 `20261114100000 → 20261114120000`。
-- 反序：`exit=1` + 上述拒绝原文，零 DDL。
+- `topems_order_gate`（已 DROP）：两条同名版本桩文件的正序/反序演练，正序 `== OK：应用 2 条，无失败`（`14100000 → 14120000`），反序 `exit=1` + 上述拒绝原文，零 DDL。
+- `topems_guard_drill`（已 DROP，模板克隆 + 账本锚 `20261113100000`）：`--only 20261114100000,20261114130000` → `== OK：应用 2 条，无失败`；以新水位 `--anchor 20261114130000` 复跑 → `== 无待应用迁移`；触发器 `trg_sqlx_migrations_monotonic` 存在。
+- `topems_guard_bypass`（已 DROP，空库）：裸 `sqlx` 先落 `14120000` → 安装守卫 → 再落 `14100000` 被拒（原文见 17.5）；回滚守卫后同命令应用成功。

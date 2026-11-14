@@ -38,6 +38,9 @@
 #   非 prod 需显式 ALLOW_ANCHOR_REWIND=1 且 PROD_CHANGE_TICKET 非空才放行（仅演练用）。
 #   旧版本永不 in-place 重放：请在 database/migration_manifest.yaml 登记处置，
 #   用 version > 账本 max 的前向补丁承接效果。
+#   数据库级兜底（20261114130000）：public._sqlx_migrations 上的 BEFORE INSERT 触发器
+#   会拒绝 version < 账本 max 的插入——裸 `sqlx migrate run` 等绕过本脚本的路径同样失败；
+#   ALLOW_ANCHOR_REWIND 只对「账本没有更高版本」的副本库有意义。
 #
 # SSH 模式（prod 主机不在本地暴露 DSN）：
 #   --ssh-host <user@host>   --remote-db <db>   --remote-mig-dir <已投递校验的远端目录>
@@ -142,7 +145,7 @@ fi
 # 历史 defer 重新变成 pending（这正是 43 个孤儿产生的机制）。
 LEDGER_MAX="$(psql_exec -tA -c "SELECT COALESCE(max(version),0) FROM _sqlx_migrations WHERE success" 2>/dev/null || echo 0)"
 if [[ "$LEDGER_MAX" =~ ^[0-9]+$ ]] && (( 10#$LEDGER_MAX > 0 )) && (( 10#$ANCHOR != 10#$LEDGER_MAX )); then
-  echo "== 拒绝：锚点偏离账本水位（--anchor=$ANCHOR，账本 max=$LEDGER_MAX）" >&2
+  echo "== 拒绝：锚点偏离账本水位（--anchor=${ANCHOR}，账本 max=${LEDGER_MAX}）" >&2
   echo "   锚点下移会把历史 defer 重新纳入扫描；锚点上跳会静默跳过 pending。" >&2
   echo "   旧版本不得 in-place 重放：请在 database/migration_manifest.yaml 登记处置，用 > 账本 max 的前向补丁承接。" >&2
   if [[ $PROD -eq 1 ]]; then
@@ -153,7 +156,7 @@ if [[ "$LEDGER_MAX" =~ ^[0-9]+$ ]] && (( 10#$LEDGER_MAX > 0 )) && (( 10#$ANCHOR 
     echo "   仅演练场景可显式 ALLOW_ANCHOR_REWIND=1 且设置 PROD_CHANGE_TICKET。" >&2
     exit 1
   fi
-  echo "   警告：已按 ALLOW_ANCHOR_REWIND=1 放行（ticket=$PROD_CHANGE_TICKET），本区间必须由 --only/--defer 严格约束。" >&2
+  echo "   警告：已按 ALLOW_ANCHOR_REWIND=1 放行（ticket=${PROD_CHANGE_TICKET}），本区间必须由 --only/--defer 严格约束。" >&2
 fi
 
 # --- --allow-destructive 参数校验：单版本、精确、不支持列表/通配 -------------
