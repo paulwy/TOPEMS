@@ -71,7 +71,7 @@ pub async fn list_processes(
         }
     };
     let rows = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes ORDER BY created_at DESC",
+        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM qa_lab_processes ORDER BY created_at DESC",
     )
     .bind(locale)
     .fetch_all(&mut scope)
@@ -141,7 +141,7 @@ pub async fn get_process(
         }
     };
     let row = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
     .bind(locale)
