@@ -84,7 +84,7 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
 const PRODUCT_COLS: &str =
     "id::text, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
 const SUBSCRIPTION_COLS: &str =
-    "id::text, api_product_id, tenant_id::text, tier, starts_at, expires_at, status";
+    "id::text, api_product_id, tenant_id::text, tier, starts_at::timestamptz, expires_at, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -490,7 +490,7 @@ pub async fn create_api_product(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_api_products
            (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&product.id)
     .bind(&product.name)
@@ -551,7 +551,7 @@ pub async fn get_api_product(
 ) -> ApiResponse<APIProduct> {
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(&id)
     .fetch_optional(&state.db)
@@ -580,7 +580,7 @@ pub async fn subscribe_tenant(
 ) -> ApiResponse<Subscription> {
     // K1：产品从真表查找。
     let product_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(&req.api_product_id)
     .fetch_optional(&state.db)
@@ -614,7 +614,7 @@ pub async fn subscribe_tenant(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_subscriptions
            (id, api_product_id, tenant_id, tier, starts_at, expires_at, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7)"#,
     )
     .bind(&sub.id)
     .bind(&sub.api_product_id)
@@ -651,7 +651,7 @@ pub async fn get_subscription(
 ) -> ApiResponse<Subscription> {
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"
+        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(&id)
     .fetch_optional(&state.db)
@@ -831,7 +831,7 @@ pub async fn record_usage(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_usage_records
            (id, tenant_id, api_product_id, endpoint, requests, errors, data_transferred, recorded_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8)"#,
     )
     .bind(&record.id)
     .bind(&record.tenant_id)
@@ -930,7 +930,7 @@ pub async fn generate_bill(
 
     let usage_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
-           WHERE tenant_id = $1 AND recorded_at::text >= $2 AND recorded_at::text <= $3
+           WHERE tenant_id = $1::uuid AND recorded_at::text >= $2 AND recorded_at::text <= $3
            ORDER BY recorded_at"#,
     )))
     .bind(&req.tenant_id)
@@ -1015,7 +1015,7 @@ pub async fn generate_bill(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_billing_records
            (id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8)"#,
     )
     .bind(&bill.id)
     .bind(&bill.tenant_id)
@@ -1122,7 +1122,7 @@ pub async fn create_rate_card(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_rate_cards
            (id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6)"#,
     )
     .bind(&card.id)
     .bind(product_tier_to_string(&card.tier))
@@ -1227,7 +1227,7 @@ pub async fn configure_sla(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_configs
            (id, metric, target_value, unit, penalty_per_min, measurement_window)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6)"#,
     )
     .bind(&config.id)
     .bind(sla_metric_to_str(&config.metric))
@@ -1260,7 +1260,7 @@ pub async fn measure_sla(
 ) -> ApiResponse<SLAMeasurement> {
     // K1：先读真表 SLA 配置（无行 404），再写度量。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(&req.config_id)
     .fetch_optional(&state.db)
@@ -1294,7 +1294,7 @@ pub async fn measure_sla(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_measurements
            (id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7,$8,$9)"#,
     )
     .bind(&measurement.id)
     .bind(&measurement.config_id)
@@ -1440,7 +1440,7 @@ pub async fn calculate_penalty(
 ) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（config + measurements），逻辑保留。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(&params.config_id)
     .fetch_optional(&state.db)
@@ -1453,7 +1453,7 @@ pub async fn calculate_penalty(
 
     let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
-           WHERE config_id = $1 AND tenant_id = $2 AND met = FALSE ORDER BY measured_at"#,
+           WHERE config_id = $1 AND tenant_id = $2::uuid AND met = FALSE ORDER BY measured_at"#,
     )))
     .bind(&params.config_id)
     .bind(&params.tenant_id)
@@ -1504,7 +1504,7 @@ pub async fn create_incident(
         .unwrap_or(ImpactSeverity::Medium);
 
     let config_row = sqlx::query(
-        "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1",
+        "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1",
     )
     .bind(&req.config_id)
     .fetch_optional(&state.db)
@@ -1531,7 +1531,7 @@ pub async fn create_incident(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_incidents
            (id, config_id, tenant_id, incident_type, duration_min, impact_severity, compensation_amount, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7,$8)"#,
     )
     .bind(&incident.id)
     .bind(&incident.config_id)
