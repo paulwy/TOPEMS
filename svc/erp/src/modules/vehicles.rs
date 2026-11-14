@@ -505,6 +505,32 @@ pub async fn delete_vehicle(
     response
 }
 
+/// 车辆申请列表 SQL（handler 与模块内回归用例共用同一份，避免用例与实现漂移）。
+/// `deleted_at IS NULL` 与同模块其他列表口径一致（K3）。
+const LIST_VEHICLE_REQUESTS_SQL: &str = only_own_schema_query!(
+    "erp",
+    r#"
+        SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
+        FROM vehicle_requests
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#
+);
+
+/// 与 [`LIST_VEHICLE_REQUESTS_SQL`] 同口径的计数 SQL（K3：软删行不计入 total）。
+const COUNT_VEHICLE_REQUESTS_SQL: &str = only_own_schema_query!(
+    "erp",
+    r#"
+                SELECT COUNT(*) FROM vehicle_requests
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                "#
+);
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -533,37 +559,21 @@ pub async fn list_vehicle_requests(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, VehicleApplication>(
-        only_own_schema_query!("erp", r#"
-        SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
-        FROM vehicle_requests
-        WHERE ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-        ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
-        "#),
-    )
-    .bind(&search_pattern)
-    .bind(&status_filter)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&mut **txn)
-    .await;
+    let result = sqlx::query_as::<_, VehicleApplication>(LIST_VEHICLE_REQUESTS_SQL)
+        .bind(&search_pattern)
+        .bind(&status_filter)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&mut **txn)
+        .await;
 
     match result {
         Ok(requests) => {
-            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "erp",
-                r#"
-                SELECT COUNT(*) FROM vehicle_requests
-                WHERE ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                "#
-            ))
-            .bind(&search_pattern)
-            .bind(&status_filter)
-            .fetch_one(&mut **txn)
-            .await;
+            let count_result = sqlx::query_scalar::<_, i64>(COUNT_VEHICLE_REQUESTS_SQL)
+                .bind(&search_pattern)
+                .bind(&status_filter)
+                .fetch_one(&mut **txn)
+                .await;
 
             let total = count_result.unwrap_or(0);
 
@@ -1033,6 +1043,88 @@ pub async fn get_vehicle_requests(
 mod tests {
     use super::*;
 
+    /// 建表：`purpose` 可空（对齐生产库历史形状），`deleted_at` 用于软删过滤用例。
+    async fn setup_vehicle_requests(pool: &sqlx::PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS erp")
+            .execute(pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS erp.vehicle_requests (
+                id UUID PRIMARY KEY,
+                vehicle_id UUID,
+                vehicle_plate VARCHAR(64),
+                requester VARCHAR(128) NOT NULL,
+                purpose TEXT,
+                start_time TIMESTAMPTZ NOT NULL,
+                end_time TIMESTAMPTZ NOT NULL,
+                driver_required BOOLEAN NOT NULL DEFAULT false,
+                status VARCHAR(32),
+                approved_by VARCHAR(128),
+                approved_at TIMESTAMPTZ,
+                rejected_reason TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMPTZ
+            )"#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    async fn insert_vehicle_request(
+        pool: &sqlx::PgPool,
+        purpose: Option<&str>,
+        deleted: bool,
+    ) -> Uuid {
+        let id = Uuid::new_v4();
+        let deleted_at = if deleted { Some(Utc::now()) } else { None };
+        sqlx::query(
+            r#"INSERT INTO erp.vehicle_requests
+               (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time,
+                driver_required, status, created_at, updated_at, deleted_at)
+               VALUES ($1, $2, '京A00001', '申请人', $3, NOW(), NOW(), false, 'pending', NOW(), NOW(), $4)"#,
+        )
+        .bind(id)
+        .bind(Uuid::new_v4())
+        .bind(purpose)
+        .bind(deleted_at)
+        .execute(pool)
+        .await
+        .unwrap();
+        id
+    }
+
+    /// 按 handler 相同 SQL（同一常量）取列表与计数；查询失败即等价于 handler 的 500 分支。
+    async fn fetch_vehicle_requests(
+        pool: &sqlx::PgPool,
+        status: Option<&str>,
+    ) -> (Vec<VehicleApplication>, i64) {
+        let mut conn = pool.acquire().await.unwrap();
+        sqlx::query("SET search_path TO erp, public")
+            .execute(&mut *conn)
+            .await
+            .unwrap();
+        let search_pattern: Option<String> = None;
+        let status_filter: Option<String> = status.map(str::to_string);
+        let rows = sqlx::query_as::<_, VehicleApplication>(LIST_VEHICLE_REQUESTS_SQL)
+            .bind(&search_pattern)
+            .bind(&status_filter)
+            .bind(20_i64)
+            .bind(0_i64)
+            .fetch_all(&mut *conn)
+            .await
+            .expect("列表查询应成功（handler 侧转换为 200）");
+        let total: i64 = sqlx::query_scalar(COUNT_VEHICLE_REQUESTS_SQL)
+            .bind(&search_pattern)
+            .bind(&status_filter)
+            .fetch_one(&mut *conn)
+            .await
+            .unwrap();
+        (rows, total)
+    }
+
     #[test]
     fn test_vehicle_query_params_deserialize() {
         let query = "page=1&page_size=20&search=car&status=active&vehicle_type=sedan";
@@ -1053,5 +1145,30 @@ mod tests {
         assert!(params.search.is_none());
         assert!(params.status.is_none());
         assert!(params.vehicle_type.is_none());
+    }
+
+    /// K3：软删行不得出现在列表与总数里。
+    #[sqlx::test(migrations = false)]
+    async fn list_vehicle_requests_excludes_soft_deleted(pool: sqlx::PgPool) {
+        setup_vehicle_requests(&pool).await;
+        let alive = insert_vehicle_request(&pool, Some("接送客户"), false).await;
+        insert_vehicle_request(&pool, Some("已删除申请"), true).await;
+
+        let (rows, total) = fetch_vehicle_requests(&pool, None).await;
+        assert_eq!(total, 1, "软删行不应计入 total");
+        assert_eq!(rows.len(), 1, "软删行不应出现在列表");
+        assert_eq!(rows[0].id, alive);
+    }
+
+    /// K4：`purpose IS NULL` 的行不应让列表解码失败（handler 返回 500）。
+    #[sqlx::test(migrations = false)]
+    async fn list_vehicle_requests_allows_null_purpose(pool: sqlx::PgPool) {
+        setup_vehicle_requests(&pool).await;
+        insert_vehicle_request(&pool, None, false).await;
+
+        let (rows, total) = fetch_vehicle_requests(&pool, None).await;
+        assert_eq!(total, 1);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].purpose, None);
     }
 }

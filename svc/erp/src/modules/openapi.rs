@@ -230,7 +230,8 @@ pub struct VehicleRequest {
     pub vehicle_id: Uuid,
     pub vehicle_plate: String,
     pub requester: String,
-    pub purpose: String,
+    /// 库列可空，实际接口可能返回 null（K4）
+    pub purpose: Option<String>,
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,
     pub driver_required: bool,
