@@ -1035,31 +1035,51 @@ pub async fn get_logs_by_user(
 // ─── Handlers: Realtime / Dashboard / Performance / SLA ─────────────────────
 
 /// GET /monitor/realtime
-pub async fn get_realtime_stats(State(state): State<AppState>) -> ApiResponse<RealtimeStats> {
-    let active: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
-    )
+pub async fn get_realtime_stats(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<RealtimeStats> {
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_realtime_stats",
+        "core_workflow_instances",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let active: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending') AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let pending_tasks: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
-    )
+    let pending_tasks: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let completed_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE",
-    )
+    let completed_today: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let error_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
-    )
+    let error_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -1253,31 +1273,51 @@ pub async fn get_dashboard_data(
 /// GET /monitor/performance
 pub async fn get_performance_metrics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<PerformanceMetrics> {
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at IS NOT NULL",
-    )
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_performance_metrics",
+        "core_workflow_instances",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
+
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at IS NOT NULL AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let avg_duration: f64 = sqlx::query_scalar(
+    let avg_duration: f64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
-    )
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL AND {}"#,
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let total_all: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
-    let error_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
-    )
+    let error_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -1288,7 +1328,7 @@ pub async fn get_performance_metrics(
         0.0
     };
 
-    let by_workflow: Vec<WorkflowPerformance> = sqlx::query_as(
+    let by_workflow: Vec<WorkflowPerformance> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT w.id::text as workflow_id, w.name as workflow_name,
                   COUNT(i.id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (i.completed_at - i.started_at))), 0) as avg_duration_seconds,
@@ -1296,9 +1336,13 @@ pub async fn get_performance_metrics(
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'error')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as error_rate
            FROM public.core_workflows w
-           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id AND {instance_pred}
+           WHERE {workflow_pred}
            GROUP BY w.id, w.name ORDER BY instance_count DESC LIMIT 20"#,
-    )
+        instance_pred = scope.sql_predicate("i.tenant_id", "$1"),
+        workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -1322,30 +1366,50 @@ pub async fn get_performance_metrics(
 /// GET /monitor/sla-compliance
 pub async fn get_sla_compliance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<SlaCompliance> {
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.flow.monitor.get_sla_compliance",
+        "core_workflow_instances",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::bad_request(&message),
+    };
 
-    let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
-    )
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let error: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
-    )
+    let completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let rejected: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
-    )
+    let error: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let rejected: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected' AND {}",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -1356,7 +1420,7 @@ pub async fn get_sla_compliance(
         0.0
     };
 
-    let by_workflow: Vec<WorkflowSla> = sqlx::query_as(
+    let by_workflow: Vec<WorkflowSla> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT w.id::text as workflow_id, w.name as workflow_name,
                   COUNT(i.id) as total_instances,
                   COUNT(*) FILTER (WHERE i.status = 'completed') as compliant_count,
@@ -1365,16 +1429,22 @@ pub async fn get_sla_compliance(
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'completed')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as compliance_rate
            FROM public.core_workflows w
-           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id AND {instance_pred}
+           WHERE {workflow_pred}
            GROUP BY w.id, w.name ORDER BY total_instances DESC LIMIT 20"#,
-    )
+        instance_pred = scope.sql_predicate("i.tenant_id", "$1"),
+        workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
-    let by_status: Vec<StatusCount> = sqlx::query_as(
-        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances GROUP BY status ORDER BY count DESC",
-    )
+    let by_status: Vec<StatusCount> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances WHERE {} GROUP BY status ORDER BY count DESC",
+        scope.sql_predicate("tenant_id", "$1")
+    )))
+    .bind_tenant_scope(&scope)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
