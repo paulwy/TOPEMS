@@ -145,7 +145,7 @@ pub async fn create_scope(
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
         INSERT INTO erp.consolidation_scopes (id, code, name, description, consolidation_method, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID))
         RETURNING *
         "#,
     )

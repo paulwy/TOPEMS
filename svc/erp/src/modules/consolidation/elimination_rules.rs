@@ -157,7 +157,7 @@ pub async fn create_elimination_rule(
         r#"
         INSERT INTO erp.elimination_rules
         (id, scope_id, code, name, type, description, status, direction, debit_account_codes, credit_account_codes, company_pairs, auto_elimination, priority, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID))
         RETURNING *
         "#,
     )

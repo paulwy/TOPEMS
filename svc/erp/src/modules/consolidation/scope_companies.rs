@@ -108,7 +108,7 @@ pub async fn add_scope_company(
         r#"
         INSERT INTO erp.consolidation_scope_companies
         (id, scope_id, company_id, is_parent, control_type, ownership_percentage, consolidation_percentage, minority_interest, effective_date, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID))
         RETURNING *
         "#,
     )

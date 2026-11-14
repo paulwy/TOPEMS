@@ -271,8 +271,7 @@ pub async fn create_internal_transaction(
          transaction_type, description, amount, currency,
          elimination_status, eliminated_amount, remaining_amount, voucher_id, created_at)
         VALUES ($1,
-                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID,
-                         '00000000-0000-0000-0000-000000000000'),
+                erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID),
                 $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
                 'unmatched', 0, $11, $13, NOW())
         RETURNING *

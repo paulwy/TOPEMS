@@ -424,8 +424,7 @@ pub(crate) async fn scan_core(
              transaction_type, account_pair, amount, debit_voucher_id, credit_voucher_id,
              from_ledger_id, to_ledger_id, aux_type, aux_id, status, created_at)
             VALUES (gen_random_uuid(),
-                    COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID,
-                             '00000000-0000-0000-0000-000000000000'),
+                    erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID),
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULL, $12, 'pending', NOW())
             ON CONFLICT (scope_id, period, from_ledger_id, to_ledger_id) DO NOTHING
             "#,
