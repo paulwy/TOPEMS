@@ -17,6 +17,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -227,32 +228,40 @@ pub async fn list_accidents(
     _headers: HeaderMap,
     Query(q): Query<AccidentQuery>,
 ) -> ApiResponse<Vec<Accident>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.list_accidents",
+        "ehs.qa_ehs_accidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open accident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind: String = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(status) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(status.clone());
     }
     if let Some(severity) = &q.severity {
-        where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND severity = ${}", params.len() + filter_base));
         params.push(severity.clone());
     }
 
@@ -271,6 +280,9 @@ pub async fn list_accidents(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -444,34 +456,42 @@ pub async fn get_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AccidentDetail> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
-        Err(resp) => return resp,
-    };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let tenant_scope =
+        match dual_scope(&claims, "ehs.accident.get_accident", "ehs.qa_ehs_accidents") {
+            Ok(s) => s,
+            Err(resp) => return resp,
+        };
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open accident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting accident detail: {}", id);
 
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, accident_no, title, description, accident_type, severity,
                   location, occurred_at AS occurred_at, casualties,
                   economic_loss::text AS economic_loss, status, reported_by,
                   created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
            FROM ehs.qa_ehs_accidents
-           WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-             AND id = $1::uuid AND deleted_at IS NULL"#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+           WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"#
+    } else {
+        r#"SELECT id::text AS id, accident_no, title, description, accident_type, severity,
+                  location, occurred_at AS occurred_at, casualties,
+                  economic_loss::text AS economic_loss, status, reported_by,
+                  created_at AS created_at, updated_at AS updated_at,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_accidents
+           WHERE id = $1::uuid AND deleted_at IS NULL"#
+    };
+    let mut query = sqlx::query(sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
 
     let row = match row {
         Ok(Some(r)) => r,
@@ -516,47 +536,63 @@ pub async fn update_accident(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateAccidentRequest>,
 ) -> ApiResponse<Accident> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.update_accident",
+        "ehs.qa_ehs_accidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open accident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating accident {}: {:?}", id, req);
 
-    let result = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_accidents
            SET title=$1, description=$2, accident_type=$3, severity=$4, location=$5,
                occurred_at=$6, casualties=$7, economic_loss=$8, updated_at=now()
-           WHERE ($9 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $9)
-             AND id = $10::uuid AND deleted_at IS NULL
+           WHERE id = $9::uuid AND tenant_id = $10::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
                      location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
                      created_at AS created_at, updated_at AS updated_at,
-                     tenant_id::text AS tenant_id"#,
-    )
-    .bind(&req.title)
-    .bind(&req.description)
-    .bind(&req.accident_type)
-    .bind(&req.severity)
-    .bind(&req.location)
-    .bind(req.occurred_at.and_then(|t| {
-        chrono::DateTime::parse_from_rfc3339(&t)
-            .ok()
-            .map(|d| d.with_timezone(&chrono::Utc))
-    }))
-    .bind(req.casualties.unwrap_or(0))
-    .bind(req.economic_loss.unwrap_or(0.0))
-    .bind(&tenant_bind)
-    .bind(&id);
-    let row = match result.fetch_optional(&mut scope).await {
+                     tenant_id::text AS tenant_id"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_accidents
+           SET title=$1, description=$2, accident_type=$3, severity=$4, location=$5,
+               occurred_at=$6, casualties=$7, economic_loss=$8, updated_at=now()
+           WHERE id = $9::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
+                     location, occurred_at AS occurred_at, casualties,
+                     economic_loss::text AS economic_loss, status, reported_by,
+                     created_at AS created_at, updated_at AS updated_at,
+                     tenant_id::text AS tenant_id"#
+    };
+    let mut query = sqlx::query(sql)
+        .bind(&req.title)
+        .bind(&req.description)
+        .bind(&req.accident_type)
+        .bind(&req.severity)
+        .bind(&req.location)
+        .bind(req.occurred_at.and_then(|t| {
+            chrono::DateTime::parse_from_rfc3339(&t)
+                .ok()
+                .map(|d| d.with_timezone(&chrono::Utc))
+        }))
+        .bind(req.casualties.unwrap_or(0))
+        .bind(req.economic_loss.unwrap_or(0.0))
+        .bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("事故不存在"),
         Err(e) => {
@@ -735,37 +771,49 @@ pub async fn update_investigation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInvestigationRequest>,
 ) -> ApiResponse<Investigation> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.update_investigation",
+        "ehs.qa_ehs_investigations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open investigation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_investigations
            SET findings=COALESCE($1, findings), root_cause=COALESCE($2, root_cause),
                timeline=$3::jsonb, status=COALESCE($4, status), updated_at=now()
-           WHERE ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $5)
-             AND accident_id = $6::uuid AND deleted_at IS NULL
+           WHERE accident_id = $5::uuid AND tenant_id = $6::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
-                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
-    )
-    .bind(&req.findings)
-    .bind(&req.root_cause)
-    .bind(serde_json::to_string(&req.timeline).unwrap_or_else(|_| "null".into()))
-    .bind(&req.status)
-    .bind(&tenant_bind)
-    .bind(&id)
-    .fetch_optional(&mut scope)
-    .await;
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_investigations
+           SET findings=COALESCE($1, findings), root_cause=COALESCE($2, root_cause),
+               timeline=$3::jsonb, status=COALESCE($4, status), updated_at=now()
+           WHERE accident_id = $5::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
+                     timeline, status, started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
+    };
+    let mut query = sqlx::query(sql)
+        .bind(&req.findings)
+        .bind(&req.root_cause)
+        .bind(serde_json::to_string(&req.timeline).unwrap_or_else(|_| "null".into()))
+        .bind(&req.status)
+        .bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("调查记录不存在"),
@@ -899,37 +947,47 @@ pub async fn update_treatment_action(
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> ApiResponse<TreatmentAction> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.update_treatment_action",
+        "ehs.qa_ehs_treatment_actions",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open treatment action scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_treatment_actions
            SET status=COALESCE($1, status), completed_at=$2, updated_at=now()
-           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
-             AND id = $4::uuid AND deleted_at IS NULL
+           WHERE id = $3::uuid AND tenant_id = $4::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
-                     status, completed_at AS completed_at, tenant_id::text AS tenant_id"#,
-    )
-    .bind(&req.status)
-    .bind(req.completed_at.and_then(|d| {
-        chrono::DateTime::parse_from_rfc3339(&d)
-            .ok()
-            .map(|t| t.with_timezone(&chrono::Utc))
-    }))
-    .bind(&tenant_bind)
-    .bind(&action_id)
-    .fetch_optional(&mut scope)
-    .await;
+                     status, completed_at AS completed_at, tenant_id::text AS tenant_id"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_treatment_actions
+           SET status=COALESCE($1, status), completed_at=$2, updated_at=now()
+           WHERE id = $3::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
+                     status, completed_at AS completed_at, tenant_id::text AS tenant_id"#
+    };
+    let mut query = sqlx::query(sql)
+        .bind(&req.status)
+        .bind(req.completed_at.and_then(|d| {
+            chrono::DateTime::parse_from_rfc3339(&d)
+                .ok()
+                .map(|t| t.with_timezone(&chrono::Utc))
+        }))
+        .bind(&action_id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("处置行动不存在"),
@@ -973,34 +1031,45 @@ pub async fn close_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Accident> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.close_accident",
+        "ehs.qa_ehs_accidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open accident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
     tracing::info!("Closing accident: {}", id);
 
-    let tenant_bind = tenant.to_string();
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_accidents SET status='closed', updated_at=now()
-           WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-             AND id = $1::uuid AND deleted_at IS NULL
+           WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
                      location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
                      created_at AS created_at, updated_at AS updated_at,
-                     tenant_id::text AS tenant_id"#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+                     tenant_id::text AS tenant_id"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_accidents SET status='closed', updated_at=now()
+           WHERE id = $1::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
+                     location, occurred_at AS occurred_at, casualties,
+                     economic_loss::text AS economic_loss, status, reported_by,
+                     created_at AS created_at, updated_at AS updated_at,
+                     tenant_id::text AS tenant_id"#
+    };
+    let mut query = sqlx::query(sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("事故不存在"),
@@ -1033,33 +1102,42 @@ pub async fn complete_investigation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Investigation> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.complete_investigation",
+        "ehs.qa_ehs_investigations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open investigation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::info!("Completing investigation for accident: {}", id);
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_investigations
            SET status='completed', completed_at=now(), updated_at=now()
-           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
-             AND accident_id = $1::uuid AND deleted_at IS NULL
+           WHERE accident_id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
-                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_investigations
+           SET status='completed', completed_at=now(), updated_at=now()
+           WHERE accident_id = $1::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
+                     timeline, status, started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
+    };
+    let mut query = sqlx::query(sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("调查记录不存在"),
@@ -1268,30 +1346,37 @@ pub async fn list_incident_actions(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.list_incident_actions",
+        "ehs.qa_ehs_incident_actions",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident action scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let rows = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, title, status, created_at AS created_at
            FROM ehs.qa_ehs_incident_actions
-           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
-             AND accident_id = $1::uuid AND deleted_at IS NULL
-           ORDER BY created_at DESC"#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await;
+           WHERE accident_id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+           ORDER BY created_at DESC"#
+    } else {
+        r#"SELECT id::text AS id, title, status, created_at AS created_at
+           FROM ehs.qa_ehs_incident_actions
+           WHERE accident_id = $1::uuid AND deleted_at IS NULL
+           ORDER BY created_at DESC"#
+    };
+    let mut query = sqlx::query(sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let rows = query.fetch_all(&mut scope).await;
     match rows {
         Ok(r) => {
             let list: Vec<serde_json::Value> = r
@@ -1377,32 +1462,37 @@ pub async fn update_incident_action(
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.accident.update_incident_action",
+        "ehs.qa_ehs_incident_actions",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident action scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let status = req
         .get("status")
         .and_then(|v| v.as_str())
         .unwrap_or("in_progress");
-    let r = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
-         WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
-           AND id = $3::uuid AND deleted_at IS NULL",
-    )
-    .bind(status)
-    .bind(&tenant_bind)
-    .bind(&action_id)
-    .execute(&mut scope)
-    .await;
+         WHERE id = $2::uuid AND tenant_id = $3::uuid AND deleted_at IS NULL"
+    } else {
+        "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
+         WHERE id = $2::uuid AND deleted_at IS NULL"
+    };
+    let mut query = sqlx::query(sql).bind(status).bind(&action_id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let r = query.execute(&mut scope).await;
     if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit tenant write: {}", e);
         return ApiResponse::server_error("提交事务失败");
