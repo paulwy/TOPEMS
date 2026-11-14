@@ -30,3 +30,11 @@ psql "$TARGET_DB_URL" -X -v ON_ERROR_STOP=1 \
 1. 统计与执行之间存在窗口期：迁移内部会再校验一次，期间新增的空串/非法值同样触发 `RAISE EXCEPTION`，整事务中止。
 2. 迁移只做类型收敛：全部合法时执行 `ALTER COLUMN starts_at TYPE timestamptz USING btrim(starts_at)::timestamptz`，并 `DROP DEFAULT`（不安装新默认值，避免静默落值）。
 3. 任一门禁失败时数据库保持原状：列类型仍为 `text`、DEFAULT 仍为 `''::text`、NOT NULL 与约束不变。
+
+## 版本号台账
+
+`20261114130000` 这个号此前用于已撤回的 `..._w7_b4_ledger_monotonic_guard.sql`（`78cdae151` 引入，`a9fa83343` 连同回滚与 manifest 条目一起删除）。撤回后，版本单调守卫改为只在迁移入口层实现，数据库层不再有触发器。
+
+复用前核查结果：本机 46 个非模板库的 `_sqlx_migrations` 中该版本行数全部为 0；271 个 ref 的最终树中均无该守卫文件。因此现由 `starts_at` 迁移复用该号。
+
+**复用风险**：若将来从备份恢复一个曾应用过该守卫的库，或基于 `78cdae151` 复建分支，`starts_at` 新文件会被账本判为「该版本已应用」而静默跳过，类型收敛不会执行。届时须先查目标库 `_sqlx_migrations` 是否已有 `20261114130000` 行，再决定是否换号，不可直接按默认路径应用。
