@@ -317,6 +317,53 @@ else
   done
 fi
 
+# 事务控制语句检查：迁移文件不得自带 BEGIN/COMMIT/ROLLBACK。
+# 文件内 COMMIT 会让外层 --single-transaction 提前结束，账本写入落到事务外，
+# 一旦被守卫拒绝就留下「DDL 已提交、账本未写」的半应用态。
+log_info "Checking explicit transaction control..."
+TRANSACTION_ALLOWLIST_FILE="$REPO_ROOT/scripts/migration/legacy-transaction-block-allowlist.txt"
+TRANSACTION_ALLOWLIST=()
+if [[ -f "$TRANSACTION_ALLOWLIST_FILE" ]]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="$(printf '%s' "$line" | tr -d '[:space:]')"
+    [[ -n "$line" ]] && TRANSACTION_ALLOWLIST+=("$line")
+  done < "$TRANSACTION_ALLOWLIST_FILE"
+fi
+
+transaction_allowed() {
+  local needle="$1" x
+  for x in ${TRANSACTION_ALLOWLIST[@]+"${TRANSACTION_ALLOWLIST[@]}"}; do
+    [[ "$x" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
+TRANSACTION_VIOLATIONS=()
+for dir in "${MIGRATION_DIRS[@]}"; do
+  full_dir="$REPO_ROOT/$dir"
+  [[ -d "$full_dir" ]] || continue
+  while IFS= read -r -d '' file; do
+    if grep -qE '^[[:space:]]*(BEGIN|COMMIT|ROLLBACK)[[:space:]]*;' "$file"; then
+      version="$(extract_version "$(basename "$file")")"
+      if [[ -z "$version" ]] || ! transaction_allowed "$version"; then
+        TRANSACTION_VIOLATIONS+=("$(rel_path "$file")")
+      fi
+    fi
+  done < <(find "$full_dir" -maxdepth 1 -type f \( -name '*.sql' \) ! -name '*.backup' ! -name '*.sql.backup' ! -name '*.down.sql' -print0 | sort -z)
+done
+
+if [[ ${#TRANSACTION_VIOLATIONS[@]} -eq 0 ]]; then
+  log_ok "No migration manages its own transaction (BEGIN/COMMIT/ROLLBACK)"
+else
+  log_err "${#TRANSACTION_VIOLATIONS[@]} migration(s) contain explicit BEGIN/COMMIT/ROLLBACK (would break single-transaction + ledger atomicity)"
+  for f in "${TRANSACTION_VIOLATIONS[@]}"; do
+    echo "  - $f"
+  done
+  echo "  迁移文件不得自带事务控制：外层 --single-transaction 会被文件内 COMMIT 提前结束，"
+  echo "  账本写入落到事务外，被拒时产生「DDL 已提交、账本未写」半应用态。"
+fi
+
 # Checksum check
 log_info "Checking checksums..."
 mkdir -p "$(dirname "$CHECKSUM_PATH")"
@@ -422,6 +469,7 @@ echo "Invalid filenames:             ${#INVALID_FILES[@]}"
 echo "Version ordering issues:       ${#ORDER_ISSUES[@]}"
 echo "Idempotency warnings:          ${#IDEMPOTENCY_WARNINGS[@]}"
 echo "Multi-responsibility flags:    ${#SINGLE_RESPONSIBILITY_WARNINGS[@]}"
+echo "Explicit transaction blocks:   ${#TRANSACTION_VIOLATIONS[@]}"
 echo "Missing down migrations:       ${#DOWN_MIGRATION_WARNINGS[@]}"
 echo "Checksum errors:               ${#CHECKSUM_ERRORS[@]}"
 echo "Schema drift issues:           ${#SCHEMA_DRIFT[@]}"
@@ -441,6 +489,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     echo "| Version ordering issues | ${#ORDER_ISSUES[@]} | $([ ${#ORDER_ISSUES[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Idempotency warnings | ${#IDEMPOTENCY_WARNINGS[@]} | $([ ${#IDEMPOTENCY_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
     echo "| Multi-responsibility flags | ${#SINGLE_RESPONSIBILITY_WARNINGS[@]} | $([ ${#SINGLE_RESPONSIBILITY_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
+    echo "| Explicit transaction blocks | ${#TRANSACTION_VIOLATIONS[@]} | $([ ${#TRANSACTION_VIOLATIONS[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Missing down migrations | ${#DOWN_MIGRATION_WARNINGS[@]} | $([ ${#DOWN_MIGRATION_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
     echo "| Checksum errors | ${#CHECKSUM_ERRORS[@]} | $([ ${#CHECKSUM_ERRORS[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Schema drift issues | ${#SCHEMA_DRIFT[@]} | $([ ${#SCHEMA_DRIFT[@]} -eq 0 ] && echo '✅' || echo '❌') |"

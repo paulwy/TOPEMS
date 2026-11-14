@@ -1047,10 +1047,3 @@ pending_forward_patches:
     effect: "18 张表的 ck_*_status_standard 值域 = 现状 active/inactive/archived ∪ 代码实际写入的流程态（draft/suspected/paid/running 等），共 18 条约束重建"
     destructive_scan: "ALTER TABLE DROP/ADD CONSTRAINT；无 DELETE/UPDATE/TRUNCATE；表/约束缺失、现状定义含目标外值、存在越界存量行时 RAISE EXCEPTION 中止"
     note: "前向迁移 > 20261113100000，不改已推送历史；target 逐表可指到代码写入点（清单见 status约束清单-2026-11-14.md）；配 database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql，写入新值后回滚会失败"
-
-  - version: "20261114130000"
-    file: "database/migrations/20261114130000_w7_b4_ledger_monotonic_guard.sql"
-    status: to_apply
-    effect: "public._sqlx_migrations 安装 BEFORE INSERT 触发器：version < 账本 max(success) 时 RAISE EXCEPTION，任何绕过 apply-forward.sh 的乱序落库（裸 sqlx migrate run、psql 手写账本）直接失败"
-    destructive_scan: "CREATE OR REPLACE FUNCTION + DROP TRIGGER IF EXISTS + CREATE TRIGGER；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；public._sqlx_migrations 不存在时 NOTICE SKIP"
-    note: "前向迁移 > 20261114120000，不改已推送历史；升序应用（含基线账本 ORDER BY version 重放）不受影响；配 database/rollback/20261114130000_w7_b4_ledger_monotonic_guard.rollback.sql"

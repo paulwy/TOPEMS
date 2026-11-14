@@ -38,9 +38,21 @@
 #   非 prod 需显式 ALLOW_ANCHOR_REWIND=1 且 PROD_CHANGE_TICKET 非空才放行（仅演练用）。
 #   旧版本永不 in-place 重放：请在 database/migration_manifest.yaml 登记处置，
 #   用 version > 账本 max 的前向补丁承接效果。
-#   数据库级兜底（20261114130000）：public._sqlx_migrations 上的 BEFORE INSERT 触发器
-#   会拒绝 version < 账本 max 的插入——裸 `sqlx migrate run` 等绕过本脚本的路径同样失败；
-#   ALLOW_ANCHOR_REWIND 只对「账本没有更高版本」的副本库有意义。
+#
+# 版本单调性只在入口校验（2026-11-14 方案 B）：
+#   `public._sqlx_migrations` 上不装任何触发器；升序保证完全由本脚本提供：
+#     - 正常模式：anchor 必须等于账本 max，扫描只收 version > anchor；
+#     - 补投模式：--apply-deferred 单版本 + --ticket，允许 version <= 账本 max。
+#   绕过本脚本（裸 sqlx / psql 手写账本）不会失败——这正是方案 B 的已知取舍。
+#   所有校验都在任何 DDL 之前完成：校验不通过 = 零 DDL、零半应用态。
+#   迁移文件不得自带 BEGIN/COMMIT（validate.sh 强制，36 个存量白名单待清理）：
+#   文件内 COMMIT 会让 --single-transaction 提前结束，产生「DDL 已提交、账本未写」半应用。
+#
+# defer 补投（正式入口）：
+#   --apply-deferred <version> --ticket <ticket>
+#   只扫描并应用该单版本，不与 --only/--defer 组合；prod 同样可用；
+#   仍执行定向迁移命名与破坏性语句校验（ticket 用于破坏性标记比对）。
+#   适用：某版本在历史窗口被 --defer 保持 pending，之后需要单独补投。
 #
 # SSH 模式（prod 主机不在本地暴露 DSN）：
 #   --ssh-host <user@host>   --remote-db <db>   --remote-mig-dir <已投递校验的远端目录>
@@ -52,6 +64,8 @@
 #     --anchor 20261105235700 --only 20261107000008,20261107000013 \
 #     --defer 20261105235800,20261106000000,...
 #   bash scripts/migration/apply-forward.sh --dsn "$DSN" --anchor 20261105235700
+#   bash scripts/migration/apply-forward.sh --db topems --apply-deferred 20261114100000 \
+#     --ticket CHG-2026-1114
 #   WINDOW_SSH_LOCAL_SIM=1 bash scripts/migration/apply-forward.sh \
 #     --ssh-host sim --remote-db topems_window_drill \
 #     --remote-mig-dir /tmp/window/migrations --anchor "$ANCHOR" \
@@ -71,6 +85,8 @@ ALLOW_PENDING=()
 ALLOW_DESTRUCTIVE=""
 ONLY_RAW=""
 DEFER_RAW=""
+DEFER_APPLY_VERSION=""
+TICKET="${PROD_CHANGE_TICKET:-}"
 SSH_HOST="${WINDOW_SSH_HOST:-}"
 REMOTE_DB="${WINDOW_REMOTE_DB:-}"
 REMOTE_MIG_DIR="${WINDOW_REMOTE_MIG_DIR:-}"
@@ -89,10 +105,12 @@ while [[ $# -gt 0 ]]; do
     --allow-destructive=*) ALLOW_DESTRUCTIVE="${1#*=}"; shift ;;
     --only) ONLY_RAW="$2"; shift 2 ;;
     --defer) DEFER_RAW="$2"; shift 2 ;;
+    --apply-deferred) DEFER_APPLY_VERSION="$2"; shift 2 ;;
+    --ticket) TICKET="$2"; shift 2 ;;
     --ssh-host) SSH_HOST="$2"; shift 2 ;;
     --remote-db) REMOTE_DB="$2"; shift 2 ;;
     --remote-mig-dir) REMOTE_MIG_DIR="$2"; shift 2 ;;
-    -h|--help) sed -n '2,46p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,75p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -100,6 +118,31 @@ done
 if [[ "${WINDOW_TARGET:-}" == "prod" && $PROD -eq 0 ]]; then
   echo "拒绝：WINDOW_TARGET=prod 时 apply-forward 必须带 --prod" >&2
   exit 1
+fi
+
+# --- --apply-deferred 参数校验（方案 B：defer 补投的唯一正式入口，全部在 DDL 之前） ---
+if [[ -n "$DEFER_APPLY_VERSION" ]]; then
+  if [[ ! "$DEFER_APPLY_VERSION" =~ ^[0-9]{14}$ ]]; then
+    echo "拒绝：--apply-deferred 只接受单个 14 位版本号（收到：${DEFER_APPLY_VERSION}）" >&2
+    exit 2
+  fi
+  if [[ -n "$ONLY_RAW" || -n "$DEFER_RAW" ]]; then
+    echo "拒绝：--apply-deferred 不能与 --only/--defer 组合（补投只应用该单版本）" >&2
+    exit 2
+  fi
+  if [[ -n "$ANCHOR" ]]; then
+    echo "拒绝：--apply-deferred 不与 --anchor 组合（锚点由账本水位推导）" >&2
+    exit 2
+  fi
+  if [[ -z "$TICKET" ]]; then
+    echo "拒绝：--apply-deferred 必须同时提供 --ticket（写入执行日志，并用于破坏性标记比对）" >&2
+    exit 2
+  fi
+  PROD_CHANGE_TICKET="$TICKET"
+  if ! compgen -G "$MIG_DIR/${DEFER_APPLY_VERSION}_*.sql" > /dev/null; then
+    echo "拒绝：--apply-deferred 的版本 ${DEFER_APPLY_VERSION} 没有对应迁移文件（$MIG_DIR）" >&2
+    exit 2
+  fi
 fi
 
 sq() { printf '%q' "$1"; }
@@ -144,7 +187,13 @@ fi
 # 账本 max(success) 是唯一水位线；显式 --anchor 不得偏离，避免把锚点以下的
 # 历史 defer 重新变成 pending（这正是 43 个孤儿产生的机制）。
 LEDGER_MAX="$(psql_exec -tA -c "SELECT COALESCE(max(version),0) FROM _sqlx_migrations WHERE success" 2>/dev/null || echo 0)"
-if [[ "$LEDGER_MAX" =~ ^[0-9]+$ ]] && (( 10#$LEDGER_MAX > 0 )) && (( 10#$ANCHOR != 10#$LEDGER_MAX )); then
+if [[ -n "$DEFER_APPLY_VERSION" ]]; then
+  echo "== DEFER 补投模式：version=${DEFER_APPLY_VERSION}，ticket=${TICKET}，账本水位=${LEDGER_MAX}（允许 version <= 水位，仅此单版本）" >&2
+  if psql_exec -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=${DEFER_APPLY_VERSION} AND success" | grep -q '1'; then
+    echo "== 拒绝：版本 ${DEFER_APPLY_VERSION} 已在账本，补投无意义（未产生任何 DDL）" >&2
+    exit 1
+  fi
+elif [[ "$LEDGER_MAX" =~ ^[0-9]+$ ]] && (( 10#$LEDGER_MAX > 0 )) && (( 10#$ANCHOR != 10#$LEDGER_MAX )); then
   echo "== 拒绝：锚点偏离账本水位（--anchor=${ANCHOR}，账本 max=${LEDGER_MAX}）" >&2
   echo "   锚点下移会把历史 defer 重新纳入扫描；锚点上跳会静默跳过 pending。" >&2
   echo "   旧版本不得 in-place 重放：请在 database/migration_manifest.yaml 登记处置，用 > 账本 max 的前向补丁承接。" >&2
@@ -220,7 +269,12 @@ while IFS= read -r f; do
   b="$(basename "$f")"
   [[ "$b" =~ ^[0-9]{14}_ ]] || continue
   v="${b%%_*}"
-  (( 10#$v > 10#$ANCHOR )) || continue
+  if [[ -n "$DEFER_APPLY_VERSION" ]]; then
+    # 补投模式：只收该单版本，允许其 <= 账本水位；不参与 --only/--defer 扫描
+    [[ "$v" == "$DEFER_APPLY_VERSION" ]] || continue
+  else
+    (( 10#$v > 10#$ANCHOR )) || continue
+  fi
   # </dev/null：SSH 模式下 psql 会继承并吞掉 while 的 stdin（进程替换），
   # 导致扫描在第 1 条后就结束、后续 pending 被静默跳过（fail-open）。
   if psql_exec -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" </dev/null | grep -q 1; then
@@ -309,7 +363,11 @@ EOF
 fi
 
 if [[ ${#PENDING[@]} -eq 0 ]]; then
-  echo "== 无待应用迁移（anchor=${ANCHOR}）"
+  if [[ -n "$DEFER_APPLY_VERSION" ]]; then
+    echo "== 无待应用迁移（DEFER 补投 version=${DEFER_APPLY_VERSION} 已无对应 pending）"
+  else
+    echo "== 无待应用迁移（anchor=${ANCHOR}）"
+  fi
   [[ ${#DEFERRED[@]} -gt 0 ]] && echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）：" && printf '  %s\n' "${DEFERRED[@]}"
   [[ ${#APPLIED_ONLY[@]} -gt 0 ]] && echo "== --only 中已应用: ${APPLIED_ONLY[*]}"
   exit 0
@@ -375,7 +433,11 @@ DG_GEN_JS
   done <<< "$dg_rows"
 done
 
-echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}${ONLY_RAW:+，only=$ONLY_RAW}）"
+if [[ -n "$DEFER_APPLY_VERSION" ]]; then
+  echo "== 待应用 ${#PENDING[@]} 条（DEFER 补投 version=${DEFER_APPLY_VERSION}，ticket=${TICKET}，账本水位=${LEDGER_MAX}）"
+else
+  echo "== 待应用 ${#PENDING[@]} 条（anchor=${ANCHOR}${ONLY_RAW:+，only=$ONLY_RAW}）"
+fi
 [[ ${#DEFERRED[@]} -gt 0 ]] && { echo "== 显式 defer ${#DEFERRED[@]} 条（保持 pending）："; printf '  %s\n' "${DEFERRED[@]}"; }
 for f in "${PENDING[@]}"; do
   b="$(basename "$f")"
