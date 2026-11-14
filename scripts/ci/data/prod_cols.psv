@@ -3642,8 +3642,6 @@ finance|finance_audit_log|entity_type|text|t|r
 finance|finance_audit_log|action|text|t|r
 finance|finance_audit_log|created_at|timestamp with time zone|t|r
 finance|finance_audit_log|tenant_id|uuid|t|r
-finance|finance_audit_rules_v|id|uuid|t|r
-finance|finance_audit_rules_v|deleted_at|timestamp with time zone|f|r
 finance|finance_audit_rules_v52|id|uuid|t|r
 finance|finance_audit_rules_v52|tenant_id|uuid|f|r
 finance|finance_audit_rules_v52|name|character varying(255)|f|r
@@ -3656,8 +3654,6 @@ finance|finance_audit_rules_v52|created_by|character varying(255)|f|r
 finance|finance_audit_rules_v52|created_at|timestamp with time zone|f|r
 finance|finance_audit_rules_v52|updated_at|timestamp with time zone|f|r
 finance|finance_audit_rules_v52|deleted_at|timestamp with time zone|f|r
-finance|finance_budget_variances_v|id|uuid|t|r
-finance|finance_budget_variances_v|deleted_at|timestamp with time zone|f|r
 finance|finance_budget_variances_v53|id|uuid|t|r
 finance|finance_budget_variances_v53|tenant_id|uuid|f|r
 finance|finance_budget_variances_v53|created_at|timestamp with time zone|f|r
@@ -3670,8 +3666,6 @@ finance|finance_budget_variances_v53|period|character varying(255)|f|r
 finance|finance_budget_variances_v53|trend|text|f|r
 finance|finance_budget_variances_v53|variance_amount|numeric(18,2)|f|r
 finance|finance_budget_variances_v53|variance_percentage|numeric(18,2)|f|r
-finance|finance_cash_flow_predictions_v|id|uuid|t|r
-finance|finance_cash_flow_predictions_v|deleted_at|timestamp with time zone|f|r
 finance|finance_cash_flow_predictions_v53|id|uuid|t|r
 finance|finance_cash_flow_predictions_v53|tenant_id|uuid|f|r
 finance|finance_cash_flow_predictions_v53|created_at|timestamp with time zone|f|r
@@ -3740,8 +3734,6 @@ finance|finance_detection_configs_v52|parameters|text|f|r
 finance|finance_detection_configs_v52|tenant_id|uuid|f|r
 finance|finance_detection_configs_v52|updated_at|timestamp with time zone|f|r
 finance|finance_detection_configs_v52|created_at|timestamp with time zone|f|r
-finance|finance_prediction_models_v|id|uuid|t|r
-finance|finance_prediction_models_v|deleted_at|timestamp with time zone|f|r
 finance|finance_prediction_models_v53|id|uuid|t|r
 finance|finance_prediction_models_v53|tenant_id|uuid|f|r
 finance|finance_prediction_models_v53|created_at|timestamp with time zone|f|r
@@ -3765,10 +3757,6 @@ finance|finance_risk_assessments|assessed_by|character varying(100)|t|r
 finance|finance_risk_assessments|created_at|timestamp with time zone|t|r
 finance|finance_risk_assessments|updated_at|timestamp with time zone|t|r
 finance|finance_risk_assessments|deleted_at|timestamp with time zone|f|r
-finance|finance_u|id|uuid|t|r
-finance|finance_u|deleted_at|timestamp with time zone|f|r
-finance|finance_v|id|uuid|t|r
-finance|finance_v|deleted_at|timestamp with time zone|f|r
 finance|finance_v54_fraud_rules|id|uuid|t|r
 finance|finance_v54_fraud_rules|tenant_id|uuid|t|r
 finance|finance_v54_fraud_rules|name|character varying(255)|t|r
