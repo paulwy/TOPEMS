@@ -1156,9 +1156,9 @@ pub async fn list_plan_results(
 
     let rows = sqlx::query(
         r#"
-        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result::FLOAT8,
                result_unit, test_date::TEXT, tested_by, instrument, test_method,
-               replicate_results, mean_value, standard_deviation, coefficient_variation,
+               replicate_results, mean_value::FLOAT8, standard_deviation::FLOAT8, coefficient_variation::FLOAT8,
                notes, submitted_at, created_at, updated_at, tenant_id::TEXT
         FROM qa_lims_pt_results
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
@@ -1288,10 +1288,10 @@ pub async fn evaluate_result(
             measurement_uncertainty, reference_uncertainty, evaluation_method,
             evaluation_result, evaluated_by, evaluated_at, notes, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-        RETURNING id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
-                  assigned_value, standard_deviation, z_score, en_score,
-                  measurement_uncertainty, reference_uncertainty, evaluation_method,
-                  evaluation_result, evaluated_by, evaluated_at, notes, created_at
+        RETURNING id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result::FLOAT8,
+                  assigned_value::FLOAT8, standard_deviation::FLOAT8, z_score::FLOAT8, en_score::FLOAT8,
+                  measurement_uncertainty::FLOAT8, reference_uncertainty::FLOAT8, evaluation_method,
+                  evaluation_result, evaluated_by, evaluated_at, notes, created_at, tenant_id::TEXT
         "#,
     )
     .bind(plan_id)
@@ -1399,9 +1399,9 @@ pub async fn list_plan_evaluations(
 
     let rows = sqlx::query(
         r#"
-        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
-               assigned_value, standard_deviation, z_score, en_score,
-               measurement_uncertainty, reference_uncertainty, evaluation_method,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result::FLOAT8,
+               assigned_value::FLOAT8, standard_deviation::FLOAT8, z_score::FLOAT8, en_score::FLOAT8,
+               measurement_uncertainty::FLOAT8, reference_uncertainty::FLOAT8, evaluation_method,
                evaluation_result, evaluated_by, evaluated_at, notes, created_at, tenant_id::TEXT
         FROM qa_lims_pt_evaluations
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
