@@ -161,6 +161,15 @@ pub async fn list_processes(
     let page_size = query.page_size.unwrap_or(10).min(100) as i64;
     let offset = (page - 1) * page_size;
 
+    // 租户作用域读：production_processes 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产工序列表失败");
+        }
+    };
+
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE tenant_id = $1");
 
@@ -191,7 +200,7 @@ pub async fn list_processes(
         count_query = count_query.bind(p.clone());
     }
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -223,7 +232,7 @@ pub async fn list_processes(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let processes = match fetch_query.fetch_all(&state.pool).await {
+    let processes = match fetch_query.fetch_all(&mut scope).await {
         Ok(p) => p,
         Err(e) => {
             tracing::error!("Failed to fetch processes: {}", e);
@@ -317,6 +326,18 @@ pub async fn create_process(
         )
     });
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::<ProductionProcessResponse>::server_error("创建生产工序失败"),
+            )
+                .into_response();
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         INSERT INTO mes.production_processes (
@@ -340,7 +361,7 @@ pub async fn create_process(
     .bind(req.work_station_id.as_deref())
     .bind(tenant_id)
     .bind(Utc::now())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
@@ -365,6 +386,15 @@ pub async fn create_process(
                 .into_response();
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产工序事务失败: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::<ProductionProcessResponse>::server_error("创建生产工序失败"),
+        )
+            .into_response();
+    }
 
     ApiResponse::success(ProductionProcessResponse::from(result), "生产工序创建成功")
         .into_response()
@@ -398,6 +428,14 @@ pub async fn get_process(
     // 租户上下文泄漏给后续复用该连接的其它请求）。
     let tenant_id = get_tenant_id_from_claims(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产工序失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         SELECT
@@ -411,7 +449,7 @@ pub async fn get_process(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -447,6 +485,18 @@ pub async fn update_process(
 
     let tenant_id = get_tenant_id_from_claims(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::<ProductionProcessResponse>::server_error("更新生产工序失败"),
+            )
+                .into_response();
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         UPDATE mes.production_processes SET
@@ -477,7 +527,7 @@ pub async fn update_process(
     .bind(req.work_station_id.as_deref())
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -504,8 +554,18 @@ pub async fn update_process(
     };
 
     match result {
-        Some(r) => ApiResponse::success(ProductionProcessResponse::from(r), "生产工序更新成功")
-            .into_response(),
+        Some(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交生产工序事务失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::<ProductionProcessResponse>::server_error("更新生产工序失败"),
+                )
+                    .into_response();
+            }
+            ApiResponse::success(ProductionProcessResponse::from(r), "生产工序更新成功")
+                .into_response()
+        }
         None => {
             ApiResponse::<ProductionProcessResponse>::not_found("生产工序不存在或状态不允许修改")
                 .into_response()
@@ -524,6 +584,14 @@ pub async fn delete_process(
 
     let tenant_id = get_tenant_id_from_claims(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除生产工序失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.production_processes SET deleted_at = NOW()
@@ -532,7 +600,7 @@ pub async fn delete_process(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
@@ -542,6 +610,11 @@ pub async fn delete_process(
             return ApiResponse::server_error("删除生产工序失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产工序事务失败: {}", e);
+        return ApiResponse::server_error("删除生产工序失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产工序删除成功")
@@ -587,6 +660,14 @@ pub async fn deactivate_process(
 
     let tenant_id = get_tenant_id_from_claims(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("停用生产工序失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, DeactivateProcessRow>(
         r#"
         UPDATE mes.production_processes SET
@@ -602,7 +683,7 @@ pub async fn deactivate_process(
     .bind(id)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -612,6 +693,11 @@ pub async fn deactivate_process(
             return ApiResponse::server_error("停用生产工序失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产工序事务失败: {}", e);
+        return ApiResponse::server_error("停用生产工序失败");
+    }
 
     match result {
         Some(r) => {

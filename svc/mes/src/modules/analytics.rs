@@ -214,6 +214,19 @@ pub async fn get_capacity_utilization(
     let days = query.days.unwrap_or(7);
     let tenant_id = get_tenant_id(&claims);
 
+    // 租户作用域读：mes 分析表受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(CapacityUtilizationResponse {
+                heatmap: vec![],
+                avg_utilization: 0.0,
+                total_equipment: 0,
+            });
+        }
+    };
+
     let result = sqlx::query_as::<_, (String, String, String, Option<f64>)>(
         r#"
         SELECT
@@ -230,7 +243,7 @@ pub async fn get_capacity_utilization(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -296,6 +309,19 @@ pub async fn get_energy_cost(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(EnergyCostResponse {
+                per_unit_trend: vec![],
+                energy_mix: vec![],
+                workshop_top_n: vec![],
+                total_cost: 0.0,
+            });
+        }
+    };
+
     // 从生产成本表聚合能源相关成本
     let cost_result = sqlx::query_as::<_, (String, Option<f64>)>(
         r#"
@@ -312,7 +338,7 @@ pub async fn get_energy_cost(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let (energy_mix, total_cost) = match cost_result {
@@ -358,7 +384,7 @@ pub async fn get_energy_cost(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let per_unit_trend: Vec<EnergyTrendItem> = match trend_result {
@@ -391,7 +417,7 @@ pub async fn get_energy_cost(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let workshop_top_n: Vec<WorkshopCostItem> = match workshop_result {
@@ -437,6 +463,19 @@ pub async fn get_equipment_mtbf(
     let days = query.days.unwrap_or(90);
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(EquipmentMtbfResponse {
+                by_equipment_type: vec![],
+                fault_reasons: vec![],
+                scatter: vec![],
+                avg_mtbf: 0.0,
+            });
+        }
+    };
+
     // 按设备类型统计 MTBF/MTTR
     let mtbf_result = sqlx::query_as::<_, (String, Option<f64>, Option<f64>)>(
         r#"
@@ -455,7 +494,7 @@ pub async fn get_equipment_mtbf(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let by_equipment_type: Vec<EquipmentMtbfItem> = match mtbf_result {
@@ -490,7 +529,7 @@ pub async fn get_equipment_mtbf(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let fault_reasons: Vec<FaultReasonItem> = match fault_result {
@@ -524,7 +563,7 @@ pub async fn get_equipment_mtbf(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let scatter: Vec<MtbfScatterItem> = match scatter_result {
@@ -577,6 +616,19 @@ pub async fn get_delivery_analytics(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(DeliveryAnalyticsResponse {
+                trend: vec![],
+                on_time_rate: 0.0,
+                total_orders: 0,
+                delayed_orders: 0,
+            });
+        }
+    };
+
     let result = sqlx::query_as::<_, (String, Option<i64>, Option<i64>, Option<f64>, Option<i64>)>(
         r#"
         SELECT
@@ -599,7 +651,7 @@ pub async fn get_delivery_analytics(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -665,6 +717,21 @@ pub async fn get_oee_dashboard(
     let days = query.days.unwrap_or(7);
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(OeeDashboardResponse {
+                avg_oee: 0.0,
+                avg_availability: 0.0,
+                avg_performance: 0.0,
+                avg_quality_rate: 0.0,
+                by_equipment: vec![],
+                trend: vec![],
+            });
+        }
+    };
+
     // 按设备统计 OEE
     let equipment_result =
         sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>)>(
@@ -686,7 +753,7 @@ pub async fn get_oee_dashboard(
         )
         .bind(days)
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let by_equipment: Vec<OeeDashboardItem> = match equipment_result {
@@ -726,7 +793,7 @@ pub async fn get_oee_dashboard(
         )
         .bind(days)
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let trend: Vec<OeeTrendItem> = match trend_result {
@@ -798,6 +865,18 @@ pub async fn get_quality_pareto(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            error!("建立只读作用域失败: {}", e);
+            return Json(QualityParetoResponse {
+                pareto: vec![],
+                total_defects: 0,
+                pass_rate: 0.0,
+            });
+        }
+    };
+
     let result = sqlx::query_as::<_, (String, Option<i64>)>(
         r#"
         SELECT
@@ -814,7 +893,7 @@ pub async fn get_quality_pareto(
     )
     .bind(days)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -858,7 +937,7 @@ pub async fn get_quality_pareto(
             )
             .bind(days)
             .bind(tenant_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let pass_rate = match pass_result {

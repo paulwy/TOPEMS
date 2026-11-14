@@ -222,6 +222,15 @@ pub async fn list_process_routes(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
+    // 租户作用域读：process_routes 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺路线列表失败");
+        }
+    };
+
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM process_routes pr{}",
         where_clause
@@ -234,7 +243,7 @@ pub async fn list_process_routes(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -267,7 +276,7 @@ pub async fn list_process_routes(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let routes = match fetch_query.fetch_all(&state.pool).await {
+    let routes = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process routes: {}", e);
@@ -360,6 +369,14 @@ pub async fn get_process_route(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺路线失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -370,7 +387,7 @@ pub async fn get_process_route(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -385,7 +402,7 @@ pub async fn get_process_route(
                 "#,
             )
             .bind(uuid)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let (total_estimated_time_minutes, process_count) = match step_stats {
@@ -438,6 +455,15 @@ pub async fn create_process_route(
     }
 
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建工艺路线失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO process_routes (route_code, route_name, description, tenant_id)
@@ -450,11 +476,15 @@ pub async fn create_process_route(
         body.description,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线事务失败: {}", e);
+                return ApiResponse::server_error("创建工艺路线失败");
+            }
             // 失效列表缓存（创建后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -531,6 +561,14 @@ pub async fn update_process_route(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工艺路线失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProcessRouteUpdateRow>(
         r#"
         UPDATE process_routes
@@ -549,11 +587,15 @@ pub async fn update_process_route(
     .bind(body.status)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线事务失败: {}", e);
+                return ApiResponse::server_error("更新工艺路线失败");
+            }
             // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -619,6 +661,14 @@ pub async fn delete_process_route(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工艺路线失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
@@ -626,11 +676,15 @@ pub async fn delete_process_route(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线事务失败: {}", e);
+                return ApiResponse::server_error("删除工艺路线失败");
+            }
             // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -690,6 +744,15 @@ pub async fn get_route_steps(
         }
     };
 
+    // 租户作用域读：process_route_steps 受 RLS 保护，裸 pool 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺路线步骤失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -706,7 +769,7 @@ pub async fn get_route_steps(
         "#,
         route_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -777,6 +840,15 @@ pub async fn add_route_step(
         .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("添加工艺路线步骤失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO process_route_steps (
@@ -793,7 +865,7 @@ pub async fn add_route_step(
         estimated_time_minutes,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -805,13 +877,18 @@ pub async fn add_route_step(
                 process_uuid,
                 tenant_id,
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线步骤事务失败: {}", e);
+                return ApiResponse::server_error("添加工艺路线步骤失败");
+            }
 
             ApiResponse::success(
                 ProcessRouteStepResponse {
@@ -894,6 +971,14 @@ pub async fn update_route_step(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工艺路线步骤失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProcessRouteStepUpdateRow>(
         r#"
         UPDATE process_route_steps
@@ -910,7 +995,7 @@ pub async fn update_route_step(
     .bind(estimated_time_minutes)
     .bind(step_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -921,13 +1006,18 @@ pub async fn update_route_step(
                 "#,
                 s.process_id,
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线步骤事务失败: {}", e);
+                return ApiResponse::server_error("更新工艺路线步骤失败");
+            }
 
             ApiResponse::success(
                 ProcessRouteStepResponse {
@@ -974,17 +1064,31 @@ pub async fn remove_route_step(
         }
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工艺路线步骤失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         DELETE FROM process_route_steps WHERE id = $1
         "#,
         step_uuid,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(step_id, "删除工艺路线步骤成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺路线步骤事务失败: {}", e);
+                return ApiResponse::server_error("删除工艺路线步骤失败");
+            }
+            ApiResponse::success(step_id, "删除工艺路线步骤成功")
+        }
         Err(e) => {
             tracing::error!("Failed to remove route step: {}", e);
             ApiResponse::server_error("删除工艺路线步骤失败")
@@ -1031,7 +1135,7 @@ pub async fn reorder_route_steps(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.scope().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -1058,7 +1162,7 @@ pub async fn reorder_route_steps(
         .bind(step_uuid)
         .bind(route_uuid)
         .bind(tenant_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
         {
             tracing::error!("Failed to reorder step: {}", e);
@@ -1070,6 +1174,14 @@ pub async fn reorder_route_steps(
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("重排序工艺路线步骤失败");
     }
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取重排序后的步骤失败");
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -1087,7 +1199,7 @@ pub async fn reorder_route_steps(
         "#,
         route_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {

@@ -60,6 +60,15 @@ async fn stub_efficiency_detail(
 
     let tenant_id = get_tenant_id(&claims);
 
+    // 租户作用域读：equipment_oee 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("设备效率详情查询失败");
+        }
+    };
+
     let rows = sqlx::query(
         r#"SELECT id, equipment_id, record_date, availability, performance, quality_rate, oee
            FROM mes.equipment_oee
@@ -70,7 +79,7 @@ async fn stub_efficiency_detail(
     )
     .bind(equipment_uuid)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -317,6 +326,15 @@ pub async fn list_oee_records(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
+    // 租户作用域读：equipment_oee 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取OEE记录列表失败");
+        }
+    };
+
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
         where_clause
@@ -329,7 +347,7 @@ pub async fn list_oee_records(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -366,7 +384,7 @@ pub async fn list_oee_records(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let records = match fetch_query.fetch_all(&state.pool).await {
+    let records = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE records: {}", e);
@@ -486,6 +504,15 @@ pub async fn create_oee_record(
         req.good_output,
     );
 
+    // 写作用域：INSERT 与随后回查设备名同属一个租户事务。
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建OEE记录失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO equipment_oee (
@@ -521,7 +548,7 @@ pub async fn create_oee_record(
         now,
         get_tenant_id(&claims),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
@@ -537,10 +564,15 @@ pub async fn create_oee_record(
         req.equipment_id,
         get_tenant_id(&claims),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()
     .flatten();
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交OEE记录事务失败: {}", e);
+        return ApiResponse::server_error("创建OEE记录失败");
+    }
 
     let record = OeeRecordResponse {
         id: result.id,
@@ -593,6 +625,14 @@ pub async fn get_oee_record(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取OEE记录失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT
@@ -611,7 +651,7 @@ pub async fn get_oee_record(
         id,
         get_tenant_id(&claims),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -704,6 +744,14 @@ pub async fn update_oee_record(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新OEE记录失败");
+        }
+    };
+
     let existing = sqlx::query!(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
@@ -715,7 +763,7 @@ pub async fn update_oee_record(
         id,
         tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let existing = match existing {
@@ -782,7 +830,7 @@ pub async fn update_oee_record(
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -792,6 +840,11 @@ pub async fn update_oee_record(
             return ApiResponse::server_error("更新OEE记录失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交OEE记录事务失败: {}", e);
+        return ApiResponse::server_error("更新OEE记录失败");
+    }
 
     match result {
         Some(r) => {
@@ -850,12 +903,20 @@ pub async fn delete_oee_record(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除OEE记录失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid"#,
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
@@ -867,6 +928,10 @@ pub async fn delete_oee_record(
     };
 
     if result.rows_affected() > 0 {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("提交OEE记录事务失败: {}", e);
+            return ApiResponse::server_error("删除OEE记录失败");
+        }
         ApiResponse::success("".to_string(), "OEE记录删除成功")
     } else {
         ApiResponse::not_found("OEE记录不存在")
@@ -910,6 +975,15 @@ pub async fn get_oee_statistics(
 
     // 总体统计
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取OEE统计数据失败");
+        }
+    };
+
     let overall_result = sqlx::query!(
         r#"
         SELECT
@@ -931,7 +1005,7 @@ pub async fn get_oee_statistics(
         end_date,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let (total_records, avg_availability, avg_performance, avg_quality, avg_oee) =
@@ -971,7 +1045,7 @@ pub async fn get_oee_statistics(
     )
     .bind(req.equipment_id)
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let trend: Vec<OeeTrendItem> = match trend_result {
@@ -1045,7 +1119,7 @@ pub async fn get_oee_statistics(
         end_date,
         tenant_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let by_equipment: Vec<OeeEquipmentStat> = match by_equip_result {
@@ -1117,6 +1191,14 @@ pub async fn get_equipment_efficiency_analysis(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取设备效率分析失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT
@@ -1138,7 +1220,7 @@ pub async fn get_equipment_efficiency_analysis(
         equipment_uuid,
         get_tenant_id(&claims),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let equipments = match result {

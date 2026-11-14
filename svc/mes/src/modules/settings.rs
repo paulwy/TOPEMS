@@ -55,12 +55,21 @@ pub async fn get_settings(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
+    // 租户作用域读：module_settings 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取模块设置失败".to_string()));
+        }
+    };
+
     let result = sqlx::query(
         "SELECT key, value FROM mes.module_settings WHERE tenant_id = $1 AND category = $2",
     )
     .bind(tenant_id)
     .bind(&category)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -99,6 +108,14 @@ pub async fn update_settings(
     };
     let now = chrono::Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
+        }
+    };
+
     let mut updated = 0;
     for (key, value) in &req.settings {
         let result = sqlx::query(
@@ -114,7 +131,7 @@ pub async fn update_settings(
         .bind(key)
         .bind(value)
         .bind(now)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
         match result {
@@ -124,6 +141,11 @@ pub async fn update_settings(
                 return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
             }
         }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交模块设置事务失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
     }
 
     ApiResponse::success(

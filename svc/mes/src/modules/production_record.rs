@@ -154,6 +154,15 @@ pub async fn list_records(
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
 
+    // 租户作用域读：production_records 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产记录列表失败");
+        }
+    };
+
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
@@ -198,7 +207,7 @@ pub async fn list_records(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -233,7 +242,7 @@ pub async fn list_records(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let records = match fetch_query.fetch_all(&state.pool).await {
+    let records = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch records: {}", e);
@@ -323,6 +332,14 @@ pub async fn create_record(
         .map(|id| id.to_string())
         .unwrap_or_else(|| claims.username.clone());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建生产记录失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO mes.production_records (
@@ -348,7 +365,7 @@ pub async fn create_record(
         now,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
@@ -358,6 +375,11 @@ pub async fn create_record(
             return ApiResponse::server_error("创建生产记录失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产记录事务失败: {}", e);
+        return ApiResponse::server_error("创建生产记录失败");
+    }
 
     let record = ProductionRecordResponse {
         id: result.id,
@@ -406,6 +428,14 @@ pub async fn get_record(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产记录失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT
@@ -420,7 +450,7 @@ pub async fn get_record(
         id,
         get_tenant_id(&claims),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -476,6 +506,14 @@ pub async fn update_record(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新生产记录失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         UPDATE mes.production_records SET
@@ -505,7 +543,7 @@ pub async fn update_record(
     .bind(req.notes)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -515,6 +553,11 @@ pub async fn update_record(
             return ApiResponse::server_error("更新生产记录失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产记录事务失败: {}", e);
+        return ApiResponse::server_error("更新生产记录失败");
+    }
 
     match result {
         Some(r) => {
@@ -552,6 +595,14 @@ pub async fn delete_record(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除生产记录失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.production_records SET deleted_at = NOW()
@@ -560,7 +611,7 @@ pub async fn delete_record(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
@@ -570,6 +621,11 @@ pub async fn delete_record(
             return ApiResponse::server_error("删除生产记录失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产记录事务失败: {}", e);
+        return ApiResponse::server_error("删除生产记录失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产记录删除成功")
@@ -605,6 +661,14 @@ pub async fn complete_record(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("完成生产记录失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         UPDATE mes.production_records SET
@@ -622,7 +686,7 @@ pub async fn complete_record(
     .bind(id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -632,6 +696,11 @@ pub async fn complete_record(
             return ApiResponse::server_error("完成生产记录失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产记录事务失败: {}", e);
+        return ApiResponse::server_error("完成生产记录失败");
+    }
 
     match result {
         Some(r) => {

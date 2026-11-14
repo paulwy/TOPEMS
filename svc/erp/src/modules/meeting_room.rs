@@ -17,6 +17,7 @@ use crate::models::{
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -145,14 +146,21 @@ pub async fn create_room(
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
+    // 写入必须绑定真实租户：表已 FORCE RLS，NULL 行会被策略当共享行放行（跨租户可见）。
+    // 只认 claims 里的租户（超管的 x-tenant-id 已由 tenant_middleware 写入 claims）；
+    // 不采信请求头覆盖，claims 无租户即 400。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7)
+        INSERT INTO meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8)
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
         "#),
     )
@@ -163,6 +171,7 @@ pub async fn create_room(
     .bind(&req.facilities)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -581,6 +590,11 @@ pub async fn create_booking(
     if let Err(e) = validate_required_field("会议标题", &req.title) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
+    // 写入必须绑定真实租户（同 meeting_rooms：NULL 行会被策略当共享行放行）。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
@@ -626,8 +640,8 @@ pub async fn create_booking(
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9)
+        INSERT INTO meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9, $10)
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         "#),
     )
@@ -640,6 +654,7 @@ pub async fn create_booking(
     .bind(req.end_time)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

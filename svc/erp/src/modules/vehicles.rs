@@ -17,6 +17,7 @@ use crate::models::{
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -154,14 +155,21 @@ pub async fn create_vehicle(
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
+    // 写入必须绑定真实租户：表已 FORCE RLS，NULL 行会被策略当共享行放行（跨租户可见）。
+    // 只认 claims 里的租户（超管的 x-tenant-id 已由 tenant_middleware 写入 claims）；
+    // 不采信请求头覆盖，claims 无租户即 400。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO vehicles (id, plate_number, brand, model, vehicle_type, status, driver, mileage, fuel_type, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8, $9, $10)
+        INSERT INTO vehicles (id, plate_number, brand, model, vehicle_type, status, driver, mileage, fuel_type, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8, $9, $10, $11)
         RETURNING id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
         "#),
     )
@@ -175,6 +183,7 @@ pub async fn create_vehicle(
     .bind(&req.fuel_type)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -597,6 +606,11 @@ pub async fn create_vehicle_request(
     if let Err(e) = validate_required_field("申请人", &req.requester) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
+    // 写入必须绑定真实租户（同 vehicles：NULL 行会被策略当共享行放行）。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", "SELECT id, plate_number, status FROM vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
@@ -642,8 +656,8 @@ pub async fn create_vehicle_request(
 
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO vehicle_requests (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
+        INSERT INTO vehicle_requests (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11)
         RETURNING id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
         "#),
     )
@@ -657,6 +671,7 @@ pub async fn create_vehicle_request(
     .bind(req.driver_required)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

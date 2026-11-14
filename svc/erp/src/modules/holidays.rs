@@ -96,6 +96,9 @@ async fn query_holiday_from_db(
     //       name      TEXT,
     //       PRIMARY KEY (tenant_id, year, date, kind)
     //   );
+    // 块 D 登记：erp.holidays 是跨租户共享的法定节假日/调休日历，本次不补租户绑定、
+    // 不按租户过滤（None 分支保留全局查询语义）。表虽已 FORCE RLS，后续阶段二迁移
+    // 将按"全局字典"用系统通道（app.rls_system）放行；不在此处伪造租户或落 NULL 写入。
     let year = date.year();
     let result = match tenant_id {
         Some(tid) => {

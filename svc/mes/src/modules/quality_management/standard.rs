@@ -115,6 +115,16 @@ pub async fn list_standards(
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
 
+    // 租户作用域读：quality_standards / quality_standard_values 受 RLS 保护，
+    // 裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取质量标准列表失败");
+        }
+    };
+
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
@@ -159,7 +169,7 @@ pub async fn list_standards(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -191,7 +201,7 @@ pub async fn list_standards(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality standards: {}", e);
@@ -218,7 +228,7 @@ pub async fn list_standards(
             "#,
             &standard_ids,
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
         if let Ok(value_rows) = values_result {
@@ -327,6 +337,14 @@ pub async fn get_standard(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取质量标准失败");
+        }
+    };
+
     let standard_result = sqlx::query!(
         r#"
         SELECT
@@ -339,7 +357,7 @@ pub async fn get_standard(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let standard = match standard_result {
@@ -363,7 +381,7 @@ pub async fn get_standard(
         "#,
         uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let standard_values: Vec<StandardValueResponse> = match values_result {
@@ -417,7 +435,7 @@ pub async fn create_standard(
         return e;
     }
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -464,7 +482,7 @@ pub async fn create_standard(
         body.description,
         tenant_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut tx)
     .await;
 
     let standard = match standard_result {
@@ -506,7 +524,7 @@ pub async fn create_standard(
                 v.remark,
                 tenant_id,
             )
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut tx)
             .await;
 
             match value_result {
@@ -592,7 +610,7 @@ pub async fn update_standard(
     };
     let tenant_id = get_tenant_id(&claims);
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -633,7 +651,7 @@ pub async fn update_standard(
     .bind(body.description)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut tx)
     .await;
 
     let standard = match standard_result {
@@ -658,7 +676,7 @@ pub async fn update_standard(
             "#,
             uuid,
         )
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await;
 
         if let Err(e) = delete_result {
@@ -694,7 +712,7 @@ pub async fn update_standard(
                 v.remark,
                 tenant_id,
             )
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut tx)
             .await;
 
             match value_result {
@@ -728,7 +746,7 @@ pub async fn update_standard(
             "#,
             uuid,
         )
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut tx)
         .await;
 
         if let Ok(rows) = values_result {
@@ -791,6 +809,15 @@ pub async fn delete_standard(
     };
 
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除质量标准失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
@@ -798,11 +825,17 @@ pub async fn delete_standard(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(id, "删除质量标准成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交质量标准事务失败: {}", e);
+                return ApiResponse::server_error("删除质量标准失败");
+            }
+            ApiResponse::success(id, "删除质量标准成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete quality standard: {}", e);
             ApiResponse::server_error("删除质量标准失败")

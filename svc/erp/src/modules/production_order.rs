@@ -551,6 +551,19 @@ pub async fn update_production_status(
                 if let Some(publisher) = &state.event_publisher {
                     let publisher = publisher.clone();
                     let order_clone = order.clone();
+                    // 下达事件必须携带真实租户：mes 侧据此建立租户作用域，
+                    // 缺失时 mes 会拒单并转入 DLQ（不再落 nil 租户工单）。
+                    let publish_tenant_id = _claims
+                        .tenant_id
+                        .as_deref()
+                        .and_then(|s| Uuid::parse_str(s).ok());
+                    if publish_tenant_id.is_none() {
+                        tracing::warn!(
+                            "[ERP→MES] 当前请求无租户上下文，ErpProductionOrderDispatched 将缺 tenant_id - order_no={}, is_superuser={}",
+                            order_clone.order_no,
+                            _claims.is_superuser
+                        );
+                    }
                     tokio::spawn(async move {
                         let order_no = order_clone.order_no.clone();
                         let payload = ErpProductionOrderDispatchedPayload {
@@ -566,7 +579,7 @@ pub async fn update_production_status(
                             planned_start_date: order_clone.planned_start_date,
                             planned_end_date: order_clone.planned_end_date,
                             notes: order_clone.notes,
-                            tenant_id: None,
+                            tenant_id: publish_tenant_id,
                         };
                         if let Err(e) = publisher
                             .publish_event(EventType::ErpProductionOrderDispatched, payload)

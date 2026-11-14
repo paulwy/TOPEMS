@@ -190,6 +190,7 @@ pub struct TodayOutputQuery {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<TodayOutputQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // Mobile BFF 数据迁移已完成：改为查询 MES 自有表 work_reports。
@@ -208,11 +209,25 @@ pub async fn get_today_production_output(
         }
     };
 
+    // 今日产量按本租户汇总：跨租户按操作员姓名汇总会把他人产量计入本租户看板，
+    // 属数据越界。此处用请求租户的只读作用域 + 显式 tenant_id 谓词。
+    let tenant_id = get_tenant_id(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取今日产量失败");
+        }
+    };
+
     let output: Option<BigDecimal> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(output_quantity), 0) FROM work_reports WHERE reporter_name = $1 AND created_at >= CURRENT_DATE",
+        "SELECT COALESCE(SUM(output_quantity), 0) FROM work_reports \
+         WHERE reporter_name = $1 AND created_at >= CURRENT_DATE \
+           AND tenant_id = $2::uuid",
     )
     .bind(&operator)
-    .fetch_one(&state.pool)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
     .await
     .ok();
 
@@ -257,6 +272,15 @@ pub async fn list_work_reports(
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
+
+    // 租户作用域读：work_reports 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工报列表失败");
+        }
+    };
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
@@ -303,7 +327,7 @@ pub async fn list_work_reports(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -340,7 +364,7 @@ pub async fn list_work_reports(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work reports: {}", e);
@@ -470,6 +494,14 @@ pub async fn get_work_report(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工报失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT
@@ -484,7 +516,7 @@ pub async fn get_work_report(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -581,25 +613,16 @@ pub async fn create_work_report(
 
     let report_no = generate_report_no();
 
-    // 事务内设置 RLS 上下文（与 create_order_from_erp 一致）：确保 set_config 与 INSERT 同连接
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    // 写作用域由 Db::scope() 统一设置 app.tenant_id / app.rls_system：
+    // 改前这里对 nil 租户设置 GUC，却向真实租户 INSERT，fail-closed 策略下必然被
+    // WITH CHECK 拒绝（0 行写入，接口 500）；现在 GUC 与插入行租户同源。
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for create_work_report: {}", e);
+            tracing::error!("建立写作用域失败: {}", e);
             return ApiResponse::server_error("创建工报失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(Uuid::nil().to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!(
-            "Failed to set nil RLS context for create_work_report: {}",
-            e
-        );
-        return ApiResponse::server_error("创建工报失败");
-    }
 
     let result = sqlx::query!(
         r#"
@@ -635,12 +658,12 @@ pub async fn create_work_report(
         body.remark,
         tenant_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(r) => {
-            if let Err(e) = tx.commit().await {
+            if let Err(e) = scope.commit().await {
                 tracing::error!("Failed to commit tx for create_work_report: {}", e);
                 return ApiResponse::server_error("创建工报失败");
             }
@@ -650,7 +673,8 @@ pub async fn create_work_report(
             // 幂等键 = work_report_id；DLQ 兜底由 erp 订阅器统一提供，不阻塞报工主流程。
             // erp_order_id 仍由工单 ID（work_order_id）反查本地 source_order_id 得到。
             let mes_order_id = r.work_order_id;
-            let pool = state.pool.clone();
+            let db = state.db.clone();
+            let report_tenant_id = tenant_id;
             let output_qty = big_decimal_to_f64(r.output_quantity.clone());
             let work_report_id = r.id;
             let report_no = r.report_no.clone();
@@ -658,26 +682,27 @@ pub async fn create_work_report(
                 (mes_order_id, state.event_publisher.clone())
             {
                 tokio::spawn(async move {
-                    // RLS 连接级隔离：反查工单需在独立连接上绑定 nil 租户上下文
-                    let mut conn = match pool.acquire().await {
-                        Ok(c) => c,
-                        Err(_) => return,
-                    };
-                    let _ = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-                        .bind(Uuid::nil().to_string())
-                        .execute(&mut *conn)
-                        .await;
-                    let erp_order_id: Option<Uuid> = sqlx::query_scalar(
-                        "SELECT source_order_id FROM production_orders WHERE id = $1",
-                    )
-                    .bind(mes_order_id)
-                    .fetch_optional(&mut *conn)
-                    .await
-                    .ok()
-                    .flatten();
-                    // 查询完成即归还连接：事件发布（Redis/Stream 往返）不需要 DB 连接，
-                    // 不应在连接上跨 await 持有（预算内每条连接都有配额成本）。
-                    drop(conn);
+                    // 反查工单使用本工报的租户作用域：改前用 nil 租户 GUC 裸连接查询
+                    // production_orders（跨租户、且策略收紧后必然 0 行）。
+                    let erp_order_id: Option<Uuid> =
+                        match db.scope_read_for_tenant(report_tenant_id).await {
+                            Ok(mut scope) => sqlx::query_scalar(
+                                "SELECT source_order_id FROM production_orders WHERE id = $1",
+                            )
+                            .bind(mes_order_id)
+                            .fetch_optional(&mut scope)
+                            .await
+                            .ok()
+                            .flatten(),
+                            Err(e) => {
+                                tracing::warn!(
+                                    "工报回传反查工单缺少租户上下文（tenant_id={}）：{}",
+                                    report_tenant_id,
+                                    e
+                                );
+                                None
+                            }
+                        };
 
                     let payload = MesWorkReportSubmittedPayload {
                         work_report_id,
@@ -687,7 +712,7 @@ pub async fn create_work_report(
                         completed_quantity: Some(output_qty),
                         status: Some("in_progress".to_string()),
                         reported_at: Some(Utc::now()),
-                        tenant_id: None,
+                        tenant_id: Some(report_tenant_id),
                     };
                     let et = EventType::MesWorkReportSubmitted;
                     match publisher.publish_event(et, &payload).await {
@@ -808,6 +833,14 @@ pub async fn update_work_report(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工报失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
@@ -854,36 +887,42 @@ pub async fn update_work_report(
     .bind(body.status)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(r) => ApiResponse::success(
-            WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
-                work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: Some(r.work_order_no.unwrap_or_default()),
-                order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
-                work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
-                shift: r.shift,
-                output_quantity: big_decimal_to_f64(r.output_quantity),
-                defect_quantity: big_decimal_to_f64(r.defect_quantity),
-                labor_hours: big_decimal_to_f64(r.labor_hours),
-                remark: r.remark,
-                status: r.status.unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
-                approval_remark: r.approval_remark,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            },
-            "更新工报成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工报事务失败: {}", e);
+                return ApiResponse::server_error("更新工报失败");
+            }
+            ApiResponse::success(
+                WorkReportResponse {
+                    id: r.id.to_string(),
+                    report_no: r.report_no.unwrap_or_default(),
+                    work_order_id: r.work_order_id.map(|u| u.to_string()),
+                    work_order_no: Some(r.work_order_no.unwrap_or_default()),
+                    order_id: r.order_id.map(|u| u.to_string()),
+                    order_no: r.order_no,
+                    work_station_id: r.work_station_id.map(|u| u.to_string()),
+                    work_station_name: r.work_station_name,
+                    reporter_name: r.reporter_name.unwrap_or_default(),
+                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    shift: r.shift,
+                    output_quantity: big_decimal_to_f64(r.output_quantity),
+                    defect_quantity: big_decimal_to_f64(r.defect_quantity),
+                    labor_hours: big_decimal_to_f64(r.labor_hours),
+                    remark: r.remark,
+                    status: r.status.unwrap_or_default(),
+                    approved_by: r.approved_by.map(|u| u.to_string()),
+                    approved_at: opt_datetime_to_string(r.approved_at),
+                    approval_remark: r.approval_remark,
+                    created_at: naive_to_utc(r.created_at),
+                    updated_at: naive_to_utc(r.updated_at),
+                },
+                "更新工报成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to update work report: {}", e);
@@ -923,6 +962,14 @@ pub async fn delete_work_report(
         }
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工报失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
@@ -931,11 +978,17 @@ pub async fn delete_work_report(
     )
     .bind(uuid)
     .bind(get_tenant_id(&claims))
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(id, "删除工报成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工报事务失败: {}", e);
+                return ApiResponse::server_error("删除工报失败");
+            }
+            ApiResponse::success(id, "删除工报成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete work report: {}", e);
             ApiResponse::server_error("删除工报失败")
@@ -976,6 +1029,14 @@ pub async fn approve_work_report(
 
     let approver = Uuid::parse_str(&claims.username).ok();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("审批通过失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
@@ -998,36 +1059,42 @@ pub async fn approve_work_report(
     .bind(approver)
     .bind(uuid)
     .bind(get_tenant_id(&claims))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(r) => ApiResponse::success(
-            WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
-                work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: Some(r.work_order_no.unwrap_or_default()),
-                order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
-                work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
-                shift: r.shift,
-                output_quantity: big_decimal_to_f64(r.output_quantity),
-                defect_quantity: big_decimal_to_f64(r.defect_quantity),
-                labor_hours: big_decimal_to_f64(r.labor_hours),
-                remark: r.remark,
-                status: r.status.unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
-                approval_remark: r.approval_remark,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            },
-            "审批通过成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工报事务失败: {}", e);
+                return ApiResponse::server_error("审批通过失败");
+            }
+            ApiResponse::success(
+                WorkReportResponse {
+                    id: r.id.to_string(),
+                    report_no: r.report_no.unwrap_or_default(),
+                    work_order_id: r.work_order_id.map(|u| u.to_string()),
+                    work_order_no: Some(r.work_order_no.unwrap_or_default()),
+                    order_id: r.order_id.map(|u| u.to_string()),
+                    order_no: r.order_no,
+                    work_station_id: r.work_station_id.map(|u| u.to_string()),
+                    work_station_name: r.work_station_name,
+                    reporter_name: r.reporter_name.unwrap_or_default(),
+                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    shift: r.shift,
+                    output_quantity: big_decimal_to_f64(r.output_quantity),
+                    defect_quantity: big_decimal_to_f64(r.defect_quantity),
+                    labor_hours: big_decimal_to_f64(r.labor_hours),
+                    remark: r.remark,
+                    status: r.status.unwrap_or_default(),
+                    approved_by: r.approved_by.map(|u| u.to_string()),
+                    approved_at: opt_datetime_to_string(r.approved_at),
+                    approval_remark: r.approval_remark,
+                    created_at: naive_to_utc(r.created_at),
+                    updated_at: naive_to_utc(r.updated_at),
+                },
+                "审批通过成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to approve work report: {}", e);
@@ -1072,6 +1139,14 @@ pub async fn reject_work_report(
     let approver = Uuid::parse_str(&claims.username).ok();
     let remark = body.remark.unwrap_or_default();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("审批驳回失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE work_reports
@@ -1095,36 +1170,42 @@ pub async fn reject_work_report(
     .bind(remark)
     .bind(uuid)
     .bind(get_tenant_id(&claims))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(r) => ApiResponse::success(
-            WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
-                work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: Some(r.work_order_no.unwrap_or_default()),
-                order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
-                work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
-                shift: r.shift,
-                output_quantity: big_decimal_to_f64(r.output_quantity),
-                defect_quantity: big_decimal_to_f64(r.defect_quantity),
-                labor_hours: big_decimal_to_f64(r.labor_hours),
-                remark: r.remark,
-                status: r.status.unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
-                approval_remark: r.approval_remark,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            },
-            "审批驳回成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工报事务失败: {}", e);
+                return ApiResponse::server_error("审批驳回失败");
+            }
+            ApiResponse::success(
+                WorkReportResponse {
+                    id: r.id.to_string(),
+                    report_no: r.report_no.unwrap_or_default(),
+                    work_order_id: r.work_order_id.map(|u| u.to_string()),
+                    work_order_no: Some(r.work_order_no.unwrap_or_default()),
+                    order_id: r.order_id.map(|u| u.to_string()),
+                    order_no: r.order_no,
+                    work_station_id: r.work_station_id.map(|u| u.to_string()),
+                    work_station_name: r.work_station_name,
+                    reporter_name: r.reporter_name.unwrap_or_default(),
+                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    shift: r.shift,
+                    output_quantity: big_decimal_to_f64(r.output_quantity),
+                    defect_quantity: big_decimal_to_f64(r.defect_quantity),
+                    labor_hours: big_decimal_to_f64(r.labor_hours),
+                    remark: r.remark,
+                    status: r.status.unwrap_or_default(),
+                    approved_by: r.approved_by.map(|u| u.to_string()),
+                    approved_at: opt_datetime_to_string(r.approved_at),
+                    approval_remark: r.approval_remark,
+                    created_at: naive_to_utc(r.created_at),
+                    updated_at: naive_to_utc(r.updated_at),
+                },
+                "审批驳回成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to reject work report: {}", e);

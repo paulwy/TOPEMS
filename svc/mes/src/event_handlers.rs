@@ -8,6 +8,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_event::event::{
@@ -16,6 +17,7 @@ use topems_shared_event::event::{
 
 /// 启动 MES 业务事件订阅（在 main.rs 中与缓存失效订阅并行 spawn）。
 pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
+    let scoped_db = Db::new(db, "mes, public, shared");
     let subscriber = EventSubscriber::new("mes-business")
         .map_err(|e| TopemsError::NetworkRequest(format!("创建 MES 业务事件订阅者失败: {}", e)))?;
 
@@ -24,7 +26,7 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), TopemsEr
     let subscriber = subscriber.subscribe_handler(
         vec![EventType::ErpProductionOrderDispatched],
         move |event| {
-            let db = db.clone();
+            let db = scoped_db.clone();
             Box::pin(async move {
                 match handle_erp_production_order_dispatched(&db, event).await {
                     Ok(()) => Ok(()),
@@ -49,14 +51,28 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), TopemsEr
 
 /// ErpProductionOrderDispatched → 在 MES 本地创建生产工单。
 /// 幂等：source_order_id = erp_order_id 已存在则跳过（事件重放不重复建单）。
-async fn handle_erp_production_order_dispatched(
-    db: &PgPool,
-    event: Event,
-) -> Result<(), TopemsError> {
+async fn handle_erp_production_order_dispatched(db: &Db, event: Event) -> Result<(), TopemsError> {
     let payload: ErpProductionOrderDispatchedPayload = event.parse_payload().map_err(|e| {
         TopemsError::ValidationFailed(format!(
             "解析 ErpProductionOrderDispatched payload 失败: {}",
             e
+        ))
+    })?;
+
+    // 事件必须携带真实租户：改前这里对 nil 租户 set_config 并向 production_orders 插 nil 租户行，
+    // 策略收紧后既写不进、又难排查。现在缺租户即拒绝建单；原因写进 Err（由流层每次失败的
+    // error! 日志带出），重试耗尽后由 settle_failed 的 error! 记录 DLQ 落点，避免重复打日志。
+    let tenant_id = payload.tenant_id.filter(|t| !t.is_nil()).ok_or_else(|| {
+        TopemsError::ValidationFailed(format!(
+            "ErpProductionOrderDispatched payload 缺少 tenant_id（event_id={}, erp_order_id={}），拒绝以 nil 租户建单（重试耗尽后进入 DLQ）",
+            event.event_id, payload.erp_order_id
+        ))
+    })?;
+
+    let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+        TopemsError::DatabaseQuery(format!(
+            "建立租户写作用域失败（tenant_id={}）: {}",
+            tenant_id, e
         ))
     })?;
 
@@ -68,14 +84,16 @@ async fn handle_erp_production_order_dispatched(
         event.trace_id
     );
 
-    // 幂等去重：同一 erp_order_id 已建单则直接收敛返回
+    // 幂等去重：同一租户内同一 erp_order_id 已建单则直接收敛返回
     // source_order_id 列为 uuid（见 bootstrap/mod.rs 与 model），须直接绑定 Uuid，
     // 不能 .to_string() 转 text——否则触发 `operator does not exist: uuid = text`（R-1）。
     let existing: Option<Uuid> = sqlx::query_scalar(
-        "SELECT source_order_id FROM production_orders WHERE source_order_id = $1 LIMIT 1",
+        "SELECT source_order_id FROM production_orders \
+         WHERE source_order_id = $1 AND tenant_id = $2::uuid LIMIT 1",
     )
     .bind(payload.erp_order_id)
-    .fetch_optional(db)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("幂等查询 source_order_id 失败: {}", e)))?;
     if existing.is_some() {
@@ -96,17 +114,6 @@ async fn handle_erp_production_order_dispatched(
     let planned_end = payload
         .planned_end_date
         .unwrap_or_else(|| now + chrono::Duration::days(7));
-
-    // 服务间事件（无租户上下文）：事务内绑定 nil 租户，确保 RLS 放行 INSERT
-    let mut tx = db
-        .begin()
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
-    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(Uuid::nil().to_string())
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("设置 nil 租户上下文失败: {}", e)))?;
 
     // f64→i32 无 TryFrom 实现；生产订单数量在 i32 合理范围，截断后转换（cast deny 受控点）
     #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
@@ -131,12 +138,13 @@ async fn handle_erp_production_order_dispatched(
     .bind(payload.workshop_id)
     .bind(&payload.notes)
     .bind(now)
-    .bind(Uuid::nil())
-    .execute(&mut *tx)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入 production_orders 失败: {}", e)))?;
 
-    tx.commit()
+    scope
+        .commit()
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
 

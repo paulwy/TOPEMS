@@ -101,6 +101,9 @@ async fn global_search(
 
     let mut results: Vec<SearchResult> = Vec::new();
 
+    // 块 D 登记：core_erp_materials 是全局主数据（物料编码/名称跨租户共享），
+    // 全局搜索有意不按租户过滤，本次不补租户谓词。后续阶段二 RLS 迁移按全局表
+    // 用系统通道放行，不在此处伪造租户。
     let material_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"

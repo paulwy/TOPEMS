@@ -394,11 +394,16 @@ impl StreamEventSubscriber {
 
         if retry_count >= self.config.max_retries {
             // 超过最大重试次数，进入死信队列
+            // DLQ 可观测：必须带 event_id / event_type，并点明是否缺 tenant_id，
+            // 否则"无租户 → 拒单进 DLQ"在日志里不可定位。
+            let payload_has_tenant = event.payload.get("tenant_id").is_some_and(|v| !v.is_null());
             error!(
-                "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}, 真因: {}",
+                "事件超过最大重试次数，进入死信队列 - event_id: {}, 类型: {:?}, 消息ID: {}, 重试次数: {}, 缺失租户字段: {}, 真因: {}",
+                event.event_id,
                 event_type,
                 message_id,
                 retry_count,
+                if payload_has_tenant { "否" } else { "是(tenant_id)" },
                 last_error.unwrap_or("未知（无 handler 错误）")
             );
 

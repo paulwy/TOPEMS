@@ -82,6 +82,9 @@ async fn load_quick_actions(db: &Db, state: &AppState, headers: &HeaderMap) -> V
         }
     };
 
+    // 块 D 登记：portal.portal_quick_actions 是平台级快捷入口配置（当前 5 行均为
+    // nil 租户的全局行），对所有租户可见，本次不补租户谓词。后续阶段二 RLS 迁移
+    // 按全局表用系统通道放行；不在此处按请求租户过滤，否则会丢全局入口。
     let result = sqlx::query(
         r#"
         SELECT id, name, description, icon, action_type, target_url, service_code, sort_order

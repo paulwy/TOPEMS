@@ -218,6 +218,15 @@ pub async fn list_process_flows(
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
 
+    // 租户作用域读：process_flows 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺流程列表失败");
+        }
+    };
+
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
@@ -262,7 +271,7 @@ pub async fn list_process_flows(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -297,7 +306,7 @@ pub async fn list_process_flows(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let flows = match fetch_query.fetch_all(&state.pool).await {
+    let flows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process flows: {}", e);
@@ -388,6 +397,14 @@ pub async fn get_process_flow(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺流程失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -401,7 +418,7 @@ pub async fn get_process_flow(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -454,6 +471,15 @@ pub async fn create_process_flow(
         .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
         .unwrap_or_default();
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建工艺流程失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO process_flows (
@@ -475,30 +501,36 @@ pub async fn create_process_flow(
         body.unit,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(r) => ApiResponse::success(
-            ProcessFlowResponse {
-                id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
-                version: r.version,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                route_id: r.route_id.map(|u| u.to_string()),
-                route_name: None,
-                production_line: r.production_line,
-                capacity: r
-                    .capacity
-                    .map(|d| d.to_string().parse().unwrap_or_default()),
-                unit: r.unit,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
-            },
-            "创建工艺流程成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺流程事务失败: {}", e);
+                return ApiResponse::server_error("创建工艺流程失败");
+            }
+            ApiResponse::success(
+                ProcessFlowResponse {
+                    id: r.id.to_string(),
+                    code: r.code,
+                    name: r.name,
+                    description: r.description,
+                    version: r.version,
+                    status: r.status.unwrap_or_else(|| "active".to_string()),
+                    route_id: r.route_id.map(|u| u.to_string()),
+                    route_name: None,
+                    production_line: r.production_line,
+                    capacity: r
+                        .capacity
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    unit: r.unit,
+                    created_at: r.created_at.unwrap_or_else(Utc::now),
+                    updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                },
+                "创建工艺流程成功",
+            )
+        }
         Err(e) => {
             tracing::error!("Failed to create process flow: {}", e);
             ApiResponse::server_error("创建工艺流程失败")
@@ -551,6 +583,15 @@ pub async fn update_process_flow(
         .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
         .unwrap_or_default();
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工艺流程失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProcessFlowUpdateRow>(
         r#"
         UPDATE process_flows
@@ -580,30 +621,36 @@ pub async fn update_process_flow(
     .bind(body.status)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(r) => ApiResponse::success(
-            ProcessFlowResponse {
-                id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
-                version: r.version,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                route_id: r.route_id.map(|u| u.to_string()),
-                route_name: None,
-                production_line: r.production_line,
-                capacity: r
-                    .capacity
-                    .map(|d| d.to_string().parse().unwrap_or_default()),
-                unit: r.unit,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
-            },
-            "更新工艺流程成功",
-        ),
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺流程事务失败: {}", e);
+                return ApiResponse::server_error("更新工艺流程失败");
+            }
+            ApiResponse::success(
+                ProcessFlowResponse {
+                    id: r.id.to_string(),
+                    code: r.code,
+                    name: r.name,
+                    description: r.description,
+                    version: r.version,
+                    status: r.status.unwrap_or_else(|| "active".to_string()),
+                    route_id: r.route_id.map(|u| u.to_string()),
+                    route_name: None,
+                    production_line: r.production_line,
+                    capacity: r
+                        .capacity
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    unit: r.unit,
+                    created_at: r.created_at.unwrap_or_else(Utc::now),
+                    updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                },
+                "更新工艺流程成功",
+            )
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工艺流程不存在"),
         Err(e) => {
             tracing::error!("Failed to update process flow: {}", e);
@@ -632,6 +679,14 @@ pub async fn delete_process_flow(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工艺流程失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
@@ -639,11 +694,17 @@ pub async fn delete_process_flow(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(id, "删除工艺流程成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺流程事务失败: {}", e);
+                return ApiResponse::server_error("删除工艺流程失败");
+            }
+            ApiResponse::success(id, "删除工艺流程成功")
+        }
         Err(e) => {
             tracing::error!("Failed to delete process flow: {}", e);
             ApiResponse::server_error("删除工艺流程失败")
@@ -681,6 +742,14 @@ pub async fn get_flow_steps(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工艺步骤失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -698,7 +767,7 @@ pub async fn get_flow_steps(
         "#,
         flow_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -784,6 +853,15 @@ pub async fn add_flow_step(
     });
 
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("添加工艺步骤失败");
+        }
+    };
+
     let result = sqlx::query_unchecked!(
         r#"
         INSERT INTO process_flow_steps (
@@ -809,7 +887,7 @@ pub async fn add_flow_step(
         body.description,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -821,13 +899,18 @@ pub async fn add_flow_step(
                 process_uuid,
                 tenant_id,
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺步骤事务失败: {}", e);
+                return ApiResponse::server_error("添加工艺步骤失败");
+            }
 
             ApiResponse::success(
                 ProcessFlowStepResponse {
@@ -910,6 +993,14 @@ pub async fn update_flow_step(
             .collect()
     });
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工艺步骤失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, FlowStepRow>(
         r#"
         UPDATE process_flow_steps
@@ -938,7 +1029,7 @@ pub async fn update_flow_step(
     .bind(body.quality_check_required)
     .bind(body.description)
     .bind(step_uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -949,13 +1040,18 @@ pub async fn update_flow_step(
                 "#,
                 s.process_id,
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
+
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺步骤事务失败: {}", e);
+                return ApiResponse::server_error("更新工艺步骤失败");
+            }
 
             ApiResponse::success(
                 ProcessFlowStepResponse {
@@ -1011,17 +1107,31 @@ pub async fn remove_flow_step(
         }
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工艺步骤失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         DELETE FROM process_flow_steps WHERE id = $1
         "#,
         step_uuid,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(step_id, "删除工艺步骤成功"),
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交工艺步骤事务失败: {}", e);
+                return ApiResponse::server_error("删除工艺步骤失败");
+            }
+            ApiResponse::success(step_id, "删除工艺步骤成功")
+        }
         Err(e) => {
             tracing::error!("Failed to remove flow step: {}", e);
             ApiResponse::server_error("删除工艺步骤失败")
@@ -1066,7 +1176,7 @@ pub async fn reorder_flow_steps(
         }
     };
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.scope().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -1085,7 +1195,7 @@ pub async fn reorder_flow_steps(
             step_uuid,
             flow_uuid,
         )
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
         {
             tracing::error!("Failed to reorder step: {}", e);
@@ -1097,6 +1207,14 @@ pub async fn reorder_flow_steps(
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("重排序工艺流程步骤失败");
     }
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取重排序后的步骤失败");
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -1115,7 +1233,7 @@ pub async fn reorder_flow_steps(
         "#,
         flow_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -1189,6 +1307,14 @@ pub async fn analyze_capacity(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("产能分析失败");
+        }
+    };
+
     let flow_result = sqlx::query!(
         r#"
         SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid
@@ -1196,7 +1322,7 @@ pub async fn analyze_capacity(
         flow_uuid,
         get_tenant_id(&claims),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let flow = match flow_result {
@@ -1222,7 +1348,7 @@ pub async fn analyze_capacity(
         "#,
         flow_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let steps = match steps_result {

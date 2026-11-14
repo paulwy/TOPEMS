@@ -136,6 +136,15 @@ pub async fn list_material_plans(
     let search = params.search.clone();
     let plan_id = params.plan_id;
 
+    // 租户作用域读：material_plans 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return Err(internal_error("查询材料计划失败"));
+        }
+    };
+
     let total: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM mes.material_plans \
          WHERE ($1::text IS NULL OR status = $1) \
@@ -149,7 +158,7 @@ pub async fn list_material_plans(
     .bind(&search)
     .bind(plan_id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -172,7 +181,7 @@ pub async fn list_material_plans(
     .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -208,6 +217,14 @@ pub async fn get_material_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return Err(internal_error("查询材料计划失败"));
+        }
+    };
+
     let row = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
@@ -217,7 +234,7 @@ pub async fn get_material_plan(
     )
     .bind(id)
     .bind(get_tenant_id_from_claims(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
@@ -254,6 +271,14 @@ pub async fn create_material_plan(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let required_date = parse_datetime(&req.required_date);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立租户写作用域失败: {}", e);
+            return Err(internal_error("创建材料计划失败"));
+        }
+    };
+
     let row = sqlx::query(
         "INSERT INTO mes.material_plans \
          (plan_no, plan_id, material_id, material_code, material_name, required_quantity, \
@@ -275,11 +300,17 @@ pub async fn create_material_plan(
     .bind(&supply_type)
     .bind(&status)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
-        Ok(row) => Ok(ApiResponse::success(row_to_json(&row), "创建材料计划成功")),
+        Ok(row) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交材料计划事务失败: {}", e);
+                return Err(internal_error("创建材料计划失败"));
+            }
+            Ok(ApiResponse::success(row_to_json(&row), "创建材料计划成功"))
+        }
         Err(e) => {
             tracing::error!("创建材料计划失败: {}", e);
             Err(internal_error("创建材料计划失败"))
@@ -294,6 +325,14 @@ pub async fn update_material_plan(
     Json(req): Json<UpdateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let required_date = parse_datetime(&req.required_date);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return Err(internal_error("更新材料计划失败"));
+        }
+    };
 
     let row = sqlx::query(
         "UPDATE mes.material_plans SET \
@@ -325,11 +364,17 @@ pub async fn update_material_plan(
     .bind(&req.supply_type)
     .bind(&req.status)
     .bind(get_tenant_id_from_claims(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
-        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "更新材料计划成功")),
+        Ok(Some(row)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交材料计划事务失败: {}", e);
+                return Err(internal_error("更新材料计划失败"));
+            }
+            Ok(ApiResponse::success(row_to_json(&row), "更新材料计划成功"))
+        }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             ApiResponse::not_found("材料计划不存在"),
@@ -346,13 +391,21 @@ pub async fn delete_material_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return Err(internal_error("删除材料计划失败"));
+        }
+    };
+
     let result = sqlx::query(
         "DELETE FROM mes.material_plans WHERE id = $1 \
            AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(get_tenant_id_from_claims(&claims))
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -362,6 +415,10 @@ pub async fn delete_material_plan(
                     StatusCode::NOT_FOUND,
                     ApiResponse::not_found("材料计划不存在"),
                 ));
+            }
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交材料计划事务失败: {}", e);
+                return Err(internal_error("删除材料计划失败"));
             }
             Ok(ApiResponse::success(
                 serde_json::json!({ "deleted": true, "id": id.to_string() }),
@@ -381,7 +438,8 @@ async fn transition_status(
     new_status: &str,
     tenant_id: Uuid,
 ) -> Result<Option<sqlx::postgres::PgRow>, sqlx::Error> {
-    sqlx::query(
+    let mut scope = state.db.scope().await?;
+    let row = sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
          WHERE id = $1 \
            AND tenant_id = $3::uuid \
@@ -392,8 +450,10 @@ async fn transition_status(
     .bind(id)
     .bind(new_status)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
-    .await
+    .fetch_optional(&mut scope)
+    .await?;
+    scope.commit().await?;
+    Ok(row)
 }
 
 #[utoipa::path(

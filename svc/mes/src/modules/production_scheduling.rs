@@ -235,6 +235,16 @@ pub async fn list_production_schedules(
         return e;
     }
 
+    // 租户作用域读：production_schedules 受 RLS（ENABLE+FORCE）保护，
+    // 裸 pool 不带 app.tenant_id GUC，策略收紧后恒为 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产排产列表失败");
+        }
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -285,7 +295,7 @@ pub async fn list_production_schedules(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -329,7 +339,7 @@ pub async fn list_production_schedules(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let schedules = match fetch_query.fetch_all(&state.pool).await {
+    let schedules = match fetch_query.fetch_all(&mut scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch production schedules: {}", e);
@@ -458,6 +468,16 @@ pub async fn create_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
+
+    // 写作用域：建成单与回查订单号同属一个租户事务，避免裸 pool 读写受 RLS 拒止。
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建生产排产失败");
+        }
+    };
+
     let schedule_no = format!(
         "PS{}{:04}",
         now.format("%Y%m%d"),
@@ -470,7 +490,7 @@ pub async fn create_production_schedule(
             order_id,
             tenant_id
         )
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .ok()
         .flatten();
@@ -515,7 +535,7 @@ req.planned_end_time,
 Utc::now(),
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
@@ -525,6 +545,11 @@ Utc::now(),
             return ApiResponse::server_error("创建生产排产失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产排产事务失败: {}", e);
+        return ApiResponse::server_error("创建生产排产失败");
+    }
 
     let schedule = ProductionScheduleResponse {
         id: result.id,
@@ -586,6 +611,14 @@ pub async fn get_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产排产失败");
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT
@@ -612,7 +645,7 @@ pub async fn get_production_schedule(
         id,
         tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -689,6 +722,14 @@ pub async fn update_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新生产排产失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionScheduleRow>(
         r#"
         UPDATE production_schedules SET
@@ -725,7 +766,7 @@ pub async fn update_production_schedule(
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -735,6 +776,11 @@ pub async fn update_production_schedule(
             return ApiResponse::server_error("更新生产排产失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交生产排产事务失败: {}", e);
+        return ApiResponse::server_error("更新生产排产失败");
+    }
 
     match result {
         Some(r) => {
@@ -800,6 +846,14 @@ pub async fn delete_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除生产排产失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE production_schedules SET deleted_at = NOW()
@@ -808,7 +862,7 @@ pub async fn delete_production_schedule(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
@@ -818,6 +872,11 @@ pub async fn delete_production_schedule(
             return ApiResponse::server_error("删除生产排产失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交删除生产排产事务失败: {}", e);
+        return ApiResponse::server_error("删除生产排产失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产排产删除成功")
@@ -859,6 +918,14 @@ pub async fn adjust_schedule(
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("调整生产排产失败");
+        }
+    };
+
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query(
             r#"
@@ -874,13 +941,18 @@ pub async fn adjust_schedule(
         .bind(req.new_start_time)
         .bind(now)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
         if let Err(e) = result {
             tracing::error!("Failed to adjust schedule {}: {}", schedule_id, e);
             return ApiResponse::server_error("调整生产排产失败");
         }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交调整生产排产事务失败: {}", e);
+        return ApiResponse::server_error("调整生产排产失败");
     }
 
     ApiResponse::success("".to_string(), "生产排产调整成功")
@@ -912,6 +984,14 @@ pub async fn get_gantt_data(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取甘特图数据失败");
+        }
+    };
+
     let schedules = sqlx::query!(
         r#"
         SELECT
@@ -930,7 +1010,7 @@ pub async fn get_gantt_data(
         "#,
         tenant_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let schedules = match schedules {
@@ -1150,12 +1230,20 @@ async fn transition_schedule(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("查询排产单状态失败");
+        }
+    };
+
     let existing: Option<(String,)> = match sqlx::query_as(
         "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => Some(row),
@@ -1186,18 +1274,24 @@ async fn transition_schedule(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(
-            ScheduleActionResponse {
-                success: true,
-                message: format!("排产单已{}", to_status),
-                id: Some(id),
-            },
-            "操作成功",
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交排产单状态事务失败: {}", e);
+                return ApiResponse::server_error("更新排产单状态失败");
+            }
+            ApiResponse::success(
+                ScheduleActionResponse {
+                    success: true,
+                    message: format!("排产单已{}", to_status),
+                    id: Some(id),
+                },
+                "操作成功",
+            )
+        }
         Ok(_) => ApiResponse::not_found("排产单不存在"),
         Err(e) => {
             tracing::error!("更新排产单状态失败: {}", e);

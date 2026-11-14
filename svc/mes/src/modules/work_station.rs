@@ -198,6 +198,14 @@ pub async fn list_work_stations(
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
+    // 租户作用域读：work_stations 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工位列表失败");
+        }
+    };
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE ws.deleted_at IS NULL");
@@ -243,7 +251,7 @@ pub async fn list_work_stations(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -281,7 +289,7 @@ pub async fn list_work_stations(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let workstations = match fetch_query.fetch_all(&state.pool).await {
+    let workstations = match fetch_query.fetch_all(&mut scope).await {
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch work stations: {}", e);
@@ -339,6 +347,14 @@ pub async fn create_work_station(
         .and_then(|s| Uuid::parse_str(s).ok());
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("创建工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         INSERT INTO work_stations (
@@ -362,7 +378,7 @@ pub async fn create_work_station(
     .bind(&req.description)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let row = match result {
@@ -372,6 +388,11 @@ pub async fn create_work_station(
             return ApiResponse::server_error("创建工位失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交工位事务失败: {}", e);
+        return ApiResponse::server_error("创建工位失败");
+    }
 
     ApiResponse::success(row_to_workstation_response(&row), "工位创建成功")
 }
@@ -399,6 +420,14 @@ pub async fn get_work_station(
         return e;
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT 
@@ -415,7 +444,7 @@ pub async fn get_work_station(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -457,6 +486,14 @@ pub async fn update_work_station(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET
@@ -488,7 +525,7 @@ pub async fn update_work_station(
     .bind(&req.description)
     .bind(Utc::now())
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -498,6 +535,11 @@ pub async fn update_work_station(
             return ApiResponse::server_error("更新工位失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交工位事务失败: {}", e);
+        return ApiResponse::server_error("更新工位失败");
+    }
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位更新成功"),
@@ -516,6 +558,14 @@ pub async fn delete_work_station(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET deleted_at = NOW()
@@ -525,7 +575,7 @@ pub async fn delete_work_station(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
@@ -535,6 +585,11 @@ pub async fn delete_work_station(
             return ApiResponse::server_error("删除工位失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交工位事务失败: {}", e);
+        return ApiResponse::server_error("删除工位失败");
+    }
 
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "工位删除成功")
@@ -567,6 +622,14 @@ pub async fn activate_work_station(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("激活工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET
@@ -583,7 +646,7 @@ pub async fn activate_work_station(
     .bind(id)
     .bind(Utc::now())
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -593,6 +656,11 @@ pub async fn activate_work_station(
             return ApiResponse::server_error("激活工位失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交工位事务失败: {}", e);
+        return ApiResponse::server_error("激活工位失败");
+    }
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位激活成功"),
@@ -624,6 +692,14 @@ pub async fn deactivate_work_station(
         return e;
     }
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("停用工位失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET
@@ -640,7 +716,7 @@ pub async fn deactivate_work_station(
     .bind(id)
     .bind(Utc::now())
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -650,6 +726,11 @@ pub async fn deactivate_work_station(
             return ApiResponse::server_error("停用工位失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交工位事务失败: {}", e);
+        return ApiResponse::server_error("停用工位失败");
+    }
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位停用成功"),
