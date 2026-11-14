@@ -1926,6 +1926,9 @@ mod tests {
             (inflow - 1000.0).abs() < 0.01,
             "应使用真实历史数据（流入 1000），实际 {inflow}；出现大额说明落回了合成数据"
         );
-        assert!((outflow - 400.0).abs() < 0.01, "流出应为 400，实际 {outflow}");
+        assert!(
+            (outflow - 400.0).abs() < 0.01,
+            "流出应为 400，实际 {outflow}"
+        );
     }
 }
