@@ -2444,7 +2444,7 @@ pub async fn create_control_measure_db(
     let sql = r#"
         INSERT INTO ehs.hazard_control_measures
             (hazard_id, measure_type, description, responsible, deadline, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1::uuid, $2, $3, $4, $5::timestamptz, $6, $7)
         RETURNING id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
                   responsible, deadline::text AS deadline, status, effectiveness,
                   created_at AS created_at

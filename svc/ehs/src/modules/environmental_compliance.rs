@@ -589,7 +589,7 @@ pub async fn create_regulation(
             (reg_no, title, category, regulation_type, issuing_authority, issued_date,
              effective_date, expiry_date, status, content, keywords, applicable_scopes,
              related_files, version, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
                   issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                   expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
@@ -1414,7 +1414,7 @@ pub async fn create_evaluation(
             (eval_no, title, eval_type, eval_period, start_date, end_date, evaluator,
              evaluated_at, overall_result, compliance_rate, findings, non_complianceitems,
              corrective_actions, status, attachments, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8::timestamptz, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                   eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
                   evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
@@ -2050,7 +2050,7 @@ pub async fn create_permit(
             (permit_no, permit_type, permit_name, permit_category, holder, issued_date,
              valid_from, valid_to, issuing_authority, discharge_location, discharge_standard,
              discharge_limits, monitoring_requirements, status, attachments, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
                   holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                   valid_to::text AS expiry_date, issuing_authority, discharge_location,

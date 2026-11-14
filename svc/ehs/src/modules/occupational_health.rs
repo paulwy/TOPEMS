@@ -1339,7 +1339,7 @@ pub async fn create_health_record(
             (record_no, employee_id, employee_name, gender, birth_date, department,
              position, workplace, hazard_factors, blood_type, allergy_history,
              medical_history, contact_info, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
                   birth_date::text AS birthday, department, position, workplace,
                   hazard_factors, blood_type, allergy_history, medical_history,

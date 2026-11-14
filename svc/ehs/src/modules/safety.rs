@@ -566,7 +566,7 @@ pub async fn create_plan_db(
         INSERT INTO ehs.qa_ehs_inspection_plans
             (plan_no, title, description, inspection_type, frequency, start_date, end_date,
              inspector, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8, $9, $10)
         RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
                   start_date::text AS start_date, end_date::text AS end_date, inspector, status,
                   created_at AS created_at, updated_at AS updated_at,
@@ -961,7 +961,7 @@ pub async fn create_record_db(
         INSERT INTO ehs.qa_ehs_inspection_records
             (record_no, plan_id, title, inspection_type, location, inspector, inspected_at,
              issues, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2::uuid, $3, $4, $5, $6, $7::timestamptz, $8, $9, $10)
         RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
                   location, inspector, inspected_at AS inspected_at, result,
                   issues, attachments, status,
@@ -996,7 +996,7 @@ pub async fn create_record_db(
             r#"
             INSERT INTO ehs.qa_ehs_inspection_record_items
                 (record_id, item_id, item_title, item_category, result, remarks, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7)
             "#,
         )
         .bind(&record_id)

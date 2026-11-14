@@ -943,8 +943,8 @@ pub async fn create_disease_case(
              disease_type, disease_name, hazard_factor, diagnosed_at, diagnosing_hospital,
              diagnosis_basis, work_related, severity, status, treatment_plan,
              compensation_status, attachments, reported_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date, $12, $13, $14, $15, $16,
+                $17, $18, $19, $20::timestamptz, $21)
         RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
                   department, position, disease_type, disease_name, hazard_factor,
                   diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
