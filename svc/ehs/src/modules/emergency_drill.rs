@@ -15,6 +15,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -293,69 +294,119 @@ pub async fn list_drill_plans(
     _headers: HeaderMap,
     Query(q): Query<DrillPlanQuery>,
 ) -> ApiResponse<Vec<DrillPlan>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.drill.list_plans", "ehs.qa_ehs_drill_plans") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open drill scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
-    if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(s.clone());
-    }
-    if let Some(t) = &q.drill_type {
-        where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 1));
-        params.push(t.clone());
-    }
-    if let Some(y) = q.year {
-        where_clause.push_str(&format!(
-            " AND EXTRACT(YEAR FROM plan_date) = ${}",
-            params.len() + 1
-        ));
-        params.push(y.to_string());
-    }
-    if let Some(k) = &q.q {
-        where_clause.push_str(&format!(
-            " AND (title ILIKE ${} OR plan_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
-        ));
-        let like = format!("%{k}%");
-        params.push(like.clone());
-        params.push(like);
-    }
-
-    let sql = format!(
-        r#"
-        SELECT id::text AS id, plan_no, title, description, drill_type,
-               plan_date::text AS plan_date, location, participants, estimated_duration,
-               content, organizer, status, related_plan_id::text AS related_plan_id,
-               created_at AS created_at, updated_at AS updated_at,
-               tenant_id AS tenant_id
-        FROM ehs.qa_ehs_drill_plans
-        {where_clause}
-        ORDER BY created_at DESC
-        LIMIT {page_size} OFFSET {offset}
-        "#
-    );
-    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
-    for p in &params {
-        query = query.bind(p);
-    }
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let query = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause =
+                String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
+                params.push(s.clone());
+            }
+            if let Some(t) = &q.drill_type {
+                where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 2));
+                params.push(t.clone());
+            }
+            if let Some(y) = q.year {
+                where_clause.push_str(&format!(
+                    " AND EXTRACT(YEAR FROM plan_date) = ${}",
+                    params.len() + 2
+                ));
+                params.push(y.to_string());
+            }
+            if let Some(k) = &q.q {
+                where_clause.push_str(&format!(
+                    " AND (title ILIKE ${} OR plan_no ILIKE ${})",
+                    params.len() + 2,
+                    params.len() + 3
+                ));
+                let like = format!("%{k}%");
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, plan_no, title, description, drill_type,
+                       plan_date::text AS plan_date, location, participants, estimated_duration,
+                       content, organizer, status, related_plan_id::text AS related_plan_id,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id AS tenant_id
+                FROM ehs.qa_ehs_drill_plans
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant);
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+        None => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+                params.push(s.clone());
+            }
+            if let Some(t) = &q.drill_type {
+                where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 1));
+                params.push(t.clone());
+            }
+            if let Some(y) = q.year {
+                where_clause.push_str(&format!(
+                    " AND EXTRACT(YEAR FROM plan_date) = ${}",
+                    params.len() + 1
+                ));
+                params.push(y.to_string());
+            }
+            if let Some(k) = &q.q {
+                where_clause.push_str(&format!(
+                    " AND (title ILIKE ${} OR plan_no ILIKE ${})",
+                    params.len() + 1,
+                    params.len() + 2
+                ));
+                let like = format!("%{k}%");
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, plan_no, title, description, drill_type,
+                       plan_date::text AS plan_date, location, participants, estimated_duration,
+                       content, organizer, status, related_plan_id::text AS related_plan_id,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id AS tenant_id
+                FROM ehs.qa_ehs_drill_plans
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+    };
     let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -680,63 +731,111 @@ pub async fn list_drill_records(
     _headers: HeaderMap,
     Query(q): Query<DrillQuery>,
 ) -> ApiResponse<Vec<DrillRecord>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.drill.list_records",
+        "ehs.qa_ehs_drill_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open drill scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
-    if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(s.clone());
-    }
-    if let Some(t) = &q.drill_type {
-        where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 1));
-        params.push(t.clone());
-    }
-    if let Some(search) = &q.search {
-        where_clause.push_str(&format!(
-            " AND (title ILIKE ${} OR record_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
-        ));
-        let like = format!("%{search}%");
-        params.push(like.clone());
-        params.push(like);
-    }
-
-    let sql = format!(
-        r#"
-        SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-               started_at AS drill_date, participant_list AS participants,
-               duration::float8 AS duration_hours, location, actual_content AS summary,
-               issues_found, improvements, attachments, status, created_by,
-               created_at AS created_at, updated_at AS updated_at,
-               tenant_id::text AS tenant_id
-        FROM ehs.qa_ehs_drill_records
-        {where_clause}
-        ORDER BY created_at DESC
-        LIMIT {page_size} OFFSET {offset}
-        "#
-    );
-    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
-    for p in &params {
-        query = query.bind(p);
-    }
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let query = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause =
+                String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
+                params.push(s.clone());
+            }
+            if let Some(t) = &q.drill_type {
+                where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 2));
+                params.push(t.clone());
+            }
+            if let Some(search) = &q.search {
+                where_clause.push_str(&format!(
+                    " AND (title ILIKE ${} OR record_no ILIKE ${})",
+                    params.len() + 2,
+                    params.len() + 3
+                ));
+                let like = format!("%{search}%");
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                       started_at AS drill_date, participant_list AS participants,
+                       duration::float8 AS duration_hours, location, actual_content AS summary,
+                       issues_found, improvements, attachments, status, created_by,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_drill_records
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant);
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+        None => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+                params.push(s.clone());
+            }
+            if let Some(t) = &q.drill_type {
+                where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 1));
+                params.push(t.clone());
+            }
+            if let Some(search) = &q.search {
+                where_clause.push_str(&format!(
+                    " AND (title ILIKE ${} OR record_no ILIKE ${})",
+                    params.len() + 1,
+                    params.len() + 2
+                ));
+                let like = format!("%{search}%");
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                       started_at AS drill_date, participant_list AS participants,
+                       duration::float8 AS duration_hours, location, actual_content AS summary,
+                       issues_found, improvements, attachments, status, created_by,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_drill_records
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+    };
     let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -847,36 +946,55 @@ pub async fn get_drill_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DrillRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.drill.get_record", "ehs.qa_ehs_drill_records")
+    {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open drill scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
-        SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-               started_at AS drill_date, participant_list AS participants,
-               duration::float8 AS duration_hours, location, actual_content AS summary,
-               issues_found, improvements, attachments, status, created_by,
-               created_at AS created_at, updated_at AS updated_at,
-               tenant_id::text AS tenant_id
-        FROM ehs.qa_ehs_drill_records
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let row = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let sql = r#"
+                SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                       started_at AS drill_date, participant_list AS participants,
+                       duration::float8 AS duration_hours, location, actual_content AS summary,
+                       issues_found, improvements, attachments, status, created_by,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_drill_records
+                WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .bind(tenant)
+                .fetch_optional(&mut scope)
+                .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let sql = r#"
+                SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                       started_at AS drill_date, participant_list AS participants,
+                       duration::float8 AS duration_hours, location, actual_content AS summary,
+                       issues_found, improvements, attachments, status, created_by,
+                       created_at AS created_at, updated_at AS updated_at,
+                       tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_drill_records
+                WHERE id::text = $1 AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .fetch_optional(&mut scope)
+                .await
+        }
+    };
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("演练记录不存在"),
         Err(e) => {
@@ -907,18 +1025,21 @@ pub async fn update_drill_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> ApiResponse<DrillRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.drill.update_record",
+        "ehs.qa_ehs_drill_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to begin drill txn: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.drill_name {
@@ -926,7 +1047,7 @@ pub async fn update_drill_record(
         params.push(v);
     }
     if let Some(v) = req.drill_date {
-        sets.push(format!("started_at = ${}", params.len() + 1));
+        sets.push(format!("started_at = ${}::timestamptz", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.duration_hours {
@@ -964,33 +1085,57 @@ pub async fn update_drill_record(
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
-    let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
-    let sql = format!(
-        r#"
-        UPDATE ehs.qa_ehs_drill_records
-        SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
-          AND deleted_at IS NULL
-        RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-                  started_at AS drill_date, participant_list AS participants,
-                  duration::float8 AS duration_hours, location, actual_content AS summary,
-                  issues_found, improvements, attachments, status, created_by,
-                  created_at AS created_at, updated_at AS updated_at,
-                  tenant_id::text AS tenant_id
-        "#
-    );
-    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
-    for p in &params {
-        query = query.bind(p);
-    }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let row = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $N::uuid
+        Some(tenant) => {
+            let id_idx = params.len() + 1;
+            let tenant_idx = params.len() + 2;
+            let sql = format!(
+                r#"
+                UPDATE ehs.qa_ehs_drill_records
+                SET {set_clause}
+                WHERE id::text = ${id_idx}
+                  AND tenant_id = ${tenant_idx}::uuid
+                  AND deleted_at IS NULL
+                RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                          started_at AS drill_date, participant_list AS participants,
+                          duration::float8 AS duration_hours, location, actual_content AS summary,
+                          issues_found, improvements, attachments, status, created_by,
+                          created_at AS created_at, updated_at AS updated_at,
+                          tenant_id::text AS tenant_id
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q.bind(&id).bind(tenant).fetch_optional(&mut scope).await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let id_idx = params.len() + 1;
+            let sql = format!(
+                r#"
+                UPDATE ehs.qa_ehs_drill_records
+                SET {set_clause}
+                WHERE id::text = ${id_idx}
+                  AND deleted_at IS NULL
+                RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
+                          started_at AS drill_date, participant_list AS participants,
+                          duration::float8 AS duration_hours, location, actual_content AS summary,
+                          issues_found, improvements, attachments, status, created_by,
+                          created_at AS created_at, updated_at AS updated_at,
+                          tenant_id::text AS tenant_id
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q.bind(&id).fetch_optional(&mut scope).await
+        }
+    };
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("演练记录不存在"),
         Err(e) => {
@@ -1023,31 +1168,48 @@ pub async fn delete_drill_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.drill.delete_record",
+        "ehs.qa_ehs_drill_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to begin drill txn: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
-        UPDATE ehs.qa_ehs_drill_records
-        SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+    let result = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let sql = r#"
+                UPDATE ehs.qa_ehs_drill_records
+                SET deleted_at = now()
+                WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .bind(tenant)
+                .execute(&mut scope)
+                .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let sql = r#"
+                UPDATE ehs.qa_ehs_drill_records
+                SET deleted_at = now()
+                WHERE id::text = $1 AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .execute(&mut scope)
+                .await
+        }
+    };
+    let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete drill record: {}", e);
@@ -1076,78 +1238,84 @@ pub async fn get_drill_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<DrillStatistics> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.drill.statistics", "ehs.qa_ehs_drill_records")
+    {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open drill scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    // 系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
-    let total_drills: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let planned_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_plans WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let completed_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {} AND status = 'completed'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let average_score: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT AVG(overall_score)::float8 FROM ehs.qa_ehs_drill_evaluations WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(None);
-    let problem_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let rectified_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {} AND status = 'rectified'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let total_drills = drill_scalar_i64(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {}", tc),
+        tenant,
+    )
+    .await;
+    let planned_count = drill_scalar_i64(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.qa_ehs_drill_plans WHERE {}", tc),
+        tenant,
+    )
+    .await;
+    let completed_count = drill_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {} AND status = 'completed'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let average_score = drill_scalar_opt_f64(
+        &mut scope,
+        format!(
+            "SELECT AVG(overall_score)::float8 FROM ehs.qa_ehs_drill_evaluations WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let problem_count = drill_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let rectified_count = drill_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {} AND status = 'rectified'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     let mut by_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut type_query = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT drill_type, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY drill_type ORDER BY cnt DESC",
         tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    {
+    )));
+    if let Some(t) = tenant {
+        type_query = type_query.bind(t);
+    }
+    if let Ok(rows) = type_query.fetch_all(&mut scope).await {
         for r in rows {
             by_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("drill_type").unwrap_or_default(),
@@ -1158,14 +1326,14 @@ pub async fn get_drill_statistics(
     }
 
     let mut by_month: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut month_query = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT to_char(started_at, 'YYYY-MM') AS month, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY 1 ORDER BY 1",
         tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    {
+    )));
+    if let Some(t) = tenant {
+        month_query = month_query.bind(t);
+    }
+    if let Ok(rows) = month_query.fetch_all(&mut scope).await {
         for r in rows {
             by_month.push(serde_json::json!({
                 "month": r.try_get::<String, _>("month").unwrap_or_default(),
@@ -1185,10 +1353,34 @@ pub async fn get_drill_statistics(
             problem_count: i32::try_from(problem_count).unwrap_or(i32::MAX),
             rectified_count: i32::try_from(rectified_count).unwrap_or(i32::MAX),
             participant_count: 0,
-            tenant_id: tenant_bind.parse().unwrap_or_default(),
+            tenant_id: tenant.unwrap_or_default(),
         },
         "获取演练统计成功",
     )
+}
+
+async fn drill_scalar_i64(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> i64 {
+    let mut q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(0)
+}
+
+async fn drill_scalar_opt_f64(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> Option<f64> {
+    let mut q = sqlx::query_scalar::<_, Option<f64>>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(None)
 }
 #[utoipa::path(
     get,
@@ -1202,29 +1394,34 @@ pub async fn list_drill_types(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<DrillType>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.drill.list_types", "ehs.qa_ehs_drill_plans") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open drill scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    // 系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
     let mut types: Vec<DrillType> = Vec::new();
     let sql = format!(
         "SELECT drill_type FROM ehs.qa_ehs_drill_plans WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          UNION          SELECT drill_type FROM ehs.qa_ehs_drill_records WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          ORDER BY 1"
     );
-    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&tenant_bind)
-        .fetch_all(&mut scope)
-        .await
-    {
+    let mut types_query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        types_query = types_query.bind(t);
+    }
+    if let Ok(rows) = types_query.fetch_all(&mut scope).await {
         for r in rows {
             let code = r.try_get::<String, _>("drill_type").unwrap_or_default();
             types.push(DrillType {
