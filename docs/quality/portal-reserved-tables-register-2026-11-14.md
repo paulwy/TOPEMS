@@ -19,8 +19,8 @@
 这 115 张里有 **110 张静态引用为 0/0**，仍全部登记为「预留未启用」，理由如下：
 
 1. **运行期自愈注册**：`svc/portal/src/models/schema_defense.rs` 注册了 83 张 `portal_*` 表名（去重计数），服务启动时会 `CREATE TABLE IF NOT EXISTS` 自愈。删表不会减少对象，只会让它在下次启动被重建，且绕开迁移账本，制造新的漂移。
-2. **静态引用口径天然漏计**：本清单 110 张为 0 引用，是因为 SQL 以动态表名/配置/后端编排方式使用；例如 `portal.portal_quick_actions` 在 `svc/portal/src/modules/quick_actions.rs` 有 1 文件/2 处引用、`portal.user_preferences` 在代码中承担字典角色，均非「无用」。
-3. **同名跨 schema 副本**：`portal.core_faqs`、`portal.core_guides`、`portal.core_guide_lessons`、`portal.core_guide_progress` 在 `iam` / `public` 有同名表，属于分域演进中的副本，权威表尚未定；删副本等于替业务做归属决策。
+2. **静态引用口径天然漏计**：本清单 110 张为 0 引用，是因为 SQL 以动态表名/配置/后端编排方式使用；例如 `portal.portal_quick_actions` 在 `svc/portal/src/modules/quick_actions.rs` 有引用（盘点口径 1 文件/2 处），`portal.user_preferences` 盘点口径 1 文件/2 处、被判为字典表，均非「无用」。
+3. **同名跨 schema 副本**：`portal.core_faqs`、`portal.core_guides`、`portal.core_guide_lessons`、`portal.core_guide_progress` 各在 `iam` / `mes` / `public` 有同名表（实测 4 个 schema 同名），属于分域演进中的副本，权威表尚未定；删副本等于替业务做归属决策。
 4. **历史迁移从未删过它们**：这些表自建库起只增不删，多数是 `id`/`deleted_at` 的壳形状，符合「先建表占位、后按模块启用」的预留节奏。
 5. **prod 全空 ≠ 未使用**：prod 115 张全部 0 行，说明功能尚未放量，而不是功能已废弃；dev 的 `portal_quick_actions`（5 行）、`user_preferences`（3 行）已有人在用。
 
