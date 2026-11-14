@@ -42,7 +42,7 @@ pub async fn trigger_collection(
     };
 
     let task_row = sqlx::query(
-        "SELECT id::TEXT, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, task_no, task_name, instrument_id::TEXT, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
     .fetch_optional(&mut scope)
@@ -207,11 +207,11 @@ pub async fn list_collection_tasks(
 
     let sql = match query.status.as_ref() {
         Some(_) => {
-            "SELECT t.id, t.task_no, t.task_name, t.instrument_id, t.protocol, \
+            "SELECT t.id::TEXT, t.task_no, t.task_name, t.instrument_id::TEXT, t.protocol, \
              t.collection_mode, t.cron_expression, t.interval_minutes, \
-             t.parse_rule_id, t.status, t.last_run_at, t.next_run_at, \
+             t.parse_rule_id::TEXT, t.status, t.last_run_at, t.next_run_at, \
              t.total_collections, t.success_count, t.failed_count, \
-             t.created_by, t.created_at, t.updated_at, t.tenant_id, \
+             t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT, \
              i.instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
@@ -219,11 +219,11 @@ pub async fn list_collection_tasks(
              ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"
         }
         None => {
-            "SELECT t.id, t.task_no, t.task_name, t.instrument_id, t.protocol, \
+            "SELECT t.id::TEXT, t.task_no, t.task_name, t.instrument_id::TEXT, t.protocol, \
              t.collection_mode, t.cron_expression, t.interval_minutes, \
-             t.parse_rule_id, t.status, t.last_run_at, t.next_run_at, \
+             t.parse_rule_id::TEXT, t.status, t.last_run_at, t.next_run_at, \
              t.total_collections, t.success_count, t.failed_count, \
-             t.created_by, t.created_at, t.updated_at, t.tenant_id, \
+             t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT, \
              i.instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
@@ -318,11 +318,11 @@ pub async fn get_collection_task(
 
     let row = sqlx::query(
         r#"
-        SELECT t.id, t.task_no, t.task_name, t.instrument_id, t.protocol,
+        SELECT t.id::TEXT, t.task_no, t.task_name, t.instrument_id::TEXT, t.protocol,
                t.collection_mode, t.cron_expression, t.interval_minutes,
-               t.parse_rule_id, t.status, t.last_run_at, t.next_run_at,
+               t.parse_rule_id::TEXT, t.status, t.last_run_at, t.next_run_at,
                t.total_collections, t.success_count, t.failed_count,
-               t.created_by, t.created_at, t.updated_at, t.tenant_id,
+               t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name
         FROM qa_lims_collection_tasks t
         LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id
@@ -403,9 +403,9 @@ pub async fn create_collection_task(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'system', $10)
         RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,
                   collection_mode, cron_expression, interval_minutes,
-                  parse_rule_id, status, last_run_at, next_run_at,
+                  parse_rule_id::TEXT, status, last_run_at, next_run_at,
                   total_collections, success_count, failed_count,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(task_id)
@@ -491,9 +491,9 @@ pub async fn update_collection_task(
         WHERE id = $1
         RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,
                   collection_mode, cron_expression, interval_minutes,
-                  parse_rule_id, status, last_run_at, next_run_at,
+                  parse_rule_id::TEXT, status, last_run_at, next_run_at,
                   total_collections, success_count, failed_count,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(id)
