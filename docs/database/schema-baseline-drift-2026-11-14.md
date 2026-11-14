@@ -176,6 +176,59 @@ comm -13 /tmp/prod_versions.txt /tmp/dev_versions.txt   # dev - prod
 `20261114160000`，其余 5 个是 prod 历史窗口未纳入的定向迁移）。先前预期的「`dev - prod` 仅
 `20261114170000`」与实测不符，以本表为准。今天补投的 3 个版本均在 prod 账本中（故未出现在差集）。
 
+### 6 个 dev-only 版本归因（2026-11-14 实测）
+
+| version | 文件在 `origin/main` | prod 账本 | prod 结构是否已体现意图 | 归类 |
+| --- | --- | --- | --- | --- |
+| `20261107000019` | 命中 `20261107000019_drop_communication_email_templates.sql` | 未登记 | `communication.core_email_templates` 仍存在、0 行；无代码引用（manifest `present_empty`） | **A 已废弃**：删除非功能必需，manifest `disposition=obsolete`，需未来 `> max` 的新版本清理 |
+| `20261107000020` | 命中 `..._align_finance_payments_created_by_and_pm_tags.sql` | 未登记 | `finance.core_finance_payments.created_by` 已是 `varchar(100)`；`pm.projects.tags` 已是 `jsonb` | **A 已废弃**：manifest `class=effect_already_present`，prod 上两条分支均为 no-op |
+| `20261109110100` | 命中 `20261109110100_p3_report_line_map.sql` | 未登记 | `finance.core_finance_report_line_map` 已存在，带 `rls_tenant_isolation` + `rls_global_read` 策略 | **A 被替代**：由 `20261109110160`（`supersedes: 202611091100`，prod 账本已入账）承接 |
+| `20261112105000` | 命中 `20261112105000_w7_b4_wms_rls_fail_closed.sql` | 未登记 | `wms` 39 条策略全为 `rls_tenant_isolation`、38 张表 FORCE RLS | **A 被替代**：由 `20261113100000`（manifest `replaces`，prod 账本已入账）承接 |
+| `20261114100000` | 命中 `20261114100000_w7_b4_status_check_widen_business_states.sql` | 未登记 | `crm.billing_records`/`iam.users`/`analytics.report_execution_records` 上 **0 条** `ck_*_status_standard`，意图未体现 | **B（不可按原文投递）**：不是「待投」，是「投了必失败」，详见下方专节 |
+| `20261114170000` | 命中 `20261114170000_drop_finance_dead_tables_shells.sql` | 未登记 | 6 张 finance 空壳表仍存在（manifest：prod 6/6 = 0 行） | **B 待投窗口**：manifest `status=to_apply`、`本任务只写不投`，属正常待投而非漏账 |
+
+结论：**无 C 类**（6 个文件都在 `origin/main`，不存在「只在 dev 的实验残留」）。`20261114100000`
+并不是「main 里已撤下」——它仍在 main 且状态为 `to_apply`，但 prod 侧缺少其前置 `ck_*_status_standard`
+约束，需单独排窗口前先做存在性核查。
+
+## dev 账本权宜说明（重要）
+
+- `20261105100000` 在 dev 使用 **DEV-TOPOLOGY 变体**执行（终态断言改为 dev 拓扑 21 条 + 父表必须为
+  权威表），但 `_sqlx_migrations` 仍按**原文件 SHA-384** 登记。因此 **dev 账本该行不代表原文件原文
+  被原样执行**，不能作为「该迁移在真实拓扑下验证通过」的证据；prod 侧该版本为当年真实应用。
+- 相关 SQL 与结果：`/tmp/p4_dev_variant.sql` + 账本插入语句已随本次追平记录留档；dev 侧实际效果为
+  4 条 public QA EHS 外键重指向 `ehs.*`、6 张 public 旧父表删除。
+
+## 待修项（主分支迁移缺陷，本次不改）
+
+- `20261105230000_p4a4_drop_shadows_in_rebuild_chain.sql`：前置解绑块排除了「本身也是删除目标」的子表，
+  导致 `public.report_schedules` 指向 `public.report_templates` 的入站外键未被解除；而 DROP 顺序中
+  `report_templates` 先于 `report_schedules`，在两者同时存在的库上必然失败。dev 侧以手工补
+  `DROP CONSTRAINT report_schedules_template_id_fkey` 绕过，**迁移文件本身需修**（调整解绑条件或 DROP
+  顺序），属主分支问题，不在 dev 侧顺手改。
+
+## `20261114100000` 定性：不可按原文投递（2026-11-14 定稿）
+
+**结论：不是「待投」，是「投了必失败」。不得按原文应用，需重写，重写单独立项。**
+
+三条硬理由（均已实测）：
+
+1. **前置对象不存在**：迁移里的 18 条 `ck_*_status_standard` 清单来自 dev 漂移库；prod 对应表上
+   实际 **0 条**该类约束（抽样 `crm.billing_records`、`iam.users`、`analytics.report_execution_records`
+   的 `pg_constraint` 均为 0 行）。
+2. **不会自愈**：迁移对「表/约束缺失」是 `RAISE EXCEPTION`（文件头安全约定第 1 条），不会静默跳过，
+   在 prod 上第一步即整事务中止。
+3. **值域仍窄于代码真实写入**：即便约束存在，迁移拟加的值域也覆盖不了代码字面量——
+   `tms_carriers` 缺 `suspended`、`mes_erp_sync_logs` 缺 `pending`、`integration_sync_logs`
+   的代码三值一个都不在目标集合、`report_execution_records` 缺 `completed`/`failed`、
+   `finance_v60_alerts` 缺 `draft`/`pending`、`qa_alert_messages` 缺 `open`/`pending`；
+   一旦投产，第一条真实业务写入就会 `23514 check_violation`。
+
+处置：**不删文件、不改 SQL、不动 manifest 状态**（改状态会影响账本比对），仅在本文档登记结论；
+重写工作另行立项，本次不做。
+
+`20261114170000` 仍按正常待投记录（manifest `to_apply`、只写不投），等窗口落刀。
+
 ## 收敛数字
 
 | 对比 | 变更行 |
