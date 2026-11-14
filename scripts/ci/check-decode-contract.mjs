@@ -19,7 +19,9 @@
 //   2) node scripts/ci/check-decode-contract.mjs /tmp/prod_cols.psv
 //
 // 输出：`risk|file:line|subject:RustType|table.column:DBType|reason`
-// 仅报告，不改变退出码；high 需人工复核后再修。
+// 退出码：缺少列目录时 exit 2；扫描命中项默认仅报告，不改变退出码（high 需人工复核后再修）。
+// 阻断语义：pre-push 包装层（lefthook decode-contract）在缺少 /tmp/prod_cols.psv 且本次变更
+//           涉及 svc/*/src/modules/**.rs 时 exit 1，避免“缺少输入”被当成通过。
 //
 // 已知边界（保守跳过，不会误报）：
 //   - 解码列名不是字面量（变量/拼接）无法定位；

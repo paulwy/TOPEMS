@@ -603,13 +603,31 @@ pre-push:
         bash scripts/dev/domain-probe.sh
 
     # [Gate DC] decode 契约扫描（W6-D）：交叉比对 prod 列目录与 Rust 动态解码类型
-    # 依赖 /tmp/prod_cols.psv（prod 列目录只读导出）；本仓库工作流约束禁止访问生产库，
-    # 缺失时 SKIP 不阻断（脚本本身仅报告、不改退出码）。生成命令见脚本文件头。
+    # 依赖 /tmp/prod_cols.psv（prod 列目录只读导出）；本仓库工作流约束禁止访问生产库。
+    # [2026-11-14 修订] 缺列目录时不再一律放行：
+    #   - 本次变更涉及 svc/*/src/modules/**.rs → FAILED（解码契约无法校验，exit 1）
+    #   - 不涉及上述路径 → SKIP（与动态解码无关）
+    # 扫描命中项本身仍为报告输出（high 需人工复核），区别于“缺少输入时阻断”。
     decode-contract:
       tags: database rust contract
       run: |
         if [ ! -f /tmp/prod_cols.psv ]; then
-          printf '\033[33m[Gate DC] SKIP\033[0m 缺少 /tmp/prod_cols.psv（需只读导出 prod 列目录；本约束禁止访问生产库）\n'
+          BASE="$(git merge-base origin/main HEAD 2>/dev/null || true)"
+          if [ -z "$BASE" ]; then
+            BASE="$(git merge-base '@{upstream}' HEAD 2>/dev/null || true)"
+          fi
+          if [ -z "$BASE" ]; then
+            printf '\033[31m[Gate DC] FAILED\033[0m 无法确定变更基线（origin/main、@{upstream} 均不可用），解码契约无法判定。\n'
+            printf '  修复：先执行 git fetch origin 确保 origin/main 存在，再重跑；不要用 --no-verify 绕过。\n'
+            exit 1
+          fi
+          if git diff --name-only "$BASE" HEAD | grep -Eq '^svc/[^/]+/src/modules/.*\.rs$'; then
+            printf '\033[31m[Gate DC] FAILED\033[0m 本次变更涉及 svc/*/src/modules/**.rs，但缺少 /tmp/prod_cols.psv，解码契约无法校验。\n'
+            printf '  修复：按 scripts/ci/check-decode-contract.mjs 文件头注释的命令只读导出 prod 列目录到 /tmp/prod_cols.psv，然后重跑本 gate。\n'
+            printf '  不要用 --no-verify 绕过；若本次并未改动态解码，请把无关的 modules/*.rs 变更拆出。\n'
+            exit 1
+          fi
+          printf '\033[33m[Gate DC] SKIP\033[0m 缺少 /tmp/prod_cols.psv，且本次变更不涉及 svc/*/src/modules/**.rs（无需解码契约校验）\n'
           exit 0
         fi
         node scripts/ci/check-decode-contract.mjs /tmp/prod_cols.psv
