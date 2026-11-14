@@ -37,8 +37,8 @@ pub async fn list_instrument_data(
     };
     let mut query_builder = QueryBuilder::<Postgres>::new(
         r#"
-        SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
-               d.raw_data, d.parsed_data, d.status, d.quality_score,
+        SELECT d.id::TEXT, d.data_no, d.instrument_id::TEXT, d.batch_no, d.protocol,
+               d.raw_data, d.parsed_data, d.status, d.quality_score::FLOAT8,
                d.error_msg, d.collected_at, d.parsed_at,
                d.created_by, d.created_at, d.updated_at,
                i.instrument_no, CASE WHEN
@@ -46,7 +46,8 @@ pub async fn list_instrument_data(
     );
     query_builder.push_bind(locale);
     query_builder.push(
-        r#" = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
+        r#" = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name,
+        d.tenant_id::TEXT
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
         WHERE 1=1
@@ -146,10 +147,10 @@ pub async fn get_instrument_data(
     };
     let row = sqlx::query(
         r#"
-        SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
-               d.raw_data, d.parsed_data, d.status, d.quality_score,
+        SELECT d.id::TEXT, d.data_no, d.instrument_id::TEXT, d.batch_no, d.protocol,
+               d.raw_data, d.parsed_data, d.status, d.quality_score::FLOAT8,
                d.error_msg, d.collected_at, d.parsed_at,
-               d.created_by, d.created_at, d.updated_at, d.tenant_id,
+               d.created_by, d.created_at, d.updated_at, d.tenant_id::TEXT,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
@@ -230,10 +231,10 @@ pub async fn create_instrument_data(
         INSERT INTO qa_lims_instrument_data
             (id, data_no, instrument_id, batch_no, protocol, raw_data, status, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'system', $7)
-        RETURNING id, data_no, instrument_id, batch_no, protocol,
-                  raw_data, parsed_data, status, quality_score,
+        RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
+                  raw_data, parsed_data, status, quality_score::FLOAT8,
                   error_msg, collected_at, parsed_at,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(data_id)
@@ -309,10 +310,10 @@ pub async fn update_instrument_data(
             error_msg = COALESCE($4, error_msg),
             updated_at = NOW()
         WHERE id = $1
-        RETURNING id, data_no, instrument_id, batch_no, protocol,
-                  raw_data, parsed_data, status, quality_score,
+        RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
+                  raw_data, parsed_data, status, quality_score::FLOAT8,
                   error_msg, collected_at, parsed_at,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(id)

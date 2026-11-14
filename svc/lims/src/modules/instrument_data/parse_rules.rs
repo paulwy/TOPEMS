@@ -34,33 +34,33 @@ pub async fn list_parse_rules(
 
     let sql = match (query.status.as_ref(), query.protocol.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, rule_no, rule_name, protocol, instrument_type, \
+            "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at, updated_at, tenant_id \
+             created_by, created_at, updated_at, tenant_id::TEXT \
              FROM qa_lims_parse_rules \
              WHERE status = $1 AND protocol = $2 \
              ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (Some(_), None) => {
-            "SELECT id, rule_no, rule_name, protocol, instrument_type, \
+            "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at, updated_at, tenant_id \
+             created_by, created_at, updated_at, tenant_id::TEXT \
              FROM qa_lims_parse_rules \
              WHERE status = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, Some(_)) => {
-            "SELECT id, rule_no, rule_name, protocol, instrument_type, \
+            "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at, updated_at, tenant_id \
+             created_by, created_at, updated_at, tenant_id::TEXT \
              FROM qa_lims_parse_rules \
              WHERE protocol = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, None) => {
-            "SELECT id, rule_no, rule_name, protocol, instrument_type, \
+            "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at, updated_at, tenant_id \
+             created_by, created_at, updated_at, tenant_id::TEXT \
              FROM qa_lims_parse_rules \
              ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
@@ -146,9 +146,9 @@ pub async fn get_parse_rule(
 
     let row = sqlx::query(
         r#"
-        SELECT id, rule_no, rule_name, protocol, instrument_type,
+        SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type,
                parse_config, quality_rules, status, version, description,
-               created_by, created_at, updated_at, tenant_id
+               created_by, created_at, updated_at, tenant_id::TEXT
         FROM qa_lims_parse_rules
         WHERE id = $1
         "#,
@@ -209,9 +209,9 @@ pub async fn create_parse_rule(
             (id, rule_no, rule_name, protocol, instrument_type,
              parse_config, quality_rules, status, version, description, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', '1.0', $8, 'system', $9)
-        RETURNING id, rule_no, rule_name, protocol, instrument_type,
+        RETURNING id::TEXT, rule_no, rule_name, protocol, instrument_type,
                   parse_config, quality_rules, status, version, description,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(rule_id)
@@ -288,9 +288,9 @@ pub async fn update_parse_rule(
             version = (version::numeric + 0.1)::varchar,
             updated_at = NOW()
         WHERE id = $1
-        RETURNING id, rule_no, rule_name, protocol, instrument_type,
+        RETURNING id::TEXT, rule_no, rule_name, protocol, instrument_type,
                   parse_config, quality_rules, status, version, description,
-                  created_by, created_at, updated_at, tenant_id
+                  created_by, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(id)

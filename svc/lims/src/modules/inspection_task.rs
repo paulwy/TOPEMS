@@ -427,7 +427,7 @@ pub async fn create_task(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING {}",
+        "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz) RETURNING {}",
         TASK_SELECT_COLS
     )))
     .bind(ctx.tenant_id)
