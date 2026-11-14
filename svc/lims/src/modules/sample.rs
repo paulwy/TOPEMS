@@ -1106,7 +1106,7 @@ pub async fn get_sample_traceability(
     let sample_row = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit,
-               status, received_at, expired_at, created_at, updated_at
+               status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
         FROM public.qa_lab_samples WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
@@ -1137,7 +1137,7 @@ pub async fn get_sample_traceability(
 
     let lifecycle_rows = sqlx::query(
         r#"
-        SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at
+        SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at::TEXT
         FROM public.qa_lab_sample_lifecycle
         WHERE sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC
