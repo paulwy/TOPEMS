@@ -2945,7 +2945,7 @@ ALTER TABLE ONLY mes.teams
 
 
 ALTER TABLE ONLY mes.teams
-    ADD CONSTRAINT teams_team_code_key UNIQUE (team_code);
+    ADD CONSTRAINT teams_tenant_id_team_code_key UNIQUE NULLS NOT DISTINCT (tenant_id, team_code);
 
 
 

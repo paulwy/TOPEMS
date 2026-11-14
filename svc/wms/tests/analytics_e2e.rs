@@ -9,7 +9,7 @@ use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::State;
 use axum::Extension;
 use serde_json::Value;
-use topems_wms::modules::analytics::get_dashboard_summary;
+use topems_wms::modules::analytics::{get_dashboard_summary, get_flow_trend, AnalyticsQueryParams};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -109,4 +109,104 @@ async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {
     assert_eq!(summary["alert_count"], 2);
     assert_eq!(summary["alert_critical"], 1);
     assert_eq!(summary["location_utilization"], 50.0);
+}
+
+// ===== flow-trend 权限校验 =====
+
+fn flow_params() -> AnalyticsQueryParams {
+    AnalyticsQueryParams {
+        start_date: None,
+        end_date: None,
+        group_by: Some("month".to_string()),
+        warehouse_id: None,
+    }
+}
+
+/// 普通用户（非超管）且无 wms:read → 403。
+#[sqlx::test(migrations = false)]
+async fn flow_trend_requires_wms_read(pool: sqlx::PgPool) {
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
+        .execute(&pool)
+        .await
+        .unwrap();
+    for table in ["inbound_orders", "outbound_orders"] {
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "CREATE TABLE IF NOT EXISTS wms.{table} (
+                id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(),
+                total_items NUMERIC(15,2), warehouse_id UUID,
+                tenant_id UUID, deleted_at TIMESTAMPTZ)"
+        )))
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    let state = api_state(pool.clone());
+    let mut claims = tenant_claims();
+    claims.is_superuser = false;
+    claims.permissions = vec![];
+
+    let resp = get_flow_trend(
+        State(state),
+        Extension(claims),
+        axum::extract::Query(flow_params()),
+    )
+    .await;
+    assert_eq!(resp.code, 403, "无 wms:read 应 403: {}", resp.message);
+    assert!(
+        resp.message.contains("权限不足"),
+        "message={}",
+        resp.message
+    );
+}
+
+/// 普通用户持有 wms:read → 200，且只统计本租户数据。
+#[sqlx::test(migrations = false)]
+async fn flow_trend_allows_wms_read(pool: sqlx::PgPool) {
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
+        .execute(&pool)
+        .await
+        .unwrap();
+    for table in ["inbound_orders", "outbound_orders"] {
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "CREATE TABLE IF NOT EXISTS wms.{table} (
+                id UUID PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(),
+                total_items NUMERIC(15,2), warehouse_id UUID,
+                tenant_id UUID, deleted_at TIMESTAMPTZ)"
+        )))
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+    sqlx::query(
+        "INSERT INTO wms.inbound_orders (id, total_items, tenant_id) VALUES (gen_random_uuid(), 10, $1)",
+    )
+    .bind(test_tenant())
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO wms.outbound_orders (id, total_items, tenant_id) VALUES (gen_random_uuid(), 4, $1)",
+    )
+    .bind(test_tenant())
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let state = api_state(pool);
+    let mut claims = tenant_claims();
+    claims.is_superuser = false;
+    claims.permissions = vec!["wms:read".to_string()];
+
+    let resp = get_flow_trend(
+        State(state),
+        Extension(claims),
+        axum::extract::Query(flow_params()),
+    )
+    .await;
+    assert_eq!(resp.code, 200, "wms:read 应放行: {}", resp.message);
+    let data = resp.data.unwrap();
+    let body = serde_json::to_value(data).unwrap();
+    assert_eq!(body["summary"]["total_inbound_qty"], 10.0);
+    assert_eq!(body["summary"]["total_outbound_qty"], 4.0);
 }
