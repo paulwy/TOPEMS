@@ -20,7 +20,9 @@
 --   4. ADD CONSTRAINT 会校验存量行（本批 18 张表现存值全在目标集合内）。
 --
 -- 幂等：
---   已包含全部目标值时 NOTICE 跳过；DROP+ADD 位于同一事务，失败整体回滚。
+--   已包含全部目标值时 NOTICE 跳过；文件内不写 BEGIN/COMMIT，由入口
+--   `apply-forward.sh` 的 psql --single-transaction 把迁移 SQL 与账本
+--   INSERT 包在同一事务里，任一步失败则约束与账本一起回滚。
 --
 -- 回滚：
 --   database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql
@@ -32,8 +34,6 @@
 
 SET lock_timeout = '5s';
 SET statement_timeout = '120s';
-
-BEGIN;
 
 DO $status_widen$
 DECLARE
@@ -186,5 +186,3 @@ BEGIN
     RAISE NOTICE 'status-widen VERIFY OK: 18 条约束全部包含目标值';
 END
 $status_widen_verify$;
-
-COMMIT;

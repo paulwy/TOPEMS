@@ -70,6 +70,17 @@
       ],
       "evidence": "生产副本 topems_w7_reh_prod_20261111（由生产全库 dump sha256=54bad79c4b8e3618960ce7d3944a5d843bf83a772186138f3243b296dacf8086 恢复，账本 655/max 20261110210000）从 anchor 20261110210000 顺序应用前 5 笔后，第 6 笔硬失败：ERROR: W7-B4-SRM 失败：srm.supplier_users 不存在（账本止于 660/max 20261112094000）；根因定位 database/migrations/20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql:60 DROP TABLE srm.supplier_users（该版本在 prod 账本内、本地开发库账本内没有）。守卫改造后重建副本、从干净恢复点重跑六笔，账本 661/max 20261112095000，mes 52 表/50 RLS/50 FORCE/57 策略、19 表 tenant_id 19/19、srm 21 表/20 RLS/20 FORCE/20 策略/RESTRICTIVE 0、quarantine 0、v_tenant_backfill_gaps 0 全绿；开发克隆 topems_w7_reh_20261111（账本 578、表存在）同文件走非 no-op 分支并断言通过。",
       "approved": true
+    },
+    {
+      "id": "B20261114-w7b4-status-widen-atomic",
+      "date": "2026-11-14",
+      "committer": "air",
+      "reason": "20261114100000 为尚未投递生产的前向补丁（prod 账本 668 行/max 20261113100000，无该版本）。窗口前清理：删除文件自带的 BEGIN/COMMIT，改由 apply-forward.sh 的 psql --single-transaction 把迁移 SQL 与 _sqlx_migrations INSERT 包在同一事务。该条是本批唯一必须与账本原子的一条（18 张表 DROP/ADD CHECK），因此不等 36 条存量批量清理，先移出 legacy-transaction-block-allowlist.txt。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261114100000_w7_b4_status_check_widen_business_states.sql"
+      ],
+      "evidence": "prod 只读核验（2026-11-14）：SELECT count(*) FROM _sqlx_migrations WHERE version=20261114100000 = 0，max=20261113100000/668 行。演练库 topems_atomic_pos（topems 克隆 + 账本锚 20261113100000）：apply-forward --only 20261114100000 单事务内 18× status-widen OK + VERIFY OK + INSERT 0 1，账本 checksum 与 shasum -a 384 一致（856dbab3…dacb6），新连接复核 ehs 约束含 draft；同文件重跑 18× SKIP + VERIFY OK。失败模拟 topems_atomic_fail（前置于三值约束、账本无该行）：文件末尾临时追加 SELECT 1/0，入口报 ERROR division by zero 并中止，复核账本 0 行、18 条约束均未放宽（any_widened=0），即约束与账本一起回滚；演练后文件恢复，SHA-384 不变。回滚文件仍可用：18× status-unwiden OK、EXIT=0。validate.sh Errors 0 / Checksum errors 0。",
+      "approved": true
     }
   ]
 }

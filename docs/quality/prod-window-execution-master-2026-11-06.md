@@ -1276,8 +1276,8 @@ bash scripts/migration/apply-forward.sh ... \
 `apply-forward.sh` 用 `psql --single-transaction` 把「迁移 SQL + `_sqlx_migrations` 写入」包在同一个事务里。文件内的 `COMMIT` 会**提前结束外层事务**，账本 INSERT 落到事务外；一旦账本写入被任何校验拒绝，就会留下「DDL 已提交、账本没有记录」的半应用态（2026-11-14 实测复现：18 条约束已放宽，账本行 0）。**这是半应用态的根因。**
 
 - `scripts/migration/validate.sh` 新增规则：扫描 `database/migrations`、`migrations`、`svc/*/migrations` 下所有 `.sql`，命中 `^[[:space:]]*(BEGIN|COMMIT|ROLLBACK)[[:space:]]*;` 且版本不在豁免清单 → 计入 `ERRORS`，退出码 1。当前结果：`Explicit transaction blocks: 0`。
-- 存量 **36 条**先豁免，登记在 `scripts/migration/legacy-transaction-block-allowlist.txt`，**不一次性修改**。清理方式：逐条删掉文件内的 `BEGIN`/`COMMIT` 后，从清单移除版本号；新迁移一律不得加入清单。
-- 豁免版本号（36）：
+- 存量 **35 条**先豁免，登记在 `scripts/migration/legacy-transaction-block-allowlist.txt`，**不一次性修改**。清理方式：逐条删掉文件内的 `BEGIN`/`COMMIT` 后，从清单移除版本号；新迁移一律不得加入清单。
+- 豁免版本号（35）：
 
 ```
 20260824000001 20260827000002 20260905000002 20260908000007 20260908000008
@@ -1287,10 +1287,9 @@ bash scripts/migration/apply-forward.sh ... \
 20261107000033 20261107000036 20261109100100 20261109100200 20261109100300
 20261109100400 20261109100600 20261109100700 20261109100800 20261109100900
 20261109101000 20261109101100 20261109101200 20261109101300 20261109101400
-20261114100000
 ```
 
-- **`20261114100000` 也在清单内，且下一个窗口就投递**：它的半应用风险最高，优先清理。在清理前，该版本的「迁移 SQL + 账本写入」**不是原子的**——迁移成功时账本行会正常写入，但若中途被拒，可能只留下 DDL。
+- **`20261114100000` 已于 2026-11-14 窗口前清理出清单**：删除文件内的 `BEGIN`/`COMMIT`，改由入口 `psql --single-transaction` 包裹（`DO` 块不变）。该条必须与账本原子，因此不等批量清理。生产中该版本未应用（账本 0 行），改文件不存在「已应用后改 checksum」的问题。演练见 17.10。
 
 ### 17.5 护栏在哪：顺序只靠入口，没有数据库兜底
 
@@ -1308,7 +1307,7 @@ bash scripts/migration/apply-forward.sh ... \
 撤回 `14130000` 的两个原因：
 
 1. **与 defer 冲突**：被 `--defer` 的版本补投时，账本水位已高于它，`version < max` 的触发器会把它**永久挡死**，等于封掉延后补投。
-2. **拦截点太晚**：触发器在账本 INSERT 时才拒绝，而 `20261114100000` 自带 `BEGIN/COMMIT`，外层 `--single-transaction` 已被提前结束 → 拒绝时 **DDL 已提交、账本 0 行**（实测原文见 17.9 对照）。
+2. **拦截点太晚**：触发器在账本 INSERT 时才拒绝，而当时 `20261114100000` 自带 `BEGIN/COMMIT`（现已移除），外层 `--single-transaction` 已被提前结束 → 拒绝时 **DDL 已提交、账本 0 行**（实测原文见 17.9 对照）。
 
 ### 17.6 反序风险（先落 `14120000`）
 
@@ -1439,4 +1438,34 @@ CHECK (((status IS NULL) OR ((status)::text = ANY ('{active,inactive,archived,dr
 > 说明：场景 2/3 的“更高版本”分别用了 `14120000` 实文件和同版本桩文件。原因是 `topems` 克隆的策略数是 41，不满足 `14120000` 的「恰 29 条」前置，无法在普通克隆上应用真实 `14120000`；场景 3 只需水位高于被 defer 的版本，因此用桩文件 `20261114120000_w7_b4_watermark_probe.sql`（已删除、未提交）。桩文件只用于验证入口判定，`14100000` 本身用真实文件。
 >
 > 对照（撤回 `14130000` 前）：同样命令在账本触发器存在时输出 `ERROR: ledger-guard：拒绝乱序迁移 version=20261114100000 < 账本水位 20261114130000` 与 `WARNING: there is no transaction in progress`，但 `ehs.qa_ehs_environmental_regulations` 约束已含 `draft`、账本 0 行——即触发器拦截时 DDL 已提交。这正是改为入口校验、并禁止迁移文件自带 `BEGIN/COMMIT` 的直接原因。
+
+### 17.10 `20261114100000` 窗口前清理：去掉自带事务，改由入口包裹
+
+- 变更：删除文件内 `BEGIN;`（原第 36 行）与 `COMMIT;`（原第 190 行），保留 `SET lock_timeout/statement_timeout` 与两个 `DO` 块；`legacy-transaction-block-allowlist.txt` 移除该版本（36 → 35）。
+- 正向（`topems_atomic_pos`，`topems` 克隆 + 账本锚 `20261113100000`）：入口 `--only 20261114100000` → `== OK：应用 1 条，无失败`。单事务内原始日志：
+
+```
+NOTICE:  status-widen OK: ehs.ck_qa_ehs_disease_cases_status_standard + [suspected]
+...
+NOTICE:  status-widen OK: analytics.ck_report_execution_records_status_standard + [running]
+DO
+NOTICE:  status-widen VERIFY OK: 18 条约束全部包含目标值
+DO
+INSERT 0 1
+```
+
+- 账本（新连接复核）：`20261114100000 | w7 b4 status check widen business states | t | installed_on 2026-11-14 11:35:32+08`，checksum = 文件 SHA-384 `856dbab3…dacb6`，与 `shasum -a 384` 逐字节一致；`ehs` 约束为 `'{active,inactive,archived,draft}'`。
+- 幂等：同文件重跑 → 18 × `status-widen SKIP（已含全部目标值）` + `VERIFY OK`。
+- 中途失败（`topems_atomic_fail`，前置于三值约束、账本无该行）：文件末尾临时追加 `SELECT 1/0` 后经入口执行：
+
+```
+ERROR:  division by zero
+== 中止：20261114100000_w7_b4_status_check_widen_business_states.sql 失败，后续迁移未执行
+```
+
+  复核：账本 `14100000` 行数 **0**；`ck_qa_ehs_environmental_regulations_status_standard` 仍为 `'{active,inactive,archived}'`；抽检 4 条约束无任何新增值（`any_widened = 0`）。**约束与账本一起回滚**，不再出现「约束放宽、账本 0 行」。演练后文件已恢复，SHA-384 仍为 `856dbab3…dacb6`。
+- 回滚（双向）：在正向应用后的库执行 `database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql` → 18 × `status-unwiden OK`、`EXIT=0`，约束回到 `'{active,inactive,archived}'`。
+- checksum：`validate.sh` → `Explicit transaction blocks: 0`、`Checksum errors: 0`、`Errors: 0`；`database/checksums.txt` 中该版本 = 文件 SHA-256 `d2ca50ad…72b3`。
+- **prod 未应用（只读核实）**：`_sqlx_migrations` 中 `version=20261114100000` 行数 `0`，水位 `max=20261113100000 / 668 行`。所以本次改文件不存在「已应用后再改文件导致 checksum 不一致」的问题。
+
 
