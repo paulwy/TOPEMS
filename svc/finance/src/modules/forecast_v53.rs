@@ -687,8 +687,7 @@ impl CashFlowPredictor {
         let (sample, is_synthetic) = Self::fetch_historical_data(db, tenant_id, None).await?;
         if is_synthetic {
             return Err(sqlx::Error::Protocol(
-                "无真实历史凭证数据，拒绝用合成样本计算模型精度：合成数据不可用于决策"
-                    .to_string(),
+                "无真实历史凭证数据，拒绝用合成样本计算模型精度：合成数据不可用于决策".to_string(),
             ));
         }
 

@@ -1111,6 +1111,15 @@ mod tests {
         for sql in [
             "CREATE SCHEMA IF NOT EXISTS hrm",
             "CREATE SCHEMA IF NOT EXISTS erp",
+            // 与迁移 20261114180000 保持一致：写路径与 RLS 策略都依赖该解析函数
+            r#"CREATE OR REPLACE FUNCTION erp.group_tenant_of(p_tenant uuid) RETURNS uuid
+                LANGUAGE sql STABLE AS $fn$
+                SELECT CASE
+                    WHEN p_tenant IS NULL THEN NULL
+                    WHEN p_tenant = '00000000-0000-0000-0000-000000000000'::uuid THEN NULL
+                    ELSE p_tenant
+                END
+                $fn$"#,
             "CREATE SCHEMA IF NOT EXISTS finance",
             r#"CREATE TABLE IF NOT EXISTS hrm.companies (
                 id uuid PRIMARY KEY, tenant_id uuid NOT NULL, name varchar(255) NOT NULL,
