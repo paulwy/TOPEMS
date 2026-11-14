@@ -27,6 +27,29 @@ fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
     }
 }
 
+/// 解析外部传入的 RFC3339 时间：失败返回 400。
+fn parse_time_or_400<T>(
+    value: &str,
+    field: &str,
+) -> Result<chrono::DateTime<chrono::Utc>, ApiResponse<T>> {
+    chrono::DateTime::parse_from_rfc3339(value)
+        .map(|t| t.with_timezone(&chrono::Utc))
+        .map_err(|_| {
+            ApiResponse::bad_request(&format!("参数 {field} 不是合法的 RFC3339 时间: {value}"))
+        })
+}
+
+/// Option 版本：None 直接通过，Some 走 RFC3339 解析。
+fn parse_opt_time_or_400<T>(
+    value: Option<&str>,
+    field: &str,
+) -> Result<Option<chrono::DateTime<chrono::Utc>>, ApiResponse<T>> {
+    match value {
+        Some(v) => parse_time_or_400(v, field).map(Some),
+        None => Ok(None),
+    }
+}
+
 // ==================== K1：真表映射（master_data.mdm_api_products / mdm_subscriptions） ====================
 
 /// 行 → APIProduct（tier/features 以 snake 字符串 / JSONB 存储）。
@@ -864,19 +887,29 @@ pub async fn get_usage_summary(
     State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<UsageSummary> {
+    let start_time =
+        match parse_opt_time_or_400::<UsageSummary>(params.start_time.as_deref(), "start_time") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
+    let end_time =
+        match parse_opt_time_or_400::<UsageSummary>(params.end_time.as_deref(), "end_time") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
     // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
     let query = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR api_product_id = $2)
-             AND ($3::text IS NULL OR recorded_at::text >= $3)
-             AND ($4::text IS NULL OR recorded_at::text <= $4)
+             AND ($3::timestamptz IS NULL OR recorded_at >= $3)
+             AND ($4::timestamptz IS NULL OR recorded_at <= $4)
            ORDER BY recorded_at"#,
     )))
     .bind(params.tenant_id.as_deref())
     .bind(params.api_product_id.as_deref())
-    .bind(params.start_time.as_deref())
-    .bind(params.end_time.as_deref())
+    .bind(start_time)
+    .bind(end_time)
     .fetch_all(&state.db)
     .await;
 
@@ -927,15 +960,23 @@ pub async fn generate_bill(
     let period_end = req
         .period_end
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let period_start_at = match parse_time_or_400::<BillingRecord>(&period_start, "period_start") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let period_end_at = match parse_time_or_400::<BillingRecord>(&period_end, "period_end") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
 
     let usage_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
-           WHERE tenant_id = $1::uuid AND recorded_at::text >= $2 AND recorded_at::text <= $3
+           WHERE tenant_id = $1::uuid AND recorded_at >= $2 AND recorded_at <= $3
            ORDER BY recorded_at"#,
     )))
     .bind(&req.tenant_id)
-    .bind(&period_start)
-    .bind(&period_end)
+    .bind(period_start_at)
+    .bind(period_end_at)
     .fetch_all(&state.db)
     .await;
     let filtered: Vec<UsageRecord> = match usage_rows {
@@ -1397,19 +1438,33 @@ pub async fn get_sla_history(
     State(state): State<AppState>,
     Query(params): Query<SLAHistoryQuery>,
 ) -> ApiResponse<Vec<SLAMeasurement>> {
+    let start_time = match parse_opt_time_or_400::<Vec<SLAMeasurement>>(
+        params.start_time.as_deref(),
+        "start_time",
+    ) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let end_time = match parse_opt_time_or_400::<Vec<SLAMeasurement>>(
+        params.end_time.as_deref(),
+        "end_time",
+    ) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR config_id = $2)
-             AND ($3::text IS NULL OR measured_at::text >= $3)
-             AND ($4::text IS NULL OR measured_at::text <= $4)
+             AND ($3::timestamptz IS NULL OR measured_at >= $3)
+             AND ($4::timestamptz IS NULL OR measured_at <= $4)
            ORDER BY measured_at"#,
     )))
     .bind(params.tenant_id.as_deref())
     .bind(params.config_id.as_deref())
-    .bind(params.start_time.as_deref())
-    .bind(params.end_time.as_deref())
+    .bind(start_time)
+    .bind(end_time)
     .fetch_all(&state.db)
     .await;
     let filtered: Vec<SLAMeasurement> = match rows {
