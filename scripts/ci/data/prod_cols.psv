@@ -8209,7 +8209,7 @@ master_data|mdm_subscriptions|id|uuid|t|r
 master_data|mdm_subscriptions|api_product_id|text|t|r
 master_data|mdm_subscriptions|tenant_id|uuid|t|r
 master_data|mdm_subscriptions|tier|text|t|r
-master_data|mdm_subscriptions|starts_at|text|t|r
+master_data|mdm_subscriptions|starts_at|timestamp with time zone|t|r
 master_data|mdm_subscriptions|expires_at|timestamp with time zone|t|r
 master_data|mdm_subscriptions|status|text|t|r
 master_data|mdm_subscriptions|db_tenant_id|uuid|f|r
@@ -9202,7 +9202,7 @@ mes|teams|team_code|character varying(100)|t|r
 mes|teams|team_name|character varying(200)|t|r
 mes|teams|team_type|character varying(50)|f|r
 mes|teams|work_station_id|uuid|f|r
-mes|teams|leader_id|character varying(64)|f|r
+mes|teams|leader_id|uuid|f|r
 mes|teams|leader_name|character varying(128)|f|r
 mes|teams|member_count|integer|t|r
 mes|teams|status|character varying(32)|t|r

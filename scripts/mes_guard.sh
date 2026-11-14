@@ -25,9 +25,17 @@
 #   scripts/mes_guard.sh --db-url "postgresql://..."   # 指定编译库（CI 传入 service 地址）
 #   scripts/mes_guard.sh --skip-compile       # 只做遮蔽检查（快排）
 #
+# 以生产为真源重刷快照（唯一推荐路径，只读）：
+#   bash scripts/mes_guard.sh --sync-snapshot \
+#     --snapshot-ssh xingzhai@192.168.3.129 --snapshot-db topems_prod \
+#     --snapshot-pg-bin /opt/homebrew/bin
+#   → 远端 pg_dump 以 default_transaction_read_only=on 执行，不写任何对象；
+#     头部写入基线日期 / 生成命令 / 客户端与服务端版本 / 账本水位，可一键复现。
+#
 # 环境变量：
 #   DATABASE_URL       未传 --db-url 时使用（默认 5432 本地编译参考库）
 #   MES_SNAPSHOT       快照输出路径（默认 fixtures/mes_compile_schema.sql）
+#   MES_SNAPSHOT_DATE  基线日期（默认取生成当日 UTC，格式 YYYY-MM-DD）
 #
 # 退出码：0=全部通过；1=遮蔽报警/编译失败/快照失败
 # =============================================================================
@@ -43,6 +51,11 @@ SYNC_SNAPSHOT=0
 SKIP_COMPILE=0
 PREPARE=0
 DB_URL="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public}"
+SNAPSHOT_SSH="${MES_SNAPSHOT_SSH:-}"
+SNAPSHOT_DB="${MES_SNAPSHOT_DB:-topems_prod}"
+SNAPSHOT_PG_BIN="${MES_SNAPSHOT_PG_BIN:-}"
+SNAPSHOT_DATE="${MES_SNAPSHOT_DATE:-$(date -u +%Y-%m-%d)}"
+GENERATOR_CMD=""
 
 # public schema 中允许存在的 mes 查询表（共享表，非遮蔽）
 PUBLIC_ALLOWLIST=(
@@ -65,7 +78,13 @@ while [[ $# -gt 0 ]]; do
     --prepare)       PREPARE=1 ;;
     --db-url)        [[ -z "${2:-}" ]] && die "--db-url 需要参数 <postgresql://...>"
                      DB_URL="$2"; shift ;;
-    *) die "未知参数: $1（支持 --clean / --sync-snapshot / --skip-compile / --prepare / --db-url）" ;;
+    --snapshot-ssh)  [[ -z "${2:-}" ]] && die "--snapshot-ssh 需要参数 <user@host>"
+                     SNAPSHOT_SSH="$2"; shift ;;
+    --snapshot-db)   [[ -z "${2:-}" ]] && die "--snapshot-db 需要参数 <dbname>"
+                     SNAPSHOT_DB="$2"; shift ;;
+    --snapshot-pg-bin) [[ -z "${2:-}" ]] && die "--snapshot-pg-bin 需要参数 <包含 pg_dump/psql 的目录>"
+                     SNAPSHOT_PG_BIN="$2"; shift ;;
+    *) die "未知参数: $1（支持 --clean / --sync-snapshot / --skip-compile / --prepare / --db-url / --snapshot-ssh / --snapshot-db / --snapshot-pg-bin）" ;;
   esac
   shift
 done
@@ -76,7 +95,7 @@ done
 # ---------------------------------------------------------------------------
 TARGET_DB_NAME="${DB_URL%%\?*}"
 TARGET_DB_NAME="${TARGET_DB_NAME##*/}"
-if [[ "$TARGET_DB_NAME" == "topems_prod" && "${ALLOW_PROD_MES_GUARD:-0}" != "1" ]]; then
+if [[ "$TARGET_DB_NAME" == "topems_prod" && "${ALLOW_PROD_MES_GUARD:-0}" != "1" && "$SYNC_SNAPSHOT" != "1" ]]; then
   die "拒绝在库 ${TARGET_DB_NAME} 上执行 mes_guard（--clean 会 DROP TABLE/VIEW）。如确需执行，显式设置 ALLOW_PROD_MES_GUARD=1"
 fi
 
@@ -84,46 +103,104 @@ if [[ "$SYNC_SNAPSHOT" == "1" ]]; then
   say "=== 同步结构快照 → $SNAPSHOT ==="
   mkdir -p "$ROOT/fixtures"
 
-  # 拆分 DB URL 以复用主机/端口/用户/库（保留 options 不适用 pg_dump）
-  DB_HOST="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^@]*@([^:/]+).*|\1|')"
-  DB_PORT="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^@]*@[^:/]+:([0-9]+).*|\1|')"
-  DB_USER="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://([^:]+):[^@]*@.*|\1|')"
-  DB_NAME="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^@]*@[^/]+/([^?]+).*|\1|')"
-  [[ -z "$DB_HOST" ]] && DB_HOST="localhost"
-  [[ -z "$DB_PORT" ]] && DB_PORT="5432"
-  export PGPASSWORD
-  PGPASSWORD="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^:]+:([^@]*)@.*|\1|')"
+  # ---- 目标库定位：远端（生产）或本地 DSN --------------------------------
+  if [[ -n "$SNAPSHOT_SSH" ]]; then
+    SNAPSHOT_PG_BIN="${SNAPSHOT_PG_BIN:-/opt/homebrew/bin}"
+    SOURCE_DESC="ssh://${SNAPSHOT_SSH}/${SNAPSHOT_DB}"
+    es() { printf '%q' "$1"; }
+    remote_exec() { ssh "$SNAPSHOT_SSH" "$1"; }
+    snapshot_psql() { remote_exec "PGOPTIONS='-c default_transaction_read_only=on' $(es "$SNAPSHOT_PG_BIN/psql") -X -tA -d $(es "$SNAPSHOT_DB") -c $(es "$1")"; }
+    snapshot_pg_dump() { remote_exec "PGOPTIONS='-c default_transaction_read_only=on' $(es "$SNAPSHOT_PG_BIN/pg_dump") -d $(es "$SNAPSHOT_DB") $1"; }
+    PGDUMP_VERSION="$(remote_exec "$(es "$SNAPSHOT_PG_BIN/pg_dump") --version")"
+    GENERATOR_CMD="bash scripts/mes_guard.sh --sync-snapshot --snapshot-ssh ${SNAPSHOT_SSH} --snapshot-db ${SNAPSHOT_DB} --snapshot-pg-bin ${SNAPSHOT_PG_BIN}"
+  else
+    # 逐段解析 DSN（不依赖库名里有无 @ / 是否带 options，避免旧 sed 拼接错乱）
+    eval "$(python3 - "$DB_URL" <<'PY'
+import sys, shlex, urllib.parse as u
+p = u.urlparse(sys.argv[1])
+qs = u.parse_qs(p.query)
+for k, v in (
+    ('DB_USER', p.username or ''),
+    ('DB_PASS', p.password or ''),
+    ('DB_HOST', qs.get('host', [p.hostname or 'localhost'])[0]),
+    ('DB_PORT', str(p.port or '5432')),
+    ('DB_NAME', (p.path or '/').lstrip('/')),
+):
+    print(f'{k}={shlex.quote(v)}')
+PY
+)"
+    export PGPASSWORD="$DB_PASS"
+    SNAPSHOT_DB="$DB_NAME"
+    SOURCE_USER="${DB_USER:-unknown}"
+    SOURCE_DESC="db=${DB_NAME} host=${DB_HOST}:${DB_PORT} user=${SOURCE_USER}（口令已脱敏）"
+    snapshot_psql() { psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -X -tA -c "$1"; }
+    snapshot_pg_dump() { pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" $1; }
+    PGDUMP_VERSION="$(pg_dump --version)"
+    GENERATOR_CMD="bash scripts/mes_guard.sh --sync-snapshot --db-url <PG_DSN，口令已脱敏>  # host=${DB_HOST}:${DB_PORT} db=${DB_NAME} user=${SOURCE_USER}"
+  fi
 
+  # ---- 防跑错库（fail-closed）：账本位置 + dev 特征 ----------------------
+  LEDGER_PUBLIC="$(snapshot_psql "SELECT to_regclass('public._sqlx_migrations') IS NOT NULL;" | tr -d '[:space:]')"
+  LEDGER_MES="$(snapshot_psql "SELECT to_regclass('mes._sqlx_migrations') IS NOT NULL;" | tr -d '[:space:]')"
+  SERVER_VERSION="$(snapshot_psql "SHOW server_version;" | tr -d '[:space:]')"
+  LEDGER_MAX="$(snapshot_psql "SELECT COALESCE(max(version)::text,'') FROM public._sqlx_migrations;" | tr -d '[:space:]')"
+  LEDGER_ROWS="$(snapshot_psql "SELECT count(*) FROM public._sqlx_migrations;" | tr -d '[:space:]')"
+
+  [[ "$LEDGER_PUBLIC" == "t" ]] || die "拒绝生成：目标库 ${SNAPSHOT_DB} 的账本不在 public._sqlx_migrations（可能连错库/连到 dev）"
+  [[ "$LEDGER_MES" == "f" ]] || die "拒绝生成：目标库 ${SNAPSHOT_DB} 存在 mes._sqlx_migrations（dev 本地账本特征，prod 账本只在 public）"
+  if [[ "$SNAPSHOT_DB" != *_prod && "${ALLOW_NONPROD_MES_SNAPSHOT:-0}" != "1" ]]; then
+    die "拒绝生成：库名 ${SNAPSHOT_DB} 不具备 *_prod 特征（疑似 dev/test）。如确需为非生产库生成，显式设置 ALLOW_NONPROD_MES_SNAPSHOT=1"
+  fi
+  if [[ -z "$LEDGER_MAX" || -z "$LEDGER_ROWS" || "$LEDGER_ROWS" == "0" ]]; then
+    die "拒绝生成：无法读取 ${SNAPSHOT_DB} 的账本水位（max/rows 为空）"
+  fi
+
+  # ---- 生成内容区（先落临时文件，便于计算 sha256 后写入头部） ------------
+  BODY="$(mktemp /tmp/mes_snapshot_body.XXXXXX.sql)"
+  trap 'rm -f "$BODY"' EXIT
   {
-    echo "-- ============================================================================"
-    echo "-- mes 编译结构快照（mes_guard.sh --sync-snapshot 自动生成，勿手改）"
-    echo "-- 来源: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}  生成时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "-- 用途: CI mes-online-check 干净库编译（导入本文件后在线解析）"
-    echo "-- 规则: 任何 mes schema / public 共享表结构变更后，必须重新执行本脚本同步"
-    echo "-- ============================================================================"
-    echo
     echo "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
     echo "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
     echo "CREATE SCHEMA IF NOT EXISTS mes;"
     echo "DO \$\$ BEGIN EXECUTE format('ALTER DATABASE %I SET app.tenant_id = %L', current_database(), '00000000-0000-0000-0000-000000000000'); EXCEPTION WHEN OTHERS THEN NULL; END \$\$;"
     echo
-  } > "$SNAPSHOT"
+  } > "$BODY"
 
-  # mes schema 全量结构
-  pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
-    --schema-only --schema=mes 2>>"${LOG}" | \
+  # mes schema 全量结构（排除 mes 本地账本，prod 不依赖它）
+  snapshot_pg_dump "--schema-only --schema=mes --exclude-table=mes._sqlx_migrations" 2>>"${LOG}" | \
     grep -vE '^--$|^-- (Name|Schema|Owner|PostgreSQL database dump)|^\\|^CREATE SCHEMA|^CREATE TRIGGER' | \
-    grep -vE '^CREATE EXTENSION|^ALTER .* OWNER|^ALTER DEFAULT PRIVILEGES|^GRANT|^REVOKE' >> "$SNAPSHOT" || true
+    grep -vE '^CREATE EXTENSION|^ALTER .* OWNER|^ALTER DEFAULT PRIVILEGES|^GRANT|^REVOKE' >> "$BODY" || true
 
   # public 共享表（白名单）
   for t in "${PUBLIC_ALLOWLIST[@]}"; do
-    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
-      --schema-only -t "public.$t" 2>>"${LOG}" | \
+    snapshot_pg_dump "--schema-only -t public.$t" 2>>"${LOG}" | \
       grep -vE '^--$|^-- (Name|Schema|Owner|PostgreSQL database dump)|^\\|^CREATE SCHEMA|^CREATE TRIGGER' | \
-      grep -vE '^CREATE EXTENSION|^ALTER .* OWNER|^ALTER DEFAULT PRIVILEGES|^GRANT|^REVOKE' >> "$SNAPSHOT" || true
+      grep -vE '^CREATE EXTENSION|^ALTER .* OWNER|^ALTER DEFAULT PRIVILEGES|^GRANT|^REVOKE' >> "$BODY" || true
   done
 
-  say "快照生成完成: $(wc -l < "$SNAPSHOT") 行"
+  BODY_SHA="$(shasum -a 256 "$BODY" | awk '{print $1}')"
+
+  {
+    echo "-- ============================================================================"
+    echo "-- mes 编译结构快照（scripts/mes_guard.sh --sync-snapshot 自动生成，勿手改）"
+    echo "-- 基线日期: ${SNAPSHOT_DATE}"
+    echo "-- 唯一真源: ${SOURCE_DESC}（只读导出，未写入任何对象）"
+    echo "-- 数据库: ${SNAPSHOT_DB}  服务端: PostgreSQL ${SERVER_VERSION}"
+    echo "-- pg_dump: ${PGDUMP_VERSION}"
+    echo "-- 账本水位: max(version)=${LEDGER_MAX}  行数=${LEDGER_ROWS}（public._sqlx_migrations）"
+    echo "-- 生成命令: ${GENERATOR_CMD}"
+    echo "-- 生成时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "-- 内容区 sha256（不含本头部）: ${BODY_SHA}"
+    echo "-- 用途: CI mes-online-check 干净库编译（导入本文件后在线解析）"
+    echo "-- 规则: 任何 mes schema / public 共享表结构变更后，必须重新执行本脚本同步"
+    echo "-- ============================================================================"
+    echo
+    cat "$BODY"
+  } > "$SNAPSHOT"
+  rm -f "$BODY"; trap - EXIT
+
+  say "快照生成完成: $(wc -l < "$SNAPSHOT") 行；内容区 sha256=${BODY_SHA}"
+  say "整文件 sha256=$(shasum -a 256 "$SNAPSHOT" | awk '{print $1}')"
   exit 0
 fi
 

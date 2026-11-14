@@ -28,15 +28,16 @@ cd "$ROOT_DIR" || exit 1
 
 OUT="scripts/ci/data/prod_cols.psv"
 META="scripts/ci/data/prod_cols.meta.json"
-PROD_SSH_HOST="${PROD_SSH_HOST:-xingzhai@192.168.110.115}"
+PROD_SSH_HOST="${PROD_SSH_HOST:-xingzhai@192.168.3.129}"
 PROD_DB="${PROD_DB:-topems_prod}"
 PROD_PSQL="${PROD_PSQL:-/opt/homebrew/bin/psql}"
 PSQL_LOCAL="${PSQL_BIN:-psql}"
 
 SQL_CATALOG="$(mktemp)"
 SQL_LEDGER="$(mktemp)"
+SQL_VERSION="$(mktemp)"
 TMP_OUT="$(mktemp)"
-trap 'rm -f "$SQL_CATALOG" "$SQL_LEDGER" "$TMP_OUT"' EXIT
+trap 'rm -f "$SQL_CATALOG" "$SQL_LEDGER" "$SQL_VERSION" "$TMP_OUT"' EXIT
 
 cat > "$SQL_CATALOG" <<'SQL'
 SELECT n.nspname, c.relname, a.attname,
@@ -52,6 +53,7 @@ ORDER BY n.nspname, c.relname, a.attnum;
 SQL
 
 printf "SELECT COALESCE(max(version)::TEXT, '') FROM _sqlx_migrations;\n" > "$SQL_LEDGER"
+printf "SELECT current_setting('server_version');\n" > "$SQL_VERSION"
 
 # 只读会话：default_transaction_read_only=on，任何写语句都会被数据库拒绝
 run_psql() { # $1 = SQL 文件
@@ -74,18 +76,22 @@ if ! awk -F'|' 'NF < 6 { bad++ } END { if (bad) { printf "存在 %d 行列数不
 fi
 
 LEDGER_MAX="$(run_psql "$SQL_LEDGER" | tr -d '[:space:]')"
+SERVER_VERSION="$(run_psql "$SQL_VERSION" | tr -d '[:space:]')"
+CLIENT_VERSION="$("$PSQL_LOCAL" --version 2>/dev/null || echo unknown)"
 ROWS="$(wc -l < "$TMP_OUT" | tr -d ' ')"
 SHA="$(shasum -a 256 "$TMP_OUT" | awk '{print $1}')"
 EXPORTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 if [ -n "${PROD_DB_URL:-}" ]; then SOURCE_HOST="local-psql"; else SOURCE_HOST="$PROD_SSH_HOST"; fi
+GENERATOR_CMD="bash scripts/ci/refresh-prod-cols.sh（PROD_SSH_HOST=${SOURCE_HOST} PROD_DB=${PROD_DB}）"
 
 mkdir -p scripts/ci/data
 mv "$TMP_OUT" "$OUT"
-python3 - "$EXPORTED_AT" "$ROWS" "$SHA" "$LEDGER_MAX" "$SOURCE_HOST" > "$META" <<'PY'
+python3 - "$EXPORTED_AT" "$ROWS" "$SHA" "$LEDGER_MAX" "$SOURCE_HOST" "$SERVER_VERSION" "$CLIENT_VERSION" "$GENERATOR_CMD" > "$META" <<'PY'
 import json, sys
-exported_at, rows, sha, ledger_max, source_host = sys.argv[1:6]
+exported_at, rows, sha, ledger_max, source_host, server_version, client_version, generator_cmd = sys.argv[1:9]
 meta = {
     "exported_at": exported_at,
+    "baseline_date": exported_at[:10],
     "database": "topems_prod",
     "ledger_max": ledger_max,
     "source_host": source_host,
@@ -93,6 +99,9 @@ meta = {
     "sha256": sha,
     "max_age_days": 7,
     "generator": "scripts/ci/refresh-prod-cols.sh",
+    "generator_cmd": generator_cmd,
+    "server_version": server_version,
+    "client_version": client_version,
 }
 json.dump(meta, sys.stdout, ensure_ascii=False, indent=2)
 sys.stdout.write("\n")

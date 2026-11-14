@@ -1,10 +1,14 @@
 {
-  "exported_at": "2026-11-14T03:32:46Z",
+  "exported_at": "2026-11-14T14:05:03Z",
+  "baseline_date": "2026-11-14",
   "database": "topems_prod",
-  "ledger_max": "20261113100000",
-  "source_host": "xingzhai@192.168.110.115",
+  "ledger_max": "20261114160000",
+  "source_host": "xingzhai@192.168.3.129",
   "row_count": 17260,
-  "sha256": "9db481f4801f90bb9a6225f402dc76a3efe187ecf0a373d23ee6ec30d3df468e",
+  "sha256": "d8c0adb6027aa36ff78fb1d6f0fd740c00c184503559b6fbce94c70f630db7e8",
   "max_age_days": 7,
-  "generator": "scripts/ci/refresh-prod-cols.sh"
+  "generator": "scripts/ci/refresh-prod-cols.sh",
+  "generator_cmd": "bash scripts/ci/refresh-prod-cols.sh（PROD_SSH_HOST=xingzhai@192.168.3.129 PROD_DB=topems_prod）",
+  "server_version": "18.4(Homebrew)",
+  "client_version": "psql (PostgreSQL) 18.4 (Homebrew)"
 }
