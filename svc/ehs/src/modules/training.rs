@@ -14,7 +14,21 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
+
+async fn training_count(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> i64 {
+    let mut q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(0)
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/training", get(list_trainings).post(create_training))
@@ -151,41 +165,40 @@ pub async fn list_trainings(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<Training>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.list_trainings",
+        "ehs.qa_ehs_trainings",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    // 接真 ehs.qa_ehs_trainings；超管全量可见，普通用户强制 tenant 过滤
-    let tenant_filter = if claims.is_superuser {
-        String::from("deleted_at IS NULL")
-    } else {
-        let tid = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(|| {
-                uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-            });
-        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
-    };
-    let sql = format!(
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 不带租户谓词。
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, training_no, title, content, trainer,
                   training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id
-           FROM ehs.qa_ehs_trainings WHERE {} ORDER BY updated_at DESC"#,
-        tenant_filter
-    );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .fetch_all(&mut scope)
-        .await
-    {
+           FROM ehs.qa_ehs_trainings
+           WHERE tenant_id = $1::uuid AND deleted_at IS NULL ORDER BY updated_at DESC"#
+    } else {
+        r#"SELECT id::text AS id, training_no, title, content, trainer,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
+                  status, tenant_id
+           FROM ehs.qa_ehs_trainings
+           WHERE deleted_at IS NULL ORDER BY updated_at DESC"#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list trainings: {}", e);
@@ -337,41 +350,36 @@ pub async fn get_training(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Training> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
-        Err(resp) => return resp,
-    };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let tenant_scope =
+        match dual_scope(&claims, "ehs.training.get_training", "ehs.qa_ehs_trainings") {
+            Ok(s) => s,
+            Err(resp) => return resp,
+        };
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_clause = if claims.is_superuser {
-        String::from("deleted_at IS NULL")
-    } else {
-        let tid = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(|| {
-                uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-            });
-        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
-    };
-    let sql = format!(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, training_no, title, content, trainer,
                   training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id
-           FROM ehs.qa_ehs_trainings WHERE id = $1::uuid AND {}"#,
-        tenant_clause
-    );
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .fetch_optional(&mut scope)
-        .await
-    {
+           FROM ehs.qa_ehs_trainings
+           WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"#
+    } else {
+        r#"SELECT id::text AS id, training_no, title, content, trainer,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
+                  status, tenant_id
+           FROM ehs.qa_ehs_trainings
+           WHERE id = $1::uuid AND deleted_at IS NULL"#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训不存在"),
         Err(e) => {
@@ -417,28 +425,20 @@ pub async fn update_training(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Training> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.update_training",
+        "ehs.qa_ehs_trainings",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
-    };
-    let tenant_clause = if claims.is_superuser {
-        String::from("")
-    } else {
-        let tid = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(|| {
-                uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-            });
-        format!(" AND tenant_id = '{}'", tid)
     };
     let title = req
         .get("title")
@@ -465,6 +465,11 @@ pub async fn update_training(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        " AND tenant_id = $8::uuid"
+    } else {
+        ""
+    };
     let sql = format!(
         r#"UPDATE ehs.qa_ehs_trainings
               SET title = COALESCE($1, title),
@@ -474,23 +479,23 @@ pub async fn update_training(
                   duration_hours = COALESCE($5, duration_hours),
                   status = COALESCE($6, status),
                   updated_at = now()
-            WHERE id = $7::uuid AND deleted_at IS NULL {}
+            WHERE id = $7::uuid AND deleted_at IS NULL{tenant_filter}
           RETURNING id::text AS id, training_no, title, content, trainer,
                   training_type, duration_hours, scheduled_at AS scheduled_at,
-                  status, tenant_id"#,
-        tenant_clause
+                  status, tenant_id"#
     );
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(title)
         .bind(content)
         .bind(trainer)
         .bind(training_type)
         .bind(duration_hours)
         .bind(status)
-        .bind(&id)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        .bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训不存在"),
         Err(e) => {
@@ -537,38 +542,33 @@ pub async fn delete_training(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.delete_training",
+        "ehs.qa_ehs_trainings",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_clause = if claims.is_superuser {
-        String::from("")
+    let sql = if tenant_scope.tenant_id().is_some() {
+        "UPDATE ehs.qa_ehs_trainings SET deleted_at = now() \
+         WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"
     } else {
-        let tid = claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(|| {
-                uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-            });
-        format!(" AND tenant_id = '{}'", tid)
+        "UPDATE ehs.qa_ehs_trainings SET deleted_at = now() \
+         WHERE id = $1::uuid AND deleted_at IS NULL"
     };
-    let sql = format!(
-        "UPDATE ehs.qa_ehs_trainings SET deleted_at = now() WHERE id = $1::uuid AND deleted_at IS NULL {}",
-        tenant_clause
-    );
-    let res = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .execute(&mut scope)
-        .await
-    {
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let res = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training {}: {}", id, e);
@@ -599,34 +599,44 @@ pub async fn get_training_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingPlan> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.get_training_plan",
+        "ehs.training_programs",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting training plan: {}", id);
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, program_no AS plan_no, title, content AS description,
                training_type, start_date::text AS planned_date, instructor AS trainer,
                status, created_at AS created_at, tenant_id::text AS tenant_id
         FROM ehs.training_programs
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        SELECT id::text AS id, program_no AS plan_no, title, content AS description,
+               training_type, start_date::text AS planned_date, instructor AS trainer,
+               status, created_at AS created_at, tenant_id::text AS tenant_id
+        FROM ehs.training_programs
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训计划不存在"),
         Err(e) => {
@@ -654,18 +664,21 @@ pub async fn update_training_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingPlan> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.update_training_plan",
+        "ehs.training_programs",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("title").and_then(|v| v.as_str()) {
@@ -695,13 +708,16 @@ pub async fn update_training_plan(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.training_programs
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, program_no AS plan_no, title, content AS description,
                   training_type, start_date::text AS planned_date, instructor AS trainer,
@@ -712,12 +728,11 @@ pub async fn update_training_plan(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训计划不存在"),
         Err(e) => {
@@ -747,31 +762,39 @@ pub async fn delete_training_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.delete_training_plan",
+        "ehs.training_programs",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.training_programs
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        UPDATE ehs.training_programs
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training plan: {}", e);
@@ -802,36 +825,48 @@ pub async fn get_training_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.get_training_record",
+        "ehs.training_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting training record: {}", id);
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                category, trainer, training_date::text AS training_date, location, duration_hours,
                participants, content, materials, result, pass_rate, status, created_by,
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.training_records
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
+               category, trainer, training_date::text AS training_date, location, duration_hours,
+               participants, content, materials, result, pass_rate, status, created_by,
+               created_at AS created_at, updated_at AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.training_records
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训记录不存在"),
         Err(e) => {
@@ -864,18 +899,21 @@ pub async fn update_training_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.update_training_record",
+        "ehs.training_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("title").and_then(|v| v.as_str()) {
@@ -936,13 +974,16 @@ pub async fn update_training_record(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.training_records
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                   category, trainer, training_date::text AS training_date, location, duration_hours,
@@ -955,12 +996,11 @@ pub async fn update_training_record(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训记录不存在"),
         Err(e) => {
@@ -990,31 +1030,39 @@ pub async fn delete_training_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.delete_training_record",
+        "ehs.training_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.training_records
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        UPDATE ehs.training_records
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training record: {}", e);
@@ -1045,36 +1093,48 @@ pub async fn get_certificate(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<TrainingCertificate> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.get_certificate",
+        "ehs.qa_ehs_training_certificates",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     tracing::debug!("Getting certificate: {}", id);
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
                certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                issuing_authority, status, record_id::text AS record_id, attachments,
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_training_certificates
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
+               certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
+               issuing_authority, status, record_id::text AS record_id, attachments,
+               created_at AS created_at, updated_at AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_training_certificates
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训证书不存在"),
         Err(e) => {
@@ -1102,18 +1162,21 @@ pub async fn update_certificate(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TrainingCertificate> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.update_certificate",
+        "ehs.qa_ehs_training_certificates",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.get("employee_name").and_then(|v| v.as_str()) {
@@ -1151,13 +1214,16 @@ pub async fn update_certificate(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_training_certificates
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
                   certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
@@ -1170,12 +1236,11 @@ pub async fn update_certificate(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("培训证书不存在"),
         Err(e) => {
@@ -1205,31 +1270,39 @@ pub async fn delete_certificate(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.delete_certificate",
+        "ehs.qa_ehs_training_certificates",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.qa_ehs_training_certificates
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_training_certificates
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training certificate: {}", e);
@@ -1252,52 +1325,53 @@ pub async fn get_training_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.get_training_statistics",
+        "ehs.qa_ehs_trainings",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    // 租户通道显式绑定 tenant_id；系统通道显式不带租户谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
-    let total_trainings: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let total_plans: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.training_programs WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let total_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.training_records WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let total_certificates: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_training_certificates WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let total_trainings = training_count(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE {tc}"),
+        tenant,
+    )
+    .await;
+    let total_plans = training_count(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.training_programs WHERE {tc}"),
+        tenant,
+    )
+    .await;
+    let total_records = training_count(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.training_records WHERE {tc}"),
+        tenant,
+    )
+    .await;
+    let total_certificates = training_count(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.qa_ehs_training_certificates WHERE {tc}"),
+        tenant,
+    )
+    .await;
 
     let completion_rate = if total_trainings > 0 {
         (total_records as f64 / total_trainings as f64).min(1.0)
@@ -1338,36 +1412,47 @@ pub async fn list_training_plans(
     _headers: HeaderMap,
     Query(q): Query<TrainingPlanQuery>,
 ) -> ApiResponse<Vec<TrainingPlan>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.list_training_plans",
+        "ehs.training_programs",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 不带租户谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(status) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(status.clone());
     }
     if let Some(training_type) = &q.training_type {
-        where_clause.push_str(&format!(" AND training_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND training_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(training_type.clone());
     }
     if let Some(search) = &q.search {
-        where_clause.push_str(&format!(" AND title ILIKE ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND title ILIKE ${}", params.len() + filter_base));
         params.push(format!("%{search}%"));
     }
 
@@ -1384,6 +1469,9 @@ pub async fn list_training_plans(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1512,44 +1600,55 @@ pub async fn list_training_records(
     _headers: HeaderMap,
     Query(q): Query<TrainingRecordQuery>,
 ) -> ApiResponse<Vec<TrainingRecord>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.list_training_records",
+        "ehs.training_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 不带租户谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(status) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(status.clone());
     }
     if let Some(training_type) = &q.training_type {
-        where_clause.push_str(&format!(" AND training_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND training_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(training_type.clone());
     }
     if let Some(category) = &q.category {
-        where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND category = ${}", params.len() + filter_base));
         params.push(category.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (title ILIKE ${} OR record_no ILIKE ${} OR trainer ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2,
-            params.len() + 3
+            params.len() + filter_base,
+            params.len() + filter_base + 1,
+            params.len() + filter_base + 2
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -1572,6 +1671,9 @@ pub async fn list_training_records(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1739,43 +1841,57 @@ pub async fn list_certificates(
     _headers: HeaderMap,
     Query(q): Query<TrainingCertificateQuery>,
 ) -> ApiResponse<Vec<TrainingCertificate>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.training.list_certificates",
+        "ehs.qa_ehs_training_certificates",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open training scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 不带租户谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(status) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(status.clone());
     }
     if let Some(training_type) = &q.training_type {
-        where_clause.push_str(&format!(" AND training_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND training_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(training_type.clone());
     }
     if let Some(employee_id) = &q.employee_id {
-        where_clause.push_str(&format!(" AND employee_id = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND employee_id = ${}",
+            params.len() + filter_base
+        ));
         params.push(employee_id.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (employee_name ILIKE ${} OR certificate_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
+            params.len() + filter_base,
+            params.len() + filter_base + 1
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -1797,6 +1913,9 @@ pub async fn list_certificates(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }

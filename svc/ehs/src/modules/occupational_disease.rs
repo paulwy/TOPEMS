@@ -16,6 +16,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -338,47 +339,66 @@ pub async fn list_hazard_factors(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<HazardFactor>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.list_hazard_factors",
+        "ehs.qa_ehs_hazard_factors",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational disease scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
     let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
-        r#"
-        SELECT
-            id::text AS id, factor_no,
-            CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
-            factor_type, category, description, hazard_level, exposure_limit, unit,
-            sources::text AS sources, affected_positions::text AS affected_positions,
-            affected_count, status, remarks,
-            created_at AS created_at, updated_at AS updated_at
-        FROM ehs.qa_ehs_hazard_factors
-        WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL
-        ORDER BY created_at DESC
-        LIMIT 200
-        "#,
-    )
-    .bind(locale)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, factor_no,
+                    CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                    factor_type, category, description, hazard_level, exposure_limit, unit,
+                    sources::text AS sources, affected_positions::text AS affected_positions,
+                    affected_count, status, remarks,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_hazard_factors
+                WHERE tenant_id = $2::uuid AND deleted_at IS NULL
+                ORDER BY created_at DESC
+                LIMIT 200
+                "#,
+            )
+            .bind(locale)
+            .bind(tenant)
+            .fetch_all(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, factor_no,
+                    CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                    factor_type, category, description, hazard_level, exposure_limit, unit,
+                    sources::text AS sources, affected_positions::text AS affected_positions,
+                    affected_count, status, remarks,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_hazard_factors
+                WHERE deleted_at IS NULL
+                ORDER BY created_at DESC
+                LIMIT 200
+                "#,
+            )
+            .bind(locale)
+            .fetch_all(&mut scope)
+            .await
+        }
+    };
 
     let rows = match result {
         Ok(r) => r,
@@ -478,46 +498,64 @@ pub async fn get_hazard_factor(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HazardFactor> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.get_hazard_factor",
+        "ehs.qa_ehs_hazard_factors",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational disease scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
     let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
-        r#"
-        SELECT
-            id::text AS id, factor_no,
-            CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
-            factor_type, category, description, hazard_level, exposure_limit, unit,
-            sources::text AS sources, affected_positions::text AS affected_positions,
-            affected_count, status, remarks,
-            created_at AS created_at, updated_at AS updated_at
-        FROM ehs.qa_ehs_hazard_factors
-        WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
-        "#,
-    )
-    .bind(&id)
-    .bind(locale)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, factor_no,
+                    CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                    factor_type, category, description, hazard_level, exposure_limit, unit,
+                    sources::text AS sources, affected_positions::text AS affected_positions,
+                    affected_count, status, remarks,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_hazard_factors
+                WHERE id = $1::uuid AND tenant_id = $3::uuid AND deleted_at IS NULL
+                "#,
+            )
+            .bind(&id)
+            .bind(locale)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, factor_no,
+                    CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                    factor_type, category, description, hazard_level, exposure_limit, unit,
+                    sources::text AS sources, affected_positions::text AS affected_positions,
+                    affected_count, status, remarks,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_hazard_factors
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                "#,
+            )
+            .bind(&id)
+            .bind(locale)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let row = match result {
         Ok(r) => r,
@@ -730,70 +768,125 @@ pub async fn list_disease_cases(
     _headers: HeaderMap,
     Query(q): Query<DiseaseCaseQuery>,
 ) -> ApiResponse<Vec<DiseaseCase>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.list_disease_cases",
+        "ehs.qa_ehs_disease_cases",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational disease scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
-    if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(s.clone());
-    }
-    if let Some(d) = &q.disease_type {
-        where_clause.push_str(&format!(" AND disease_type = ${}", params.len() + 1));
-        params.push(d.clone());
-    }
-    if let Some(v) = &q.severity {
-        where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
-        params.push(v.clone());
-    }
-    if let Some(search) = &q.search {
-        where_clause.push_str(&format!(
-            " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR case_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2,
-            params.len() + 3
-        ));
-        let like = format!("%{search}%");
-        params.push(like.clone());
-        params.push(like.clone());
-        params.push(like);
-    }
-
-    let sql = format!(
-        r#"
-        SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
-               department, position, disease_type, disease_name, hazard_factor,
-               diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
-               diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
-               compensation_status AS compensation, attachments,
-               reported_at AS reported_at, created_at AS created_at,
-               updated_at AS updated_at, tenant_id::text AS tenant_id
-        FROM ehs.qa_ehs_disease_cases
-        {where_clause}
-        ORDER BY created_at DESC
-        LIMIT {page_size} OFFSET {offset}
-        "#
-    );
-    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
-    for p in &params {
-        query = query.bind(p);
-    }
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let query = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause =
+                String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
+                params.push(s.clone());
+            }
+            if let Some(d) = &q.disease_type {
+                where_clause.push_str(&format!(" AND disease_type = ${}", params.len() + 2));
+                params.push(d.clone());
+            }
+            if let Some(v) = &q.severity {
+                where_clause.push_str(&format!(" AND severity = ${}", params.len() + 2));
+                params.push(v.clone());
+            }
+            if let Some(search) = &q.search {
+                where_clause.push_str(&format!(
+                    " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR case_no ILIKE ${})",
+                    params.len() + 2,
+                    params.len() + 3,
+                    params.len() + 4
+                ));
+                let like = format!("%{search}%");
+                params.push(like.clone());
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+                       department, position, disease_type, disease_name, hazard_factor,
+                       diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                       diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                       compensation_status AS compensation, attachments,
+                       reported_at AS reported_at, created_at AS created_at,
+                       updated_at AS updated_at, tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_disease_cases
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant);
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+        None => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+            if let Some(s) = &q.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+                params.push(s.clone());
+            }
+            if let Some(d) = &q.disease_type {
+                where_clause.push_str(&format!(" AND disease_type = ${}", params.len() + 1));
+                params.push(d.clone());
+            }
+            if let Some(v) = &q.severity {
+                where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
+                params.push(v.clone());
+            }
+            if let Some(search) = &q.search {
+                where_clause.push_str(&format!(
+                    " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR case_no ILIKE ${})",
+                    params.len() + 1,
+                    params.len() + 2,
+                    params.len() + 3
+                ));
+                let like = format!("%{search}%");
+                params.push(like.clone());
+                params.push(like.clone());
+                params.push(like);
+            }
+            let sql = format!(
+                r#"
+                SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+                       department, position, disease_type, disease_name, hazard_factor,
+                       diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                       diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                       compensation_status AS compensation, attachments,
+                       reported_at AS reported_at, created_at AS created_at,
+                       updated_at AS updated_at, tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_disease_cases
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+    };
     let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -850,8 +943,8 @@ pub async fn create_disease_case(
              disease_type, disease_name, hazard_factor, diagnosed_at, diagnosing_hospital,
              diagnosis_basis, work_related, severity, status, treatment_plan,
              compensation_status, attachments, reported_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date, $12, $13, $14, $15, $16,
+                $17, $18, $19, $20::timestamptz, $21)
         RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
                   department, position, disease_type, disease_name, hazard_factor,
                   diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
@@ -915,37 +1008,60 @@ pub async fn get_disease_case(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DiseaseCase> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.get_disease_case",
+        "ehs.qa_ehs_disease_cases",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational disease scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
-        SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
-               department, position, disease_type, disease_name, hazard_factor,
-               diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
-               diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
-               compensation_status AS compensation, attachments,
-               reported_at AS reported_at, created_at AS created_at,
-               updated_at AS updated_at, tenant_id::text AS tenant_id
-        FROM ehs.qa_ehs_disease_cases
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let row = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let sql = r#"
+                SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+                       department, position, disease_type, disease_name, hazard_factor,
+                       diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                       diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                       compensation_status AS compensation, attachments,
+                       reported_at AS reported_at, created_at AS created_at,
+                       updated_at AS updated_at, tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_disease_cases
+                WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .bind(tenant)
+                .fetch_optional(&mut scope)
+                .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let sql = r#"
+                SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+                       department, position, disease_type, disease_name, hazard_factor,
+                       diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                       diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                       compensation_status AS compensation, attachments,
+                       reported_at AS reported_at, created_at AS created_at,
+                       updated_at AS updated_at, tenant_id::text AS tenant_id
+                FROM ehs.qa_ehs_disease_cases
+                WHERE id::text = $1 AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .fetch_optional(&mut scope)
+                .await
+        }
+    };
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("职业病案例不存在"),
         Err(e) => {
@@ -975,18 +1091,21 @@ pub async fn update_disease_case(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDiseaseCaseRequest>,
 ) -> ApiResponse<DiseaseCase> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.update_disease_case",
+        "ehs.qa_ehs_disease_cases",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to begin occupational disease txn: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = &req.employee_name {
@@ -1060,34 +1179,59 @@ pub async fn update_disease_case(
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
-    let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
-    let sql = format!(
-        r#"
-        UPDATE ehs.qa_ehs_disease_cases
-        SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
-          AND deleted_at IS NULL
-        RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
-                  department, position, disease_type, disease_name, hazard_factor,
-                  diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
-                  diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
-                  compensation_status AS compensation, attachments,
-                  reported_at AS reported_at, created_at AS created_at,
-                  updated_at AS updated_at, tenant_id::text AS tenant_id
-        "#
-    );
-    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
-    for p in &params {
-        query = query.bind(p);
-    }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let row = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $N::uuid
+        Some(tenant) => {
+            let id_idx = params.len() + 1;
+            let tenant_idx = params.len() + 2;
+            let sql = format!(
+                r#"
+                UPDATE ehs.qa_ehs_disease_cases
+                SET {set_clause}
+                WHERE id::text = ${id_idx}
+                  AND tenant_id = ${tenant_idx}::uuid
+                  AND deleted_at IS NULL
+                RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
+                          department, position, disease_type, disease_name, hazard_factor,
+                          diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                          diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                          compensation_status AS compensation, attachments,
+                          reported_at AS reported_at, created_at AS created_at,
+                          updated_at AS updated_at, tenant_id::text AS tenant_id
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q.bind(&id).bind(tenant).fetch_optional(&mut scope).await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let id_idx = params.len() + 1;
+            let sql = format!(
+                r#"
+                UPDATE ehs.qa_ehs_disease_cases
+                SET {set_clause}
+                WHERE id::text = ${id_idx}
+                  AND deleted_at IS NULL
+                RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
+                          department, position, disease_type, disease_name, hazard_factor,
+                          diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                          diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                          compensation_status AS compensation, attachments,
+                          reported_at AS reported_at, created_at AS created_at,
+                          updated_at AS updated_at, tenant_id::text AS tenant_id
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q.bind(&id).fetch_optional(&mut scope).await
+        }
+    };
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("职业病案例不存在"),
         Err(e) => {
@@ -1119,31 +1263,48 @@ pub async fn delete_disease_case(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational.delete_disease_case",
+        "ehs.qa_ehs_disease_cases",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to begin occupational disease txn: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
-        UPDATE ehs.qa_ehs_disease_cases
-        SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+    let result = match tenant_scope.tenant_id() {
+        Some(tenant) => {
+            let sql = r#"
+                UPDATE ehs.qa_ehs_disease_cases
+                SET deleted_at = now()
+                WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .bind(tenant)
+                .execute(&mut scope)
+                .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let sql = r#"
+                UPDATE ehs.qa_ehs_disease_cases
+                SET deleted_at = now()
+                WHERE id::text = $1 AND deleted_at IS NULL
+            "#;
+            sqlx::query(sqlx::AssertSqlSafe(sql))
+                .bind(&id)
+                .execute(&mut scope)
+                .await
+        }
+    };
+    let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete disease case: {}", e);

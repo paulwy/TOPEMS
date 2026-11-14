@@ -15,7 +15,22 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
+
+/// 统计查询：租户通道显式绑定 tenant_id，系统通道显式不带 tenant_id 谓词。
+async fn oh_count(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> i64 {
+    let mut q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(0)
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -1085,68 +1100,80 @@ pub async fn get_health_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<HealthStatistics> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational_health.get_health_statistics",
+        "ehs.qa_ehs_health_exam_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational health scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    // 租户通道显式绑定 tenant_id；系统通道显式不带租户谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
-    let total_employees: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_employees WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let exam_planned: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_plans WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let exam_completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let normal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result = 'normal'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let abnormal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result != 'normal'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let contraindication_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_contraindications WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    let total_employees = oh_count(
+        &mut scope,
+        format!("SELECT COUNT(*) FROM ehs.qa_ehs_employees WHERE {}", tc),
+        tenant,
+    )
+    .await;
+    let exam_planned = oh_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_plans WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let exam_completed = oh_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let normal_count = oh_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result = 'normal'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let abnormal_count = oh_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result != 'normal'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let contraindication_count = oh_count(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_contraindications WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     tracing::debug!(
         "Health stats (real DB): employees={}, planned={}, completed={}, normal={}, abnormal={}, contra={}",
@@ -1164,7 +1191,7 @@ pub async fn get_health_statistics(
             by_department: Vec::new(),
             by_abnormality_type: Vec::new(),
 
-            tenant_id: tenant,
+            tenant_id: tenant.unwrap_or_default(),
         },
         "获取健康统计成功",
     )
@@ -1185,44 +1212,55 @@ pub async fn list_health_records(
     _headers: HeaderMap,
     Query(q): Query<HealthQuery>,
 ) -> ApiResponse<Vec<HealthRecord>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational_health.list_health_records",
+        "ehs.health_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational health scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(s.clone());
     }
     if let Some(d) = &q.department {
-        where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND department = ${}",
+            params.len() + filter_base
+        ));
         params.push(d.clone());
     }
     if let Some(p) = &q.position {
-        where_clause.push_str(&format!(" AND position = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND position = ${}", params.len() + filter_base));
         params.push(p.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR record_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2,
-            params.len() + 3
+            params.len() + filter_base,
+            params.len() + filter_base + 1,
+            params.len() + filter_base + 2
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -1246,6 +1284,9 @@ pub async fn list_health_records(
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1298,7 +1339,7 @@ pub async fn create_health_record(
             (record_no, employee_id, employee_name, gender, birth_date, department,
              position, workplace, hazard_factors, blood_type, allergy_history,
              medical_history, contact_info, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
                   birth_date::text AS birthday, department, position, workplace,
                   hazard_factors, blood_type, allergy_history, medical_history,
@@ -1352,35 +1393,47 @@ pub async fn get_health_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<HealthRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational_health.get_health_record",
+        "ehs.health_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational health scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, record_no, employee_id, employee_name, gender,
                birth_date::text AS birthday, department, position, workplace,
                hazard_factors, blood_type, allergy_history, medical_history,
                contact_info, status, created_at AS created_at,
                updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.health_records
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        SELECT id::text AS id, record_no, employee_id, employee_name, gender,
+               birth_date::text AS birthday, department, position, workplace,
+               hazard_factors, blood_type, allergy_history, medical_history,
+               contact_info, status, created_at AS created_at,
+               updated_at AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.health_records
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("健康档案不存在"),
         Err(e) => {
@@ -1408,18 +1461,21 @@ pub async fn update_health_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateHealthRecordRequest>,
 ) -> ApiResponse<HealthRecord> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational_health.update_health_record",
+        "ehs.health_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational health scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.employee_name {
@@ -1473,13 +1529,16 @@ pub async fn update_health_record(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.health_records
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
                   birth_date::text AS birthday, department, position, workplace,
@@ -1492,12 +1551,11 @@ pub async fn update_health_record(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("健康档案不存在"),
         Err(e) => {
@@ -1527,31 +1585,39 @@ pub async fn delete_health_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.occupational_health.delete_health_record",
+        "ehs.health_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open occupational health scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.health_records
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        UPDATE ehs.health_records
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);

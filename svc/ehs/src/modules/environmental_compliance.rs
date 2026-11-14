@@ -15,7 +15,33 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
+
+/// 统计查询：租户通道显式绑定 tenant_id，系统通道显式不带 tenant_id 谓词。
+async fn compliance_scalar_i64(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> i64 {
+    let mut q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.unwrap_or(0)
+}
+
+async fn compliance_scalar_opt_f64(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    sql: String,
+    tenant: Option<Uuid>,
+) -> Option<f64> {
+    let mut q = sqlx::query_scalar::<_, Option<f64>>(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope).await.ok().flatten()
+}
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -436,39 +462,47 @@ pub async fn list_regulations(
     _headers: HeaderMap,
     Query(q): Query<RegulationQuery>,
 ) -> ApiResponse<Vec<EnvironmentalRegulation>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.list_regulations",
+        "ehs.qa_ehs_environmental_regulations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open regulation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(category) = &q.category {
-        where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND category = ${}", params.len() + filter_base));
         params.push(category.clone());
     }
     if let Some(status) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(status.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (title ILIKE ${} OR reg_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
+            params.len() + filter_base,
+            params.len() + filter_base + 1
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -491,6 +525,9 @@ pub async fn list_regulations(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -552,7 +589,7 @@ pub async fn create_regulation(
             (reg_no, title, category, regulation_type, issuing_authority, issued_date,
              effective_date, expiry_date, status, content, keywords, applicable_scopes,
              related_files, version, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
                   issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                   expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
@@ -607,19 +644,23 @@ pub async fn get_regulation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentalRegulation> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.get_regulation",
+        "ehs.qa_ehs_environmental_regulations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open regulation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
                issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
@@ -627,16 +668,25 @@ pub async fn get_regulation(
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_environmental_regulations
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
+               issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
+               expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
+               related_files AS attachments, version, created_by,
+               created_at AS created_at, updated_at AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_environmental_regulations
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("环保法规不存在"),
         Err(e) => {
@@ -664,18 +714,21 @@ pub async fn update_regulation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
 ) -> ApiResponse<EnvironmentalRegulation> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.update_regulation",
+        "ehs.qa_ehs_environmental_regulations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open regulation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -695,15 +748,15 @@ pub async fn update_regulation(
         params.push(v);
     }
     if let Some(v) = req.issue_date {
-        sets.push(format!("issued_date = ${}", params.len() + 1));
+        sets.push(format!("issued_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.effective_date {
-        sets.push(format!("effective_date = ${}", params.len() + 1));
+        sets.push(format!("effective_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.expiry_date {
-        sets.push(format!("expiry_date = ${}", params.len() + 1));
+        sets.push(format!("expiry_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.status {
@@ -733,13 +786,16 @@ pub async fn update_regulation(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_environmental_regulations
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
                   issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
@@ -753,12 +809,11 @@ pub async fn update_regulation(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("环保法规不存在"),
         Err(e) => {
@@ -788,31 +843,39 @@ pub async fn delete_regulation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.delete_regulation",
+        "ehs.qa_ehs_environmental_regulations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open regulation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.qa_ehs_environmental_regulations
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_environmental_regulations
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete environmental regulation: {}", e);
@@ -845,18 +908,21 @@ pub async fn update_monitor_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.update_monitor_record",
+        "ehs.qa_ehs_env_monitor_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open monitor record scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut add = |field: &str, val: Option<String>| {
@@ -888,31 +954,36 @@ pub async fn update_monitor_record(
     if sets.is_empty() {
         return ApiResponse::bad_request("无更新字段");
     }
-    sets.push(format!("updated_at = ${}", params.len() + 1));
+    sets.push(format!("updated_at = ${}::timestamptz", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
     let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_env_monitor_records
         SET {set_clause}
-        WHERE id::text = ${}
-          AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING
             id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
             monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
             result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
             created_at AS created_at, updated_at AS updated_at, tenant_id AS tenant_id
-        "#,
-        params.len() + 1,
-        params.len() + 2,
-        params.len() + 2
+        "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
-    query = query.bind(&id).bind(&tenant_bind);
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     let row = match query.fetch_one(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -940,19 +1011,23 @@ pub async fn get_permit(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<DischargePermit> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.get_permit",
+        "ehs.qa_ehs_discharge_permits",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open permit scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
                holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                valid_to::text AS expiry_date, issuing_authority, discharge_location,
@@ -960,16 +1035,25 @@ pub async fn get_permit(
                attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_discharge_permits
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
+               holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
+               valid_to::text AS expiry_date, issuing_authority, discharge_location,
+               discharge_standard, discharge_limits, monitoring_requirements, status,
+               attachments, created_at AS created_at, updated_at AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_discharge_permits
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("排污许可不存在"),
         Err(e) => {
@@ -997,18 +1081,21 @@ pub async fn update_permit(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
 ) -> ApiResponse<DischargePermit> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.update_permit",
+        "ehs.qa_ehs_discharge_permits",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open permit scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -1028,15 +1115,15 @@ pub async fn update_permit(
         params.push(v);
     }
     if let Some(v) = req.issue_date {
-        sets.push(format!("issued_date = ${}", params.len() + 1));
+        sets.push(format!("issued_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.effective_date {
-        sets.push(format!("valid_from = ${}", params.len() + 1));
+        sets.push(format!("valid_from = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.expiry_date {
-        sets.push(format!("valid_to = ${}", params.len() + 1));
+        sets.push(format!("valid_to = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.issuing_authority {
@@ -1070,13 +1157,16 @@ pub async fn update_permit(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_discharge_permits
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
                   holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
@@ -1090,12 +1180,11 @@ pub async fn update_permit(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("排污许可不存在"),
         Err(e) => {
@@ -1125,31 +1214,39 @@ pub async fn delete_permit(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.delete_permit",
+        "ehs.qa_ehs_discharge_permits",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open permit scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.qa_ehs_discharge_permits
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_discharge_permits
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete discharge permit: {}", e);
@@ -1189,43 +1286,54 @@ pub async fn list_evaluations(
     _headers: HeaderMap,
     Query(q): Query<AssessmentQuery>,
 ) -> ApiResponse<Vec<ComplianceAssessment>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.list_evaluations",
+        "ehs.qa_ehs_compliance_evaluations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open evaluation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(t) = &q.assessment_type {
-        where_clause.push_str(&format!(" AND eval_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND eval_type = ${}", params.len() + filter_base));
         params.push(t.clone());
     }
     if let Some(r) = &q.result {
-        where_clause.push_str(&format!(" AND overall_result = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND overall_result = ${}",
+            params.len() + filter_base
+        ));
         params.push(r.clone());
     }
     if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(s.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (title ILIKE ${} OR eval_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
+            params.len() + filter_base,
+            params.len() + filter_base + 1
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -1248,6 +1356,9 @@ pub async fn list_evaluations(
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1303,7 +1414,7 @@ pub async fn create_evaluation(
             (eval_no, title, eval_type, eval_period, start_date, end_date, evaluator,
              evaluated_at, overall_result, compliance_rate, findings, non_complianceitems,
              corrective_actions, status, attachments, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8::timestamptz, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                   eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
                   evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
@@ -1363,19 +1474,23 @@ pub async fn get_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ComplianceAssessment> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.get_evaluation",
+        "ehs.qa_ehs_compliance_evaluations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open evaluation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
                evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
@@ -1384,16 +1499,26 @@ pub async fn get_evaluation(
                created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_compliance_evaluations
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
+               eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
+               evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
+               compliance_rate::float8 AS score, findings, non_complianceitems,
+               corrective_actions, status, attachments,
+               created_at AS created_at, updated_at AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_compliance_evaluations
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("合规性评价不存在"),
         Err(e) => {
@@ -1424,18 +1549,21 @@ pub async fn update_evaluation(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> ApiResponse<ComplianceAssessment> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.update_evaluation",
+        "ehs.qa_ehs_compliance_evaluations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open evaluation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.title {
@@ -1451,11 +1579,11 @@ pub async fn update_evaluation(
         params.push(v);
     }
     if let Some(v) = req.period_start {
-        sets.push(format!("start_date = ${}", params.len() + 1));
+        sets.push(format!("start_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.period_end {
-        sets.push(format!("end_date = ${}", params.len() + 1));
+        sets.push(format!("end_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.assessor {
@@ -1463,7 +1591,7 @@ pub async fn update_evaluation(
         params.push(v);
     }
     if let Some(v) = req.assessment_date {
-        sets.push(format!("evaluated_at = ${}", params.len() + 1));
+        sets.push(format!("evaluated_at = ${}::timestamptz", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.result {
@@ -1497,13 +1625,16 @@ pub async fn update_evaluation(
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let id_idx = params.len() + 1;
-    let tenant_idx = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
         SET {set_clause}
-        WHERE id::text = ${id_idx}
-          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                   eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
@@ -1518,12 +1649,11 @@ pub async fn update_evaluation(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = match query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("合规性评价不存在"),
         Err(e) => {
@@ -1556,31 +1686,39 @@ pub async fn delete_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.delete_evaluation",
+        "ehs.qa_ehs_compliance_evaluations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open evaluation scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = r#"
+    let sql = if tenant_scope.tenant_id().is_some() {
+        r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
         SET deleted_at = now()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-    "#;
-    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+    "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_compliance_evaluations
+        SET deleted_at = now()
+        WHERE id::text = $1 AND deleted_at IS NULL
+    "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = match query.execute(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete compliance assessment: {}", e);
@@ -1610,32 +1748,43 @@ pub async fn list_monitor_records(
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> ApiResponse<Vec<EnvironmentMonitor>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.list_monitor_records",
+        "ehs.qa_ehs_env_monitor_records",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open monitor record scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(st) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(st.clone());
     }
     if let Some(cat) = &q.category {
-        where_clause.push_str(&format!(" AND monitor_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND monitor_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(cat.clone());
     }
 
@@ -1652,6 +1801,9 @@ pub async fn list_monitor_records(
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1767,43 +1919,57 @@ pub async fn list_permits(
     _headers: HeaderMap,
     Query(q): Query<PermitQuery>,
 ) -> ApiResponse<Vec<DischargePermit>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.list_permits",
+        "ehs.qa_ehs_discharge_permits",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open permit scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(t) = &q.permit_type {
-        where_clause.push_str(&format!(" AND permit_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND permit_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(t.clone());
     }
     if let Some(c) = &q.permit_category {
-        where_clause.push_str(&format!(" AND permit_category = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND permit_category = ${}",
+            params.len() + filter_base
+        ));
         params.push(c.clone());
     }
     if let Some(s) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(s.clone());
     }
     if let Some(search) = &q.search {
         where_clause.push_str(&format!(
             " AND (permit_name ILIKE ${} OR permit_no ILIKE ${})",
-            params.len() + 1,
-            params.len() + 2
+            params.len() + filter_base,
+            params.len() + filter_base + 1
         ));
         let like = format!("%{search}%");
         params.push(like.clone());
@@ -1825,6 +1991,9 @@ pub async fn list_permits(
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -1881,7 +2050,7 @@ pub async fn create_permit(
             (permit_no, permit_type, permit_name, permit_category, holder, issued_date,
              valid_from, valid_to, issuing_authority, discharge_location, discharge_standard,
              discharge_limits, monitoring_requirements, status, attachments, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
                   holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                   valid_to::text AS expiry_date, issuing_authority, discharge_location,
@@ -1936,38 +2105,49 @@ pub async fn list_incidents(
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> ApiResponse<Vec<EnvironmentIncident>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.list_incidents",
+        "ehs.qa_ehs_environment_incidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(st) = &q.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
         params.push(st.clone());
     }
     if let Some(cat) = &q.category {
-        where_clause.push_str(&format!(" AND incident_type = ${}", params.len() + 1));
+        where_clause.push_str(&format!(
+            " AND incident_type = ${}",
+            params.len() + filter_base
+        ));
         params.push(cat.clone());
     }
     if let Some(y) = &q.year {
         where_clause.push_str(&format!(
             " AND EXTRACT(YEAR FROM occurred_at)::int = ${}",
-            params.len() + 1
+            params.len() + filter_base
         ));
         params.push(y.to_string());
     }
@@ -1987,6 +2167,9 @@ pub async fn list_incidents(
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     for p in &params {
         query = query.bind(p);
     }
@@ -2095,19 +2278,22 @@ pub async fn get_incident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentIncident> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.get_incident",
+        "ehs.qa_ehs_environment_incidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let result = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"
         SELECT id::text AS id, incident_no, title, incident_type, level, location,
                occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
@@ -2116,15 +2302,25 @@ pub async fn get_incident(
                attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.qa_ehs_environment_incidents
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
         "#
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await;
+    } else {
+        r#"
+        SELECT id::text AS id, incident_no, title, incident_type, level, location,
+               occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
+               description, cause, impact, immediate_measures, status, responsible_person,
+               investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
+               attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
+               tenant_id AS tenant_id
+        FROM ehs.qa_ehs_environment_incidents
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = query.fetch_one(&mut scope).await;
 
     let row = match result {
         Ok(r) => r,
@@ -2154,18 +2350,21 @@ pub async fn update_incident(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> ApiResponse<EnvironmentIncident> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.update_incident",
+        "ehs.qa_ehs_environment_incidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut add = |field: &str, val: Option<String>| {
@@ -2185,15 +2384,20 @@ pub async fn update_incident(
     if sets.is_empty() {
         return ApiResponse::bad_request("无更新字段");
     }
-    sets.push(format!("updated_at = ${}", params.len() + 1));
+    sets.push(format!("updated_at = ${}::timestamptz", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
     let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_idx + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
         r#"
         UPDATE ehs.qa_ehs_environment_incidents
         SET {set_clause}
-        WHERE id::text = ${}
-          AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${})
+        WHERE id::text = ${id_idx}{tenant_filter}
           AND deleted_at IS NULL
         RETURNING
             id::text AS id, incident_no, title, incident_type, level, location,
@@ -2202,16 +2406,16 @@ pub async fn update_incident(
             investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
             attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
-        "#,
-        params.len() + 1,
-        params.len() + 2,
-        params.len() + 2
+        "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
-    query = query.bind(&id).bind(&tenant_bind);
+    query = query.bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
     let row = match query.fetch_one(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -2242,31 +2446,39 @@ pub async fn delete_incident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.delete_incident",
+        "ehs.qa_ehs_environment_incidents",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open incident scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let result = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"
         UPDATE ehs.qa_ehs_environment_incidents
         SET deleted_at = NOW()
-        WHERE id::text = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-          AND deleted_at IS NULL
-        "#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .execute(&mut scope)
-    .await;
+        WHERE id::text = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+        "#
+    } else {
+        r#"
+        UPDATE ehs.qa_ehs_environment_incidents
+        SET deleted_at = NOW()
+        WHERE id::text = $1 AND deleted_at IS NULL
+        "#
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let result = query.execute(&mut scope).await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -2295,86 +2507,129 @@ pub async fn get_compliance_statistics(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<ComplianceStatistics> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.env_compliance.get_statistics",
+        "ehs.qa_ehs_environmental_regulations",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open compliance statistics scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_id = tenant;
-    let tenant_bind = tenant_id.to_string();
-    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+    let tenant = tenant_scope.tenant_id();
+    let tenant_id = tenant.unwrap_or_default();
+    // 租户通道显式绑定 tenant_id；系统通道显式不带租户谓词。
+    let tc = if tenant.is_some() {
+        "tenant_id = $1::uuid AND deleted_at IS NULL"
+    } else {
+        "deleted_at IS NULL"
+    };
 
-    let total_regulations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let active_regulations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {} AND status = 'active'",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let total_evaluations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_compliance_evaluations WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let average_compliance_rate: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT AVG(compliance_rate)::float8 FROM ehs.qa_ehs_compliance_evaluations WHERE {} AND compliance_rate IS NOT NULL", tc
-    ))).bind(&tenant_bind).fetch_one(&mut scope).await.ok().flatten();
-    let total_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let qualified_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {} AND result IN ('合格','达标')", tc
-    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
-    let total_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let expiring_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {} AND valid_to BETWEEN NOW() AND NOW() + INTERVAL '30 days'", tc
-    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
-    let total_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {}",
-        tc
-    )))
-    .bind(&tenant_bind)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let open_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {} AND status NOT IN ('closed','resolved')", tc
-    ))).bind(&tenant_bind).fetch_one(&mut scope).await.unwrap_or(0);
+    let total_regulations = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let active_regulations = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {} AND status = 'active'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let total_evaluations = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_compliance_evaluations WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let average_compliance_rate = compliance_scalar_opt_f64(
+        &mut scope,
+        format!(
+            "SELECT AVG(compliance_rate)::float8 FROM ehs.qa_ehs_compliance_evaluations WHERE {} AND compliance_rate IS NOT NULL",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let total_monitor_records = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let qualified_monitor_records = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {} AND result IN ('合格','达标')",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let total_permits = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let expiring_permits = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {} AND valid_to BETWEEN NOW() AND NOW() + INTERVAL '30 days'",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let total_incidents = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {}",
+            tc
+        ),
+        tenant,
+    )
+    .await;
+    let open_incidents = compliance_scalar_i64(
+        &mut scope,
+        format!(
+            "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {} AND status NOT IN ('closed','resolved')",
+            tc
+        ),
+        tenant,
+    )
+    .await;
 
     let mut by_monitor_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut monitor_group = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(monitor_type, '未分类') AS mt, COUNT(*)::int8 AS cnt, COUNT(*) FILTER (WHERE result IN ('合格','达标'))::int8 AS qc FROM ehs.qa_ehs_env_monitor_records WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    ))).bind(&tenant_bind).fetch_all(&mut scope).await {
+    )));
+    if let Some(t) = tenant {
+        monitor_group = monitor_group.bind(t);
+    }
+    if let Ok(rows) = monitor_group.fetch_all(&mut scope).await {
         for r in rows {
             by_monitor_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("mt").unwrap_or_default(),
@@ -2384,9 +2639,13 @@ pub async fn get_compliance_statistics(
         }
     }
     let mut by_incident_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut incident_group = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(incident_type, '未分类') AS it, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_environment_incidents WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    ))).bind(&tenant_bind).fetch_all(&mut scope).await {
+    )));
+    if let Some(t) = tenant {
+        incident_group = incident_group.bind(t);
+    }
+    if let Ok(rows) = incident_group.fetch_all(&mut scope).await {
         for r in rows {
             by_incident_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("it").unwrap_or_default(),

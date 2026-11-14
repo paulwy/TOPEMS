@@ -11,6 +11,7 @@ use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -69,19 +70,22 @@ pub async fn list_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<EnvironmentMonitor>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.environment.list_records",
+        "ehs.qa_ehs_environment_monitors",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open monitor scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let rows = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
                   description, monitor_frequency, standard_value,
                   warning_threshold::text AS warning_threshold,
@@ -89,13 +93,24 @@ pub async fn list_records(
                   unit, created_by,
                   created_at AS created_at, updated_at AS updated_at
            FROM ehs.qa_ehs_environment_monitors
-           WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)
-             AND deleted_at IS NULL
-           ORDER BY created_at DESC"#,
-    )
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await;
+           WHERE tenant_id = $1::uuid AND deleted_at IS NULL
+           ORDER BY created_at DESC"#
+    } else {
+        r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
+                  description, monitor_frequency, standard_value,
+                  warning_threshold::text AS warning_threshold,
+                  alarm_threshold::text AS alarm_threshold,
+                  unit, created_by,
+                  created_at AS created_at, updated_at AS updated_at
+           FROM ehs.qa_ehs_environment_monitors
+           WHERE deleted_at IS NULL
+           ORDER BY created_at DESC"#
+    };
+    let mut query = sqlx::query(sql);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let rows = query.fetch_all(&mut scope).await;
     match rows {
         Ok(r) => {
             let list: Vec<EnvironmentMonitor> = r
@@ -294,19 +309,22 @@ pub async fn get_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.environment.get_record",
+        "ehs.qa_ehs_environment_monitors",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open monitor scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let row = sqlx::query(
+    let sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
                   description, monitor_frequency, standard_value,
                   warning_threshold::text AS warning_threshold,
@@ -314,13 +332,22 @@ pub async fn get_record(
                   unit, created_by,
                   created_at AS created_at, updated_at AS updated_at
            FROM ehs.qa_ehs_environment_monitors
-           WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)
-             AND id = $2::uuid AND deleted_at IS NULL"#,
-    )
-    .bind(&tenant_bind)
-    .bind(&id)
-    .fetch_optional(&mut scope)
-    .await;
+           WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"#
+    } else {
+        r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
+                  description, monitor_frequency, standard_value,
+                  warning_threshold::text AS warning_threshold,
+                  alarm_threshold::text AS alarm_threshold,
+                  unit, created_by,
+                  created_at AS created_at, updated_at AS updated_at
+           FROM ehs.qa_ehs_environment_monitors
+           WHERE id = $1::uuid AND deleted_at IS NULL"#
+    };
+    let mut query = sqlx::query(sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    let row = query.fetch_optional(&mut scope).await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
             EnvironmentMonitor {
@@ -379,30 +406,38 @@ pub async fn update_record(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<EnvironmentMonitor> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.environment.update_record",
+        "ehs.qa_ehs_environment_monitors",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open monitor scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     // 先取现有行，再按请求字段 COALESCE 保留原值。
-    let existing = sqlx::query(
+    let existing_sql = if tenant_scope.tenant_id().is_some() {
         r#"SELECT name, monitor_type, location, status, description, monitor_frequency,
                   standard_value, warning_threshold, alarm_threshold, unit
            FROM ehs.qa_ehs_environment_monitors
-           WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)
-             AND id = $2::uuid AND deleted_at IS NULL"#,
-    )
-    .bind(&tenant_bind)
-    .bind(&id)
-    .fetch_optional(&mut scope)
-    .await;
+           WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"#
+    } else {
+        r#"SELECT name, monitor_type, location, status, description, monitor_frequency,
+                  standard_value, warning_threshold, alarm_threshold, unit
+           FROM ehs.qa_ehs_environment_monitors
+           WHERE id = $1::uuid AND deleted_at IS NULL"#
+    };
+    let mut existing_query = sqlx::query(existing_sql).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        existing_query = existing_query.bind(tenant);
+    }
+    let existing = existing_query.fetch_optional(&mut scope).await;
     let _existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => return ApiResponse::not_found("环境监测点不存在"),
@@ -423,7 +458,7 @@ pub async fn update_record(
     let alarm_threshold = req.get("alarm_threshold").and_then(|v| v.as_f64());
     let unit = req.get("unit").and_then(|v| v.as_str());
 
-    let r = sqlx::query(
+    let update_sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_environment_monitors SET
              name = COALESCE($1, name),
              monitor_type = COALESCE($2, monitor_type),
@@ -436,23 +471,38 @@ pub async fn update_record(
              alarm_threshold = COALESCE($9, alarm_threshold),
              unit = $10,
              updated_at = now()
-           WHERE ($11 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $11)
-             AND id = $12::uuid AND deleted_at IS NULL"#,
-    )
-    .bind(name)
-    .bind(monitor_type)
-    .bind(location)
-    .bind(status)
-    .bind(description)
-    .bind(monitor_frequency)
-    .bind(standard_value)
-    .bind(warning_threshold)
-    .bind(alarm_threshold)
-    .bind(unit)
-    .bind(&tenant_bind)
-    .bind(&id)
-    .execute(&mut scope)
-    .await;
+           WHERE id = $11::uuid AND tenant_id = $12::uuid AND deleted_at IS NULL"#
+    } else {
+        r#"UPDATE ehs.qa_ehs_environment_monitors SET
+             name = COALESCE($1, name),
+             monitor_type = COALESCE($2, monitor_type),
+             location = $3,
+             status = COALESCE($4, status),
+             description = $5,
+             monitor_frequency = $6,
+             standard_value = $7,
+             warning_threshold = COALESCE($8, warning_threshold),
+             alarm_threshold = COALESCE($9, alarm_threshold),
+             unit = $10,
+             updated_at = now()
+           WHERE id = $11::uuid AND deleted_at IS NULL"#
+    };
+    let mut update_query = sqlx::query(update_sql)
+        .bind(name)
+        .bind(monitor_type)
+        .bind(location)
+        .bind(status)
+        .bind(description)
+        .bind(monitor_frequency)
+        .bind(standard_value)
+        .bind(warning_threshold)
+        .bind(alarm_threshold)
+        .bind(unit)
+        .bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        update_query = update_query.bind(tenant);
+    }
+    let r = update_query.execute(&mut scope).await;
     if let Err(e) = r {
         tracing::error!("Failed to update environment monitor: {}", e);
         return ApiResponse::server_error("更新环境监测点失败");

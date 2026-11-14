@@ -15,6 +15,7 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -210,35 +211,43 @@ pub async fn list_plans(
     _headers: HeaderMap,
     Query(q): Query<PlanQuery>,
 ) -> ApiResponse<Vec<EmergencyPlan>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.emergency_plan.list_plans",
+        "ehs.qa_ehs_emergency_plans",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open plan scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(
-        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
-    );
+    // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
+    let mut params: Vec<String> = Vec::new();
+    let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
+        Some(_) => (
+            String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL"),
+            2,
+        ),
+        None => (String::from(" WHERE deleted_at IS NULL"), 1),
+    };
     if let Some(status) = &q.status {
         if !status.is_empty() {
-            where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+            where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
             params.push(status.clone());
         }
     }
     if let Some(category) = &q.category {
         if !category.is_empty() {
-            where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
+            where_clause.push_str(&format!(" AND category = ${}", params.len() + filter_base));
             params.push(category.clone());
         }
     }
@@ -247,6 +256,9 @@ pub async fn list_plans(
         where_clause, page_size, offset
     );
     let mut qb = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        qb = qb.bind(tenant);
+    }
     for p in &params {
         qb = qb.bind(p);
     }
@@ -351,25 +363,32 @@ pub async fn get_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<PlanDetail> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.emergency_plan.get_plan",
+        "ehs.qa_ehs_emergency_plans",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open plan scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let plan_sql = "SELECT id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
-    let plan_row = match sqlx::query(sqlx::AssertSqlSafe(plan_sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_optional(&mut scope)
-        .await
-    {
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        " AND tenant_id = $2::uuid"
+    } else {
+        ""
+    };
+    let plan_sql = format!("SELECT id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid{tenant_filter} AND deleted_at IS NULL");
+    let mut plan_query = sqlx::query(sqlx::AssertSqlSafe(plan_sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        plan_query = plan_query.bind(tenant);
+    }
+    let plan_row = match plan_query.fetch_optional(&mut scope).await {
         Ok(Some(r)) => r,
         Ok(None) => {
             return ApiResponse::not_found("应急预案不存在");
@@ -381,14 +400,14 @@ pub async fn get_plan(
     };
     let plan = plan_from_row(&plan_row);
 
-    let supplies: Vec<PlanSupply> = match sqlx::query(
-        "SELECT id::text, plan_id::text, name, specification, quantity, unit, storage_location, responsible_person, remarks, created_at, tenant_id::text FROM ehs.qa_ehs_emergency_plan_supplies WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY created_at DESC",
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    {
+    let supplies_sql = format!(
+        "SELECT id::text, plan_id::text, name, specification, quantity, unit, storage_location, responsible_person, remarks, created_at, tenant_id::text FROM ehs.qa_ehs_emergency_plan_supplies WHERE plan_id = $1::uuid{tenant_filter} AND deleted_at IS NULL ORDER BY created_at DESC"
+    );
+    let mut supplies_query = sqlx::query(sqlx::AssertSqlSafe(supplies_sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        supplies_query = supplies_query.bind(tenant);
+    }
+    let supplies: Vec<PlanSupply> = match supplies_query.fetch_all(&mut scope).await {
         Ok(rows) => rows.iter().map(plan_supply_from_row).collect(),
         Err(e) => {
             tracing::error!("get_plan supplies error: {}", e);
@@ -396,14 +415,14 @@ pub async fn get_plan(
         }
     };
 
-    let versions: Vec<PlanVersion> = match sqlx::query(
-        "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC",
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    {
+    let versions_sql = format!(
+        "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid{tenant_filter} AND deleted_at IS NULL ORDER BY changed_at DESC"
+    );
+    let mut versions_query = sqlx::query(sqlx::AssertSqlSafe(versions_sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        versions_query = versions_query.bind(tenant);
+    }
+    let versions: Vec<PlanVersion> = match versions_query.fetch_all(&mut scope).await {
         Ok(rows) => rows.iter().map(plan_version_from_row).collect(),
         Err(e) => {
             tracing::error!("get_plan versions error: {}", e);
@@ -411,14 +430,14 @@ pub async fn get_plan(
         }
     };
 
-    let approvals: Vec<PlanApproval> = match sqlx::query(
-        "SELECT id::text, plan_id::text, approver, approver_role, status, opinion, approved_at, order_num, tenant_id::text FROM ehs.qa_ehs_emergency_plan_approvals WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY order_num ASC",
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    {
+    let approvals_sql = format!(
+        "SELECT id::text, plan_id::text, approver, approver_role, status, opinion, approved_at, order_num, tenant_id::text FROM ehs.qa_ehs_emergency_plan_approvals WHERE plan_id = $1::uuid{tenant_filter} AND deleted_at IS NULL ORDER BY order_num ASC"
+    );
+    let mut approvals_query = sqlx::query(sqlx::AssertSqlSafe(approvals_sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        approvals_query = approvals_query.bind(tenant);
+    }
+    let approvals: Vec<PlanApproval> = match approvals_query.fetch_all(&mut scope).await {
         Ok(rows) => rows.iter().map(plan_approval_from_row).collect(),
         Err(e) => {
             tracing::error!("get_plan approvals error: {}", e);
@@ -451,18 +470,21 @@ pub async fn update_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> ApiResponse<EmergencyPlan> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.emergency_plan.update_plan",
+        "ehs.qa_ehs_emergency_plans",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open plan scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
     let mut set_clauses: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     let mut push = |val: String, col: &str| {
@@ -515,17 +537,23 @@ pub async fn update_plan(
     }
     set_clauses.push("updated_at = NOW()".to_string());
     let id_param = params.len() + 1;
-    let tenant_param = params.len() + 2;
+    let tenant_filter = if tenant_scope.tenant_id().is_some() {
+        format!(" AND tenant_id = ${}::uuid", id_param + 1)
+    } else {
+        String::new()
+    };
     let sql = format!(
-        "UPDATE ehs.qa_ehs_emergency_plans SET {} WHERE id = ${}::uuid AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${}) AND deleted_at IS NULL RETURNING id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text",
-        set_clauses.join(", "), id_param, tenant_param, tenant_param
+        "UPDATE ehs.qa_ehs_emergency_plans SET {} WHERE id = ${}::uuid{} AND deleted_at IS NULL RETURNING id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text",
+        set_clauses.join(", "), id_param, tenant_filter
     );
     params.push(id.clone());
     let mut qb = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         qb = qb.bind(p);
     }
-    qb = qb.bind(&tenant_bind);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        qb = qb.bind(tenant);
+    }
     match qb.fetch_optional(&mut scope).await {
         Ok(Some(r)) => {
             if let Err(e) = scope.commit().await {
@@ -555,25 +583,31 @@ pub async fn delete_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.emergency_plan.delete_plan",
+        "ehs.qa_ehs_emergency_plans",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_for_tenant(tenant).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open plan scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
-    match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .execute(&mut scope)
-        .await
-    {
+    let sql = if tenant_scope.tenant_id().is_some() {
+        "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    } else {
+        "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND deleted_at IS NULL"
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    match query.execute(&mut scope).await {
         Ok(res) if res.rows_affected() > 0 => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("Failed to commit tenant write: {}", e);
@@ -602,25 +636,31 @@ pub async fn list_plan_versions(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<PlanVersion>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.emergency_plan.list_plan_versions",
+        "ehs.qa_ehs_emergency_plan_versions",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open plan version scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let sql = "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
-    match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(&id)
-        .bind(&tenant_bind)
-        .fetch_all(&mut scope)
-        .await
-    {
+    let sql = if tenant_scope.tenant_id().is_some() {
+        "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL ORDER BY changed_at DESC"
+    } else {
+        "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND deleted_at IS NULL ORDER BY changed_at DESC"
+    };
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id);
+    if let Some(tenant) = tenant_scope.tenant_id() {
+        query = query.bind(tenant);
+    }
+    match query.fetch_all(&mut scope).await {
         Ok(rows) => {
             let items: Vec<PlanVersion> = rows.iter().map(plan_version_from_row).collect();
             ApiResponse::success(items, "获取预案版本列表成功")

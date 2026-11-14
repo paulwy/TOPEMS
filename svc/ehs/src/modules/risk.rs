@@ -14,6 +14,7 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -83,84 +84,86 @@ pub async fn list_risks(
     _headers: HeaderMap,
     Query(query): Query<RiskQuery>,
 ) -> ApiResponse<Vec<Risk>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.risk.list_risks", "ehs.qa_ehs_risks") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open risk scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
+
+    let fetch_query = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $1::uuid
+        Some(tenant) => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause =
+                String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
+            if let Some(status) = &query.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
+                params.push(status.clone());
+            }
+            if let Some(level) = &query.risk_level {
+                where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 2));
+                params.push(level.clone());
+            }
+            let fetch_sql = format!(
+                r#"
+                SELECT
+                    id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_risks
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(fetch_sql)).bind(tenant);
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            let mut params: Vec<String> = Vec::new();
+            let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+            if let Some(status) = &query.status {
+                where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+                params.push(status.clone());
+            }
+            if let Some(level) = &query.risk_level {
+                where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 1));
+                params.push(level.clone());
+            }
+            let fetch_sql = format!(
+                r#"
+                SELECT
+                    id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_risks
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT {page_size} OFFSET {offset}
+                "#
+            );
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
+            for p in &params {
+                q = q.bind(p);
+            }
+            q
+        }
     };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let _rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
-        }
-    };
-
-    let mut params: Vec<String> = vec![tenant_bind];
-    let mut where_clause = String::from(" WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL");
-
-    if let Some(status) = &query.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(status.clone());
-    }
-    if let Some(level) = &query.risk_level {
-        where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 1));
-        params.push(level.clone());
-    }
-
-    let fetch_sql = format!(
-        r#"
-        SELECT
-            id::text AS id, risk_no, title, description, risk_type, hazard_factor,
-            likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at AS assessed_at,
-            created_at AS created_at, updated_at AS updated_at
-        FROM ehs.qa_ehs_risks
-        {where_clause}
-        ORDER BY created_at DESC
-        LIMIT {page_size} OFFSET {offset}
-        "#,
-        where_clause = where_clause,
-    );
-
-    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
-    for p in &params {
-        fetch_query = fetch_query.bind(p);
-    }
 
     let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
@@ -328,66 +331,56 @@ pub async fn get_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Risk> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.risk.get_risk", "ehs.qa_ehs_risks") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open risk scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
-        }
-    };
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = if claims.is_superuser {
-        {
-            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }
-    } else {
-        {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| uuid::Uuid::parse_str(t).ok())
-                .unwrap_or_else(uuid::Uuid::nil)
-        }
-    };
-    let _rls_tenant = if claims.is_superuser {
-        {
-            uuid::Uuid::nil()
-        }
-    } else {
-        {
-            tenant_id
         }
     };
     tracing::debug!("Getting risk: {}", id);
 
-    let result = sqlx::query(
-        r#"
-        SELECT
-            id::text AS id, risk_no, title, description, risk_type, hazard_factor,
-            likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at AS assessed_at,
-            created_at AS created_at, updated_at AS updated_at
-        FROM ehs.qa_ehs_risks
-        WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND id = $1::uuid AND deleted_at IS NULL
-        "#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $2::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_risks
+                WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+                "#,
+            )
+            .bind(&id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                SELECT
+                    id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                FROM ehs.qa_ehs_risks
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                "#,
+            )
+            .bind(&id)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let row = match result {
         Ok(r) => r,
@@ -455,61 +448,162 @@ pub async fn update_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Risk> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.risk.update_risk", "ehs.qa_ehs_risks") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     tracing::debug!("Updating risk {}: {:?}", id, req);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    let result = sqlx::query(
-        r#"
-        UPDATE ehs.qa_ehs_risks SET
-            title = COALESCE($3, title),
-            description = COALESCE($4, description),
-            risk_type = COALESCE($5, risk_type),
-            hazard_factor = COALESCE($6, hazard_factor),
-            likelihood = COALESCE($7, likelihood),
-            severity = COALESCE($8, severity),
-            risk_level = COALESCE($9, risk_level),
-            control_measures = COALESCE($10, control_measures),
-            status = COALESCE($11, status),
-            updated_at = NOW()
-        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
-        RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
-            likelihood, severity, risk_level, control_measures, status,
-            created_at AS created_at, updated_at AS updated_at
-        "#,
-    )
-    .bind(&tenant_bind)
-    .bind(&id)
-    .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("risk_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("hazard_factor").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("likelihood").and_then(|v| v.as_i64()).map(|i| i as i32))
-    .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
-    .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $1::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET
+                    title = COALESCE($3, title),
+                    description = COALESCE($4, description),
+                    risk_type = COALESCE($5, risk_type),
+                    hazard_factor = COALESCE($6, hazard_factor),
+                    likelihood = COALESCE($7, likelihood),
+                    severity = COALESCE($8, severity),
+                    risk_level = COALESCE($9, risk_level),
+                    control_measures = COALESCE($10, control_measures),
+                    status = COALESCE($11, status),
+                    updated_at = NOW()
+                WHERE tenant_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    created_at AS created_at, updated_at AS updated_at
+                "#,
+            )
+            .bind(tenant)
+            .bind(&id)
+            .bind(
+                req.get("title")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("description")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("risk_type")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("hazard_factor")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("likelihood")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("severity")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("risk_level")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("control_measures")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("status")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET
+                    title = COALESCE($2, title),
+                    description = COALESCE($3, description),
+                    risk_type = COALESCE($4, risk_type),
+                    hazard_factor = COALESCE($5, hazard_factor),
+                    likelihood = COALESCE($6, likelihood),
+                    severity = COALESCE($7, severity),
+                    risk_level = COALESCE($8, risk_level),
+                    control_measures = COALESCE($9, control_measures),
+                    status = COALESCE($10, status),
+                    updated_at = NOW()
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    created_at AS created_at, updated_at AS updated_at
+                "#,
+            )
+            .bind(&id)
+            .bind(
+                req.get("title")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("description")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("risk_type")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("hazard_factor")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("likelihood")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("severity")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("risk_level")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("control_measures")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("status")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let row = match result {
         Ok(r) => r,
@@ -581,58 +675,123 @@ pub async fn assess_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Risk> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.risk.assess_risk", "ehs.qa_ehs_risks") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     tracing::debug!("Assessing risk {}: {:?}", id, req);
     let assessed_by = claims.username.clone();
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    let result = sqlx::query(
-        r#"
-        UPDATE ehs.qa_ehs_risks SET
-            likelihood = COALESCE($3, likelihood),
-            severity = COALESCE($4, severity),
-            risk_level = COALESCE($5, risk_level),
-            control_measures = COALESCE($6, control_measures),
-            status = COALESCE($7, status),
-            assessed_by = $8,
-            assessed_at = NOW(),
-            updated_at = NOW()
-        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
-        RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
-            likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at AS assessed_at,
-            created_at AS created_at, updated_at AS updated_at
-        "#,
-    )
-    .bind(&tenant_bind)
-    .bind(&id)
-    .bind(req.get("likelihood").and_then(|v| v.as_i64()).map(|i| i as i32))
-    .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
-    .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(assessed_by)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $1::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET
+                    likelihood = COALESCE($3, likelihood),
+                    severity = COALESCE($4, severity),
+                    risk_level = COALESCE($5, risk_level),
+                    control_measures = COALESCE($6, control_measures),
+                    status = COALESCE($7, status),
+                    assessed_by = $8,
+                    assessed_at = NOW(),
+                    updated_at = NOW()
+                WHERE tenant_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                "#,
+            )
+            .bind(tenant)
+            .bind(&id)
+            .bind(
+                req.get("likelihood")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("severity")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("risk_level")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("control_measures")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("status")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(assessed_by.clone())
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET
+                    likelihood = COALESCE($2, likelihood),
+                    severity = COALESCE($3, severity),
+                    risk_level = COALESCE($4, risk_level),
+                    control_measures = COALESCE($5, control_measures),
+                    status = COALESCE($6, status),
+                    assessed_by = $7,
+                    assessed_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+                    likelihood, severity, risk_level, control_measures, status,
+                    assessed_by, assessed_at AS assessed_at,
+                    created_at AS created_at, updated_at AS updated_at
+                "#,
+            )
+            .bind(&id)
+            .bind(
+                req.get("likelihood")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("severity")
+                    .and_then(|v| v.as_i64())
+                    .map(|i| i as i32),
+            )
+            .bind(
+                req.get("risk_level")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("control_measures")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(
+                req.get("status")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            )
+            .bind(assessed_by)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let row = match result {
         Ok(r) => r,
@@ -721,40 +880,48 @@ pub async fn delete_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.risk.delete_risk", "ehs.qa_ehs_risks") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     tracing::debug!("Deleting risk: {}", id);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
             return ApiResponse::server_error("风险操作失败");
         }
     };
-    let result = sqlx::query(
-        r#"
-        UPDATE ehs.qa_ehs_risks SET deleted_at = NOW(), updated_at = NOW()
-        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
-        RETURNING id
-        "#,
-    )
-    .bind(&tenant_bind)
-    .bind(&id)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $1::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET deleted_at = NOW(), updated_at = NOW()
+                WHERE tenant_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                RETURNING id
+                "#,
+            )
+            .bind(tenant)
+            .bind(&id)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risks SET deleted_at = NOW(), updated_at = NOW()
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                RETURNING id
+                "#,
+            )
+            .bind(&id)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     match result {
         Ok(Some(_)) => {}
@@ -788,56 +955,55 @@ pub async fn list_control_measures(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<RiskControlMeasure>> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.risk.list_control_measures",
+        "ehs.qa_ehs_risk_controls",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open risk scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = if claims.is_superuser {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    };
-    let _rls_tenant = if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        tenant_id
-    };
     tracing::debug!("Listing control measures for risk: {}", id);
 
-    let result = sqlx::query(
-        r#"
-        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
-        FROM ehs.qa_ehs_risk_controls
-        WHERE risk_id = $1::uuid AND deleted_at IS NULL
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-        ORDER BY created_at DESC
-        "#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $2::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
+                FROM ehs.qa_ehs_risk_controls
+                WHERE risk_id = $1::uuid AND deleted_at IS NULL
+                  AND tenant_id = $2::uuid
+                ORDER BY created_at DESC
+                "#,
+            )
+            .bind(&id)
+            .bind(tenant)
+            .fetch_all(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
+                FROM ehs.qa_ehs_risk_controls
+                WHERE risk_id = $1::uuid AND deleted_at IS NULL
+                ORDER BY created_at DESC
+                "#,
+            )
+            .bind(&id)
+            .fetch_all(&mut scope)
+            .await
+        }
+    };
 
     let rows = match result {
         Ok(r) => r,
@@ -893,18 +1059,17 @@ pub async fn create_control_measure(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<RiskControlMeasure> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
+    // 写入目标租户必须显式给出：缺失/非法/nil 一律 400，绝不写 nil 租户行。
     let tenant_id = match crate::shared::permission::require_tenant(&claims) {
         Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.risk.create_control_measure",
+        "ehs.qa_ehs_risk_controls",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     let title = req
@@ -918,7 +1083,7 @@ pub async fn create_control_measure(
     );
     tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control measure txn: {}", e);
@@ -926,17 +1091,33 @@ pub async fn create_control_measure(
         }
     };
 
-    let owned = sqlx::query_as::<_, (String,)>(
-        r#"
-        SELECT id::text FROM ehs.qa_ehs_risks
-        WHERE id::text = $1::uuid AND deleted_at IS NULL
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
-        "#,
-    )
-    .bind(&id)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+    let owned = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $2::uuid
+        Some(tenant) => {
+            sqlx::query_as::<_, (String,)>(
+                r#"
+                SELECT id::text FROM ehs.qa_ehs_risks
+                WHERE id = $1::uuid AND deleted_at IS NULL AND tenant_id = $2::uuid
+                "#,
+            )
+            .bind(&id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query_as::<_, (String,)>(
+                r#"
+                SELECT id::text FROM ehs.qa_ehs_risks
+                WHERE id = $1::uuid AND deleted_at IS NULL
+                "#,
+            )
+            .bind(&id)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let owned = match owned {
         Ok(o) => o,
@@ -961,7 +1142,7 @@ pub async fn create_control_measure(
     .bind(&title)
     .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(tenant_id.to_string())
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -1030,18 +1211,12 @@ pub async fn update_control_measure(
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<RiskControlMeasure> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.risk.update_control_measure",
+        "ehs.qa_ehs_risk_controls",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     tracing::debug!(
@@ -1051,7 +1226,7 @@ pub async fn update_control_measure(
         req
     );
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control update txn: {}", e);
@@ -1059,28 +1234,56 @@ pub async fn update_control_measure(
         }
     };
 
-    let result = sqlx::query(
-        r#"
-        UPDATE ehs.qa_ehs_risk_controls SET
-            title = COALESCE($3, title),
-            description = COALESCE($4, description),
-            measure_type = COALESCE($5, measure_type),
-            status = COALESCE($6, status),
-            updated_at = NOW()
-        WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
-          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $7)
-        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
-        "#,
-    )
-    .bind(&id)
-    .bind(&measure_id)
-    .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $7::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risk_controls SET
+                    title = COALESCE($3, title),
+                    description = COALESCE($4, description),
+                    measure_type = COALESCE($5, measure_type),
+                    status = COALESCE($6, status),
+                    updated_at = NOW()
+                WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                  AND tenant_id = $7::uuid
+                RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at, tenant_id
+                "#,
+            )
+            .bind(&id)
+            .bind(&measure_id)
+            .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risk_controls SET
+                    title = COALESCE($3, title),
+                    description = COALESCE($4, description),
+                    measure_type = COALESCE($5, measure_type),
+                    status = COALESCE($6, status),
+                    updated_at = NOW()
+                WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at, tenant_id
+                "#,
+            )
+            .bind(&id)
+            .bind(&measure_id)
+            .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     let row = match result {
         Ok(r) => r,
@@ -1121,7 +1324,9 @@ pub async fn update_control_measure(
                 .ok()
                 .flatten()
                 .unwrap_or_default(),
-            tenant_id,
+            tenant_id: row
+                .try_get::<uuid::Uuid, _>("tenant_id")
+                .unwrap_or_default(),
         },
         "控制措施更新成功",
     )
@@ -1145,23 +1350,17 @@ pub async fn delete_control_measure(
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> ApiResponse<()> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let tenant_id = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(
+        &claims,
+        "ehs.risk.delete_control_measure",
+        "ehs.qa_ehs_risk_controls",
+    ) {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
     tracing::debug!("Deleting control measure {} for risk {}", measure_id, id);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin control delete txn: {}", e);
@@ -1169,19 +1368,38 @@ pub async fn delete_control_measure(
         }
     };
 
-    let result = sqlx::query(
-        r#"
-        UPDATE ehs.qa_ehs_risk_controls SET deleted_at = NOW(), updated_at = NOW()
-        WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
-          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
-        RETURNING id
-        "#,
-    )
-    .bind(&id)
-    .bind(&measure_id)
-    .bind(&tenant_bind)
-    .fetch_optional(&mut scope)
-    .await;
+    let result = match tenant_scope.tenant_id() {
+        // 租户通道：tenant_id = $3::uuid
+        Some(tenant) => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risk_controls SET deleted_at = NOW(), updated_at = NOW()
+                WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                  AND tenant_id = $3::uuid
+                RETURNING id
+                "#,
+            )
+            .bind(&id)
+            .bind(&measure_id)
+            .bind(tenant)
+            .fetch_optional(&mut scope)
+            .await
+        }
+        // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
+        None => {
+            sqlx::query(
+                r#"
+                UPDATE ehs.qa_ehs_risk_controls SET deleted_at = NOW(), updated_at = NOW()
+                WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                RETURNING id
+                "#,
+            )
+            .bind(&id)
+            .bind(&measure_id)
+            .fetch_optional(&mut scope)
+            .await
+        }
+    };
 
     match result {
         Ok(Some(_)) => {}

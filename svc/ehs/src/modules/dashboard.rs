@@ -10,8 +10,38 @@ use serde::Serialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use uuid::Uuid;
 
+use crate::shared::permission::{dual_scope, open_read_scope};
 use crate::shared::AppState;
+
+/// 按作用域统计行数：租户通道显式绑定 tenant_id，系统通道显式不带 tenant_id 谓词。
+async fn dashboard_count(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    table: &str,
+    condition: &str,
+    tenant: Option<Uuid>,
+) -> i64 {
+    let where_clause = if tenant.is_some() {
+        "tenant_id = $1::uuid"
+    } else {
+        "TRUE"
+    };
+    let sql = if condition.is_empty() {
+        format!("SELECT COUNT(*) FROM {table} WHERE {where_clause}")
+    } else {
+        format!("SELECT COUNT(*) FROM {table} WHERE {where_clause} AND {condition}")
+    };
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
+    if let Some(t) = tenant {
+        q = q.bind(t);
+    }
+    q.fetch_one(&mut *scope)
+        .await
+        .ok()
+        .and_then(|r| r.try_get::<i64, _>(0).ok())
+        .unwrap_or(0)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new().route("/dashboard", get(get_dashboard))
@@ -49,83 +79,77 @@ pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<EhsDashboardStats> {
-    let tenant = match crate::shared::permission::require_tenant(&claims) {
-        Ok(t) => t,
+    let tenant_scope = match dual_scope(&claims, "ehs.dashboard.get_dashboard", "ehs.dashboard") {
+        Ok(s) => s,
         Err(resp) => return resp,
     };
-    let mut scope = match state.db.scope_read_for_tenant(tenant).await {
+    let mut scope = match open_read_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to open tenant scope: {}", e);
+            tracing::error!("Failed to open dashboard scope: {}", e);
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let tenant_bind = tenant.to_string();
-    let _nil_uuid = "00000000-0000-0000-0000-000000000000";
+    let tenant = tenant_scope.tenant_id();
 
     // --- 事故统计 ---
-    let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
-        .bind(&tenant_bind)
-        .fetch_one(&mut scope)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let total_accidents = dashboard_count(&mut scope, "ehs.qa_ehs_accidents", "", tenant).await;
 
-    let reported_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'reported'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let reported_accidents = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_accidents",
+        "status = 'reported'",
+        tenant,
+    )
+    .await;
 
-    let investigating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'investigating'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let investigating_accidents = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_accidents",
+        "status = 'investigating'",
+        tenant,
+    )
+    .await;
 
-    let treating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'treating'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let treating_accidents = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_accidents",
+        "status = 'treating'",
+        tenant,
+    )
+    .await;
 
-    let closed_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'closed'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let closed_accidents = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_accidents",
+        "status = 'closed'",
+        tenant,
+    )
+    .await;
 
     // --- 隐患统计 ---
-    let pending_hazards: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_hazards WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status != 'closed'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let pending_hazards = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_hazards",
+        "status != 'closed'",
+        tenant,
+    )
+    .await;
 
     // 隐患按类别分组
-    let hazard_rows = sqlx::query(
-        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM ehs.qa_ehs_hazards WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) GROUP BY category ORDER BY cnt DESC LIMIT 10",
-    )
-    .bind(&tenant_bind)
-    .fetch_all(&mut scope)
-    .await
-    .ok();
+    let hazard_where = if tenant.is_some() {
+        "tenant_id = $1::uuid"
+    } else {
+        "TRUE"
+    };
+    let hazard_sql = format!(
+        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM ehs.qa_ehs_hazards WHERE {hazard_where} GROUP BY category ORDER BY cnt DESC LIMIT 10"
+    );
+    let mut hazard_query = sqlx::query(sqlx::AssertSqlSafe(hazard_sql));
+    if let Some(t) = tenant {
+        hazard_query = hazard_query.bind(t);
+    }
+    let hazard_rows = hazard_query.fetch_all(&mut scope).await.ok();
 
     let hazard_types: Vec<NameValue> = hazard_rows
         .map(|rows| {
@@ -141,31 +165,23 @@ pub async fn get_dashboard(
         .unwrap_or_default();
 
     // --- 培训统计 ---
-    let total_trainings: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
-        .bind(&tenant_bind)
-        .fetch_one(&mut scope)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let total_trainings = dashboard_count(&mut scope, "ehs.qa_ehs_trainings", "", tenant).await;
 
-    let completed_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'completed'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let completed_trainings = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_trainings",
+        "status = 'completed'",
+        tenant,
+    )
+    .await;
 
-    let scheduled_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'scheduled'")
-            .bind(&tenant_bind)
-            .fetch_one(&mut scope)
-            .await
-            .ok()
-            .and_then(|r| r.try_get::<i64, _>(0).ok())
-            .unwrap_or(0);
+    let scheduled_trainings = dashboard_count(
+        &mut scope,
+        "ehs.qa_ehs_trainings",
+        "status = 'scheduled'",
+        tenant,
+    )
+    .await;
 
     let training_rate = if total_trainings == 0 {
         0.0
@@ -174,13 +190,7 @@ pub async fn get_dashboard(
     };
 
     // --- 应急演练统计 ---
-    let drill_count: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
-        .bind(&tenant_bind)
-        .fetch_one(&mut scope)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let drill_count = dashboard_count(&mut scope, "ehs.qa_ehs_drill_records", "", tenant).await;
 
     let stats = EhsDashboardStats {
         total_accidents,

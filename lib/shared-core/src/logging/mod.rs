@@ -321,7 +321,7 @@ pub fn format_log_entry(mut w: Writer<'_>, entry: &LogEntry) -> std::fmt::Result
 /// 全链路端口排查日志的默认级别配置，内嵌到 EnvFilter 基础值里，
 /// 保证无论 RUST_LOG 是否设置，都能直接看到服务发现、AI 集成、智能网关的端口解析。
 const PORT_DIAGNOSTIC_DIRECTIVES: &str =
-    "service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
+    "tenant_scope=warn,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
 
 pub fn create_log_filter(service: &str, level: &str) -> EnvFilter {
     EnvFilter::try_from_default_env().unwrap_or_else(|_| {

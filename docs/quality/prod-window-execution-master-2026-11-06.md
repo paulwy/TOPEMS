@@ -1207,3 +1207,265 @@ real 6.175s
 - 证据目录 `/tmp/topems_window_b3_20261106_203254/`：`perm_grants.dump`、`codes_before.csv` / `codes_after.csv`、
   `grants_before.csv` / `grants_after.csv`、`ledger_before.txt` / `ledger_after.txt`；
   `apply.log`（本地 `/tmp/b3_apply.log`）与 sha256 投递清单。
+
+---
+
+## 17. 2026-11-14 追加：W7-B4 迁移的**强制投递顺序**（14100000 / 14120000）
+
+> **2026-11-14 修订（方案 B）：`20261114130000` 已撤回。**
+> 原设计在 `public._sqlx_migrations` 上装 `BEFORE INSERT` 触发器做兜底，现改为：
+> 版本单调性、白名单、defer 校验**全部前移到 `apply-forward.sh` 入口、在任何 DDL 之前完成**。
+> 校验不通过 = 零 DDL、零半应用态；数据库侧**不再有任何顺序兜底**（护栏位置见 17.5）。
+
+### 17.1 库身份与账本水位
+
+- 本地核对库：`topems @ 127.0.0.1:5432`，PostgreSQL 18.4。本地账本 `20261109101400 / 572 行`，**是滞后快照**，不能替代 prod 事实。
+- prod 事实（窗口单口径）：`max(version)=20261113100000`，账本 668 行。**本次未直连 prod 复核**。
+- 本地最近演练库 `topems_six_rls_reh_20261114`：`max=20261112095000 / 661 行`，同样不含下面两条。
+
+### 17.2 版本区间清单（2026-11-14，全 refs）
+
+| 区间 | 命中 |
+|---|---|
+| `(20261113100000, 20261114100000)` | **无** |
+| `(20261114100000, 20261114120000)` | **无** |
+| 全 refs 同号重复 | **0**（两条各 1 份文件） |
+
+| 版本 | 文件 | 所在分支 / 提交 |
+|---|---|---|
+| `20261114100000` | `database/migrations/20261114100000_w7_b4_status_check_widen_business_states.sql` | `fix/ehs-tenant-scope-20261114-r2` @ `f0afa31b6` |
+| `20261114120000` | `database/migrations/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql` | `fix/rls-six-schema-failclosed-20261114` @ `25d8aca34` |
+
+`origin/main` 的迁移顶端仍是 `20261113100000`（main 上无这两条）。
+
+**`20261114130000`（账本单调守卫）已撤回**：迁移文件、回滚文件、`migration_manifest.yaml` 条目均已删除（本批提交）。撤回原因见 17.5。
+
+### 17.3 强制投递顺序
+
+1. **`20261114100000`（status 约束扩容）**
+2. **`20261114120000`（六 schema RLS fail-closed）**
+
+- 推荐**一次调用两条**，由 `apply-forward.sh` 按版本升序执行：
+
+```bash
+bash scripts/migration/apply-forward.sh ... \
+  --anchor 20261113100000 \
+  --only 20261114100000,20261114120000
+```
+
+- 分两次调用也可以，但必须升序：第一次 `--anchor 20261113100000 --only 20261114100000`；第二次 `--anchor 20261114100000 --only 20261114120000`。
+- 两条**互不依赖**：`14100000` 只对 18 张表 `DROP/ADD CHECK`；`14120000` 只对 28 张表 `DROP/CREATE POLICY` + `ENABLE/FORCE RLS`；对象零交集。
+- 顺序**只由入口保证**，没有数据库触发器兜底：先落 `14120000` 再投 `14100000` 会在入口被拒（见 17.6）。
+
+### 17.4 各自前置条件
+
+**`20261114100000`**
+- 18 张表与 18 条 `ck_*_status_standard` 均存在（缺失即 `RAISE EXCEPTION`，整笔回滚）。
+- 以表 owner 执行；18 张表存量 `status` 必须落在目标集合内（本地核实：14 张空表，4 张仅 `active`）。
+- 目标值 = 现状三值 ∪ 代码字面量；现状定义若含目标外值会 `RAISE`，防静默收窄。
+- 回滚：`database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql`。**写入过 draft/suspected 等新值后回滚会失败**（`check constraint ... is violated by some row`），回滚前必须先清理新值。
+
+**`20261114120000`**
+- 28 张表存在、`tenant_id` 为 uuid、既有策略恰 29 条、28 张表已 `ENABLE+FORCE`、`tenant_id IS NULL` 与子表孤儿均为 0（任一不符即 `RAISE`）。
+- 以表 owner 执行（策略 DDL 需要 owner 权限）。
+- **必须与同一分支的代码同批发布**：`lib/shared-db` 审计系统通道及 `svc/{crm,erp,hrm}/src/modules/audit.rs` 等改动；只落库不发代码会让审计写入被 fail-closed 挡住。
+- 回滚：`database/rollback/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.rollback.sql`（恢复 29 条原策略）。
+
+### 17.4.1 迁移文件不得自带 `BEGIN` / `COMMIT`
+
+`apply-forward.sh` 用 `psql --single-transaction` 把「迁移 SQL + `_sqlx_migrations` 写入」包在同一个事务里。文件内的 `COMMIT` 会**提前结束外层事务**，账本 INSERT 落到事务外；一旦账本写入被任何校验拒绝，就会留下「DDL 已提交、账本没有记录」的半应用态（2026-11-14 实测复现：18 条约束已放宽，账本行 0）。**这是半应用态的根因。**
+
+- `scripts/migration/validate.sh` 新增规则：扫描 `database/migrations`、`migrations`、`svc/*/migrations` 下所有 `.sql`，命中 `^[[:space:]]*(BEGIN|COMMIT|ROLLBACK)[[:space:]]*;` 且版本不在豁免清单 → 计入 `ERRORS`，退出码 1。当前结果：`Explicit transaction blocks: 0`。
+- 存量 **35 条**先豁免，登记在 `scripts/migration/legacy-transaction-block-allowlist.txt`，**不一次性修改**。清理方式：逐条删掉文件内的 `BEGIN`/`COMMIT` 后，从清单移除版本号；新迁移一律不得加入清单。
+- 豁免版本号（35）：
+
+```
+20260824000001 20260827000002 20260905000002 20260908000007 20260908000008
+20261015000065 20261016000093 20261016000095 20261017000002 20261021000002
+20261021000003 20261106000001 20261107000025 20261107000026 20261107000027
+20261107000028 20261107000029 20261107000030 20261107000031 20261107000032
+20261107000033 20261107000036 20261109100100 20261109100200 20261109100300
+20261109100400 20261109100600 20261109100700 20261109100800 20261109100900
+20261109101000 20261109101100 20261109101200 20261109101300 20261109101400
+```
+
+- **`20261114100000` 已于 2026-11-14 窗口前清理出清单**：删除文件内的 `BEGIN`/`COMMIT`，改由入口 `psql --single-transaction` 包裹（`DO` 块不变）。该条必须与账本原子，因此不等批量清理。生产中该版本未应用（账本 0 行），改文件不存在「已应用后改 checksum」的问题。演练见 17.10。
+
+### 17.5 护栏在哪：顺序只靠入口，没有数据库兜底
+
+`14130000` 撤回后，`14100000 → 14120000` 的升序保证**完全由 `apply-forward.sh` 提供**，共四道，全部在任何 DDL 之前：
+
+| # | 位置 | 判定 | 失败结果 |
+|---|---|---|---|
+| 1 | 锚点块 | `--anchor` 必须等于账本 `max(version) where success`；prod 不允许任何偏离（`ALLOW_ANCHOR_REWIND` 只对演练库有意义） | exit 1，零 DDL |
+| 2 | 扫描过滤 | 只收 `version > anchor` 的文件；低版本在水位之上时根本不进入待应用队列 | 触发第 3 道 |
+| 3 | `--only` 白名单 fail-closed | 白名单版本必须出现在「待应用队列」或「账本」，否则判为扫描截断 | exit 1，零 DDL |
+| 4 | `--apply-deferred` | 单版本 + 强制 `--ticket`；允许 `version <= 账本 max`，但只扫该版本、不参与 `--only/--defer` | 参数不符 exit 2 |
+
+**没有数据库兜底**：`public._sqlx_migrations` 上没有任何触发器。裸 `sqlx migrate run`（0.8.6 接受乱序）、`psql -f` + 手写账本等绕过脚本的路径**不会失败**——这是方案 B 的已知取舍。约束手段只有：CI（`validate.sh` / `check-migrations.mjs`）、窗口流程「唯一入口 = `apply-forward.sh`」、以及本节演练记录。任何人不得以「库里还有触发器兜底」为前提操作。
+
+撤回 `14130000` 的两个原因：
+
+1. **与 defer 冲突**：被 `--defer` 的版本补投时，账本水位已高于它，`version < max` 的触发器会把它**永久挡死**，等于封掉延后补投。
+2. **拦截点太晚**：触发器在账本 INSERT 时才拒绝，而当时 `20261114100000` 自带 `BEGIN/COMMIT`（现已移除），外层 `--single-transaction` 已被提前结束 → 拒绝时 **DDL 已提交、账本 0 行**（实测原文见 17.9 对照）。
+
+### 17.6 反序风险（先落 `14120000`）
+
+若先落 `14120000`，账本 max 变为 `20261114120000`，之后再投 `14100000`：
+
+- `apply-forward.sh` 只扫描 `version > anchor` 的迁移，`14100000` 被直接过滤，不会进入待应用队列；
+- 白名单 fail-closed 检查随后中止，**exit 1、零 DDL**。原始输出：
+
+```
+== 拒绝：白名单版本 20261114100000 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL
+```
+
+- 复核（scratch 库 `topems_b_reverse`）：`_sqlx_migrations` 中 `version=20261114100000` 行数 **0**、水位保持 `20261114120000`；同版本桩文件 `CREATE TABLE public.gate_v1` 未执行，`to_regclass('public.gate_v1') IS NULL`。
+- 由于 `14100000` 本身只 `DROP/ADD CHECK`、不创建关系，`to_regclass` 用同版本桩文件取证；真实文件的效果另以「约束定义未变化 + 账本 0 行」核对。
+- **裸 `sqlx migrate run` 会接受乱序，不会报错**（sqlx-cli 0.8.6 行为）。原先靠 `14130000` 触发器拦截，该触发器已撤回；现在唯一拦截点是入口。
+- 补救：不要手工改版本号或删账本行；按 manifest 用 `> 20261114120000` 的前向补丁承接。
+
+### 17.7 defer 补投：`--apply-deferred <version> --ticket <ticket>`
+
+历史窗口被 `--defer` 保持 pending 的版本，用这个正式入口补投。**prod 同样可用**——否则延后补投只能靠手工改账本。
+
+```bash
+bash scripts/migration/apply-forward.sh --db <db> --prod \
+  --apply-deferred 20261114100000 --ticket CHG-2026-1114
+```
+
+前置与行为：
+
+- 只接受单个 14 位版本号；**必须**同时给 `--ticket`（写入执行日志，并用于破坏性标记比对）。
+- 不得与 `--only` / `--defer` / `--anchor` 组合（锚点由账本水位推导）。
+- 允许 `version <= 账本 max`，但扫描只收该单版本；已在账本则直接拒绝（`未产生任何 DDL`）。
+- prod 下仍执行定向迁移命名与破坏性语句校验；`--ticket` 用于与破坏性标记比对。补投 `20261114100000`（含 `ALTER TABLE ... DROP CONSTRAINT`）时，prod 还需按既有规则加 `--allow-destructive=20261114100000`，且 `--ticket` 必须与标记一致；这不是新增例外，与非补投路径同口径。
+- 校验全部在 DDL 之前：参数不符 exit 2、账本已有 exit 1，均零 DDL。
+
+实测原始输出（`topems_b_defer`，水位先被推到 `20261114120000` 后补投）：
+
+```
+== DEFER 补投模式：version=20261114100000，ticket=CHG-2026-1114-DEFER，账本水位=20261114120000（允许 version <= 水位，仅此单版本）
+== 待应用 1 条（DEFER 补投 version=20261114100000，ticket=CHG-2026-1114-DEFER，账本水位=20261114120000）
+-- 20261114100000_w7_b4_status_check_widen_business_states.sql
+== OK：应用 1 条，无失败
+```
+
+账本落库（按版本升序，补投行插在水位之下）：
+
+```
+    version     |               description                | success 
+----------------+------------------------------------------+---------
+ 20261113100000 | synthetic baseline for drill             | t
+ 20261114100000 | w7 b4 status check widen business states | t
+ 20261114120000 | w7 b4 watermark probe                    | t
+```
+
+重复补投：`== 拒绝：版本 20261114100000 已在账本，补投无意义（未产生任何 DDL）`，exit 1。
+
+### 17.8 已修复：错 anchor 报错不可读（`apply-forward.sh:145`）
+
+- 原因：中文全角逗号紧邻 `$ANCHOR` / `$LEDGER_MAX`，bash 3.2 把多字节字符并入变量名，`set -u` 下报 `ANCHOR…: unbound variable`（仍然 exit 1、零 DDL，但指向错误位置）。
+- 修复：改为 `${ANCHOR}` / `${LEDGER_MAX}` / `${PROD_CHANGE_TICKET}`（同文件 145、156 行），未改任何判定逻辑。
+- 实测（scratch `topems_guard_drill`，账本 max=`20261114130000`）：`== 拒绝：锚点偏离账本水位（--anchor=20261112190000，账本 max=20261114130000）`，`exit=1`、零 DDL。
+
+### 17.9 演练证据（2026-11-14 方案 B 验收，原始输出）
+
+**场景 1：正常升序应用** — 库 `topems_b_probe`（`topems` 克隆 + 账本锚 `20261113100000`）：
+
+```
+== 待应用 1 条（anchor=20261113100000，only=20261114100000）
+-- 20261114100000_w7_b4_status_check_widen_business_states.sql
+== OK：应用 1 条，无失败
+```
+
+账本与效果：
+
+```
+    version     |               description                | success | ck_len 
+----------------+------------------------------------------+---------+--------
+ 20261114100000 | w7 b4 status check widen business states | t       |     48
+
+CHECK (((status IS NULL) OR ((status)::text = ANY ('{active,inactive,archived,draft}'::text[]))))
+```
+
+**场景 2：反序（先 `14120000` 后 `14100000`）** — 库 `topems_b_reverse`（`topems_six_rls_reh_20261114` 克隆，该库策略数满足 `14120000` 前置 29 条）。第一步必须显式 defer 低版本，否则会被「清单外 pending」拦下：
+
+```
+== 待应用 1 条（anchor=20261113100000，only=20261114120000）
+== 显式 defer 1 条（保持 pending）：
+  20261114100000_w7_b4_status_check_widen_business_states.sql
+-- 20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql
+== OK：应用 1 条，无失败
+```
+
+第二步再投低版本，入口拒绝：
+
+```
+== 拒绝：白名单版本 20261114100000 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL
+```
+
+零 DDL 复核：
+
+```
+ ledger_rows_14100000 
+----------------------
+                    0
+
+ gate_v1 
+---------
+ 
+```
+
+**场景 3：defer 补投** — 库 `topems_b_defer`（`topems` 克隆）。先 defer 低版本、应用更高版本：
+
+```
+== 待应用 1 条（anchor=20261113100000，only=20261114120000）
+== 显式 defer 1 条（保持 pending）：
+  20261114100000_w7_b4_status_check_widen_business_states.sql
+-- 20261114120000_w7_b4_watermark_probe.sql
+== OK：应用 1 条，无失败
+```
+
+强制 ticket：
+
+```
+拒绝：--apply-deferred 必须同时提供 --ticket（写入执行日志，并用于破坏性标记比对）
+```
+
+补投与账本见 17.7；约束同样放宽为 `'{active,inactive,archived,draft}'`。
+
+> 说明：场景 2/3 的“更高版本”分别用了 `14120000` 实文件和同版本桩文件。原因是 `topems` 克隆的策略数是 41，不满足 `14120000` 的「恰 29 条」前置，无法在普通克隆上应用真实 `14120000`；场景 3 只需水位高于被 defer 的版本，因此用桩文件 `20261114120000_w7_b4_watermark_probe.sql`（已删除、未提交）。桩文件只用于验证入口判定，`14100000` 本身用真实文件。
+>
+> 对照（撤回 `14130000` 前）：同样命令在账本触发器存在时输出 `ERROR: ledger-guard：拒绝乱序迁移 version=20261114100000 < 账本水位 20261114130000` 与 `WARNING: there is no transaction in progress`，但 `ehs.qa_ehs_environmental_regulations` 约束已含 `draft`、账本 0 行——即触发器拦截时 DDL 已提交。这正是改为入口校验、并禁止迁移文件自带 `BEGIN/COMMIT` 的直接原因。
+
+### 17.10 `20261114100000` 窗口前清理：去掉自带事务，改由入口包裹
+
+- 变更：删除文件内 `BEGIN;`（原第 36 行）与 `COMMIT;`（原第 190 行），保留 `SET lock_timeout/statement_timeout` 与两个 `DO` 块；`legacy-transaction-block-allowlist.txt` 移除该版本（36 → 35）。
+- 正向（`topems_atomic_pos`，`topems` 克隆 + 账本锚 `20261113100000`）：入口 `--only 20261114100000` → `== OK：应用 1 条，无失败`。单事务内原始日志：
+
+```
+NOTICE:  status-widen OK: ehs.ck_qa_ehs_disease_cases_status_standard + [suspected]
+...
+NOTICE:  status-widen OK: analytics.ck_report_execution_records_status_standard + [running]
+DO
+NOTICE:  status-widen VERIFY OK: 18 条约束全部包含目标值
+DO
+INSERT 0 1
+```
+
+- 账本（新连接复核）：`20261114100000 | w7 b4 status check widen business states | t | installed_on 2026-11-14 11:35:32+08`，checksum = 文件 SHA-384 `856dbab3…dacb6`，与 `shasum -a 384` 逐字节一致；`ehs` 约束为 `'{active,inactive,archived,draft}'`。
+- 幂等：同文件重跑 → 18 × `status-widen SKIP（已含全部目标值）` + `VERIFY OK`。
+- 中途失败（`topems_atomic_fail`，前置于三值约束、账本无该行）：文件末尾临时追加 `SELECT 1/0` 后经入口执行：
+
+```
+ERROR:  division by zero
+== 中止：20261114100000_w7_b4_status_check_widen_business_states.sql 失败，后续迁移未执行
+```
+
+  复核：账本 `14100000` 行数 **0**；`ck_qa_ehs_environmental_regulations_status_standard` 仍为 `'{active,inactive,archived}'`；抽检 4 条约束无任何新增值（`any_widened = 0`）。**约束与账本一起回滚**，不再出现「约束放宽、账本 0 行」。演练后文件已恢复，SHA-384 仍为 `856dbab3…dacb6`。
+- 回滚（双向）：在正向应用后的库执行 `database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql` → 18 × `status-unwiden OK`、`EXIT=0`，约束回到 `'{active,inactive,archived}'`。
+- checksum：`validate.sh` → `Explicit transaction blocks: 0`、`Checksum errors: 0`、`Errors: 0`；`database/checksums.txt` 中该版本 = 文件 SHA-256 `d2ca50ad…72b3`。
+- **prod 未应用（只读核实）**：`_sqlx_migrations` 中 `version=20261114100000` 行数 `0`，水位 `max=20261113100000 / 668 行`。所以本次改文件不存在「已应用后再改文件导致 checksum 不一致」的问题。
+
+
