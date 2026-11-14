@@ -747,12 +747,18 @@ mod sanitize_file_path_tests {
     #[test]
     fn absolute_path_inside_docs_root_is_relative_to_docs() {
         let inside = crate::models::docs_dir().join("报表.md");
-        assert_eq!(sanitize_file_path(&inside.to_string_lossy()), "docs/报表.md");
+        assert_eq!(
+            sanitize_file_path(&inside.to_string_lossy()),
+            "docs/报表.md"
+        );
     }
 
     #[test]
     fn absolute_path_outside_docs_root_degrades_to_file_name() {
-        assert_eq!(sanitize_file_path("/var/tmp/elsewhere/secret.md"), "secret.md");
+        assert_eq!(
+            sanitize_file_path("/var/tmp/elsewhere/secret.md"),
+            "secret.md"
+        );
     }
 
     #[test]

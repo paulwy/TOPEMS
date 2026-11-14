@@ -11,6 +11,7 @@ const ENV_UNSET: &str = "TOPEMS_TEST_PATHS_CWD_UNSET";
 const ENV_RELATIVE: &str = "TOPEMS_TEST_PATHS_CWD_RELATIVE";
 
 #[test]
+#[allow(clippy::expect_used)]
 fn resolves_absolute_paths_while_cwd_is_root() {
     std::env::remove_var(ENV_UNSET);
     std::env::set_var(ENV_RELATIVE, "data/uploads");
