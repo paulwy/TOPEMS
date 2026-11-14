@@ -27,6 +27,12 @@ fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
     }
 }
 
+/// 解析外部传入的 UUID：失败返回 400，避免非法参数落到 SQL 层变成 500。
+fn parse_uuid_or_400<T>(value: &str, field: &str) -> Result<uuid::Uuid, ApiResponse<T>> {
+    uuid::Uuid::parse_str(value)
+        .map_err(|_| ApiResponse::bad_request(&format!("参数 {field} 不是合法的 UUID: {value}")))
+}
+
 /// 解析外部传入的 RFC3339 时间：失败返回 400。
 fn parse_time_or_400<T>(
     value: &str,
@@ -572,11 +578,15 @@ pub async fn get_api_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<APIProduct> {
+    let id = match parse_uuid_or_400::<APIProduct>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -601,11 +611,20 @@ pub async fn subscribe_tenant(
     State(state): State<AppState>,
     Json(req): Json<SubscribeTenantRequest>,
 ) -> ApiResponse<Subscription> {
+    let api_product_id =
+        match parse_uuid_or_400::<Subscription>(&req.api_product_id, "api_product_id") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
+    let tenant_id = match parse_uuid_or_400::<Subscription>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：产品从真表查找。
     let product_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&req.api_product_id)
+    .bind(api_product_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -641,7 +660,7 @@ pub async fn subscribe_tenant(
     )
     .bind(&sub.id)
     .bind(&sub.api_product_id)
-    .bind(&sub.tenant_id)
+    .bind(tenant_id)
     .bind(tier_to_str(&sub.tier))
     .bind(sub.starts_at)
     .bind(sub.expires_at)
@@ -672,11 +691,15 @@ pub async fn get_subscription(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -736,6 +759,10 @@ pub async fn cancel_subscription(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -743,7 +770,7 @@ pub async fn cancel_subscription(
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {SUBSCRIPTION_COLS}"#,
     )))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
     .await;
@@ -776,12 +803,16 @@ pub async fn upgrade_tier(
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {
@@ -801,7 +832,7 @@ pub async fn upgrade_tier(
         "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2::uuid AND ($3::uuid IS NULL OR tenant_id = $3)",
     )
     .bind(product_tier_to_string(&new_tier))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .execute(&state.db)
     .await
@@ -812,7 +843,7 @@ pub async fn upgrade_tier(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {
@@ -839,6 +870,10 @@ pub async fn record_usage(
     State(state): State<AppState>,
     Json(req): Json<RecordUsageRequest>,
 ) -> ApiResponse<UsageRecord> {
+    let tenant_id = match parse_uuid_or_400::<UsageRecord>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：写真表 master_data.mdm_usage_records。
     let record = UsageRecord {
         id: uuid::Uuid::new_v4().to_string(),
@@ -857,7 +892,7 @@ pub async fn record_usage(
            VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8)"#,
     )
     .bind(&record.id)
-    .bind(&record.tenant_id)
+    .bind(tenant_id)
     .bind(&record.api_product_id)
     .bind(&record.endpoint)
     .bind(record.requests)
@@ -954,6 +989,10 @@ pub async fn generate_bill(
     Json(req): Json<GenerateBillRequest>,
 ) -> ApiResponse<BillingRecord> {
     // K1：数据源改真表（usage_records / rate_cards / api_products），逻辑保留。
+    let tenant_id = match parse_uuid_or_400::<BillingRecord>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let period_start = req
         .period_start
         .unwrap_or_else(|| (chrono::Utc::now() - chrono::Duration::days(30)).to_rfc3339());
@@ -974,7 +1013,7 @@ pub async fn generate_bill(
            WHERE tenant_id = $1::uuid AND recorded_at >= $2 AND recorded_at <= $3
            ORDER BY recorded_at"#,
     )))
-    .bind(&req.tenant_id)
+    .bind(tenant_id)
     .bind(period_start_at)
     .bind(period_end_at)
     .fetch_all(&state.db)
@@ -1220,6 +1259,10 @@ pub async fn mark_bill_paid(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<BillingRecord> {
+    let id = match parse_uuid_or_400::<BillingRecord>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -1227,7 +1270,7 @@ pub async fn mark_bill_paid(
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {BILLING_COLS}"#,
     )))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
     .await;
@@ -1299,11 +1342,19 @@ pub async fn measure_sla(
     State(state): State<AppState>,
     Json(req): Json<MeasureSLARequest>,
 ) -> ApiResponse<SLAMeasurement> {
+    let config_id = match parse_uuid_or_400::<SLAMeasurement>(&req.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<SLAMeasurement>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：先读真表 SLA 配置（无行 404），再写度量。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&req.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let config = match config_row {
@@ -1339,7 +1390,7 @@ pub async fn measure_sla(
     )
     .bind(&measurement.id)
     .bind(&measurement.config_id)
-    .bind(&measurement.tenant_id)
+    .bind(tenant_id)
     .bind(measurement.measured_value)
     .bind(measurement.target_value)
     .bind(measurement.met)
@@ -1493,11 +1544,19 @@ pub async fn calculate_penalty(
     State(state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let config_id = match parse_uuid_or_400::<serde_json::Value>(&params.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<serde_json::Value>(&params.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：数据源改真表（config + measurements），逻辑保留。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&params.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let config = match config_row {
@@ -1511,7 +1570,7 @@ pub async fn calculate_penalty(
            WHERE config_id = $1 AND tenant_id = $2::uuid AND met = FALSE ORDER BY measured_at"#,
     )))
     .bind(&params.config_id)
-    .bind(&params.tenant_id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
     let breached: Vec<SLAMeasurement> = match meas_rows {
@@ -1550,6 +1609,14 @@ pub async fn create_incident(
     State(state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
 ) -> ApiResponse<SLAIncident> {
+    let config_id = match parse_uuid_or_400::<SLAIncident>(&req.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<SLAIncident>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：写真表 master_data.mdm_sla_incidents。
     let incident_type = sla_incident_type_from_str(&req.incident_type);
     let impact_severity = req
@@ -1561,7 +1628,7 @@ pub async fn create_incident(
     let config_row = sqlx::query(
         "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1",
     )
-    .bind(&req.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let penalty_per_min = match config_row {
@@ -1590,7 +1657,7 @@ pub async fn create_incident(
     )
     .bind(&incident.id)
     .bind(&incident.config_id)
-    .bind(&incident.tenant_id)
+    .bind(tenant_id)
     .bind(sla_incident_type_to_str(&incident.incident_type))
     .bind(incident.duration_min)
     .bind(impact_severity_to_str(&incident.impact_severity))
