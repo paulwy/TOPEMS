@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# [2026-11-05] 增量 rust 门禁：只 check/clippy 本次 push 变更的 crate（替代全 workspace）
+# [2026-11-05] 增量 rust 门禁：只 check/clippy/test 本次 push 变更的 crate（替代全 workspace）
 # 背景：全量 cargo check 被 utoipa-swagger-ui build.rs 网络下载失败（curl HTTP2 framing）
 #       恒阻断 + RUSTFLAGS=-D warnings 使编译缓存失效 → 每次 push 冷编译且必失败，
 #       "卡住/恒红"表象 → 团队长期 --no-verify 绕过门禁。
-#       增量后：无 .rs 变更秒级跳过；变更 crate 独立编译，绕开无关 crate 的失败源，
+#       增量后：无 .rs 变更跳过；变更 crate 独立编译/测试，绕开无关 crate 的失败源，
 #       门禁恢复可用；RUSTFLAGS=-D warnings 仅作用于变更 crate（存量 warning 不误伤）。
-# 用法: run-cargo-changed.sh <check|clippy>（由 lefthook pre-push 调用）
+# 语义（test 模式）：有 .rs 变更 → 变更 crate 的 --lib 单元测试必跑；
+#                   无 .rs 变更 → 才允许 SKIP；不得以“检测不到变更”为由放过 .rs 改动。
+# 用法: run-cargo-changed.sh <check|clippy|test>（由 lefthook pre-push 调用）
 set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../lib/swagger-ui.sh
 source "$SCRIPT_DIR/../lib/swagger-ui.sh"
 MODE="${1:-check}"
 case "$MODE" in
-  check|clippy) ;;
+  check|clippy|test) ;;
   *)
-    echo "[cargo-changed] 非法 MODE：'$MODE'（仅支持 check|clippy）" >&2
+    echo "[cargo-changed] 非法 MODE：'$MODE'（仅支持 check|clippy|test）" >&2
     exit 2
     ;;
 esac
@@ -66,11 +68,11 @@ fi
 run_full() {
   echo "[cargo-changed] workspace 级变更 → 全量 ${MODE}"
   topems_ensure_swagger_ui_archive || exit 1
-  if [ "$MODE" = clippy ]; then
-    cargo clippy --workspace --all-targets -- -D warnings
-  else
-    cargo check --workspace
-  fi
+  case "$MODE" in
+    clippy) cargo clippy --workspace --all-targets -- -D warnings ;;
+    test)   cargo test --workspace --lib ;;
+    *)      cargo check --workspace ;;
+  esac
 }
 
 # 2) 归属：svc/<dir> 或 lib/<dir>；lib 根 crate 的 src/tests/examples 归到 lib；
@@ -121,6 +123,16 @@ echo "[cargo-changed] 增量 ${MODE}: ${PKGS}"
 topems_ensure_swagger_ui_archive || exit 1
 if [ "$MODE" = clippy ]; then
   cargo clippy $PKGS --all-targets -- -D warnings
+elif [ "$MODE" = test ]; then
+  if cargo test $PKGS --lib; then
+    :
+  else
+    rc=$?
+    echo "[cargo-changed] FAILED：上述变更 crate 的 --lib 单元测试未通过（见上方 cargo 输出的首个 failure 与文件:行）。" >&2
+    echo "  修复：定位并修复该测试/断言后，重跑 bash scripts/ci/run-cargo-changed.sh test；" >&2
+    echo "        需要全量回归时用 LEFTHOOK_RUN_HEAVY=1 bash scripts/ci/run-cargo-changed.sh test。" >&2
+    exit "$rc"
+  fi
 else
   cargo check $PKGS
 fi

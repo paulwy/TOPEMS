@@ -550,18 +550,16 @@ pre-push:
     cargo-clippy-workspace:
       tags: rust clippy
       run: bash scripts/ci/run-cargo-changed.sh clippy
-    # [V294 NEW] cargo test workspace — 重型门禁（2026-11-05 修订：默认 SKIP，CI 兜底）
-    # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
-    # 2026-11-05：默认跳过（push 秒级放行），显式 LEFTHOOK_RUN_HEAVY=1 时执行；
-    # CI（ci.yml test job）承担全量兜底。历史实测串行全量 2304s → 不再阻塞本地 push。
+    # [V294 NEW / 2026-11-14 修订] cargo test — 增量门禁
+    # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）。
+    # 语义：本次 push 有 .rs 变更 → 对变更 crate 跑 cargo test --lib（必跑，不得放过）；
+    #       无 .rs 变更 → 才允许 SKIP；LEFTHOOK_RUN_HEAVY=1 保留为全量 --workspace --lib 通道。
+    # 背景：原实现未设置 LEFTHOOK_RUN_HEAVY 就无条件 SKIP，push 全绿但测试一次没跑（0.01s），
+    #       “CI 兜底”在账号侧不可用时不成立；改为变更 crate 本地必跑。
     cargo-test-workspace:
       tags: rust test
       timeout: 3600s
       run: |
-        if [ -z "${LEFTHOOK_RUN_HEAVY:-}" ]; then
-          printf '\033[33m[Gate T] SKIP\033[0m cargo-test-workspace（重型门禁：LEFTHOOK_RUN_HEAVY=1 时执行；CI 已兜底全量）\n'
-          exit 0
-        fi
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
@@ -579,10 +577,15 @@ pre-push:
           if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
           if [ -n "$DATABASE_URL" ]; then export DATABASE_URL; fi
         fi
-        # 统一 swagger-ui 离线包探测：缺失时立即失败并给出指引，避免联网空转
-        source scripts/lib/swagger-ui.sh
-        topems_ensure_swagger_ui_archive || exit 1
-        cargo test --workspace --lib
+        if [ -n "${LEFTHOOK_RUN_HEAVY:-}" ]; then
+          # 全量通道：仅显式 LEFTHOOK_RUN_HEAVY=1 时执行（耗时长）
+          source scripts/lib/swagger-ui.sh
+          topems_ensure_swagger_ui_archive || exit 1
+          cargo test --workspace --lib
+        else
+          # 增量通道：有 .rs 变更 → 变更 crate 的 --lib 测试必跑；无 .rs 变更 → SKIP
+          bash scripts/ci/run-cargo-changed.sh test
+        fi
 
     # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）
     # svc crate utoipa path → BFF GET 全路径 5xx 扫描（缺表/缺列/死锁等运行态缺陷）。
