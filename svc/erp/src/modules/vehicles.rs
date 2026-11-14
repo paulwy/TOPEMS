@@ -612,8 +612,10 @@ pub async fn create_vehicle_request(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
+    // 显式列出 Vehicle 全部字段：query_as 按列名映射，投影缺列会直接报
+    // `no column found for name: ...` 并把创建用车申请打成 500（K2）。
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
-        only_own_schema_query!("erp", "SELECT id, plate_number, status FROM vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
+        only_own_schema_query!("erp", "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.vehicle_id)
     .fetch_optional(&mut **txn)

@@ -596,8 +596,10 @@ pub async fn create_booking(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
+    // 显式列出 MeetingRoom 全部字段：query_as 按列名映射，投影缺列会直接报
+    // `no column found for name: ...` 并把创建预约打成 500（K2）。
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        only_own_schema_query!("erp", "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
+        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.room_id)
     .fetch_optional(&mut **txn)
