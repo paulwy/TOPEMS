@@ -1149,3 +1149,71 @@ pending_forward_patches:
       前向补丁 > 20261114160000，不改已推送历史；文件内无 BEGIN/COMMIT；
       配 database/rollback/20261114190000_forecast_v53_mark_synthetic.rollback.sql；
       说明文档 docs/quality/forecast-v53-synthetic-data-2026-11-14.md；本任务不删数据、只合 main、不投生产
+
+  - version: "20261114200000"
+    file: "database/migrations/20261114200000_mes_rls_fail_closed_22.sql"
+    status: to_apply
+    effect: >-
+      mes 22 张 fail-open 表（audit_logs、dashboard_stats、equipment、equipment_inspection_records、
+      equipment_maintenance_records、equipment_oee、financial_records、material_plans、module_settings、
+      process_route_steps、process_routes、production_costs、production_orders、production_processes、
+      production_records、production_schedules、quality_standard_values、quality_standards、
+      supply_chain_orders、teams、work_reports、work_stations）删除全部旧策略（含 tenant_isolation_*、
+      mes_allow_all_quality_standards），每表重建一条 rls_tenant_isolation，USING 与 WITH CHECK 均为
+      COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+      OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
+    destructive_scan: >-
+      DROP POLICY + CREATE POLICY，无 DML/DDL 数据变更；不删列、不改表结构；
+      文件内无 BEGIN/COMMIT（外层 --single-transaction）
+    evidence:
+      - { kind: catalog, ref: "prod 快照 fixtures/full_schema_contract.sql", detail: "22 表共 28 条策略原文（含 3 条 tenant_isolation_*、1 条 mes_allow_all_quality_standards）" }
+      - { kind: data, ref: "dev count(*)", detail: "22 表合计约 9,914 行，其中 production_schedules 9,678、production_orders 134、work_stations 79；module_settings 有 2 行 tenant_id IS NULL（不删不回填，收紧后本就不可见）" }
+      - { kind: drill, ref: "topems_rls_drill（prod 快照克隆，topems_prod 非超户）", detail: "28 条策略 → 22 条目标策略；rollback 后 pg_policies 与基线逐表 diff 为空（含 qual/with_check 原文）" }
+    note: >-
+      前向补丁 > 20261114190000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261114200000_mes_rls_fail_closed_22.rollback.sql；
+      投递门：新二进制已部署（收紧门）+ 账本 max(version) >= 20261114201000（部署门）；
+      与 20261114202000 同批投递（窗口 C）；本任务只合 main、不投生产
+
+  - version: "20261114201000"
+    file: "database/migrations/20261114201000_add_tenant_id_8_tables.sql"
+    status: to_apply
+    effect: >-
+      8 张缺 tenant_id 的表只做加法：erp.meeting_rooms、erp.meeting_bookings、erp.vehicles、
+      erp.vehicle_requests（以上为阶段一代码硬依赖，优先）、erp.expenses、crm.core_crm_customers、
+      erp.core_erp_suppliers、portal.portal_announcements，各 ADD COLUMN IF NOT EXISTS tenant_id uuid +
+      CREATE INDEX IF NOT EXISTS idx_<schema>_<table>_tenant_id；仅 meeting_bookings（room_id ->
+      meeting_rooms.tenant_id）与 vehicle_requests（vehicle_id -> vehicles.tenant_id）做可重跑幂等回填。
+      **本迁移不改任何策略**，旧二进制（不设 GUC、裸池）行为完全不变。
+    destructive_scan: >-
+      ADD COLUMN / CREATE INDEX / 条件 UPDATE（tenant_id IS NULL AND 父.tenant_id IS NOT NULL），
+      无 DROP/DELETE/TRUNCATE；列保持 nullable，不伪造租户；文件内无 BEGIN/COMMIT
+    evidence:
+      - { kind: data, ref: "prod 快照 + prod count(*)", detail: "8 表 prod 均 0 行，生产回填实际为空操作" }
+      - { kind: code, ref: "svc/erp/src/modules/{meeting_room,vehicles}.rs", detail: "4 条 INSERT 已写 tenant_id，prod 无该列，部署新二进制前必须先跑本迁移（否则 42703）" }
+      - { kind: drill, ref: "topems_rls_drill", detail: "M2a up：8 列 + 8 索引，策略仍为 8 条 allow_all；M2a down：无数据时 8 列删除，有数据保留并 RAISE NOTICE；仅 M2a 后以无 GUC 裸连接 INSERT/SELECT 正常（旧二进制安全）" }
+    note: >-
+      前向补丁 > 20261114190000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261114201000_add_tenant_id_8_tables.rollback.sql；
+      投递顺序固定：窗口 A 只投本迁移（账本 674 -> 675），窗口 B 部署新二进制，
+      窗口 C 才投 20261114200000 + 20261114202000；本任务只合 main、不投生产
+
+  - version: "20261114202000"
+    file: "database/migrations/20261114202000_erp_crm_portal_rls_fail_closed_8.sql"
+    status: to_apply
+    effect: >-
+      上述 8 张表的策略收紧：删除 8 条 *_allow_all_*（erp_allow_all_meeting_rooms /
+      erp_allow_all_meeting_bookings / erp_allow_all_vehicles / erp_allow_all_vehicle_requests /
+      erp_allow_all_expenses / crm_allow_all_core_crm_customers / erp_allow_all_core_erp_suppliers /
+      portal_allow_all_portal_announcements），各建一条 rls_tenant_isolation，谓词与 M1 完全一致
+    destructive_scan: >-
+      DROP POLICY + CREATE POLICY，无数据变更；依赖 20261114201000 已补出 tenant_id 列；
+      文件内无 BEGIN/COMMIT
+    evidence:
+      - { kind: catalog, ref: "prod 快照 pg_policies", detail: "8 条 allow_all 原文均 USING (true) WITH CHECK (true)" }
+      - { kind: drill, ref: "topems_rls_drill", detail: "M2b up：8 条 allow_all -> 8 条目标策略；M2b down：恢复 8 条 true/true；新策略下 4 个 erp 创建 handler 全部 success=true 且 tenant_id 正确" }
+    note: >-
+      前向补丁 > 20261114190000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261114202000_erp_crm_portal_rls_fail_closed_8.rollback.sql；
+      必须与 20261114200000 同批（窗口 C），且在新二进制部署之后；本任务只合 main、不投生产
+
