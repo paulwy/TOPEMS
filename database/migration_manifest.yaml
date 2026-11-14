@@ -1067,3 +1067,9 @@ pending_forward_patches:
       配 database/rollback/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.rollback.sql；
       副本库 topems_six_rls_reh_20261114 已演练成功/失败/回滚三路径，回滚后 29 条策略与基线逐字节一致；
       审计表代码侧改为显式系统通道（lib/shared-db SchemaAwareAuditLogService::new_system_channel + 读侧 set_system_channel）
+  - version: "20261114130000"
+    file: "database/migrations/20261114130000_mdm_subscriptions_starts_at_timestamptz.sql"
+    status: to_apply
+    effect: "master_data.mdm_subscriptions.starts_at text -> timestamptz（USING btrim(starts_at)::timestamptz），并 DROP 默认值 ''::text"
+    destructive_scan: "ALTER COLUMN TYPE 位于 DO 块且以 information_schema 列类型守卫；存在 NULL/空串/非法格式时 RAISE EXCEPTION 并报计数，整事务中止；不 NULLIF 转 NULL、不回填固定值、不 DROP NOT NULL；无 DELETE/UPDATE/TRUNCATE/DROP"
+    note: "前向补丁 > 20261113100000，不改已推送历史；配 database/rollback/20261114130000_mdm_subscriptions_starts_at_timestamptz.rollback.sql；窗口内先跑 database/scripts/mdm_starts_at_window_stats.sql（只读），判据见 docs/quality/mdm-starts-at-timestamptz-window-2026-11-14.md"
