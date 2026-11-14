@@ -861,11 +861,8 @@ pub async fn start_hazard_approval(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<StartApprovalRequest>,
 ) -> ApiResponse<Hazard> {
-    let tenant_scope = match dual_scope(
-        &claims,
-        "ehs.hazard.start_approval",
-        "ehs.qa_ehs_hazards",
-    ) {
+    let tenant_scope = match dual_scope(&claims, "ehs.hazard.start_approval", "ehs.qa_ehs_hazards")
+    {
         Ok(s) => s,
         Err(resp) => return resp,
     };
