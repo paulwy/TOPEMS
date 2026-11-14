@@ -93,7 +93,23 @@ ssh xingzhai@192.168.110.115 \
 
 ## 2. DDL 窗口手册
 
-### 2.1 前置检查（全部只读，窗口前完成）
+### 2.1 前置风险：硬复位、磁盘与并发构建（2026-11-14 复盘）
+
+**事实（本次中断的现场证据）**
+
+- 整机硬复位（看门狗）：`kern.boottime` = `2026-11-14 06:18:43`，`last reboot` 同一时间；`/Library/Logs/DiagnosticReports/ResetCounter-2026-11-14-064111.diag` 记录 `Reset count: 1`、`Boot faults: wdog,reset_in_1 timeout,dblclick_timeout target_off_restart`。
+- PostgreSQL 没有干净关闭：服务日志只有 `database system was interrupted; last known up at 2026-11-14 06:10:01 CST`，没有 `received … shutdown request` / `database system is shut down`；数据目录残留 `postmaster.pid`（PID 862，复位后已被其他进程占用），brew 的 launchd 任务重试 158 次、`last exit 1`，每次报 `lock file "postmaster.pid" already exists`。
+- `/private/tmp` 整体重建：目录 birth `06:40:52`，06:18 之前的条目一个不剩；`/var/tmp` 里的旧文件仍在，说明不是通用 tmp 清理，而是 `/private/tmp` 被重建。同机的会话工作目录若在 `/private/tmp` 下，现场会一起丢失。
+- 诱因（用户复盘判断，非日志直证）：磁盘一度接近写满（复盘时 `df -h` 为 407 GiB 已用 / 26 GiB 可用，94%），且多会话共享同一 `/Users/air/TOPEMS/target` 并发跑重型 cargo 构建；本次一次 `LEFTHOOK_RUN_HEAVY=1` 的 pre-push 在 1365 秒被外部 `SIGTERM` 终止，日志只有 `signal: terminated`，是锁争用的直接表现。
+
+**窗口纪律（写进执行清单，逐条打勾）**
+
+1. **窗口内不跑任何并发重型构建**，只跑这一个迁移动作：cargo check/test/build、pnpm build、docker build、其它会话的重型门禁全部停掉；迁移开始前确认无 `cargo`/`rustc` 进程、1 分钟负载低于物理核心数。
+2. 前置检查必须包含**磁盘余量与 `target` 占用**（见 §2.2 的 P9/P10），任一低于阈值就不开窗。
+3. 窗口若中途被复位打断，恢复后**先查账本版本与策略形状，再决定重跑还是走回滚**，顺序见 §2.4，不得直接重跑。
+4. **硬复位后 `postmaster.pid` 残留会导致 PostgreSQL 起不来**，恢复顺序是先清陈旧 pid 再起库（命令见 §2.4 第 1 步）；不要反复点启动、也不要直接删数据目录。
+
+### 2.2 前置检查（全部只读，窗口前完成）
 
 **P1 账本版本**
 
@@ -178,7 +194,24 @@ SELECT pid, usename, state, wait_event_type, left(query, 80) AS q, now() - xact_
 
 `launchctl bootout gui/501/com.topems.server`（`KeepAlive=true`，不能用 kill），轮询确认进程退出、`:8099` 无监听、`pg_stat_activity` 中 `usename='topems_prod'` 归零。
 
-### 2.2 执行命令与事务边界
+**P9 磁盘余量**
+
+```bash
+df -h /System/Volumes/Data
+# 阈值：可用 ≥ 50 GiB 且使用率 ≤ 88%；任一不满足则先清理再开窗（2026-11-14 复盘时为 26 GiB / 94%，不合格）
+```
+
+**P10 `target` 占用与并发构建**
+
+```bash
+du -sh /Users/air/TOPEMS/target /private/tmp/*/target 2>/dev/null
+pgrep -fl 'cargo|rustc' || echo "NO_CARGO"
+uptime; sysctl -n hw.ncpu
+```
+
+阈值：单个 `target` 目录 ≤ 40 GiB；`pgrep` 无输出；1 分钟负载 < `hw.ncpu`。同一 `target` 只允许一个构建在跑——多会话共享同一 `target` 时，cargo 会串行抢锁，长任务更容易被外部 `SIGTERM` 打断（2026-11-14 已出现：3 个会话并发 `cargo test`，一次 pre-push 在 1365s 被终止）。
+
+### 2.3 执行命令与事务边界
 
 投递：`scp` 迁移文件到 `/tmp/w7b4/migrations/`，`scp` 回滚脚本与属主 psql 包装器到 `/tmp/w7b4/`，逐个 `shasum -a 256` 比对（迁移 `da5fcb9a…`，回滚 `751bbafc…`）。
 
@@ -215,7 +248,63 @@ NOTICE:  B4-WMS 租户自查：全部租户表 tenant_id IS NULL 行数 = 0
 
 退出码 0。
 
-### 2.3 失败表现与处理
+### 2.4 复位/中断打断后的恢复步骤
+
+窗口执行中若整机复位或连接被强断，恢复后按下面顺序做，**不要直接重跑迁移**：
+
+**第 1 步：清陈旧 pid，起库**
+
+```bash
+PGDATA=/opt/homebrew/var/postgresql@18
+PID=$(head -1 "$PGDATA/postmaster.pid" 2>/dev/null || true)
+[ -n "$PID" ] && ps -p "$PID" -o pid,comm    # 输出不是 postgres 才可继续
+rm -f "$PGDATA/postmaster.pid"               # 仅确认陈旧后执行
+brew services restart postgresql@18
+/opt/homebrew/bin/pg_isready
+```
+
+起库后在服务日志确认崩溃恢复走完：
+
+```bash
+tail -f "$PGDATA/log/postgresql-$(date +%F).log"   # 直到 "database system is ready to accept connections"
+psql -d postgres -Atc "select pg_is_in_recovery();"   # f
+```
+
+**第 2 步：查账本**
+
+```sql
+SELECT max(version), count(*) FILTER (WHERE NOT success) FROM _sqlx_migrations;
+SELECT version, success, installed_on FROM _sqlx_migrations WHERE version = 20261113100000;
+```
+
+**第 3 步：查策略形状（四项 + 新形状）**
+
+```sql
+SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'wms' AND c.relkind = 'r';                        -- 39
+SELECT count(*) FILTER (WHERE c.relrowsecurity), count(*) FILTER (WHERE c.relforcerowsecurity)
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'wms' AND c.relkind = 'r';                        -- 目标 39 / 38；基线 37 / 37
+SELECT count(*) FROM pg_policies WHERE schemaname = 'wms';           -- 目标 39；基线 42
+SELECT count(*) FROM pg_policies
+ WHERE schemaname = 'wms' AND policyname = 'rls_tenant_isolation';
+```
+
+**第 4 步：按账本 + 形状决策**
+
+| 账本 `20261113100000` | 形状 | 判定 | 动作 |
+|---|---|---|---|
+| 有 | 目标态：39 表 / rls 39 / force 38 / 策略 39 | 单事务已提交且完整 | **不重跑**；继续 §2.6 验收 + 业务 smoke |
+| 无 | 基线：39 表 / rls 37 / force 37 / 策略 42 / `true-true` 16 | 单事务未提交，DDL 也未落 | 重新执行 §2.3；锚点用恢复后的账本 max |
+| 无 | 目标态 | 结构已变但账本没写（理论上不应出现） | **停止**；用 §1.2 回滚脚本退回基线，复盘后再投递 |
+| 有 | 基线 | 回滚脚本被执行过 | **不重跑同一版本**；按 §1.5 决策账本与前向补丁 |
+| 其他（混合态、策略数不符） | 任意 | 不可判定 | **停止**；先用 §1.2 回滚脚本退回基线，再复盘 |
+
+**第 5 步：重跑前重新校验**
+
+确认服务仍停、无并发构建（P10）、迁移与回滚文件 sha256 未变、备份可用；再看一眼 P4 的 NULL 自查，然后才执行 §2.3。
+
+### 2.5 失败表现与处理
 
 | 失败点 | 原始表现 | 事务结果 | 处理 |
 |---|---|---|---|
@@ -230,7 +319,7 @@ NOTICE:  B4-WMS 租户自查：全部租户表 tenant_id IS NULL 行数 = 0
 | 账本 INSERT 失败 | 任意外键/权限错误 | 整笔回滚（含 DDL） | 检查属主权限与账本表结构 |
 | 迁移成功但 smoke 失败 | 接口 5xx / 列表为空 / 写入被拒 | 已提交 | 进第 3 节决策 |
 
-### 2.4 窗口验收查询
+### 2.6 窗口验收查询
 
 ```sql
 -- A1 账本
@@ -266,7 +355,7 @@ SELECT count(*) FROM pg_policies
 
 业务 smoke：用默认租户账号分别读/写 `inventory`、`inbound_orders`、`outbound_orders`、`transfer_orders`、`stock_takes`，确认非空读与写入均成功；再用系统任务路径（`app.rls_system='on'`）确认告警/同步任务可跨租户读到数据。
 
-### 2.5 窗口后 24 小时观测
+### 2.7 窗口后 24 小时观测
 
 基线（EHS 窗口同期测得，近 24h）：`pool timed out = 0`、`Failed to begin RLS txn = 0`、`ERROR` 级日志 = 0、全站 5xx = 0。
 
