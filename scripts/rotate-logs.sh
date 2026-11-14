@@ -37,9 +37,14 @@ rotate() {
 
   if [ "$size_mb" -ge "$MAX_SIZE_MB" ]; then
     stamp=$(date +%Y%m%d_%H%M%S)
-    gzip -c "$file" > "${file}.${stamp}.gz"
+    local archive="${file}.${stamp}.gz"
+    # 同一秒内重复执行时避免覆盖已有归档
+    if [ -e "$archive" ]; then
+      archive="${file}.${stamp}_$$.gz"
+    fi
+    gzip -c "$file" > "$archive"
     : > "$file"
-    echo "[$(date)] 轮转: $file (${size_mb}MB) -> $(basename "${file}.${stamp}.gz")"
+    echo "[$(date)] 轮转: $file (${size_mb}MB) -> $(basename "$archive")"
   else
     echo "[$(date)] $file 当前 ${size_mb}MB，未达阈值 ${MAX_SIZE_MB}MB，跳过"
   fi
