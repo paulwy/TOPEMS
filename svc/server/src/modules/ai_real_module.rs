@@ -13,7 +13,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 use std::sync::{Arc, Mutex};
 use topems_ai::models::{
-    Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DIFY_CONFIG, DOCS_DIR, DOCUMENTS, VECTORS,
+    docs_dir, Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DIFY_CONFIG, DOCUMENTS, VECTORS,
 };
 use topems_ai::services::document::DocumentQAConfig;
 use topems_ai::services::embedding::{index_all_documents, load_documents_from_dir};
@@ -198,7 +198,7 @@ impl AiRealModule {
         );
 
         // 初始化静态存储（向后兼容）
-        let docs = load_documents_from_dir(DOCS_DIR).await;
+        let docs = load_documents_from_dir(docs_dir()).await;
         tracing::info!("📁 加载了 {} 个文件系统文档", docs.len());
         let _ = DOCUMENTS.set(Arc::new(Mutex::new(docs)));
         let _ = VECTORS.set(Arc::new(Mutex::new(Vec::new())));

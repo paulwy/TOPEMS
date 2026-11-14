@@ -679,7 +679,7 @@ pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiS
                     content: vec.content.clone(),
                     filename: doc.filename.clone(),
                     path: None,
-                    file_path: doc.file_path.clone(),
+                    file_path: doc.file_path.as_deref().map(sanitize_file_path),
                     file_size: doc.file_size,
                     mime_type: doc.mime_type.clone(),
                     status: Some(doc.status.clone()),
@@ -705,6 +705,65 @@ pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiS
         },
         "Success",
     ))
+}
+
+/// 将文档记录的 `file_path` 映射为对外可见形态，**不返回绝对路径**：
+///
+/// - 绝对路径且位于 `docs_dir()` 之内 → 相对 docs 根输出，形如 `docs/x.md`；
+/// - 绝对路径但不在 docs 根内 → 退化为文件名；
+/// - 相对路径（历史记录，形如 `docs/x.md`）→ 原样返回；
+/// - 相对路径含目录穿越 → 退化为文件名。
+fn sanitize_file_path(file_path: &str) -> String {
+    let path = std::path::Path::new(file_path);
+
+    if path.is_absolute() {
+        let docs_root = crate::models::docs_dir();
+        if let Ok(relative) = path.strip_prefix(&docs_root) {
+            return format!("docs/{}", relative.display());
+        }
+        return path
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| file_path.to_string());
+    }
+
+    let is_legacy_docs_path = path
+        .file_name()
+        .map(|name| path == std::path::Path::new("docs").join(name))
+        .unwrap_or(false);
+    if is_legacy_docs_path {
+        return file_path.to_string();
+    }
+
+    path.file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| file_path.to_string())
+}
+
+#[cfg(test)]
+mod sanitize_file_path_tests {
+    use super::sanitize_file_path;
+
+    #[test]
+    fn absolute_path_inside_docs_root_is_relative_to_docs() {
+        let inside = crate::models::docs_dir().join("报表.md");
+        assert_eq!(sanitize_file_path(&inside.to_string_lossy()), "docs/报表.md");
+    }
+
+    #[test]
+    fn absolute_path_outside_docs_root_degrades_to_file_name() {
+        assert_eq!(sanitize_file_path("/var/tmp/elsewhere/secret.md"), "secret.md");
+    }
+
+    #[test]
+    fn legacy_relative_docs_path_is_preserved() {
+        assert_eq!(sanitize_file_path("docs/legacy.md"), "docs/legacy.md");
+    }
+
+    #[test]
+    fn relative_path_with_traversal_degrades_to_file_name() {
+        assert_eq!(sanitize_file_path("../../etc/passwd"), "passwd");
+    }
 }
 
 async fn call_ai_api(

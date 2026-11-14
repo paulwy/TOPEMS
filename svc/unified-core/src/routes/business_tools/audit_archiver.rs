@@ -31,7 +31,10 @@ pub struct ArchiveConfig {
 impl Default for ArchiveConfig {
     fn default() -> Self {
         Self {
-            archive_dir: PathBuf::from("audit_archives"),
+            archive_dir: topems_shared_core::paths::resolve_writable_dir(
+                "AUDIT_ARCHIVE_DIR",
+                "audit_archives",
+            ),
             compress: false,
             max_file_size: 10 * 1024 * 1024, // 10 MB
             file_prefix: "audit_log".to_string(),
@@ -384,7 +387,9 @@ mod tests {
     #[test]
     fn test_archive_config_default() {
         let config = ArchiveConfig::default();
-        assert_eq!(config.archive_dir, PathBuf::from("audit_archives"));
+        // 默认目录锚定可执行文件目录（绝对路径），不再依赖进程 CWD
+        assert!(config.archive_dir.is_absolute());
+        assert!(config.archive_dir.ends_with("audit_archives"));
         assert!(!config.compress);
         assert_eq!(config.max_file_size, 10 * 1024 * 1024);
         assert_eq!(config.file_prefix, "audit_log");

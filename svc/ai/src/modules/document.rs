@@ -76,10 +76,10 @@ pub async fn upload(
                 let data = field.bytes().await.unwrap_or_default();
                 file_size = data.len() as u64;
 
-                // 保存文件到 docs 目录
-                let docs_dir = "docs";
-                let path = std::path::Path::new(docs_dir).join(&filename);
-                if let Err(e) = std::fs::create_dir_all(docs_dir) {
+                // 保存文件到 AI 文档目录（绝对路径，不依赖进程 CWD）
+                let docs_dir = crate::models::docs_dir();
+                let path = docs_dir.join(&filename);
+                if let Err(e) = std::fs::create_dir_all(&docs_dir) {
                     let err_msg = format!("创建目录失败: {}", e);
                     if let Err(audit_err) = state
                         .audit
@@ -355,11 +355,12 @@ pub async fn download(
         }
     };
 
-    // upload 落盘路径优先取记录中的 file_path；兜底 docs/<filename>
+    // upload 落盘路径优先取记录中的 file_path；兜底解析到绝对文档目录，不依赖 CWD
     let file_path = doc
         .file_path
         .clone()
-        .unwrap_or_else(|| format!("docs/{}", doc.filename));
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| crate::models::docs_dir().join(&doc.filename));
     let bytes = match std::fs::read(&file_path) {
         Ok(b) => b,
         Err(_) => {

@@ -9,7 +9,7 @@ mod services;
 mod shared;
 
 use crate::models::{
-    Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DIFY_CONFIG, DOCS_DIR, DOCUMENTS, VECTORS,
+    docs_dir, Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DIFY_CONFIG, DOCUMENTS, VECTORS,
 };
 use crate::services::document::DocumentQAConfig;
 use crate::services::embedding::{index_all_documents, load_documents_from_dir};
@@ -235,7 +235,7 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // 初始化静态存储（向后兼容）
-    let docs = load_documents_from_dir(DOCS_DIR).await;
+    let docs = load_documents_from_dir(docs_dir()).await;
     tracing::info!("📁 加载了 {} 个文件系统文档", docs.len());
     DOCUMENTS
         .set(Arc::new(Mutex::new(docs)))

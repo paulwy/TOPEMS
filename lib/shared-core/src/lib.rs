@@ -29,6 +29,7 @@ pub mod locale;
 pub mod logging;
 pub mod metrics;
 pub mod n_plus_one_detector;
+pub mod paths;
 pub mod plugin;
 pub mod response;
 pub mod service_config;

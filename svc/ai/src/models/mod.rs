@@ -190,7 +190,14 @@ pub static DOCUMENTS: std::sync::OnceLock<Arc<Mutex<Vec<Document>>>> = std::sync
 pub static CLIENT: std::sync::OnceLock<Client> = std::sync::OnceLock::new();
 pub static CONFIG: std::sync::OnceLock<Config> = std::sync::OnceLock::new();
 pub static DIFY_CONFIG: std::sync::OnceLock<DifyConfig> = std::sync::OnceLock::new();
-pub static DOCS_DIR: &str = "docs";
+/// AI 文档目录。
+///
+/// 默认锚定可执行文件所在目录下的 `ai-docs`（可用 `AI_DOCS_DIR` 覆盖），
+/// **不指向仓库 `docs/`**：仓库文档有数百个文件，一旦被 `load_documents_from_dir`
+/// 扫到会被当作知识库全量索引。返回值恒为绝对路径，不依赖进程 CWD。
+pub fn docs_dir() -> std::path::PathBuf {
+    topems_shared_core::paths::resolve_writable_dir("AI_DOCS_DIR", "ai-docs")
+}
 
 // =============================================================================
 // Dify 集成：配置 + 请求/响应 DTO

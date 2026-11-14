@@ -142,7 +142,7 @@ pub async fn restore_archives(
 /// Get a restorer instance with default configuration.
 fn get_restorer() -> AuditLogRestorer {
     let archive_dir =
-        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
+        topems_shared_core::paths::resolve_writable_dir("AUDIT_ARCHIVE_DIR", "audit_archives");
     let config = RestoreConfig::new(archive_dir);
     AuditLogRestorer::new(config)
 }
@@ -150,7 +150,7 @@ fn get_restorer() -> AuditLogRestorer {
 /// Get a restorer instance with custom skip_existing setting.
 fn get_restorer_with_config(skip_existing: bool) -> AuditLogRestorer {
     let archive_dir =
-        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
+        topems_shared_core::paths::resolve_writable_dir("AUDIT_ARCHIVE_DIR", "audit_archives");
     let config = RestoreConfig::new(archive_dir).with_skip_existing(skip_existing);
     AuditLogRestorer::new(config)
 }

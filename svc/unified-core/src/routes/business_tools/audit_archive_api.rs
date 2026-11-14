@@ -276,7 +276,7 @@ pub struct ArchiveStatsResponse {
 /// For now, we use the default config with the archive path from environment.
 fn get_archiver(_state: &AppState) -> AuditLogArchiver {
     let archive_dir =
-        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
+        topems_shared_core::paths::resolve_writable_dir("AUDIT_ARCHIVE_DIR", "audit_archives");
     let compress = std::env::var("AUDIT_ARCHIVE_COMPRESS")
         .ok()
         .map(|v| v == "true" || v == "1")

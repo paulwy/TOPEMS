@@ -31,7 +31,10 @@ pub struct RestoreConfig {
 impl Default for RestoreConfig {
     fn default() -> Self {
         Self {
-            archive_dir: PathBuf::from("audit_archives"),
+            archive_dir: topems_shared_core::paths::resolve_writable_dir(
+                "AUDIT_ARCHIVE_DIR",
+                "audit_archives",
+            ),
             file_prefix: "audit_log".to_string(),
             skip_existing: true,
             batch_size: 1000,
@@ -424,7 +427,9 @@ mod tests {
     #[test]
     fn test_restore_config_default() {
         let config = RestoreConfig::default();
-        assert_eq!(config.archive_dir, PathBuf::from("audit_archives"));
+        // 默认目录锚定可执行文件目录（绝对路径），不再依赖进程 CWD
+        assert!(config.archive_dir.is_absolute());
+        assert!(config.archive_dir.ends_with("audit_archives"));
         assert_eq!(config.file_prefix, "audit_log");
         assert!(config.skip_existing);
         assert_eq!(config.batch_size, 1000);

@@ -14,18 +14,22 @@ use tracing;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
-pub async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
+/// 从目录加载文档（目录由 [`crate::models::docs_dir`] 解析为绝对路径）。
+///
+/// 接受 `impl AsRef<Path>`：绝对目录下 `WalkDir` 产出的文件路径也是绝对路径，
+/// 后续 `read_file_content` 因此不再受进程 CWD 影响（CWD=`/` 时也能读到）。
+pub async fn load_documents_from_dir(dir: impl AsRef<Path>) -> Vec<Document> {
     let mut docs = Vec::new();
-    let path = Path::new(dir);
+    let path = dir.as_ref();
 
     if !path.exists() {
-        if let Err(e) = fs::create_dir_all(dir) {
-            tracing::warn!(error = %e, "Failed to create documents directory");
+        if let Err(e) = fs::create_dir_all(path) {
+            tracing::warn!(error = %e, dir = %path.display(), "Failed to create documents directory");
         }
         return docs;
     }
 
-    for entry in WalkDir::new(dir)
+    for entry in WalkDir::new(path)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
@@ -84,10 +88,19 @@ pub async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
 }
 
 async fn read_file_content(file_path: &str) -> Option<String> {
-    match fs::read_to_string(file_path) {
+    let path = Path::new(file_path);
+    // 历史记录可能是相对路径（旧实现写入 "docs/<filename>"），统一解析到绝对文档目录，
+    // 避免 CWD=/ 时读不到文件。
+    let resolved = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        let name = path.file_name().map(Path::new).unwrap_or(path);
+        crate::models::docs_dir().join(name)
+    };
+    match fs::read_to_string(&resolved) {
         Ok(content) => Some(content),
         Err(e) => {
-            tracing::error!("Failed to read file {}: {}", file_path, e);
+            tracing::error!("Failed to read file {}: {}", resolved.display(), e);
             None
         }
     }

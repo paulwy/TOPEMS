@@ -7,13 +7,13 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgRow, Row};
 use std::fs;
-use std::path::Path;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_core::paths::resolve_writable_dir;
 use topems_shared_core::response::ApiResponse;
 
 fn tenant_filter(claims: &Claims) -> Option<Uuid> {
@@ -312,9 +312,11 @@ pub async fn upload_avatar(
     };
 
     let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
-    let path = Path::new("./uploads").join(&file_name);
+    // 上传目录解析为绝对路径（默认锚定可执行文件目录，可用 UPLOAD_DIR 覆盖），不依赖 CWD
+    let uploads_dir = resolve_writable_dir("UPLOAD_DIR", "uploads");
+    let path = uploads_dir.join(&file_name);
 
-    if let Err(e) = fs::create_dir_all("./uploads") {
+    if let Err(e) = fs::create_dir_all(&uploads_dir) {
         tracing::error!("创建上传目录失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

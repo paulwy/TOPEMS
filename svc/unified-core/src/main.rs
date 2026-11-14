@@ -579,7 +579,10 @@ async fn main() -> anyhow::Result<()> {
             export_interval_hours * 3600,
         )));
         let archive_config = ArchiveConfig {
-            archive_dir: std::path::PathBuf::from("data/audit-export"),
+            archive_dir: topems_shared_core::paths::resolve_writable_dir(
+                "AUDIT_EXPORT_DIR",
+                "audit-export",
+            ),
             ..Default::default()
         };
         let archiver = std::sync::Arc::new(AuditLogArchiver::new(archive_config));
