@@ -44,6 +44,10 @@ fn decimal_from_f64(value: f64) -> Decimal {
     Decimal::from_f64_retain(value).unwrap_or(Decimal::ZERO)
 }
 
+/// K6：无真实历史凭证时 predict 的拒绝原因前缀。这属于「请求无法按预期满足」，
+/// handler 侧据此映射为 400 而不是 500；守卫消息本身复用同一常量，避免文案与判定漂移。
+const NO_HISTORY_MARKER: &str = "无真实历史凭证数据（近 12 个月 0 行）";
+
 // ==================== 枚举类型 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -272,10 +276,9 @@ impl CashFlowPredictor {
         // 无真实历史凭证时，旧实现会静默用合成序列（500k 基数 + 正弦噪声）生成预测并落库，
         // 让"预测"看起来正常。合成数据不可用于决策，这里直接拒绝，不落任何行。
         if is_synthetic {
-            return Err(sqlx::Error::Protocol(
-                "无真实历史凭证数据（近 12 个月 0 行），forecast_v53 拒绝用合成数据生成预测：合成数据不可用于决策"
-                    .to_string(),
-            ));
+            return Err(sqlx::Error::Protocol(format!(
+                "{NO_HISTORY_MARKER}，forecast_v53 拒绝用合成数据生成预测：合成数据不可用于决策"
+            )));
         }
 
         let (inflow, outflow) = Self::apply_model(&historical, &model_type, horizon, &scenario);
@@ -1328,6 +1331,18 @@ impl BudgetAnalyzer {
 // ==================== API Handlers ====================
 
 // --- Cash Flow Handlers ---
+
+/// K6：无历史数据的拒绝属于「请求无法满足」，映射 400 并原样返回说明；
+/// 其余错误维持既有映射，不改变其他失败面的状态码。
+fn map_predict_error(e: sqlx::Error) -> ApiResponse<PredictionResult> {
+    match e {
+        sqlx::Error::Protocol(msg) if msg.starts_with(NO_HISTORY_MARKER) => {
+            ApiResponse::bad_request(&msg)
+        }
+        other => crate::shared::err_resp(other),
+    }
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
@@ -1354,7 +1369,7 @@ pub async fn predict_cash_flow_handler(
 
     match CashFlowPredictor::predict(&db, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "预测完成"),
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => map_predict_error(e),
     }
 }
 
@@ -1826,12 +1841,10 @@ mod tests {
         roundtrip(&v);
     }
 
-    /// K5 回归：`finance.vouchers.entity_id` 为 text（生产实际形状），predict 必须能
-    /// 命中真实历史凭证而不是 500，也不能回落到合成数据。
-    #[sqlx::test(migrations = false)]
-    async fn predict_matches_text_entity_id(pool: sqlx::PgPool) {
+    /// predict 依赖的三张表（列类型对齐生产实际形状：entity_id 为 text、amount 为 numeric）。
+    async fn setup_finance_tables(pool: &sqlx::PgPool) {
         sqlx::query("CREATE SCHEMA IF NOT EXISTS finance")
-            .execute(&pool)
+            .execute(pool)
             .await
             .unwrap();
         sqlx::query(
@@ -1843,7 +1856,7 @@ mod tests {
                 created_at TIMESTAMPTZ
             )"#,
         )
-        .execute(&pool)
+        .execute(pool)
         .await
         .unwrap();
         sqlx::query(
@@ -1854,7 +1867,7 @@ mod tests {
                 amount NUMERIC
             )"#,
         )
-        .execute(&pool)
+        .execute(pool)
         .await
         .unwrap();
         sqlx::query(
@@ -1874,9 +1887,16 @@ mod tests {
                 is_synthetic BOOLEAN NOT NULL DEFAULT false
             )"#,
         )
-        .execute(&pool)
+        .execute(pool)
         .await
         .unwrap();
+    }
+
+    /// K5 回归：`finance.vouchers.entity_id` 为 text（生产实际形状），predict 必须能
+    /// 命中真实历史凭证而不是 500，也不能回落到合成数据。
+    #[sqlx::test(migrations = false)]
+    async fn predict_matches_text_entity_id(pool: sqlx::PgPool) {
+        setup_finance_tables(&pool).await;
 
         let tenant_id = Uuid::new_v4();
         let entity_id = Uuid::new_v4();
@@ -1930,5 +1950,52 @@ mod tests {
             (outflow - 400.0).abs() < 0.01,
             "流出应为 400，实际 {outflow}"
         );
+    }
+
+    /// K6 回归：无真实历史凭证时 predict 拒绝生成，handler 必须映射为 400 并说明原因，
+    /// 而不是把数据缺失伪装成 500。同时不得落任何预测行。
+    #[sqlx::test(migrations = false)]
+    async fn predict_without_history_maps_to_400(pool: sqlx::PgPool) {
+        setup_finance_tables(&pool).await;
+
+        let tenant_id = Uuid::new_v4();
+        let entity_id = Uuid::new_v4();
+        let db = Db::new(pool.clone(), "finance, public, shared");
+        let err = CashFlowPredictor::predict(
+            &db,
+            tenant_id,
+            PredictCashFlowRequest {
+                entity_id: entity_id.to_string(),
+                period: "2026-11".into(),
+                model: Some("exponential_smoothing".into()),
+                scenario: Some("realistic".into()),
+                horizon_months: Some(1),
+            },
+        )
+        .await
+        .expect_err("无历史凭证时应拒绝预测，不得回落到合成数据");
+
+        let resp = map_predict_error(err);
+        assert_eq!(
+            resp.code, 400,
+            "无历史数据应为 400，实际 {}：{}",
+            resp.code, resp.message
+        );
+        assert!(resp.message.contains(NO_HISTORY_MARKER));
+        assert!(resp.message.contains("无真实历史凭证数据"));
+
+        let rows: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM finance.finance_cash_flow_predictions_v53")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(rows, 0, "拒绝生成时不得写入任何预测行");
+    }
+
+    /// K6 边界：非「无历史数据」的失败保持既有映射，不得被误判成 400。
+    #[test]
+    fn map_predict_error_keeps_other_errors() {
+        let resp = map_predict_error(sqlx::Error::RowNotFound);
+        assert_ne!(resp.code, 400, "非数据缺失错误不应映射为 400");
     }
 }
