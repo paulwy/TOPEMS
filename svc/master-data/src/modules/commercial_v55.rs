@@ -27,6 +27,35 @@ fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
     }
 }
 
+/// 解析外部传入的 UUID：失败返回 400，避免非法参数落到 SQL 层变成 500。
+fn parse_uuid_or_400<T>(value: &str, field: &str) -> Result<uuid::Uuid, ApiResponse<T>> {
+    uuid::Uuid::parse_str(value)
+        .map_err(|_| ApiResponse::bad_request(&format!("参数 {field} 不是合法的 UUID: {value}")))
+}
+
+/// 解析外部传入的 RFC3339 时间：失败返回 400。
+fn parse_time_or_400<T>(
+    value: &str,
+    field: &str,
+) -> Result<chrono::DateTime<chrono::Utc>, ApiResponse<T>> {
+    chrono::DateTime::parse_from_rfc3339(value)
+        .map(|t| t.with_timezone(&chrono::Utc))
+        .map_err(|_| {
+            ApiResponse::bad_request(&format!("参数 {field} 不是合法的 RFC3339 时间: {value}"))
+        })
+}
+
+/// Option 版本：None 直接通过，Some 走 RFC3339 解析。
+fn parse_opt_time_or_400<T>(
+    value: Option<&str>,
+    field: &str,
+) -> Result<Option<chrono::DateTime<chrono::Utc>>, ApiResponse<T>> {
+    match value {
+        Some(v) => parse_time_or_400(v, field).map(Some),
+        None => Ok(None),
+    }
+}
+
 // ==================== K1：真表映射（master_data.mdm_api_products / mdm_subscriptions） ====================
 
 /// 行 → APIProduct（tier/features 以 snake 字符串 / JSONB 存储）。
@@ -84,7 +113,7 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
 const PRODUCT_COLS: &str =
     "id::text, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
 const SUBSCRIPTION_COLS: &str =
-    "id::text, api_product_id, tenant_id::text, tier, starts_at, expires_at, status";
+    "id::text, api_product_id, tenant_id::text, tier, starts_at::timestamptz, expires_at, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -490,7 +519,7 @@ pub async fn create_api_product(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_api_products
            (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&product.id)
     .bind(&product.name)
@@ -549,11 +578,15 @@ pub async fn get_api_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<APIProduct> {
+    let id = match parse_uuid_or_400::<APIProduct>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -578,11 +611,20 @@ pub async fn subscribe_tenant(
     State(state): State<AppState>,
     Json(req): Json<SubscribeTenantRequest>,
 ) -> ApiResponse<Subscription> {
+    let api_product_id =
+        match parse_uuid_or_400::<Subscription>(&req.api_product_id, "api_product_id") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
+    let tenant_id = match parse_uuid_or_400::<Subscription>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：产品从真表查找。
     let product_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&req.api_product_id)
+    .bind(api_product_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -614,11 +656,11 @@ pub async fn subscribe_tenant(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_subscriptions
            (id, api_product_id, tenant_id, tier, starts_at, expires_at, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7)"#,
     )
     .bind(&sub.id)
     .bind(&sub.api_product_id)
-    .bind(&sub.tenant_id)
+    .bind(tenant_id)
     .bind(tier_to_str(&sub.tier))
     .bind(sub.starts_at)
     .bind(sub.expires_at)
@@ -649,11 +691,15 @@ pub async fn get_subscription(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"
+        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -713,6 +759,10 @@ pub async fn cancel_subscription(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -720,7 +770,7 @@ pub async fn cancel_subscription(
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {SUBSCRIPTION_COLS}"#,
     )))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
     .await;
@@ -753,12 +803,16 @@ pub async fn upgrade_tier(
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
+    let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {
@@ -778,7 +832,7 @@ pub async fn upgrade_tier(
         "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2::uuid AND ($3::uuid IS NULL OR tenant_id = $3)",
     )
     .bind(product_tier_to_string(&new_tier))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .execute(&state.db)
     .await
@@ -789,7 +843,7 @@ pub async fn upgrade_tier(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
     let Some(row) = (match row {
@@ -816,6 +870,10 @@ pub async fn record_usage(
     State(state): State<AppState>,
     Json(req): Json<RecordUsageRequest>,
 ) -> ApiResponse<UsageRecord> {
+    let tenant_id = match parse_uuid_or_400::<UsageRecord>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：写真表 master_data.mdm_usage_records。
     let record = UsageRecord {
         id: uuid::Uuid::new_v4().to_string(),
@@ -831,10 +889,10 @@ pub async fn record_usage(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_usage_records
            (id, tenant_id, api_product_id, endpoint, requests, errors, data_transferred, recorded_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8)"#,
     )
     .bind(&record.id)
-    .bind(&record.tenant_id)
+    .bind(tenant_id)
     .bind(&record.api_product_id)
     .bind(&record.endpoint)
     .bind(record.requests)
@@ -864,19 +922,29 @@ pub async fn get_usage_summary(
     State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<UsageSummary> {
+    let start_time =
+        match parse_opt_time_or_400::<UsageSummary>(params.start_time.as_deref(), "start_time") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
+    let end_time =
+        match parse_opt_time_or_400::<UsageSummary>(params.end_time.as_deref(), "end_time") {
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
     // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
     let query = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR api_product_id = $2)
-             AND ($3::text IS NULL OR recorded_at::text >= $3)
-             AND ($4::text IS NULL OR recorded_at::text <= $4)
+             AND ($3::timestamptz IS NULL OR recorded_at >= $3)
+             AND ($4::timestamptz IS NULL OR recorded_at <= $4)
            ORDER BY recorded_at"#,
     )))
     .bind(params.tenant_id.as_deref())
     .bind(params.api_product_id.as_deref())
-    .bind(params.start_time.as_deref())
-    .bind(params.end_time.as_deref())
+    .bind(start_time)
+    .bind(end_time)
     .fetch_all(&state.db)
     .await;
 
@@ -921,21 +989,33 @@ pub async fn generate_bill(
     Json(req): Json<GenerateBillRequest>,
 ) -> ApiResponse<BillingRecord> {
     // K1：数据源改真表（usage_records / rate_cards / api_products），逻辑保留。
+    let tenant_id = match parse_uuid_or_400::<BillingRecord>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let period_start = req
         .period_start
         .unwrap_or_else(|| (chrono::Utc::now() - chrono::Duration::days(30)).to_rfc3339());
     let period_end = req
         .period_end
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let period_start_at = match parse_time_or_400::<BillingRecord>(&period_start, "period_start") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let period_end_at = match parse_time_or_400::<BillingRecord>(&period_end, "period_end") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
 
     let usage_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
-           WHERE tenant_id = $1 AND recorded_at::text >= $2 AND recorded_at::text <= $3
+           WHERE tenant_id = $1::uuid AND recorded_at >= $2 AND recorded_at <= $3
            ORDER BY recorded_at"#,
     )))
-    .bind(&req.tenant_id)
-    .bind(&period_start)
-    .bind(&period_end)
+    .bind(tenant_id)
+    .bind(period_start_at)
+    .bind(period_end_at)
     .fetch_all(&state.db)
     .await;
     let filtered: Vec<UsageRecord> = match usage_rows {
@@ -1015,7 +1095,7 @@ pub async fn generate_bill(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_billing_records
            (id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8)"#,
     )
     .bind(&bill.id)
     .bind(&bill.tenant_id)
@@ -1122,7 +1202,7 @@ pub async fn create_rate_card(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_rate_cards
            (id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6)"#,
     )
     .bind(&card.id)
     .bind(product_tier_to_string(&card.tier))
@@ -1179,6 +1259,10 @@ pub async fn mark_bill_paid(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<BillingRecord> {
+    let id = match parse_uuid_or_400::<BillingRecord>(&id, "id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     let tenant = tenant_of(&claims);
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -1186,7 +1270,7 @@ pub async fn mark_bill_paid(
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING {BILLING_COLS}"#,
     )))
-    .bind(&id)
+    .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
     .await;
@@ -1227,7 +1311,7 @@ pub async fn configure_sla(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_configs
            (id, metric, target_value, unit, penalty_per_min, measurement_window)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           VALUES ($1::uuid,$2,$3,$4,$5,$6)"#,
     )
     .bind(&config.id)
     .bind(sla_metric_to_str(&config.metric))
@@ -1258,11 +1342,19 @@ pub async fn measure_sla(
     State(state): State<AppState>,
     Json(req): Json<MeasureSLARequest>,
 ) -> ApiResponse<SLAMeasurement> {
+    let config_id = match parse_uuid_or_400::<SLAMeasurement>(&req.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<SLAMeasurement>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：先读真表 SLA 配置（无行 404），再写度量。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&req.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let config = match config_row {
@@ -1294,11 +1386,11 @@ pub async fn measure_sla(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_measurements
            (id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7,$8,$9)"#,
     )
     .bind(&measurement.id)
     .bind(&measurement.config_id)
-    .bind(&measurement.tenant_id)
+    .bind(tenant_id)
     .bind(measurement.measured_value)
     .bind(measurement.target_value)
     .bind(measurement.met)
@@ -1397,19 +1489,33 @@ pub async fn get_sla_history(
     State(state): State<AppState>,
     Query(params): Query<SLAHistoryQuery>,
 ) -> ApiResponse<Vec<SLAMeasurement>> {
+    let start_time = match parse_opt_time_or_400::<Vec<SLAMeasurement>>(
+        params.start_time.as_deref(),
+        "start_time",
+    ) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let end_time = match parse_opt_time_or_400::<Vec<SLAMeasurement>>(
+        params.end_time.as_deref(),
+        "end_time",
+    ) {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR config_id = $2)
-             AND ($3::text IS NULL OR measured_at::text >= $3)
-             AND ($4::text IS NULL OR measured_at::text <= $4)
+             AND ($3::timestamptz IS NULL OR measured_at >= $3)
+             AND ($4::timestamptz IS NULL OR measured_at <= $4)
            ORDER BY measured_at"#,
     )))
     .bind(params.tenant_id.as_deref())
     .bind(params.config_id.as_deref())
-    .bind(params.start_time.as_deref())
-    .bind(params.end_time.as_deref())
+    .bind(start_time)
+    .bind(end_time)
     .fetch_all(&state.db)
     .await;
     let filtered: Vec<SLAMeasurement> = match rows {
@@ -1438,11 +1544,19 @@ pub async fn calculate_penalty(
     State(state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let config_id = match parse_uuid_or_400::<serde_json::Value>(&params.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<serde_json::Value>(&params.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：数据源改真表（config + measurements），逻辑保留。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
-    .bind(&params.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let config = match config_row {
@@ -1453,10 +1567,10 @@ pub async fn calculate_penalty(
 
     let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
-           WHERE config_id = $1 AND tenant_id = $2 AND met = FALSE ORDER BY measured_at"#,
+           WHERE config_id = $1 AND tenant_id = $2::uuid AND met = FALSE ORDER BY measured_at"#,
     )))
     .bind(&params.config_id)
-    .bind(&params.tenant_id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
     let breached: Vec<SLAMeasurement> = match meas_rows {
@@ -1495,6 +1609,14 @@ pub async fn create_incident(
     State(state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
 ) -> ApiResponse<SLAIncident> {
+    let config_id = match parse_uuid_or_400::<SLAIncident>(&req.config_id, "config_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
+    let tenant_id = match parse_uuid_or_400::<SLAIncident>(&req.tenant_id, "tenant_id") {
+        Ok(v) => v,
+        Err(resp) => return resp,
+    };
     // K1：写真表 master_data.mdm_sla_incidents。
     let incident_type = sla_incident_type_from_str(&req.incident_type);
     let impact_severity = req
@@ -1504,9 +1626,9 @@ pub async fn create_incident(
         .unwrap_or(ImpactSeverity::Medium);
 
     let config_row = sqlx::query(
-        "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1",
+        "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1",
     )
-    .bind(&req.config_id)
+    .bind(config_id)
     .fetch_optional(&state.db)
     .await;
     let penalty_per_min = match config_row {
@@ -1531,11 +1653,11 @@ pub async fn create_incident(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_sla_incidents
            (id, config_id, tenant_id, incident_type, duration_min, impact_severity, compensation_amount, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           VALUES ($1::uuid,$2,$3::uuid,$4,$5,$6,$7,$8)"#,
     )
     .bind(&incident.id)
     .bind(&incident.config_id)
-    .bind(&incident.tenant_id)
+    .bind(tenant_id)
     .bind(sla_incident_type_to_str(&incident.incident_type))
     .bind(incident.duration_min)
     .bind(impact_severity_to_str(&incident.impact_severity))
