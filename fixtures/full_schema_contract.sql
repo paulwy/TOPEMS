@@ -42242,11 +42242,11 @@ ALTER TABLE ONLY mes.teams
 
 
 --
--- Name: teams teams_team_code_key; Type: CONSTRAINT; Schema: mes; Owner: -
+-- Name: teams teams_tenant_id_team_code_key; Type: CONSTRAINT; Schema: mes; Owner: -
 --
 
 ALTER TABLE ONLY mes.teams
-    ADD CONSTRAINT teams_team_code_key UNIQUE (team_code);
+    ADD CONSTRAINT teams_tenant_id_team_code_key UNIQUE NULLS NOT DISTINCT (tenant_id, team_code);
 
 
 --
