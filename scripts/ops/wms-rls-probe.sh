@@ -172,10 +172,11 @@ snap() {
     "select relname, coalesce(seq_scan,0)+coalesce(idx_scan,0) from pg_stat_user_tables where schemaname='wms' order by 1" 2>/dev/null
 }
 
-is_bare_pool() {
+is_unscoped_pool() {
+  # 已逐行核对（2a3da1cff）：只有 flow-trend 直接用 &state.db 且无任何租户 GUC；
+  # serial-numbers 两处走请求事务 txn_arc，dashboard-summary 走 scope_read_for_tenant，均有 GUC。
   case "$1" in
-    /api/wms/serial-numbers|/api/wms/serial-numbers/statistics|\
-    /api/wms/analytics/flow-trend|/api/wms/analytics/dashboard-summary) return 0 ;;
+    /api/wms/analytics/flow-trend) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -229,8 +230,8 @@ while IFS= read -r ep; do
   fi
 
   if [ "$good" = "1" ]; then
-    if is_bare_pool "$ep"; then
-      warn "$ep [裸池路径] 401/400/200/200/200 非超户[$d_user] 超户[$d_super]：绕过请求事务，空表期与正常不可区分，数据到位后必须回归"
+    if is_unscoped_pool "$ep"; then
+      warn "$ep [无租户作用域] 401/400/200/200/200 非超户[$d_user] 超户[$d_super]：裸池无 GUC，FORCE RLS 下必然读空（功能已坏，非泄漏）"
     else
       ok "$ep 401/400/200/200/200 非超户[$d_user] 超户[$d_super]"
     fi

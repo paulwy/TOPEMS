@@ -214,13 +214,36 @@ ssh -o BatchMode=yes xingzhai@192.168.110.115 'bash /tmp/w7b4/wms-rls-probe.sh'
 | D 形状与角色 | 39/39/0/39/38；应用角色非 super/bypassrls；探针窗口 RLS 违例 0 | 排除"策略被改写"与"角色绕过 RLS" |
 
 - 非超户权限由服务端授权表按 `user_id` 解析，token 内 `permissions` 不生效；探针使用现有非超户 `tenant_admin`（`0d000000-…-000000000001`）的 `sub` + 租户 claim，**只读、不建账号、不改授权**
-- 裸池路径（`serial-numbers`、`serial-numbers/statistics`、`analytics/flow-trend`、`analytics/dashboard-summary`）绕过请求事务，空表期响应与正常无法区分；**数据到位后这些入口返回 0 行即视为阻断**
+- 无租户作用域的入口只有 `analytics/flow-trend`（裸池 `&state.db`）；`serial-numbers` 两处与 `analytics/dashboard-summary` 均已带租户 GUC，定性见 §5.1
 - 探针不进入 §2 的 2 小时节奏；按需执行，数据首次写入后必须回归一次
 
-**首轮实测（2026-11-14 11:10:25，只读）：`RESULT: PASS`，pass=36 / fail=0 / warn=5**
+**首轮实测（2026-11-14 11:10:25）：`RESULT: PASS`，pass=36 / fail=0 / warn=5；分类修正后复跑（11:14:18）：`RESULT: PASS`，pass=39 / fail=0 / warn=2**
 
 - 28 个端点全部满足 `401/400/200/200/200`；非超户与超户返回结构一致（均为空表）
 - 扫描覆盖 18/39 表；未触达的 21 张多为 `*_items`、`replenishment_*`、`sync_*` 等无列表 GET 的内部表
 - 运行时差分：`ehs` 无 GUC=0、租户 A=1、租户 B=0、系统通道=1；`wms.inventory` 各上下文均 0（表空）
-- 已知例外：`wms.schema_defense_ledger` 无 FORCE，属主 `topems_prod` 可绕过 RLS（全局账本表，无 `tenant_id`）
 - 非超户缺 `tenant_id` → 400（不落随机租户兜底）；探针窗口内 RLS 违例 0
+- 复跑后只剩 2 条 WARN：`analytics/flow-trend`（无租户作用域，功能已坏）与 `wms.schema_defense_ledger`（无 FORCE 的全局表，属预期）
+
+### 5.1 四个 WARN 入口定性（只读代码 @ `2a3da1cff`）
+
+| 入口 | 取连接 / 租户 GUC | 目标表 RLS | 结论 | 依据 |
+|---|---|---|---|---|
+| `GET /api/wms/serial-numbers` | 请求事务 `Extension(txn_arc)`，与 `tenant_middleware` 同一事务（GUC 已设） | `wms.serial_numbers` ENABLE+FORCE | **正常**（非泄漏、非功能坏） | `serial_number.rs:66-74`、`83-85` |
+| `GET /api/wms/serial-numbers/statistics` | 同上 | 同上 | **正常** | `serial_number.rs:655-663`、`674-684` |
+| `GET /api/wms/analytics/flow-trend` | 裸池 `&state.db`，**无任何 GUC**；SQL 也没有 `tenant_id` 谓词 | `inbound_orders` / `outbound_orders` 均 ENABLE+FORCE | **功能已坏**（有数据后仍恒空），非泄漏 | `analytics.rs:452-508` |
+| `GET /api/wms/analytics/dashboard-summary` | `scope_read_for_tenant(tenant)` → 事务级 `set_config('app.tenant_id', …, true)` + `rls_system=off` | `warehouses` / `inventory` 等 FORCE | **正常** | `analytics.rs:1031-1060`；`scope.rs:285-295` |
+
+关键前提：
+
+- 生产 pid 18043 环境、`~/TOPEMS/.env`、`~/topems/.env` 均**未设置** `DEFAULT_TENANT_ID` / `MULTI_TENANT_ENABLED` → 连接池 `after_connect` 不会注入 `app.tenant_id`（`database/mod.rs:104-141`），裸池连接 GUC 为空
+- 应用角色 `topems_prod` 实测 `rolsuper=f / rolbypassrls=f`；上述四表 `relforcerowsecurity=t`
+- 因此无 GUC 的裸池查询在 FORCE RLS 下恒返回 0 行 → 是"功能坏了"，不是"跨租户泄漏"；泄漏只在表无 RLS / 无 FORCE / 角色可绕过时成立，本组均不满足
+
+**flow-trend 最小修复方向（本轮不改代码）**
+
+1. 改走作用域事务：`let db = wms_db(&state.db); let mut scope = db.scope_read_for_tenant(resolve_tenant_id(&claims)?).await?;`，两处 `.fetch_all(&mut scope)`；或直接使用 `Extension(txn_arc)` 走请求事务
+2. 顺带补权限校验：当前 `Extension(_claims)` 未被使用，任何已登录用户都可调用
+3. 写法可直接参照同文件 `get_dashboard_summary`（`analytics.rs:1031-1044`）
+
+**`wms.schema_defense_ledger` 结论**：列为 `service_schema / schema_hash / tables_count / cols_count / applied_at / last_skipped_ensure`，**没有 `tenant_id`**；策略是系统通道专用（`COALESCE(current_setting('app.rls_system', true), 'off') = 'on'`）。它是**全局表，不是漏列**；无 FORCE、属主可读属预期设计，不构成跨租户泄漏。
