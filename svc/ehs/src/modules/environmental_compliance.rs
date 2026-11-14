@@ -748,15 +748,15 @@ pub async fn update_regulation(
         params.push(v);
     }
     if let Some(v) = req.issue_date {
-        sets.push(format!("issued_date = ${}", params.len() + 1));
+        sets.push(format!("issued_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.effective_date {
-        sets.push(format!("effective_date = ${}", params.len() + 1));
+        sets.push(format!("effective_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.expiry_date {
-        sets.push(format!("expiry_date = ${}", params.len() + 1));
+        sets.push(format!("expiry_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.status {
@@ -1115,15 +1115,15 @@ pub async fn update_permit(
         params.push(v);
     }
     if let Some(v) = req.issue_date {
-        sets.push(format!("issued_date = ${}", params.len() + 1));
+        sets.push(format!("issued_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.effective_date {
-        sets.push(format!("valid_from = ${}", params.len() + 1));
+        sets.push(format!("valid_from = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.expiry_date {
-        sets.push(format!("valid_to = ${}", params.len() + 1));
+        sets.push(format!("valid_to = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.issuing_authority {
@@ -1579,11 +1579,11 @@ pub async fn update_evaluation(
         params.push(v);
     }
     if let Some(v) = req.period_start {
-        sets.push(format!("start_date = ${}", params.len() + 1));
+        sets.push(format!("start_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.period_end {
-        sets.push(format!("end_date = ${}", params.len() + 1));
+        sets.push(format!("end_date = ${}::date", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.assessor {
@@ -1591,7 +1591,7 @@ pub async fn update_evaluation(
         params.push(v);
     }
     if let Some(v) = req.assessment_date {
-        sets.push(format!("evaluated_at = ${}", params.len() + 1));
+        sets.push(format!("evaluated_at = ${}::timestamptz", params.len() + 1));
         params.push(v);
     }
     if let Some(v) = req.result {
