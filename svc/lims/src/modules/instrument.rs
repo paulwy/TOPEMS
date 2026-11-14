@@ -1046,7 +1046,7 @@ pub async fn create_maintenance(
     };
 
     let row = sqlx::query(
-        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5::uuid, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
+        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5::uuid, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by::TEXT, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
     )
     .bind(ctx.tenant_id)
     .bind(req.instrument_id)

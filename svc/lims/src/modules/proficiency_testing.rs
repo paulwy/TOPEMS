@@ -821,7 +821,7 @@ pub async fn receive_sample(
             plan_id, plan_no, plan_name, sample_code, sample_name,
             received_date, received_by, storage_condition, sample_status, notes, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8, 'received', $9, $10)
-        RETURNING id, plan_id, plan_no, plan_name, sample_code, sample_name,
+        RETURNING id::TEXT, tenant_id::TEXT, plan_id::TEXT, plan_no, plan_name, sample_code, sample_name,
                   received_date::TEXT, received_by, storage_condition, sample_status,
                   notes, created_at
         "#,
@@ -1043,10 +1043,11 @@ pub async fn submit_result(
             replicate_results, mean_value, standard_deviation, coefficient_variation,
             notes, submitted_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-        RETURNING id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
-                  result_unit, test_date::TEXT, tested_by, instrument, test_method,
-                  replicate_results, mean_value, standard_deviation, coefficient_variation,
-                  notes, submitted_at, created_at, updated_at
+        RETURNING id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item,
+                  test_result::FLOAT8, result_unit, test_date::TEXT, tested_by, instrument, test_method,
+                  replicate_results, mean_value::FLOAT8, standard_deviation::FLOAT8,
+                  coefficient_variation::FLOAT8,
+                  notes, submitted_at, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(plan_id)
@@ -1501,7 +1502,7 @@ pub async fn create_corrective_action(
             plan_id, plan_no, evaluation_id, unsatisfactory_item,
             root_cause, corrective_measures, responsible_person, deadline, status, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, 'pending', $9)
-        RETURNING id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
+        RETURNING id::TEXT, plan_id::TEXT, plan_no, evaluation_id::TEXT, unsatisfactory_item,
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at,
                   created_at, updated_at, tenant_id::TEXT

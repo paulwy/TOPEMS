@@ -369,10 +369,11 @@ pub async fn create_project(
             project_no, project_name, method_id, method_name, test_item,
             measurand, measurement_range, unit, status, evaluator, notes, tenant_id
         ) VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
-        RETURNING id, project_no, project_name, method_id, method_name, test_item,
+        RETURNING id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item,
                   measurand, measurement_range, unit, status, evaluator,
-                  evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
-                  coverage_factor, confidence_level, notes, created_at, updated_at, tenant_id
+                  evaluation_date::TEXT, combined_uncertainty::FLOAT8,
+                  expanded_uncertainty::FLOAT8, coverage_factor::FLOAT8,
+                  confidence_level::FLOAT8, notes, created_at, updated_at, tenant_id::TEXT
         "#,
     )
     .bind(&project_no)
