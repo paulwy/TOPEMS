@@ -820,7 +820,7 @@ pub async fn receive_sample(
         INSERT INTO qa_lims_pt_samples (
             plan_id, plan_no, plan_name, sample_code, sample_name,
             received_date, received_by, storage_condition, sample_status, notes, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'received', $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8, 'received', $9, $10)
         RETURNING id, plan_id, plan_no, plan_name, sample_code, sample_name,
                   received_date::TEXT, received_by, storage_condition, sample_status,
                   notes, created_at
@@ -1042,7 +1042,7 @@ pub async fn submit_result(
             result_unit, test_date, tested_by, instrument, test_method,
             replicate_results, mean_value, standard_deviation, coefficient_variation,
             notes, submitted_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
                   result_unit, test_date::TEXT, tested_by, instrument, test_method,
                   replicate_results, mean_value, standard_deviation, coefficient_variation,
@@ -1500,7 +1500,7 @@ pub async fn create_corrective_action(
         INSERT INTO qa_lims_pt_corrective_actions (
             plan_id, plan_no, evaluation_id, unsatisfactory_item,
             root_cause, corrective_measures, responsible_person, deadline, status, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, 'pending', $9)
         RETURNING id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at,

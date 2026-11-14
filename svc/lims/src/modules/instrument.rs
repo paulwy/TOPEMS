@@ -445,7 +445,7 @@ pub async fn calibrate(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
+        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2::timestamptz, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
     .bind(id)
     .bind(&req.next_calibration_at)
@@ -704,7 +704,7 @@ pub async fn create_calibration_record(
             id, instrument_id, instrument_no, instrument_name, calibrated_by,
             calibration_date, next_calibration_date, calibration_result,
             parameters, notes, certificate_no, created_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8, $9, $10, $11, NOW(), $12)
         RETURNING id::TEXT, instrument_id::TEXT, instrument_no, instrument_name, calibrated_by,
                   calibration_date::TEXT, next_calibration_date::TEXT, calibration_result,
                   parameters, notes, certificate_no, created_at
@@ -729,7 +729,7 @@ pub async fn create_calibration_record(
         Ok(r) => {
             // Update instrument's calibration dates
             let _ = sqlx::query(
-                "UPDATE qa_lab_instruments SET last_calibration_at = $2, next_calibration_at = $3, updated_at = NOW() WHERE id = $1"
+                "UPDATE qa_lab_instruments SET last_calibration_at = $2::timestamptz, next_calibration_at = $3::timestamptz, updated_at = NOW() WHERE id = $1"
             )
             .bind(instrument_id)
             .bind(&calibration_date)
@@ -1046,7 +1046,7 @@ pub async fn create_maintenance(
     };
 
     let row = sqlx::query(
-        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
+        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5::uuid, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
     )
     .bind(ctx.tenant_id)
     .bind(req.instrument_id)

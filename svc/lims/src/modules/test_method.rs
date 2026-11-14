@@ -1048,7 +1048,7 @@ pub async fn create_validation(
         INSERT INTO qa_lims_method_validations (
             method_id, method_code, method_name, version, validation_type,
             validation_date, validated_by, conclusion, parameters, report_url, notes, status, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed', $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8, $9, $10, $11, 'completed', $12)
         RETURNING id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version,
                   validation_type, validation_date::TEXT, validated_by, conclusion, parameters,
                   report_url, notes, status, created_at
@@ -1071,7 +1071,7 @@ pub async fn create_validation(
 
     if req.conclusion == "pass" || req.conclusion == "合格" {
         let _ = sqlx::query(
-            "UPDATE qa_lims_test_methods SET validated = true, validated_at = $2, validated_by = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $4"
+            "UPDATE qa_lims_test_methods SET validated = true, validated_at = $2::timestamptz, validated_by = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $4"
         )
         .bind(method_id)
         .bind(&validation_date)

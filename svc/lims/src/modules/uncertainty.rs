@@ -368,7 +368,7 @@ pub async fn create_project(
         INSERT INTO qa_lims_uncertainty_projects (
             project_no, project_name, method_id, method_name, test_item,
             measurand, measurement_range, unit, status, evaluator, notes, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
+        ) VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
         RETURNING id, project_no, project_name, method_id, method_name, test_item,
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
