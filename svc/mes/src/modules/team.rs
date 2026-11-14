@@ -491,8 +491,16 @@ pub async fn create_team(
     let result = match result {
         Ok(r) => r,
         Err(e) => {
-            tracing::error!("Failed to create team: {}", e);
             let _ = scope.rollback().await;
+            // UNIQUE NULLS NOT DISTINCT (tenant_id, team_code)：同租户内班组编码重复
+            // 只会在 INSERT 时以 23505 暴露，必须映射为 409 而不是笼统的 500。
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.is_unique_violation() {
+                    tracing::warn!("创建班组编码冲突: {}", e);
+                    return ApiResponse::conflict("班组编码已存在（team_code 重复）");
+                }
+            }
+            tracing::error!("Failed to create team: {}", e);
             return ApiResponse::server_error("创建班组失败");
         }
     };
