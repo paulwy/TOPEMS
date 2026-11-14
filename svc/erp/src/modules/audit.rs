@@ -69,6 +69,11 @@ pub async fn list_audit_logs(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    // erp.audit_logs 仅系统通道：读侧显式打开，不能依赖请求租户通道（会静默 0 行）。
+    if let Err(e) = topems_shared_db::set_system_channel(txn).await {
+        tracing::error!("打开审计系统通道失败: {}", e);
+        return ApiResponse::server_error("获取审计日志失败");
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -163,6 +168,11 @@ pub async fn get_audit_log(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    // erp.audit_logs 仅系统通道：读侧显式打开。
+    if let Err(e) = topems_shared_db::set_system_channel(txn).await {
+        tracing::error!("打开审计系统通道失败: {}", e);
+        return ApiResponse::server_error("获取审计日志失败");
+    }
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "erp",
         r#"
@@ -248,7 +258,8 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, Some("erp"));
+    // erp.audit_logs 策略仅保留系统通道（fail-closed），写入必须显式系统作用域。
+    let service = SchemaAwareAuditLogService::new_system_channel(db, Some("erp"));
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

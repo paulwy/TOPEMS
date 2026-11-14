@@ -20,8 +20,8 @@ pub mod storage;
 pub mod tenant;
 
 pub use audit::{
-    is_valid_audit_log_status, AuditLog, AuditLogQuery, AuditLogService, AuditOrigin,
-    CreateAuditLogRequest, SchemaAwareAuditLogService, AUDIT_LOG_STATUS_STANDARD,
+    is_valid_audit_log_status, set_system_channel, AuditLog, AuditLogQuery, AuditLogService,
+    AuditOrigin, CreateAuditLogRequest, SchemaAwareAuditLogService, AUDIT_LOG_STATUS_STANDARD,
 };
 pub use backup::{
     BackupConfig, BackupError, BackupManager, BackupMetadata, BackupRequest, BackupSchedule,
