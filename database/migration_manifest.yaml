@@ -1073,3 +1073,10 @@ pending_forward_patches:
     effect: "master_data.mdm_subscriptions.starts_at text -> timestamptz（USING btrim(starts_at)::timestamptz），并 DROP 默认值 ''::text"
     destructive_scan: "ALTER COLUMN TYPE 位于 DO 块且以 information_schema 列类型守卫；存在 NULL/空串/非法格式时 RAISE EXCEPTION 并报计数，整事务中止；不 NULLIF 转 NULL、不回填固定值、不 DROP NOT NULL；无 DELETE/UPDATE/TRUNCATE/DROP"
     note: "前向补丁 > 20261113100000，不改已推送历史；配 database/rollback/20261114130000_mdm_subscriptions_starts_at_timestamptz.rollback.sql；窗口内先跑 database/scripts/mdm_starts_at_window_stats.sql（只读），判据见 docs/quality/mdm-starts-at-timestamptz-window-2026-11-14.md"
+
+  - version: "20261114140000"
+    file: "database/migrations/20261114140000_mes_teams_leader_id_uuid.sql"
+    status: to_apply
+    effect: "mes.teams.leader_id 单列 varchar(64) -> uuid（空串/纯空白 NULLIF 为 NULL），对齐 team.rs 的 Option<Uuid> 解码；不含 db10 其余 17 列"
+    destructive_scan: "ALTER COLUMN TYPE（DO 块按 information_schema 类型守卫，已是 uuid 跳过）；无 DELETE/UPDATE/TRUNCATE/DROP；非法 uuid 文本转换即报错中止"
+    note: "前向补丁 > 20261113100000，不改已推送历史；刻意不整包投 db10 20261103230000（会顺带改 18 列）；14130000 已由 master-data 分支 starts_at 占用，本文件改用 14140000；配 database/rollback/20261114140000_mes_teams_leader_id_uuid.rollback.sql，回滚只恢复类型、不恢复空串"
