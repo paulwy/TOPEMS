@@ -589,14 +589,15 @@ pre-push:
 
     # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）
     # svc crate utoipa path → BFF GET 全路径 5xx 扫描（缺表/缺列/死锁等运行态缺陷）。
-    # 2026-11-05：重型门禁（默认 SKIP，CI/部署机 LEFTHOOK_RUN_HEAVY=1 时执行）；
-    # BFF 离线（CI/无运行态）SKIP_WARN 不阻断，手动 bash scripts/dev/domain-probe.sh 复核。
+    # [2026-11-14 修订] 本 gate 默认 SKIP：它依赖运行中的 BFF 与真实库，CI 无此运行态、未接入；
+    # 需部署机手动执行 bash scripts/dev/domain-probe.sh（本地具备 BFF 运行态时可 LEFTHOOK_RUN_HEAVY=1 尝试）。
+    # 不再声称“CI 已兜底”——该说法不成立，见 2026-11-14 门禁排查。
     domain-probe:
       tags: runtime probe
       timeout: 1800s
       run: |
         if [ -z "${LEFTHOOK_RUN_HEAVY:-}" ]; then
-          printf '\033[33m[Gate DP] SKIP\033[0m domain-probe（重型门禁：LEFTHOOK_RUN_HEAVY=1 时执行；CI 已兜底）\n'
+          printf '\033[33m[Gate DP] SKIP\033[0m domain-probe（需部署机手动执行：bash scripts/dev/domain-probe.sh；CI 未接入）\n'
           exit 0
         fi
         bash scripts/dev/domain-probe.sh
