@@ -1946,3 +1946,15 @@ pending_forward_patches:
       - { kind: catalog, ref: "prod/dev pg_policies", detail: "两侧策略逐字一致：read USING(true) + write 要求 app.rls_system='on'；新增列不进入谓词，无 RLS 副作用" }
       - { kind: catalog, ref: "dev information_schema/pg_constraint", detail: "13 列类型/长度/可空/默认值与 CHECK 定义逐项取自 dev 实读" }
     note: "不修改 prod 主键（PK 列变更不在补列范围），唯一性由新增单列唯一索引承担；源码注释称该表无 tenant_id 与实际列清单不符，属陈旧注释，本批不改代码"
+
+  - version: "20261115142400"
+    file: "database/migrations/20261115142400_public_platform_3tables_25cols.sql"
+    status: to_apply
+    effect: "public.cqrs_events 补 8 列 + 唯一约束 cqrs_events_aggregate_id_version_key(aggregate_id,version) + 3 索引；public.search_logs 补 5 列 + 3 索引；public.analytics_sync_records 补 12 列 + 4 索引"
+    destructive_scan: "仅 ADD COLUMN + ADD CONSTRAINT(UNIQUE) + CREATE INDEX；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: data, ref: "prod count(*)", detail: "三表均 0 行；cqrs_events/search_logs/analytics_sync_records 含 NOT NULL 无默认列，可安全直加（迁移内仍保留三表行数门）" }
+      - { kind: catalog, ref: "prod/dev pg_indexes/pg_constraint", detail: "prod 三表均只有 PK 索引；dev 侧 11 只索引/唯一约束全部缺失，本次一并补齐（含 search_logs 的 idx_search_logs_query，query 列已由 20261115141800 补入）" }
+      - { kind: catalog, ref: "prod/dev pg_class/pg_policy", detail: "cqrs_events 两侧均 RLS enable/force 且策略只引用既有 tenant_id；search_logs / analytics_sync_records 两侧 rls=false（dev 亦无策略），无 RLS 行为变化" }
+      - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "25 列类型/长度/精度/可空/默认值与 11 只索引定义逐项取自 dev 实读" }
+    note: "cqrs_events 补后 prod 为 12 列（dev 10 列）：prod 独有的 created_at/updated_at 保留不动，不做删列；本批只保证「dev 有、prod 缺」的列齐备"
