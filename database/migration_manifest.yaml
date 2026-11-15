@@ -1676,3 +1676,24 @@ pending_forward_patches:
       删除本迁移新增的 erp.idx_erp_master_data_refs_tenant；
       回退顺序先回策略再回二进制（fail-open 下新旧二进制均可工作）；
       代码前置已上线，方案见 docs/database/k8-fail-open-tightening-plan-2026-11-15.md（ticket TOPEMS-K8-CRM-ERP-20261115）
+
+  - version: "20261115130000"
+    file: "database/migrations/20261115130000_drop_shell_tables_crm_erp_2.sql"
+    status: to_apply
+    effect: >-
+      拆除 prod 遗留空壳表 crm.core_crm_customers 与 erp.core_erp_suppliers（各 3 列、0 行）。
+      dev 侧同样拆除（dev 的占位表是为对齐 M2a 临时补建的），拆除后双库均无此表。
+      DROP TABLE 无 CASCADE，pkey / tenant_id 索引 / RLS 策略随表删除。
+    destructive_scan: >-
+      DROP TABLE ×2（含 destructive-gate 标记：kind/reason/owner/ticket/expires/rows-at-review/backup）；
+      前置断言：两表存在、0 行、无入向外键、无视图/物化视图依赖、无非内部触发器、无函数文本引用，
+      任一不符即 RAISE 中止；后置断言：两表不存在且无同名策略残留；文件内无 BEGIN/COMMIT
+    evidence:
+      - { kind: catalog, ref: "prod topems_prod 2026-11-15（只读）", detail: "3 列 id uuid NOT NULL DEFAULT gen_random_uuid() / deleted_at timestamptz / tenant_id uuid（可空）；pkey <table>_pkey；idx_<schema>_<table>_tenant_id；rls/force=true；各 1 条 rls_tenant_isolation（fail-closed）；owner topems_prod；relacl 为空；0 行；入向外键/视图/触发器/函数引用均 0" }
+      - { kind: code, ref: "svc/ lib/", detail: "core_crm_customers / core_erp_suppliers 0 命中（0 writers / 0 readers）" }
+      - { kind: drill, ref: "dev topems 2026-11-15", detail: "正向拆除（账本 688→689）→ rollback 重建自检通过（3 列 / pkey / tenant 索引 / rls+force / 1 条策略）→ 回放拆除；往返差异仅列序（按 prod 列序）与 owner（回滚不自动设属主）" }
+    note: >-
+      前向补丁 > 20261115120000；配 database/rollback/20261115130000_drop_shell_tables_crm_erp_2.rollback.sql
+      （按 prod 快照逐字重建，文末列出回滚后需人工复核的属主/授权/策略/数据四点）。
+      投产后 scripts/ci/data/prod_cols.psv 仍登记两表，decode-contract 会报「目录存在、库中已删」，
+      如需消差执行 scripts/ci/refresh-prod-cols.sh（ticket TOPEMS-SHELL-TABLES-20261115）

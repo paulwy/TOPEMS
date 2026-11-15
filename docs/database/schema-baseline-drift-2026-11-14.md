@@ -285,16 +285,33 @@ node scripts/ci/check-baseline-integrity.mjs # PASS
 2. `crm.core_crm_customers` / `erp.core_erp_suppliers` 在 dev 不存在（见下节待拆除登记），按 prod 3 列形状补建。
 3. 6 张 erp/crm/portal 表上 10 条旧策略挡住 `20261114202000`（见下节），先删后应用。
 
-## 待拆除登记：`crm.core_crm_customers` / `erp.core_erp_suppliers`
+## 待拆除登记：`crm.core_crm_customers` / `core_erp_suppliers`（已由 `20261115130000` 拆除）
 
-prod 历史遗留死壳，dev 为对齐账本于 2026-11-15 临时补建，**本轮只登记不删除**。
+prod 历史遗留死壳，dev 为对齐账本于 2026-11-15 临时补建；2026-11-15 已用前向迁移
+`20261115130000_drop_shell_tables_crm_erp_2` 在 prod 与 dev 双库拆除，现双库均无此表。
 
 - 形状：仅 3 列 `id uuid NOT NULL DEFAULT gen_random_uuid()` / `tenant_id uuid` / `deleted_at timestamptz`，两表均 0 行；
-  prod 侧 `rls=true`、`force_rls=true`、每表 1 条 `rls_tenant_isolation`。
+  prod 侧 `rls=true`、`force_rls=true`、每表 1 条 `rls_tenant_isolation`（fail-closed）；pkey `<table>_pkey`、
+  `idx_<schema>_<table>_tenant_id` 各 1 条；prod 属主 `topems_prod`、`relacl` 为空。
 - 引用面：prod 只读核查——外键 0、触发器 0、视图 0、函数文本引用 0，仅自身 pkey 与 `tenant_id` 索引；代码侧 0 引用。
-- 删除来源：`20261107000027_drop_dead_tables_batch31.sql` 在 dev（679 行）与 prod（681 行）账本里**均未登记**；
-  prod 因历史原因仍留空壳，dev 重建后已无。
-- 建议：下一批按 finance 6 张死表的同一路子（零引用 × 双库 0 行 × 无外键/视图依赖 + rollback 写全 DDL）一并拆除。
+
+### 账本外生效的删除：`20261107000027_drop_dead_tables_batch31.sql`
+
+该文件在仓库中存在（移除 `erp.core_erp_suppliers`、`crm.core_crm_customers`、
+`crm.customers_tenant_null_backup_20260919` 三张表），但**dev 与 prod 的 `_sqlx_migrations` 都没有该版本**。
+事实与可见影响：
+
+- dev：文件被绕过账本执行过——dev 上这三张表确实已不存在（本次对齐 M2a 前即为空），
+  而账本 686 行中查无 `20261107000027`。因账本无记录，`sqlx migrate` 不会把它当已应用版本，
+  也不会校验其 checksum；若在新环境重放该文件，对 dev 是 no-op（表已不在），
+  但会在账本里首次登记该版本，造成「同名版本、不同环境有/无记录」的代际差。
+- prod：**从未生效**——两表在 prod 一直存在（本次拆除前仍为 3 列 0 行），说明该文件只被局部环境用过。
+- 风险定性：属于「账本外生效」（apply-forward 方案 B 的已知取舍在真实历史中的一次实例）。
+  它不会造成数据错误，但会让「账本 = 真实结构」的推断在该版本上失效；本仓库因此不复用该版本号，
+  改用 `20261115130000` 前向补丁显式承接，并在 manifest 登记。
+- 处置：`20261115130000` 已带前置断言（存在 / 0 行 / 无外键 / 无视图 / 无触发器）与完整 rollback；
+  投产后需刷新 `scripts/ci/data/prod_cols.psv`（否则 decode-contract 报「目录存在、库中已删」）。
+
 
 ## `20261114202000` 已知前提：只删 `*_allow_all_*`，不清理残留 `tenant_isolation_*`
 
