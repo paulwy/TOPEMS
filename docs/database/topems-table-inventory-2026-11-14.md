@@ -33,9 +33,9 @@
 | 7 | `mes` fail-open 策略 | 22 张（含 `mes.teams`） | **0 张**：50 条策略全部含 `app.rls_system` 系统通道 + 租户谓词（`20261114200000`） | `pg_policies` 全量判定 |
 | 8 | `erp` 8 张合并域表 | 全部 `USING(true)`/NULL 哨兵 | 8 张策略均为 `tenant_id = erp.group_tenant_of(...)`，无 `true`/NULL 分支（`20261114180000`）；仍全部 0 行 | `pg_policies` |
 | 9 | `mes.teams` 策略 | fail-open（nil 哨兵） | fail-closed（系统通道 + 租户谓词）；**仍缺 `ck_teams_status_standard`** | `pg_policies` / `pg_constraint` |
-| 10 | §7 缺陷清单 | 只有 K1、K3、K4、K5、K7 | 补登 **K2**；K1/K2/K3/K4/K5 已修复并合入 `origin/main`，K7 保持未修（见 §7） | git 提交 + 代码复核 |
+| 10 | §7 缺陷清单 | 只有 K1、K3、K4、K5、K7 | 补登 **K2**；K1/K2/K3/K4/K5 已修复并合入 `origin/main`，K7 于 2026-11-15 由 `20261115100000` 修复（见 §7） | git 提交 + 代码复核 |
 | 11 | K7 工单位置 | 仅在 `/private/tmp/topems-dud-20261115/` | 仓库内已有同内容工单：`docs/database/workorder-wms-po-snapshot-backfill-20261115.md` | `git ls-tree origin/main docs/database/` |
-| 12 | 其他未变项 | — | `public.core_menus` NULL 租户仍 452 行；`wms.purchase_order_snapshots` 仍仅 3 列（`id`/`deleted_at`/`tenant_id`）、0 行；`plugin_wms.purchase_order_snapshots` 未被触碰 | 逐项 `SELECT` |
+| 12 | 其他未变项 | — | `public.core_menus` NULL 租户仍 452 行；`wms.purchase_order_snapshots` 校对时点仅 3 列（`id`/`deleted_at`/`tenant_id`）、0 行，后由 `20261115100000` 补齐至 14 列（见 §7 K7）；`plugin_wms.purchase_order_snapshots` 未被触碰 | 逐项 `SELECT` |
 
 > 未重跑项：§2 主表其余 559 行的行数/列数、§4 nil 租户合计（1139 行）、§5 dev 侧账本与表集合差异，均为 2026-11-14 采集值。结构类结论（缺列、重复表、schema_defense 注册）不受上述迁移影响。
 
@@ -1344,7 +1344,7 @@ order by 1;
 
 ## 7. 已知缺陷登记（2026-11-14 建立，2026-11-15 校对状态）
 
-> 编号沿用项目 K 系列。K1–K5 已在 2026-11-15 的代码批次中修复并合入 `origin/main`；K7 仍开放。K6（ledger-ddl-drift 门禁空账本放行）登记在 `docs/database/known-gate-defects.md`，不在本文件重复。
+> 编号沿用项目 K 系列。K1–K5 已在 2026-11-15 的代码批次中修复并合入 `origin/main`；K7 已于 2026-11-15 由 `20261115100000` 修复（见下）。K6（ledger-ddl-drift 门禁空账本放行）登记在 `docs/database/known-gate-defects.md`，不在本文件重复。
 
 ### K1. mes equipment 列表 e2e 绕过租户上下文（3 条用例红）
 
@@ -1395,14 +1395,15 @@ order by 1;
 - **备注**：窗口 D 未回滚 190000——在跑的件 INSERT 已写 `is_synthetic`，回滚会删列并让写路径报列不存在，比现状更糟。
 - **状态（2026-11-15）**：**已修复**，提交 `320a19b7e`（+ `ba3b6e4ad` rustfmt 折行）。2026-11-15 生产换件回执：`text = uuid` 与 NUMERIC 解码错误消失；无历史数据时 predict 仍 500 属上游既有行为（后续由 finance K6 改为 400）。
 
-### K7. `wms.purchase_order_snapshots` 生产只有 3 列、缺 11 列，WMS 快照写/查路径必失败
+### K7. `wms.purchase_order_snapshots` 生产只有 3 列、缺 11 列，WMS 快照写/查路径必失败（**已修复**）
 
 - **位置**：写 `svc/wms/src/event_handlers/mod.rs:436-439`（`INSERT INTO wms.purchase_order_snapshots` 引用 13 列）；读 `svc/wms/src/modules/data_sync.rs:384-390`（`SELECT ... FROM wms.purchase_order_snapshots WHERE id = $1 AND status = 'approved'`）。
 - **现象**：2026-11-15 窗口 E 投前预检实测，prod `wms.purchase_order_snapshots` 只有 `id`、`deleted_at`、`tenant_id` **3 列**（2026-11-15 入库校对复核一致，0 行）；dev 同名表 **14 列**（`order_number`、`supplier_id`、`supplier_name`、`total_amount`、`payable_amount`、`status`、`approved_by`、`approved_at`、`synced_at`、`created_at`、`updated_at` 等）。生产没有 `status` 列。
 - **根因**：prod 该表由 `20260725000000_business_base_tables.sql:3457` 的脚手架 `CREATE TABLE IF NOT EXISTS (id UUID PRIMARY KEY ...)` 先建成空壳；真正的业务列在 `20260905000003_v255_wms_po_snapshots.sql` 里建到了 `plugin_wms` schema（13 列）。prod 的 `wms` 空壳此后只被补过 `tenant_id`（`20260909000001`）和 `deleted_at`（`20261007000004`），业务列从未补齐；dev 因历史对齐得到 14 列，形成 prod/dev 结构漂移。
 - **影响**：`wms.purchase_order_snapshots` 写入必报 `42703 column "order_number" of relation "purchase_order_snapshots" does not exist`，采购订单快照同步整条链路不可用；读路径同样失败。与 RLS/租户无关，纯列缺失。
 - **处置**：单独立项，不在窗口 E 做。顺序必须是「先补 11 列（含 `status`，注意 NOT NULL/DEFAULT）→ 再建 `ck_purchase_order_snapshots_status_standard`」。窗口 E 的 `20261115000000` 已按 17 表口径剔除该表，原因写在其文件头。
-- **工单**：`docs/database/workorder-wms-po-snapshot-backfill-20261115.md`（与 `/private/tmp/topems-dud-20261115/docs/database/` 下同名文件内容一致，已入 `origin/main`）；建议 ticket `TOPEMS-W7-B4-WMS-PO-SNAPSHOT-BACKFILL`。
+- **工单**：`docs/database/workorder-wms-po-snapshot-backfill-20261115.md`（与 `/private/tmp/topems-dud-20261115/docs/database/` 下同名文件内容一致，已入 `origin/main`）；ticket `TOPEMS-W7-B4-WMS-PO-SNAPSHOT-BACKFILL`。
+- **状态（2026-11-15）**：**已修复**，迁移 `20261115100000_w7_b4_wms_po_snapshot_backfill`（提交 `e2ed366de`，生产投递 2026-11-15 08:57:36 +08，账本 681）。prod 补齐至 14 列并与 dev 逐列 diff 为空；`ck_purchase_order_snapshots_status_standard` 值域 `active/inactive/archived/pending/approved`；事务内非法值取证 `23514` 后已回滚，表内 0 行。回滚文件 `database/rollback/20261115100000_w7_b4_wms_po_snapshot_backfill.rollback.sql`（表内有数据时拒绝执行）。
 - **备注**：`docs/quality/prod-column-drift-full-2026-11-09.md` 的 `wms.purchase_order_snapshots`（11）节已登记同一批缺列但未修，本项 K7 作为跟踪编号。`plugin_wms.purchase_order_snapshots`（13 列）当前 0 行，且不是代码路径的目标表。
 
 

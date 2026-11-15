@@ -1,6 +1,10 @@
 # 后续工单：`wms.purchase_order_snapshots` 列补齐 + 状态约束（K7）
 
-- 状态：待排期（不在 2026-11-15 窗口 E 内）
+- 状态：**已完成（2026-11-15）**，由 `20261115100000_w7_b4_wms_po_snapshot_backfill` 落地，提交 `e2ed366de`
+  - 生产投递：2026-11-15 08:57:36 +08，账本 **681 / max `20261115100000` / success=true**（投前 680 / `20261115000000`）
+  - 投后核对：14 列 / 5 条约束 / 2 个索引 / 1 条策略与 dev 归一化后 **diff 为空**（仅 `id` 默认值按约定忽略，prod 保留 `gen_random_uuid()`）
+  - 约束取证：事务内 `INSERT` 非法 status → **23514**（`ck_purchase_order_snapshots_status_standard`）→ `ROLLBACK`，表内 0 行留存
+  - 观测：10 分钟 3 次取样，health 200 / pid 46983 未变 / idle_in_txn 0 / deadlocks 0，窗口内无新增业务错误
 - 关联缺陷：`topems-table-inventory-2026-11-14.md` §7 K7
 - 关联迁移：`20261115000000_w7_b4_status_check_widen_forward.sql`（窗口 E 按 17 表口径已剔除本表）
 - 建议 owner：platform-db + WMS 模块负责人
