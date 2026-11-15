@@ -1933,3 +1933,16 @@ pending_forward_patches:
       - { kind: catalog, ref: "prod/dev pg_trigger", detail: "两侧均无触发器；updated_at 不自动维护（与 dev 一致），本迁移不引入" }
       - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "15 列类型/长度/精度/可空/默认值（organization_id=uuid_generate_v4()、status='pending'、created_at/updated_at=now()）与 5 只索引定义逐项取自 dev 实读" }
     note: "文档 §7.4 把本表归到 operational.rs 报销 CRUD，实测该路径绑定的是 finance.expenses，全仓无 erp.expenses 直接 SQL 引用；本批收益为结构对齐，不宣称报销路径已修复。既有列 id 默认值差异（dev uuid_generate_v4 / prod gen_random_uuid）属类型漂移，本批不改"
+
+  - version: "20261115142300"
+    file: "database/migrations/20261115142300_pdm_master_data_refs_13cols.sql"
+    status: to_apply
+    effect: "pdm.pdm_master_data_refs 补 13 列（master_data_id/tenant_id/domain/code/name/status/source_service/local_entity_type/local_entity_id/payload_snapshot/last_synced_at/created_at/updated_at，定义同 dev）+ 唯一索引 uq_pdm_master_data_refs_master_data_id(master_data_id) + CHECK ck_pdm_master_data_refs_status_standard"
+    destructive_scan: "仅 ADD COLUMN + CREATE UNIQUE INDEX + ADD CONSTRAINT(CHECK)；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/pdm/src/event_handlers/mod.rs:269-281", detail: "INSERT 13 列 + ON CONFLICT (master_data_id) DO UPDATE；无唯一索引时 42P10，缺列时 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "0 行；master_data_id/tenant_id/domain/code/source_service 为 NOT NULL 无默认值，可直接加（迁移内仍保留行数门）" }
+      - { kind: catalog, ref: "prod pg_indexes/pg_constraint", detail: "prod 唯一索引仅 pdm_master_data_refs_pkey(id)；dev 的 PK 落在 master_data_id 上。dev 索引名被 prod PK 占用，另建 uq_pdm_master_data_refs_master_data_id（单列唯一，功能等价）" }
+      - { kind: catalog, ref: "prod/dev pg_policies", detail: "两侧策略逐字一致：read USING(true) + write 要求 app.rls_system='on'；新增列不进入谓词，无 RLS 副作用" }
+      - { kind: catalog, ref: "dev information_schema/pg_constraint", detail: "13 列类型/长度/可空/默认值与 CHECK 定义逐项取自 dev 实读" }
+    note: "不修改 prod 主键（PK 列变更不在补列范围），唯一性由新增单列唯一索引承担；源码注释称该表无 tenant_id 与实际列清单不符，属陈旧注释，本批不改代码"
