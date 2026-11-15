@@ -1599,3 +1599,29 @@ pending_forward_patches:
       生产水位 20261114202000，走正常通道单版本投递（ticket TOPEMS-W7-B4-STATUS-20261115）；
       wms.purchase_order_snapshots 的列补齐与状态约束另开工单，不在本迁移内
 
+
+  - version: "20261115100000"
+    file: "database/migrations/20261115100000_w7_b4_wms_po_snapshot_backfill.sql"
+    status: to_apply
+    effect: >-
+      K7 收口：wms.purchase_order_snapshots 按 dev 定义补齐 11 列
+      （order_number varchar(100)、supplier_id uuid、supplier_name varchar(200)、
+      total_amount/payable_amount numeric(15,2)、status varchar(20)、approved_by uuid、
+      approved_at/synced_at timestamptz、created_at/updated_at timestamptz NOT NULL DEFAULT now()），
+      并建立 ck_purchase_order_snapshots_status_standard
+      （active/inactive/archived/pending/approved；= 代码写入 {pending,approved} ∪ dev 现值域）。
+      不动已有列（prod.id 的 gen_random_uuid() 默认保留），不新增 dev 没有的索引/约束
+    destructive_scan: >-
+      仅 ADD COLUMN IF NOT EXISTS + ADD/DROP CONSTRAINT；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；
+      前置断言表存在且已存在列类型与 dev 一致（不符即 ABORT），
+      后置断言 14 列类型/可空/默认逐列一致、约束逐值接受 5 个目标值且拒绝非法值；
+      文件内无 BEGIN/COMMIT；表 0 行，NOT NULL DEFAULT 无回填风险
+    evidence:
+      - { kind: code, ref: "svc/wms/src/event_handlers/mod.rs:436-450", detail: "全仓唯一写入点，status 字面量仅 pending/approved" }
+      - { kind: code, ref: "svc/wms/src/modules/data_sync.rs:384-394", detail: "读路径 status='approved'，显式 wms schema + only_own_schema_query 守卫" }
+      - { kind: catalog, ref: "dev topems / prod topems_prod 2026-11-15", detail: "dev 14 列 + 同名约束；prod 3 列、0 行" }
+      - { kind: drill, ref: "topems_po_snapshot_drill + dev topems", detail: "从 prod 同形 3 列基线正向/逐值/23514/回滚 diff 空/重放全通过；dev 实库幂等跳过、账本未变" }
+    note: >-
+      前向补丁 > 20261115000000；配 database/rollback/20261115100000_w7_b4_wms_po_snapshot_backfill.rollback.sql；
+      回滚先删约束再逆序删列，表内有数据时 ABORT；
+      生产走正常通道单版本投递（ticket TOPEMS-W7-B4-WMS-PO-SNAPSHOT-BACKFILL）
