@@ -131,10 +131,13 @@ pre-commit:
     # 触发条件：.sql/.sqlx 变更（V538：纯 .rs 变更不再触发——重型 cargo check 27 包已由
     # pre-push 的 cargo-check-workspace SQLX_OFFLINE 全量兜底）。失败时运行
     # ./scripts/dev/sqlx-prepare.sh 刷新缓存后重提。
+    # 触发面收窄：只认真正影响 sqlx 缓存的位置（database/、migrations_deferred/、svc/、lib/
+    # 下的 .sql 与 .sqlx/）。fixtures/*.sql 是生产结构快照（CI 导入用），不是查询源，
+    # 且不会被 include_str!/query_file! 消费，不应触发 cargo check。
     sqlx-cache-freshness:
       tags: rust sqlx cache
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sql)$|^\.sqlx/' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^database/.*\.sql$|^migrations_deferred/.*\.sql$|^svc/.*\.sql$|^lib/.*\.sql$|^\.sqlx/' || true)
         [ -z "$STAGED" ] && exit 0
         bash scripts/dev/sqlx-prepare.sh --check || {
           echo "❌ [Gate S] SQLx 离线缓存不完整或不一致，提交已阻断。"
