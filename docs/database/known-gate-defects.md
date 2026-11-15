@@ -4,7 +4,7 @@
 
 ## K6 ledger-ddl-drift 门禁对「无 _sqlx_migrations 的库」放行 —— 已修复（2026-11-15）
 
-- **状态**：已修复，提交 `2d085923d`（`scripts/migration/check-ledger-ddl-drift.mjs`）。
+- **状态**：已修复，提交 `522bbf166`（`scripts/migration/check-ledger-ddl-drift.mjs`）。
 - **位置**：[scripts/migration/check-ledger-ddl-drift.mjs](../../scripts/migration/check-ledger-ddl-drift.mjs)，pre-push 门禁 `ledger-ddl-drift`（`lefthook.yml`）。
 - **原现象**：目标库可连接但没有 `_sqlx_migrations` 表（空库、新建库、误指其他库）时，清单内 12 项断言全部按「源迁移未记账」打 NOTE 跳过，最后输出 `PASS 断言 12 项，记账校验 0 项` 并 **exit 0**，只留一条 WARN。
 - **原实测（2026-11-15）**：`MIGRATION_DRIFT_DB_URL` 指向本地 `topems_test`（无账本）执行 `bash scripts/ci/check-ledger-ddl-drift.sh`，输出前述 NOTE 与 `PASS`，退出码 0。
