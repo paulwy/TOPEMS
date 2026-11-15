@@ -1,8 +1,12 @@
 -- ============================================================
 -- 回滚：20261115000000_w7_b4_status_check_widen_forward.sql
 --
--- 把 18 条 ck_*_status_standard 恢复为「20261114100000 目标定义」——
+-- 把 17 条 ck_*_status_standard 恢复为「20261114100000 目标定义」——
 -- 这也是 dev 在应用本前向补丁之前的实际定义。
+--
+-- 范围说明（2026-11-15 窗口 E）：本补丁为 17 表口径，
+-- wms.purchase_order_snapshots 已排除（生产缺 status 列，见
+-- topems-table-inventory-2026-11-14.md §7 K7），本回滚同样不触碰该表。
 --
 -- ⚠️ 已知代价：
 --   1) 一旦写入过本批新增值（suspended / pending_review / completed / failed /
@@ -51,7 +55,6 @@ BEGIN
             ('tms',        'tms_carriers',                      'ck_tms_carriers_status_standard',                      ARRAY['active','inactive','archived','rejected']),
             ('tms',        'tms_drivers',                       'ck_tms_drivers_status_standard',                       ARRAY['active','inactive','archived','suspended']),
             ('tms',        'tms_vehicles',                      'ck_tms_vehicles_status_standard',                      ARRAY['active','inactive','archived','maintenance']),
-            ('wms',        'purchase_order_snapshots',          'ck_purchase_order_snapshots_status_standard',          ARRAY['active','inactive','archived','pending','approved']),
             ('integration', 'integration_sync_logs',            'ck_integration_sync_logs_status_standard',             ARRAY['active','inactive','archived','triggered']),
             ('integration', 'mes_erp_sync_logs',                'ck_mes_erp_sync_logs_status_standard',                 ARRAY['active','inactive','archived','success','failed']),
             ('iam',        'users',                             'ck_users_status_standard',                             ARRAY['active','inactive','archived','pending']),

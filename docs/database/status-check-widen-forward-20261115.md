@@ -31,7 +31,9 @@
 
 文件：`database/migrations/20261115000000_w7_b4_status_check_widen_forward.sql`
 
-- 覆盖 18 张表，目标值域逐表登记在 DO 块的 `VALUES` 矩阵里；
+- 覆盖 17 张表（2026-11-15 窗口 E 修订：剔除 `wms.purchase_order_snapshots`，
+  生产缺 `status` 列，见 §5 与 `topems-table-inventory-2026-11-14.md` §7 K7），
+  目标值域逐表登记在 DO 块的 `VALUES` 矩阵里；
 - 前置断言：
   - 表存在；
   - `status` 列存在且为字符类型（`text` / `varchar` / `char`），否则拒绝自动处理；
@@ -65,7 +67,11 @@
 六表列类型均已核对：`status` 全部是字符类型（`text` / `varchar`），无枚举列，
 新增值长度均落在现有 `varchar` 上限内。
 
-## 5. 全量 18 表目标值域
+## 5. 全量 17 表目标值域（窗口 E 口径）
+
+> 2026-11-15 窗口 E 投前预检发现：生产 `wms.purchase_order_snapshots` 只有 3 列
+> （`id`/`deleted_at`/`tenant_id`），没有 `status` 列，迁移的前置断言会直接 ABORT。
+> 该表已从矩阵剔除，缺陷登记为 K7，列补齐后由后续迁移单独建约束。
 
 | schema.table | 约束 | 目标值域 | 本次动作（dev） |
 | --- | --- | --- | --- |
@@ -82,16 +88,19 @@
 | tms.tms_carriers | ck_tms_carriers_status_standard | +pending_review,suspended,blacklisted | 重建 |
 | tms.tms_drivers | ck_tms_drivers_status_standard | active,inactive,archived,suspended | SKIP |
 | tms.tms_vehicles | ck_tms_vehicles_status_standard | active,inactive,archived,maintenance | SKIP |
-| wms.purchase_order_snapshots | ck_purchase_order_snapshots_status_standard | active,inactive,archived,pending,approved | SKIP |
+| ~~wms.purchase_order_snapshots~~ | ~~ck_purchase_order_snapshots_status_standard~~ | ~~active,inactive,archived,pending,approved~~ | **已剔除（K7）** |
 | integration.integration_sync_logs | ck_integration_sync_logs_status_standard | +pending,success,failed | 重建 |
 | integration.mes_erp_sync_logs | ck_mes_erp_sync_logs_status_standard | +pending | 重建 |
 | iam.users | ck_users_status_standard | active,inactive,archived,pending | SKIP |
 | analytics.report_execution_records | ck_report_execution_records_status_standard | +completed,failed | 重建 |
 
-生产侧预期：15 条已存在（按需重建），3 条缺失（`crm.billing_records`、`iam.users`、
-`analytics.report_execution_records`）会被新建。
+生产侧实测（2026-11-15 08:21 预检）：17 条目标约束**全部不存在**，
+本迁移会逐条新建；`wms` 已剔除，不在生产建约束。
 
 ## 6. dev 演练
+
+> 6.1–6.5 是 2026-11-15 首轮 18 表演练记录。窗口 E 剔除 `wms` 后的 17 表重跑见
+> §6.6，以 §6.6 为准。
 
 库：`topems`（dev，`_sqlx_migrations` max = `20261114170000`）。
 
@@ -210,12 +219,82 @@ COMMIT
 再次执行正向迁移，6 条约束重新重建、12 条 SKIP，逐值验证再次通过；
 dev 最终停留在「新值域」状态，且 `_sqlx_migrations` 未改动。
 
+### 6.6 窗口 E 重跑（17 表口径，2026-11-15 09:xx）
+
+1）先用**旧 18 表回滚**（`git show HEAD:...rollback.sql`）把 dev 恢复到演练前基线：
+
+```bash
+git -C /private/tmp/topems-dud-20261115 show HEAD:database/rollback/20261115000000_w7_b4_status_check_widen_forward.rollback.sql > old_rollback_18.sql
+psql -h /tmp -U air -d topems -X -v ON_ERROR_STOP=1 -f old_rollback_18.sql
+psql -h /tmp -U air -d topems -X -q -f snapshot.sql > baseline_restored.txt
+diff before.txt baseline_restored.txt        # 空
+```
+
+```text
+NOTICE:  status-unwiden ROLLBACK OK: 18 条约束已恢复到 20261114100000 目标定义
+DIFF EMPTY（18 行约束定义与 baseline 完全一致）
+```
+
+2）应用 17 表新版：
+
+```bash
+psql -h /tmp -U air -d topems -X -v ON_ERROR_STOP=1 --single-transaction \
+  -f database/migrations/20261115000000_w7_b4_status_check_widen_forward.sql
+```
+
+```text
+NOTICE:  status-widen APPLY OK: 17 张表的约束均已落地并通过逐值验证
+NOTICE:  status-widen VERIFY OK: 17 条约束存在、值域覆盖目标、存量无越界
+统计：SKIP 11 / 重建 6（与旧版相同，wms 不再参与）
+```
+
+3）逐值验证（`verify_values.sql`，六表 45 个目标值 + 非法值 + NULL）：
+
+```text
+NOTICE:  ACCEPT | rejected           | accepted=t
+NOTICE:  REJECT | __illegal_status__ | accepted=f
+NOTICE:  NULL   | <null>             | accepted=t
+NOTICE:  DRILL OK: 六表全部目标值被接受，非法值被拒绝，NULL 语义保留
+```
+
+4）真实 DML 探针（`analytics.report_execution_records`）：
+
+```text
+INSERT 0 1
+ERROR:  new row for relation "report_execution_records" violates check constraint "ck_report_execution_records_status_standard"
+ROLLBACK
+ROLLBACK
+```
+
+探针后 `select count(*) from analytics.report_execution_records` = 0，无残留。
+
+5）新回滚文件验证：
+
+```text
+NOTICE:  status-unwiden ROLLBACK OK: 17 条约束已恢复到 20261114100000 目标定义
+COMMIT
+```
+
+回滚后与 baseline `diff` 为空（`wms` 未被触碰，定义本就一致）。
+
+6）再次正向应用并做幂等复跑：
+
+```text
+第一次重放：SKIP 11 / 重建 6
+第二次重放：SKIP 17 / 重建 0
+NOTICE:  status-widen APPLY OK: 17 张表的约束均已落地并通过逐值验证
+NOTICE:  status-widen VERIFY OK: 17 条约束存在、值域覆盖目标、存量无越界
+```
+
+dev 最终停在「17 表新值域」，`_sqlx_migrations` max 仍为 `20261114170000`（演练不记账本）。
+
 ## 7. 生产投递前置（等放行，本次不做）
 
 1. 生产窗口先停写 8099，确认无连接后再执行（`ADD CONSTRAINT` 取 ACCESS EXCLUSIVE）；
-2. 用 `apply-forward.sh --apply-deferred 20261115000000 --ticket <工单>` 单版本投递，
-   不要与 `20261114180000`～`20261114202000` 混批；
-3. 投递后核对：账本 +1、18 条约束存在、六表新增值可写、无 `23514`；
+2. 生产水位为 `20261114202000`，本版本更高，走**正常通道**：
+   `apply-forward.sh --only 20261115000000 --ticket TOPEMS-W7-B4-STATUS-20261115`
+   （无需 `--apply-deferred`），单版本投递；
+3. 投递后核对：账本 +1、17 条约束存在、六表新增值可写、无 `23514`；
 4. 若需回滚：先停写并清理新增值，再执行回滚文件；`analytics` 回滚后只允许 `running`，
    必须同步回退二进制，否则 `completed/failed` 写入会失败。
 
@@ -226,4 +305,5 @@ dev 最终停留在「新值域」状态，且 `_sqlx_migrations` 未改动。
 - `database/migration_manifest.yaml`（旧版本 `superseded` + 新版本 `to_apply`）
 - `database/checksums.txt`（validate.sh 自动更新）
 - `docs/database/status-check-widen-forward-20261115.md`（本文）
+- `docs/database/workorder-wms-po-snapshot-backfill-20261115.md`（K7 后续工单：列补齐 + 约束）
 - `docs/database/schema-baseline-drift-2026-11-14.md`（补充取代结论）

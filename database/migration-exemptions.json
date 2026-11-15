@@ -81,6 +81,18 @@
       ],
       "evidence": "prod 只读核验（2026-11-14）：SELECT count(*) FROM _sqlx_migrations WHERE version=20261114100000 = 0，max=20261113100000/668 行。演练库 topems_atomic_pos（topems 克隆 + 账本锚 20261113100000）：apply-forward --only 20261114100000 单事务内 18× status-widen OK + VERIFY OK + INSERT 0 1，账本 checksum 与 shasum -a 384 一致（856dbab3…dacb6），新连接复核 ehs 约束含 draft；同文件重跑 18× SKIP + VERIFY OK。失败模拟 topems_atomic_fail（前置于三值约束、账本无该行）：文件末尾临时追加 SELECT 1/0，入口报 ERROR division by zero 并中止，复核账本 0 行、18 条约束均未放宽（any_widened=0），即约束与账本一起回滚；演练后文件恢复，SHA-384 不变。回滚文件仍可用：18× status-unwiden OK、EXIT=0。validate.sh Errors 0 / Checksum errors 0。",
       "approved": true
+    },
+    {
+      "id": "B20261115-windowE-status-widen-17tables",
+      "date": "2026-11-15",
+      "committer": "air",
+      "reason": "20261115000000 为尚未进入任何账本的前向补丁（dev 演练刻意不写 _sqlx_migrations；prod 只读核验 679 行/max 20261114202000，无该版本）。窗口 E 投前预检发现 prod wms.purchase_order_snapshots 只有 3 列（id/deleted_at/tenant_id）、没有 status 列，迁移的前置断言会在该表 ABORT，整笔回滚；故把 18 表矩阵收敛为 17 表并同步回滚文件。属『未应用迁移』的受控内容修正，不新增版本号、不改已推送历史。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261115000000_w7_b4_status_check_widen_forward.sql",
+        "20261115000000_w7_b4_status_check_widen_forward.rollback.sql"
+      ],
+      "evidence": "dev topems（账本 max 20261114170000，无 20261115000000）：先用旧 18 表回滚恢复到演练前基线，18 条约束定义 diff 为空；再用 17 表新版 --single-transaction 应用，11 SKIP/6 重建、APPLY OK 17、VERIFY OK 17；六表 45 个目标值 accepted=t、__illegal_status__ accepted=f、NULL accepted=t；analytics 真实 INSERT status=completed 成功、非法值 23514 后 ROLLBACK，残留行 0；新回滚 17 条恢复目标定义后与基线 diff 为空；再次重放幂等 SKIP 17/重建 0，终态与首轮 wide 快照一致。prod 只读核验（2026-11-15）：_sqlx_migrations 679 行/max 20261114202000，目标约束 18/18 不存在；wms.purchase_order_snapshots 仅 3 列。validate.sh Errors 0 / Checksum errors 0。",
+      "approved": true
     }
   ]
 }

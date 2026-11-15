@@ -14,6 +14,14 @@
 --   历史迁移已推送不可改；本文件以更高版本号前向承接：约束不存在则创建，
 --   存在但值域不符则按新定义重建。
 --
+-- 2026-11-15 窗口 E 修订（17 表口径）：
+--   排除 wms.purchase_order_snapshots。生产该表只有 3 列
+--   （id / deleted_at / tenant_id），没有 status 列；dev 为 14 列，属已登记的
+--   生产列漂移（见 topems-table-inventory-2026-11-14.md §7 K7，缺 11 列）。
+--   本迁移的前置断言会在该表直接 ABORT，故本窗口不纳入；待补列后由后续
+--   迁移单独建立 ck_purchase_order_snapshots_status_standard。
+--   版本号保持 20261115000000：本文件尚未进入任何账本，同一件事不拆成两笔。
+--
 -- owner:  platform-db
 -- ticket: TOPEMS-W7-B4-STATUS-WIDEN-20261115
 --
@@ -34,7 +42,7 @@
 --
 -- 回滚：
 --   database/rollback/20261115000000_w7_b4_status_check_widen_forward.rollback.sql
---   回滚把 18 条约束恢复到 20261114100000 的目标定义（即 dev 在应用本补丁前的
+--   回滚把 17 条约束恢复到 20261114100000 的目标定义（即 dev 在应用本补丁前的
 --   状态）。注意：一旦写入过本批新增值（suspended/completed/open…），回滚的
 --   ADD CONSTRAINT 会因存量行校验失败而中止，这是预期行为。
 --
@@ -45,7 +53,7 @@ SET lock_timeout = '5s';
 SET statement_timeout = '120s';
 
 -- ---------------------------------------------------------------------------
--- 1) 应用：按目标值域创建或重建 18 条 ck_*_status_standard
+-- 1) 应用：按目标值域创建或重建 17 条 ck_*_status_standard
 -- ---------------------------------------------------------------------------
 DO $status_widen_forward$
 DECLARE
@@ -83,7 +91,6 @@ BEGIN
             ('tms',        'tms_carriers',                      'ck_tms_carriers_status_standard',                      ARRAY['active','inactive','archived','pending_review','suspended','blacklisted','rejected']),
             ('tms',        'tms_drivers',                       'ck_tms_drivers_status_standard',                       ARRAY['active','inactive','archived','suspended']),
             ('tms',        'tms_vehicles',                      'ck_tms_vehicles_status_standard',                      ARRAY['active','inactive','archived','maintenance']),
-            ('wms',        'purchase_order_snapshots',          'ck_purchase_order_snapshots_status_standard',          ARRAY['active','inactive','archived','pending','approved']),
             ('integration','integration_sync_logs',             'ck_integration_sync_logs_status_standard',             ARRAY['active','inactive','archived','pending','triggered','success','failed']),
             ('integration','mes_erp_sync_logs',                 'ck_mes_erp_sync_logs_status_standard',                 ARRAY['active','inactive','archived','pending','success','failed']),
             ('iam',        'users',                             'ck_users_status_standard',                             ARRAY['active','inactive','archived','pending']),
@@ -281,7 +288,6 @@ BEGIN
             ('tms',        'tms_carriers',                      'ck_tms_carriers_status_standard',                      ARRAY['active','inactive','archived','pending_review','suspended','blacklisted','rejected']),
             ('tms',        'tms_drivers',                       'ck_tms_drivers_status_standard',                       ARRAY['active','inactive','archived','suspended']),
             ('tms',        'tms_vehicles',                      'ck_tms_vehicles_status_standard',                      ARRAY['active','inactive','archived','maintenance']),
-            ('wms',        'purchase_order_snapshots',          'ck_purchase_order_snapshots_status_standard',          ARRAY['active','inactive','archived','pending','approved']),
             ('integration','integration_sync_logs',             'ck_integration_sync_logs_status_standard',             ARRAY['active','inactive','archived','pending','triggered','success','failed']),
             ('integration','mes_erp_sync_logs',                 'ck_mes_erp_sync_logs_status_standard',                 ARRAY['active','inactive','archived','pending','success','failed']),
             ('iam',        'users',                             'ck_users_status_standard',                             ARRAY['active','inactive','archived','pending']),

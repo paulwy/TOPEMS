@@ -1578,11 +1578,12 @@ pending_forward_patches:
     file: "database/migrations/20261115000000_w7_b4_status_check_widen_forward.sql"
     status: to_apply
     effect: >-
-      前向承接 20261114100000：18 张表的 ck_*_status_standard 幂等创建/重建。
+      前向承接 20261114100000：17 张表的 ck_*_status_standard 幂等创建/重建。
       约束不存在则创建；存在但值域不符则 DROP + ADD。6 张表按代码实际写入扩容：
       tms_carriers +pending_review/suspended/blacklisted，finance_v60_alerts +draft/pending，
       qa_alert_messages +open/pending，integration_sync_logs +pending/success/failed，
-      mes_erp_sync_logs +pending，report_execution_records +completed/failed
+      mes_erp_sync_logs +pending，report_execution_records +completed/failed。
+      窗口 E 剔除 wms.purchase_order_snapshots（生产缺 status 列，K7），不建其约束
     destructive_scan: >-
       DO 块内动态 SQL ALTER TABLE DROP/ADD CONSTRAINT；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；
       前置断言表/列存在且 status 为字符类型，存量越界、同表其他 status CHECK 拒绝目标值、
@@ -1595,5 +1596,6 @@ pending_forward_patches:
       前向补丁 > 20261114202000，不改已推送历史；文件内无 BEGIN/COMMIT；
       配 database/rollback/20261115000000_w7_b4_status_check_widen_forward.rollback.sql；
       回滚恢复到 20261114100000 目标定义，写入过新增值时会因存量行校验失败而中止；
-      生产投递需单独窗口，本任务只合 main、不投生产
+      生产水位 20261114202000，走正常通道单版本投递（ticket TOPEMS-W7-B4-STATUS-20261115）；
+      wms.purchase_order_snapshots 的列补齐与状态约束另开工单，不在本迁移内
 
