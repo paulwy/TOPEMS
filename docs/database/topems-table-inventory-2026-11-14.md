@@ -1406,4 +1406,24 @@ order by 1;
 - **状态（2026-11-15）**：**已修复**，迁移 `20261115100000_w7_b4_wms_po_snapshot_backfill`（提交 `e2ed366de`，生产投递 2026-11-15 08:57:36 +08，账本 681）。prod 补齐至 14 列并与 dev 逐列 diff 为空；`ck_purchase_order_snapshots_status_standard` 值域 `active/inactive/archived/pending/approved`；事务内非法值取证 `23514` 后已回滚，表内 0 行。回滚文件 `database/rollback/20261115100000_w7_b4_wms_po_snapshot_backfill.rollback.sql`（表内有数据时拒绝执行）。
 - **备注**：`docs/quality/prod-column-drift-full-2026-11-09.md` 的 `wms.purchase_order_snapshots`（11）节已登记同一批缺列但未修，本项 K7 作为跟踪编号。`plugin_wms.purchase_order_snapshots`（13 列）当前 0 行，且不是代码路径的目标表。
 
+### K8. 5 张表的 RLS 谓词为 fail-open，无租户上下文的连接可读全表（**待处置**）
+
+- **位置**：`rls_tenant_isolation` 策略本体位于 `crm.billing_records`、`erp.erp_master_data_refs`、`tms.tms_carriers`、`tms.tms_drivers`、`tms.tms_vehicles`（prod 与 dev 定义同义）。
+- **现象（2026-11-15 dev 实测，非超户 `topems_app`，`rolsuper=false`、`rolbypassrls=false`）**：A、B 两个租户各插一行后——GUC=租户A 读只看到 A 的 1 行 ✅；GUC=A 写 `tenant_id=B` 被拒（`insufficient_privilege`）✅；但**无 GUC 的连接读到 2 行**（A、B 都可见）。prod 上这 5 张表的策略定义与 dev 相同，因此 prod 同样成立，不是本次 dev 对齐引入的漂移。
+- **谓词原文**（`crm.billing_records` 与 tms 三张，`USING` 与 `WITH CHECK` 同构）：
+
+```sql
+((current_setting('app.tenant_id'::text, true) IS NULL)
+ OR (current_setting('app.tenant_id'::text, true) = ''::text)
+ OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text)
+ OR (tenant_id IS NULL)
+ OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))
+```
+
+  `erp.erp_master_data_refs` 为等价的 `COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '000…0'` 复合式，同样含 `current_setting(...) IS NULL` 与 `tenant_id IS NULL` 两个放行分支。
+- **与已完成批次的同类性**：与 M2b（`20261114202000`）、M1（`20261114200000`）同属「旧 fail-open 策略让收紧失效」家族。区别是前两批的成因是**多条 permissive 策略 OR 短路**（残留 `tenant_isolation_*`，已在 dev 清理），这 5 张表是**单条策略内部的 `IS NULL` 放行分支**，必须重写策略本体才能收紧。
+- **影响面**：只影响完全不带租户上下文的连接（裸池、后台任务、手工 SQL）。带 GUC 的正常业务读写隔离正确，跨租户写被 `WITH CHECK` 拒绝。风险点在于：任何漏设 GUC 的代码路径会静默读到全表，且无日志、无 0 行告警。
+- **建议处置**：下一批用新迁移把 5 张表统一收紧为 `app.rls_system = 'on'`（显式系统通道）或 `tenant_id = GUC` 的 fail-closed 形状，`USING` 与 `WITH CHECK` 同步改写；落刀前先逐表核查代码侧读写路径的租户绑定情况，**先出方案再改**，避免收紧后出现静默 0 行。
+- **状态（2026-11-15）**：**待处置**。本轮按要求让 dev 与 prod 保持一致，dev 不做额外收紧；与 dev 账本对齐同批的登记见 `docs/database/schema-baseline-drift-2026-11-14.md`。
+
 
