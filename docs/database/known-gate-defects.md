@@ -36,3 +36,24 @@
   ```
 - **建议后续（未做）**：CI 侧禁止注入该豁免变量；如需更强约束，可要求豁免必须同时提供工单号（`MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER_TICKET`）并写审计日志。
 
+## K9 plugin-registry 全量 `Db::scope*` 缺 RLS 上下文 —— OPEN（2026-11-15 登记，不修）
+
+- **现象**：2026-11-15T08:11:51Z（主机本地 16:11:51，UTC+08）同一页面加载触发两条 ERROR，间隔 47ms：
+  ```
+  2026-11-15T08:11:51.095164Z  INFO  topems_plugin_registry::modules::plugin::handlers::marketplace: [Plugin] Listing plugins with filters: PluginFilters { category: None, search: None, is_free: None, sort_by: None, page: None, page_size: None }
+  2026-11-15T08:11:51.096724Z ERROR  topems_plugin_registry::modules::plugin::handlers::marketplace: [Plugin] Failed to open read scope: encountered unexpected or invalid data: RLS context missing: 无租户上下文，禁止执行租户数据查询；后台任务/脚本请改用 Db::scope_system()/scope_read_system() 或按租户遍历
+  2026-11-15T08:11:51.135479Z  INFO  topems_plugin_registry::modules::plugin::handlers::runtime: [Plugin] Fetching navigation config for tenant: Some("00000000-0000-0000-0000-000000000001")
+  2026-11-15T08:11:51.142988Z ERROR  topems_plugin_registry::modules::plugin::handlers::runtime: [Plugin] Failed to open read scope: encountered unexpected or invalid data: RLS context missing: 无租户上下文，禁止执行租户数据查询；后台任务/脚本请改用 Db::scope_system()/scope_read_system() 或按租户遍历
+  ```
+  对应端点：`GET /api/plugin/marketplace/list`、`GET /api/plugin/navigation-config`。
+- **根因**（两处叠加）：
+  1. plugin-registry 用的是**自己实现**的 `jwt_auth_middleware`（[svc/plugin-registry/src/shared/middleware.rs:13](../../svc/plugin-registry/src/shared/middleware.rs#L13)），只校验 JWT 并注入 `Claims`，**从不调用** `topems_shared_auth::middleware::tenant::scope_request_tenant`；而 `Db::scope_read()` 的 `apply_request_tenant()` 只认 task-local `RLS_REQUEST_TENANT`（[lib/shared-db/src/scope.rs:273](../../lib/shared-db/src/scope.rs#L273)），缺失即 `sqlx::Error::Protocol`。
+  2. `marketplace` 系列路由被单独挂在**无鉴权**的 `stateful_public`（[svc/plugin-registry/src/main.rs:85](../../svc/plugin-registry/src/main.rs#L85)-129），且路径前缀被 `is_public_path` 豁免（[lib/shared-auth/src/auth.rs:894](../../lib/shared-auth/src/auth.rs#L894)-911），连 Claims 都没有。
+- **影响面**：机制上是**系统性**的——plugin-registry 内任何走 `Db::scope*` 的 handler 都会这样失败，不只是这两个端点。当前生产日志覆盖 2026-11-14T06:58Z 起至今，该错误全量仅 2 次（两个端点各 1 次），说明其余 scope 路径尚未被真实调用。
+- **风险评估**：**当前无数据泄漏**。失败发生在作用域事务建立之前，零 SQL 下发，handler 直接返回错误（fail-closed）。**禁止**用"未设 GUC 即豁免/兜底放行"的方式消除报错：那会让 `navigation-config` 这类租户表查询（`iam.core_tenant_plugins`）失去 RLS 兜底，等于把 K8 刚收紧的 fail-open 重新打开。
+- **修复方向（未实施）**：
+  - 首选：plugin-registry 的 `jwt_auth_middleware` 内补 `scope_request_tenant(rls_request_tenant(&claims), next.run(req))`，与其它服务对齐；
+  - 或：把这些 handler 显式改走 `scope_read_system()` 并在 SQL 里显式绑定租户谓词；
+  - `marketplace` 查的是全局目录表 `core.core_plugins`（按设计无租户谓词），走 system 作用域合理；`navigation-config` 必须保留租户谓词与 RLS。
+- **状态**：OPEN，与 B 类 8 列（代码引用不存在的列）一起在代码轮处理，不在补列迁移内动手；本批只登记。
+
