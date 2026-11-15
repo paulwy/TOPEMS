@@ -1920,3 +1920,16 @@ pending_forward_patches:
       - { kind: catalog, ref: "dev pg_indexes", detail: "23 只索引定义逐字比对（含 idx_quality_standards_code_unique 的 partial UNIQUE (code, organization_id) WHERE deleted_at IS NULL）" }
       - { kind: code, ref: "svc/qms/src/modules/quality/*", detail: "质量标准的写/读路径直接引用上述列；prod 缺列 42703" }
     note: "父子两表放同一版本：均为 0 行空壳、纯加列加索引，父表先建 + 子表 FK 需同窗原子；rollback 单文件按逆序可完整还原。既有列 id 的默认值差异（dev uuid_generate_v4 / prod gen_random_uuid）属类型漂移，本批不改"
+
+  - version: "20261115142200"
+    file: "database/migrations/20261115142200_erp_expenses_15cols.sql"
+    status: to_apply
+    effect: "erp.expenses 补 15 列（organization_id/expense_number/applicant_name/department_id/expense_type/amount/description/expense_date/receipt_count/status/approver_id/approved_at/reimbursed_at/created_at/updated_at，定义同 dev）+ 唯一约束 expenses_expense_number_key(expense_number) + 4 只索引（idx_expenses_expense_number/organization_id/status/deleted_at）"
+    destructive_scan: "仅 ADD COLUMN + ADD CONSTRAINT(UNIQUE) + CREATE INDEX；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: data, ref: "prod count(*)", detail: "0 行；expense_number/amount 为 NOT NULL 无默认值，可直接加（迁移内仍保留行数门）" }
+      - { kind: catalog, ref: "prod pg_indexes/pg_constraint", detail: "prod 仅 expenses_pkey + idx_erp_expenses_tenant_id；dev 另有的唯一约束/4 只索引全部缺失，本次一并补齐" }
+      - { kind: catalog, ref: "prod pg_class/pg_policies", detail: "relrowsecurity=true / relforcerowsecurity=true；策略 rls_tenant_isolation 只引用既有 tenant_id，新增列不进入谓词，无 RLS 副作用" }
+      - { kind: catalog, ref: "prod/dev pg_trigger", detail: "两侧均无触发器；updated_at 不自动维护（与 dev 一致），本迁移不引入" }
+      - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "15 列类型/长度/精度/可空/默认值（organization_id=uuid_generate_v4()、status='pending'、created_at/updated_at=now()）与 5 只索引定义逐项取自 dev 实读" }
+    note: "文档 §7.4 把本表归到 operational.rs 报销 CRUD，实测该路径绑定的是 finance.expenses，全仓无 erp.expenses 直接 SQL 引用；本批收益为结构对齐，不宣称报销路径已修复。既有列 id 默认值差异（dev uuid_generate_v4 / prod gen_random_uuid）属类型漂移，本批不改"
