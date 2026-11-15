@@ -1877,3 +1877,18 @@ pending_forward_patches:
       - { kind: data, ref: "prod count(*)", detail: "0 行，可直接加 NOT NULL" }
       - { kind: catalog, ref: "prod pg_class", detail: "该表 rls=false、无策略，补列无 RLS 副作用" }
     note: "同一语句还读 MAX(created_at)，prod 缺 created_at 等 4 列；本迁移后该查询仍会在 created_at 上 42703，不得据此宣称路径已修复"
+
+  # ===== 空壳表整表对齐（2026-11-15 起，共 6 批，分批单版本投产） =====
+  # 口径来源：docs/database/code-schema-gap-2026-11-15.md §7（9 表 / 159 列，prod 全部 0 行）。
+  # 边界：只补列 + 依赖索引/约束；不改已有列类型（类型漂移 16 处另走）、不改代码、不收敛 RLS 策略。
+  - version: "20261115141900"
+    file: "database/migrations/20261115141900_portal_quick_actions_11cols.sql"
+    status: to_apply
+    effect: "portal.portal_quick_actions 补 11 列（tenant_id/name/description/icon/action_type/target_url/service_code/sort_order/is_active/created_at/updated_at，定义同 dev）并建 3 只索引（idx_quick_actions_active/service/tenant）"
+    destructive_scan: "仅 ADD COLUMN + CREATE INDEX；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/portal/src/modules/quick_actions.rs:90", detail: "门户首页快捷入口 SELECT 列清单读 7 个新增列；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "0 行，tenant_id/name/target_url 为 NOT NULL 无默认值，可直接加（迁移内仍保留行数门）" }
+      - { kind: catalog, ref: "prod pg_class/pg_policies", detail: "relrowsecurity=true / relforcerowsecurity=true；策略 portal_allow_all_portal_quick_actions 谓词为常量 true，不引用新增列，补列无 RLS 副作用" }
+      - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "11 列定义与 3 只索引定义逐项取自 dev 实读；后置断言按同一定义校验" }
+    note: "本批不收敛 RLS（prod 仍 allow-all，与 dev 的 tenant_isolation 差异留后续）；不改任何已有列类型与代码"
