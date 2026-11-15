@@ -513,6 +513,12 @@ pre-push:
       tags: database migrations
       run: bash scripts/ci/check-ledger-ddl-drift.sh
 
+    # [2026-11-15 NEW Gate] manifest 台账漂移：登记 / 磁盘迁移 / checksums.txt 三者不一致即阻断。
+    # 秒级（711 文件 SHA-256）；无 glob 过滤，每次 push 全量机械比对。
+    manifest-drift:
+      tags: database migrations
+      run: bash scripts/migration/gen-manifest.sh --check
+
     # [2026-11-06 NEW Gate INSERT] 迁移 INSERT 列序/列数静态防线：
     # 历史事故：20261107000011 的 VALUES 行实际为 (code, resource, action, name, level)，
     #           但派生表别名声明为 (code, name, resource, action, level)，写入后
