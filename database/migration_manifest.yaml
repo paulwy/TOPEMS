@@ -30,12 +30,12 @@ scope: >-
 
 ledger_evidence:
   current_prod:
-    ledger_rows: 679
+    ledger_rows: 684
     ledger_rows_14digit: 665
     ledger_rows_legacy_3digit: 14
     failed_rows: 0
-    anchor: "20261114202000"
-    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1；2026-11-15 生产账本只读复核（topems_prod，679 行 / max 20261114202000）"
+    anchor: "20261115130000"
+    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1；2026-11-15 生产账本只读复核（topems_prod，684 行 / max 20261115130000，failed 0）"
   baseline_snapshot:
     file: "database/baseline/prod_ledger_20261105235700.sql"
     ledger_rows: 576
@@ -1697,3 +1697,99 @@ pending_forward_patches:
       （按 prod 快照逐字重建，文末列出回滚后需人工复核的属主/授权/策略/数据四点）。
       投产后 scripts/ci/data/prod_cols.psv 仍登记两表，decode-contract 会报「目录存在、库中已删」，
       如需消差执行 scripts/ci/refresh-prod-cols.sh（ticket TOPEMS-SHELL-TABLES-20261115）
+
+  # ===== 2026-11-15 族清理 batch1：A 组 12 张非权威成员数据迁移 =====
+  # 依据：docs/database/table-family-authority-recommendations-2026-11-15.md（A1/A2）
+  # dev 已应用 10 条（账本 699 行，max 20261115141100）；2 条因外键/依赖 hold。
+  # prod 一律 to_apply：本批为 DML 回填，不含 DDL/删除。
+  - version: "20261115140000"
+    file: "database/migrations/20261115140000_family_assets_to_erp_assets.sql"
+    status: to_apply
+    effect: "public.assets → erp.assets 数据迁移（31 列全同，1 行已存在且逐列一致，DO 块断言行数相等）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用；回滚 database/rollback/20261115140000_family_assets_to_erp_assets.rollback.sql（空操作 SELECT 1）"
+  - version: "20261115140100"
+    file: "database/migrations/20261115140100_family_employees_to_hrm_employees.sql"
+    status: to_apply
+    effect: "public.employees → hrm.employees（41 列同名，19 行一致）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用；回滚为空操作"
+  - version: "20261115140200"
+    file: "database/migrations/20261115140200_family_mail_emails_to_core_emails.sql"
+    status: to_apply
+    effect: "mail.emails → public.core_emails（13 列）：from_address→from_email、to_addresses jsonb 数组 string_agg→to_email、body_html→html_body、cc/bcc jsonb→text[]、is_read=false"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用（23 行）；回滚按源 id 删除"
+  - version: "20261115140300"
+    file: "database/migrations/20261115140300_family_erp_connections_to_integration.sql"
+    status: to_apply
+    effect: "public.erp_connections → integration.erp_connections（16 列同名，38 行）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用"
+  - version: "20261115140400"
+    file: "database/migrations/20261115140400_family_erp_mappings_to_integration.sql"
+    status: to_apply
+    effect: "public.erp_mappings → integration.erp_mappings（15 列同名，31 行）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用"
+  - version: "20261115140500"
+    file: "database/migrations/20261115140500_family_external_erp_sync_logs_to_integration.sql"
+    status: to_apply
+    effect: "public.external_erp_sync_logs → integration.external_erp_sync_logs（13 列同名，315 行）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用"
+  - version: "20261115140600"
+    file: "database/migrations/20261115140600_family_storage_files_to_core_files.sql"
+    status: to_apply
+    effect: "storage.files → public.core_files（43 行）：filename→name、storage_path→path、file_size→size、owner_id→uploader_id、content_type→mime_type、parent_id→folder_id；status deleted→archived（8 行，删除语义由 deleted_at 承载）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING；本迁移创建 public.migration_quarantine_rows / public.migration_column_rewrites（IF NOT EXISTS）"
+    note: "dev 已应用（2026-11-15 修正映射后重跑，43 行）；每行 status 改写写入 migration_column_rewrites（8 条 old_value=deleted），事后可复原"
+  - version: "20261115140700"
+    file: "database/migrations/20261115140700_family_doc_service_files_to_core_files.sql"
+    status: to_apply
+    effect: "doc_service.files → public.core_files（9 行 id 全部被 storage.files 覆盖且更旧 → 外层去重后插入 0）；created_by 仅当其本身是合法 UUID 文本时按真实值写入 uploader_id，否则该行（目标中尚不存在时）写入 migration_quarantine_rows，不兜底 admin"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT DO NOTHING"
+    note: "dev 已应用（按 owner 裁决 ③ 重跑：去除 admin 兜底；隔离 0 条——9 行均已被 storage 版本覆盖，无需补操作人）"
+  - version: "20261115140800"
+    file: "database/migrations/20261115140800_family_tenant_plugins_to_iam.sql"
+    status: hold
+    effect: "core.core_tenant_plugins → iam.core_tenant_plugins（14 列，4 行）：purchase_order_id uuid→text"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    reason: >-
+      owner 裁决 ①：继续 hold，不迁。FK core_tenant_plugins_tenant_id_fkey → iam.core_tenants(id)
+      ON DELETE CASCADE，而 iam.core_tenants 实测 0 行；F105 已判定它为空壳、dev 侧删除，
+      不在迁移里绕过这个冲突。取证：iam.core_tenant_plugins 有 15 处运行期 SQL 引用
+      （svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs 与 simple_api.rs，
+      含 INSERT/UPDATE/SELECT），core.core_tenant_plugins 仅 1 处注释引用（marketplace.rs:50）
+      与 fixtures，零运行期引用；dev 行数 4 / 0。因 iam 侧并非零引用，不转 D 类“待下线候选”。
+    release_conditions:
+      - "iam.core_tenants 的权威归属先定（补租户 或 改判空壳处置），使目标外键可满足"
+      - "或 owner 明确改判 tenant_plugins 权威表，并给出 core/iam 两侧引用收敛方案"
+  - version: "20261115140900"
+    file: "database/migrations/20261115140900_family_tenant_users_to_public.sql"
+    status: hold
+    effect: "flow.core_tenant_users → public.core_tenant_users（9 列同名，1 行）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    reason: >-
+      owner 裁决 ②：F105（flow.core_tenants → public.core_tenants）不并入本步，本迁移继续 hold。
+      FK core_tenant_users_tenant_id_fkey → public.core_tenants(id)；源行 tenant_id=05a97d16-…
+      仅存在于 flow.core_tenants（1 行），public.core_tenants 无此行。租户表牵动 RLS 上下文与 claims，
+      必须单独立项并先做影响面核查（哪些表按 tenant_id 关联、哪些缓存/令牌带租户、迁移期间租户集是否变化）。
+      本步只记录依赖，不执行。
+    depends_on:
+      - "F105 flow.core_tenants → public.core_tenants（单独立项）"
+    release_conditions:
+      - "F105 完成且 public.core_tenants 含 tenant_id=05a97d16-8e26-4a39-9147-c02df29ef1e4"
+      - "RLS/claims/缓存影响面核查通过"
+  - version: "20261115141000"
+    file: "database/migrations/20261115141000_family_core_workflows_to_public.sql"
+    status: to_apply
+    effect: "flow.core_workflows → public.core_workflows（14 列同名，20 行；同 id 行 updated_at 全部更新，以本表为准）"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
+    note: "dev 已应用"
+  - version: "20261115141100"
+    file: "database/migrations/20261115141100_family_flow_workflows_to_public.sql"
+    status: to_apply
+    effect: "flow.workflows → public.core_workflows（18 行 id 全部被覆盖且更旧 → 外层去重后插入 0）；is_active→status active/inactive；created_by 为 NULL 且目标 NOT NULL 的行写入隔离表，有真实值则按真实值迁移，不兜底 admin"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT DO NOTHING"
+    note: "dev 已应用（按 owner 裁决 ③ 重跑：去除 admin 兜底；隔离 0 条——18 行均已被 flow.core_workflows 的新版本覆盖，不涉及操作人补全）"

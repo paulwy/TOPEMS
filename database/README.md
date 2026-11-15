@@ -149,6 +149,34 @@ psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql
 
 - **守卫脚本层 vs 重构迁移链**（B14 重构级评估）：用户定案**当前维持脚本层**（守卫脚本 + validate.sh 三方核对）。登记——**未来一次性迁移基线重建窗口（大版本重构/迁移链重写）再评估**是否将守卫逻辑内迁进迁移链本身，届时可一并裁决"脚本层守卫"是否仍为最佳形态。本窗口到来前不做重构。
 
+## 迁移机制表（非业务表）
+
+以下两张表由迁移脚本自行创建（`CREATE TABLE IF NOT EXISTS`），承载“数据迁移时的分歧与改写留痕”，**不是业务表，不得被业务代码读写**，也不参与表族清理的空表统计。
+
+### `public.migration_quarantine_rows`
+
+- **谁写**：迁移文件（目前 `20261115140700`、`20261115141100`）在插入前写入；业务代码、定时任务均不写。
+- **什么条件写**：源表某行在目标表中尚不存在（去重后确需插入），但目标列 `NOT NULL` 而源侧缺失该值（如缺操作人 `uploader_id` / `created_by`）。此时**不伪造默认值、不兜底账号**，整行 JSON 落隔离表等人工补。
+- **怎么查**：
+  ```sql
+  SELECT migration_version, source_table, source_pk, missing_fields,
+         row_json ->> 'id' AS 源主键, created_at
+  FROM public.migration_quarantine_rows ORDER BY created_at DESC;
+  ```
+  唯一键 `(migration_version, source_table, source_pk)`，可重复执行迁移而不会重复登记。
+- **保留期限**：长期保留，**不得随迁移或回滚清理**；只有人工补齐数据、把该行正式写入目标表后，才可按 `source_pk` 单条删除并留一句处置说明。当前 dev 为 0 条。
+
+### `public.migration_column_rewrites`
+
+- **谁写**：迁移文件在写入前逐行登记；目前只有 `20261115140600`（`status` 的 `deleted → archived`）写入，dev 8 条。
+- **什么条件写**：源值因目标 `CHECK`/枚举/类型收窄而必须改写，改完会丢失“原值”语义时。登记 `旧值 → 新值 + 理由`，保证事后任何人能复原“这行原本是什么”。
+- **怎么查**：
+  ```sql
+  SELECT row_pk, column_name, old_value, new_value, reason
+  FROM public.migration_column_rewrites WHERE migration_version = '20261115140600';
+  ```
+- **保留期限**：与源表同寿——源表还在就保留；源表被删除并完成备份归档后，可与备份一并退役。
+
 ## 相关文档
 
 - [init/README.md](init/README.md) — 数据库重建详细步骤
