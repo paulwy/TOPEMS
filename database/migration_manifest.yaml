@@ -1892,3 +1892,17 @@ pending_forward_patches:
       - { kind: catalog, ref: "prod pg_class/pg_policies", detail: "relrowsecurity=true / relforcerowsecurity=true；策略 portal_allow_all_portal_quick_actions 谓词为常量 true，不引用新增列，补列无 RLS 副作用" }
       - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "11 列定义与 3 只索引定义逐项取自 dev 实读；后置断言按同一定义校验" }
     note: "本批不收敛 RLS（prod 仍 allow-all，与 dev 的 tenant_isolation 差异留后续）；不改任何已有列类型与代码"
+
+  - version: "20261115142000"
+    file: "database/migrations/20261115142000_finance_core_vouchers_26cols.sql"
+    status: to_apply
+    effect: "finance.core_finance_vouchers 补 26 列（voucher_number/year/month/total_amount/currency_code/submitter_*/maker_*/submitted_at/approver_*/checker_*/approved_at/poster_*/bookkeeper_*/posted_at/is_reversed/reverse_voucher_id/reversed_at/attachment_count/summary/updated_by，定义同 dev，全部 nullable）并补外键 core_finance_vouchers_tenant_id_fkey（tenant_id → public.core_tenants(id)）"
+    destructive_scan: "仅 ADD COLUMN + ADD CONSTRAINT(FK)；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/finance/src/modules/audit_v52.rs:911/858/1317、modules/mod.rs:3845/3884、periods.rs:702、elimination_flow.rs:1204、event_handlers/mod.rs:239", detail: "读路径 SELECT total_amount 等新增列；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "1 行（记2026110001，tenant_id 默认租户，2026-11-09 写入），非文档 §7.1 所称 0 行；26 列在 dev 全部 nullable，加列不触碰既有行" }
+      - { kind: data, ref: "prod tenant_id 外键目标校验", detail: "既有行 tenant_id=00000000-0000-0000-0000-000000000001 在 public.core_tenants 存在（默认租户/default）；无孤儿行，FK 可建立" }
+      - { kind: catalog, ref: "prod pg_indexes/pg_constraint", detail: "uq_finance_voucher_tenant_source、uq_voucher_company_period_no、idx_voucher_period/status/tenant_id/tenant_company 已存在且与 dev 定义逐字一致；prod 仅缺 FK，本迁移只补 FK" }
+      - { kind: catalog, ref: "prod pg_class/pg_policies", detail: "relrowsecurity=true / relforcerowsecurity=true；策略 rls_tenant_isolation 只引用既有 tenant_id，新增列不进入谓词，无 RLS 副作用" }
+      - { kind: catalog, ref: "dev information_schema", detail: "26 列类型/长度/精度/可空/默认值（is_reversed=false、attachment_count=0）逐项取自 dev 实读，后置断言按同一定义校验" }
+    note: "文档 §7.1′prod 全部 0 行′前提对本表不成立（实测 1 行），已按实测收敛为′新增列全部 nullable + 外键目标完整性校验′；不改任何已有列类型与代码"
