@@ -1,16 +1,16 @@
 -- ============================================================================
 -- 整库结构契约快照（CI runtime-sql-contract-gate 导入用，勿手改）
--- 基线日期: 2026-11-14（取代 2026-10-15 旧 dump）
+-- 基线日期: 2026-11-15（取代 2026-11-14 上一版）
 -- 唯一真源: ssh://xingzhai@192.168.3.129/topems_prod（只读导出，--no-owner --no-privileges）
 -- 服务端: PostgreSQL 18.4 (Homebrew)   pg_dump: pg_dump (PostgreSQL) 18.4 (Homebrew)
--- 账本水位: max(version)=20261114160000  行数=673（public._sqlx_migrations）
+-- 账本水位: max(version)=20261114202000  行数=679（public._sqlx_migrations）
 -- 生成命令: ssh xingzhai@192.168.3.129 "PGOPTIONS='-c default_transaction_read_only=on' \
 --             /opt/homebrew/bin/pg_dump -d topems_prod --schema-only --no-owner --no-privileges" \
 --             | grep -vE '^\\(un)?restrict' > fixtures/full_schema_contract.sql
 --   （已剔除 PG18 的 \restrict/\unrestrict 元命令，保证 postgres:16 客户端可直接导入）
--- 生成时间: 2026-11-14T14:04:44Z
--- 内容区 sha256（不含本头部）: 9b6667fd625918652f3eb1e4c6a2ea5bb8027038f88abab32013fce661ca95b4
--- 说明: 旧 2026-10-15 dump 来自已漂移的本地库，缺 RLS/新表；本文件为 prod 实际结构
+-- 生成时间: 2026-11-15T00:04:26Z
+-- 内容区 sha256（不含本头部）: b91d327fee86ee5d85b05ae012da29cd56b05dd6e9c104168f1eae507c27c453
+-- 说明: 上一版停在账本 673/20261114160000；本版追平 679/20261114202000（170000/180000/190000/200000/201000/202000）
 -- ============================================================================
 
 --
@@ -733,6 +733,36 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+
+--
+-- Name: group_tenant_of(uuid); Type: FUNCTION; Schema: erp; Owner: -
+--
+
+CREATE FUNCTION erp.group_tenant_of(p_tenant uuid) RETURNS uuid
+    LANGUAGE sql STABLE PARALLEL SAFE
+    SET search_path TO 'pg_catalog', 'pg_temp'
+    AS $$
+    SELECT CASE
+        WHEN p_tenant IS NULL THEN NULL
+        WHEN p_tenant = '00000000-0000-0000-0000-000000000000'::uuid THEN NULL
+        -- 未来若引入"租户级上下级"（成员公司租户 -> 集团租户），只在此处追加解析；
+        -- 8 张表的策略表达式保持不变。
+        ELSE p_tenant
+    END
+$$;
+
+
+--
+-- Name: FUNCTION group_tenant_of(p_tenant uuid); Type: COMMENT; Schema: erp; Owner: -
+--
+
+COMMENT ON FUNCTION erp.group_tenant_of(p_tenant uuid) IS '
+合并域集团租户解析。入参为 app.tenant_id；
+NULL / 空串 / nil 哨兵 -> NULL（fail-closed）；合法租户 -> 自身。
+当前数据模型下 tenant 即集团边界：hrm.companies.tenant_id 就是集团租户，
+erp.company_relations 的 (tenant_id, company_id) 外键保证母子公司同租户。
+';
 
 
 --
@@ -2958,7 +2988,8 @@ ALTER TABLE ONLY crm.contracts FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE crm.core_crm_customers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY crm.core_crm_customers FORCE ROW LEVEL SECURITY;
@@ -5593,7 +5624,8 @@ ALTER TABLE ONLY erp.core_erp_materials FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE erp.core_erp_suppliers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.core_erp_suppliers FORCE ROW LEVEL SECURITY;
@@ -5948,7 +5980,8 @@ ALTER TABLE ONLY erp.event_idempotency FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE erp.expenses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.expenses FORCE ROW LEVEL SECURITY;
@@ -6224,7 +6257,8 @@ CREATE TABLE erp.meeting_bookings (
     status character varying(50) DEFAULT 'confirmed'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.meeting_bookings FORCE ROW LEVEL SECURITY;
@@ -6243,7 +6277,8 @@ CREATE TABLE erp.meeting_rooms (
     status character varying(50) DEFAULT 'available'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.meeting_rooms FORCE ROW LEVEL SECURITY;
@@ -6456,7 +6491,8 @@ CREATE TABLE erp.vehicle_requests (
     rejected_reason text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.vehicle_requests FORCE ROW LEVEL SECURITY;
@@ -6479,7 +6515,8 @@ CREATE TABLE erp.vehicles (
     fuel_type character varying(50),
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.vehicles FORCE ROW LEVEL SECURITY;
@@ -7431,16 +7468,6 @@ ALTER TABLE ONLY finance.finance_audit_log FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: finance_audit_rules_v; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_audit_rules_v (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: finance_audit_rules_v52; Type: TABLE; Schema: finance; Owner: -
 --
 
@@ -7460,16 +7487,6 @@ CREATE TABLE finance.finance_audit_rules_v52 (
 );
 
 ALTER TABLE ONLY finance.finance_audit_rules_v52 FORCE ROW LEVEL SECURITY;
-
-
---
--- Name: finance_budget_variances_v; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_budget_variances_v (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
 
 
 --
@@ -7495,16 +7512,6 @@ ALTER TABLE ONLY finance.finance_budget_variances_v53 FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: finance_cash_flow_predictions_v; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_cash_flow_predictions_v (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: finance_cash_flow_predictions_v53; Type: TABLE; Schema: finance; Owner: -
 --
 
@@ -7520,10 +7527,25 @@ CREATE TABLE finance.finance_cash_flow_predictions_v53 (
     predicted_inflow numeric(18,2),
     predicted_net numeric(18,2),
     predicted_outflow numeric(18,2),
-    scenario character varying(255)
+    scenario character varying(255),
+    is_synthetic boolean DEFAULT true NOT NULL
 );
 
 ALTER TABLE ONLY finance.finance_cash_flow_predictions_v53 FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: TABLE finance_cash_flow_predictions_v53; Type: COMMENT; Schema: finance; Owner: -
+--
+
+COMMENT ON TABLE finance.finance_cash_flow_predictions_v53 IS 'Forecast V53 现金流预测。含合成数据：is_synthetic=true 的行不可用于决策（合成数据、不可用于决策）。';
+
+
+--
+-- Name: COLUMN finance_cash_flow_predictions_v53.is_synthetic; Type: COMMENT; Schema: finance; Owner: -
+--
+
+COMMENT ON COLUMN finance.finance_cash_flow_predictions_v53.is_synthetic IS '合成数据标记。true = 该行由 forecast_v53 在缺少真实历史凭证时用合成序列生成（或来源不可考），不可当作真实预测用于决策；服务层读路径只返回 false 的行。';
 
 
 --
@@ -7633,16 +7655,6 @@ ALTER TABLE ONLY finance.finance_detection_configs_v52 FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: finance_prediction_models_v; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_prediction_models_v (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: finance_prediction_models_v53; Type: TABLE; Schema: finance; Owner: -
 --
 
@@ -7656,10 +7668,25 @@ CREATE TABLE finance.finance_prediction_models_v53 (
     is_active boolean DEFAULT false,
     model_type character varying(255),
     trained_at timestamp with time zone,
-    parameters jsonb
+    parameters jsonb,
+    is_synthetic boolean DEFAULT true NOT NULL
 );
 
 ALTER TABLE ONLY finance.finance_prediction_models_v53 FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: TABLE finance_prediction_models_v53; Type: COMMENT; Schema: finance; Owner: -
+--
+
+COMMENT ON TABLE finance.finance_prediction_models_v53 IS 'Forecast V53 预测模型精度。含合成数据：is_synthetic=true 的模型精度不可用于决策（合成数据、不可用于决策）。';
+
+
+--
+-- Name: COLUMN finance_prediction_models_v53.is_synthetic; Type: COMMENT; Schema: finance; Owner: -
+--
+
+COMMENT ON COLUMN finance.finance_prediction_models_v53.is_synthetic IS '合成数据标记。true = 该模型的精度来自合成样本（或来源不可考），不可当作真实精度用于决策；服务层读路径只返回 false 的行。';
 
 
 --
@@ -7683,26 +7710,6 @@ CREATE TABLE finance.finance_risk_assessments (
 );
 
 ALTER TABLE ONLY finance.finance_risk_assessments FORCE ROW LEVEL SECURITY;
-
-
---
--- Name: finance_u; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_u (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: finance_v; Type: TABLE; Schema: finance; Owner: -
---
-
-CREATE TABLE finance.finance_v (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
 
 
 --
@@ -20985,7 +20992,8 @@ CREATE TABLE portal.portal_alert_thresholds (
 
 CREATE TABLE portal.portal_announcements (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY portal.portal_announcements FORCE ROW LEVEL SECURITY;
@@ -34140,14 +34148,6 @@ ALTER TABLE ONLY finance.finance_audit_rules_v52
 
 
 --
--- Name: finance_audit_rules_v finance_audit_rules_v_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_audit_rules_v
-    ADD CONSTRAINT finance_audit_rules_v_pkey PRIMARY KEY (id);
-
-
---
 -- Name: finance_budget_variances_v53 finance_budget_variances_v53_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
 --
 
@@ -34156,27 +34156,11 @@ ALTER TABLE ONLY finance.finance_budget_variances_v53
 
 
 --
--- Name: finance_budget_variances_v finance_budget_variances_v_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_budget_variances_v
-    ADD CONSTRAINT finance_budget_variances_v_pkey PRIMARY KEY (id);
-
-
---
 -- Name: finance_cash_flow_predictions_v53 finance_cash_flow_predictions_v53_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
 --
 
 ALTER TABLE ONLY finance.finance_cash_flow_predictions_v53
     ADD CONSTRAINT finance_cash_flow_predictions_v53_pkey PRIMARY KEY (id);
-
-
---
--- Name: finance_cash_flow_predictions_v finance_cash_flow_predictions_v_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_cash_flow_predictions_v
-    ADD CONSTRAINT finance_cash_flow_predictions_v_pkey PRIMARY KEY (id);
 
 
 --
@@ -34228,27 +34212,11 @@ ALTER TABLE ONLY finance.finance_prediction_models_v53
 
 
 --
--- Name: finance_prediction_models_v finance_prediction_models_v_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_prediction_models_v
-    ADD CONSTRAINT finance_prediction_models_v_pkey PRIMARY KEY (id);
-
-
---
 -- Name: finance_risk_assessments finance_risk_assessments_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
 --
 
 ALTER TABLE ONLY finance.finance_risk_assessments
     ADD CONSTRAINT finance_risk_assessments_pkey PRIMARY KEY (id);
-
-
---
--- Name: finance_u finance_u_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_u
-    ADD CONSTRAINT finance_u_pkey PRIMARY KEY (id);
 
 
 --
@@ -34633,14 +34601,6 @@ ALTER TABLE ONLY finance.finance_v60_schedule_executions
 
 ALTER TABLE ONLY finance.finance_v60_schedule_tasks
     ADD CONSTRAINT finance_v60_schedule_tasks_pkey PRIMARY KEY (id);
-
-
---
--- Name: finance_v finance_v_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
---
-
-ALTER TABLE ONLY finance.finance_v
-    ADD CONSTRAINT finance_v_pkey PRIMARY KEY (id);
 
 
 --
@@ -45423,6 +45383,13 @@ CREATE INDEX idx_crm_contracts_tenant ON crm.contracts USING btree (tenant_id);
 
 
 --
+-- Name: idx_crm_core_crm_customers_tenant_id; Type: INDEX; Schema: crm; Owner: -
+--
+
+CREATE INDEX idx_crm_core_crm_customers_tenant_id ON crm.core_crm_customers USING btree (tenant_id);
+
+
+--
 -- Name: idx_crm_customer_orders_customer; Type: INDEX; Schema: crm; Owner: -
 --
 
@@ -46253,6 +46220,48 @@ CREATE INDEX idx_elimination_candidates_pair ON erp.elimination_candidates USING
 --
 
 CREATE INDEX idx_elimination_candidates_scope_period ON erp.elimination_candidates USING btree (tenant_id, scope_id, period, status);
+
+
+--
+-- Name: idx_erp_core_erp_suppliers_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_core_erp_suppliers_tenant_id ON erp.core_erp_suppliers USING btree (tenant_id);
+
+
+--
+-- Name: idx_erp_expenses_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_expenses_tenant_id ON erp.expenses USING btree (tenant_id);
+
+
+--
+-- Name: idx_erp_meeting_bookings_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_meeting_bookings_tenant_id ON erp.meeting_bookings USING btree (tenant_id);
+
+
+--
+-- Name: idx_erp_meeting_rooms_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_meeting_rooms_tenant_id ON erp.meeting_rooms USING btree (tenant_id);
+
+
+--
+-- Name: idx_erp_vehicle_requests_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_vehicle_requests_tenant_id ON erp.vehicle_requests USING btree (tenant_id);
+
+
+--
+-- Name: idx_erp_vehicles_tenant_id; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX idx_erp_vehicles_tenant_id ON erp.vehicles USING btree (tenant_id);
 
 
 --
@@ -52542,6 +52551,13 @@ CREATE INDEX idx_core_guides_sort ON portal.core_guides USING btree (sort_order)
 
 
 --
+-- Name: idx_portal_portal_announcements_tenant_id; Type: INDEX; Schema: portal; Owner: -
+--
+
+CREATE INDEX idx_portal_portal_announcements_tenant_id ON portal.portal_announcements USING btree (tenant_id);
+
+
+--
 -- Name: audit_logs_tenant_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -57778,13 +57794,6 @@ ALTER TABLE crm.contracts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crm.core_crm_customers ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: core_crm_customers crm_allow_all_core_crm_customers; Type: POLICY; Schema: crm; Owner: -
---
-
-CREATE POLICY crm_allow_all_core_crm_customers ON crm.core_crm_customers USING (true) WITH CHECK (true);
-
-
---
 -- Name: crm_master_data_refs; Type: ROW SECURITY; Schema: crm; Owner: -
 --
 
@@ -57881,6 +57890,13 @@ CREATE POLICY rls_tenant_isolation ON crm.billing_records USING (((current_setti
 --
 
 CREATE POLICY rls_tenant_isolation ON crm.contacts USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: core_crm_customers rls_tenant_isolation; Type: POLICY; Schema: crm; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON crm.core_crm_customers USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -59179,52 +59195,10 @@ ALTER TABLE erp.elimination_candidates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE erp.elimination_rules ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: company_relations erp_allow_all_company_relations; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_company_relations ON erp.company_relations USING (true) WITH CHECK (true);
-
-
---
--- Name: consolidation_report_lines erp_allow_all_consolidation_report_lines; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_consolidation_report_lines ON erp.consolidation_report_lines USING (true) WITH CHECK (true);
-
-
---
--- Name: consolidation_reports erp_allow_all_consolidation_reports; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_consolidation_reports ON erp.consolidation_reports USING (true) WITH CHECK (true);
-
-
---
--- Name: consolidation_scope_companies erp_allow_all_consolidation_scope_companies; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_consolidation_scope_companies ON erp.consolidation_scope_companies USING (true) WITH CHECK (true);
-
-
---
--- Name: consolidation_scopes erp_allow_all_consolidation_scopes; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_consolidation_scopes ON erp.consolidation_scopes USING (true) WITH CHECK (true);
-
-
---
 -- Name: core_erp_materials erp_allow_all_core_erp_materials; Type: POLICY; Schema: erp; Owner: -
 --
 
 CREATE POLICY erp_allow_all_core_erp_materials ON erp.core_erp_materials USING (true) WITH CHECK (true);
-
-
---
--- Name: core_erp_suppliers erp_allow_all_core_erp_suppliers; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_core_erp_suppliers ON erp.core_erp_suppliers USING (true) WITH CHECK (true);
 
 
 --
@@ -59242,59 +59216,10 @@ CREATE POLICY erp_allow_all_dict_types ON erp.dict_types USING (true) WITH CHECK
 
 
 --
--- Name: elimination_rules erp_allow_all_elimination_rules; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_elimination_rules ON erp.elimination_rules USING (true) WITH CHECK (true);
-
-
---
--- Name: expenses erp_allow_all_expenses; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_expenses ON erp.expenses USING (true) WITH CHECK (true);
-
-
---
 -- Name: holidays erp_allow_all_holidays; Type: POLICY; Schema: erp; Owner: -
 --
 
 CREATE POLICY erp_allow_all_holidays ON erp.holidays USING (true) WITH CHECK (true);
-
-
---
--- Name: internal_transactions erp_allow_all_internal_transactions; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_internal_transactions ON erp.internal_transactions USING (true) WITH CHECK (true);
-
-
---
--- Name: meeting_bookings erp_allow_all_meeting_bookings; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_meeting_bookings ON erp.meeting_bookings USING (true) WITH CHECK (true);
-
-
---
--- Name: meeting_rooms erp_allow_all_meeting_rooms; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_meeting_rooms ON erp.meeting_rooms USING (true) WITH CHECK (true);
-
-
---
--- Name: vehicle_requests erp_allow_all_vehicle_requests; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_vehicle_requests ON erp.vehicle_requests USING (true) WITH CHECK (true);
-
-
---
--- Name: vehicles erp_allow_all_vehicles; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY erp_allow_all_vehicles ON erp.vehicles USING (true) WITH CHECK (true);
 
 
 --
@@ -59433,6 +59358,13 @@ CREATE POLICY rls_tenant_isolation ON erp.audit_logs USING ((COALESCE(current_se
 
 
 --
+-- Name: core_erp_suppliers rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.core_erp_suppliers USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
 -- Name: customers rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
 --
 
@@ -59451,6 +59383,13 @@ CREATE POLICY rls_tenant_isolation ON erp.documents USING (((current_setting('ap
 --
 
 CREATE POLICY rls_tenant_isolation ON erp.erp_master_data_refs USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: expenses rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.expenses USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -59496,6 +59435,20 @@ CREATE POLICY rls_tenant_isolation ON erp.materials USING (((current_setting('ap
 
 
 --
+-- Name: meeting_bookings rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.meeting_bookings USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: meeting_rooms rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.meeting_rooms USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
 -- Name: opening_balances rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
 --
 
@@ -59538,6 +59491,20 @@ CREATE POLICY rls_tenant_isolation ON erp.suppliers USING (((COALESCE(current_se
 
 
 --
+-- Name: vehicle_requests rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.vehicle_requests USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: vehicles rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON erp.vehicles USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
 -- Name: voucher_items rls_tenant_isolation; Type: POLICY; Schema: erp; Owner: -
 --
 
@@ -59562,13 +59529,6 @@ ALTER TABLE erp.sales_orders ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE erp.suppliers ENABLE ROW LEVEL SECURITY;
-
---
--- Name: elimination_candidates tenant_isolation; Type: POLICY; Schema: erp; Owner: -
---
-
-CREATE POLICY tenant_isolation ON erp.elimination_candidates USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
-
 
 --
 -- Name: erp_production_orders tenant_isolation; Type: POLICY; Schema: erp; Owner: -
@@ -59606,10 +59566,66 @@ CREATE POLICY tenant_isolation_bank_accounts ON erp.bank_accounts USING (((curre
 
 
 --
+-- Name: company_relations tenant_isolation_company_relations; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_company_relations ON erp.company_relations USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: consolidation_report_lines tenant_isolation_consolidation_report_lines; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_consolidation_report_lines ON erp.consolidation_report_lines USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: consolidation_reports tenant_isolation_consolidation_reports; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_consolidation_reports ON erp.consolidation_reports USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: consolidation_scope_companies tenant_isolation_consolidation_scope_companies; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_consolidation_scope_companies ON erp.consolidation_scope_companies USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: consolidation_scopes tenant_isolation_consolidation_scopes; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_consolidation_scopes ON erp.consolidation_scopes USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: elimination_candidates tenant_isolation_elimination_candidates; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_elimination_candidates ON erp.elimination_candidates USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: elimination_rules tenant_isolation_elimination_rules; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_elimination_rules ON erp.elimination_rules USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
 -- Name: fin_reconciliations tenant_isolation_fin_reconciliations; Type: POLICY; Schema: erp; Owner: -
 --
 
 CREATE POLICY tenant_isolation_fin_reconciliations ON erp.fin_reconciliations USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL))));
+
+
+--
+-- Name: internal_transactions tenant_isolation_internal_transactions; Type: POLICY; Schema: erp; Owner: -
+--
+
+CREATE POLICY tenant_isolation_internal_transactions ON erp.internal_transactions USING ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64435,13 +64451,6 @@ ALTER TABLE mes.material_return_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mes.material_returns ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: quality_standards mes_allow_all_quality_standards; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY mes_allow_all_quality_standards ON mes.quality_standards USING (true) WITH CHECK (true);
-
-
---
 -- Name: module_settings; Type: ROW SECURITY; Schema: mes; Owner: -
 --
 
@@ -64553,7 +64562,7 @@ ALTER TABLE mes.quality_standards ENABLE ROW LEVEL SECURITY;
 -- Name: audit_logs rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.audit_logs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+CREATE POLICY rls_tenant_isolation ON mes.audit_logs USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64581,7 +64590,7 @@ CREATE POLICY rls_tenant_isolation ON mes.capacities USING (((COALESCE(current_s
 -- Name: dashboard_stats rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.dashboard_stats USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.dashboard_stats USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64595,14 +64604,14 @@ CREATE POLICY rls_tenant_isolation ON mes.demand_forecasts USING (((COALESCE(cur
 -- Name: equipment rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.equipment USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.equipment USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
 -- Name: equipment_inspection_records rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.equipment_inspection_records USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.equipment_inspection_records USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64616,14 +64625,21 @@ CREATE POLICY rls_tenant_isolation ON mes.equipment_inspections USING (((COALESC
 -- Name: equipment_maintenance_records rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.equipment_maintenance_records USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.equipment_maintenance_records USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: equipment_oee rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON mes.equipment_oee USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
 -- Name: financial_records rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.financial_records USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.financial_records USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64658,7 +64674,7 @@ CREATE POLICY rls_tenant_isolation ON mes.material_issues USING (((COALESCE(curr
 -- Name: material_plans rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.material_plans USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+CREATE POLICY rls_tenant_isolation ON mes.material_plans USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64693,7 +64709,7 @@ CREATE POLICY rls_tenant_isolation ON mes.material_returns USING (((COALESCE(cur
 -- Name: module_settings rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.module_settings USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
+CREATE POLICY rls_tenant_isolation ON mes.module_settings USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64718,14 +64734,21 @@ CREATE POLICY rls_tenant_isolation ON mes.process_flows USING (((COALESCE(curren
 -- Name: process_route_steps rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.process_route_steps USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.process_route_steps USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
 -- Name: process_routes rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.process_routes USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.process_routes USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: production_costs rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON mes.production_costs USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64739,7 +64762,7 @@ CREATE POLICY rls_tenant_isolation ON mes.production_lines USING (((COALESCE(cur
 -- Name: production_orders rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.production_orders USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.production_orders USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64753,14 +64776,21 @@ CREATE POLICY rls_tenant_isolation ON mes.production_plans USING (((COALESCE(cur
 -- Name: production_processes rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.production_processes USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.production_processes USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
 -- Name: production_records rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.production_records USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.production_records USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: production_schedules rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON mes.production_schedules USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64799,7 +64829,14 @@ CREATE POLICY rls_tenant_isolation ON mes.quality_records USING (((COALESCE(curr
 -- Name: quality_standard_values rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.quality_standard_values USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+CREATE POLICY rls_tenant_isolation ON mes.quality_standard_values USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: quality_standards rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON mes.quality_standards USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64813,7 +64850,7 @@ CREATE POLICY rls_tenant_isolation ON mes.shifts USING (((COALESCE(current_setti
 -- Name: supply_chain_orders rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.supply_chain_orders USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.supply_chain_orders USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64821,6 +64858,13 @@ CREATE POLICY rls_tenant_isolation ON mes.supply_chain_orders USING (((COALESCE(
 --
 
 CREATE POLICY rls_tenant_isolation ON mes.team_members USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: teams rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON mes.teams USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64855,14 +64899,14 @@ CREATE POLICY rls_tenant_isolation ON mes.work_orders USING (((COALESCE(current_
 -- Name: work_reports rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.work_reports USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+CREATE POLICY rls_tenant_isolation ON mes.work_reports USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
 -- Name: work_stations rls_tenant_isolation; Type: POLICY; Schema: mes; Owner: -
 --
 
-CREATE POLICY rls_tenant_isolation ON mes.work_stations USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+CREATE POLICY rls_tenant_isolation ON mes.work_stations USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -64895,76 +64939,6 @@ ALTER TABLE mes.team_members ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE mes.teams ENABLE ROW LEVEL SECURITY;
-
---
--- Name: audit_logs tenant_isolation_audit_logs; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_audit_logs ON mes.audit_logs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL))));
-
-
---
--- Name: dashboard_stats tenant_isolation_dashboard_stats; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_dashboard_stats ON mes.dashboard_stats USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
-
-
---
--- Name: equipment_oee tenant_isolation_equipment_oee; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_equipment_oee ON mes.equipment_oee USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))));
-
-
---
--- Name: financial_records tenant_isolation_financial_records; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_financial_records ON mes.financial_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR ((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))));
-
-
---
--- Name: production_costs tenant_isolation_production_costs; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_production_costs ON mes.production_costs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))));
-
-
---
--- Name: production_schedules tenant_isolation_production_schedules; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_production_schedules ON mes.production_schedules USING (((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
-
---
--- Name: quality_standard_values tenant_isolation_quality_standard_values; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_quality_standard_values ON mes.quality_standard_values USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))) WITH CHECK ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
-
---
--- Name: supply_chain_orders tenant_isolation_supply_chain_orders; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_supply_chain_orders ON mes.supply_chain_orders USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
-
-
---
--- Name: teams tenant_isolation_teams; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_teams ON mes.teams USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
-
---
--- Name: work_reports tenant_isolation_work_reports; Type: POLICY; Schema: mes; Owner: -
---
-
-CREATE POLICY tenant_isolation_work_reports ON mes.work_reports USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))) WITH CHECK ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
 
 --
 -- Name: wip_transfers; Type: ROW SECURITY; Schema: mes; Owner: -
@@ -66278,13 +66252,6 @@ ALTER TABLE pm.settlement_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pm.settlements ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: portal_announcements portal_allow_all_portal_announcements; Type: POLICY; Schema: portal; Owner: -
---
-
-CREATE POLICY portal_allow_all_portal_announcements ON portal.portal_announcements USING (true) WITH CHECK (true);
-
-
---
 -- Name: portal_quick_actions portal_allow_all_portal_quick_actions; Type: POLICY; Schema: portal; Owner: -
 --
 
@@ -66327,6 +66294,13 @@ ALTER TABLE portal.portal_quick_actions ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE portal.portal_todos ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: portal_announcements rls_tenant_isolation; Type: POLICY; Schema: portal; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON portal.portal_announcements USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: portal_todos rls_tenant_isolation; Type: POLICY; Schema: portal; Owner: -

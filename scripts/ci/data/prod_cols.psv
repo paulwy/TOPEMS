@@ -1027,6 +1027,7 @@ crm|contracts|deleted_at|timestamp with time zone|f|r
 crm|contracts|title_en|character varying(255)|f|r
 crm|core_crm_customers|id|uuid|t|r
 crm|core_crm_customers|deleted_at|timestamp with time zone|f|r
+crm|core_crm_customers|tenant_id|uuid|f|r
 crm|crm_master_data_refs|master_data_id|character varying(128)|t|r
 crm|crm_master_data_refs|tenant_id|uuid|t|r
 crm|crm_master_data_refs|domain|character varying(32)|t|r
@@ -2552,6 +2553,7 @@ erp|core_erp_materials|id|uuid|t|r
 erp|core_erp_materials|deleted_at|timestamp with time zone|f|r
 erp|core_erp_suppliers|id|uuid|t|r
 erp|core_erp_suppliers|deleted_at|timestamp with time zone|f|r
+erp|core_erp_suppliers|tenant_id|uuid|f|r
 erp|customers|id|uuid|t|r
 erp|customers|deleted_at|timestamp with time zone|f|r
 erp|customers|name_en|character varying(255)|f|r
@@ -2763,6 +2765,7 @@ erp|event_idempotency|processed_at|timestamp with time zone|t|r
 erp|event_idempotency|tenant_id|uuid|t|r
 erp|expenses|id|uuid|t|r
 erp|expenses|deleted_at|timestamp with time zone|f|r
+erp|expenses|tenant_id|uuid|f|r
 erp|fin_reconciliations|id|uuid|t|r
 erp|fin_reconciliations|reconciliation_no|character varying(50)|t|r
 erp|fin_reconciliations|reconciliation_type|character varying(20)|t|r
@@ -2923,6 +2926,7 @@ erp|meeting_bookings|status|character varying(50)|t|r
 erp|meeting_bookings|created_at|timestamp with time zone|t|r
 erp|meeting_bookings|updated_at|timestamp with time zone|t|r
 erp|meeting_bookings|deleted_at|timestamp with time zone|f|r
+erp|meeting_bookings|tenant_id|uuid|f|r
 erp|meeting_rooms|id|uuid|t|r
 erp|meeting_rooms|name|character varying(255)|t|r
 erp|meeting_rooms|capacity|integer|t|r
@@ -2932,6 +2936,7 @@ erp|meeting_rooms|status|character varying(50)|t|r
 erp|meeting_rooms|created_at|timestamp with time zone|t|r
 erp|meeting_rooms|updated_at|timestamp with time zone|t|r
 erp|meeting_rooms|deleted_at|timestamp with time zone|f|r
+erp|meeting_rooms|tenant_id|uuid|f|r
 erp|office_supplies|id|uuid|t|r
 erp|office_supplies|name|character varying(255)|t|r
 erp|office_supplies|category|character varying(100)|f|r
@@ -3058,6 +3063,7 @@ erp|vehicle_requests|rejected_reason|text|f|r
 erp|vehicle_requests|created_at|timestamp with time zone|t|r
 erp|vehicle_requests|updated_at|timestamp with time zone|t|r
 erp|vehicle_requests|deleted_at|timestamp with time zone|f|r
+erp|vehicle_requests|tenant_id|uuid|f|r
 erp|vehicles|id|uuid|t|r
 erp|vehicles|plate_number|character varying(50)|t|r
 erp|vehicles|brand|character varying(100)|f|r
@@ -3071,6 +3077,7 @@ erp|vehicles|fuel_type|character varying(50)|f|r
 erp|vehicles|created_at|timestamp with time zone|t|r
 erp|vehicles|updated_at|timestamp with time zone|t|r
 erp|vehicles|deleted_at|timestamp with time zone|f|r
+erp|vehicles|tenant_id|uuid|f|r
 erp|voucher_items|id|uuid|t|r
 erp|voucher_items|tenant_id|uuid|t|r
 erp|voucher_items|voucher_id|uuid|t|r
@@ -3678,6 +3685,7 @@ finance|finance_cash_flow_predictions_v53|predicted_inflow|numeric(18,2)|f|r
 finance|finance_cash_flow_predictions_v53|predicted_net|numeric(18,2)|f|r
 finance|finance_cash_flow_predictions_v53|predicted_outflow|numeric(18,2)|f|r
 finance|finance_cash_flow_predictions_v53|scenario|character varying(255)|f|r
+finance|finance_cash_flow_predictions_v53|is_synthetic|boolean|t|r
 finance|finance_compliance_issues|id|uuid|t|r
 finance|finance_compliance_issues|report_id|uuid|t|r
 finance|finance_compliance_issues|severity|character varying(20)|t|r
@@ -3744,6 +3752,7 @@ finance|finance_prediction_models_v53|is_active|boolean|f|r
 finance|finance_prediction_models_v53|model_type|character varying(255)|f|r
 finance|finance_prediction_models_v53|trained_at|timestamp with time zone|f|r
 finance|finance_prediction_models_v53|parameters|jsonb|f|r
+finance|finance_prediction_models_v53|is_synthetic|boolean|t|r
 finance|finance_risk_assessments|id|uuid|t|r
 finance|finance_risk_assessments|tenant_id|uuid|t|r
 finance|finance_risk_assessments|control_point_id|uuid|t|r
@@ -11151,6 +11160,7 @@ portal|portal_alert_thresholds|updated_at|timestamp with time zone|t|r
 portal|portal_alert_thresholds|deleted_at|timestamp with time zone|f|r
 portal|portal_announcements|id|uuid|t|r
 portal|portal_announcements|deleted_at|timestamp with time zone|f|r
+portal|portal_announcements|tenant_id|uuid|f|r
 portal|portal_anomalies|id|uuid|t|r
 portal|portal_anomalies|anomaly_type|character varying(32)|t|r
 portal|portal_anomalies|severity|character varying(16)|t|r
