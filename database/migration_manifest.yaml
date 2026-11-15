@@ -1793,3 +1793,87 @@ pending_forward_patches:
     effect: "flow.workflows → public.core_workflows（18 行 id 全部被覆盖且更旧 → 外层去重后插入 0）；is_active→status active/inactive；created_by 为 NULL 且目标 NOT NULL 的行写入隔离表，有真实值则按真实值迁移，不兜底 admin"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT DO NOTHING"
     note: "dev 已应用（按 owner 裁决 ③ 重跑：去除 admin 兜底；隔离 0 条——18 行均已被 flow.core_workflows 的新版本覆盖，不涉及操作人补全）"
+
+  # ===== B 类列级漂移补列（2026-11-15，7 笔，按模块各一笔） =====
+  # 口径来源：docs/database/column-drift-attribution-2026-11-15.md §4.2.2（18 列 / 11 表）。
+  # 117 列留 D，不补 prod。7 笔均为纯 ADD COLUMN，不建索引/约束、不改策略。
+  # 投递序列固定：141200 erp → 141300 finance → 141400 gis → 141500 portal →
+  #   141600 monitor → 141700 unified-core → 141800 search。
+  - version: "20261115141200"
+    file: "database/migrations/20261115141200_b_class_erp_holidays_date.sql"
+    status: to_apply
+    effect: "erp.holidays 补 date date NOT NULL（dev 定义，无默认值）"
+    destructive_scan: "仅 ALTER TABLE ... ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/erp/src/modules/holidays.rs:107-108", detail: "SELECT COUNT(*) FROM erp.holidays WHERE tenant_id=$1 AND year=$2 AND date=$3 AND kind=$4；prod 缺列时 parse/analyze 阶段 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "erp.holidays 0 行，可直接加 NOT NULL" }
+      - { kind: drill, ref: "topems_prod_drill（prod 结构 + prod 账本 684 行的本地还原库）", detail: "正向应用 OK；后置形状与 dev 逐项一致；rollback 往返 1→0；回放后再次一致" }
+    note: "prod 该表还缺 year/kind/name/tenant_id（§4.2.3/§4.4 另行处置），故本迁移不宣称该读写路径已端到端修复"
+
+  - version: "20261115141300"
+    file: "database/migrations/20261115141300_b_class_finance_voucher_template_6cols.sql"
+    status: to_apply
+    effect: "finance.finance_voucher_template_lines 补 debit_amount numeric(18,2) / credit_amount numeric(18,2) / account_id uuid / account_name varchar(255)（均可空）；finance.finance_voucher_templates 补 voucher_type varchar(255)（可空）/ is_default boolean DEFAULT false"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/finance/src/services/finance/voucher_template.rs:189", detail: "SELECT 列清单读 4 个 lines 新列；prod 缺列 42703" }
+      - { kind: code, ref: "同文件 :215-221 / :443", detail: "INSERT 写 voucher_type、UPDATE 读 voucher_type 与 SET is_default；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "两表均 0 行" }
+    note: "prod 的 templates 还缺 default_debit_account/default_credit_account、lines 还缺 updated_at（同语句引用，不在本批），故不宣称端到端修复"
+
+  - version: "20261115141400"
+    file: "database/migrations/20261115141400_b_class_gis_tenant_id_4tables.sql"
+    status: to_apply
+    effect: "gis.geodata / gis.geofeatures / gis.map_layers / gis.spatial_analysis 各补 tenant_id uuid NOT NULL（dev 定义，无默认值）"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/gis/src/modules/geodata.rs:127-131 / 186-190、svc/gis/src/modules/map.rs:391-396 / 351-353、svc/gis/src/modules/spatial.rs:94-97", detail: "4 条 INSERT 列清单含 tenant_id，map.rs 另有 SELECT WHERE tenant_id；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "4 表均 0 行，可直接加 NOT NULL" }
+      - { kind: catalog, ref: "prod pg_class/pg_policies", detail: "4 表 rls+force_rls=true，策略 gis_allow_all_* 谓词 USING (true)，补列不进入谓词，无 RLS 副作用" }
+      - { kind: drill, ref: "topems_prod_drill + dev 真实读写", detail: "本地 prod 结构演练往返/回放通过；dev 上 gis.geodata 插一行（tenant_id 显式）→ 读回 → 删净 0 残留" }
+    note: "prod 仍为 allow-all 策略，补列不会自动收紧隔离；收紧属后续批次"
+
+  - version: "20261115141500"
+    file: "database/migrations/20261115141500_b_class_portal_todos_2cols.sql"
+    status: to_apply
+    effect: "portal.portal_todos 补 user_id varchar(100) NOT NULL、completed boolean NOT NULL DEFAULT false"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/portal/src/modules/todos.rs:159-165 / 217-222", detail: "INSERT 写 user_id 且 RETURNING completed；UPDATE SET completed WHERE user_id；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "0 行，可直接加 NOT NULL" }
+      - { kind: catalog, ref: "prod pg_policies", detail: "rls_tenant_isolation 只引用已存在的 tenant_id，新列不进入谓词，无 RLS 副作用" }
+      - { kind: drill, ref: "topems_prod_drill + dev 真实读写", detail: "演练往返/回放通过；dev 上插一行（completed 走默认 false）→ 读回 → UPDATE completed=TRUE → 删净 0 残留" }
+    note: "prod 该表还缺 service_code/service_name/todo_type/link_url/sort_order（前三个在同一 INSERT 里），本迁移不宣称该路径端到端修复"
+
+  - version: "20261115141600"
+    file: "database/migrations/20261115141600_b_class_monitor_alerts_3cols.sql"
+    status: to_apply
+    effect: "public.alerts 补 tenant_id uuid NOT NULL、severity varchar(20) NOT NULL、status varchar(20) DEFAULT 'active'"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/monitor/src/modules/monitor/metrics.rs:474-478", detail: "COUNT(*) FILTER 读 status/severity，WHERE 读 tenant_id；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "0 行，可直接加 NOT NULL" }
+      - { kind: catalog, ref: "prod pg_policies", detail: "策略 public_allow_all_alerts 谓词 USING (true)，补列不改变谓词" }
+    note: "该查询只用 status/severity/tenant_id/deleted_at，本迁移后读路径列层面齐备；其余 7 列留 D 不补"
+
+  - version: "20261115141700"
+    file: "database/migrations/20261115141700_b_class_core_file_permissions_tenant_id.sql"
+    status: to_apply
+    effect: "public.core_file_permissions 补 tenant_id uuid（可空，dev 定义）"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/unified-core/src/modules/file/manage.rs:1022-1025", detail: "INSERT 列清单与 ON CONFLICT DO UPDATE 的 EXCLUDED 均含 tenant_id；prod 缺列 42703" }
+      - { kind: catalog, ref: "prod pg_indexes", detail: "ON CONFLICT (file_id,user_id) 依赖的唯一索引已存在，补列不影响推断目标" }
+      - { kind: catalog, ref: "prod pg_class", detail: "该表 rls=false、无策略，补列无 RLS 副作用" }
+    note: "prod 无 tenant 策略，补列不等于启用隔离；与 dev 的策略差异属后续批次"
+
+  - version: "20261115141800"
+    file: "database/migrations/20261115141800_b_class_search_logs_query.sql"
+    status: to_apply
+    effect: "public.search_logs 补 query text NOT NULL"
+    destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: code, ref: "svc/search/src/handlers.rs:478-483", detail: "SELECT query ... WHERE query ILIKE ... GROUP BY query；prod 缺列 42703" }
+      - { kind: data, ref: "prod count(*)", detail: "0 行，可直接加 NOT NULL" }
+      - { kind: catalog, ref: "prod pg_class", detail: "该表 rls=false、无策略，补列无 RLS 副作用" }
+    note: "同一语句还读 MAX(created_at)，prod 缺 created_at 等 4 列；本迁移后该查询仍会在 created_at 上 42703，不得据此宣称路径已修复"
