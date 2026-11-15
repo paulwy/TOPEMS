@@ -1958,3 +1958,17 @@ pending_forward_patches:
       - { kind: catalog, ref: "prod/dev pg_class/pg_policy", detail: "cqrs_events 两侧均 RLS enable/force 且策略只引用既有 tenant_id；search_logs / analytics_sync_records 两侧 rls=false（dev 亦无策略），无 RLS 行为变化" }
       - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "25 列类型/长度/精度/可空/默认值与 11 只索引定义逐项取自 dev 实读" }
     note: "cqrs_events 补后 prod 为 12 列（dev 10 列）：prod 独有的 created_at/updated_at 保留不动，不做删列；本批只保证「dev 有、prod 缺」的列齐备"
+
+  - version: "20261115142500"
+    file: "database/migrations/20261115142500_shell_tail_7tables_13cols.sql"
+    status: to_apply
+    effect: "portal.portal_todos 补 4 列(service_code/service_name/todo_type/link_url) + 4 只部分索引；finance.finance_voucher_templates 补 2 列；integration.crm_erp_sync/crm_scm_sync/erp_wms_sync/hrm_finance_sync 各补 updated_at；integration.core_inter_module_sync 按 dev∪prod 并集补 7 列(source_entity/source_id/source_code/retry_count/max_retries/next_retry_at/executed_at)"
+    destructive_scan: "仅 ADD COLUMN + CREATE INDEX；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: data, ref: "prod count(*)", detail: "七表均 0 行；core_inter_module_sync.source_entity 为 NOT NULL 无默认列，可安全直加（迁移内保留七表行数门）" }
+      - { kind: catalog, ref: "prod pg_indexes", detail: "portal_todos 只有 PK；dev 的 idx_todos_user/completed/due_date/tenant 四只部分索引缺失，本次一并补齐" }
+      - { kind: catalog, ref: "prod/dev information_schema", detail: "目标列类型/长度/可空/默认值逐项取自 dev；四张 sync 表 updated_at 均为 timestamptz NOT NULL DEFAULT now()" }
+      - { kind: code, ref: "svc/portal/src/modules/todos.rs:59/161", detail: "portal_todos 代码 INSERT/SELECT 明确引用 service_code/service_name/todo_type/link_url" }
+      - { kind: code, ref: "svc/integration/src/crm_erp_sync.rs:214 / crm_scm_sync.rs:206 / erp_wms_sync.rs:206 / hrm_finance_sync.rs:207", detail: "四张 sync 表 INSERT/SELECT/UPDATE 三处都用 updated_at" }
+      - { kind: code, ref: "svc/integration/src/handlers/sync.rs:752", detail: "core_inter_module_sync 写 source_entity/source_id/source_code/retry_count/max_retries/next_retry_at/executed_at；prod 独有 5 列仍在用" }
+    note: "core_inter_module_sync 按工程决定取 dev∪prod 并集（补后 23 列），不删任何一侧字段，operation 与 source_entity 的同义性另立项；portal_todos 的 sort_order 代码未引用，本批不补（prod 仍 20 列）；crm_product_id / erp_sales_order_id 代码未引用，不补"
