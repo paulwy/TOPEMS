@@ -82,7 +82,7 @@ CSV_LIST_ALL="$(printf '%s' "${TABLES[*]}" | sed 's/ /,/g')"
 assert_table() {
   local t="$1"
   psql_at -c "DO \$\$
-DECLARE rel regclass := to_regclass('$t'); n bigint; k int;
+DECLARE rel regclass := to_regclass('$t'); n bigint; k int; g int; gu text;
 BEGIN
   IF rel IS NULL THEN RAISE EXCEPTION 'MISSING'; END IF;
   IF (SELECT relkind FROM pg_class WHERE oid = rel) <> 'r' THEN RAISE EXCEPTION 'NOT_ORDINARY_TABLE'; END IF;
@@ -103,8 +103,23 @@ BEGIN
   SELECT count(*) INTO k
     FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
    WHERE ns.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
-     AND p.prosrc ~* ('(^|[^a-z_0-9])' || rel::text || '([^a-z_0-9]|$)');
-  IF k > 0 THEN RAISE EXCEPTION 'FUNC_REF count=%', k; END IF;
+     AND p.prosrc ~* ('(^|[^a-z_0-9])' || rel::text || '([^a-z_0-9]|$)')
+     AND p.prosrc !~* ('to_regclass\(\s*''' || rel::text || '''\s*\)\s+IS\s+NOT\s+NULL');
+  IF k > 0 THEN
+    SELECT string_agg(p.oid::regprocedure::text, ', ') INTO gu
+      FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+     WHERE ns.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+       AND p.prosrc ~* ('(^|[^a-z_0-9])' || rel::text || '([^a-z_0-9]|$)')
+       AND p.prosrc !~* ('to_regclass\(\s*''' || rel::text || '''\s*\)\s+IS\s+NOT\s+NULL');
+    RAISE EXCEPTION 'FUNC_REF count=% [%]', k, gu;
+  END IF;
+  -- 只被 to_regclass('x') IS NOT NULL 守卫的动态 SQL 引用：缺表时函数自行跳过，不阻断删除。
+  SELECT count(*) INTO g
+    FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+   WHERE ns.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+     AND p.prosrc ~* ('(^|[^a-z_0-9])' || rel::text || '([^a-z_0-9]|$)')
+     AND p.prosrc ~* ('to_regclass\(\s*''' || rel::text || '''\s*\)\s+IS\s+NOT\s+NULL');
+  IF g > 0 THEN RAISE NOTICE 'FUNC_REF_GUARDED rel=% count=%（to_regclass 守卫）', rel, g; END IF;
   SELECT count(*) INTO k FROM pg_trigger WHERE tgrelid = rel AND NOT tgisinternal;
   IF k > 0 THEN RAISE EXCEPTION 'TRIGGER count=%', k; END IF;
 END \$\$;" >/dev/null
@@ -196,7 +211,7 @@ if $DRILL; then
   D_POL="$(psql "$DDSN" -At -c "select count(*) from pg_policy p join pg_class c on c.oid=p.polrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname||'.'||c.relname in ('$IN_LIST')")"
   $D_OK || die "rollback drill failed (restore incomplete) — dev untouched"
   [[ "$D_IDX" == "$PRE_IDX" && "$D_POL" == "$PRE_POL" ]] || die "rollback drill mismatch: idx $D_IDX/$PRE_IDX pol $D_POL/$PRE_POL — dev untouched"
-  DRILL_RESULT="通过：${#EXISTING[@]} 张全部重建；索引 $D_IDX/$PRE_IDX，策略 $D_POL/$PRE_POL 与删除前一致"
+  DRILL_RESULT="通过：${#EXISTING[@]} 张全部重建；索引 ${D_IDX}/${PRE_IDX}，策略 ${D_POL}/${PRE_POL} 与删除前一致"
   dropdb -h /tmp --if-exists "$DRILL_DB" >/dev/null 2>&1 || true
   say "回滚演练: $DRILL_RESULT"
 fi

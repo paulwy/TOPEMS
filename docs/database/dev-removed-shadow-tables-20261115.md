@@ -1,12 +1,12 @@
 # dev 已移除影子表清单（2026-11-15 第二步）
 
-> 背景：`docs/database/table-family-authority-recommendations-2026-11-15.md` 判定 103 个表族里 145 张 dev 侧成员为空壳影子表。
+> 背景：`docs/database/table-family-authority-recommendations-2026-11-15.md` 判定 103 个表族里 145 张 dev 侧成员为空壳影子表；本步执行其中 138 张，另 7 张判定不删。
 > 本步只做 **dev 侧物理删除**，prod 侧一张不动（按「标残留不删」口径）。
 
 ## 为什么需要这份清单
 
-这 145 张由历史迁移（`20260725000000_business_base_tables.sql`、`20261007000006_rebuild_orphan_tables.sql`、`003_plugin.sql` 等）与 init 脚本创建。
-**在空库重放迁移会把它们原样重建**，删表结果不可由迁移链复现。若不留登记，新建 dev/验证库会再次漂出这 145 张影子表，族判定又要重做一遍。
+这些表由历史迁移（`20260725000000_business_base_tables.sql`、`20261007000006_rebuild_orphan_tables.sql`、`003_plugin.sql` 等）与 init 脚本创建。
+**在空库重放迁移会把它们原样重建**，删表结果不可由迁移链复现。若不留登记，新建 dev/验证库会再次漂出这同一批影子表，族判定又要重做一遍。
 因此：
 
 - 删除动作由 `scripts/db/drop-shadow-tables-step2.sh` 执行（dev 专用，幂等），**不进 `database/migrations/`**——迁移会在 prod 执行，与「prod 不删」冲突。
@@ -15,7 +15,7 @@
 
 ## 统计
 
-- 清单总数 **145**：本轮删除 **138**，保留 **7**。
+- 执行清单 **138** 张（`scripts/db/shadow-tables-step2.tsv`，只含待删项）；族判定候选 145 张，余下 7 张判定不删。
 - 保留理由逐条见文末「本轮不删」。
 - 执行顺序：B6 → B1 → B2 → B7 → B8 → B3 → B4 → B5 → B9 → B10（先小后大）。
 
@@ -24,6 +24,7 @@
 | 批 | 日期 | 结果 |
 |---|---|---|
 | B6 | 2026-11-15 | 删 7 张（保留 `public.core_guide_lessons`）；快照 `/Users/air/topems-db-snapshots/20261115-step2/B6/`；回滚演练通过（7 张全部重建，索引 29/29、策略 7/7） |
+| B1 | 2026-11-15 | 删 21 张；快照 `.../B1/`；回滚演练通过（21 张全部重建，索引 32/32、策略 19/19）；删后索引 32→0、策略 19→0；`finance.bootstrap_defaults` 对 `iam.core_tenant_users` 为 `to_regclass` 守卫的动态引用，缺表自动跳过 |
 
 ## 逐批清单
 
@@ -40,31 +41,31 @@
 | `public.core_plugins` | plugins | 0 | 已移除 |
 | `public.core_tenant_plugins` | tenant_plugins | 0 | 已移除 |
 
-### B1 iam 影子族 —— 删 21 / 保留 0
+### B1 iam 影子族 —— 删 21 / 保留 0（已执行）
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `iam.core_emails` | emails | 0 | 待执行 |
-| `iam.core_files` | files | 0 | 待执行 |
-| `iam.core_guide_lessons` | guide_lessons | 0 | 待执行 |
-| `iam.core_login_logs` | login_logs | 0 | 待执行 |
-| `iam.core_migration_history` | migration_history | 0 | 待执行 |
-| `iam.core_mobile_offline_records` | mobile_offline_records | 0 | 待执行 |
-| `iam.core_notification_templates` | notification_templates | 0 | 待执行 |
-| `iam.core_plugin_categories` | plugin_categories | 0 | 待执行 |
-| `iam.core_plugin_instances` | plugin_instances | 0 | 待执行 |
-| `iam.core_plugin_permissions` | plugin_permissions | 0 | 待执行 |
-| `iam.core_plugin_reviews` | plugin_reviews | 0 | 待执行 |
-| `iam.core_plugin_versions` | plugin_versions | 0 | 待执行 |
-| `iam.core_plugins` | plugins | 0 | 待执行 |
-| `iam.core_tenant_modules` | tenant_modules | 0 | 待执行 |
-| `iam.core_tenant_settings` | tenant_settings | 0 | 待执行 |
-| `iam.core_tenant_users` | tenant_users | 0 | 待执行 |
-| `iam.core_workflow_instances` | workflow_instances | 0 | 待执行 |
-| `iam.core_workflow_tasks` | workflow_tasks | 0 | 待执行 |
-| `iam.core_workflows` | workflows | 0 | 待执行 |
-| `iam.dynamic_data` | dynamic_data | 0 | 待执行 |
-| `iam.tenant_users` | tenant_users | 0 | 待执行 |
+| `iam.core_emails` | emails | 0 | 已移除 |
+| `iam.core_files` | files | 0 | 已移除 |
+| `iam.core_guide_lessons` | guide_lessons | 0 | 已移除 |
+| `iam.core_login_logs` | login_logs | 0 | 已移除 |
+| `iam.core_migration_history` | migration_history | 0 | 已移除 |
+| `iam.core_mobile_offline_records` | mobile_offline_records | 0 | 已移除 |
+| `iam.core_notification_templates` | notification_templates | 0 | 已移除 |
+| `iam.core_plugin_categories` | plugin_categories | 0 | 已移除 |
+| `iam.core_plugin_instances` | plugin_instances | 0 | 已移除 |
+| `iam.core_plugin_permissions` | plugin_permissions | 0 | 已移除 |
+| `iam.core_plugin_reviews` | plugin_reviews | 0 | 已移除 |
+| `iam.core_plugin_versions` | plugin_versions | 0 | 已移除 |
+| `iam.core_plugins` | plugins | 0 | 已移除 |
+| `iam.core_tenant_modules` | tenant_modules | 0 | 已移除 |
+| `iam.core_tenant_settings` | tenant_settings | 0 | 已移除 |
+| `iam.core_tenant_users` | tenant_users | 0 | 已移除（仅 `finance.bootstrap_defaults` 的 `to_regclass` 守卫引用） |
+| `iam.core_workflow_instances` | workflow_instances | 0 | 已移除 |
+| `iam.core_workflow_tasks` | workflow_tasks | 0 | 已移除 |
+| `iam.core_workflows` | workflows | 0 | 已移除 |
+| `iam.dynamic_data` | dynamic_data | 0 | 已移除 |
+| `iam.tenant_users` | tenant_users | 0 | 已移除 |
 
 ### B2 flow 影子族 —— 删 4 / 保留 3
 

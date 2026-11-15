@@ -1,8 +1,9 @@
 # 第二步（删表批）执行清单
 # 列：batch<TAB>table<TAB>status<TAB>family<TAB>rows<TAB>note
-# status=drop 才会被 drop-shadow-tables-step2.sh 处理；hold 只打印 NOTE。
+# status=drop 才会被 drop-shadow-tables-step2.sh 处理（脚本仍兼容 hold 行）。
 # 生成依据：docs/database/table-family-authority-recommendations-2026-11-15.md §3（A 组 103 族）
-B6	public.core_guide_lessons	hold	guide_lessons	0	portal search_path=public,portal；guide.rs 无前缀读写直接命中本表
+# 口径：本清单只含本轮 drop 的 138 张；另有 7 张判定不删，已移出本文件，
+#       理由见 docs/database/dev-removed-shadow-tables-20261115.md「本轮不删」。
 B6	public.core_plugin_categories	drop	plugin_categories	0	
 B6	public.core_plugin_instances	drop	plugin_instances	0	
 B6	public.core_plugin_permissions	drop	plugin_permissions	0	
@@ -33,9 +34,6 @@ B1	iam.dynamic_data	drop	dynamic_data	0
 B1	iam.tenant_users	drop	tenant_users	0	
 B2	flow.core_files	drop	files	0	
 B2	flow.core_login_logs	drop	login_logs	0	
-B2	flow.core_migration_history	hold	migration_history	0	池基线 search_path=flow,public，裸名引用待证
-B2	flow.core_tenant_settings	hold	tenant_settings	0	池基线 search_path=flow,public，裸名引用待证
-B2	flow.core_tenant_usage	hold	tenant_usage	0	池基线 search_path=flow,public，裸名引用待证
 B2	flow.core_workflow_instances	drop	workflow_instances	0	
 B2	flow.core_workflow_tasks	drop	workflow_tasks	0	
 B7	analytics.analytics_comparison_analyses	drop	analytics_comparison_analyses	0	
@@ -79,7 +77,6 @@ B3	mes.core_plugin_permissions	drop	plugin_permissions	0
 B3	mes.core_plugin_reviews	drop	plugin_reviews	0	
 B3	mes.core_plugin_versions	drop	plugin_versions	0	
 B3	mes.core_plugins	drop	plugins	0	
-B3	mes.core_subscriptions	hold	subscriptions	0	被 mes.core_billing_invoices 入向外键引用
 B3	mes.core_tenant_plugins	drop	tenant_plugins	0	
 B3	mes.core_tenant_settings	drop	tenant_settings	0	
 B3	mes.core_tenant_usage	drop	tenant_usage	0	
@@ -132,7 +129,6 @@ B5	public.qa_standards	drop	qa_standards	0
 B9	public.production_lines	drop	production_lines	0	
 B9	public.shifts	drop	shifts	0	
 B9	public.work_calendars	drop	work_calendars	0	
-B9	public.workshops	hold	workshops	0	被 mes.production_orders / mes.work_stations 入向外键引用
 B10	hrm.vectors	drop	vectors	0	
 B10	master_data.dynamic_data	drop	dynamic_data	0	
 B10	public.business_locations	drop	business_locations	0	
@@ -144,6 +140,5 @@ B10	public.location_photos	drop	location_photos	0
 B10	public.map_markers	drop	map_markers	0	
 B10	public.mes_qms_sync	drop	mes_qms_sync	0	
 B10	public.notification_channels	drop	notification_channels	0	
-B10	public.notification_templates	hold	notification_templates	0	来源不明（仓库内无 CREATE TABLE，仅被 RLS/资源码迁移引用）
 B10	public.pipelines	drop	pipelines	0	
 B10	public.warehouse_locations	drop	warehouse_locations	0	
