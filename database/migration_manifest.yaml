@@ -1625,3 +1625,27 @@ pending_forward_patches:
       前向补丁 > 20261115000000；配 database/rollback/20261115100000_w7_b4_wms_po_snapshot_backfill.rollback.sql；
       回滚先删约束再逆序删列，表内有数据时 ABORT；
       生产走正常通道单版本投递（ticket TOPEMS-W7-B4-WMS-PO-SNAPSHOT-BACKFILL）
+
+  - version: "20261115110000"
+    file: "database/migrations/20261115110000_k8_tms_rls_fail_closed_3.sql"
+    status: to_apply
+    effect: >-
+      K8 第一批：tms.tms_carriers / tms.tms_drivers / tms.tms_vehicles 由 fail-open 收紧为 fail-closed
+      （COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+      OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid），
+      策略名沿用 rls_tenant_isolation、PERMISSIVE/ALL、FORCE RLS 保持；
+      同批 tenant_id SET NOT NULL，并补 idx_tms_carriers_tenant / idx_tms_drivers_tenant / idx_tms_vehicles_tenant
+    destructive_scan: >-
+      仅 DROP POLICY IF EXISTS + CREATE POLICY + ALTER COLUMN SET NOT NULL + CREATE INDEX IF NOT EXISTS；
+      无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；
+      前置断言表存在、rls/force_rls 为 true、tenant_id IS NULL = 0 行、每表恰 1 条策略（不符即 ABORT）；
+      后置断言策略形状 / 可空性 / 索引逐表复核；文件内无 BEGIN/COMMIT；prod 3 表 0 行，SET NOT NULL 无回填风险
+    evidence:
+      - { kind: catalog, ref: "prod topems_prod 2026-11-15（只读）", detail: "3 表各 1 条 rls_tenant_isolation，谓词含 IS NULL 放行分支；0 行、0 行 tenant_id IS NULL；tenant_id 可空、无租户索引" }
+      - { kind: code, ref: "svc/tms/src/modules/carrier.rs:152 / driver.rs:152 / vehicle.rs:149", detail: "三个模块的列表等读写全部经 Db::scope_with(txn) 请求事务，无裸池依赖" }
+      - { kind: drill, ref: "dev topems 2026-11-15", detail: "四场景逐表通过：同租户读 1/1/1、异租户读 0/0/0、无 GUC 读 0/0/0、跨租户写 42501 拒绝、同租户写成功；探针按精确 id 清除，残留 0" }
+    note: >-
+      前向补丁 > 20261115100000；配 database/rollback/20261115110000_k8_tms_rls_fail_closed_3.rollback.sql；
+      回滚恢复 prod 快照策略原文与 tenant_id 可空性，并删除本迁移新增索引；
+      回退顺序先回策略再回二进制（策略 fail-open 下新旧二进制均可工作）；
+      方案见 docs/database/k8-fail-open-tightening-plan-2026-11-15.md；本轮未投生产（ticket TOPEMS-K8-TMS-20261115）
