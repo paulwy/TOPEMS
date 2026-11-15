@@ -14,6 +14,7 @@
 - [postgres-native-migration-20261008.md](./postgres-native-migration-20261008.md)
 - [rls-coverage-report.md](./rls-coverage-report.md)
 - [rls-live-coverage.md](./rls-live-coverage.md)
+- [topems-table-inventory-2026-11-14.md](./topems-table-inventory-2026-11-14.md) — 全库表级只读盘点（560 张表、nil 租户存量、RLS 现状、已知缺陷 K1–K5/K7）
 
 ## 子目录
 
