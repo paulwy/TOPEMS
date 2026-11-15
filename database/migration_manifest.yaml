@@ -1399,10 +1399,11 @@ pending_forward_patches:
 
   - version: "20261114100000"
     file: "database/migrations/20261114100000_w7_b4_status_check_widen_business_states.sql"
-    status: to_apply
+    status: superseded
     effect: "18 张表的 ck_*_status_standard 值域 = 现状 active/inactive/archived ∪ 代码实际写入的流程态（draft/suspected/paid/running 等），共 18 条约束重建"
     destructive_scan: "ALTER TABLE DROP/ADD CONSTRAINT；无 DELETE/UPDATE/TRUNCATE；表/约束缺失、现状定义含目标外值、存在越界存量行时 RAISE EXCEPTION 中止"
-    note: "前向迁移 > 20261113100000，不改已推送历史；target 逐表可指到代码写入点（清单见 status约束清单-2026-11-14.md）；配 database/rollback/20261114100000_w7_b4_status_check_widen_business_states.rollback.sql，写入新值后回滚会失败"
+    superseded_by: [ "20261115000000" ]
+    note: "不可投递、已被 20261115000000 取代：①prod crm.billing_records / iam.users / analytics.report_execution_records 三表无 ck_*_status_standard，本迁移会在第一处断言 RAISE 并整笔回滚；②6 张表目标值域窄于代码实际写入（tms_carriers 缺 suspended、mes_erp_sync_logs 缺 pending、integration_sync_logs 缺 pending/success/failed、report_execution_records 缺 completed/failed、finance_v60_alerts 缺 draft/pending、qa_alert_messages 缺 open/pending）。文件与旧回滚均保持原样，不再投递"
   - version: "20261114120000"
     file: "database/migrations/20261114120000_w7_b4_six_schema_rls_fail_closed_forward.sql"
     status: to_apply
@@ -1572,4 +1573,27 @@ pending_forward_patches:
       前向补丁 > 20261114190000，不改已推送历史；文件内无 BEGIN/COMMIT；
       配 database/rollback/20261114202000_erp_crm_portal_rls_fail_closed_8.rollback.sql；
       必须与 20261114200000 同批（窗口 C），且在新二进制部署之后；本任务只合 main、不投生产
+
+  - version: "20261115000000"
+    file: "database/migrations/20261115000000_w7_b4_status_check_widen_forward.sql"
+    status: to_apply
+    effect: >-
+      前向承接 20261114100000：18 张表的 ck_*_status_standard 幂等创建/重建。
+      约束不存在则创建；存在但值域不符则 DROP + ADD。6 张表按代码实际写入扩容：
+      tms_carriers +pending_review/suspended/blacklisted，finance_v60_alerts +draft/pending，
+      qa_alert_messages +open/pending，integration_sync_logs +pending/success/failed，
+      mes_erp_sync_logs +pending，report_execution_records +completed/failed
+    destructive_scan: >-
+      DO 块内动态 SQL ALTER TABLE DROP/ADD CONSTRAINT；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；
+      前置断言表/列存在且 status 为字符类型，存量越界、同表其他 status CHECK 拒绝目标值、
+      约束同名但非 CHECK 时 RAISE EXCEPTION 整笔回滚；后置逐值求值验证全部目标值可接受
+    supersedes: [ "20261114100000" ]
+    evidence:
+      - { kind: code, ref: "status约束清单-2026-11-14.md + 2026-11-15 六表复核", detail: "六表实际写值逐条 grep 到 INSERT/UPDATE/SET status 字面量，见 docs/database/status-check-widen-forward-20261115.md" }
+      - { kind: drill, ref: "dev topems", detail: "正向应用、六表逐值接受/非法值拒绝、回滚、再应用均通过；明细见 docs/database/status-check-widen-forward-20261115.md" }
+    note: >-
+      前向补丁 > 20261114202000，不改已推送历史；文件内无 BEGIN/COMMIT；
+      配 database/rollback/20261115000000_w7_b4_status_check_widen_forward.rollback.sql；
+      回滚恢复到 20261114100000 目标定义，写入过新增值时会因存量行校验失败而中止；
+      生产投递需单独窗口，本任务只合 main、不投生产
 

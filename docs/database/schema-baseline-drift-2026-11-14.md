@@ -224,8 +224,12 @@ comm -13 /tmp/prod_versions.txt /tmp/dev_versions.txt   # dev - prod
    `finance_v60_alerts` 缺 `draft`/`pending`、`qa_alert_messages` 缺 `open`/`pending`；
    一旦投产，第一条真实业务写入就会 `23514 check_violation`。
 
-处置：**不删文件、不改 SQL、不动 manifest 状态**（改状态会影响账本比对），仅在本文档登记结论；
-重写工作另行立项，本次不做。
+处置：**不删文件、不改 SQL、保留旧回滚文件**；仅登记结论并把 manifest 状态改为
+`superseded`（不改旧文件内容与 checksum）。重写由 `20261115000000_w7_b4_status_check_widen_forward.sql`
+前向承接，论证与 dev 演练见
+[status-check-widen-forward-20261115.md](status-check-widen-forward-20261115.md)。
+
+**2026-11-15 更新：`20261114100000` 已标记为不可投递、被 `20261115000000` 取代，旧迁移不再进入任何窗口。**
 
 `20261114170000` 仍按正常待投记录（manifest `to_apply`、只写不投），等窗口落刀。
 
