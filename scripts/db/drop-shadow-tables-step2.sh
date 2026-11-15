@@ -120,8 +120,18 @@ BEGIN
      AND p.prosrc ~* ('(^|[^a-z_0-9])' || rel::text || '([^a-z_0-9]|$)')
      AND p.prosrc ~* ('to_regclass\(\s*''' || rel::text || '''\s*\)\s+IS\s+NOT\s+NULL');
   IF g > 0 THEN RAISE NOTICE 'FUNC_REF_GUARDED rel=% count=%（to_regclass 守卫）', rel, g; END IF;
-  SELECT count(*) INTO k FROM pg_trigger WHERE tgrelid = rel AND NOT tgisinternal;
+  -- 表自带的 updated_at 维护触发器（BEFORE UPDATE ROW + *_updated_at 函数）随表删除，
+  -- 不构成外部依赖；其余非内部触发器一律阻断。
+  SELECT count(*) INTO k
+    FROM pg_trigger tg JOIN pg_proc p ON p.oid = tg.tgfoid
+   WHERE tg.tgrelid = rel AND NOT tg.tgisinternal
+     AND NOT (p.proname ~ '(^|_)(update|set|touch)_updated_at(_|$)' AND (tg.tgtype & 2) = 2 AND (tg.tgtype & 16) = 16);
   IF k > 0 THEN RAISE EXCEPTION 'TRIGGER count=%', k; END IF;
+  SELECT count(*) INTO g
+    FROM pg_trigger tg JOIN pg_proc p ON p.oid = tg.tgfoid
+   WHERE tg.tgrelid = rel AND NOT tg.tgisinternal
+     AND p.proname ~ '(^|_)(update|set|touch)_updated_at(_|$)' AND (tg.tgtype & 2) = 2 AND (tg.tgtype & 16) = 16;
+  IF g > 0 THEN RAISE NOTICE 'TRIGGER_UPDATED_AT rel=% count=%（随表删除）', rel, g; END IF;
 END \$\$;" >/dev/null
 }
 

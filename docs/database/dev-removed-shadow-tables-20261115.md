@@ -25,6 +25,14 @@
 |---|---|---|
 | B6 | 2026-11-15 | 删 7 张（保留 `public.core_guide_lessons`）；快照 `/Users/air/topems-db-snapshots/20261115-step2/B6/`；回滚演练通过（7 张全部重建，索引 29/29、策略 7/7） |
 | B1 | 2026-11-15 | 删 21 张；快照 `.../B1/`；回滚演练通过（21 张全部重建，索引 32/32、策略 19/19）；删后索引 32→0、策略 19→0；`finance.bootstrap_defaults` 对 `iam.core_tenant_users` 为 `to_regclass` 守卫的动态引用，缺表自动跳过 |
+| B2 | 2026-11-15 | 删 4 张；演练 4/4、索引 14/14、策略 5/5；删后索引 14→0、策略 5→0 |
+| B7 | 2026-11-15 | 删 12 张；演练 12/12、索引 12/12、策略 11/11；删后索引 12→0、策略 11→0 |
+| B8 | 2026-11-15 | 删 16 张；演练 16/16、索引 51/51、策略 14/14；删后索引 51→0、策略 14→0 |
+| B3 | 2026-11-15 | 删 21 张；演练 21/21、索引 74/74、策略 19/19；删后索引 74→0、策略 19→0；`mes.dynamic_data` 自带 `updated_at` 维护触发器（BEFORE UPDATE ROW，随表删除） |
+| B4 | 2026-11-15 | 删 16 张；演练 16/16、索引 68/68、策略 15/15；删后索引 68→0、策略 15→0 |
+| B5 | 2026-11-15 | 删 25 张；演练 25/25、索引 106/106、策略 25/25；删后索引 106→0、策略 25→0 |
+| B9 | 2026-11-15 | 删 3 张；演练 3/3、索引 6/6、策略 0/0；删后索引 6→0、策略 0→0 |
+| B10 | 2026-11-15 | 删 13 张；演练 13/13、索引 28/28、策略 11/11；删后索引 28→0、策略 11→0 |
 
 ## 逐批清单
 
@@ -41,7 +49,7 @@
 | `public.core_plugins` | plugins | 0 | 已移除 |
 | `public.core_tenant_plugins` | tenant_plugins | 0 | 已移除 |
 
-### B1 iam 影子族 —— 删 21 / 保留 0（已执行）
+### B1 iam 影子族 —— 删 21 / 保留 0
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
@@ -71,157 +79,157 @@
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `flow.core_files` | files | 0 | 待执行 |
-| `flow.core_login_logs` | login_logs | 0 | 待执行 |
+| `flow.core_files` | files | 0 | 已移除 |
+| `flow.core_login_logs` | login_logs | 0 | 已移除 |
 | `flow.core_migration_history` | migration_history | 0 | 保留（池基线 search_path=flow,public，裸名引用待证） |
 | `flow.core_tenant_settings` | tenant_settings | 0 | 保留（池基线 search_path=flow,public，裸名引用待证） |
 | `flow.core_tenant_usage` | tenant_usage | 0 | 保留（池基线 search_path=flow,public，裸名引用待证） |
-| `flow.core_workflow_instances` | workflow_instances | 0 | 待执行 |
-| `flow.core_workflow_tasks` | workflow_tasks | 0 | 待执行 |
+| `flow.core_workflow_instances` | workflow_instances | 0 | 已移除 |
+| `flow.core_workflow_tasks` | workflow_tasks | 0 | 已移除 |
 
 ### B7 analytics schema 影子 —— 删 12 / 保留 0
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `analytics.analytics_comparison_analyses` | analytics_comparison_analyses | 0 | 待执行 |
-| `analytics.analytics_comparison_results` | analytics_comparison_results | 0 | 待执行 |
-| `analytics.analytics_dashboard_shares` | analytics_dashboard_shares | 0 | 待执行 |
-| `analytics.analytics_dashboard_templates` | analytics_dashboard_templates | 0 | 待执行 |
-| `analytics.analytics_dashboards` | analytics_dashboards | 0 | 待执行 |
-| `analytics.analytics_datasets` | analytics_datasets | 0 | 待执行 |
-| `analytics.analytics_datasources` | analytics_datasources | 0 | 待执行 |
-| `analytics.analytics_drilldown_history` | analytics_drilldown_history | 0 | 待执行 |
-| `analytics.analytics_drilldown_paths` | analytics_drilldown_paths | 0 | 待执行 |
-| `analytics.analytics_row_level_permissions` | analytics_row_level_permissions | 0 | 待执行 |
-| `analytics.analytics_self_service_reports` | analytics_self_service_reports | 0 | 待执行 |
-| `analytics.analytics_widgets` | analytics_widgets | 0 | 待执行 |
+| `analytics.analytics_comparison_analyses` | analytics_comparison_analyses | 0 | 已移除 |
+| `analytics.analytics_comparison_results` | analytics_comparison_results | 0 | 已移除 |
+| `analytics.analytics_dashboard_shares` | analytics_dashboard_shares | 0 | 已移除 |
+| `analytics.analytics_dashboard_templates` | analytics_dashboard_templates | 0 | 已移除 |
+| `analytics.analytics_dashboards` | analytics_dashboards | 0 | 已移除 |
+| `analytics.analytics_datasets` | analytics_datasets | 0 | 已移除 |
+| `analytics.analytics_datasources` | analytics_datasources | 0 | 已移除 |
+| `analytics.analytics_drilldown_history` | analytics_drilldown_history | 0 | 已移除 |
+| `analytics.analytics_drilldown_paths` | analytics_drilldown_paths | 0 | 已移除 |
+| `analytics.analytics_row_level_permissions` | analytics_row_level_permissions | 0 | 已移除 |
+| `analytics.analytics_self_service_reports` | analytics_self_service_reports | 0 | 已移除 |
+| `analytics.analytics_widgets` | analytics_widgets | 0 | 已移除 |
 
 ### B8 public analytics/report 镜像 —— 删 16 / 保留 0
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `analytics.report_subscriptions` | report_subscriptions | 0 | 待执行 |
-| `bi.report_execution_records` | report_execution_records | 0 | 待执行 |
-| `public.analytics_comparison_analyses` | analytics_comparison_analyses | 0 | 待执行 |
-| `public.analytics_comparison_results` | analytics_comparison_results | 0 | 待执行 |
-| `public.analytics_dashboard_shares` | analytics_dashboard_shares | 0 | 待执行 |
-| `public.analytics_dashboard_templates` | analytics_dashboard_templates | 0 | 待执行 |
-| `public.analytics_dashboards` | analytics_dashboards | 0 | 待执行 |
-| `public.analytics_datasets` | analytics_datasets | 0 | 待执行 |
-| `public.analytics_datasources` | analytics_datasources | 0 | 待执行 |
-| `public.analytics_drilldown_history` | analytics_drilldown_history | 0 | 待执行 |
-| `public.analytics_drilldown_paths` | analytics_drilldown_paths | 0 | 待执行 |
-| `public.analytics_row_level_permissions` | analytics_row_level_permissions | 0 | 待执行 |
-| `public.analytics_self_service_reports` | analytics_self_service_reports | 0 | 待执行 |
-| `public.analytics_widgets` | analytics_widgets | 0 | 待执行 |
-| `public.report_execution_records` | report_execution_records | 0 | 待执行 |
-| `public.report_subscriptions` | report_subscriptions | 0 | 待执行 |
+| `analytics.report_subscriptions` | report_subscriptions | 0 | 已移除 |
+| `bi.report_execution_records` | report_execution_records | 0 | 已移除 |
+| `public.analytics_comparison_analyses` | analytics_comparison_analyses | 0 | 已移除 |
+| `public.analytics_comparison_results` | analytics_comparison_results | 0 | 已移除 |
+| `public.analytics_dashboard_shares` | analytics_dashboard_shares | 0 | 已移除 |
+| `public.analytics_dashboard_templates` | analytics_dashboard_templates | 0 | 已移除 |
+| `public.analytics_dashboards` | analytics_dashboards | 0 | 已移除 |
+| `public.analytics_datasets` | analytics_datasets | 0 | 已移除 |
+| `public.analytics_datasources` | analytics_datasources | 0 | 已移除 |
+| `public.analytics_drilldown_history` | analytics_drilldown_history | 0 | 已移除 |
+| `public.analytics_drilldown_paths` | analytics_drilldown_paths | 0 | 已移除 |
+| `public.analytics_row_level_permissions` | analytics_row_level_permissions | 0 | 已移除 |
+| `public.analytics_self_service_reports` | analytics_self_service_reports | 0 | 已移除 |
+| `public.analytics_widgets` | analytics_widgets | 0 | 已移除 |
+| `public.report_execution_records` | report_execution_records | 0 | 已移除 |
+| `public.report_subscriptions` | report_subscriptions | 0 | 已移除 |
 
 ### B3 mes 影子族 —— 删 21 / 保留 1
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `mes.core_emails` | emails | 0 | 待执行 |
-| `mes.core_files` | files | 0 | 待执行 |
-| `mes.core_guide_lessons` | guide_lessons | 0 | 待执行 |
-| `mes.core_login_logs` | login_logs | 0 | 待执行 |
-| `mes.core_migration_history` | migration_history | 0 | 待执行 |
-| `mes.core_mobile_offline_records` | mobile_offline_records | 0 | 待执行 |
-| `mes.core_notification_templates` | notification_templates | 0 | 待执行 |
-| `mes.core_plugin_categories` | plugin_categories | 0 | 待执行 |
-| `mes.core_plugin_instances` | plugin_instances | 0 | 待执行 |
-| `mes.core_plugin_permissions` | plugin_permissions | 0 | 待执行 |
-| `mes.core_plugin_reviews` | plugin_reviews | 0 | 待执行 |
-| `mes.core_plugin_versions` | plugin_versions | 0 | 待执行 |
-| `mes.core_plugins` | plugins | 0 | 待执行 |
+| `mes.core_emails` | emails | 0 | 已移除 |
+| `mes.core_files` | files | 0 | 已移除 |
+| `mes.core_guide_lessons` | guide_lessons | 0 | 已移除 |
+| `mes.core_login_logs` | login_logs | 0 | 已移除 |
+| `mes.core_migration_history` | migration_history | 0 | 已移除 |
+| `mes.core_mobile_offline_records` | mobile_offline_records | 0 | 已移除 |
+| `mes.core_notification_templates` | notification_templates | 0 | 已移除 |
+| `mes.core_plugin_categories` | plugin_categories | 0 | 已移除 |
+| `mes.core_plugin_instances` | plugin_instances | 0 | 已移除 |
+| `mes.core_plugin_permissions` | plugin_permissions | 0 | 已移除 |
+| `mes.core_plugin_reviews` | plugin_reviews | 0 | 已移除 |
+| `mes.core_plugin_versions` | plugin_versions | 0 | 已移除 |
+| `mes.core_plugins` | plugins | 0 | 已移除 |
 | `mes.core_subscriptions` | subscriptions | 0 | 保留（被 mes.core_billing_invoices 入向外键引用） |
-| `mes.core_tenant_plugins` | tenant_plugins | 0 | 待执行 |
-| `mes.core_tenant_settings` | tenant_settings | 0 | 待执行 |
-| `mes.core_tenant_usage` | tenant_usage | 0 | 待执行 |
-| `mes.core_tenant_users` | tenant_users | 0 | 待执行 |
-| `mes.core_workflow_instances` | workflow_instances | 0 | 待执行 |
-| `mes.core_workflow_tasks` | workflow_tasks | 0 | 待执行 |
-| `mes.core_workflows` | workflows | 0 | 待执行 |
-| `mes.dynamic_data` | dynamic_data | 0 | 待执行 |
+| `mes.core_tenant_plugins` | tenant_plugins | 0 | 已移除 |
+| `mes.core_tenant_settings` | tenant_settings | 0 | 已移除 |
+| `mes.core_tenant_usage` | tenant_usage | 0 | 已移除 |
+| `mes.core_tenant_users` | tenant_users | 0 | 已移除 |
+| `mes.core_workflow_instances` | workflow_instances | 0 | 已移除 |
+| `mes.core_workflow_tasks` | workflow_tasks | 0 | 已移除 |
+| `mes.core_workflows` | workflows | 0 | 已移除 |
+| `mes.dynamic_data` | dynamic_data | 0 | 已移除 |
 
 ### B4 pdm 影子族 —— 删 16 / 保留 0
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `public.pdm_bom_items` | pdm_bom_items | 0 | 待执行 |
-| `public.pdm_boms` | pdm_boms | 0 | 待执行 |
-| `public.pdm_configurations` | pdm_configurations | 0 | 待执行 |
-| `public.pdm_document_versions` | pdm_document_versions | 0 | 待执行 |
-| `public.pdm_documents` | pdm_documents | 0 | 待执行 |
-| `public.pdm_master_data_refs` | pdm_master_data_refs | 0 | 待执行 |
-| `public.pdm_production_batches` | pdm_production_batches | 0 | 待执行 |
-| `public.pdm_production_formulas` | pdm_production_formulas | 0 | 待执行 |
-| `public.pdm_production_processes` | pdm_production_processes | 0 | 待执行 |
-| `public.pdm_production_steps` | pdm_production_steps | 0 | 待执行 |
-| `public.pdm_project_members` | pdm_project_members | 0 | 待执行 |
-| `public.pdm_project_phases` | pdm_project_phases | 0 | 待执行 |
-| `public.pdm_projects` | pdm_projects | 0 | 待执行 |
-| `public.pdm_versions` | pdm_versions | 0 | 待执行 |
-| `public.pdm_workflow_instances` | pdm_workflow_instances | 0 | 待执行 |
-| `public.pdm_workflows` | pdm_workflows | 0 | 待执行 |
+| `public.pdm_bom_items` | pdm_bom_items | 0 | 已移除 |
+| `public.pdm_boms` | pdm_boms | 0 | 已移除 |
+| `public.pdm_configurations` | pdm_configurations | 0 | 已移除 |
+| `public.pdm_document_versions` | pdm_document_versions | 0 | 已移除 |
+| `public.pdm_documents` | pdm_documents | 0 | 已移除 |
+| `public.pdm_master_data_refs` | pdm_master_data_refs | 0 | 已移除 |
+| `public.pdm_production_batches` | pdm_production_batches | 0 | 已移除 |
+| `public.pdm_production_formulas` | pdm_production_formulas | 0 | 已移除 |
+| `public.pdm_production_processes` | pdm_production_processes | 0 | 已移除 |
+| `public.pdm_production_steps` | pdm_production_steps | 0 | 已移除 |
+| `public.pdm_project_members` | pdm_project_members | 0 | 已移除 |
+| `public.pdm_project_phases` | pdm_project_phases | 0 | 已移除 |
+| `public.pdm_projects` | pdm_projects | 0 | 已移除 |
+| `public.pdm_versions` | pdm_versions | 0 | 已移除 |
+| `public.pdm_workflow_instances` | pdm_workflow_instances | 0 | 已移除 |
+| `public.pdm_workflows` | pdm_workflows | 0 | 已移除 |
 
 ### B5 qms/qa 影子族 —— 删 25 / 保留 0
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `public.qa_alert_messages` | qa_alert_messages | 0 | 待执行 |
-| `public.qa_alert_rules` | qa_alert_rules | 0 | 待执行 |
-| `public.qa_apqp_approvals` | qa_apqp_approvals | 0 | 待执行 |
-| `public.qa_apqp_phases` | qa_apqp_phases | 0 | 待执行 |
-| `public.qa_apqp_projects` | qa_apqp_projects | 0 | 待执行 |
-| `public.qa_apqp_risks` | qa_apqp_risks | 0 | 待执行 |
-| `public.qa_apqp_tasks` | qa_apqp_tasks | 0 | 待执行 |
-| `public.qa_audit_findings` | qa_audit_findings | 0 | 待执行 |
-| `public.qa_audit_plans` | qa_audit_plans | 0 | 待执行 |
-| `public.qa_audit_tasks` | qa_audit_tasks | 0 | 待执行 |
-| `public.qa_corrective_action_items` | qa_corrective_action_items | 0 | 待执行 |
-| `public.qa_corrective_actions` | qa_corrective_actions | 0 | 待执行 |
-| `public.qa_eightd_audit_logs` | qa_eightd_audit_logs | 0 | 待执行 |
-| `public.qa_eightd_reports` | qa_eightd_reports | 0 | 待执行 |
-| `public.qa_fmea_analyses` | qa_fmea_analyses | 0 | 待执行 |
-| `public.qa_fmea_items` | qa_fmea_items | 0 | 待执行 |
-| `public.qa_inspection_audits` | qa_inspection_audits | 0 | 待执行 |
-| `public.qa_inspection_results` | qa_inspection_results | 0 | 待执行 |
-| `public.qa_quality_costs` | qa_quality_costs | 0 | 待执行 |
-| `public.qa_quality_inspections` | qa_quality_inspections | 0 | 待执行 |
-| `public.qa_quality_issues` | qa_quality_issues | 0 | 待执行 |
-| `public.qa_spc_charts` | qa_spc_charts | 0 | 待执行 |
-| `public.qa_spc_data_points` | qa_spc_data_points | 0 | 待执行 |
-| `public.qa_standard_revisions` | qa_standard_revisions | 0 | 待执行 |
-| `public.qa_standards` | qa_standards | 0 | 待执行 |
+| `public.qa_alert_messages` | qa_alert_messages | 0 | 已移除 |
+| `public.qa_alert_rules` | qa_alert_rules | 0 | 已移除 |
+| `public.qa_apqp_approvals` | qa_apqp_approvals | 0 | 已移除 |
+| `public.qa_apqp_phases` | qa_apqp_phases | 0 | 已移除 |
+| `public.qa_apqp_projects` | qa_apqp_projects | 0 | 已移除 |
+| `public.qa_apqp_risks` | qa_apqp_risks | 0 | 已移除 |
+| `public.qa_apqp_tasks` | qa_apqp_tasks | 0 | 已移除 |
+| `public.qa_audit_findings` | qa_audit_findings | 0 | 已移除 |
+| `public.qa_audit_plans` | qa_audit_plans | 0 | 已移除 |
+| `public.qa_audit_tasks` | qa_audit_tasks | 0 | 已移除 |
+| `public.qa_corrective_action_items` | qa_corrective_action_items | 0 | 已移除 |
+| `public.qa_corrective_actions` | qa_corrective_actions | 0 | 已移除 |
+| `public.qa_eightd_audit_logs` | qa_eightd_audit_logs | 0 | 已移除 |
+| `public.qa_eightd_reports` | qa_eightd_reports | 0 | 已移除 |
+| `public.qa_fmea_analyses` | qa_fmea_analyses | 0 | 已移除 |
+| `public.qa_fmea_items` | qa_fmea_items | 0 | 已移除 |
+| `public.qa_inspection_audits` | qa_inspection_audits | 0 | 已移除 |
+| `public.qa_inspection_results` | qa_inspection_results | 0 | 已移除 |
+| `public.qa_quality_costs` | qa_quality_costs | 0 | 已移除 |
+| `public.qa_quality_inspections` | qa_quality_inspections | 0 | 已移除 |
+| `public.qa_quality_issues` | qa_quality_issues | 0 | 已移除 |
+| `public.qa_spc_charts` | qa_spc_charts | 0 | 已移除 |
+| `public.qa_spc_data_points` | qa_spc_data_points | 0 | 已移除 |
+| `public.qa_standard_revisions` | qa_standard_revisions | 0 | 已移除 |
+| `public.qa_standards` | qa_standards | 0 | 已移除 |
 
 ### B9 mes 基础主数据 public 镜像 —— 删 3 / 保留 1
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `public.production_lines` | production_lines | 0 | 待执行 |
-| `public.shifts` | shifts | 0 | 待执行 |
-| `public.work_calendars` | work_calendars | 0 | 待执行 |
+| `public.production_lines` | production_lines | 0 | 已移除 |
+| `public.shifts` | shifts | 0 | 已移除 |
+| `public.work_calendars` | work_calendars | 0 | 已移除 |
 | `public.workshops` | workshops | 0 | 保留（被 mes.production_orders / mes.work_stations 入向外键引用） |
 
 ### B10 其他 public 影子 —— 删 13 / 保留 1
 
 | 表 | 族 | 行数 | 状态 |
 |---|---|---|---|
-| `hrm.vectors` | vectors | 0 | 待执行 |
-| `master_data.dynamic_data` | dynamic_data | 0 | 待执行 |
-| `public.business_locations` | business_locations | 0 | 待执行 |
-| `public.cqrs_snapshots` | cqrs_snapshots | 0 | 待执行 |
-| `public.device_locations` | device_locations | 0 | 待执行 |
-| `public.erp_master_data_refs` | erp_master_data_refs | 0 | 待执行 |
-| `public.factory_maps` | factory_maps | 0 | 待执行 |
-| `public.location_photos` | location_photos | 0 | 待执行 |
-| `public.map_markers` | map_markers | 0 | 待执行 |
-| `public.mes_qms_sync` | mes_qms_sync | 0 | 待执行 |
-| `public.notification_channels` | notification_channels | 0 | 待执行 |
+| `hrm.vectors` | vectors | 0 | 已移除 |
+| `master_data.dynamic_data` | dynamic_data | 0 | 已移除 |
+| `public.business_locations` | business_locations | 0 | 已移除 |
+| `public.cqrs_snapshots` | cqrs_snapshots | 0 | 已移除 |
+| `public.device_locations` | device_locations | 0 | 已移除 |
+| `public.erp_master_data_refs` | erp_master_data_refs | 0 | 已移除 |
+| `public.factory_maps` | factory_maps | 0 | 已移除 |
+| `public.location_photos` | location_photos | 0 | 已移除 |
+| `public.map_markers` | map_markers | 0 | 已移除 |
+| `public.mes_qms_sync` | mes_qms_sync | 0 | 已移除 |
+| `public.notification_channels` | notification_channels | 0 | 已移除 |
 | `public.notification_templates` | notification_templates | 0 | 保留（来源不明（仓库内无 CREATE TABLE，仅被 RLS/资源码迁移引用）） |
-| `public.pipelines` | pipelines | 0 | 待执行 |
-| `public.warehouse_locations` | warehouse_locations | 0 | 待执行 |
+| `public.pipelines` | pipelines | 0 | 已移除 |
+| `public.warehouse_locations` | warehouse_locations | 0 | 已移除 |
 
 ## 本轮不删（7 张）
 
