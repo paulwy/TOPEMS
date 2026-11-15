@@ -48,6 +48,11 @@ fn decimal_from_f64(value: f64) -> Decimal {
 /// handler 侧据此映射为 400 而不是 500；守卫消息本身复用同一常量，避免文案与判定漂移。
 const NO_HISTORY_MARKER: &str = "无真实历史凭证数据（近 12 个月 0 行）";
 
+/// K7：无真实样本时 retrain 的拒绝原因（文案沿用既有含义，不改写），
+/// handler 侧据此映射为 400 而不是 500。
+const NO_SAMPLE_MARKER: &str =
+    "无真实历史凭证数据，拒绝用合成样本计算模型精度：合成数据不可用于决策";
+
 // ==================== 枚举类型 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -695,9 +700,7 @@ impl CashFlowPredictor {
         // 包装成可信精度。无真实历史时直接报错，不落模型行。
         let (sample, is_synthetic) = Self::fetch_historical_data(db, tenant_id, None).await?;
         if is_synthetic {
-            return Err(sqlx::Error::Protocol(
-                "无真实历史凭证数据，拒绝用合成样本计算模型精度：合成数据不可用于决策".to_string(),
-            ));
+            return Err(sqlx::Error::Protocol(NO_SAMPLE_MARKER.to_string()));
         }
 
         let (errors_inflow, errors_outflow) = Self::compute_prediction_errors(&sample, model);
@@ -1398,6 +1401,17 @@ pub async fn get_predictions_handler(
     }
 }
 
+/// K7：无真实样本的拒绝同属「请求无法满足」，映射 400 并原样返回说明；
+/// 其余错误维持既有映射，不改变其他失败面的状态码。
+fn map_retrain_error(e: sqlx::Error) -> ApiResponse<PredictionModelRecord> {
+    match e {
+        sqlx::Error::Protocol(msg) if msg.starts_with(NO_SAMPLE_MARKER) => {
+            ApiResponse::bad_request(&msg)
+        }
+        other => crate::shared::err_resp(other),
+    }
+}
+
 pub async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1414,7 +1428,7 @@ pub async fn retrain_model_handler(
 
     match CashFlowPredictor::retrain_model(&db, tenant_id, model).await {
         Ok(record) => ApiResponse::success(record, "模型重训练完成"),
-        Err(e) => crate::shared::err_resp(e),
+        Err(e) => map_retrain_error(e),
     }
 }
 #[utoipa::path(
@@ -1997,5 +2011,35 @@ mod tests {
     fn map_predict_error_keeps_other_errors() {
         let resp = map_predict_error(sqlx::Error::RowNotFound);
         assert_ne!(resp.code, 400, "非数据缺失错误不应映射为 400");
+    }
+
+    /// K7 回归：无真实历史凭证时 retrain 拒绝计算模型精度，handler 必须映射为 400
+    /// 并说明缺少真实样本，而不是把数据缺失伪装成 500。
+    #[sqlx::test(migrations = false)]
+    async fn retrain_without_history_maps_to_400(pool: sqlx::PgPool) {
+        setup_finance_tables(&pool).await;
+
+        let tenant_id = Uuid::new_v4();
+        let db = Db::new(pool.clone(), "finance, public, shared");
+        let err =
+            CashFlowPredictor::retrain_model(&db, tenant_id, PredictionModel::ExponentialSmoothing)
+                .await
+                .expect_err("无真实历史时应拒绝重训练，不得用合成样本计算精度");
+
+        let resp = map_retrain_error(err);
+        assert_eq!(
+            resp.code, 400,
+            "无真实样本应为 400，实际 {}：{}",
+            resp.code, resp.message
+        );
+        assert!(resp.message.contains("无真实历史凭证数据"));
+        assert!(resp.message.contains("拒绝用合成样本计算模型精度"));
+    }
+
+    /// K7 边界：非「无真实样本」的失败保持既有映射，不得被误判成 400。
+    #[test]
+    fn map_retrain_error_keeps_other_errors() {
+        let resp = map_retrain_error(sqlx::Error::RowNotFound);
+        assert_ne!(resp.code, 400, "非真实样本缺失错误不应映射为 400");
     }
 }
