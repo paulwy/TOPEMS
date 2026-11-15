@@ -249,3 +249,135 @@ node scripts/ci/check-decode-contract.mjs   # rc=0
 node scripts/ci/check-baseline-integrity.mjs # PASS
 ```
 
+## dev 迁移账本对齐生产（2026-11-15）
+
+目的：dev 不再落后于 prod，后续 RLS / 数据演练有可靠基线。
+
+| 侧 | 库 | 对齐前 | 对齐后 |
+| --- | --- | --- | --- |
+| dev | `127.0.0.1:5432/topems` | 679 行 / max `20261114170000` | **686 行 / max `20261115100000`** |
+| prod | `topems_prod`（只读） | 681 行 / max `20261115100000` | 不变 |
+
+补应用 7 笔（按版本升序，全部 `success=t`，前置校验每笔文件 SHA-384 与 prod 账本 checksum 一致）：
+
+`20261114180000` erp consolidation group tenant rls → `20261114190000` forecast v53 mark synthetic →
+`20261114200000` mes rls fail closed 22 → `20261114201000` add tenant id 8 tables →
+`20261114202000` erp crm portal rls fail closed 8 → `20261115000000` status check widen forward →
+`20261115100000` wms po snapshot backfill。
+
+应用工具：`scripts/migration/apply-forward.sh`（非 prod 路径，不用 `--only`，anchor 逐段推进）。
+
+对齐结论（可复核）：
+
+- 账本：dev **686 行 / max `20261115100000`**，prod **681 行 / max `20261115100000`**，两边 max 一致；
+  5 行差额即 dev 独有的 5 笔（`20261107000019`、`20261107000020`、`20261109110100`、`20261112105000`、`20261114100000`），
+  不存在「prod 有 dev 无」的版本。
+- 7 笔新版本在 dev 的 `checksum` 与 prod 逐笔相同（7/7）。
+- 策略：本批涉及的 16 张表（8 张 M2b 表 + 16 张 MES 残留表，含重叠）逐表与 prod 一致（每表 1 条 `rls_tenant_isolation`、`force_rls=true`）。
+- 黑盒（非超户 `topems_app`）：16/16 表租户读隔离通过（A 的 GUC 只读到 A 的行）、16/16 跨租户写被阻断；
+  11 张 fail-closed 表无 GUC 读 0 行，5 张 fail-open 表见 K8 登记。
+- 结构残留（与本批无关的 dev 代际差）见「本轮不处理的差异」一节。
+
+三处 dev 侧前置处理（均只影响 dev，已留档 `/tmp/topems_dev_align/`）：
+
+1. `erp.group_tenant_of` 属主为超级用户 `air`（dev 演练遗留），`CREATE OR REPLACE` 报
+   `must be owner of function`；函数体与 prod 一致，仅属主不同，改属主为 `topems_app`。
+2. `crm.core_crm_customers` / `erp.core_erp_suppliers` 在 dev 不存在（见下节待拆除登记），按 prod 3 列形状补建。
+3. 6 张 erp/crm/portal 表上 10 条旧策略挡住 `20261114202000`（见下节），先删后应用。
+
+## 待拆除登记：`crm.core_crm_customers` / `erp.core_erp_suppliers`
+
+prod 历史遗留死壳，dev 为对齐账本于 2026-11-15 临时补建，**本轮只登记不删除**。
+
+- 形状：仅 3 列 `id uuid NOT NULL DEFAULT gen_random_uuid()` / `tenant_id uuid` / `deleted_at timestamptz`，两表均 0 行；
+  prod 侧 `rls=true`、`force_rls=true`、每表 1 条 `rls_tenant_isolation`。
+- 引用面：prod 只读核查——外键 0、触发器 0、视图 0、函数文本引用 0，仅自身 pkey 与 `tenant_id` 索引；代码侧 0 引用。
+- 删除来源：`20261107000027_drop_dead_tables_batch31.sql` 在 dev（679 行）与 prod（681 行）账本里**均未登记**；
+  prod 因历史原因仍留空壳，dev 重建后已无。
+- 建议：下一批按 finance 6 张死表的同一路子（零引用 × 双库 0 行 × 无外键/视图依赖 + rollback 写全 DDL）一并拆除。
+
+## `20261114202000` 已知前提：只删 `*_allow_all_*`，不清理残留 `tenant_isolation_*`
+
+该迁移对每张表只 `DROP POLICY IF EXISTS <schema>_allow_all_<table>` 再 `CREATE POLICY rls_tenant_isolation`，
+**不处理其他命名残留的策略**。风险点：
+
+- PostgreSQL 多条 permissive 策略是 **OR** 关系，只要旧的 fail-open 策略（`app.tenant_id` 为 NULL/空/nil 时放行、
+  或 `tenant_id IS NULL` 放行）还在，新建的 fail-closed 策略会被短路，收紧等于没做。
+- prod 因为窗口 C 先清理了旧策略，所以没撞上；**从旧备份恢复的环境、或先跑过早期 fail-open 策略的环境会撞上**，
+  表现为 `policy "rls_tenant_isolation" for table "..." already exists` 或收紧后仍可见全量行。
+
+dev 实测报错原文（事务整笔回滚，账本未记）：
+
+```text
+psql:database/migrations/20261114202000_erp_crm_portal_rls_fail_closed_8.sql:23: ERROR:  policy "rls_tenant_isolation" for table "meeting_rooms" already exists
+NOTICE:  policy "erp_allow_all_meeting_rooms" for relation "erp.meeting_rooms" does not exist, skipping
+```
+
+dev 处置：人工前置删掉 6 张表上 10 条旧策略（4 条同名 `rls_tenant_isolation` + 4 条 `tenant_isolation_<table>` +
+`tenant_isolation_expenses` + `tenant_isolation_portal_announcements`），再以 `anchor=20261114201000` 重跑，通过。
+脚本与前置快照：`/tmp/topems_dev_align/dev_repair_drop_m2b_policies.sql`、`dev_pre_m2b_policies.txt`。
+
+**人工前置清理操作顺序**（恢复/新环境投本笔前）：
+
+```sql
+-- 1) 逐表查残留策略；除目标名外全部视为残留
+SELECT schemaname, tablename, policyname FROM pg_policies
+ WHERE (schemaname||'.'||tablename) IN ('erp.meeting_rooms','erp.meeting_bookings','erp.vehicles',
+       'erp.vehicle_requests','erp.expenses','crm.core_crm_customers','erp.core_erp_suppliers','portal.portal_announcements');
+-- 2) 先快照再删；多条 permissive 会互相短路
+DROP POLICY IF EXISTS <residual_name> ON <table>;
+-- 3) 再投 20261114202000，确认每表最终只剩 1 条 rls_tenant_isolation
+```
+
+## `20261114200000` 已知前提：同样只删固定名单，不清同名旧策略
+
+`20261114200000`（mes rls fail closed 22）与上一笔同源缺陷：每表只 `DROP POLICY IF EXISTS` 固定名单里的策略名
+（`rls_tenant_isolation` 及个别 `tenant_isolation_*`），**不清理名单外的残留**。旧 fail-open 策略一残留，
+多条 permissive 即 OR 短路，新 fail-closed 策略被短路，收紧名义生效、实际 fail-open。
+
+dev 实测受影响 16 张表（各多 1 条 `tenant_isolation_<table>`）：
+
+| 模块 | 表 |
+| --- | --- |
+| mes（11） | `mes.equipment`、`mes.equipment_inspection_records`、`mes.equipment_maintenance_records`、`mes.module_settings`、`mes.process_route_steps`、`mes.process_routes`、`mes.production_orders`、`mes.production_processes`、`mes.production_records`、`mes.quality_standards`、`mes.work_stations`（另 `mes.module_settings` 当时 `force_rls=false`） |
+| tms（3） | `tms.tms_carriers`、`tms.tms_drivers`、`tms.tms_vehicles` |
+| crm（1） | `crm.billing_records` |
+| erp（1） | `erp.erp_master_data_refs` |
+
+合计 16 张表、16 条残留策略（每表 1 条 `tenant_isolation_<table>`）。
+
+清理动作与结果（2026-11-15，dev）：删 16 条残留 + `mes.module_settings` 置 FORCE RLS，
+库内策略总数 **1344 → 1328**；清理后 16/16 表各 1 条 `rls_tenant_isolation`、`force_rls=true`，与 prod 逐表一致。
+脚本：`/tmp/topems_dev_align/dev_repair_drop_mes_residual_policies.sql`；删前快照：`dev_16_policies_before.txt`。
+
+非超户黑盒验证（`topems_app`：`rolsuper=false`、`rolbypassrls=false`，16 张表逐张、不抽样）：
+
+| 断言 | 结果 |
+| --- | --- |
+| GUC=租户A 读（A、B 各插一行） | 16/16 只读到 A 的 1 行 |
+| 跨租户写（GUC=A 写 tenant_id=B） | 16/16 被拒（`insufficient_privilege`） |
+| 无 GUC 读 | 11 张 mes 表 = 0 行；5 张 fail-open 表 = 2 行（见下） |
+| 探针清理 | 超户绕过 RLS 复核 `residual_total=0` |
+
+5 张 fail-open 表：`crm.billing_records`、`erp.erp_master_data_refs`、`tms.tms_carriers`、`tms.tms_drivers`、
+`tms.tms_vehicles`。其 prod 策略谓词本身即
+`current_setting('app.tenant_id', true) IS NULL OR ='' OR = nil OR tenant_id IS NULL OR tenant_id = GUC`，
+无 GUC 时放行全量，**dev 现与 prod 逐字同义**。这是 prod 侧待收紧缺口，不是本批引入的 dev 漂移，本轮保持与 prod 一致，
+待另行排期收紧（收紧需与代码侧租户上下文改造同步，否则读侧会静默 0 行）。
+
+## 本轮不处理的差异（dev 代际差，非本批引入）
+
+以下差异与本批 7 笔迁移无关，仅登记，不在本轮修改：
+
+1. `qms.qa_alert_messages` 的 `tenant_isolation_qa_alert_messages` 在同名策略上定义不同
+   （prod 为复合 fail-open 表达式，dev 为旧式 fail-open）。两侧都 fail-open，语义等价，属既有环境漂移。
+2. 列级漂移（按「表+列名」逐列比对 56 张表）：dev **缺 29 列 / 7 表**——`integration.integration_sync_logs`(7)、
+   `mes.production_records`(9)、`finance.reconciliation_snapshots`(4)、`mes.equipment`(3)、
+   `mes.production_orders`(3)、`erp.erp_master_data_refs`(2：`id`、`deleted_at`)、`mes.work_stations`(1)；
+   dev **多 39 列 / 10 表**——`erp.expenses`(15)、`portal.portal_announcements`(10)、`erp.vehicle_requests`(5)、
+   `ehs.health_records`(2)、`erp.meeting_bookings`(2) 等。典型：dev 的 `erp.meeting_rooms` 为
+   `name varchar(200)` / `location varchar(200)` / `facilities jsonb`，prod 为 `varchar(255)` / `varchar(255)` / `text[]`。
+3. `status` CHECK 约束：**prod 的 18 条在 dev 上逐条一致（18/18 命中）**；dev 另有 6 条更严的约束
+   （`erp.company_relations`、`erp.elimination_rules`、`mes.process_route_steps`、`mes.process_routes`、
+   `mes.production_processes`、`mes.quality_standards`），来自 dev 独有迁移 `20261114100000` 的扩张口径，属「dev 更严」，不影响对齐。
+
