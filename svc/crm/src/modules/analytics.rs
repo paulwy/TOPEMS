@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Deserialize)]
 pub struct PeriodParam {
@@ -513,8 +515,40 @@ pub async fn analytics_billing(
     Extension(claims): Extension<Claims>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
+    let db = Db::new(state.db.clone(), "crm, public, shared");
     let tenant = resolve_tenant(&claims);
+
+    match load_billing_analytics(&db, tenant).await {
+        Ok(data) => envelope(
+            data,
+            "Billing 真实聚合：账单状态饼 + Top10 客户应收 + 账龄四桶（按租户过滤；billing_records 写入方待 finance/erp 接通，当前以已落库账单为准）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] 账单分析聚合失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "message": "账单分析数据查询失败",
+                    "code": 500,
+                })),
+            )
+        }
+    }
+}
+
+/// 账单分析聚合（只读租户作用域）。
+///
+/// K8：`crm.billing_records` 收紧为 fail-closed 后，裸连接池读取会静默返回 0 行。
+/// 这里统一走 `Db::scope_read()`，由请求级租户上下文写入事务级 GUC；无租户上下文
+/// 直接报错（不再用 `unwrap_or_default()` 把失败伪装成空结果）。
+async fn load_billing_analytics(
+    db: &Db,
+    tenant: Option<uuid::Uuid>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_read().await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 账单分析读作用域打开失败: {}", e))
+    })?;
 
     // 状态饼（paid/pending/overdue…）：按 status 聚合计数与金额。
     let status_rows = sqlx::query(
@@ -524,9 +558,9 @@ pub async fn analytics_billing(
          GROUP BY COALESCE(status,'unknown') ORDER BY value DESC",
     )
     .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单状态聚合失败: {}", e)))?;
     let status_pie: Vec<serde_json::Value> = status_rows
         .iter()
         .map(|r| {
@@ -546,9 +580,9 @@ pub async fn analytics_billing(
          GROUP BY COALESCE(customer_name,'unknown') ORDER BY value DESC LIMIT 10",
     )
     .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单 TopN 聚合失败: {}", e)))?;
     let top_customers = rows_to_name_value_f64(&top_rows);
 
     // 账龄四桶：paid / overdue(已逾期) / due_soon(30 天内到期) / current。
@@ -562,19 +596,20 @@ pub async fn analytics_billing(
          GROUP BY 1 ORDER BY value DESC",
     )
     .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单账龄聚合失败: {}", e)))?;
     let aging = rows_to_name_value(&aging_rows);
 
-    envelope(
-        json!({
-            "status_pie": status_pie,
-            "top_customers": top_customers,
-            "aging": aging,
-        }),
-        "Billing 真实聚合：账单状态饼 + Top10 客户应收 + 账龄四桶（按租户过滤；billing_records 写入方待 finance/erp 接通，当前以已落库账单为准）",
-    )
+    scope.commit().await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 账单分析读作用域提交失败: {}", e))
+    })?;
+
+    Ok(json!({
+        "status_pie": status_pie,
+        "top_customers": top_customers,
+        "aging": aging,
+    }))
 }
 
 /// 同 rows_to_name_value，但 value 为 f64（金额类聚合）。
@@ -768,5 +803,160 @@ mod tests {
     #[test]
     fn create_routes_smoke() {
         let _router: Router<ApiState> = create_routes();
+    }
+}
+
+#[cfg(test)]
+mod billing_scope_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+
+    use super::*;
+    use sqlx::PgPool;
+    use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
+
+    /// 建 crm.billing_records 并安装 K8 目标策略（fail-closed）：
+    /// 只有带 app.tenant_id 命中本租户、或显式 app.rls_system='on' 才能读写。
+    async fn setup(pool: &PgPool) {
+        sqlx::raw_sql(
+            r#"
+            CREATE SCHEMA IF NOT EXISTS crm;
+            CREATE TABLE crm.billing_records (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL,
+                customer_id UUID,
+                customer_name TEXT,
+                invoice_no TEXT NOT NULL,
+                amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+                currency TEXT NOT NULL DEFAULT 'CNY',
+                status TEXT,
+                due_date TIMESTAMPTZ,
+                paid_at TIMESTAMPTZ,
+                items JSONB,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMPTZ
+            );
+            ALTER TABLE crm.billing_records ENABLE ROW LEVEL SECURITY;
+            ALTER TABLE crm.billing_records FORCE ROW LEVEL SECURITY;
+            DROP POLICY IF EXISTS rls_tenant_isolation ON crm.billing_records;
+            CREATE POLICY rls_tenant_isolation ON crm.billing_records
+                USING (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
+                WITH CHECK (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid);
+            "#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    async fn insert_bill(
+        pool: &PgPool,
+        tenant: uuid::Uuid,
+        invoice_no: &str,
+        status: &str,
+        amount: i64,
+    ) {
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"INSERT INTO crm.billing_records
+               (tenant_id, customer_name, invoice_no, amount, status, due_date, paid_at)
+               VALUES ($1, 'Acme', $2, $3, $4, NOW() - INTERVAL '1 day',
+                       CASE WHEN $4 = 'paid' THEN NOW() ELSE NULL END)"#,
+        )
+        .bind(tenant)
+        .bind(invoice_no)
+        .bind(rust_decimal::Decimal::from(amount))
+        .bind(status)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    fn sum_count(v: &serde_json::Value) -> i64 {
+        v.as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x["count"].as_i64().unwrap())
+            .sum()
+    }
+
+    fn sum_amount(v: &serde_json::Value) -> f64 {
+        v.as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x["amount"].as_f64().unwrap())
+            .sum()
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn billing_analytics_is_tenant_scoped_and_fail_closed(pool: PgPool) {
+        setup(&pool).await;
+
+        let (is_super, bypass): (bool, bool) = sqlx::query_as(
+            "SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert!(
+            !is_super && !bypass,
+            "测试连接必须是受 RLS 约束的非超户角色，否则隔离断言无意义"
+        );
+
+        let tenant_a = uuid::Uuid::new_v4();
+        let tenant_b = uuid::Uuid::new_v4();
+        insert_bill(&pool, tenant_a, "INV-A1", "paid", 100).await;
+        insert_bill(&pool, tenant_a, "INV-A2", "pending", 50).await;
+        insert_bill(&pool, tenant_b, "INV-B1", "paid", 999).await;
+
+        let db = Db::new(pool.clone(), "crm, public, shared");
+
+        // 有租户上下文：只能读到本租户
+        let data_a = scope_request_tenant(
+            RlsRequestTenant {
+                tenant: tenant_a,
+                system: false,
+            },
+            async { load_billing_analytics(&db, Some(tenant_a)).await },
+        )
+        .await
+        .expect("有租户上下文时应能读到本租户账单");
+        assert_eq!(sum_count(&data_a["status_pie"]), 2);
+        assert!((sum_amount(&data_a["status_pie"]) - 150.0).abs() < f64::EPSILON);
+
+        let data_b = scope_request_tenant(
+            RlsRequestTenant {
+                tenant: tenant_b,
+                system: false,
+            },
+            async { load_billing_analytics(&db, Some(tenant_b)).await },
+        )
+        .await
+        .expect("租户 B 应能读到自己的账单");
+        assert_eq!(sum_count(&data_b["status_pie"]), 1);
+        assert!((sum_amount(&data_b["status_pie"]) - 999.0).abs() < f64::EPSILON);
+
+        // 无租户上下文：拒绝（不是返回空聚合）
+        let err = load_billing_analytics(&db, None)
+            .await
+            .expect_err("无租户上下文必须拒绝");
+        assert!(
+            format!("{err}").contains("RLS context missing"),
+            "错误应来自作用域守卫: {err}"
+        );
+
+        // 裸连接（无 GUC）在 fail-closed 策略下读不到任何行，证明测试未被超户/mock 绕过
+        let bare: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM crm.billing_records")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(bare, 0, "无租户上下文时 RLS 必须 fail-closed");
     }
 }

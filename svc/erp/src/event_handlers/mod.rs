@@ -1262,6 +1262,23 @@ impl ErpEventHandlers {
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
+        // K8：erp.erp_master_data_refs 收紧为 fail-closed 后，裸池 UPSERT 会报 42501。
+        // 非 nil 租户一律走租户作用域；nil 租户代表全局共享主数据（服务身份/平台级），
+        // 显式走系统通道（rls_system='on'），不复用「未设 GUC 即放行」的旧豁免。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let scope_result = if event.tenant_id.is_nil() {
+            // tenant-system: nil 租户代表全局共享主数据，需要写入 tenant_id IS NULL 的行
+            db.scope_system().await
+        } else {
+            db.scope_for_tenant(event.tenant_id).await
+        };
+        let mut scope = scope_result.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[erp-mdm] 打开本地 ref 写入作用域失败 - master_data_id={}, tenant_id={}, domain={}: {}",
+                event.master_data_id, event.tenant_id, domain_str, e
+            ))
+        })?;
+
         let result = sqlx::query(
             r#"INSERT INTO erp_master_data_refs
                (master_data_id, tenant_id, domain, code, name, status, source_service,
@@ -1284,16 +1301,23 @@ impl ErpEventHandlers {
         .bind(&event.source_service)
         .bind(local_entity_type)
         .bind(&event.payload)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         // R-7b：写失败不再 warn 吞成 Ok（旧语义下 Err 被包成 Ok 立即 ACK，失败完全不可见）。
         // ref 写入是幂等 UPSERT，瞬态故障走 Stream 重试自愈；永久性失败超列 MDM DLQ。
         match result {
             Ok(_) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "[erp-mdm] 本地 ref 写入作用域提交失败 - master_data_id={}, tenant_id={}, domain={}: {}",
+                        event.master_data_id, event.tenant_id, domain_str, e
+                    ))
+                })?;
                 tracing::info!(
-                    "[erp-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
+                    "[erp-mdm] 本地 ref 已同步 - master_data_id={}, tenant_id={}, domain={}, action={:?}, local_entity_type={}",
                     event.master_data_id,
+                    event.tenant_id,
                     domain_str,
                     event.action,
                     local_entity_type
@@ -1301,8 +1325,8 @@ impl ErpEventHandlers {
             }
             Err(e) => {
                 return Err(TopemsError::BusinessLogic(format!(
-                    "[erp-mdm] 本地 ref 同步失败 - master_data_id={}, domain={}, local_entity_type={}: {}",
-                    event.master_data_id, domain_str, local_entity_type, e
+                    "[erp-mdm] 本地 ref 同步失败 - master_data_id={}, tenant_id={}, domain={}, local_entity_type={}: {}",
+                    event.master_data_id, event.tenant_id, domain_str, local_entity_type, e
                 )));
             }
         }
@@ -1574,4 +1598,163 @@ pub async fn start_event_subscribers(
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod rls_scope_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+
+    use super::*;
+    use sqlx::PgPool;
+    use topems_shared_core::l2_cache::L2CacheConfig;
+
+    /// 建 erp.erp_master_data_refs 并安装 K8 目标策略（fail-closed）。
+    async fn setup(pool: &PgPool) {
+        sqlx::raw_sql(
+            r#"
+            CREATE SCHEMA IF NOT EXISTS erp;
+            CREATE TABLE erp.erp_master_data_refs (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                master_data_id TEXT NOT NULL UNIQUE,
+                tenant_id UUID NOT NULL,
+                domain TEXT NOT NULL,
+                code TEXT,
+                name TEXT,
+                status TEXT,
+                source_service TEXT,
+                local_entity_type TEXT,
+                payload_snapshot JSONB,
+                last_synced_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            ALTER TABLE erp.erp_master_data_refs ENABLE ROW LEVEL SECURITY;
+            ALTER TABLE erp.erp_master_data_refs FORCE ROW LEVEL SECURITY;
+            DROP POLICY IF EXISTS rls_tenant_isolation ON erp.erp_master_data_refs;
+            CREATE POLICY rls_tenant_isolation ON erp.erp_master_data_refs
+                USING (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
+                WITH CHECK (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid);
+            "#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    fn handlers(pool: &PgPool) -> ErpEventHandlers {
+        let cache = Arc::new(AsyncL2Cache::new_l1_only(L2CacheConfig::default()));
+        ErpEventHandlers::new(pool.clone(), cache)
+    }
+
+    fn material_event(tenant: uuid::Uuid) -> MasterDataEvent {
+        MasterDataEvent::new(
+            tenant,
+            MasterDataDomain::Material,
+            MasterDataAction::Updated,
+            format!("mat-{}-test", uuid::Uuid::new_v4()),
+            "MAT001".to_string(),
+            "srm",
+            serde_json::json!({"name": "Widget"}),
+        )
+    }
+
+    /// 以系统通道读取全量 ref 行（仅断言用）。
+    async fn all_refs(pool: &PgPool) -> Vec<(String, uuid::Uuid)> {
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        let rows = sqlx::query_as("SELECT master_data_id, tenant_id FROM erp.erp_master_data_refs")
+            .fetch_all(&mut *tx)
+            .await
+            .unwrap();
+        tx.rollback().await.unwrap();
+        rows
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn mdm_ref_upsert_writes_in_tenant_scope(pool: PgPool) {
+        setup(&pool).await;
+        let tenant_a = uuid::Uuid::new_v4();
+        let tenant_b = uuid::Uuid::new_v4();
+        let event = material_event(tenant_a);
+
+        handlers(&pool)
+            .upsert_local_master_data_ref(&event, "material", "Widget", "active")
+            .await
+            .expect("有租户上下文时应写入本地 ref");
+
+        let refs = all_refs(&pool).await;
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].0, event.master_data_id);
+        assert_eq!(refs[0].1, tenant_a);
+
+        // 异租户作用域读不到
+        let db = topems_shared_db::scope::Db::new(pool.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_b).await.unwrap();
+        let other: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp.erp_master_data_refs")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        scope.rollback().await.unwrap();
+        assert_eq!(other, 0, "租户 B 不应看到租户 A 的主数据 ref");
+
+        // 裸连接无 GUC：fail-closed
+        let bare: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp.erp_master_data_refs")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(bare, 0);
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn mdm_ref_nil_tenant_uses_explicit_system_scope(pool: PgPool) {
+        setup(&pool).await;
+        let tenant_a = uuid::Uuid::new_v4();
+        let event = material_event(uuid::Uuid::nil());
+
+        handlers(&pool)
+            .upsert_local_master_data_ref(&event, "material", "Widget", "active")
+            .await
+            .expect("nil 租户（全局主数据）应显式走系统通道写入");
+
+        let refs = all_refs(&pool).await;
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].1, uuid::Uuid::nil());
+
+        // 普通租户作用域看不到全局行
+        let db = topems_shared_db::scope::Db::new(pool.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_a).await.unwrap();
+        let other: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp.erp_master_data_refs")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        scope.rollback().await.unwrap();
+        assert_eq!(other, 0);
+
+        // nil 租户本身不能当作用域用（fail-closed）
+        let err = db
+            .scope_for_tenant(uuid::Uuid::nil())
+            .await
+            .expect_err("nil 租户必须被作用域守卫拒绝");
+        assert!(format!("{err}").contains("RLS context missing"), "{err}");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn mdm_ref_upsert_propagates_db_error(pool: PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS erp")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let event = material_event(uuid::Uuid::new_v4());
+
+        let err = handlers(&pool)
+            .upsert_local_master_data_ref(&event, "material", "Widget", "active")
+            .await
+            .expect_err("ref 写入失败必须上抛（重试/DLQ），不得吞成 Ok");
+        assert!(format!("{err}").contains("本地 ref 同步失败"), "{err}");
+    }
 }

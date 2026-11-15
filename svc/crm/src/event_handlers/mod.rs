@@ -302,34 +302,54 @@ impl CrmEventHandlers {
 
         // 商机赢单 → 应收账款记录（billing_records 写入方接通）
         // 数据源：OpportunityWon 事件（crm 商机赢单发布），幂等按 invoice_no=OPP-{opportunity_id}
+        // K8：crm.billing_records 收紧为 fail-closed，读/写必须落在租户作用域内；
+        // 写入失败不再 warn 吞掉（旧语义会让应收静默丢失），一律 Err 上抛交给重试/DLQ。
         let invoice_no = format!("OPP-{}", payload.opportunity_id);
         let due_date = now + chrono::Duration::days(30);
         let billing_amount = payload.amount.unwrap_or(rust_decimal::Decimal::ZERO);
 
-        let existing_bill: Option<(uuid::Uuid,)> =
-            sqlx::query_as("SELECT id FROM crm.billing_records WHERE invoice_no = $1")
-                .bind(&invoice_no)
-                .fetch_optional(&self.db)
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("查询应收账单失败: {}", e)))?;
+        let Some(tenant_id) = self.resolve_opportunity_tenant(&payload).await? else {
+            tracing::warn!(
+                target: "crm",
+                event = "OpportunityWon",
+                opportunity_id = %payload.opportunity_id,
+                customer_id = ?payload.customer_id,
+                invoice_no = %invoice_no,
+                "无法确定租户，跳过应收账款创建（不跨租户兜底）"
+            );
+            return Ok(());
+        };
+
+        let db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开应收写入租户作用域失败 - tenant_id={}, invoice_no={}: {}",
+                tenant_id, invoice_no, e
+            ))
+        })?;
+
+        let existing_bill: Option<(uuid::Uuid,)> = sqlx::query_as(
+            "SELECT id FROM crm.billing_records WHERE invoice_no = $1 AND tenant_id = $2",
+        )
+        .bind(&invoice_no)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "[crm] 查询应收账单失败 - tenant_id={}, invoice_no={}: {}",
+                tenant_id, invoice_no, e
+            ))
+        })?;
 
         if existing_bill.is_none() {
-            // 多租户：经 customers 反查 tenant_id（OpportunityWon payload 无租户维度）
-            let tenant_id: Option<uuid::Uuid> =
-                sqlx::query_scalar("SELECT tenant_id FROM crm.customers WHERE id = $1")
-                    .bind(payload.customer_id)
-                    .fetch_optional(&self.db)
-                    .await
-                    .ok()
-                    .flatten();
-
             let items = serde_json::json!({
                 "opportunity_id": payload.opportunity_id,
                 "opportunity_name": payload.opportunity_name,
                 "won_by": payload.won_by,
             });
 
-            let bill_result = sqlx::query(
+            sqlx::query(
                 r#"INSERT INTO crm.billing_records
                    (tenant_id, customer_id, customer_name, invoice_no, amount,
                     currency, status, due_date, paid_at, items, created_at, updated_at)
@@ -344,27 +364,79 @@ impl CrmEventHandlers {
             .bind(due_date)
             .bind(items)
             .bind(now)
-            .execute(&self.db)
-            .await;
+            .execute(&mut scope)
+            .await
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "[crm] 创建应收账款失败 - tenant_id={}, invoice_no={}, opportunity_id={}: {}",
+                    tenant_id, invoice_no, payload.opportunity_id, e
+                ))
+            })?;
 
-            match bill_result {
-                Ok(_) => {
-                    tracing::info!(
-                        "[crm] 已创建应收账款 - invoice_no={}, amount={}, due_date={}",
-                        invoice_no,
-                        billing_amount,
-                        due_date.format("%Y-%m-%d")
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[crm] 创建应收账款失败（graceful fallback）: {}", e);
-                }
-            }
+            tracing::info!(
+                "[crm] 已创建应收账款 - tenant_id={}, invoice_no={}, amount={}, due_date={}",
+                tenant_id,
+                invoice_no,
+                billing_amount,
+                due_date.format("%Y-%m-%d")
+            );
         } else {
             tracing::debug!("[crm] 应收账款已存在（跳过）- invoice_no={}", invoice_no);
         }
 
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 应收写入作用域提交失败 - tenant_id={}, invoice_no={}: {}",
+                tenant_id, invoice_no, e
+            ))
+        })?;
+
         Ok(())
+    }
+
+    /// 解析 OpportunityWon 要落账的租户：优先事件载荷（新事件已携带 `tenant_id`），
+    /// 旧载荷缺失时按 `customer_id` 只读反查一次。
+    ///
+    /// 反查走显式系统通道：这是为了**建立租户作用域本身**，不是读写业务行；
+    /// `crm.customers` 已收紧为 fail-closed，裸池反查在 K8 后必然返回 0 行。
+    async fn resolve_opportunity_tenant(
+        &self,
+        payload: &OpportunityWonPayload,
+    ) -> std::result::Result<Option<uuid::Uuid>, TopemsError> {
+        if let Some(tenant) = payload.tenant_id.filter(|t| !t.is_nil()) {
+            return Ok(Some(tenant));
+        }
+        let Some(customer_id) = payload.customer_id else {
+            return Ok(None);
+        };
+
+        let db = Db::new(self.db.clone(), "crm, public, shared");
+        // tenant-system: 旧 OpportunityWon 载荷无 tenant_id，仅按主键反查客户归属租户以建立作用域（只读单行）
+        let mut scope = db.scope_read_system().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开客户租户反查作用域失败 - customer_id={}: {}",
+                customer_id, e
+            ))
+        })?;
+        let tenant: Option<uuid::Uuid> =
+            sqlx::query_scalar("SELECT tenant_id FROM crm.customers WHERE id = $1")
+                .bind(customer_id)
+                .fetch_optional(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "[crm] 反查客户租户失败 - customer_id={}: {}",
+                        customer_id, e
+                    ))
+                })?;
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 客户租户反查作用域提交失败 - customer_id={}: {}",
+                customer_id, e
+            ))
+        })?;
+
+        Ok(tenant.filter(|t| !t.is_nil()))
     }
 
     /// PaymentReceived → 核销应收账单（billing_records 状态流转）
@@ -393,74 +465,102 @@ impl CrmEventHandlers {
         let now = chrono::Utc::now();
 
         // 优先 customer_name 匹配；无则金额匹配最早 pending。
-        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时执行核销；
-        // 无租户时禁用兜底匹配，避免跨租户误核销（宁缺勿乱）。
-        let result = match payload.tenant_id {
-            Some(tenant_id) => {
-                if let Some(name) = payload.customer_name.as_deref() {
-                    sqlx::query(
-                        r#"UPDATE crm.billing_records
-                           SET status = 'paid',
-                               paid_at = $1,
-                               updated_at = $1
-                           WHERE customer_name = $2
-                             AND tenant_id = $4
-                             AND status = 'pending'
-                             AND amount = $3
-                           RETURNING invoice_no"#,
-                    )
-                    .bind(now)
-                    .bind(name)
-                    .bind(payload.amount)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                } else {
-                    sqlx::query(
-                        r#"UPDATE crm.billing_records b
-                           SET status = 'paid',
-                               paid_at = $1,
-                               updated_at = $1
-                           FROM (
-                               SELECT id FROM crm.billing_records
-                               WHERE status = 'pending'
-                                 AND tenant_id = $3
-                                 AND amount = $2
-                               ORDER BY created_at ASC
-                               LIMIT 1
-                           ) s
-                           WHERE b.id = s.id
-                           RETURNING b.invoice_no"#,
-                    )
-                    .bind(now)
-                    .bind(payload.amount)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                }
-            }
-            None => Ok(None),
+        // K8：核销必须在租户作用域内执行（billing_records 已 fail-closed，裸池 UPDATE 会命中 0 行）；
+        // 无 tenant_id 时保持「宁缺勿乱」跳过，并带业务键告警，便于定位丢单。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                target: "crm",
+                event = "PaymentReceived",
+                payment_no = %payload.payment_no,
+                amount = %payload.amount,
+                "缺少 tenant_id，跳过应收核销（不跨租户兜底）"
+            );
+            return Ok(());
         };
 
-        match result {
-            Ok(Some(row)) => {
+        let db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开应收核销租户作用域失败 - tenant_id={}, payment_no={}: {}",
+                tenant_id, payload.payment_no, e
+            ))
+        })?;
+
+        let result = if let Some(name) = payload.customer_name.as_deref() {
+            sqlx::query(
+                r#"UPDATE crm.billing_records
+                   SET status = 'paid',
+                       paid_at = $1,
+                       updated_at = $1
+                   WHERE customer_name = $2
+                     AND tenant_id = $4
+                     AND status = 'pending'
+                     AND amount = $3
+                   RETURNING invoice_no"#,
+            )
+            .bind(now)
+            .bind(name)
+            .bind(payload.amount)
+            .bind(tenant_id)
+            .fetch_optional(&mut scope)
+            .await
+        } else {
+            sqlx::query(
+                r#"UPDATE crm.billing_records b
+                   SET status = 'paid',
+                       paid_at = $1,
+                       updated_at = $1
+                   FROM (
+                       SELECT id FROM crm.billing_records
+                       WHERE status = 'pending'
+                         AND tenant_id = $3
+                         AND amount = $2
+                       ORDER BY created_at ASC
+                       LIMIT 1
+                   ) s
+                   WHERE b.id = s.id
+                   RETURNING b.invoice_no"#,
+            )
+            .bind(now)
+            .bind(payload.amount)
+            .bind(tenant_id)
+            .fetch_optional(&mut scope)
+            .await
+        };
+
+        // 失败不再 warn 吞成 Ok：核销是幂等 UPDATE，瞬态故障走重试，永久失败进 DLQ。
+        let matched = result.map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "[crm] 核销应收账单失败 - tenant_id={}, payment_no={}, customer_name={:?}, amount={}: {}",
+                tenant_id, payload.payment_no, payload.customer_name, payload.amount, e
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 应收核销作用域提交失败 - tenant_id={}, payment_no={}: {}",
+                tenant_id, payload.payment_no, e
+            ))
+        })?;
+
+        match matched {
+            Some(row) => {
                 let invoice_no: String = sqlx::Row::get(&row, "invoice_no");
                 tracing::info!(
-                    "[crm] 应收账单已核销 - invoice_no={}, amount={}, payment_no={}",
+                    "[crm] 应收账单已核销 - tenant_id={}, invoice_no={}, amount={}, payment_no={}",
+                    tenant_id,
                     invoice_no,
                     payload.amount,
                     payload.payment_no
                 );
             }
-            Ok(None) => {
+            None => {
                 tracing::info!(
-                    "[crm] 无匹配应收账单（跳过）- payment_no={}, amount={}",
+                    "[crm] 无匹配应收账单（跳过）- tenant_id={}, payment_no={}, amount={}",
+                    tenant_id,
                     payload.payment_no,
                     payload.amount
                 );
-            }
-            Err(e) => {
-                tracing::warn!("[crm] 核销应收账单失败（graceful fallback）: {}", e);
             }
         }
 
@@ -836,4 +936,264 @@ pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
         }
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod rls_scope_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+
+    use super::*;
+    use sqlx::PgPool;
+    use topems_shared_db::scope::Db;
+    use uuid::Uuid;
+
+    /// 建 crm.billing_records 并安装 K8 目标策略（fail-closed）。
+    async fn setup(pool: &PgPool) {
+        sqlx::raw_sql(
+            r#"
+            CREATE SCHEMA IF NOT EXISTS crm;
+            CREATE TABLE crm.billing_records (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL,
+                customer_id UUID,
+                customer_name TEXT,
+                invoice_no TEXT NOT NULL,
+                amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+                currency TEXT NOT NULL DEFAULT 'CNY',
+                status TEXT,
+                due_date TIMESTAMPTZ,
+                paid_at TIMESTAMPTZ,
+                items JSONB,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMPTZ
+            );
+            ALTER TABLE crm.billing_records ENABLE ROW LEVEL SECURITY;
+            ALTER TABLE crm.billing_records FORCE ROW LEVEL SECURITY;
+            DROP POLICY IF EXISTS rls_tenant_isolation ON crm.billing_records;
+            CREATE POLICY rls_tenant_isolation ON crm.billing_records
+                USING (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
+                WITH CHECK (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                       OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid);
+            "#,
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    async fn insert_pending_bill(
+        pool: &PgPool,
+        tenant: Uuid,
+        invoice_no: &str,
+        customer_name: &str,
+        amount: i64,
+    ) {
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"INSERT INTO crm.billing_records
+               (tenant_id, customer_name, invoice_no, amount, status, due_date)
+               VALUES ($1, $2, $3, $4, 'pending', NOW() + INTERVAL '7 days')"#,
+        )
+        .bind(tenant)
+        .bind(customer_name)
+        .bind(invoice_no)
+        .bind(rust_decimal::Decimal::from(amount))
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    /// 以系统通道读取全量账单，用于断言（业务代码不使用该通道写账单）。
+    async fn all_bills(pool: &PgPool) -> Vec<(Uuid, String, String)> {
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        let rows = sqlx::query_as(
+            "SELECT tenant_id, invoice_no, COALESCE(status, '') FROM crm.billing_records",
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .unwrap();
+        tx.rollback().await.unwrap();
+        rows
+    }
+
+    fn opportunity_payload(opportunity_id: Uuid, tenant: Option<Uuid>) -> serde_json::Value {
+        serde_json::json!({
+            "opportunity_id": opportunity_id,
+            "opportunity_name": "Big Deal",
+            "customer_id": null,
+            "customer_name": "Acme",
+            "amount": 123,
+            "won_by": "alice",
+            "won_at": null,
+            "tenant_id": tenant,
+        })
+    }
+
+    fn payment_payload(payment_no: &str, tenant: Option<Uuid>, amount: i64) -> serde_json::Value {
+        serde_json::json!({
+            "payment_id": Uuid::new_v4(),
+            "payment_no": payment_no,
+            "order_id": null,
+            "customer_id": null,
+            "customer_name": "Acme",
+            "amount": amount,
+            "payment_method": null,
+            "received_at": null,
+            "tenant_id": tenant,
+        })
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn opportunity_won_writes_billing_in_tenant_scope(pool: PgPool) {
+        setup(&pool).await;
+        let tenant_a = Uuid::new_v4();
+        let tenant_b = Uuid::new_v4();
+        let opportunity_id = Uuid::new_v4();
+        let handlers = CrmEventHandlers::new(pool.clone());
+
+        handlers
+            .handle_opportunity_won(Event::new(
+                EventType::OpportunityWon,
+                "crm",
+                opportunity_payload(opportunity_id, Some(tenant_a)),
+            ))
+            .await
+            .expect("有租户载荷时应写入应收账款");
+
+        let bills = all_bills(&pool).await;
+        assert_eq!(bills.len(), 1, "只应落一条应收");
+        assert_eq!(bills[0].0, tenant_a, "应收必须落在载荷租户");
+        assert_eq!(bills[0].1, format!("OPP-{opportunity_id}"));
+
+        // 异租户作用域读不到该应收
+        let db = Db::new(pool.clone(), "crm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_b).await.unwrap();
+        let other: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM crm.billing_records")
+            .fetch_one(&mut scope)
+            .await
+            .unwrap();
+        scope.rollback().await.unwrap();
+        assert_eq!(other, 0, "租户 B 不应看到租户 A 的应收");
+
+        // 裸连接无 GUC：fail-closed
+        let bare: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM crm.billing_records")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(bare, 0);
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn opportunity_won_without_tenant_does_not_write(pool: PgPool) {
+        setup(&pool).await;
+        let handlers = CrmEventHandlers::new(pool.clone());
+
+        handlers
+            .handle_opportunity_won(Event::new(
+                EventType::OpportunityWon,
+                "crm",
+                opportunity_payload(Uuid::new_v4(), None),
+            ))
+            .await
+            .expect("无法确定租户时应跳过而非报错");
+
+        assert!(
+            all_bills(&pool).await.is_empty(),
+            "无租户上下文不得落任何应收"
+        );
+
+        // nil 租户无法构造作用域：fail-closed
+        let err = Db::new(pool.clone(), "crm, public, shared")
+            .scope_for_tenant(Uuid::nil())
+            .await
+            .expect_err("nil 租户必须被作用域守卫拒绝");
+        assert!(format!("{err}").contains("RLS context missing"), "{err}");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn opportunity_won_propagates_db_error(pool: PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS crm")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let handlers = CrmEventHandlers::new(pool.clone());
+
+        let err = handlers
+            .handle_opportunity_won(Event::new(
+                EventType::OpportunityWon,
+                "crm",
+                opportunity_payload(Uuid::new_v4(), Some(Uuid::new_v4())),
+            ))
+            .await
+            .expect_err("写应收失败必须上抛，不得 warn 吞掉");
+        assert!(format!("{err}").contains("查询应收账单失败"), "{err}");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn payment_received_settles_only_own_tenant(pool: PgPool) {
+        setup(&pool).await;
+        let tenant_a = Uuid::new_v4();
+        let tenant_b = Uuid::new_v4();
+        insert_pending_bill(&pool, tenant_a, "INV-A", "Acme", 88).await;
+        insert_pending_bill(&pool, tenant_b, "INV-B", "Acme", 88).await;
+        let handlers = CrmEventHandlers::new(pool.clone());
+
+        handlers
+            .handle_payment_received(Event::new(
+                EventType::PaymentReceived,
+                "finance",
+                payment_payload("PAY-A", Some(tenant_a), 88),
+            ))
+            .await
+            .expect("租户 A 核销应成功");
+
+        let bills = all_bills(&pool).await;
+        let a = bills.iter().find(|b| b.1 == "INV-A").unwrap();
+        let b = bills.iter().find(|b| b.1 == "INV-B").unwrap();
+        assert_eq!(a.2, "paid", "租户 A 的应收应被核销");
+        assert_eq!(b.2, "pending", "租户 B 的应收不得被跨租户核销");
+
+        // 无租户载荷：跳过，不得改动任何账单
+        handlers
+            .handle_payment_received(Event::new(
+                EventType::PaymentReceived,
+                "finance",
+                payment_payload("PAY-NO-TENANT", None, 88),
+            ))
+            .await
+            .expect("无租户载荷应跳过");
+        let bills = all_bills(&pool).await;
+        let b = bills.iter().find(|b| b.1 == "INV-B").unwrap();
+        assert_eq!(b.2, "pending", "无租户上下文不得核销");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn payment_received_propagates_db_error(pool: PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS crm")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let handlers = CrmEventHandlers::new(pool.clone());
+
+        let err = handlers
+            .handle_payment_received(Event::new(
+                EventType::PaymentReceived,
+                "finance",
+                payment_payload("PAY-ERR", Some(Uuid::new_v4()), 88),
+            ))
+            .await
+            .expect_err("核销失败必须上抛，不得 warn 吞掉");
+        assert!(format!("{err}").contains("核销应收账单失败"), "{err}");
+    }
 }
