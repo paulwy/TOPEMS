@@ -30,12 +30,12 @@ scope: >-
 
 ledger_evidence:
   current_prod:
-    ledger_rows: 607
-    ledger_rows_14digit: 593
+    ledger_rows: 679
+    ledger_rows_14digit: 665
     ledger_rows_legacy_3digit: 14
     failed_rows: 0
-    anchor: "20261108141500"
-    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1"
+    anchor: "20261114202000"
+    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1；2026-11-15 生产账本只读复核（topems_prod，679 行 / max 20261114202000）"
   baseline_snapshot:
     file: "database/baseline/prod_ledger_20261105235700.sql"
     ledger_rows: 576
@@ -73,6 +73,10 @@ notes:
   - >-
     定向迁移（dbNN_test/dbNN_5433/test_*/5433_*）在生产入口被
     scripts/ci/check-directed-migrations.mjs 与 apply-forward.sh --prod 拒绝。
+  - >-
+    2026-11-15 对齐：entries 追加 29 条 applied（版本均高于旧锚点 20261108141500，
+    生产账本 success=true 已实测），current_prod.anchor 刷新到 20261114202000；
+    43 条历史异常处置的口径与计数不变。
 
 entries:
 
@@ -830,6 +834,358 @@ entries:
       - { kind: data, ref: "只读核对 wms pg_policies", detail: "39 表 / 42 策略 / 16 条 true/true / safety_stock_settings rls=false" }
     precondition: "20261113100000 应用并入账"
 
+# ===== 2026-11-15 生产账本核对：高于旧锚点 20261108141500 但已入账（29 条，applied） =====
+# 来源：2026-11-15 对 topems_prod._sqlx_migrations 的只读 SELECT（679 行 / 14 位 665 / 3 位 14 /
+# failed 0 / max 20261114202000）。29 条全部 success=true，installed_on 见各条 evidence。
+# 补登只写台账，不改迁移文件、不重放任何版本。
+
+  - version: "20261110100000"
+    file: "database/migrations/20261110100000_w7_b1_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B1 批次 RLS 策略收敛（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110100000", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110100100"
+    file: "database/migrations/20261110100100_w7_b1_global_rows_to_null.sql"
+    class: data
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B1 全局行 tenant_id 归一为 NULL（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110100100", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110000"
+    file: "database/migrations/20261110110000_w7_b2_rls_policies_pm.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 PM 域 RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110000", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110100"
+    file: "database/migrations/20261110110100_w7_b2_rls_policies_mobile.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 Mobile 域 RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110100", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110200"
+    file: "database/migrations/20261110110200_w7_b2_rls_policies_integration.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 Integration 域 RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110200", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110300"
+    file: "database/migrations/20261110110300_w7_b2_rls_policies_gis.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 GIS 域 RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110300", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110400"
+    file: "database/migrations/20261110110400_w7_b2_rls_policies_ai.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 AI 域 RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110400", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110110500"
+    file: "database/migrations/20261110110500_w7_b2_global_rows_to_null.sql"
+    class: data
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 全局行 tenant_id 归一为 NULL（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110110500", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110120000"
+    file: "database/migrations/20261110120000_w7_b5_1a_finance_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B5 Finance RLS 策略（1a）（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110120000", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110120100"
+    file: "database/migrations/20261110120100_w7_b5_1b_finance_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B5 Finance RLS 策略（1b）（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110120100", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110120200"
+    file: "database/migrations/20261110120200_w7_b5_2_finance_global_rows.sql"
+    class: data
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B5 Finance 全局行归一（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110120200", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110120300"
+    file: "database/migrations/20261110120300_w7_b5_3_finance_core_ledger.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B5 Finance 核心台账结构（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110120300", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110204000"
+    file: "database/migrations/20261110204000_w7_b4_pdm_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 PDM RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110204000", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110204100"
+    file: "database/migrations/20261110204100_w7_b4_pdm_master_data_refs.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 PDM 主数据引用结构（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-10" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110204100", detail: "success=true / installed_on=2026-11-10" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261110210000"
+    file: "database/migrations/20261110210000_w7_b4_lims_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 LIMS RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261110210000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112090000"
+    file: "database/migrations/20261112090000_w7_b4_srm_normalize_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 SRM 策略归一（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112090000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112091000"
+    file: "database/migrations/20261112091000_w7_b4_mes_add_tenant_id_columns.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 MES 补 tenant_id 列（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112091000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112092000"
+    file: "database/migrations/20261112092000_w7_b4_mes_backfill_tenant_and_quarantine.sql"
+    class: data
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 MES tenant_id 回填与隔离（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112092000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112093000"
+    file: "database/migrations/20261112093000_w7_b4_mes_rls_policies.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 MES RLS 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112093000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112094000"
+    file: "database/migrations/20261112094000_w7_b4_work_orders_forcerls.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 work_orders 强制 RLS（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112094000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112095000"
+    file: "database/migrations/20261112095000_w7_b4_srm_supplier_users_restrictive.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 SRM 供应商用户 restrictive 策略（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112095000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112100000"
+    file: "database/migrations/20261112100000_w7_b4_f1_login_path_rls_fail_closed.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 登录路径 RLS fail-closed（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-11" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112100000", detail: "success=true / installed_on=2026-11-11" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112101000"
+    file: "database/migrations/20261112101000_w7_b0_scm_inbound_snapshot_dedup.sql"
+    class: cleanup
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B0 SCM 入库快照去重（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-12" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112101000", detail: "success=true / installed_on=2026-11-12" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112103000"
+    file: "database/migrations/20261112103000_w7_b1_scm_tenant_columns.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B1 SCM 补租户列（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-12" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112103000", detail: "success=true / installed_on=2026-11-12" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112104000"
+    file: "database/migrations/20261112104000_w7_b2_scm_rls_fail_closed.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B2 SCM RLS fail-closed（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-12" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112104000", detail: "success=true / installed_on=2026-11-12" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112160000"
+    file: "database/migrations/20261112160000_w7_b4_wms_outbound_ship_date_timestamptz.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 WMS 出库发货日期 timestamptz 对齐（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-12" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112160000", detail: "success=true / installed_on=2026-11-12" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261112190000"
+    file: "database/migrations/20261112190000_w7_b4_ehs_rls_fail_closed.sql"
+    class: rls
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "W7-B4 EHS RLS fail-closed（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-13" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261112190000", detail: "success=true / installed_on=2026-11-13" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261114150000"
+    file: "database/migrations/20261114150000_mes_teams_shape_convergence.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "MES teams 结构收敛（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-14" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261114150000", detail: "success=true / installed_on=2026-11-14" }
+    precondition: "无；已入账，禁止 in-place 重放"
+
+  - version: "20261114160000"
+    file: "database/migrations/20261114160000_mes_teams_team_code_tenant_scoped_unique.sql"
+    class: structure
+    why_deferred: "旧锚点 20261108141500 之后投产，台账未同步登记；非 defer，属登记滞后"
+    declared_objects: [ "MES teams team_code 租户内唯一（按文件名归纳，未展开逐对象）" ]
+    prod_presence: { status: "present", detail: "生产 _sqlx_migrations success=true，installed_on=2026-11-14" }
+    disposition: applied
+    basis: "2026-11-15 生产账本只读实测：版本存在且 success=true，已投产"
+    evidence:
+      - { kind: ledger, ref: "topems_prod._sqlx_migrations version=20261114160000", detail: "success=true / installed_on=2026-11-14" }
+    precondition: "无；已入账，禁止 in-place 重放"
 # ===== 43 条之外的待应用前向补丁（status: to_apply） =====
 # 说明：它们 version > 当前账本 max 20261108141500，是方案 C 下唯一允许应用的集合。
 # 43 条旧文件的 forwarded 效果由这里承接；本清单不参与 43 条计数。
