@@ -12,10 +12,14 @@
  *   2. source_tokens 必须能在对应迁移文件里找到（防止清单与迁移脱节）；
  *   3. 仅当目标库 _sqlx_migrations 中该版本 success=true 时，才对实际结构做断言
  *      ——「记账说已执行」是结构必须到位的唯一前提；
- *   4. 记账 success=false → 漂移；未记账（test/快照库）→ 显式 NOTE 跳过该条，不静默。
+ *   4. 记账 success=false → 漂移；未记账（test/快照库）→ 显式 NOTE 跳过该条，不静默；
+ *   5. K6 fail-closed：目标库可连但「无 _sqlx_migrations 表 / 账本 0 行 / 断言源全部未记账」
+ *      一律 FAILED，不再 NOTE 跳过并 PASS（见 docs/database/known-gate-defects.md K6）。
+ *      仅当显式设置 MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 才放行，且输出显眼 WARN。
  *
  * 用法：
  *   node scripts/migration/check-ledger-ddl-drift.mjs
+ *   MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 node scripts/migration/check-ledger-ddl-drift.mjs  # 仅演练用
  *
  * 目标库解析顺序：MIGRATION_DRIFT_DB_URL → DATABASE_URL → .env 的 MIGRATE_URL。
  * 均缺失或不可连接 → fail-closed（exit 1），并打印启动/改指向 test 库的指引。
@@ -36,12 +40,42 @@ const PSQL_TIMEOUT_MS = 8000;
 // 可选 skip_if_applied：[版本]，其中任一版本在本库 success=t 时跳过该断言
 // （用于「A 迁移写入、B 迁移按设计删除」的成对场景，避免把正常下线误判为漂移）。
 const VALID_KINDS = new Set(["column_type", "constraint_absent", "index_exists", "data_rows"]);
+// K6 显式豁免开关：只允许演练场景使用，CI 不得设置。
+const ALLOW_EMPTY_LEDGER = /^(1|true|yes|on)$/i.test(
+  String(process.env.MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER ?? "").trim(),
+);
 
 const startedAt = Date.now();
 
 function fail(lines) {
   for (const line of lines) console.error(line);
   process.exit(1);
+}
+
+// 空账本（无表 / 0 行 / 断言源全部未记账）统一出口：默认 FAILED，显式豁免时打醒目 WARN 放行。
+function emptyLedgerFailure(summary, detailLines, label, assertionCount) {
+  if (!ALLOW_EMPTY_LEDGER) {
+    fail([
+      `${TAG} FAILED ${summary}`,
+      `  目标库：${label}`,
+      ...detailLines,
+      "  判定：K6 fail-closed —— 可连但无账本/账本为空一律失败，不再 NOTE 跳过并 PASS。",
+      "  修复：把 MIGRATION_DRIFT_DB_URL / DATABASE_URL / .env 的 MIGRATE_URL 指向已建好迁移链的库",
+      "        （本机默认 topems，需 _sqlx_migrations 与断言源齐全），或先执行迁移。",
+      "  仅演练可用显式豁免：MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1（会打印 WARN，CI 不应设置）。",
+    ]);
+  }
+  console.warn("");
+  console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  console.warn(`${TAG} WARN ${summary}`);
+  console.warn(`  目标库：${label}`);
+  for (const line of detailLines) console.warn(`  ${line.replace(/^ {2}/, "")}`);
+  console.warn("  放行依据：MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1（显式豁免，仅限本地演练；CI 不得设置）");
+  console.warn("  本次未执行任何结构断言，本结论不可用于发布判定。");
+  console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  console.warn("");
+  console.log(`${TAG} PASS(WARN) 断言 ${assertionCount} 项，记账校验 0 项，空账本已显式豁免`);
+  process.exit(0);
 }
 
 function readEnvMigrateUrl() {
@@ -253,9 +287,38 @@ function main() {
       "  缺少什么：可连接的 PostgreSQL + psql（当前 PATH 需能找到 psql）。",
       "  怎么起库：brew services start postgresql@18（仓库文档默认 @16）；PostgreSQL 未安装时 brew install postgresql@18。",
       "  确认 .env 的 MIGRATE_URL 指向本机库（示例：127.0.0.1:5432/topems）。",
-      "  无本地库：export MIGRATION_DRIFT_DB_URL=<test 库连接串>（同 .env 的 MIGRATE_URL 格式，指向 topems_prepare；无记账时仅打印 NOTE）。",
+      "  无本地库：export MIGRATION_DRIFT_DB_URL=<test 库连接串>（同 .env 的 MIGRATE_URL 格式）；无账本会 FAILED，仅显式豁免可放行。",
       `${TAG} 本门禁不可跳过；修好数据库后重跑 push。`,
     ]);
+  }
+
+  // K6：无账本表即失败，不再按「无需校验」放行。
+  if (ledgerPresent !== "present") {
+    emptyLedgerFailure(
+      "目标库无 _sqlx_migrations 表（可连但无账本）",
+      ["  现状：to_regclass('_sqlx_migrations') IS NULL", "  含义：该库从未执行过迁移链，无法做任何记账-结构比对。"],
+      label,
+      assertions.length,
+    );
+  }
+
+  let ledgerTotal;
+  try {
+    ledgerTotal = Number(psql(url, "SELECT count(*) FROM _sqlx_migrations"));
+  } catch (err) {
+    fail([
+      `${TAG} FAILED 读取 _sqlx_migrations 行数失败`,
+      `  目标库：${label}`,
+      `  原因：${connectivityFailureReason(err)}`,
+    ]);
+  }
+  if (!Number.isFinite(ledgerTotal) || ledgerTotal === 0) {
+    emptyLedgerFailure(
+      "目标库 _sqlx_migrations 账本为空（0 行）",
+      [`  现状：表存在但记录数 = ${Number.isFinite(ledgerTotal) ? ledgerTotal : "未知"}`],
+      label,
+      assertions.length,
+    );
   }
 
   const versions = [
@@ -285,6 +348,19 @@ function main() {
     }
   }
 
+  // K6：账本有行但 12 项断言源一个都没记账 → 视为「指向了非本仓库迁移链的库」，失败。
+  if (ledger.size === 0) {
+    emptyLedgerFailure(
+      "目标库账本存在但断言源全部未记账",
+      [
+        `  现状：_sqlx_migrations 共 ${ledgerTotal} 行，但断言清单涉及的 ${versions.length} 个版本命中 0 条`,
+        "  含义：该库不是本仓库的迁移链（或迁移尚未应用到这些版本），无法校验结构。",
+      ],
+      label,
+      assertions.length,
+    );
+  }
+
   let structRows = new Map();
   if (ledger.size > 0) {
     try {
@@ -310,10 +386,6 @@ function main() {
 
   for (const a of assertions) {
     const recorded = ledger.get(a.source);
-    if (ledgerPresent !== "present") {
-      skipped.push(`${a.id}（目标库无 _sqlx_migrations）`);
-      continue;
-    }
     if (recorded === undefined) {
       skipped.push(`${a.id}（源迁移 ${a.source} 未记账）`);
       continue;
@@ -355,11 +427,6 @@ function main() {
   if (skipped.length > 0) {
     console.log(`${TAG} NOTE ${skipped.length} 项源迁移未记账，按规则跳过结构断言（非静默）：`);
     for (const item of skipped) console.log(`  - ${item}`);
-  }
-  if (enforced === 0) {
-    console.log(
-      `${TAG} WARN 目标库无任何已记账的断言源（test/快照库），本库仅做连通性与清单校验；主库请指向 topems。`,
-    );
   }
   const ms = Date.now() - startedAt;
   console.log(`${TAG} PASS 断言 ${assertions.length} 项，记账校验 ${enforced} 项，耗时 ${ms} ms`);
