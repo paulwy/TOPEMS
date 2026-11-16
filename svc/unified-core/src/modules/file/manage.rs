@@ -756,14 +756,20 @@ pub async fn copy_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "缺少租户上下文：拒绝文件写操作",
+            ))
+        }
     };
     tracing::info!(
         "File manage copy_file called with id: {} for user: {}",
@@ -927,14 +933,20 @@ pub async fn set_file_permission(
     Path(id): Path<String>,
     Json(payload): Json<FilePermissionRequest>,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "缺少租户上下文：拒绝文件写操作",
+            ))
+        }
     };
     tracing::info!(
         "File manage set_file_permission called with id: {} for user: {}",

@@ -32,14 +32,20 @@ pub async fn upload_file(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "缺少租户上下文：拒绝文件写操作",
+            ))
+        }
     };
     tracing::info!(
         "File upload upload_file called for user: {}",
@@ -224,14 +230,20 @@ pub async fn upload_multiple(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "缺少租户上下文：拒绝文件写操作",
+            ))
+        }
     };
     tracing::info!(
         "File upload upload_multiple called for user: {}",

@@ -287,7 +287,15 @@ pub async fn create_document(
     };
 
     let id = Uuid::new_v4();
-    let tenant_id = tenant_filter(&claims).unwrap_or(Uuid::nil());
+    let tenant_id = match tenant_filter(&claims) {
+        Some(t) if !t.is_nil() => t,
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::bad_request("缺少租户上下文：拒绝创建文档"),
+            )
+        }
+    };
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",

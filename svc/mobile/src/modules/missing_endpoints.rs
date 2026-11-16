@@ -317,16 +317,22 @@ pub async fn update_push_config(
             );
         }
     };
-    // 租户取自 token claims，去掉硬编码 '...0001' 字面量。
-    // 注意与 offline_sync（sync_policies 可空 + RLS 含 tenant_id IS NULL 分支）不同：
-    // 本表 mobile.push_config.tenant_id 为 NOT NULL 且未启用 RLS，故不做超管→SQL NULL 特判，
-    // 直接落 claims.tenant_id；claims 无租户时退零 uuid，既满足 NOT NULL 约束，又保证
-    // ON CONFLICT (tenant_id, user_id) 幂等命中——每个用户仍按 (tenant, user) 唯一一行 upsert。
-    let tenant_id: Uuid = extract_bearer_token(&headers)
+    // 租户取自 token claims；push_config.tenant_id 为 NOT NULL，写操作必须携带有效租户，
+    // 缺失或零租户时返回 400，禁止把配置写入零 UUID 区间。
+    let tenant_id: Uuid = match extract_bearer_token(&headers)
         .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
         .and_then(|c| c.tenant_id)
         .and_then(|t| Uuid::parse_str(&t).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<Value>::bad_request("缺少租户上下文：拒绝更新推送配置"),
+            );
+        }
+    };
     let __mobile_response = {
         match sqlx::query(
         r#"INSERT INTO mobile.push_config (tenant_id, user_id, channel_config, updated_at)

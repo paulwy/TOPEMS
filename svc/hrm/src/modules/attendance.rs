@@ -275,11 +275,15 @@ pub async fn create_attendance(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let org_id = claims
+    let org_id = match claims
         .tenant_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::error(400, "缺少租户上下文：拒绝考勤写操作"),
+    };
 
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
@@ -783,11 +787,15 @@ pub async fn check_in(
             }
         };
     let now = Utc::now();
-    let org_id = claims
+    let org_id = match claims
         .tenant_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::error(400, "缺少租户上下文：拒绝考勤写操作"),
+    };
 
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",

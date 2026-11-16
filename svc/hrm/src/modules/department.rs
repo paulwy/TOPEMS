@@ -167,12 +167,17 @@ pub async fn create_department(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 从 JWT claims 自动填充 tenant_id 和 org_id
-    let claims_tenant = claims
+    // 从 JWT claims 自动填充 tenant_id 和 org_id：写操作必须携带有效租户，
+    // 缺失或零租户时返回 400，禁止把部门写入零 UUID 区间。
+    let claims_tenant = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => return ApiResponse::error(400, "缺少租户上下文：拒绝创建部门"),
+    };
     let tenant_id = req.tenant_id.unwrap_or(claims_tenant);
     let org_id = req.org_id.unwrap_or(claims_tenant);
 
