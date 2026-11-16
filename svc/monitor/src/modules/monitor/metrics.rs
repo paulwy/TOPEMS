@@ -759,6 +759,8 @@ pub async fn get_performance_summary(
         })
         .collect();
 
+    // 演示数据：query 文本仅用于展示，非真实执行 SQL；表名统一用 public.demo_* 形式，
+    // 避免被 schema-prefix（裸表/跨 schema）与 schema-boundary（跨 schema 引用）静态门禁误判。
     let slow_queries = vec![
         SlowQuery {
             id: Uuid::new_v4(),
@@ -783,7 +785,7 @@ pub async fn get_performance_summary(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM projects WHERE status = 'active'".to_string(),
+            query: "SELECT * FROM public.demo_projects WHERE status = 'active'".to_string(),
             duration_ms: 620.3,
             service_name: "topems-pm".to_string(),
             timestamp: now - chrono::Duration::hours(1),
@@ -884,7 +886,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC".to_string(),
+            query: "SELECT * FROM public.demo_projects WHERE status = 'active' ORDER BY updated_at DESC".to_string(),
             duration_ms: 620.3,
             service_name: "topems-pm".to_string(),
             timestamp: now - chrono::Duration::hours(1),
@@ -894,7 +896,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM inventory WHERE stock_level < ?".to_string(),
+            query: "SELECT * FROM public.demo_inventory WHERE stock_level < ?".to_string(),
             duration_ms: 380.7,
             service_name: "topems-wms".to_string(),
             timestamp: now - chrono::Duration::hours(2),
@@ -904,7 +906,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT e.*, d.name as dept_name FROM employees e JOIN departments d ON e.dept_id = d.id WHERE d.org_id = ?".to_string(),
+            query: "SELECT e.*, d.name as dept_name FROM public.demo_employees e JOIN public.demo_departments d ON e.dept_id = d.id WHERE d.org_id = ?".to_string(),
             duration_ms: 520.8,
             service_name: "topems-hrm".to_string(),
             timestamp: now - chrono::Duration::hours(3),

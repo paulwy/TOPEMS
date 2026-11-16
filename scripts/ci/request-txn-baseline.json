@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-11-16",
+  "note": "§17.2 只减不增基线：bare_txn = 裸 &mut **txn 直接查；own_txn = 请求路径自开事务（.scope()/.scope_read()）。--update-baseline 仅允许在计数下降后执行。",
+  "counts": {
+    "ai::own_txn": 90,
+    "communication::own_txn": 2,
+    "crm::bare_txn": 196,
+    "crm::own_txn": 1,
+    "erp::bare_txn": 351,
+    "finance::own_txn": 124,
+    "gis::own_txn": 92,
+    "hrm::bare_txn": 232,
+    "integration::own_txn": 11,
+    "lims::own_txn": 144,
+    "mes::own_txn": 203,
+    "mobile::own_txn": 133,
+    "monitor::own_txn": 12,
+    "plugin-registry::own_txn": 38,
+    "pm::own_txn": 27,
+    "portal::own_txn": 20,
+    "rd::bare_txn": 163,
+    "scm::bare_txn": 211,
+    "scm::own_txn": 3,
+    "search::own_txn": 7,
+    "server::own_txn": 4,
+    "srm::bare_txn": 211,
+    "ticket::own_txn": 65,
+    "tms::own_txn": 9,
+    "unified-core::own_txn": 87,
+    "wms::bare_txn": 292
+  }
+}

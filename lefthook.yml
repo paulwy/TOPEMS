@@ -401,6 +401,14 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-pool-acquire.mjs --changed-only
 
+    # [Gate RT] 请求事务门禁（§17.2）：bare_txn / own_txn 按服务只减不增
+    request-txn:
+      tags: database rust transaction
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^scripts/ci/check-request-txn\.mjs$|^scripts/ci/request-txn-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-request-txn.mjs --changed-only
+
     # [Gate TC] 租户上下文回归门禁（W7 第二步配套）
     # R1 event_handlers 内使用 scope_system/scope_read_system；R2 modules 内直接使用 state.pool。
     # 存量按文件计数冻结在 scripts/ci/tenant-context-baseline.json（2026-11-11：R1 4 / R2 1764），

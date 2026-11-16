@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-05",
+  "generated": "2026-11-16",
   "note": "既存裸表名基线。规则见 docs/database/connection-governance.md「C. schema 前缀规则」；新增条目必须人工 review（优先改成显式 schema 前缀，而不是加进基线）。",
   "entries": [
     {
@@ -180,19 +180,11 @@
     },
     {
       "file": "svc/communication/src/im_location.rs",
-      "table": "core_geofences"
-    },
-    {
-      "file": "svc/communication/src/im_location.rs",
       "table": "core_location_messages"
     },
     {
       "file": "svc/communication/src/mail.rs",
       "table": "core_email_queue"
-    },
-    {
-      "file": "svc/communication/src/mail.rs",
-      "table": "core_users"
     },
     {
       "file": "svc/communication/src/notification.rs",
@@ -205,14 +197,6 @@
     {
       "file": "svc/communication/src/notification.rs",
       "table": "core_notification_subscriptions"
-    },
-    {
-      "file": "svc/communication/src/notification.rs",
-      "table": "core_notification_templates"
-    },
-    {
-      "file": "svc/communication/src/notification.rs",
-      "table": "core_notifications"
     },
     {
       "file": "svc/communication/src/notification.rs",
@@ -319,10 +303,6 @@
       "table": "core_erp_materials"
     },
     {
-      "file": "svc/erp/src/modules/search.rs",
-      "table": "core_erp_suppliers"
-    },
-    {
       "file": "svc/erp/src/modules/settings.rs",
       "table": "system_settings"
     },
@@ -377,10 +357,6 @@
     {
       "file": "svc/finance/src/modules/audit_v52.rs",
       "table": "finance_detection_configs_v52"
-    },
-    {
-      "file": "svc/finance/src/modules/audit_v52.rs",
-      "table": "voucher_lines"
     },
     {
       "file": "svc/finance/src/modules/financial_reports.rs",
@@ -667,22 +643,6 @@
       "table": "qa_lims_uncertainty_sources"
     },
     {
-      "file": "svc/master-data/src/modules/dict/handlers.rs",
-      "table": "core_dict_items"
-    },
-    {
-      "file": "svc/master-data/src/modules/dict/handlers.rs",
-      "table": "core_dict_types"
-    },
-    {
-      "file": "svc/master-data/src/modules/dict/seed.rs",
-      "table": "core_dict_items"
-    },
-    {
-      "file": "svc/master-data/src/modules/dict/seed.rs",
-      "table": "core_dict_types"
-    },
-    {
       "file": "svc/mes/src/event_handlers.rs",
       "table": "production_orders"
     },
@@ -936,23 +896,7 @@
     },
     {
       "file": "svc/monitor/src/modules/monitor/metrics.rs",
-      "table": "departments"
-    },
-    {
-      "file": "svc/monitor/src/modules/monitor/metrics.rs",
-      "table": "employees"
-    },
-    {
-      "file": "svc/monitor/src/modules/monitor/metrics.rs",
-      "table": "inventory"
-    },
-    {
-      "file": "svc/monitor/src/modules/monitor/metrics.rs",
       "table": "orders"
-    },
-    {
-      "file": "svc/monitor/src/modules/monitor/metrics.rs",
-      "table": "projects"
     },
     {
       "file": "svc/monitor/src/modules/monitor/metrics.rs",
@@ -1155,10 +1099,6 @@
       "table": "core_files"
     },
     {
-      "file": "svc/tms/src/main.rs",
-      "table": "vehicles"
-    },
-    {
       "file": "svc/unified-core/src/middleware/versioning.rs",
       "table": "core_api_version_configs"
     },
@@ -1243,24 +1183,12 @@
       "table": "core_flow_variables"
     },
     {
-      "file": "svc/unified-core/src/modules/iam/auth.rs",
-      "table": "core_tenant_users"
-    },
-    {
       "file": "svc/unified-core/src/modules/master/handlers.rs",
       "table": "core_master_data_change_log"
     },
     {
       "file": "svc/unified-core/src/modules/master/handlers.rs",
       "table": "core_mdm_approvals"
-    },
-    {
-      "file": "svc/unified-core/src/modules/menu/handlers.rs",
-      "table": "core_menu_groups"
-    },
-    {
-      "file": "svc/unified-core/src/modules/menu/handlers.rs",
-      "table": "core_menus"
     },
     {
       "file": "svc/unified-core/src/modules/migration/service.rs",

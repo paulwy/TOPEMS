@@ -284,6 +284,14 @@ const all = dedup(violations);
 const freshDedup = dedup(fresh);
 
 const byLevel = (list, level) => list.filter((v) => v.level === level);
+
+// W2-0：AMBIGUOUS / CROSS_SCHEMA 是「读错表」高危级别，**不受基线豁免**。
+// 基线只放行 SEARCH_PATH_DEPENDENT / UNKNOWN 这类"待收敛"的既存量；
+// 只要还出现同名表歧义或跨 schema 越界，无论是否在基线内都阻断。
+// 现有 5 条（monitor 3 AMBIGUOUS + 2 CROSS_SCHEMA）由 W2-B0 清零后本门禁转绿。
+const HARD_FAIL_LEVELS = new Set(['AMBIGUOUS', 'CROSS_SCHEMA']);
+const hardFails = all.filter((v) => HARD_FAIL_LEVELS.has(v.level));
+
 const byModule = {};
 for (const v of all) byModule[v.svc] = (byModule[v.svc] || 0) + 1;
 
@@ -295,6 +303,7 @@ const summary = {
   cross_schema: byLevel(all, 'CROSS_SCHEMA').length,
   search_path_dependent: byLevel(all, 'SEARCH_PATH_DEPENDENT').length,
   unknown: byLevel(all, 'UNKNOWN').length,
+  hard_fail: hardFails.length,
   new_violations: freshDedup.length,
   by_module: byModule,
   changed_only: CHANGED_ONLY,
@@ -313,6 +322,14 @@ if (JSON_MODE) {
   console.log(`[schema-prefix] 按模块：${mods.map(([m, n]) => `${m}=${n}`).join(' ')}`);
   for (const v of byLevel(all, 'AMBIGUOUS')) {
     console.log(`  AMBIGUOUS  ${v.file}#${v.line}  ${v.table}  (${v.owner})`);
+  }
+  for (const v of byLevel(all, 'CROSS_SCHEMA')) {
+    console.log(`  CROSS_SCHEMA  ${v.file}#${v.line}  ${v.table}  (${v.owner})`);
+  }
+  if (hardFails.length) {
+    console.log(
+      `[schema-prefix] 高危 ${hardFails.length} 条不可基线豁免（AMBIGUOUS/CROSS_SCHEMA），必须改全限定名后才能通过`
+    );
   }
   if (freshDedup.length) {
     console.log('[schema-prefix] 新增违规（需改成 schema.table 或更新基线）：');
@@ -336,6 +353,13 @@ if (UPDATE_BASELINE) {
   };
   writeFileSync(BASELINE_FILE, JSON.stringify(payload, null, 2) + '\n');
   console.log(`[schema-prefix] 基线已写入 ${relative(ROOT, BASELINE_FILE)}（${entries.length} 条）`);
+} else if (hardFails.length && !REPORT_ONLY) {
+  // 即便 `--update-baseline`，高危级别也不进基线；这里只挡普通执行路径。
+  console.error(
+    `[schema-prefix] FAILED：${hardFails.length} 条高危违规（AMBIGUOUS=${summary.ambiguous} ` +
+      `CROSS_SCHEMA=${summary.cross_schema}）不可基线豁免，须改为 schema.table 全限定名`
+  );
+  process.exit(1);
 } else if (freshDedup.length && !REPORT_ONLY) {
   process.exit(1);
 }
