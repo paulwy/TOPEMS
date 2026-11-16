@@ -683,6 +683,15 @@ pub async fn create_zone(
             ))
         }
     };
+    // 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止落零 UUID。
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建分区"),
+    };
     let name = payload
         .get("name")
         .and_then(|v| v.as_str())
@@ -714,11 +723,7 @@ pub async fn create_zone(
         zone_type,
         location_ids,
         is_active,
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .unwrap_or(Uuid::nil()),
+        tenant_id,
     )
     .fetch_one(&mut **txn)
     .await
@@ -846,6 +851,15 @@ pub async fn create_rule(
             ))
         }
     };
+    // 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止落零 UUID。
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建规则"),
+    };
     let rule_type = payload
         .get("rule_type")
         .and_then(|v| v.as_str())
@@ -881,7 +895,7 @@ pub async fn create_rule(
         conditions,
         actions,
         is_active,
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
+        tenant_id,
     )
     .fetch_one(&mut **txn)
     .await {

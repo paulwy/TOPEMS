@@ -152,6 +152,15 @@ pub async fn create_rule(
     let now = Utc::now().naive_utc();
     let enabled = req.enabled.unwrap_or(true);
     let priority_order = req.priority_order.unwrap_or(0);
+    // 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止落零 UUID。
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建补货规则"),
+    };
 
     let result = sqlx::query(
         r#"
@@ -185,7 +194,7 @@ pub async fn create_rule(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

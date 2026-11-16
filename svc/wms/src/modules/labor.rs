@@ -603,8 +603,15 @@ pub async fn create_labor_shift(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         return e.0;
     }
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    // 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止落零 UUID。
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建班次"),
+    };
     let organization_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     let row = sqlx::query_as::<_, LaborShift>(only_own_schema_query!(

@@ -109,6 +109,18 @@ fn tenant_bind_value(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
+/// 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止把业务数据写入零 UUID 区间。
+fn require_tenant_write<T>(claims: &Claims) -> Result<Uuid, ApiResponse<T>> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => Err(ApiResponse::error(400, "缺少租户上下文：拒绝同步写操作")),
+    }
+}
+
 fn rand_no() -> u32 {
     use std::time::{SystemTime, UNIX_EPOCH};
     let nanos = SystemTime::now()
@@ -280,7 +292,10 @@ pub async fn create_sync_record(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e.0;
     }
-    let tenant_id = tenant_bind_value(&claims);
+    let tenant_id = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
 
@@ -657,7 +672,10 @@ async fn trigger_sync(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e.0;
     }
-    let tenant_id = tenant_bind_value(&claims);
+    let tenant_id = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
 

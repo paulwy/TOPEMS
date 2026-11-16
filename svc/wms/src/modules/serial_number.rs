@@ -271,11 +271,15 @@ pub async fn bulk_create_serial_numbers(
 
     let mut created_serials = Vec::new();
     let now = Utc::now();
-    let tenant_id = claims
+    // 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止落零 UUID。
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝批量创建序列号"),
+    };
 
     for item in req {
         let id = Uuid::new_v4();
