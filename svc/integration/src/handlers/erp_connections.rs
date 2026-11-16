@@ -26,9 +26,10 @@ fn tenant_filter(claims: &Claims) -> Option<Uuid> {
     }
 }
 
-/// 写入路径租户：解析失败回落 nil UUID（tenant_id 列 NOT NULL）
-fn tenant_for_write(claims: &Claims) -> Uuid {
-    tenant_filter(claims).unwrap_or(Uuid::nil())
+/// 写入路径租户：缺失或零租户时返回 None，调用方必须拒绝写入（400），
+/// 禁止以零 UUID 落库（tenant_id 列 NOT NULL）。
+fn require_tenant_for_write(claims: &Claims) -> Option<Uuid> {
+    tenant_filter(claims).filter(|t| !t.is_nil())
 }
 
 #[utoipa::path(
@@ -143,7 +144,9 @@ pub async fn create_connection(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
-    let tid = tenant_for_write(&claims);
+    let Some(tid) = require_tenant_for_write(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝创建 ERP 连接");
+    };
     let id = Uuid::new_v4();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

@@ -2,7 +2,9 @@ use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
-use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
+use topems_shared_event::event::{
+    require_event_tenant, Event, EventResult, EventSubscriber, EventType,
+};
 
 use crate::qms_lims_ehs;
 
@@ -76,6 +78,7 @@ impl IntegrationEventHandlers {
 
     async fn record_sync_log(
         &self,
+        tenant_id: uuid::Uuid,
         sync_type: &str,
         source_system: &str,
         target_system: &str,
@@ -88,13 +91,13 @@ impl IntegrationEventHandlers {
         let now = Utc::now();
         let log_id = uuid::Uuid::new_v4();
 
-        // tenant-system: 后台事件编排无请求上下文，同步日志为 nil 租户共享写入，走系统通道。
+        // tenant-system: 后台事件编排无请求上下文，同步日志按事件携带的租户落库，走系统通道。
         let scope_res = self.db.scope_system().await;
         let mut scope = scope_res
             .map_err(|e| TopemsError::BusinessLogic(format!("建立同步日志作用域失败: {}", e)))?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("integration", "INSERT INTO integration_sync_logs (id, sync_type, source_system, target_system, status, trace_id, details, started_at, source_type, source_id, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              ON CONFLICT (source_type, source_id, tenant_id) DO NOTHING
              RETURNING id"),
         )
@@ -108,6 +111,7 @@ impl IntegrationEventHandlers {
         .bind(now)
         .bind(source_type)
         .bind(source_id)
+        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await;
         let result = match (result, scope.commit().await) {
@@ -152,10 +156,23 @@ impl IntegrationEventHandlers {
             event.trace_id
         );
 
+        // 同步日志表有租户维度且事件本应携带租户：缺失时告警并跳过记录，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!(
+                    "[integration] 跳过 QMS→LIMS 同步日志：事件缺少租户上下文（{}）",
+                    e
+                );
+                return Ok(());
+            }
+        };
+
         tracing::info!("[integration] 触发 QMS→LIMS 数据同步流程");
 
         let _ = self
             .record_sync_log(
+                tenant_id,
                 "quality_inspection",
                 "qms",
                 "lims",
@@ -177,10 +194,23 @@ impl IntegrationEventHandlers {
             event.trace_id
         );
 
+        // 同步日志表有租户维度且事件本应携带租户：缺失时告警并跳过记录，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!(
+                    "[integration] 跳过 EHS→QMS 同步日志：事件缺少租户上下文（{}）",
+                    e
+                );
+                return Ok(());
+            }
+        };
+
         tracing::info!("[integration] 触发 EHS→QMS 数据同步流程");
 
         let _ = self
             .record_sync_log(
+                tenant_id,
                 "ehs_incident",
                 "ehs",
                 "qms",
@@ -202,10 +232,23 @@ impl IntegrationEventHandlers {
             event.trace_id
         );
 
+        // 同步日志表有租户维度且事件本应携带租户：缺失时告警并跳过记录，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!(
+                    "[integration] 跳过 LIMS→EHS 同步日志：事件缺少租户上下文（{}）",
+                    e
+                );
+                return Ok(());
+            }
+        };
+
         tracing::info!("[integration] 触发 LIMS→EHS 数据同步流程");
 
         let _ = self
             .record_sync_log(
+                tenant_id,
                 "lab_result",
                 "lims",
                 "ehs",

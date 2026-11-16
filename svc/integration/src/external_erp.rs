@@ -14,16 +14,14 @@ use uuid::Uuid;
 
 use crate::models::{AppState, ErpConnection, ErpConnectionResponse, ErpMapping};
 
-const TENANT_ID: &str = "default";
-
-/// 写入路径租户：claims 无租户（超管）时回落 nil UUID（tenant_id 列 NOT NULL，
-/// 直接绑 NULL 会触发非空约束 → 500）
-fn tenant_uuid(claims: &Claims) -> Uuid {
+/// 写入路径租户：缺失或零租户时返回 None，调用方必须拒绝写入（400），
+/// 禁止以零 UUID 落库（tenant_id 列 NOT NULL）。
+fn required_tenant(claims: &Claims) -> Option<Uuid> {
     claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
+        .filter(|t| !t.is_nil())
 }
 
 // ===== SSRF 防护（默认封锁私网段 + env 白名单显式放行 + DNS 重绑定加固） =====
@@ -492,6 +490,10 @@ pub async fn create_connection(
         .and_then(|v| v.as_i64())
         .map(|v| v as i32);
 
+    let Some(tenant_id) = required_tenant(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝写入 ERP 连接");
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -515,7 +517,7 @@ pub async fn create_connection(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
-    .bind(tenant_uuid(&claims))
+    .bind(tenant_id)
     .bind(&name)
     .bind(&r#type)
     .bind(&api_url)
@@ -876,6 +878,10 @@ async fn create_entity_mapping(
         .unwrap_or("")
         .to_string();
 
+    let Some(tenant_id) = required_tenant(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝写入 ERP 连接");
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -900,7 +906,7 @@ async fn create_entity_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(tenant_uuid(&claims))
+    .bind(tenant_id)
     .bind(uuid)
     .bind(&entity)
     .bind(mapping_id.to_string())
@@ -931,6 +937,10 @@ pub async fn batch_entity_mappings(
         .unwrap_or_default();
     let mut processed = 0i64;
     let mut failed = 0i64;
+
+    let Some(tenant_id) = required_tenant(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝写入 ERP 连接");
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -975,7 +985,7 @@ pub async fn batch_entity_mappings(
              VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
         ))
         .bind(mapping_id)
-        .bind(tenant_uuid(&claims))
+        .bind(tenant_id)
         .bind(uuid)
         .bind(&entity)
         .bind(mapping_id.to_string())
@@ -1183,6 +1193,18 @@ async fn write_to_staging(
     let mut inserted = 0;
     let mut skipped = 0;
 
+    // staging 行必须落连接所属租户：从连接记录读取；连接不存在则拒绝写入，
+    // 不再把 staging 数据写入零 UUID 区间。
+    let tenant_id: Uuid =
+        sqlx::query_scalar("SELECT tenant_id FROM integration.erp_connections WHERE id = $1")
+            .bind(connection_id)
+            .fetch_optional(&mut *scope)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("读取连接租户失败: {}", e)))?
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed("ERP 连接不存在，拒绝写入 staging".to_string())
+            })?;
+
     for item in items {
         // 尝试提取 external_id（常见字段名：id、ID、external_id、code）
         let external_id = item
@@ -1213,8 +1235,6 @@ async fn write_to_staging(
         }
 
         // 插入 staging 表
-        let tenant_id = Uuid::parse_str(TENANT_ID).unwrap_or_else(|_| Uuid::nil());
-
         match sqlx::query(
             "INSERT INTO integration.external_erp_staging \
              (tenant_id, connection_id, entity, direction, source_system, external_id, raw_data, processed, process_status) \
@@ -1268,6 +1288,10 @@ pub async fn sync_entity(
         .and_then(|v| v.as_i64())
         .unwrap_or(100) as i32;
 
+    let Some(tenant_id) = required_tenant(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝写入 ERP 连接");
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1288,7 +1312,7 @@ pub async fn sync_entity(
          VALUES ($1,$2::uuid,$3,$4,$5,'running',NOW(),NOW())"
     ))
     .bind(task_id)
-    .bind(tenant_uuid(&claims))
+    .bind(tenant_id)
     .bind(connection_id)
     .bind(&entity)
     .bind(&direction)
@@ -1835,6 +1859,9 @@ pub async fn create_company_mapping(
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
+    let Some(tenant_id) = required_tenant(&claims) else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝写入 ERP 连接");
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1859,7 +1886,7 @@ pub async fn create_company_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(tenant_uuid(&claims))
+    .bind(tenant_id)
     .bind(conn_uuid)
     .bind(mapping_id.to_string())
     .bind(&local_code)
