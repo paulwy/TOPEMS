@@ -458,7 +458,7 @@ pub struct ScanHistoryQuery {
 )]
 pub async fn get_scan_by_id(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -485,18 +485,9 @@ pub async fn get_scan_by_id(
         }
     };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE id = $1"))
         .bind(id)
-        .bind(tenant_filter)
         .fetch_optional(&mut scope)
         .await
     {
@@ -639,11 +630,10 @@ pub async fn delete_scan_record(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
+        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2"
     ))
     .bind(id)
     .bind(user_id)
-    .bind(Option::<Uuid>::None)
     .execute(&mut scope)
     .await;
 

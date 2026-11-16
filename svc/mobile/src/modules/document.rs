@@ -69,7 +69,7 @@ pub struct CreateDocumentRequest {
 /// 文档列表（前端 GET /documents）
 pub async fn list_documents(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -110,7 +110,6 @@ pub async fn list_documents(
     let offset = (page - 1) * page_size;
     let search = params.search.unwrap_or_default();
     let category = params.category.unwrap_or_default();
-    let tenant_filter = tenant_filter(&claims);
 
     let __mobile_response = {
         let documents: Vec<MobileDocument> = match sqlx::query_as::<_, MobileDocument>(
@@ -121,7 +120,6 @@ pub async fn list_documents(
              WHERE deleted_at IS NULL AND (author_id::text = $1 OR author_id IS NULL)
                AND ($2::text = '' OR title ILIKE '%' || $2 || '%')
                AND ($3::text = '' OR category = $3)
-               AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
              ORDER BY created_at DESC
              LIMIT $4 OFFSET $5"
         ),
@@ -131,7 +129,6 @@ pub async fn list_documents(
     .bind(&category)
     .bind(page_size)
     .bind(offset)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
 
     .await
@@ -177,7 +174,7 @@ pub async fn get_document_categories() -> impl IntoResponse {
 /// 文档详情（前端 GET /documents/{id}）
 pub async fn get_document(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -212,17 +209,15 @@ pub async fn get_document(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let document = sqlx::query_as::<_, MobileDocument>(
         only_own_schema_query!(
             "mobile",
             "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
-             FROM mobile.documents WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+             FROM mobile.documents WHERE id = $1 AND deleted_at IS NULL"
         ),
     )
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut scope)
     .await;
 
@@ -339,7 +334,7 @@ pub async fn create_document(
 /// 更新文档（前端 PUT /documents/{id}）
 pub async fn update_document(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -379,20 +374,18 @@ pub async fn update_document(
     let title = req.get("title").and_then(|v| v.as_str());
     let category = req.get("category").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str());
-    let tenant_filter = tenant_filter(&claims);
 
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",
             "UPDATE mobile.documents SET title = COALESCE($2, title), category = COALESCE($3, category), status = COALESCE($4, status), updated_at = NOW()
-             WHERE id = $1 AND deleted_at IS NULL AND ($5::uuid IS NULL OR tenant_id = $5::uuid)"
+             WHERE id = $1 AND deleted_at IS NULL"
         ),
     )
     .bind(id)
     .bind(title)
     .bind(category)
     .bind(status)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -418,7 +411,7 @@ pub async fn update_document(
 /// 删除文档（前端 DELETE /documents/{id}）
 pub async fn delete_document(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -453,14 +446,12 @@ pub async fn delete_document(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 

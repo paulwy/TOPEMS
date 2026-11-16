@@ -233,13 +233,12 @@ async fn get_today_quality_pass_rate(
 async fn get_shortcuts(
     scope: &mut ScopedTxn<'_>,
     user_id: &str,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> Vec<Shortcut> {
     let rows = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT id::text AS id, name, icon, COALESCE(action_type, '') as path, '#1890ff' as color FROM mobile.shortcuts WHERE (user_id = $1 OR user_id IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order"),
+        only_own_schema_query!("mobile", "SELECT id::text AS id, name, icon, COALESCE(action_type, '') as path, '#1890ff' as color FROM mobile.shortcuts WHERE (user_id = $1 OR user_id IS NULL) ORDER BY sort_order"),
     )
     .bind(user_id)
-    .bind(tenant_filter)
     .fetch_all(&mut *scope)
     .await;
 

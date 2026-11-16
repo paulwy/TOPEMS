@@ -279,7 +279,7 @@ pub async fn mark_synced(
     tag = "offline_records"
 )]
 pub async fn clear_synced(
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
@@ -302,10 +302,9 @@ pub async fn clear_synced(
             "mobile",
             r#"
         DELETE FROM mobile.core_mobile_offline_records
-        WHERE status = 'synced' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+        WHERE status = 'synced'
         "#
         ))
-        .bind(tenant_filter(&claims))
         .execute(&mut scope)
         .await
         {

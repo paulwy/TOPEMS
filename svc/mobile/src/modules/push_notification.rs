@@ -506,7 +506,7 @@ pub async fn send_broadcast(
 
 pub async fn get_notification_list(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -559,9 +559,8 @@ pub async fn get_notification_list(
 
     let total = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.push_notifications WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM mobile.push_notifications"
     ))
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -596,7 +595,7 @@ pub struct NotificationListQuery {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_notification_stats(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -625,9 +624,8 @@ pub async fn get_notification_stats(
 
     let total_sent: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"
     ))
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -636,9 +634,8 @@ pub async fn get_notification_stats(
     };
 
     let delivered_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
     )
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -647,9 +644,8 @@ pub async fn get_notification_stats(
     };
 
     let clicked_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
     )
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {

@@ -288,7 +288,7 @@ async fn apply_operation(
 
 pub async fn get_offline_status(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -334,10 +334,9 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'pending'"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -346,10 +345,9 @@ pub async fn get_offline_status(
     };
 
     let syncing_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'syncing' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'syncing'"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -358,10 +356,9 @@ pub async fn get_offline_status(
     };
 
     let synced_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced'"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -370,10 +367,9 @@ pub async fn get_offline_status(
     };
 
     let failed_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'failed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'failed'"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {
@@ -382,10 +378,9 @@ pub async fn get_offline_status(
     };
 
     let last_sync = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced' AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY synced_at DESC LIMIT 1"),
+        only_own_schema_query!("mobile", "SELECT synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced' ORDER BY synced_at DESC LIMIT 1"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_optional(&mut scope)
     .await
     {
@@ -429,7 +424,7 @@ pub async fn get_offline_status(
 )]
 pub async fn get_sync_history(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -515,10 +510,9 @@ pub async fn get_sync_history(
 
     let total = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1"
     ))
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {

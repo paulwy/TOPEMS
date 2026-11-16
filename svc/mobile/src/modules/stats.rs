@@ -123,7 +123,7 @@ pub async fn get_dashboard_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
@@ -154,43 +154,38 @@ pub async fn get_dashboard_stats(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let today_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_scans = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -228,7 +223,7 @@ pub async fn get_patrol_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
@@ -259,54 +254,48 @@ pub async fn get_patrol_stats(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let total_patrols = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1"
     ))
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'completed'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let in_progress_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_count = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let weekly_count = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -345,7 +334,7 @@ pub async fn get_task_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
@@ -376,44 +365,39 @@ pub async fn get_task_stats(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let total_tasks = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL)"
     ))
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let overdue_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -442,7 +426,7 @@ pub async fn get_recent_activities(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ActivityParams>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
@@ -474,17 +458,15 @@ pub async fn get_recent_activities(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
     let __mobile_response = {
         let activities: Vec<serde_json::Value> = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY updated_at DESC LIMIT $2"),
+        only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) ORDER BY updated_at DESC LIMIT $2"),
     )
     .bind(&user_id)
     .bind(limit)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
 
     .await
@@ -548,7 +530,7 @@ pub async fn get_dashboard_kpis(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(_params): Query<KpiParams>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
@@ -580,33 +562,29 @@ pub async fn get_dashboard_kpis(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let today_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_scans = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -633,7 +611,7 @@ pub struct ChartParams {
 pub async fn get_dashboard_charts(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(_params): Query<ChartParams>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
@@ -656,14 +634,12 @@ pub async fn get_dashboard_charts(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
     let rows = sqlx::query(
         only_own_schema_query!(
             "mobile",
-            "SELECT created_at::date as d, COUNT(*) as count FROM mobile.mobile_tasks WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND ($1::uuid IS NULL OR tenant_id = $1::uuid) GROUP BY d ORDER BY d"
+            "SELECT created_at::date as d, COUNT(*) as count FROM mobile.mobile_tasks WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' GROUP BY d ORDER BY d"
         ),
     )
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
     .await;
 

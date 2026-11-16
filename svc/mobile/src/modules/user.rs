@@ -111,7 +111,7 @@ impl UserSettings {
 )]
 pub async fn get_profile(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -155,12 +155,10 @@ pub async fn get_profile(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let __mobile_response = {
-        let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
+        let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1"))
         .bind(user_id)
-        .bind(tenant_filter)
         .fetch_optional(&mut scope)
         .await
     {
@@ -191,7 +189,7 @@ pub async fn get_profile(
 
 pub async fn update_profile(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -237,16 +235,13 @@ pub async fn update_profile(
         }
     };
 
-    let tenant_filter = tenant_filter(&claims);
-
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7::uuid)"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
         .bind(payload.nickname)
         .bind(payload.phone)
         .bind(payload.email)
         .bind(payload.department)
         .bind(payload.position)
         .bind(user_id)
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await;
 
@@ -286,7 +281,7 @@ pub struct UploadAvatarRequest {
 )]
 pub async fn upload_avatar(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -364,15 +359,13 @@ pub async fn upload_avatar(
     }
 
     let avatar_url = format!("/uploads/{}", file_name);
-    let tenant_filter = tenant_filter(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
+        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
     ))
     .bind(&avatar_url)
     .bind(user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -503,7 +496,7 @@ pub async fn change_password(
 /// 用户详情（前端 GET /user/{id} → mobile_users 按 id 查询）
 pub async fn get_user_by_id(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -538,14 +531,12 @@ pub async fn get_user_by_id(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let row = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut scope)
     .await;
 
@@ -592,7 +583,7 @@ pub struct ListUsersParams {
 /// 用户列表（前端 GET /user → 分页 + keyword/departmentId 过滤；status 无字段忽略）
 pub async fn list_users(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -633,7 +624,6 @@ pub async fn list_users(
     let offset = (page - 1) * page_size;
     let keyword = params.keyword.unwrap_or_default();
     let department = params.department_id.unwrap_or_default();
-    let tenant_filter = tenant_filter(&claims);
 
     let rows = sqlx::query(only_own_schema_query!(
         "mobile",
@@ -641,14 +631,12 @@ pub async fn list_users(
          FROM mobile.mobile_users
          WHERE ($1::text = '' OR username ILIKE '%' || $1 || '%' OR nickname ILIKE '%' || $1 || '%' OR phone ILIKE '%' || $1 || '%')
            AND ($2::text = '' OR department = $2)
-           AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
     ))
     .bind(&keyword)
     .bind(&department)
     .bind(page_size)
     .bind(offset)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
     .await;
 
@@ -683,7 +671,7 @@ pub async fn list_users(
 /// 部门成员（前端 GET /user/department/{departmentId} → 按 department 过滤）
 pub async fn get_department_members(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -718,15 +706,13 @@ pub async fn get_department_members(
             );
         }
     };
-    let tenant_filter = tenant_filter(&claims);
 
     let rows = sqlx::query(only_own_schema_query!(
         "mobile",
         "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at
-         FROM mobile.mobile_users WHERE department = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY username ASC"
+         FROM mobile.mobile_users WHERE department = $1 ORDER BY username ASC"
     ))
     .bind(&department_id)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
     .await;
 
@@ -758,7 +744,7 @@ pub async fn get_department_members(
 /// 更新用户状态（前端 PUT /user/{id}/status → mobile_users 无 status 字段，占位校验存在性）
 pub async fn update_user_status(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -795,14 +781,12 @@ pub async fn update_user_status(
         }
     };
     let status = payload.get("status").and_then(|v| v.as_str()).unwrap_or("");
-    let tenant_filter = tenant_filter(&claims);
 
     let exists = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT 1 FROM mobile.mobile_users WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT 1 FROM mobile.mobile_users WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut scope)
     .await;
 

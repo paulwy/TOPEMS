@@ -48,7 +48,7 @@ pub struct MediaStats {
 )]
 pub async fn get_photos(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -82,23 +82,14 @@ pub async fn get_photos(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let photos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
          FROM mobile.media_files
-         WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+         WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
     .await
     {
@@ -127,7 +118,7 @@ pub async fn get_photos(
 )]
 pub async fn get_audio(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -161,24 +152,15 @@ pub async fn get_audio(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let __mobile_response = {
         let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
          FROM mobile.media_files
-         WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+         WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
 
     .await
@@ -211,7 +193,7 @@ pub async fn get_audio(
 )]
 pub async fn get_video(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -245,23 +227,14 @@ pub async fn get_video(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let videos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
          FROM mobile.media_files
-         WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+         WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_all(&mut scope)
     .await
     {

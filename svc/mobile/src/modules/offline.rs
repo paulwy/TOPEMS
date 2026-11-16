@@ -205,7 +205,7 @@ pub async fn sync_offline_data(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_offline_status(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -250,9 +250,8 @@ pub async fn get_offline_status(
         }
     };
 
-    let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY completed_at DESC LIMIT 1"))
+    let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'completed' ORDER BY completed_at DESC LIMIT 1"))
         .bind(user_id)
-        .bind(tenant_filter(&claims))
         .fetch_optional(&mut scope)
         .await
     {
@@ -265,10 +264,9 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'pending'"),
     )
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .fetch_one(&mut scope)
     .await
     {

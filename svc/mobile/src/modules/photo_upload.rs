@@ -616,7 +616,7 @@ pub async fn get_photo_by_id(
 )]
 pub async fn get_upload_progress(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -646,10 +646,9 @@ pub async fn get_upload_progress(
 
     let row = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT upload_progress, upload_status, file_path FROM mobile.photo_uploads WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT upload_progress, upload_status, file_path FROM mobile.photo_uploads WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter(&claims))
     .fetch_optional(&mut scope)
     .await
     {
@@ -688,7 +687,7 @@ pub async fn get_upload_progress(
 
 pub async fn delete_photo(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -736,11 +735,10 @@ pub async fn delete_photo(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.photo_uploads WHERE id = $1 AND user_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
+        "DELETE FROM mobile.photo_uploads WHERE id = $1 AND user_id = $2"
     ))
     .bind(id)
     .bind(user_id)
-    .bind(tenant_filter(&claims))
     .execute(&mut scope)
     .await;
 

@@ -148,7 +148,7 @@ pub fn sort_task_titles_by_priority_str(titles: &[(String, String)]) -> Vec<(Str
 
 pub async fn get_all_tasks(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -187,11 +187,10 @@ pub async fn get_all_tasks(
         let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
+         WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) 
          ORDER BY due_date NULLS LAST, created_at DESC")
     )
     .bind(&user_id)
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -214,7 +213,7 @@ pub async fn get_all_tasks(
 
 pub async fn get_task(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -253,11 +252,10 @@ pub async fn get_task(
     let task = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
+         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter(&claims))
     .fetch_optional(&mut scope)
     .await
     {
@@ -380,7 +378,7 @@ pub async fn create_task(
 
 pub async fn update_task(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -416,22 +414,13 @@ pub async fn update_task(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let current_task = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-         FROM mobile.mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
+         FROM mobile.mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut scope)
     .await
     {
@@ -464,7 +453,7 @@ pub async fn update_task(
         only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks 
          SET title = $1, description = $2, task_type = $3, priority = $4, status = $5, assignee = $6, 
              location_lat = $7, location_lng = $8, due_date = $9, completed_at = $10, updated_at = $11 
-         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL) AND ($14::uuid IS NULL OR tenant_id = $14::uuid)")
+         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL)")
     )
     .bind(&title)
     .bind(&description)
@@ -479,7 +468,6 @@ pub async fn update_task(
     .bind(Utc::now())
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await
     {
@@ -494,7 +482,7 @@ pub async fn update_task(
 
 pub async fn update_task_status(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -530,14 +518,6 @@ pub async fn update_task_status(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let completed_at = if payload.status == "completed" {
         Some(Utc::now())
@@ -549,14 +529,13 @@ pub async fn update_task_status(
         "mobile",
         "UPDATE mobile.mobile_tasks 
          SET status = $1, completed_at = $2, updated_at = $3 
-         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL) AND ($6::uuid IS NULL OR tenant_id = $6::uuid)"
+         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)"
     ))
     .bind(&payload.status)
     .bind(&completed_at)
     .bind(Utc::now())
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -565,10 +544,9 @@ pub async fn update_task_status(
             Ok(r) if r.rows_affected() > 0 => {
                 let task = sqlx::query_as::<_, MobileTask>(
                 only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-                 FROM mobile.mobile_tasks WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
+                 FROM mobile.mobile_tasks WHERE id = $1 AND deleted_at IS NULL")
             )
             .bind(id)
-            .bind(tenant_filter)
             .fetch_one(&mut scope)
             .await;
 
@@ -602,7 +580,7 @@ pub async fn update_task_status(
 
 pub async fn delete_task(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -637,21 +615,12 @@ pub async fn delete_task(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -682,7 +651,7 @@ pub async fn delete_task(
 /// 我的任务（仅本人 assignee，较 get_all_tasks 更严格）
 pub async fn get_my_tasks(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -721,11 +690,10 @@ pub async fn get_my_tasks(
         let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND assignee = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
+         WHERE deleted_at IS NULL AND assignee = $1 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -755,7 +723,7 @@ pub async fn get_my_tasks(
 /// 待办任务（status = pending）
 pub async fn get_pending_tasks(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -794,11 +762,10 @@ pub async fn get_pending_tasks(
         let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
+         WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -828,7 +795,7 @@ pub async fn get_pending_tasks(
 /// 逾期任务（due_date 已过且未完成）
 pub async fn get_overdue_tasks(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -867,11 +834,10 @@ pub async fn get_overdue_tasks(
         let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
+         WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -901,7 +867,7 @@ pub async fn get_overdue_tasks(
 /// 完成任务（前端 /task/{id}/complete 无 body）
 pub async fn complete_task(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -936,21 +902,12 @@ pub async fn complete_task(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -979,7 +936,7 @@ pub async fn complete_task(
 /// 重新打开任务
 pub async fn reopen_task(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1014,21 +971,12 @@ pub async fn reopen_task(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'pending', completed_at = NULL, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'pending', completed_at = NULL, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(&user_id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -1057,7 +1005,7 @@ pub async fn reopen_task(
 /// 搜索任务（标题模糊匹配）
 pub async fn search_tasks(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1098,12 +1046,11 @@ pub async fn search_tasks(
         let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) 
+         WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) 
          ORDER BY created_at DESC"),
     )
     .bind(&user_id)
     .bind(&keyword)
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -1133,7 +1080,7 @@ pub async fn search_tasks(
 /// 批量更新状态（前端 /task/batch/status）
 pub async fn batch_update_status(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1168,14 +1115,6 @@ pub async fn batch_update_status(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let mut success = 0;
     let mut failed = 0;
@@ -1183,12 +1122,11 @@ pub async fn batch_update_status(
     let __mobile_response = {
         for id in payload.ids {
             let result = sqlx::query(
-            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid)"),
+            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
         )
         .bind(id)
         .bind(&user_id)
         .bind(&payload.status)
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await;
 

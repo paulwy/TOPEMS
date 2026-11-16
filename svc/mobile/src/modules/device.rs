@@ -188,11 +188,10 @@ pub async fn register_device(
 
     let existing_device = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
+        "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2"
     ))
     .bind(user_id.to_string())
     .bind(&payload.device_id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -207,7 +206,7 @@ pub async fn register_device(
     };
 
     if existing_device.is_some() {
-        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)"))
+        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8"))
             .bind(&payload.device_name)
             .bind(&payload.device_type)
             .bind(&payload.os_type)
@@ -216,7 +215,6 @@ pub async fn register_device(
             .bind(&payload.push_token)
             .bind(user_id)
             .bind(&payload.device_id)
-            .bind(tenant_id)
             .execute(&mut scope)
             .await
         {
@@ -270,7 +268,7 @@ pub async fn register_device(
 )]
 pub async fn update_push_token(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -315,20 +313,11 @@ pub async fn update_push_token(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3"))
         .bind(&payload.push_token)
         .bind(user_id)
         .bind(&payload.device_id)
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await;
 
@@ -360,7 +349,7 @@ pub async fn update_push_token(
 /// 我的设备列表（前端 GET /device → mobile.devices）
 pub async fn list_my_devices(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -394,19 +383,10 @@ pub async fn list_my_devices(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let __mobile_response = {
-        let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at DESC"))
+        let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 ORDER BY created_at DESC"))
         .bind(user_id.to_string())
-        .bind(tenant_filter)
         .fetch_all(&mut scope)
         .await
     {
@@ -440,7 +420,7 @@ pub async fn list_my_devices(
 /// 设备详情（前端 GET /device/{id} → mobile.devices 按 id 查询）
 pub async fn get_device_by_id(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -475,21 +455,12 @@ pub async fn get_device_by_id(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let device = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut scope)
     .await;
 
@@ -522,7 +493,7 @@ pub async fn get_device_by_id(
 /// 更新设备（前端 PUT /device/{id} → 更新 app_version/os_version/is_active 等）
 pub async fn update_device(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -558,14 +529,6 @@ pub async fn update_device(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let app_version = payload.get("appVersion").and_then(|v| v.as_str());
     let os_version = payload.get("osVersion").and_then(|v| v.as_str());
@@ -574,14 +537,13 @@ pub async fn update_device(
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",
-            "UPDATE mobile.devices SET app_version = COALESCE($2, app_version), os_version = COALESCE($3, os_version), is_active = COALESCE($4, is_active), updated_at = NOW() WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5::uuid)"
+            "UPDATE mobile.devices SET app_version = COALESCE($2, app_version), os_version = COALESCE($3, os_version), is_active = COALESCE($4, is_active), updated_at = NOW() WHERE id = $1"
         ),
     )
     .bind(id)
     .bind(app_version)
     .bind(os_version)
     .bind(is_active)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -607,7 +569,7 @@ pub async fn update_device(
 /// 注销设备（前端 DELETE /device/{id}）
 pub async fn unregister_device(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -642,21 +604,12 @@ pub async fn unregister_device(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "DELETE FROM mobile.devices WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -682,7 +635,7 @@ pub async fn unregister_device(
 /// 激活设备（前端 POST /device/{id}/activate）
 pub async fn activate_device(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -717,21 +670,12 @@ pub async fn activate_device(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.devices SET is_active = true, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE mobile.devices SET is_active = true, updated_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -757,7 +701,7 @@ pub async fn activate_device(
 /// 停用设备（前端 POST /device/{id}/disable）
 pub async fn disable_device(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -792,21 +736,12 @@ pub async fn disable_device(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.devices SET is_active = false, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE mobile.devices SET is_active = false, updated_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
 
@@ -832,7 +767,7 @@ pub async fn disable_device(
 /// 推送测试（前端 POST /device/{id}/test-push → 占位兜底，真实推送需推送网关）
 pub async fn test_push_device(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -868,22 +803,13 @@ pub async fn test_push_device(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let __mobile_response = {
         let _exists = sqlx::query(only_own_schema_query!(
-        "mobile",
-        "SELECT 1 FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
-    ))
+            "mobile",
+            "SELECT 1 FROM mobile.devices WHERE id = $1"
+        ))
         .bind(id)
-        .bind(tenant_filter)
         .fetch_optional(&mut scope)
         .await;
 
@@ -902,7 +828,7 @@ pub async fn test_push_device(
 /// 设备统计（前端 GET /device/stats → mobile.devices 聚合）
 pub async fn get_device_stats(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -936,21 +862,12 @@ pub async fn get_device_stats(
             );
         }
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let total = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1"
     ))
     .bind(user_id.to_string())
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -959,10 +876,9 @@ pub async fn get_device_stats(
     let __mobile_response = {
         let active = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true"
     ))
     .bind(user_id.to_string())
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))

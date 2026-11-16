@@ -112,7 +112,7 @@ pub fn patrol_progress_label(completion_pct: f64) -> &'static str {
 )]
 pub async fn get_all_patrol_records(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -151,11 +151,10 @@ pub async fn get_all_patrol_records(
         let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
         only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
-         WHERE deleted_at IS NULL AND checked_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
+         WHERE deleted_at IS NULL AND checked_by = $1 
          ORDER BY created_at DESC")
     )
     .bind(Uuid::parse_str(&user_id).ok())
-    .bind(tenant_filter(&claims))
     .fetch_all(&mut scope)
 
     .await
@@ -193,7 +192,7 @@ pub async fn get_all_patrol_records(
 )]
 pub async fn get_patrol_record(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -233,11 +232,10 @@ pub async fn get_patrol_record(
         let record = match sqlx::query_as::<_, PatrolRecord>(
         only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
-         WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
+         WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
-    .bind(tenant_filter(&claims))
     .fetch_optional(&mut scope)
 
     .await
@@ -362,7 +360,7 @@ pub async fn create_patrol_record(
 
 pub async fn update_patrol_record(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -401,11 +399,10 @@ pub async fn update_patrol_record(
 
     let current_record = match sqlx::query_as::<_, PatrolRecord>(
         only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
-         FROM mobile.patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
+         FROM mobile.patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
-    .bind(tenant_filter(&claims))
     .fetch_optional(&mut scope)
     .await
     {
@@ -429,7 +426,7 @@ pub async fn update_patrol_record(
     if let Err(e) = sqlx::query(
         only_own_schema_query!("mobile", "UPDATE mobile.patrol_records
          SET title = $1, description = $2, location_lat = $3, location_lng = $4, address = $5, status = $6
-         WHERE id = $8 AND checked_by = $9 AND ($10::uuid IS NULL OR tenant_id = $10::uuid)")
+         WHERE id = $7 AND checked_by = $8")
     )
     .bind(&title)
     .bind(&description)
@@ -437,10 +434,8 @@ pub async fn update_patrol_record(
     .bind(location_lng)
     .bind(&address)
     .bind(&status)
-    .bind(Utc::now())
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
-    .bind(tenant_filter(&claims))
     .execute(&mut scope)
     .await
     {
@@ -455,7 +450,7 @@ pub async fn update_patrol_record(
 
 pub async fn delete_patrol_record(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -492,11 +487,10 @@ pub async fn delete_patrol_record(
     };
 
     let result = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
-    .bind(tenant_filter(&claims))
     .execute(&mut scope)
     .await;
 

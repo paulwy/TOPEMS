@@ -10,37 +10,33 @@ use uuid::Uuid;
 
 pub async fn db_get_dashboard_stats(
     scope: &mut ScopedTxn<'_>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<(i64, i64, i64, i64)> {
     let patrol_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.patrol_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM mobile.patrol_records"
     ))
-    .bind(tenant_filter)
     .fetch_one(&mut *scope)
     .await?;
 
     let scan_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.scan_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM mobile.scan_records"
     ))
-    .bind(tenant_filter)
     .fetch_one(&mut *scope)
     .await?;
 
     let photo_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.photo_evidences WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM mobile.photo_evidences"
     ))
-    .bind(tenant_filter)
     .fetch_one(&mut *scope)
     .await?;
 
     let task_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.mobile_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM mobile.mobile_tasks"
     ))
-    .bind(tenant_filter)
     .fetch_one(&mut *scope)
     .await?;
 
@@ -49,10 +45,9 @@ pub async fn db_get_dashboard_stats(
 
 pub async fn db_get_patrol_records(
     scope: &mut ScopedTxn<'_>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<PatrolRecord>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at FROM mobile.patrol_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
-        .bind(tenant_filter)
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at FROM mobile.patrol_records ORDER BY created_at DESC"))
         .fetch_all(&mut *scope)
         .await?;
 
@@ -105,10 +100,9 @@ pub async fn db_create_patrol_record(
 
 pub async fn db_get_scan_records(
     scope: &mut ScopedTxn<'_>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<ScanRecord>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at FROM mobile.scan_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
-        .bind(tenant_filter)
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at FROM mobile.scan_records ORDER BY created_at DESC"))
         .fetch_all(&mut *scope)
         .await?;
 
@@ -156,10 +150,9 @@ pub async fn db_create_scan_record(
 
 pub async fn db_get_photo_evidence(
     scope: &mut ScopedTxn<'_>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<PhotoEvidence>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at FROM mobile.photo_evidences WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
-        .bind(tenant_filter)
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at FROM mobile.photo_evidences ORDER BY created_at DESC"))
         .fetch_all(&mut *scope)
         .await?;
 
@@ -323,10 +316,9 @@ pub async fn db_create_video_recording(
 
 pub async fn db_get_mobile_tasks(
     scope: &mut ScopedTxn<'_>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<MobileTask>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
-        .bind(tenant_filter)
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks ORDER BY created_at DESC"))
         .fetch_all(&mut *scope)
         .await?;
 
@@ -387,7 +379,7 @@ pub async fn db_update_task_status(
     scope: &mut ScopedTxn<'_>,
     task_id: Uuid,
     status: &str,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Option<MobileTask>> {
     let now = Utc::now();
     let completed_at = if status == "completed" {
@@ -397,13 +389,12 @@ pub async fn db_update_task_status(
     };
 
     let result = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4 AND ($5::uuid IS NULL OR tenant_id = $5::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4"),
     )
     .bind(status)
     .bind(completed_at)
     .bind(now)
     .bind(task_id)
-    .bind(tenant_filter)
     .execute(&mut *scope)
     .await?;
 
@@ -411,9 +402,8 @@ pub async fn db_update_task_status(
         return Ok(None);
     }
 
-    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
+    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE id = $1"))
         .bind(task_id)
-        .bind(tenant_filter)
         .fetch_one(&mut *scope)
         .await?;
 
@@ -424,19 +414,17 @@ pub async fn db_get_offline_operations(
     scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     status: Option<&str>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<OfflineOperation>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY created_at ASC"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC"),
         )
         .bind(user_id)
         .bind(s)
-        .bind(tenant_filter)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at ASC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at ASC"))
             .bind(user_id)
-            .bind(tenant_filter)
     };
 
     let rows = query.fetch_all(&mut *scope).await?;
@@ -492,16 +480,15 @@ pub async fn db_update_offline_operation_status(
     operation_id: Uuid,
     status: &str,
     error: Option<&str>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<()> {
     let now = Utc::now();
     let attempts = if status == "failed" {
         sqlx::query_scalar(only_own_schema_query!(
             "mobile",
-            "SELECT sync_attempts + 1 FROM mobile.offline_operations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+            "SELECT sync_attempts + 1 FROM mobile.offline_operations WHERE id = $1"
         ))
         .bind(operation_id)
-        .bind(tenant_filter)
         .fetch_one(&mut *scope)
         .await?
     } else {
@@ -790,19 +777,17 @@ pub async fn db_get_barcode_scans(
     scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     barcode_type: Option<&str>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<BarcodeScan>> {
     let query = if let Some(bt) = barcode_type {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 AND barcode_type = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY scanned_at DESC"),
+            only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC"),
         )
         .bind(user_id)
         .bind(bt)
-        .bind(tenant_filter)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY scanned_at DESC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC"))
             .bind(user_id)
-            .bind(tenant_filter)
     };
 
     let rows = query.fetch_all(&mut *scope).await?;
@@ -855,19 +840,17 @@ pub async fn db_get_photo_uploads(
     scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     status: Option<&str>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<PhotoUpload>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 AND upload_status = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY created_at DESC"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC"),
         )
         .bind(user_id)
         .bind(s)
-        .bind(tenant_filter)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at DESC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 ORDER BY created_at DESC"))
             .bind(user_id)
-            .bind(tenant_filter)
     };
 
     let rows = query.fetch_all(&mut *scope).await?;
@@ -937,19 +920,18 @@ pub async fn db_update_photo_upload_status(
     status: &str,
     progress: i32,
     thumbnail_url: Option<&str>,
-    tenant_filter: Option<Uuid>,
+    _tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<()> {
     let now = Utc::now();
 
     sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.photo_uploads SET upload_status = $1, upload_progress = $2, thumbnail_url = $3, uploaded_at = $4 WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)"),
+        only_own_schema_query!("mobile", "UPDATE mobile.photo_uploads SET upload_status = $1, upload_progress = $2, thumbnail_url = $3, uploaded_at = $4 WHERE id = $5"),
     )
     .bind(status)
     .bind(progress)
     .bind(thumbnail_url)
     .bind(if status == "completed" { Some(now) } else { None })
     .bind(upload_id)
-    .bind(tenant_filter)
     .execute(&mut *scope)
     .await?;
 
