@@ -70,29 +70,16 @@ pub async fn list_dimensions(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id,
-               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM srm.scoring_dimensions
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY sort_order ASC, created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_all(&mut **txn)
     .await;
@@ -132,29 +119,16 @@ pub async fn list_active_dimensions(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id,
-               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM srm.scoring_dimensions
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_active = true
+        FROM srm.scoring_dimensions WHERE is_active = true
         ORDER BY sort_order ASC
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_all(&mut **txn)
     .await;
@@ -198,28 +172,16 @@ pub async fn get_dimension(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id,
-               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM srm.scoring_dimensions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM srm.scoring_dimensions WHERE id = $1
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
@@ -271,13 +233,13 @@ pub async fn create_dimension(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
-    let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
-    )
+    let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1",
+        "srm"
+    ))
     .bind(&req.code)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -351,13 +313,11 @@ pub async fn update_dimension(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let existing = sqlx::query_as::<_, ScoringDimension>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -379,11 +339,10 @@ pub async fn update_dimension(
 
         if code != &existing.code {
             let exists = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND id != $2 AND ($3::uuid IS NULL OR tenant_id = $3)", "srm"),
+                only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND id != $2", "srm"),
             )
             .bind(code)
             .bind(id)
-            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await;
 

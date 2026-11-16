@@ -94,16 +94,6 @@ pub async fn list_evaluations(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -131,17 +121,15 @@ pub async fn list_evaluations(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR evaluation_no ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR supplier_id = $4)
-          AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
-          AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
+          WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR supplier_id = $3)
+          AND ($4::timestamptz IS NULL OR evaluation_date >= $4)
+          AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
         ORDER BY evaluation_date DESC
-        LIMIT $7 OFFSET $8
+        LIMIT $6 OFFSET $7
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -158,16 +146,15 @@ pub async fn list_evaluations(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_evaluations
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR evaluation_no ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR supplier_id = $4)
-                  AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
-                  AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR evaluation_no ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR supplier_id = $3)
+                  AND ($4::timestamptz IS NULL OR evaluation_date >= $4)
+                  AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
                 "#,
                 "srm"
             ))
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -217,7 +204,6 @@ pub async fn create_evaluation(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     if req.evaluation_no.is_empty() {
         return ApiResponse::<SupplierEvaluation>::bad_request("评估编号不能为空");
@@ -230,10 +216,11 @@ pub async fn create_evaluation(
         }
     };
 
-    let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND status != 'deleted'", "srm"),
-    )
-    .bind(tenant_opt)
+    let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "srm"
+    ))
     .bind(supplier_id)
     .fetch_one(&mut **txn)
     .await;
@@ -243,9 +230,8 @@ pub async fn create_evaluation(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND evaluation_no = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND evaluation_no = $1", "srm"),
     )
-    .bind(tenant_opt)
     .bind(&req.evaluation_no)
     .fetch_one(&mut **txn)
     .await;
@@ -286,13 +272,11 @@ pub async fn create_evaluation(
             "srm",
             r#"
             SELECT code, weight 
-            FROM srm.scoring_dimensions 
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_active = true
+            FROM srm.scoring_dimensions WHERE is_active = true
             ORDER BY sort_order ASC
             "#,
             "srm"
         ))
-        .bind(tenant_opt)
         .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
@@ -418,25 +402,13 @@ pub async fn get_evaluation(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM srm.supplier_evaluations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM srm.supplier_evaluations WHERE id = $1
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -472,13 +444,11 @@ pub async fn update_evaluation(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -501,10 +471,11 @@ pub async fn update_evaluation(
             }
         };
 
-        let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND status != 'deleted'", "srm"),
-        )
-        .bind(tenant_opt)
+        let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "srm",
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "srm"
+        ))
         .bind(supplier_uuid_val)
         .fetch_one(&mut **txn)
         .await;
@@ -680,23 +651,11 @@ pub async fn get_evaluation_history(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1",
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(id)
     .fetch_one(&mut **txn)
     .await;
@@ -708,12 +667,10 @@ pub async fn get_evaluation_history(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM srm.supplier_evaluations
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND supplier_id = $2
+        FROM srm.supplier_evaluations WHERE supplier_id = $1
         ORDER BY evaluation_date DESC
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(id)
     .fetch_all(&mut **txn)
     .await;
@@ -744,17 +701,6 @@ pub async fn get_performance_summary(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, EvaluationSummaryRow>(only_own_schema_query!(
         "srm",
         r#"
@@ -769,12 +715,10 @@ pub async fn get_performance_summary(
             MIN(overall_score) as min_overall_score,
             MAX(evaluation_date) as latest_evaluation_date,
             MIN(evaluation_date) as earliest_evaluation_date
-        FROM srm.supplier_evaluations
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND supplier_id = $2 AND status = 'completed'
+        FROM srm.supplier_evaluations WHERE supplier_id = $1 AND status = 'completed'
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -858,17 +802,6 @@ pub async fn get_score_trend(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let start_date = params.start_date.clone().and_then(|s| {
         chrono::DateTime::parse_from_rfc3339(&s)
             .ok()
@@ -892,16 +825,14 @@ pub async fn get_score_trend(
             service_score,
             price_score,
             evaluation_no
-        FROM srm.supplier_evaluations
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND supplier_id = $2
+        FROM srm.supplier_evaluations WHERE supplier_id = $1
           AND status = 'completed'
-          AND ($3::timestamptz IS NULL OR evaluation_date >= $3)
-          AND ($4::timestamptz IS NULL OR evaluation_date <= $4)
+          AND ($2::timestamptz IS NULL OR evaluation_date >= $2)
+          AND ($3::timestamptz IS NULL OR evaluation_date <= $3)
         ORDER BY evaluation_date ASC
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(id)
     .bind(start_date)
     .bind(end_date)
@@ -996,51 +927,37 @@ pub async fn get_evaluation_statistics(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'completed'", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND status = 'completed'", "srm"),
     )
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND status = 'pending'", "srm"),
     )
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
     let avg_score_result = sqlx::query_scalar::<_, f64>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'completed' AND overall_score IS NOT NULL", "srm")
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND status = 'completed' AND overall_score IS NOT NULL", "srm")
     )
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
-    let supplier_count_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)", "srm"),
-    )
-    .bind(tenant_opt)
+    let supplier_count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE deleted_at IS NULL",
+        "srm"
+    ))
     .fetch_one(&mut **txn)
     .await;
 

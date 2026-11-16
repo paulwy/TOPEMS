@@ -273,7 +273,7 @@ pub async fn get_quotation(
 pub async fn update_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateQuotationRequest>,
 ) -> ApiResponse<Quotation> {
@@ -283,14 +283,6 @@ pub async fn update_quotation(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let valid_until = req.valid_until.and_then(|s| {
         DateTime::parse_from_rfc3339(&s)
@@ -316,7 +308,7 @@ pub async fn update_quotation(
             items = COALESCE($8, items),
             remarks = COALESCE($9, remarks),
             updated_at = $10
-        WHERE id = $1 AND status = 'pending' AND ($11::uuid IS NULL OR tenant_id = $11::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
@@ -331,7 +323,6 @@ pub async fn update_quotation(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -357,7 +348,7 @@ pub async fn update_quotation(
 pub async fn delete_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
@@ -365,21 +356,12 @@ pub async fn delete_quotation(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -418,7 +400,7 @@ pub async fn delete_quotation(
 pub async fn award_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -427,28 +409,19 @@ pub async fn award_quotation(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
             status = 'awarded',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -487,7 +460,7 @@ pub async fn award_quotation(
 pub async fn reject_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -496,28 +469,19 @@ pub async fn reject_quotation(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
             status = 'rejected',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 

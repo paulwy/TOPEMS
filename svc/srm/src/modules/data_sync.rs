@@ -111,17 +111,15 @@ pub async fn sync_supplier_from_scm(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let scm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM srm.scm_supplier_snapshots
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
+        WHERE id = $1 AND status != 'deleted'
         "#),
     )
     .bind(supplier_id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -163,11 +161,10 @@ pub async fn sync_supplier_from_scm(
 
     let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -351,16 +348,13 @@ pub async fn sync_all_suppliers_from_scm(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let scm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
-        FROM srm.scm_supplier_snapshots
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
+        FROM srm.scm_supplier_snapshots WHERE status != 'deleted'
         "#),
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -393,11 +387,10 @@ pub async fn sync_all_suppliers_from_scm(
     {
         let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "srm",
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1",
             "srm"
         ))
         .bind(id)
-        .bind(tenant_opt)
         .fetch_one(&mut **txn)
         .await;
 
@@ -557,12 +550,11 @@ pub async fn sync_supplier_to_scm(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM srm.suppliers
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
+        WHERE id = $1 AND status != 'deleted'
         "#,
         "srm"
     ))
     .bind(supplier_id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -736,12 +728,10 @@ pub async fn sync_all_suppliers_to_scm(
         "srm",
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
-        FROM srm.suppliers
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
+        FROM srm.suppliers WHERE status != 'deleted'
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -827,7 +817,7 @@ pub async fn sync_all_suppliers_to_scm(
 )]
 pub async fn get_sync_logs(
     State(_state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncLogsRequest>,
@@ -841,17 +831,6 @@ pub async fn get_sync_logs(
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let rows = sqlx::query(only_own_schema_query!(
         "srm",
         r#"
@@ -859,15 +838,13 @@ pub async fn get_sync_logs(
                source_id, source_code, target_id, target_code, operation, status,
                error_message, retry_count, executed_at, created_at
         FROM unified_core.inter_module_sync
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR sync_type = $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::text IS NULL OR source_module = $4)
+          WHERE ($1::text IS NULL OR sync_type = $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR source_module = $3)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#
     ))
-    .bind(tenant_opt)
     .bind(&req.sync_type)
     .bind(&req.status)
     .bind(&req.source_module)

@@ -85,22 +85,12 @@ pub async fn get_supplier_portal_stats(
         }
     };
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
-    let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'", "srm"),
-    )
+    let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "srm"
+    ))
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -110,48 +100,47 @@ pub async fn get_supplier_portal_stats(
 
     let total_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1",
         "srm"
     ))
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let pending_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'pending'", "srm"),
-    )
+    let pending_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1 AND status = 'pending'",
+        "srm"
+    ))
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let completed_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'completed'", "srm"),
-    )
+    let completed_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE supplier_id = $1 AND status = 'completed'",
+        "srm"
+    ))
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_amount = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM srm.purchase_orders WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'cancelled'", "srm"),
+        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM srm.purchase_orders WHERE supplier_id = $1 AND status != 'cancelled'", "srm"),
     )
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(Some(0.0))
     .unwrap_or(0.0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND overall_score IS NOT NULL", "srm"),
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL", "srm"),
     )
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -160,11 +149,10 @@ pub async fn get_supplier_portal_stats(
     let on_time_delivery_rate = sqlx::query_scalar::<_, Option<f64>>(
         only_own_schema_query!("srm", r#"
         SELECT ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2)
-        FROM srm.supplier_evaluations WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM srm.supplier_evaluations WHERE supplier_id = $1
         "#, "srm"),
     )
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -222,27 +210,15 @@ pub async fn get_supplier_portal_orders(
         }
     };
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
         FROM srm.purchase_orders
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         ORDER BY order_date DESC
         "#, "srm"),
     )
     .bind(supplier_uuid)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

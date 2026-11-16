@@ -181,7 +181,7 @@ pub fn create_routes(db: PgPool) -> Router {
 )]
 pub async fn get_statistics(
     State(_state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -190,51 +190,39 @@ pub async fn get_statistics(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let active_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_evaluations = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.supplier_evaluations",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL", "srm"),
-    )
-    .bind(tenant_opt)
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>(only_own_schema_query!(
+        "srm",
+        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "srm"
+    ))
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -242,30 +230,27 @@ pub async fn get_statistics(
 
     let total_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.supplier_contracts",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -295,7 +280,7 @@ pub async fn get_statistics(
 )]
 pub async fn get_detailed_statistics(
     State(_state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -304,51 +289,39 @@ pub async fn get_detailed_statistics(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let active_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_evaluations = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.supplier_evaluations",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL", "srm"),
-    )
-    .bind(tenant_opt)
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>(only_own_schema_query!(
+        "srm",
+        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "srm"
+    ))
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -356,48 +329,43 @@ pub async fn get_detailed_statistics(
 
     let total_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.supplier_contracts",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.purchase_orders WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM srm.purchase_orders",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_order_amount = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM srm.purchase_orders WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'", "srm"),
+        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM srm.purchase_orders WHERE status != 'cancelled'", "srm"),
     )
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(Some(0.0))
@@ -405,28 +373,27 @@ pub async fn get_detailed_statistics(
 
     let pending_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.purchase_orders WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'pending'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let completed_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.purchase_orders WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'completed'",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'completed'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let supplier_by_category = sqlx::query_as::<_, (String, i64)>(
-        only_own_schema_query!("srm", "SELECT category, COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted' GROUP BY category", "srm"),
-    )
-    .bind(tenant_opt)
+    let supplier_by_category = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "srm",
+        "SELECT category, COUNT(*) FROM srm.suppliers WHERE status != 'deleted' GROUP BY category",
+        "srm"
+    ))
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -436,10 +403,9 @@ pub async fn get_detailed_statistics(
 
     let supplier_by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "srm",
-        "SELECT status, COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
+        "SELECT status, COUNT(*) FROM srm.suppliers GROUP BY status",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -449,10 +415,9 @@ pub async fn get_detailed_statistics(
 
     let contract_by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "srm",
-        "SELECT status, COUNT(*) FROM srm.supplier_contracts WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
+        "SELECT status, COUNT(*) FROM srm.supplier_contracts GROUP BY status",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -462,10 +427,9 @@ pub async fn get_detailed_statistics(
 
     let order_by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "srm",
-        "SELECT status, COUNT(*) FROM srm.purchase_orders WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
+        "SELECT status, COUNT(*) FROM srm.purchase_orders GROUP BY status",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -485,12 +449,11 @@ pub async fn get_detailed_statistics(
             END as range, \
             COUNT(*) as count \
         FROM srm.supplier_evaluations \
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL \
+        WHERE overall_score IS NOT NULL \
         GROUP BY range \
         ORDER BY range",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -505,12 +468,11 @@ pub async fn get_detailed_statistics(
             COUNT(*) as order_count, \
             COALESCE(SUM(total_amount), 0) as total_amount \
         FROM srm.purchase_orders \
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '12 months' \
+        WHERE created_at >= NOW() - INTERVAL '12 months' \
         GROUP BY TO_CHAR(created_at, 'YYYY-MM') \
         ORDER BY month",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
@@ -561,7 +523,7 @@ pub async fn get_detailed_statistics(
 )]
 pub async fn get_suppliers_with_stats(
     State(_state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
@@ -570,21 +532,10 @@ pub async fn get_suppliers_with_stats(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let suppliers = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted' AND deleted_at IS NULL ORDER BY created_at DESC", "srm")
+        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE status != 'deleted' AND deleted_at IS NULL ORDER BY created_at DESC", "srm")
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -593,38 +544,40 @@ pub async fn get_suppliers_with_stats(
             let mut result = Vec::new();
 
             for supplier in suppliers {
-                let product_count = sqlx::query_scalar::<_, i64>(
-                    only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_products WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
-                )
+                let product_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "srm",
+                    "SELECT COUNT(*) FROM srm.supplier_products WHERE supplier_id = $1",
+                    "srm"
+                ))
                 .bind(supplier.id)
-                .bind(tenant_opt)
                 .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
-                let contract_count = sqlx::query_scalar::<_, i64>(
-                    only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
-                )
+                let contract_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "srm",
+                    "SELECT COUNT(*) FROM srm.supplier_contracts WHERE supplier_id = $1",
+                    "srm"
+                ))
                 .bind(supplier.id)
-                .bind(tenant_opt)
                 .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
-                let eval_count = sqlx::query_scalar::<_, i64>(
-                    only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
-                )
+                let eval_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "srm",
+                    "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE supplier_id = $1",
+                    "srm"
+                ))
                 .bind(supplier.id)
-                .bind(tenant_opt)
                 .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
                 let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-                    only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND overall_score IS NOT NULL", "srm")
+                    only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL", "srm")
                 )
                 .bind(supplier.id)
-                .bind(tenant_opt)
                 .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(None);

@@ -96,16 +96,6 @@ pub async fn get_performance_reports(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -134,7 +124,7 @@ pub async fn get_performance_reports(
         r#"
         SELECT 
             s.id as supplier_id,
-            CASE WHEN $11='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
+            CASE WHEN $10='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -153,10 +143,9 @@ pub async fn get_performance_reports(
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND status != 'cancelled'
-              AND ($6::timestamptz IS NULL OR created_at >= $6)
-              AND ($7::timestamptz IS NULL OR created_at <= $7)
+              WHERE status != 'cancelled'
+              AND ($5::timestamptz IS NULL OR created_at >= $5)
+              AND ($6::timestamptz IS NULL OR created_at <= $6)
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -180,24 +169,21 @@ pub async fn get_performance_reports(
                     ELSE NULL END, 2
                 ) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
-              AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
+              WHERE ($5::timestamptz IS NULL OR evaluation_date >= $5)
+              AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
-          AND s.status != 'deleted'
-          AND ($2::text IS NULL OR s.name ILIKE $2)
-          AND ($3::text IS NULL OR s.category = $3)
-          AND ($4::text IS NULL OR s.status = $4)
-          AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
-          AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
+          WHERE s.status != 'deleted'
+          AND ($1::text IS NULL OR s.name ILIKE $1)
+          AND ($2::text IS NULL OR s.category = $2)
+          AND ($3::text IS NULL OR s.status = $3)
+          AND ($7::double precision IS NULL OR e.avg_overall_score >= $7)
+          AND ($8::double precision IS NULL OR e.avg_overall_score <= $8)
         ORDER BY e.avg_overall_score DESC NULLS LAST
-        LIMIT $5 OFFSET $10
+        LIMIT $4 OFFSET $9
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&category_filter)
     .bind(&status_filter)
@@ -221,22 +207,19 @@ pub async fn get_performance_reports(
                 LEFT JOIN (
                     SELECT supplier_id, AVG(overall_score) as avg_overall_score
                     FROM srm.supplier_evaluations
-                    WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                      AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
-                      AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
+                      WHERE ($4::timestamptz IS NULL OR evaluation_date >= $4)
+                      AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
                     GROUP BY supplier_id
                 ) e ON s.id = e.supplier_id
-                WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
-                  AND s.status != 'deleted'
-                  AND ($2::text IS NULL OR s.name ILIKE $2)
-                  AND ($3::text IS NULL OR s.category = $3)
-                  AND ($4::text IS NULL OR s.status = $4)
-                  AND ($7::double precision IS NULL OR e.avg_overall_score >= $7)
-                  AND ($8::double precision IS NULL OR e.avg_overall_score <= $8)
+                  WHERE s.status != 'deleted'
+                  AND ($1::text IS NULL OR s.name ILIKE $1)
+                  AND ($2::text IS NULL OR s.category = $2)
+                  AND ($3::text IS NULL OR s.status = $3)
+                  AND ($6::double precision IS NULL OR e.avg_overall_score >= $6)
+                  AND ($7::double precision IS NULL OR e.avg_overall_score <= $7)
                 "#,
                 "srm"
             ))
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&category_filter)
             .bind(&status_filter)
@@ -296,29 +279,17 @@ pub async fn get_performance_report(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let supplier_info =
         sqlx::query_as::<_, (String, String, String, String)>(only_own_schema_query!(
             "srm",
             r#"
-        SELECT CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, category, status, contact_person
+        SELECT CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, category, status, contact_person
         FROM srm.suppliers
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
+        WHERE id = $1 AND status != 'deleted'
         "#,
             "srm"
         ))
         .bind(id)
-        .bind(tenant_opt)
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&mut **txn)
         .await;
@@ -339,7 +310,7 @@ pub async fn get_performance_report(
         r#"
         SELECT 
             s.id as supplier_id,
-            CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
+            CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -358,8 +329,7 @@ pub async fn get_performance_report(
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE ($2::uuid IS NULL OR tenant_id = $2)
-              AND status != 'cancelled' AND supplier_id = $1
+              WHERE status != 'cancelled' AND supplier_id = $1
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -382,16 +352,14 @@ pub async fn get_performance_report(
                         (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) 
                     ELSE NULL END, 2
                 ) as defect_rate
-            FROM srm.supplier_evaluations
-            WHERE ($2::uuid IS NULL OR tenant_id = $2) AND supplier_id = $1
+            FROM srm.supplier_evaluations WHERE supplier_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.id = $1 AND ($2::uuid IS NULL OR s.tenant_id = $2)
+        WHERE s.id = $1
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
@@ -411,13 +379,12 @@ pub async fn get_performance_report(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         ORDER BY evaluation_date DESC
         LIMIT 10
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -436,14 +403,13 @@ pub async fn get_performance_report(
         r#"
         SELECT contract_no, title, start_date, end_date, total_amount
         FROM srm.supplier_contracts
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'active'
+        WHERE supplier_id = $1 AND status = 'active'
         ORDER BY start_date DESC
         LIMIT 5
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -454,14 +420,13 @@ pub async fn get_performance_report(
             r#"
         SELECT product_no, name, unit_price, min_order_qty
         FROM srm.supplier_products
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'active'
+        WHERE supplier_id = $1 AND status = 'active'
         ORDER BY unit_price ASC
         LIMIT 10
         "#,
             "srm"
         ))
         .bind(id)
-        .bind(tenant_opt)
         .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
@@ -510,16 +475,6 @@ pub async fn compare_supplier_performance(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let supplier_ids_str = params.supplier_ids.clone().unwrap_or_default();
     let supplier_ids: Vec<Uuid> = supplier_ids_str
         .split(',')
@@ -559,8 +514,7 @@ pub async fn compare_supplier_performance(
                 supplier_id,
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
-            FROM srm.purchase_orders
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
+            FROM srm.purchase_orders WHERE status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -584,17 +538,15 @@ pub async fn compare_supplier_performance(
                     ELSE NULL END, 2
                 ) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
-        ) e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.id IN ({}) AND s.status != 'deleted'
+        ) e ON s.id = e.supplier_id WHERE s.id IN ({}) AND s.status != 'deleted'
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#,
         locale_idx, placeholders_str
     );
 
     let mut query_builder = sqlx::query_as::<_, SupplierPerformance>(sqlx::AssertSqlSafe(query));
-    query_builder = query_builder.bind(tenant_opt);
+    query_builder = query_builder;
     for id in &supplier_ids {
         query_builder = query_builder.bind(*id);
     }
@@ -655,16 +607,6 @@ pub async fn get_performance_trend(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let supplier_id = params
         .supplier_id
         .clone()
@@ -704,15 +646,13 @@ pub async fn get_performance_trend(
             AVG(overall_score) as avg_overall_score,
             COUNT(*) as evaluation_count
         FROM srm.supplier_evaluations
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::uuid IS NULL OR supplier_id = $2)
-          AND evaluation_date >= NOW() - $3::interval
+          WHERE ($1::uuid IS NULL OR supplier_id = $1)
+          AND evaluation_date >= NOW() - $2::interval
         GROUP BY TO_CHAR(evaluation_date, 'YYYY-MM')
         ORDER BY month
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(supplier_id)
     .bind(interval)
     .fetch_all(&mut **txn)
@@ -778,22 +718,11 @@ pub async fn get_top_suppliers(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let top_by_score = sqlx::query_as::<_, SupplierPerformance>(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
+            CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -808,8 +737,7 @@ pub async fn get_top_suppliers(
         FROM srm.suppliers s
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-            FROM srm.purchase_orders
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
+            FROM srm.purchase_orders WHERE status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -820,15 +748,12 @@ pub async fn get_top_suppliers(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
-        ) e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
+        ) e ON s.id = e.supplier_id WHERE s.status = 'active' AND e.avg_overall_score IS NOT NULL
         ORDER BY e.avg_overall_score DESC
         LIMIT 10
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await
@@ -838,7 +763,7 @@ pub async fn get_top_suppliers(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
+            CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -853,8 +778,7 @@ pub async fn get_top_suppliers(
         FROM srm.suppliers s
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-            FROM srm.purchase_orders
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
+            FROM srm.purchase_orders WHERE status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -865,15 +789,12 @@ pub async fn get_top_suppliers(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
-        ) e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status = 'active'
+        ) e ON s.id = e.supplier_id WHERE s.status = 'active'
         ORDER BY po.total_orders DESC NULLS LAST
         LIMIT 10
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await
@@ -914,16 +835,6 @@ pub async fn export_performance_report(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let category_filter = params.category.clone();
     let status_filter = params.status.clone();
@@ -947,7 +858,7 @@ pub async fn export_performance_report(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            CASE WHEN $9='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
+            CASE WHEN $8='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -963,10 +874,9 @@ pub async fn export_performance_report(
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND status != 'cancelled'
-              AND ($5::timestamptz IS NULL OR created_at >= $5)
-              AND ($6::timestamptz IS NULL OR created_at <= $6)
+              WHERE status != 'cancelled'
+              AND ($4::timestamptz IS NULL OR created_at >= $4)
+              AND ($5::timestamptz IS NULL OR created_at <= $5)
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -977,22 +887,19 @@ pub async fn export_performance_report(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
-              AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
+              WHERE ($4::timestamptz IS NULL OR evaluation_date >= $4)
+              AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
-          AND s.status != 'deleted'
-          AND ($2::text IS NULL OR s.name ILIKE $2)
-          AND ($3::text IS NULL OR s.category = $3)
-          AND ($4::text IS NULL OR s.status = $4)
-          AND ($7::double precision IS NULL OR e.avg_overall_score >= $7)
-          AND ($8::double precision IS NULL OR e.avg_overall_score <= $8)
+          WHERE s.status != 'deleted'
+          AND ($1::text IS NULL OR s.name ILIKE $1)
+          AND ($2::text IS NULL OR s.category = $2)
+          AND ($3::text IS NULL OR s.status = $3)
+          AND ($6::double precision IS NULL OR e.avg_overall_score >= $6)
+          AND ($7::double precision IS NULL OR e.avg_overall_score <= $7)
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&category_filter)
     .bind(&status_filter)
@@ -1057,17 +964,6 @@ pub async fn get_score_level_distribution(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let distribution = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "srm",
         r#"
@@ -1082,8 +978,7 @@ pub async fn get_score_level_distribution(
             COUNT(*) as count
         FROM (
             SELECT supplier_id, AVG(overall_score) as avg_overall_score
-            FROM srm.supplier_evaluations
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL
+            FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL
             GROUP BY supplier_id
         ) s
         GROUP BY level
@@ -1091,7 +986,6 @@ pub async fn get_score_level_distribution(
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -1156,41 +1050,29 @@ pub async fn get_performance_summary(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let evaluated_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations",
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL", "srm"),
-    )
-    .bind(tenant_opt)
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>(only_own_schema_query!(
+        "srm",
+        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "srm"
+    ))
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -1199,17 +1081,15 @@ pub async fn get_performance_summary(
     let top_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
         "srm",
         r#"
-        SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
+        SELECT CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
-        JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE ($1::uuid IS NULL OR e.tenant_id = $1) AND e.overall_score IS NOT NULL
-        GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
+        JOIN srm.suppliers s ON e.supplier_id = s.id WHERE e.overall_score IS NOT NULL
+        GROUP BY CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score DESC
         LIMIT 1
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
@@ -1218,17 +1098,15 @@ pub async fn get_performance_summary(
     let bottom_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
         "srm",
         r#"
-        SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
+        SELECT CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
-        JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE ($1::uuid IS NULL OR e.tenant_id = $1) AND e.overall_score IS NOT NULL
-        GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
+        JOIN srm.suppliers s ON e.supplier_id = s.id WHERE e.overall_score IS NOT NULL
+        GROUP BY CASE WHEN $1='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score ASC
         LIMIT 1
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
@@ -1239,14 +1117,12 @@ pub async fn get_performance_summary(
         r#"
         SELECT s.category, AVG(e.overall_score) as avg_score, COUNT(DISTINCT s.id) as supplier_count
         FROM srm.suppliers s
-        LEFT JOIN srm.supplier_evaluations e ON s.id = e.supplier_id
-        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status != 'deleted' AND e.overall_score IS NOT NULL
+        LEFT JOIN srm.supplier_evaluations e ON s.id = e.supplier_id WHERE s.status != 'deleted' AND e.overall_score IS NOT NULL
         GROUP BY s.category
         ORDER BY avg_score DESC
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();

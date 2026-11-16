@@ -402,20 +402,18 @@ pub async fn list_suppliers(
 
     let query = format!(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM srm.suppliers
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::text IS NULL OR category = $4)
+          WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR category = $3)
         ORDER BY {} {}
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
         sort_field, order_clause
     );
 
     let result = sqlx::query_as::<_, Supplier>(sqlx::AssertSqlSafe(query))
-        .bind(tenant_opt)
         .bind(&search_pattern)
         .bind(&status_filter)
         .bind(&category_filter)
@@ -430,15 +428,13 @@ pub async fn list_suppliers(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM srm.suppliers
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::text IS NULL OR category = $4)
+                  WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::text IS NULL OR category = $3)
                 "#,
             );
 
             let count_result = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
-                .bind(tenant_opt)
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
@@ -727,12 +723,11 @@ pub async fn get_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        FROM srm.suppliers WHERE id = $1
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
@@ -790,13 +785,11 @@ pub async fn update_supplier(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
+        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1103,27 +1096,15 @@ pub async fn get_supplier_products(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, SupplierProduct>(
         only_own_schema_query!("srm", r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         FROM srm.supplier_products
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         ORDER BY created_at DESC
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1168,27 +1149,15 @@ pub async fn get_supplier_contracts(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM srm.supplier_contracts
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         ORDER BY created_at DESC
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1233,22 +1202,10 @@ pub async fn get_supplier_performance(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let supplier_query = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn).await;
 
     let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(only_own_schema_query!(
@@ -1256,12 +1213,11 @@ pub async fn get_supplier_performance(
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
         FROM srm.purchase_orders
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1288,12 +1244,11 @@ pub async fn get_supplier_performance(
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
         FROM srm.supplier_evaluations
-        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE supplier_id = $1
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1459,7 +1414,6 @@ pub async fn start_supplier_approval(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1506,11 +1460,10 @@ pub async fn start_supplier_approval(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+        "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -1620,7 +1573,6 @@ pub async fn approve_supplier(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1641,11 +1593,10 @@ pub async fn approve_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+        "UPDATE srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -1753,7 +1704,6 @@ pub async fn reject_supplier(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1774,11 +1724,10 @@ pub async fn reject_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+        "UPDATE srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

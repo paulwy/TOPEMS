@@ -271,7 +271,7 @@ pub async fn get_bidding(
 pub async fn update_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateBiddingRequest>,
 ) -> ApiResponse<Bidding> {
@@ -281,14 +281,6 @@ pub async fn update_bidding(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let bid_deadline = req.bid_deadline.and_then(|s: String| {
         DateTime::parse_from_rfc3339(&s)
@@ -315,7 +307,7 @@ pub async fn update_bidding(
             items = COALESCE($10, items),
             remarks = COALESCE($11, remarks),
             updated_at = $12
-        WHERE id = $1 AND ($13::uuid IS NULL OR tenant_id = $13::uuid)
+        WHERE id = $1
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
@@ -333,7 +325,6 @@ pub async fn update_bidding(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -358,7 +349,7 @@ pub async fn update_bidding(
 pub async fn delete_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
@@ -366,21 +357,12 @@ pub async fn delete_bidding(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.biddings SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+        "UPDATE srm.biddings SET deleted_at = NOW() WHERE id = $1",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -419,7 +401,7 @@ pub async fn delete_bidding(
 pub async fn publish_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -428,19 +410,11 @@ pub async fn publish_bidding(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.biddings SET status = 'published', publish_date = $2, updated_at = $3
-        WHERE id = $1 AND status = 'draft' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'draft'
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
@@ -449,7 +423,6 @@ pub async fn publish_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -487,7 +460,7 @@ pub async fn publish_bidding(
 pub async fn open_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -496,19 +469,11 @@ pub async fn open_bidding(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.biddings SET status = 'opened', open_date = $2, updated_at = $3
-        WHERE id = $1 AND status = 'published' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'published'
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
@@ -517,7 +482,6 @@ pub async fn open_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -555,7 +519,7 @@ pub async fn open_bidding(
 pub async fn evaluate_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -564,19 +528,11 @@ pub async fn evaluate_bidding(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.biddings SET status = 'evaluated', updated_at = $2
-        WHERE id = $1 AND status = 'opened' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'opened'
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
@@ -584,7 +540,6 @@ pub async fn evaluate_bidding(
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -622,7 +577,7 @@ pub async fn evaluate_bidding(
 pub async fn award_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AwardBiddingRequest>,
 ) -> ApiResponse<Bidding> {
@@ -632,14 +587,6 @@ pub async fn award_bidding(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
@@ -660,7 +607,7 @@ pub async fn award_bidding(
         only_own_schema_query!("srm", r#"
         UPDATE srm.biddings SET status = 'awarded', winner_supplier_id = $2,
             winner_supplier_name = $3, updated_at = $4
-        WHERE id = $1 AND status = 'evaluated' AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
+        WHERE id = $1 AND status = 'evaluated'
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
@@ -670,7 +617,6 @@ pub async fn award_bidding(
     .bind(supplier_id)
     .bind(supplier_name)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

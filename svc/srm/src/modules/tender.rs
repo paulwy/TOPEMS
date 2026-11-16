@@ -126,26 +126,13 @@ pub async fn list_tenders(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let tenders = sqlx::query_as::<_, Tender>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
-        FROM srm.tenders
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
+        FROM srm.tenders WHERE status != 'deleted'
         ORDER BY created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -320,26 +307,14 @@ pub async fn get_tender(
         }
     };
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Tender>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
         FROM srm.tenders
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
+        WHERE id = $1 AND status != 'deleted'
         "#, "srm"),
     )
     .bind(uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -575,27 +550,15 @@ pub async fn get_tender_bids(
         }
     };
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let bids = sqlx::query_as::<_, TenderBid>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
         FROM srm.tender_bids
-        WHERE tender_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
+        WHERE tender_id = $1 AND status != 'deleted'
         ORDER BY total_score DESC
         "#, "srm"),
     )
     .bind(tender_uuid)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -804,7 +767,6 @@ pub async fn award_tender(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let winning_bid_id = body
         .get("winning_bid_id")
@@ -826,12 +788,11 @@ pub async fn award_tender(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
         FROM srm.tender_bids
-        WHERE id = $1 AND tender_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND status != 'deleted'
+        WHERE id = $1 AND tender_id = $2 AND status != 'deleted'
         "#, "srm"),
     )
     .bind(winning_bid_uuid)
     .bind(tender_uuid)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -959,26 +920,13 @@ pub async fn list_tender_awards(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let awards = sqlx::query_as::<_, TenderAward>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
-        FROM srm.tender_awards
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
+        FROM srm.tender_awards WHERE status != 'deleted'
         ORDER BY created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

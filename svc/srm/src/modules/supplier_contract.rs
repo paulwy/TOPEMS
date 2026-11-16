@@ -84,16 +84,6 @@ pub async fn list_contracts(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -110,16 +100,14 @@ pub async fn list_contracts(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM srm.supplier_contracts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR supplier_id = $4)
-          AND ($5::text IS NULL OR contract_type = $5)
+          WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR supplier_id = $3)
+          AND ($4::text IS NULL OR contract_type = $4)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $5 OFFSET $6
         "#, "srm"),
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -135,15 +123,14 @@ pub async fn list_contracts(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_contracts
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR supplier_id = $4)
-                  AND ($5::text IS NULL OR contract_type = $5)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR supplier_id = $3)
+                  AND ($4::text IS NULL OR contract_type = $4)
                 "#,
                 "srm"
             ))
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -191,7 +178,6 @@ pub async fn create_contract(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     if req.contract_no.is_empty() || req.title.is_empty() {
         return ApiResponse::<SupplierContract>::bad_request("合同编号和标题不能为空");
@@ -204,10 +190,11 @@ pub async fn create_contract(
         }
     };
 
-    let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR ($1::uuid IS NULL OR tenant_id = $1)) AND id = $2 AND status != 'deleted'", "srm"),
-    )
-    .bind(tenant_opt)
+    let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "srm"
+    ))
     .bind(supplier_id)
     .fetch_one(&mut **txn)
     .await;
@@ -216,10 +203,11 @@ pub async fn create_contract(
         return ApiResponse::<SupplierContract>::bad_request("供应商不存在或已删除");
     }
 
-    let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR ($1::uuid IS NULL OR tenant_id = $1)) AND contract_no = $2", "srm"),
-    )
-    .bind(tenant_opt)
+    let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND contract_no = $1",
+        "srm"
+    ))
     .bind(&req.contract_no)
     .fetch_one(&mut **txn)
     .await;
@@ -336,25 +324,13 @@ pub async fn get_contract(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM srm.supplier_contracts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM srm.supplier_contracts WHERE id = $1
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -390,13 +366,11 @@ pub async fn update_contract(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let existing = sqlx::query_as::<_, SupplierContract>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -419,10 +393,11 @@ pub async fn update_contract(
             }
         };
 
-        let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR ($1::uuid IS NULL OR tenant_id = $1)) AND id = $2 AND status != 'deleted'", "srm"),
-        )
-        .bind(tenant_opt)
+        let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "srm",
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "srm"
+        ))
         .bind(supplier_uuid_val)
         .fetch_one(&mut **txn)
         .await;
@@ -587,22 +562,12 @@ pub async fn get_contract_terms(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
-    let contract_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))", "srm"),
-    )
+    let contract_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1",
+        "srm"
+    ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -614,12 +579,11 @@ pub async fn get_contract_terms(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_id, term_type, title, content, sort_order, created_at, updated_at
         FROM srm.contract_terms
-        WHERE contract_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE contract_id = $1
         ORDER BY sort_order
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

@@ -83,16 +83,6 @@ pub async fn list_categories(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -108,23 +98,20 @@ pub async fn list_categories(
         "srm",
         r#"
         SELECT id, tenant_id, category_no,
-               CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, parent_id, level, is_active, created_by, created_at, updated_at,
                (SELECT COUNT(*) FROM srm.suppliers s
-                 WHERE s.category = CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END
-                   AND s.deleted_at IS NULL
-                   AND ($1::uuid IS NULL OR s.tenant_id = $1)) AS supplier_count
+                 WHERE s.category = CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END
+                   AND s.deleted_at IS NULL) AS supplier_count
         FROM srm.supplier_categories
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
-          AND ($3::boolean IS NULL OR is_active = $3)
-          AND ($4::uuid IS NULL OR parent_id = $4)
+          WHERE ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
+          AND ($2::boolean IS NULL OR is_active = $2)
+          AND ($3::uuid IS NULL OR parent_id = $3)
         ORDER BY level, category_no
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
         "srm"
     ))
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(is_active_filter)
     .bind(parent_id_filter)
@@ -140,14 +127,13 @@ pub async fn list_categories(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_categories
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
-                  AND ($3::boolean IS NULL OR is_active = $3)
-                  AND ($4::uuid IS NULL OR parent_id = $4)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
+                  AND ($2::boolean IS NULL OR is_active = $2)
+                  AND ($3::uuid IS NULL OR parent_id = $3)
                 "#,
                 "srm"
             ))
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(is_active_filter)
             .bind(parent_id_filter)
@@ -194,7 +180,6 @@ pub async fn create_category(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     if req.category_no.is_empty() || req.name.is_empty() {
         return ApiResponse::<SupplierCategory>::bad_request("分类编号和名称不能为空");
@@ -205,9 +190,8 @@ pub async fn create_category(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND category_no = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND category_no = $1", "srm"),
     )
-    .bind(tenant_opt)
     .bind(&req.category_no)
     .fetch_one(&mut **txn)
     .await;
@@ -225,9 +209,8 @@ pub async fn create_category(
         };
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND is_active = true", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND is_active = true", "srm"),
         )
-        .bind(tenant_opt)
         .bind(parent_uuid)
         .fetch_one(&mut **txn)
         .await;
@@ -310,30 +293,18 @@ pub async fn get_category(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, SupplierCategory>(only_own_schema_query!(
         "srm",
         r#"
         SELECT id, tenant_id, category_no,
-               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, parent_id, level, is_active, created_by, created_at, updated_at
-        FROM srm.supplier_categories WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM srm.supplier_categories WHERE id = $1
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
@@ -370,13 +341,11 @@ pub async fn update_category(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
     let existing = sqlx::query_as::<_, SupplierCategory>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1", "srm"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -410,9 +379,8 @@ pub async fn update_category(
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND is_active = true", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND is_active = true", "srm"),
         )
-        .bind(tenant_opt)
         .bind(parent_uuid)
         .fetch_one(&mut **txn)
         .await;
@@ -491,12 +459,12 @@ pub async fn delete_category(
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let tenant_opt = Some(tenant_id);
 
-    let child_count = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2", "srm"),
-    )
-    .bind(tenant_opt)
+    let child_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND parent_id = $1",
+        "srm"
+    ))
     .bind(id)
     .fetch_one(&mut **txn)
     .await;
@@ -506,9 +474,8 @@ pub async fn delete_category(
     }
 
     let supplier_count = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers s JOIN srm.supplier_categories c ON c.name = s.category WHERE c.deleted_at IS NULL AND ($1::uuid IS NULL OR s.tenant_id = $1) AND c.id = $2", "srm")
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers s JOIN srm.supplier_categories c ON c.name = s.category WHERE c.deleted_at IS NULL AND c.id = $1", "srm")
     )
-    .bind(tenant_opt)
     .bind(id)
     .fetch_one(&mut **txn)
     .await;
