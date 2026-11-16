@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::middleware::tenant::{RlsTxnCell, TenantContext};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -179,11 +179,16 @@ async fn list_projects(
     State(state): State<AppState>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -265,6 +270,7 @@ async fn create_project(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateProjectRequest>,
 ) -> ApiResponse<Project> {
     let id = Uuid::new_v4();
@@ -279,7 +285,11 @@ async fn create_project(
         serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}),
     );
 
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -441,8 +451,13 @@ async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Project> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -505,13 +520,18 @@ async fn update_project(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateProjectRequest>,
 ) -> ApiResponse<Project> {
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
 
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -691,9 +711,14 @@ async fn delete_project(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<bool> {
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -783,8 +808,13 @@ async fn delete_project(
 async fn get_project_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectDashboardResponse> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -922,8 +952,13 @@ async fn get_project_dashboard(
 async fn get_project_gantt(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectGanttResponse> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1349,8 +1384,15 @@ pub struct KanbanBoardResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBoardResponse> {
-    let mut scope = match state.pool.scope_read().await {
+async fn get_kanban_board(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<KanbanBoardResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1447,8 +1489,13 @@ async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBo
 )]
 async fn get_milestones_timeline(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);

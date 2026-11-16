@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
     // ── protected_routes（业务路由：create_routes 直接调用） ─────────
     // 注：auth / rls / rate_limit 三层中间件由 build_application 自动给 protected 层叠加，
     // 这里保持 modules::create_routes 的 Router 裸返回即可
-    let db = Db::new(ctx.db.clone(), "pm, public, shared");
+    let db = Db::new(ctx.db.clone(), "pm, public, shared").deny_request_own_txn();
     let protected_routes = modules::create_routes(
         db,
         ctx.db.clone(),

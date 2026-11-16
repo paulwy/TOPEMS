@@ -1,9 +1,10 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     routing::get,
     Router,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::{Db, ScopedTxn};
 use utoipa::ToSchema;
@@ -1031,8 +1032,15 @@ async fn build_task_statistics(db: &mut ScopedTxn<'_>) -> TaskStatistics {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_statistics(State(db): State<Db>) -> ApiResponse<PmStatistics> {
-    let mut scope = match db.scope_read().await {
+async fn get_statistics(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<PmStatistics> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1066,8 +1074,13 @@ async fn get_statistics(State(db): State<Db>) -> ApiResponse<PmStatistics> {
 async fn get_project_statistics(
     State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectStatistics> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1101,8 +1114,13 @@ async fn get_project_statistics(
 async fn get_contract_statistics(
     State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ContractStatistics> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1136,8 +1154,13 @@ async fn get_contract_statistics(
 async fn get_budget_statistics(
     State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<BudgetStatistics> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1171,8 +1194,13 @@ async fn get_budget_statistics(
 async fn get_risk_statistics(
     State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<RiskStatistics> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1206,8 +1234,13 @@ async fn get_risk_statistics(
 async fn get_task_statistics(
     State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TaskStatistics> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -1232,8 +1265,15 @@ async fn get_task_statistics(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_dashboard(State(db): State<Db>) -> ApiResponse<DashboardOverview> {
-    let mut scope = match db.scope_read().await {
+async fn get_dashboard(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<DashboardOverview> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);

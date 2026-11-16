@@ -6,7 +6,7 @@ use axum::{
 use chrono::Utc;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::middleware::tenant::{RlsTxnCell, TenantContext};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
@@ -79,8 +79,13 @@ pub fn create_routes(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Ro
 async fn get_project_settlements(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Settlement>> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -126,8 +131,13 @@ async fn get_project_settlements(
 async fn get_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Settlement> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -162,6 +172,7 @@ async fn create_settlement(
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSettlementRequest>,
 ) -> ApiResponse<Settlement> {
     let id = Uuid::new_v4();
@@ -170,7 +181,11 @@ async fn create_settlement(
 
     // 列对齐真库：settlement_code->settlement_no, description->remarks, actual_amount->amount；
     // 补 NOT NULL：settlement_date=now, amount=0, currency='CNY'。
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -243,10 +258,15 @@ async fn create_settlement(
 async fn update_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSettlementRequest>,
 ) -> ApiResponse<Settlement> {
     // actual_amount->amount, description->remarks。
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -311,13 +331,18 @@ async fn approve_settlement(
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Settlement> {
     let now = Utc::now();
     // 与 INSERT 同源：superuser 会话回退默认租户，普通用户取会话租户；
     // 操作人取 JWT 真实 sub（与 pdm created_by 写法一致），不再写死 "system"。
     let tenant_id = effective_tenant_id(&ctx, &claims);
     let approved_by = claims.sub.clone();
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -460,8 +485,13 @@ async fn approve_settlement(
 async fn get_settlement_items(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SettlementItem>> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -496,6 +526,7 @@ async fn create_settlement_item(
     Path(settlement_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSettlementItemRequest>,
 ) -> ApiResponse<SettlementItem> {
     let id = Uuid::new_v4();
@@ -507,7 +538,11 @@ async fn create_settlement_item(
         None
     };
 
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -569,9 +604,14 @@ async fn create_settlement_item(
 async fn update_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSettlementItemRequest>,
 ) -> ApiResponse<SettlementItem> {
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -622,8 +662,13 @@ async fn update_settlement_item(
 async fn delete_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -675,8 +720,13 @@ async fn delete_settlement_item(
 async fn get_settlement_adjustments(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SettlementAdjustment>> {
-    let mut scope = match state.pool.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
@@ -711,12 +761,17 @@ async fn create_settlement_adjustment(
     Path(settlement_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSettlementAdjustmentRequest>,
 ) -> ApiResponse<SettlementAdjustment> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("初始化数据库作用域失败: {}", e);
