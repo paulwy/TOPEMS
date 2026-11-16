@@ -59,6 +59,12 @@ impl MonitorRealModule {
                 config.api_prefix,
                 topems_monitor::modules::create_routes().with_state(app_state),
             )
+            // M-1：请求事务由 tenant_middleware 注入（对齐独立部署 svc/monitor main.rs）。
+            // handler 复用请求事务（`Extension<RlsTxnCell>`），缺这层 settings/thresholds 全 500。
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
             // 与独立部署 :8095 同口径：模块门（monitor: 前缀任一码）+ 写动作门
             // （告警确认、规则增删等非只读方法仍要求 monitor:admin）。
             .layer(axum::middleware::from_fn(require_module_write("monitor")))

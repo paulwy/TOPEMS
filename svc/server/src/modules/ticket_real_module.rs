@@ -62,6 +62,13 @@ impl TicketRealModule {
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
             .merge(ticket_ext::ticket_ext_routes())
+            // M-1：请求事务由 tenant_middleware 注入（对齐独立部署 svc/ticket main.rs）。
+            // 该模块的 handler 已改为复用请求事务（`Extension<RlsTxnCell>`），
+            // 缺这层时整个子路由返回 500「Missing request extension」。
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
             .layer(axum::middleware::from_fn(require_module_write("ticket")))
             .layer(axum::middleware::from_fn(require_module_access("ticket")))
             .with_state(db.clone())

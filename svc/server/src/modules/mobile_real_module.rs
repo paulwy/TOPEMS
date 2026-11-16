@@ -79,6 +79,12 @@ impl MobileRealModule {
         //     待上游支持后替换为真实 handler。与 build_protected_routes 同层 merge。
         let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
             .merge(topems_mobile::modules::contract_fallback::routes())
+            // M-1：请求事务由 tenant_middleware 注入（对齐独立部署 svc/mobile main.rs）。
+            // handler 复用请求事务（`Extension<RlsTxnCell>`），缺这层整片路由 500。
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
             .layer(axum::middleware::from_fn(require_module_access("mobile")))
             // 写操作独立权限点：与独立部署 :8070 的 `require_mobile_write` 同口径，
             // 非只读方法仍需 mobile:admin，防止 mobile:read 角色从 BFF 侧绕过动作门。
