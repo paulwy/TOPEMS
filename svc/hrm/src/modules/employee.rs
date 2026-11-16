@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{extract::Extension, routing::*, Router};
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
@@ -135,7 +136,7 @@ pub async fn list_employees(
     axum::extract::Query(params): axum::extract::Query<EmployeePaginationParams>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ListResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
@@ -197,7 +198,7 @@ pub async fn get_employee(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
@@ -295,7 +296,7 @@ pub async fn get_employee_details(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -391,7 +392,7 @@ pub async fn create_employee(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
 ) -> ApiResponse<Employee> {
@@ -551,7 +552,7 @@ pub async fn update_employee(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     axum::extract::Json(req): axum::extract::Json<UpdateEmployeeRequest>,
 ) -> ApiResponse<Employee> {
@@ -702,7 +703,7 @@ pub async fn delete_employee(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -830,7 +831,7 @@ pub async fn export_employees(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     axum::extract::Json(req): axum::extract::Json<ExportRequest>,
 ) -> ApiResponse<serde_json::Value> {

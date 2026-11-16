@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::get,
@@ -66,7 +67,7 @@ pub async fn get_supplier_portal_stats(
     Path(supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -205,7 +206,7 @@ pub async fn get_supplier_portal_orders(
     Path(supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<PurchaseOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -277,7 +278,7 @@ pub async fn get_supplier_portal_invoices(
     Path(_supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -342,7 +343,7 @@ pub async fn get_supplier_portal_deliveries(
     Path(_supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -406,7 +407,7 @@ pub async fn get_supplier_portal_announcements(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;

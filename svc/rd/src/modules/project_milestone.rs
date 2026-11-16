@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{delete, get, post, put},
@@ -41,7 +42,7 @@ pub async fn create_milestone(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> ApiResponse<ProjectMilestone> {
@@ -163,7 +164,7 @@ pub async fn get_project_milestones(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
@@ -258,7 +259,7 @@ pub async fn update_milestone(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> ApiResponse<ProjectMilestone> {
@@ -400,7 +401,7 @@ pub async fn delete_milestone(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

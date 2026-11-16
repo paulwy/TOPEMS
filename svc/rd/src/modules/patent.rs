@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -163,7 +164,7 @@ pub async fn list_patents(
     State(_state): State<crate::modules::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -249,7 +250,7 @@ pub async fn list_patents_by_project(
     State(_state): State<crate::modules::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<Patent>> {
     let mut guard = txn_arc.lock().await;
@@ -286,7 +287,7 @@ pub async fn list_patents_by_project(
 pub async fn create_patent(
     State(_state): State<crate::modules::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreatePatentRequest>,
 ) -> ApiResponse<Patent> {
@@ -362,7 +363,7 @@ pub async fn get_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
@@ -397,7 +398,7 @@ pub async fn update_patent(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdatePatentRequest>,
 ) -> ApiResponse<Patent> {
@@ -478,7 +479,7 @@ pub async fn delete_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{extract::State, routing::get, Extension, Router};
 use sqlx::postgres::PgPool;
 use std::collections::HashMap;
@@ -183,7 +184,7 @@ pub async fn get_statistics(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -299,7 +300,7 @@ pub async fn get_detailed_statistics(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -567,7 +568,7 @@ pub async fn get_suppliers_with_stats(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;

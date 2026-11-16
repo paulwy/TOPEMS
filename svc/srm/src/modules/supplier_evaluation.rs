@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -82,7 +83,7 @@ pub async fn list_evaluations(
     Query(params): Query<EvaluationQueryParams>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -202,7 +203,7 @@ pub async fn create_evaluation(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> ApiResponse<SupplierEvaluation> {
@@ -415,7 +416,7 @@ pub async fn get_evaluation(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SupplierEvaluation> {
     let mut guard = txn_arc.lock().await;
@@ -466,7 +467,7 @@ pub async fn update_evaluation(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> ApiResponse<SupplierEvaluation> {
@@ -621,7 +622,7 @@ pub async fn delete_evaluation(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -694,7 +695,7 @@ pub async fn get_evaluation_history(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<SupplierEvaluation>> {
     let mut guard = txn_arc.lock().await;
@@ -760,7 +761,7 @@ pub async fn get_performance_summary(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -876,7 +877,7 @@ pub async fn get_score_trend(
     Query(params): Query<EvaluationQueryParams>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1016,7 +1017,7 @@ pub async fn get_evaluation_statistics(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

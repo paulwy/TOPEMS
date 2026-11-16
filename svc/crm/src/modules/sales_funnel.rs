@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -88,7 +89,7 @@ pub fn create_routes() -> Router<ApiState> {
 async fn get_stage_opportunities_tail(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path((stage, _tail)): Path<(String, String)>,
@@ -117,7 +118,7 @@ async fn get_stage_opportunities_tail(
 pub async fn get_funnel_data(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<FunnelQueryParams>,
@@ -197,7 +198,7 @@ pub async fn get_funnel_data(
 pub async fn get_funnel_metrics(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<FunnelMetrics> {
@@ -281,7 +282,7 @@ pub async fn get_funnel_metrics(
 pub async fn get_funnel_conversion(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<FunnelConversion>> {
@@ -346,7 +347,7 @@ pub async fn get_funnel_conversion(
 pub async fn get_funnel_trend(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FunnelQueryParams>,
@@ -427,7 +428,7 @@ pub async fn get_funnel_trend(
 pub async fn get_stage_opportunities(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(stage): Path<String>,

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -80,7 +81,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_recommendations(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecommendationQueryParams>,
@@ -184,7 +185,7 @@ pub async fn list_recommendations(
 pub async fn get_recommendation(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -237,7 +238,7 @@ pub async fn get_recommendation(
 async fn create_recommendation(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -352,7 +353,7 @@ async fn create_recommendation(
 pub async fn get_customer_recommendations(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

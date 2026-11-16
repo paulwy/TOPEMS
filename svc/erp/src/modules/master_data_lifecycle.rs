@@ -4,6 +4,7 @@
 //! 以及已归档和待销毁主数据列表查询。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
@@ -109,7 +110,7 @@ pub async fn archive_master_data_ref(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ArchiveRequest>,
 ) -> ApiResponse<MasterDataRef> {
@@ -235,7 +236,7 @@ pub async fn restore_master_data_ref(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RestoreRequest>,
 ) -> ApiResponse<MasterDataRef> {
@@ -355,7 +356,7 @@ pub async fn schedule_destruction(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ScheduleDestructionRequest>,
 ) -> ApiResponse<MasterDataRef> {
@@ -481,7 +482,7 @@ pub async fn cancel_destruction(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -600,7 +601,7 @@ pub async fn destroy_master_data_ref(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<DestroyRequest>,
 ) -> ApiResponse<MasterDataRef> {
@@ -724,7 +725,7 @@ pub async fn list_archived(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
@@ -807,7 +808,7 @@ pub async fn list_pending_destruction(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;

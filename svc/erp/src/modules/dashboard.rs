@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     Router,
@@ -109,7 +110,7 @@ pub async fn get_dashboard(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ErpDashboardStats> {
     let mut guard = txn_arc.lock().await;

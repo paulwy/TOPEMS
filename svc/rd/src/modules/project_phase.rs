@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{delete, get, post, put},
@@ -40,7 +41,7 @@ pub async fn create_phase(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> ApiResponse<ProjectPhase> {
@@ -186,7 +187,7 @@ pub async fn get_project_phases(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
@@ -282,7 +283,7 @@ pub async fn update_phase(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> ApiResponse<ProjectPhase> {
@@ -450,7 +451,7 @@ pub async fn delete_phase(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

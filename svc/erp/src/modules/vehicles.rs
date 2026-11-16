@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -63,7 +64,7 @@ pub async fn list_vehicles(
     State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
@@ -142,7 +143,7 @@ pub async fn create_vehicle(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequest>,
@@ -256,7 +257,7 @@ pub async fn get_vehicle(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
@@ -302,7 +303,7 @@ pub async fn update_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequest>,
@@ -431,7 +432,7 @@ pub async fn delete_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
@@ -544,7 +545,7 @@ pub async fn list_vehicle_requests(
     State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
@@ -603,7 +604,7 @@ pub async fn create_vehicle_request(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequestRequest>,
@@ -756,7 +757,7 @@ pub async fn get_vehicle_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<VehicleApplication> {
     let mut guard = txn_arc.lock().await;
@@ -802,7 +803,7 @@ pub async fn update_vehicle_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequestRequest>,
@@ -921,7 +922,7 @@ pub async fn delete_vehicle_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
@@ -1011,7 +1012,7 @@ pub async fn get_vehicle_requests(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -79,7 +80,7 @@ pub async fn list_documents(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -146,7 +147,7 @@ pub async fn list_documents(
 pub async fn create_document_relation(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
@@ -224,7 +225,7 @@ pub async fn get_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -279,7 +280,7 @@ pub async fn delete_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -341,7 +342,7 @@ pub async fn get_entity_documents(
     State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;

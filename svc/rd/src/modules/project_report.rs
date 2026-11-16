@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -85,7 +86,7 @@ pub async fn get_project_summary(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ProjectSummary> {
     let mut guard = txn_arc.lock().await;
@@ -172,7 +173,7 @@ pub async fn get_project_trends(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<TrendData>> {
     let mut guard = txn_arc.lock().await;
@@ -244,7 +245,7 @@ pub async fn get_project_trends(
 pub async fn get_project_type_stats(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ProjectTypeStats>> {
     let mut guard = txn_arc.lock().await;
@@ -302,7 +303,7 @@ pub async fn get_project_type_stats(
 pub async fn get_performance_metrics(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PerformanceMetrics> {
     let mut guard = txn_arc.lock().await;
@@ -432,7 +433,7 @@ pub async fn get_project_detail_report(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ProjectDetailReport> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -44,7 +45,7 @@ pub async fn list_assets(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
@@ -119,7 +120,7 @@ pub async fn create_asset(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateAssetRequest>,
 ) -> ApiResponse<Asset> {
@@ -248,7 +249,7 @@ pub async fn get_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
@@ -299,7 +300,7 @@ pub async fn update_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateAssetRequest>,
 ) -> ApiResponse<Asset> {
@@ -444,7 +445,7 @@ pub async fn delete_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -47,7 +48,7 @@ pub async fn list_documents(
     _headers: HeaderMap,
     Query(params): Query<DocumentQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<Document>> {
     let mut guard = txn_arc.lock().await;
@@ -120,7 +121,7 @@ pub async fn create_document(
     State(_state): State<ApiState>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<CreateDocumentRequest>,
 ) -> ApiResponse<Document> {
@@ -182,7 +183,7 @@ pub async fn get_document(
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Document> {
     let mut guard = txn_arc.lock().await;
@@ -218,7 +219,7 @@ pub async fn update_document(
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<UpdateDocumentRequest>,
 ) -> ApiResponse<Document> {
@@ -295,7 +296,7 @@ pub async fn delete_document(
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

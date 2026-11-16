@@ -3,6 +3,7 @@
 //! 提供主数据冲突检测、冲突列表查询、冲突详情、手动解决冲突和自动合并功能。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
@@ -134,7 +135,7 @@ pub struct AutoMergeRequest {
 pub async fn detect_conflicts(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<DetectConflictsRequest>,
 ) -> ApiResponse<ConflictDetectionResult> {
@@ -384,7 +385,7 @@ pub async fn detect_conflicts(
 pub async fn list_conflicts(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Query(params): Query<ConflictQuery>,
 ) -> ApiResponse<PaginatedResponse<MasterDataConflict>> {
@@ -502,7 +503,7 @@ pub async fn get_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MasterDataConflict> {
     let mut guard = txn_arc.lock().await;
@@ -557,7 +558,7 @@ pub async fn resolve_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ResolveConflictRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -645,7 +646,7 @@ pub async fn auto_merge_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<AutoMergeRequest>,
 ) -> ApiResponse<serde_json::Value> {

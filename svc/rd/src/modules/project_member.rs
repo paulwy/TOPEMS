@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{delete, get, post, put},
@@ -35,7 +36,7 @@ pub async fn create_member(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<CreateMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
@@ -165,7 +166,7 @@ pub async fn get_project_members(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
@@ -243,7 +244,7 @@ pub async fn update_member(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
@@ -380,7 +381,7 @@ pub async fn delete_member(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

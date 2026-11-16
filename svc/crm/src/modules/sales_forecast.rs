@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -50,7 +51,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_sales_forecasts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesForecastQueryParams>,
@@ -140,7 +141,7 @@ pub async fn list_sales_forecasts(
 async fn get_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -191,7 +192,7 @@ async fn get_sales_forecast(
 async fn create_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -316,7 +317,7 @@ async fn create_sales_forecast(
 pub async fn generate_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
@@ -408,7 +409,7 @@ pub async fn generate_forecast(
 async fn update_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -555,7 +556,7 @@ async fn update_sales_forecast(
 async fn delete_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -666,7 +667,7 @@ pub struct SalesTrendQuery {
 pub async fn get_sales_trend(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
@@ -797,7 +798,7 @@ pub struct CompareForecastQuery {
 pub async fn compare_sales_forecasts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareForecastQuery>,
@@ -951,7 +952,7 @@ pub async fn compare_sales_forecasts(
 pub async fn get_accuracy_report(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,

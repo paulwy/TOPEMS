@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -79,7 +80,7 @@ pub async fn list_locations(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationPaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -171,7 +172,7 @@ pub async fn create_location(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateLocationRequest>,
 ) -> ApiResponse<Location> {
@@ -279,7 +280,7 @@ pub async fn get_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Location> {
     let mut guard = txn_arc.lock().await;
@@ -338,7 +339,7 @@ pub async fn update_location(
     Path(id): Path<String>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateLocationRequest>,
 ) -> ApiResponse<Location> {
@@ -489,7 +490,7 @@ pub async fn delete_location(
     Path(id): Path<String>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -597,7 +598,7 @@ pub async fn get_location_status(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationStatusParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LocationStatusSummary> {
     let mut guard = txn_arc.lock().await;
@@ -663,7 +664,7 @@ pub async fn batch_create_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<Vec<CreateLocationRequest>>,
 ) -> ApiResponse<serde_json::Value> {
@@ -742,7 +743,7 @@ pub async fn batch_update_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<BatchUpdateRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -840,7 +841,7 @@ pub async fn batch_delete_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {

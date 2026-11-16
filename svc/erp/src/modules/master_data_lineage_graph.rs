@@ -3,6 +3,7 @@
 //! 提供主数据血缘关系图，包括全局血缘图、指定主数据血缘、域血缘、上游血缘和下游血缘。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -57,7 +58,7 @@ pub async fn get_lineage_graph(
     State(_state): State<ApiState>,
     Query(params): Query<LineageQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
@@ -330,7 +331,7 @@ pub async fn get_lineage_upstream(
     State(_state): State<ApiState>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
@@ -417,7 +418,7 @@ pub async fn get_lineage_downstream(
     State(_state): State<ApiState>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;

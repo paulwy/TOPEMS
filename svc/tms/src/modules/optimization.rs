@@ -10,6 +10,7 @@
 //! - POST /routes/optimize
 //! - POST /freight/quote
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{FromRef, State},
     routing::post,
@@ -235,7 +236,7 @@ pub async fn plan_assignment(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<AssignmentPlanRequest>,
 ) -> ApiResponse<AssignmentResult> {
@@ -258,7 +259,7 @@ pub async fn optimize_route_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RouteOptimizeRequest>,
 ) -> ApiResponse<RouteOptimizeResponse> {
@@ -295,7 +296,7 @@ pub async fn freight_quote_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<FreightQuoteRequest>,
 ) -> ApiResponse<FreightQuote> {

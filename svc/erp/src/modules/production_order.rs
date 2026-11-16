@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -71,7 +72,7 @@ pub async fn list_production_orders(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ProductionOrderListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ListProductionOrdersResponse> {
     let mut guard = txn_arc.lock().await;
@@ -154,7 +155,7 @@ pub async fn create_production_order(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrder> {
@@ -246,7 +247,7 @@ pub async fn get_production_order(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
@@ -296,7 +297,7 @@ pub async fn update_production_order(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrder> {
@@ -378,7 +379,7 @@ pub async fn delete_production_order(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -435,7 +436,7 @@ pub async fn update_production_progress(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> ApiResponse<ProductionOrder> {
@@ -510,7 +511,7 @@ pub async fn update_production_status(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<ProductionOrder> {
@@ -643,7 +644,7 @@ pub async fn receive_mes_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<MesProgressUpdate>,
 ) -> ApiResponse<ProductionOrder> {

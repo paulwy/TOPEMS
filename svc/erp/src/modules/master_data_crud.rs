@@ -1,5 +1,6 @@
 // ==================== 核心 CRUD 类型定义 ====================
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -176,7 +177,7 @@ pub async fn list_master_data_refs(
     Query(params): Query<MasterDataRefQuery>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
@@ -265,7 +266,7 @@ pub async fn get_master_data_ref(
     Path(master_data_id): Path<String>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -318,7 +319,7 @@ pub async fn get_master_data_ref_by_code(
     Path((domain, code)): Path<(String, String)>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;

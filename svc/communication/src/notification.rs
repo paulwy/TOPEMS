@@ -12,8 +12,7 @@ use topems_shared_core::locale::Locale;
 use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
-type RlsTxnCell =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::models::{
     ArchiveConfig, BatchSubscribeRequest, BatchUnsubscribeRequest, BroadcastNotificationRequest,

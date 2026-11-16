@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -162,7 +163,7 @@ pub async fn list_leave_requests(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LeaveRequestQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
@@ -261,7 +262,7 @@ pub async fn create_leave_request(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
@@ -390,7 +391,7 @@ pub async fn get_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -447,7 +448,7 @@ pub async fn update_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
@@ -600,7 +601,7 @@ pub async fn delete_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -692,7 +693,7 @@ pub async fn submit_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -794,7 +795,7 @@ pub async fn approve_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApproveLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
@@ -905,7 +906,7 @@ pub async fn reject_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RejectLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
@@ -1020,7 +1021,7 @@ pub async fn cancel_leave_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;

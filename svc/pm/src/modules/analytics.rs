@@ -15,8 +15,7 @@ use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 // ===== 数据类型 =====
 
@@ -48,7 +47,7 @@ pub struct ProjectStatusItem {
 )]
 pub async fn get_project_trend(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ProjectTrendItem>> {
     let mut guard = txn_arc.lock().await;
@@ -110,7 +109,7 @@ pub async fn get_project_trend(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_project_status(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ProjectStatusItem>> {
     let mut guard = txn_arc.lock().await;

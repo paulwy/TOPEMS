@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -220,7 +221,7 @@ async fn recalculate_refund_amount(
 pub async fn list_returns(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReturnQuery>,
@@ -324,7 +325,7 @@ pub async fn list_returns(
 async fn create_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -458,7 +459,7 @@ async fn create_return(
 pub async fn get_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -512,7 +513,7 @@ pub async fn get_return(
 async fn update_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -661,7 +662,7 @@ async fn update_return(
 async fn delete_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -796,7 +797,7 @@ async fn delete_return(
 pub async fn approve_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -913,7 +914,7 @@ pub async fn approve_return(
 pub async fn reject_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1030,7 +1031,7 @@ pub async fn reject_return(
 pub async fn receive_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1154,7 +1155,7 @@ pub async fn receive_return(
 pub async fn complete_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1359,7 +1360,7 @@ pub async fn complete_return(
 pub async fn cancel_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1475,7 +1476,7 @@ pub async fn cancel_return(
 pub async fn list_return_items(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1527,7 +1528,7 @@ pub async fn list_return_items(
 async fn add_return_item(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1861,7 +1862,7 @@ pub async fn sync_return_to_inventory(
 pub async fn get_return_finance_status(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1964,7 +1965,7 @@ pub async fn get_return_finance_status(
 pub async fn get_return_inventory_status(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2074,7 +2075,7 @@ pub async fn get_return_inventory_status(
 async fn accept_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2195,7 +2196,7 @@ async fn accept_return(
 pub async fn process_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2322,7 +2323,7 @@ pub async fn process_return(
 pub async fn resolve_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2454,7 +2455,7 @@ pub async fn resolve_return(
 pub async fn confirm_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

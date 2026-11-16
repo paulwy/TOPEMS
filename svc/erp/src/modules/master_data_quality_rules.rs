@@ -4,6 +4,7 @@
 //! 支持 6 种规则类型：必填、格式（正则）、范围（min/max）、唯一性、引用完整性、自定义 SQL。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
@@ -256,7 +257,7 @@ fn is_valid_identifier(s: &str) -> bool {
 pub async fn create_quality_rule(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
@@ -338,7 +339,7 @@ pub async fn list_quality_rules(
     State(_state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
@@ -437,7 +438,7 @@ pub async fn get_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
@@ -487,7 +488,7 @@ pub async fn update_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
@@ -599,7 +600,7 @@ pub async fn delete_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -661,7 +662,7 @@ pub async fn delete_quality_rule(
 pub async fn run_quality_check(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> ApiResponse<QualityReport> {
@@ -767,7 +768,7 @@ pub async fn get_quality_report(
     State(_state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<QualityReport>> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::post,
@@ -68,7 +69,7 @@ where
 pub async fn outbound_to_shipping(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<OutboundToShippingRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -130,7 +131,7 @@ pub async fn create_shipping_from_outbound(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -359,7 +360,7 @@ pub struct InboundFromScmRequest {
 pub async fn create_inbound_from_scm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<InboundFromScmRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -499,7 +500,7 @@ pub async fn create_inbound_from_scm(
 pub async fn get_sync_logs(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<SyncLogsRequest>,
 ) -> ApiResponse<serde_json::Value> {

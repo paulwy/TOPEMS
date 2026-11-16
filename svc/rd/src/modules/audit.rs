@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode},
@@ -58,7 +59,7 @@ async fn list_audit_logs(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -162,7 +163,7 @@ async fn get_audit_log(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<AuditLog> {
     let mut guard = txn_arc.lock().await;
@@ -281,7 +282,7 @@ async fn export_audit_logs(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;

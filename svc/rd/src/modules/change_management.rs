@@ -9,6 +9,7 @@
 //! - POST /change-requests/{id}/transition（状态流转，非法流转 400）
 //! - POST /change-requests/{id}/change-orders（仅 Approved 可建变更单）、GET /change-orders
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -154,7 +155,7 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 pub async fn create_change_request(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateChangeRequest>,
 ) -> impl IntoResponse {
@@ -235,7 +236,7 @@ pub async fn list_change_requests(
     State(_state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -319,7 +320,7 @@ pub async fn get_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -356,7 +357,7 @@ pub async fn update_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateChangeRequest>,
 ) -> impl IntoResponse {
@@ -431,7 +432,7 @@ pub async fn delete_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -492,7 +493,7 @@ pub async fn transition_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<TransitionRequest>,
 ) -> impl IntoResponse {
@@ -591,7 +592,7 @@ pub async fn create_change_order(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateChangeOrder>,
 ) -> impl IntoResponse {
@@ -690,7 +691,7 @@ pub async fn create_change_order(
 pub async fn list_change_orders(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;

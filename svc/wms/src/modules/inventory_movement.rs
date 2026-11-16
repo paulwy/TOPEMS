@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -71,7 +72,7 @@ async fn list_inventory_movements(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Query(params): Query<InventoryMovementQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
@@ -194,7 +195,7 @@ async fn create_inventory_movement(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateInventoryMovementRequest>,
 ) -> ApiResponse<InventoryMovement> {
@@ -299,7 +300,7 @@ async fn get_inventory_movement(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     _headers: HeaderMap,
 ) -> ApiResponse<InventoryMovement> {

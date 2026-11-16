@@ -9,8 +9,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 // ==================== P2-11 剩余项：PM 项目类型模板接真 ====================
 
@@ -83,7 +82,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_types(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ListTypesQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -153,7 +152,7 @@ async fn list_types(
 
 async fn create_type(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateTypeRequest>,
 ) -> ApiResponse<ProjectTypeConfig> {
     let mut guard = txn_arc.lock().await;
@@ -226,7 +225,7 @@ async fn create_type(
 )]
 async fn get_type(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectTypeConfig> {
     let mut guard = txn_arc.lock().await;
@@ -267,7 +266,7 @@ async fn get_type(
 
 async fn update_type(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTypeRequest>,
 ) -> ApiResponse<ProjectTypeConfig> {
@@ -324,7 +323,7 @@ async fn update_type(
 
 async fn delete_type(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

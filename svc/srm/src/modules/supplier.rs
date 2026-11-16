@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -326,7 +327,7 @@ pub async fn list_suppliers(
     Query(params): Query<ListQueryParams>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -485,7 +486,7 @@ pub async fn create_supplier(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -698,7 +699,7 @@ pub async fn get_supplier(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -783,7 +784,7 @@ pub async fn update_supplier(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -984,7 +985,7 @@ pub async fn delete_supplier(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -1118,7 +1119,7 @@ pub async fn get_supplier_products(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<SupplierProduct>> {
     let mut guard = txn_arc.lock().await;
@@ -1185,7 +1186,7 @@ pub async fn get_supplier_contracts(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<SupplierContract>> {
     let mut guard = txn_arc.lock().await;
@@ -1252,7 +1253,7 @@ pub async fn get_supplier_performance(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SupplierPerformance> {
     let mut guard = txn_arc.lock().await;
@@ -1475,7 +1476,7 @@ pub async fn start_supplier_approval(
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<StartApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1643,7 +1644,7 @@ pub async fn approve_supplier(
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1783,7 +1784,7 @@ pub async fn reject_supplier(
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<serde_json::Value> {

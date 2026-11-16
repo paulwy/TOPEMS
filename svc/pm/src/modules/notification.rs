@@ -17,8 +17,7 @@ use crate::models::notification::{
 };
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -50,7 +49,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_notifications(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Notification>> {
     let mut guard = txn_arc.lock().await;
@@ -83,7 +82,7 @@ async fn get_project_notifications(
 
 async fn create_notification(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationRequest>,
@@ -147,7 +146,7 @@ async fn create_notification(
 )]
 async fn get_project_settings(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<NotificationSetting>> {
     let mut guard = txn_arc.lock().await;
@@ -180,7 +179,7 @@ async fn get_project_settings(
 
 async fn create_setting(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -241,7 +240,7 @@ async fn create_setting(
 )]
 async fn update_setting(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> ApiResponse<NotificationSetting> {

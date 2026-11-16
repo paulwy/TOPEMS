@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     routing::*,
@@ -87,7 +88,7 @@ async fn global_search(
     State(_state): State<ApiState>,
     Query(params): Query<SearchParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<SearchResult>> {
     let mut guard = txn_arc.lock().await;

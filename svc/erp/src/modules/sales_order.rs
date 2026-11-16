@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -79,7 +80,7 @@ pub async fn list_sales_orders(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -173,7 +174,7 @@ pub async fn get_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -216,7 +217,7 @@ pub async fn create_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<CreateSalesOrderRequest>,
 ) -> ApiResponse<SalesOrder> {
@@ -353,7 +354,7 @@ pub async fn update_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<UpdateSalesOrderRequest>,
 ) -> ApiResponse<SalesOrder> {
@@ -433,7 +434,7 @@ pub async fn delete_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -540,7 +541,7 @@ pub async fn approve_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -618,7 +619,7 @@ pub async fn ship_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -661,7 +662,7 @@ pub async fn complete_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -704,7 +705,7 @@ pub async fn cancel_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -798,7 +799,7 @@ async fn batch_create_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchCreateOrdersRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -864,7 +865,7 @@ async fn batch_update_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchUpdateOrdersRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -970,7 +971,7 @@ pub async fn batch_approve_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchIdsRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -1018,7 +1019,7 @@ pub async fn batch_ship_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchShipRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -1066,7 +1067,7 @@ pub async fn batch_complete_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchIdsRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -1114,7 +1115,7 @@ pub async fn batch_cancel_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchCancelRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
@@ -1162,7 +1163,7 @@ pub async fn get_sales_order_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SalesOrderStatsResponse> {
     let mut guard = txn_arc.lock().await;

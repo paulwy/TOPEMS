@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, State};
 use axum::Json;
 use sqlx::Row;
@@ -20,7 +21,7 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
 pub async fn get_sync_stats(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SyncStats> {
     let mut guard = txn_arc.lock().await;
@@ -137,7 +138,7 @@ pub async fn get_sync_stats(
 pub async fn list_events(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<IntegrationEvent>> {
     let mut guard = txn_arc.lock().await;
@@ -182,7 +183,7 @@ pub async fn list_events(
 pub async fn create_event(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateIntegrationEventRequest>,
 ) -> ApiResponse<IntegrationEvent> {

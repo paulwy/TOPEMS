@@ -1,6 +1,7 @@
 //! ERP 连接管理（缺口#11）
 //! GET/POST /erp/connections, GET/PUT/DELETE /erp/connections/{id}, POST /erp/connections/test
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use topems_shared_auth::auth::Claims;
@@ -43,7 +44,7 @@ pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid = tenant_filter(&claims);
@@ -96,7 +97,7 @@ pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -144,7 +145,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -207,7 +208,7 @@ pub async fn update_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
@@ -278,7 +279,7 @@ pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {

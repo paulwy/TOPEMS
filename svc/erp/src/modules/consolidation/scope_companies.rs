@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
@@ -25,7 +26,7 @@ pub async fn list_scope_companies(
     Path(scope_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ConsolidationScopeCompany>> {
     let mut guard = txn_arc.lock().await;
@@ -89,7 +90,7 @@ pub async fn add_scope_company(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<AddScopeCompanyRequest>,
 ) -> ApiResponse<ConsolidationScopeCompany> {
@@ -169,7 +170,7 @@ pub async fn update_scope_company(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateScopeCompanyRequest>,
 ) -> ApiResponse<ConsolidationScopeCompany> {
@@ -272,7 +273,7 @@ pub async fn remove_scope_company(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

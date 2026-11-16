@@ -3,6 +3,7 @@
 //! 提供数据资产目录列表和详情查询，包括各域主数据的记录数、质量评分、字段定义等。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -179,7 +180,7 @@ pub async fn list_data_assets(
     State(_state): State<ApiState>,
     Query(params): Query<DataAssetQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<DataAssetSummary>> {
     let mut guard = txn_arc.lock().await;
@@ -300,7 +301,7 @@ pub async fn get_data_asset_detail(
     State(_state): State<ApiState>,
     Path(domain): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<DataAssetSummary> {
     let mut guard = txn_arc.lock().await;

@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     // ── protected_routes（业务路由：模块 State 为 Db，无直接 PgPool） ──
     // 注意：根检索端点不在此处 nest 挂载——nest 剥离前缀后路径为 "/"，命中
     // is_public_path 的 "/" 公开豁免，tenant_middleware 跳过注入请求级 RLS 事务，
-    // search_handler 提取 Extension<RlsTxnArc> 失败 500（既有 bug，试点验证发现）。
+    // search_handler 提取 Extension<RlsTxnCell> 失败 500（既有 bug，试点验证发现）。
     // 根端点改为 build_application 之后以全路径 merge（见下），与嵌入形态
     // search_real_module 的挂载方式一致。
     let protected_routes = Router::new()
@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 根检索端点（全路径挂载，不经 nest）：兼容无尾斜杠 /api/search 与带尾斜杠
     // /api/search/ 两种形态（axum 0.8 route 严格匹配）。层顺序自外向内：
-    // auth（注入 Claims）→ tenant（开启请求级 RLS 事务并注入 RlsTxnArc）→
+    // auth（注入 Claims）→ tenant（开启请求级 RLS 事务并注入 RlsTxnCell）→
     // require_permission → handler。该路由同 MCP 一样不受 build_application 内层
     // rate_limit/metrics 层覆盖（试点单端点，与嵌入形态行为对齐）。
     let root_search_routes = Router::new()

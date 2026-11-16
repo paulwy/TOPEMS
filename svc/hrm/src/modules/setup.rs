@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     routing::*,
@@ -135,7 +136,7 @@ pub async fn get_init_progress(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<InitProgressResponse> {
     let mut guard = txn_arc.lock().await;
@@ -235,7 +236,7 @@ pub async fn setup_company_info(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CompanyInfoRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -433,7 +434,7 @@ pub async fn setup_departments(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<DepartmentsBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -634,7 +635,7 @@ pub async fn setup_positions(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<PositionsBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -881,7 +882,7 @@ pub async fn setup_admin_user(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<AdminUserRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1121,7 +1122,7 @@ pub async fn complete_initialization(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CompleteInitRequest>,
 ) -> ApiResponse<serde_json::Value> {

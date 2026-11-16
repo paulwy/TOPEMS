@@ -5,6 +5,7 @@
 //!   - 仅同一 active scope 内、期间内双方均在有效期内的公司对参与。
 //!   - 金额全链路 Decimal，比较前量化到分（容差 0.00）。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     Json,
@@ -313,7 +314,7 @@ pub async fn scan_elimination_candidates(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ScanCandidatesRequest>,
 ) -> ApiResponse<ScanCandidatesResult> {
@@ -478,7 +479,7 @@ pub async fn list_elimination_candidates(
     Extension(claims): Extension<Claims>,
     Query(query): Query<CandidateListQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<EliminationCandidate>> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-reconcile:read") {
@@ -642,7 +643,7 @@ pub async fn get_reconciliation_summary(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ReconciliationQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ReconciliationSummary> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-reconcile:read") {
@@ -778,7 +779,7 @@ fn draft_voucher(agg: &PairAggregate, amount: Decimal) -> Option<EliminationDraf
 pub async fn preview_eliminations(
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<EliminationPreviewRequest>,
 ) -> ApiResponse<EliminationPreview> {

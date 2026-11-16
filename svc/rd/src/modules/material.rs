@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -126,7 +127,7 @@ pub async fn list_material_tests(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -210,7 +211,7 @@ pub async fn list_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
@@ -257,7 +258,7 @@ pub async fn list_by_experiment(
     State(_state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
@@ -291,7 +292,7 @@ pub async fn create_material_test(
     State(state): State<super::ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> ApiResponse<MaterialTest> {
@@ -405,7 +406,7 @@ pub async fn get_material_test(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
@@ -439,7 +440,7 @@ pub async fn update_material_test(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> ApiResponse<MaterialTest> {
@@ -541,7 +542,7 @@ pub async fn delete_material_test(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

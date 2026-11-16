@@ -2,6 +2,7 @@
 //! 数据源：wms.wave_picks + wms.wave_pick_items（与 wave_pick 模块同源，只读聚合视图）
 //! 权限：WavePickRead；走 RLS txn（tenant_middleware 注入）
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::get,
@@ -46,7 +47,7 @@ pub async fn list_picking_lists(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
@@ -138,7 +139,7 @@ pub async fn get_picking_list(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -220,7 +221,7 @@ pub async fn picking_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PickingStats> {
     let mut guard = txn_arc.lock().await;

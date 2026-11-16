@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -26,7 +27,7 @@ pub async fn list_reports(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
@@ -103,7 +104,7 @@ pub async fn get_report(
     State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
@@ -170,7 +171,7 @@ pub async fn get_report_lines(
     State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ConsolidationReportLine>> {
     let mut guard = txn_arc.lock().await;
@@ -224,7 +225,7 @@ pub async fn submit_report(
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
@@ -321,7 +322,7 @@ pub async fn approve_report(
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
@@ -441,7 +442,7 @@ pub async fn delete_report(
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use chrono::Utc;
@@ -35,7 +36,7 @@ pub struct SyncMesToErpRequest {
 pub async fn list_mes_erp_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<MesErpSync>> {
     let mut guard = txn_arc.lock().await;
@@ -80,7 +81,7 @@ pub async fn list_mes_erp_sync(
 pub async fn create_mes_erp_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateMesErpSyncRequest>,
 ) -> ApiResponse<MesErpSync> {
@@ -162,7 +163,7 @@ pub async fn create_mes_erp_sync(
 pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {
@@ -213,7 +214,7 @@ pub async fn get_mes_erp_sync(
 pub async fn sync_mes_erp(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {

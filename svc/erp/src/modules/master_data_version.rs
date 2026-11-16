@@ -3,6 +3,7 @@
 //! 记录主数据版本快照，支持查询版本历史、获取版本详情和回滚到指定版本。
 //! 从 master_data_refs.rs 拆分。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
@@ -77,7 +78,7 @@ pub async fn record_version(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RecordVersionRequest>,
 ) -> ApiResponse<MasterDataVersion> {
@@ -165,7 +166,7 @@ pub async fn get_versions(
     Path(master_data_id): Path<String>,
     Query(params): Query<VersionQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<MasterDataVersion>> {
     let mut guard = txn_arc.lock().await;
@@ -234,7 +235,7 @@ pub async fn get_version(
     State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<MasterDataVersion> {
     let mut guard = txn_arc.lock().await;
@@ -284,7 +285,7 @@ pub async fn rollback_to_version(
     State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

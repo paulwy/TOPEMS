@@ -26,8 +26,7 @@ pub fn should_approve_expense(amount: f64, threshold: f64, budget_remaining: f64
     amount > 0.0 && amount <= threshold && amount <= budget_remaining
 }
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -62,7 +61,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_expenses(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectExpense>> {
     let mut guard = txn_arc.lock().await;
@@ -110,7 +109,7 @@ async fn list_expenses(
 )]
 async fn add_expense(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -195,7 +194,7 @@ async fn add_expense(
 )]
 async fn get_expense(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectExpense> {
     let mut guard = txn_arc.lock().await;
@@ -247,7 +246,7 @@ async fn get_expense(
 )]
 async fn update_expense(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateExpenseRequest>,
 ) -> ApiResponse<ProjectExpense> {
@@ -321,7 +320,7 @@ async fn update_expense(
 )]
 async fn remove_expense(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

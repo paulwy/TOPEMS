@@ -20,8 +20,7 @@ use crate::models::report::{
 };
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -62,7 +61,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_reports(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectReport>> {
     let mut guard = txn_arc.lock().await;
@@ -108,7 +107,7 @@ async fn get_project_reports(
 )]
 async fn get_report(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectReport> {
     let mut guard = txn_arc.lock().await;
@@ -141,7 +140,7 @@ async fn get_report(
 
 async fn create_report(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -203,7 +202,7 @@ async fn create_report(
 )]
 async fn generate_report(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -386,7 +385,7 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
 )]
 async fn list_templates(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ReportTemplate>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -430,7 +429,7 @@ async fn list_templates(
 )]
 async fn get_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReportTemplate> {
     let mut guard = txn_arc.lock().await;
@@ -464,7 +463,7 @@ async fn get_template(
 
 async fn create_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportTemplateRequest>,
@@ -511,7 +510,7 @@ async fn create_template(
 
 async fn update_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> ApiResponse<ReportTemplate> {
@@ -554,7 +553,7 @@ async fn update_template(
 
 async fn delete_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

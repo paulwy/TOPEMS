@@ -2,6 +2,7 @@
 //! 数据源：wms.wave_picks（按 assigned_to 聚合）+ wms.labor_shifts（班次持久化）
 //! 权限：WavePickRead；走 RLS txn（tenant_middleware 注入）
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::get,
@@ -125,7 +126,7 @@ pub async fn list_labor_efficiency(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
@@ -159,7 +160,7 @@ pub async fn user_labor_efficiency(
     Path(user_id): Path<Uuid>,
     Query(params): Query<LaborQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
@@ -214,7 +215,7 @@ pub async fn labor_productivity(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<ProductivityStats> {
     let mut guard = txn_arc.lock().await;
@@ -314,7 +315,7 @@ pub async fn labor_workload(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<WorkloadItem>> {
     let mut guard = txn_arc.lock().await;
@@ -404,7 +405,7 @@ pub async fn labor_performance_dashboard(
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PerformanceDashboard> {
     let mut guard = txn_arc.lock().await;
@@ -539,7 +540,7 @@ pub async fn list_labor_shifts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<LaborShift>> {
     let mut guard = txn_arc.lock().await;
@@ -604,7 +605,7 @@ pub async fn create_labor_shift(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateShiftRequest>,
 ) -> ApiResponse<LaborShift> {

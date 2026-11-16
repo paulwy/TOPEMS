@@ -38,8 +38,7 @@ pub fn milestone_status(planned_date: i64, actual_date: Option<i64>, now: i64) -
     "upcoming"
 }
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -72,7 +71,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_milestones(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
@@ -120,7 +119,7 @@ async fn list_milestones(
 )]
 async fn create_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -193,7 +192,7 @@ async fn create_milestone(
 )]
 async fn get_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
@@ -245,7 +244,7 @@ async fn get_milestone(
 )]
 async fn update_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMilestoneRequest>,
 ) -> ApiResponse<ProjectMilestone> {
@@ -318,7 +317,7 @@ async fn update_milestone(
 )]
 async fn delete_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

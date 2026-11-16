@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -23,7 +24,7 @@ pub async fn list_elimination_rules(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<EliminationRule>> {
     let mut guard = txn_arc.lock().await;
@@ -101,7 +102,7 @@ pub async fn get_elimination_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<EliminationRule> {
     let mut guard = txn_arc.lock().await;
@@ -136,7 +137,7 @@ pub async fn create_elimination_rule(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateEliminationRuleRequest>,
 ) -> ApiResponse<EliminationRule> {
@@ -208,7 +209,7 @@ pub async fn update_elimination_rule(
     Path(rule_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateEliminationRuleRequest>,
 ) -> ApiResponse<EliminationRule> {
@@ -293,7 +294,7 @@ pub async fn delete_elimination_rule(
     Path(rule_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -352,7 +353,7 @@ pub async fn export_elimination_worksheet(
     State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

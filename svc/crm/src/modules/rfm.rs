@@ -6,6 +6,7 @@
 //! 数据来源：crm.sales_orders 表（wms ShippingOrderRequested 事件写入）
 //! 缓存表：crm.rfm_results 表（分析结果）
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{get, post},
@@ -337,7 +338,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn analyze_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
@@ -462,7 +463,7 @@ pub async fn analyze_rfm(
 pub async fn get_segments(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
@@ -571,7 +572,7 @@ pub async fn get_segments(
 async fn get_customer_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,

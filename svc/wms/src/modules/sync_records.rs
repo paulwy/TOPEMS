@@ -4,6 +4,7 @@
 //! 与 scm.sync_records 同构；前端 sync.ts 契约：
 //!   list/get/items/retry/retry-items/statistics + POST /sync/scm{,/inventory,/orders}
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::{get, post},
@@ -142,7 +143,7 @@ pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Query(params): Query<ListSyncParams>,
 ) -> ApiResponse<serde_json::Value> {
@@ -229,7 +230,7 @@ pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SyncRecord> {
@@ -273,7 +274,7 @@ pub async fn create_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSyncRequest>,
 ) -> ApiResponse<SyncRecord> {
@@ -365,7 +366,7 @@ pub async fn list_sync_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(sync_id): Path<Uuid>,
     Query(params): Query<ListSyncParams>,
@@ -436,7 +437,7 @@ pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SyncResult> {
@@ -503,7 +504,7 @@ pub async fn retry_failed_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<RetryItemsRequest>,
@@ -563,7 +564,7 @@ pub async fn get_sync_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
@@ -659,7 +660,7 @@ async fn trigger_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     sync_type: String,
     payload: serde_json::Value,
@@ -730,7 +731,7 @@ pub async fn trigger_scm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {
@@ -754,7 +755,7 @@ pub async fn trigger_scm_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {
@@ -773,7 +774,7 @@ pub async fn trigger_scm_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {

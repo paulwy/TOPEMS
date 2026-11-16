@@ -1,5 +1,6 @@
 //! Vehicle handlers - 车辆管理
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
@@ -86,7 +87,7 @@ pub async fn list_vehicles(
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
@@ -226,7 +227,7 @@ pub async fn create_vehicle(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateVehicleRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -316,7 +317,7 @@ pub async fn get_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
@@ -378,7 +379,7 @@ pub async fn update_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateVehicleRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -474,7 +475,7 @@ pub async fn delete_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -559,7 +560,7 @@ pub async fn submit_inspection(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -654,7 +655,7 @@ pub async fn approve_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -764,7 +765,7 @@ pub async fn reject_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Vehicle> {

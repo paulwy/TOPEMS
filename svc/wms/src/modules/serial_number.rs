@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::{get, post},
@@ -64,7 +65,7 @@ pub async fn list_serial_numbers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SerialNumberQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -165,7 +166,7 @@ pub async fn create_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSerialNumberRequest>,
 ) -> ApiResponse<SerialNumber> {
@@ -251,7 +252,7 @@ pub async fn bulk_create_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<Vec<CreateSerialNumberRequest>>,
 ) -> ApiResponse<Vec<SerialNumber>> {
@@ -338,7 +339,7 @@ pub async fn get_serial_number(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
@@ -390,7 +391,7 @@ pub async fn get_by_serial_no(
     Extension(claims): Extension<Claims>,
     Path(serial_no): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
@@ -435,7 +436,7 @@ pub async fn get_by_batch(
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<SerialNumber>> {
     let mut guard = txn_arc.lock().await;
@@ -482,7 +483,7 @@ pub async fn update_serial_number(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSerialNumberRequest>,
 ) -> ApiResponse<SerialNumber> {
@@ -595,7 +596,7 @@ pub async fn delete_serial_number(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -653,7 +654,7 @@ pub async fn get_serial_number_statistics(
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SerialNumberStatistics> {
     let mut guard = txn_arc.lock().await;
@@ -722,7 +723,7 @@ pub async fn transfer_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SerialNumber> {
@@ -798,7 +799,7 @@ pub async fn get_trace(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;

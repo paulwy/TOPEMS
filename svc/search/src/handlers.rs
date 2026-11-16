@@ -22,9 +22,7 @@ use crate::scoring::{
 
 use std::collections::HashSet;
 
-/// 请求级 RLS 事务句柄（由 `tenant_middleware` 注入请求扩展）
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
@@ -304,7 +302,7 @@ pub(crate) async fn search_all(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_handler(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(req): Query<SearchRequest>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SearchResponse> {

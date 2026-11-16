@@ -17,8 +17,7 @@ use crate::models::document::{
 };
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -62,7 +61,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_documents(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectDocument>> {
     let mut guard = txn_arc.lock().await;
@@ -108,7 +107,7 @@ async fn get_project_documents(
 )]
 async fn get_document(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectDocument> {
     let mut guard = txn_arc.lock().await;
@@ -141,7 +140,7 @@ async fn get_document(
 
 async fn create_document(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -194,7 +193,7 @@ async fn create_document(
 
 async fn update_document(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
 ) -> ApiResponse<ProjectDocument> {
@@ -243,7 +242,7 @@ async fn update_document(
 
 async fn delete_document(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -291,7 +290,7 @@ async fn delete_document(
 )]
 async fn get_document_versions(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentVersion>> {
     let mut guard = txn_arc.lock().await;
@@ -324,7 +323,7 @@ async fn get_document_versions(
 
 async fn create_document_version(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -415,7 +414,7 @@ async fn create_document_version(
 )]
 async fn get_project_folders(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentFolder>> {
     let mut guard = txn_arc.lock().await;
@@ -461,7 +460,7 @@ async fn get_project_folders(
 )]
 async fn get_folder(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DocumentFolder> {
     let mut guard = txn_arc.lock().await;
@@ -495,7 +494,7 @@ async fn get_folder(
 
 async fn create_folder(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -543,7 +542,7 @@ async fn create_folder(
 
 async fn update_folder(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFolderRequest>,
 ) -> ApiResponse<DocumentFolder> {
@@ -586,7 +585,7 @@ async fn update_folder(
 
 async fn delete_folder(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

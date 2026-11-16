@@ -29,8 +29,7 @@ pub fn calculate_phase_progress(completed_tasks: usize, total_tasks: usize) -> f
     pct.clamp(0.0, 100.0)
 }
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -61,7 +60,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_phases(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
@@ -110,7 +109,7 @@ async fn list_phases(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 async fn create_phase(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -199,7 +198,7 @@ async fn create_phase(
 )]
 async fn get_phase(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
@@ -251,7 +250,7 @@ async fn get_phase(
 )]
 async fn update_phase(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdatePhaseRequest>,
 ) -> ApiResponse<ProjectPhase> {
@@ -328,7 +327,7 @@ async fn update_phase(
 )]
 async fn delete_phase(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

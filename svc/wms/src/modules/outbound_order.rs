@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -107,7 +108,7 @@ pub async fn list_outbound_orders(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -205,7 +206,7 @@ pub async fn create_outbound_order(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateOutboundOrderRequest>,
 ) -> ApiResponse<OutboundOrder> {
@@ -339,7 +340,7 @@ pub async fn get_outbound_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -398,7 +399,7 @@ pub async fn update_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateOutboundOrderRequest>,
 ) -> ApiResponse<OutboundOrder> {
@@ -562,7 +563,7 @@ pub async fn delete_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -659,7 +660,7 @@ pub async fn list_outbound_order_items(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -747,7 +748,7 @@ pub async fn create_outbound_order_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<OutboundOrderItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -885,7 +886,7 @@ pub async fn update_outbound_order_item(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ShipItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -990,7 +991,7 @@ pub async fn delete_outbound_order_item(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -1083,7 +1084,7 @@ pub async fn confirm_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -1197,7 +1198,7 @@ pub async fn pick_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -1310,7 +1311,7 @@ pub async fn pack_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -1431,7 +1432,7 @@ pub async fn ship_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(items): Json<Vec<ShipItemRequest>>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1954,7 +1955,7 @@ pub async fn complete_outbound_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -2075,7 +2076,7 @@ pub async fn start_outbound_approval(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2148,7 +2149,7 @@ pub async fn approve_outbound(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2245,7 +2246,7 @@ pub async fn reject_outbound(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {

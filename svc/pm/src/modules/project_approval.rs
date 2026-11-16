@@ -22,8 +22,7 @@ use uuid::Uuid;
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 /// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
 #[derive(Clone)]
@@ -78,7 +77,7 @@ fn get_approval_workflow_id() -> Option<Uuid> {
 )]
 async fn get_approval(
     State(state): State<ApprovalState>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<ProjectApproval> {
     let mut guard = txn_arc.lock().await;
@@ -127,7 +126,7 @@ async fn get_approval(
 )]
 async fn submit_approval(
     State(state): State<ApprovalState>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -270,7 +269,7 @@ async fn submit_approval(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn handle_approval_action(
     State(state): State<ApprovalState>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<ProjectApproval> {

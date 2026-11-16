@@ -1,6 +1,7 @@
 //! 外部 ERP 集成（缺口#13 扩展版）
 //! 覆盖 /external-erp/* 全部路径，基于 erp_connections / erp_mappings / external_erp_sync_logs 真实表实现
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
@@ -392,7 +393,7 @@ pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -448,7 +449,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -646,7 +647,7 @@ async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -702,7 +703,7 @@ pub async fn update_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -779,7 +780,7 @@ pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
@@ -817,7 +818,7 @@ pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
@@ -861,7 +862,7 @@ async fn create_entity_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
@@ -933,7 +934,7 @@ pub async fn batch_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
@@ -1021,7 +1022,7 @@ pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
@@ -1267,7 +1268,7 @@ pub async fn sync_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -1491,7 +1492,7 @@ pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ExternalErpSyncLog>> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -1533,7 +1534,7 @@ pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SyncStatistics> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -1624,7 +1625,7 @@ pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -1670,7 +1671,7 @@ pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -1719,7 +1720,7 @@ pub async fn toggle_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -1767,7 +1768,7 @@ pub async fn sync_connection_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1800,7 +1801,7 @@ pub async fn list_company_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<ErpMapping>> {
@@ -1843,7 +1844,7 @@ pub async fn create_company_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -1912,7 +1913,7 @@ pub async fn create_company_mapping(
 pub async fn update_company_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, mapping_id)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
@@ -1965,7 +1966,7 @@ pub async fn update_company_mapping(
 pub async fn delete_company_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((id, mapping_id)): Path<(String, String)>,
 ) -> ApiResponse<()> {
@@ -2003,7 +2004,7 @@ pub async fn delete_company_mapping(
 pub async fn update_entity_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
     Json(body): Json<serde_json::Value>,
@@ -2057,7 +2058,7 @@ pub async fn update_entity_mapping(
 pub async fn delete_entity_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
 ) -> ApiResponse<()> {
@@ -2105,7 +2106,7 @@ pub async fn auto_match_mappings() -> ApiResponse<serde_json::Value> {
 pub async fn cancel_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(log_id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2141,7 +2142,7 @@ pub async fn cancel_sync(
 pub async fn get_sync_log(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(log_id): Path<String>,
 ) -> ApiResponse<ExternalErpSyncLog> {
@@ -2180,7 +2181,7 @@ pub async fn get_sync_log(
 pub async fn connection_sync_statistics(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(conn_id): Path<String>,
 ) -> ApiResponse<SyncStatistics> {

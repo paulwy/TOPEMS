@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -56,7 +57,7 @@ pub async fn list_quotations(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<ListQuotationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<Quotation>> {
     let mut guard = txn_arc.lock().await;
@@ -112,7 +113,7 @@ pub async fn create_quotation(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateQuotationRequest>,
 ) -> ApiResponse<Quotation> {
@@ -242,7 +243,7 @@ pub async fn get_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -280,7 +281,7 @@ pub async fn update_quotation(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateQuotationRequest>,
 ) -> ApiResponse<Quotation> {
@@ -366,7 +367,7 @@ pub async fn delete_quotation(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
@@ -429,7 +430,7 @@ pub async fn award_quotation(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -500,7 +501,7 @@ pub async fn reject_quotation(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;

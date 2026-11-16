@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
@@ -20,7 +21,7 @@ use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
 pub async fn list_wms_scm_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<WmsScmSync>> {
     let mut guard = txn_arc.lock().await;
@@ -65,7 +66,7 @@ pub async fn list_wms_scm_sync(
 pub async fn create_wms_scm_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateWmsScmSyncRequest>,
 ) -> ApiResponse<WmsScmSync> {
@@ -147,7 +148,7 @@ pub async fn create_wms_scm_sync(
 pub async fn get_wms_scm_sync(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WmsScmSync> {
@@ -198,7 +199,7 @@ pub async fn get_wms_scm_sync(
 pub async fn sync_wms_scm(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WmsScmSync> {

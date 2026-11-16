@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
@@ -26,7 +27,7 @@ use crate::models::AppState;
 pub async fn list_conversion_rules_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ConversionRule>> {
     let mut guard = txn_arc.lock().await;
@@ -66,7 +67,7 @@ pub async fn list_conversion_rules_api(
 pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
@@ -111,7 +112,7 @@ pub async fn get_conversion_rule_api(
 pub async fn create_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateConversionRuleRequest>,
 ) -> ApiResponse<ConversionRule> {
@@ -180,7 +181,7 @@ pub async fn create_conversion_rule_api(
 pub async fn update_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateConversionRuleRequest>,
@@ -270,7 +271,7 @@ pub async fn update_conversion_rule_api(
 pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -324,7 +325,7 @@ pub async fn delete_conversion_rule_api(
 pub async fn get_rule_executions_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ConversionExecution>> {
@@ -368,7 +369,7 @@ pub async fn get_rule_executions_api(
 pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
@@ -464,7 +465,7 @@ pub async fn execute_conversion_rule_api(
 pub async fn enable_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
@@ -513,7 +514,7 @@ pub async fn enable_conversion_rule_api(
 pub async fn disable_conversion_rule_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {

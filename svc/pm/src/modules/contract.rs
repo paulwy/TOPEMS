@@ -20,8 +20,7 @@ use crate::models::contract::{
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -80,7 +79,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_contracts(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Contract>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -123,7 +122,7 @@ async fn list_contracts(
 )]
 async fn get_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
@@ -155,7 +154,7 @@ async fn get_contract(
 
 async fn create_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
@@ -248,7 +247,7 @@ async fn create_contract(
 
 async fn update_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -354,7 +353,7 @@ async fn update_contract(
 
 async fn delete_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -441,7 +440,7 @@ async fn delete_contract(
 )]
 async fn submit_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -536,7 +535,7 @@ async fn submit_contract(
 )]
 async fn approve_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -631,7 +630,7 @@ async fn approve_contract(
 )]
 async fn reject_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -726,7 +725,7 @@ async fn reject_contract(
 )]
 async fn list_contract_milestones(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ContractMilestone>> {
     let mut guard = txn_arc.lock().await;
@@ -759,7 +758,7 @@ async fn list_contract_milestones(
 
 async fn create_contract_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -826,7 +825,7 @@ async fn create_contract_milestone(
 )]
 async fn update_contract_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreateContractMilestoneRequest>,
 ) -> ApiResponse<ContractMilestone> {
@@ -876,7 +875,7 @@ async fn update_contract_milestone(
 
 async fn delete_contract_milestone(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -925,7 +924,7 @@ async fn delete_contract_milestone(
 )]
 async fn list_payment_schedule(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ContractPaymentSchedule>> {
     let mut guard = txn_arc.lock().await;
@@ -958,7 +957,7 @@ async fn list_payment_schedule(
 
 async fn create_payment_schedule(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -1024,7 +1023,7 @@ async fn create_payment_schedule(
 )]
 async fn update_payment_schedule(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreatePaymentScheduleRequest>,
 ) -> ApiResponse<ContractPaymentSchedule> {
@@ -1072,7 +1071,7 @@ async fn update_payment_schedule(
 
 async fn delete_payment_schedule(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -1106,7 +1105,7 @@ async fn delete_payment_schedule(
 
 async fn list_templates(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ContractTemplate>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1137,7 +1136,7 @@ async fn list_templates(
 
 async fn get_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ContractTemplate> {
     let mut guard = txn_arc.lock().await;
@@ -1170,7 +1169,7 @@ async fn get_template(
 
 async fn create_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractTemplateRequest>,
@@ -1217,7 +1216,7 @@ async fn create_template(
 
 async fn update_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateContractTemplateRequest>,
 ) -> ApiResponse<ContractTemplate> {
@@ -1264,7 +1263,7 @@ async fn update_template(
 
 async fn delete_template(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -1312,7 +1311,7 @@ async fn delete_template(
 )]
 async fn get_project_contracts(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Contract>> {
     let mut guard = txn_arc.lock().await;
@@ -1345,7 +1344,7 @@ async fn get_project_contracts(
 
 async fn create_project_contract(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,

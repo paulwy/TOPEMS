@@ -14,8 +14,7 @@ use uuid::Uuid;
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 // ==================== Pure functions ====================
 
@@ -75,7 +74,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_benefits(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectBenefit>> {
     let mut guard = txn_arc.lock().await;
@@ -123,7 +122,7 @@ async fn get_benefits(
 )]
 async fn get_analysis(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -241,7 +240,7 @@ async fn get_analysis(
 )]
 async fn calculate_benefits(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,

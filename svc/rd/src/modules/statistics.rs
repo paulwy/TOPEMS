@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     routing::get,
@@ -44,7 +45,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn get_statistics(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<RsStatistics> {
     let mut guard = txn_arc.lock().await;

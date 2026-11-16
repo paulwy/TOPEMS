@@ -14,8 +14,7 @@ use uuid::Uuid;
 use crate::models::project_member::{CreateMemberRequest, ProjectMember, UpdateMemberRequest};
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -46,7 +45,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_members(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
@@ -95,7 +94,7 @@ async fn list_members(
 )]
 async fn create_member(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -169,7 +168,7 @@ async fn create_member(
 )]
 async fn get_member(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
@@ -221,7 +220,7 @@ async fn get_member(
 )]
 async fn update_member(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
@@ -290,7 +289,7 @@ async fn update_member(
 )]
 async fn delete_member(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

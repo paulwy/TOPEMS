@@ -1,6 +1,7 @@
 //! ERP 字段映射管理（缺口#12）
 //! GET/POST /erp/mappings, GET/PUT/DELETE /erp/mappings/{id}
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use topems_shared_auth::auth::Claims;
@@ -24,7 +25,7 @@ pub async fn list_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -79,7 +80,7 @@ pub async fn get_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpMapping> {
@@ -130,7 +131,7 @@ pub async fn get_mapping(
 pub async fn create_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateErpMappingRequest>,
 ) -> ApiResponse<ErpMapping> {
@@ -195,7 +196,7 @@ pub async fn create_mapping(
 pub async fn update_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpMappingRequest>,
@@ -269,7 +270,7 @@ pub async fn update_mapping(
 pub async fn delete_mapping(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {

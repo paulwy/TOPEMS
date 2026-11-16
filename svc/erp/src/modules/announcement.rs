@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -57,7 +58,7 @@ pub async fn list_announcements(
     Query(params): Query<AnnouncementQueryParams>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
@@ -148,7 +149,7 @@ pub async fn create_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> ApiResponse<Announcement> {
@@ -262,7 +263,7 @@ pub async fn get_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
@@ -321,7 +322,7 @@ pub async fn update_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> ApiResponse<Announcement> {
@@ -453,7 +454,7 @@ pub async fn delete_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -548,7 +549,7 @@ pub async fn publish_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
@@ -654,7 +655,7 @@ pub async fn unpublish_announcement(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;

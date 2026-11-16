@@ -18,8 +18,7 @@ use crate::models::risk::{
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 // ==================== Pure functions ====================
 
@@ -79,7 +78,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_risks(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectRisk>> {
     let mut guard = txn_arc.lock().await;
@@ -125,7 +124,7 @@ async fn get_project_risks(
 )]
 async fn get_risk(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectRisk> {
     let mut guard = txn_arc.lock().await;
@@ -157,7 +156,7 @@ async fn get_risk(
 
 async fn create_risk(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -249,7 +248,7 @@ async fn create_risk(
 
 async fn update_risk(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -376,7 +375,7 @@ async fn update_risk(
 )]
 async fn get_risk_events(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<RiskEvent>> {
     let mut guard = txn_arc.lock().await;
@@ -409,7 +408,7 @@ async fn get_risk_events(
 
 async fn create_risk_event(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,

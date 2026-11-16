@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -91,7 +92,7 @@ pub async fn list_tables(
     State(_state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<TableInfo>> {
     let mut guard = txn_arc.lock().await;
@@ -135,7 +136,7 @@ pub async fn get_table_detail(
     State(_state): State<ApiState>,
     Path(table_name): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<TableDetail> {
     let mut guard = txn_arc.lock().await;
@@ -201,7 +202,7 @@ pub async fn get_table_detail(
 pub async fn preview_add_column(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> ApiResponse<SqlPreview> {
@@ -339,7 +340,7 @@ pub async fn list_db_changes(
     State(_state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<DbChange>> {
     let mut guard = txn_arc.lock().await;

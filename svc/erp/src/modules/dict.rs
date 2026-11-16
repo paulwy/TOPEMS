@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     body::Body,
     extract::{Extension, Path, Query, State},
@@ -252,7 +253,7 @@ pub async fn list_dict_types(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DictTypeQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
@@ -369,7 +370,7 @@ pub async fn create_dict_type(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
@@ -494,7 +495,7 @@ pub async fn get_dict_type(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
@@ -537,7 +538,7 @@ pub async fn update_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
@@ -676,7 +677,7 @@ pub async fn delete_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -800,7 +801,7 @@ pub async fn list_dict_items(
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
@@ -872,7 +873,7 @@ pub async fn create_dict_item(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDictItemRequest>,
@@ -971,7 +972,7 @@ pub async fn get_dict_item(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<DictItem> {
     let mut guard = txn_arc.lock().await;
@@ -1012,7 +1013,7 @@ pub async fn update_dict_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateDictItemRequest>,
@@ -1133,7 +1134,7 @@ pub async fn delete_dict_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
@@ -1219,7 +1220,7 @@ pub async fn batch_create_dict_items(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchCreateDictItemRequest>,
@@ -1309,7 +1310,7 @@ pub async fn export_dict_items(
     State(_state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> Response<String> {
     let mut guard = txn_arc.lock().await;

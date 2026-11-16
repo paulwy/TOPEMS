@@ -61,8 +61,7 @@ pub fn task_progress_for_status(status: &str, progress: i32) -> i32 {
 
 // ==================== Handlers ====================
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 /// 构造 `pm.pm_tasks` 的 SELECT / RETURNING 列清单。
 ///
@@ -91,7 +90,7 @@ fn task_return_columns(locale_placeholder: &str) -> String {
 )]
 pub async fn list_tasks(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
     Query(query): Query<TaskQuery>,
     headers: HeaderMap,
@@ -171,7 +170,7 @@ pub async fn list_tasks(
 )]
 pub async fn list_tasks_by_project(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
     Path(project_id): Path<Uuid>,
     Query(query): Query<TaskQuery>,
@@ -235,7 +234,7 @@ pub async fn list_tasks_by_project(
 
 pub async fn create_task(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -317,7 +316,7 @@ pub async fn create_task(
 )]
 pub async fn get_task(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -354,7 +353,7 @@ pub async fn get_task(
 
 pub async fn update_task(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -433,7 +432,7 @@ pub async fn update_task(
 
 pub async fn delete_task(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {

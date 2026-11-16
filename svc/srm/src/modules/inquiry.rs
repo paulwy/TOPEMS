@@ -2,6 +2,7 @@
 //! 数据源：srm.inquiries（event_handlers 写入，收敛自 srm_inquiries）
 //! 走 RLS txn（tenant_middleware 注入）
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -94,7 +95,7 @@ pub async fn list_inquiries(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ListInquiryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -175,7 +176,7 @@ pub async fn get_inquiry(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Inquiry> {
     let mut guard = txn_arc.lock().await;
@@ -218,7 +219,7 @@ pub async fn create_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateInquiryRequest>,
 ) -> ApiResponse<Inquiry> {
@@ -270,7 +271,7 @@ pub async fn update_inquiry(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateInquiryRequest>,
 ) -> ApiResponse<Inquiry> {
@@ -321,7 +322,7 @@ pub async fn delete_inquiry(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -372,7 +373,7 @@ pub async fn publish_inquiry(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Inquiry> {
     transition_inquiry(id, "published", &["draft", "closed"], "发布", txn_arc).await
@@ -396,7 +397,7 @@ pub async fn close_inquiry(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Inquiry> {
     transition_inquiry(id, "closed", &["published"], "关闭", txn_arc).await
@@ -407,7 +408,7 @@ async fn transition_inquiry(
     target_status: &str,
     allowed_from: &[&str],
     action: &str,
-    txn_arc: std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    txn_arc: RlsTxnCell,
 ) -> ApiResponse<Inquiry> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

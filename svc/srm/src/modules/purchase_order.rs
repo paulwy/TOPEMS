@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -68,7 +69,7 @@ pub async fn list_purchase_orders(
     Query(params): Query<PurchaseOrderQueryParams>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -167,7 +168,7 @@ pub async fn create_purchase_order(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -303,7 +304,7 @@ pub async fn get_purchase_order(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -354,7 +355,7 @@ pub async fn update_purchase_order(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -478,7 +479,7 @@ pub async fn delete_purchase_order(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

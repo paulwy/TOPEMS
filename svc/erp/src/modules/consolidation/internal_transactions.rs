@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -29,7 +30,7 @@ pub async fn list_internal_transactions(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<InternalTransaction>> {
     let mut guard = txn_arc.lock().await;
@@ -119,7 +120,7 @@ pub async fn get_internal_transaction(
     State(_state): State<ApiState>,
     Path(transaction_id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<InternalTransaction> {
     let mut guard = txn_arc.lock().await;
@@ -180,7 +181,7 @@ pub async fn create_internal_transaction(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {
@@ -335,7 +336,7 @@ pub async fn update_internal_transaction(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {
@@ -476,7 +477,7 @@ pub async fn confirm_internal_transaction(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<InternalTransaction> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-ledger:approve") {
@@ -569,7 +570,7 @@ pub async fn dispute_internal_transaction(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<DisputeInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {

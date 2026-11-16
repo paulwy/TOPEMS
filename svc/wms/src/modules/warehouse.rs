@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef},
     http::HeaderMap,
@@ -105,7 +106,7 @@ pub async fn list_warehouses(
     axum::extract::Query(params): axum::extract::Query<PaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -219,7 +220,7 @@ pub async fn create_warehouse(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     axum::extract::Json(req): axum::extract::Json<CreateWarehouseRequest>,
 ) -> ApiResponse<Warehouse> {
@@ -342,7 +343,7 @@ pub async fn get_warehouse(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Warehouse> {
     let mut guard = txn_arc.lock().await;
@@ -418,7 +419,7 @@ pub async fn update_warehouse(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     axum::extract::Json(req): axum::extract::Json<UpdateWarehouseRequest>,
 ) -> ApiResponse<Warehouse> {
@@ -567,7 +568,7 @@ pub async fn delete_warehouse(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

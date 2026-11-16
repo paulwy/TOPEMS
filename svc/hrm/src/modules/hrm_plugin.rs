@@ -2,6 +2,7 @@
 //!
 //! Implements the plugin interface protocol for integration with unified-core
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     routing::get,
@@ -118,7 +119,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
 pub async fn plugin_health_check(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

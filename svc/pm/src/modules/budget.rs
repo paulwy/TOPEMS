@@ -20,8 +20,7 @@ use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 use rust_decimal::Decimal;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 /// 超支硬拦截（业务拍板 A，2026-10-25）：
 /// 登记/更新预算项前校验「预算项合计 ≤ 预算总额」，超支即 422 拒绝并回显口径。
@@ -157,7 +156,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_budgets(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Budget>> {
     let mut guard = txn_arc.lock().await;
@@ -203,7 +202,7 @@ async fn get_project_budgets(
 )]
 async fn get_budget(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
@@ -235,7 +234,7 @@ async fn get_budget(
 
 async fn create_budget(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
@@ -317,7 +316,7 @@ async fn create_budget(
 
 async fn update_budget(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -424,7 +423,7 @@ async fn update_budget(
 )]
 async fn submit_budget(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -512,7 +511,7 @@ async fn submit_budget(
 )]
 async fn approve_budget(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -600,7 +599,7 @@ async fn approve_budget(
 )]
 async fn get_budget_items(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<BudgetItem>> {
     let mut guard = txn_arc.lock().await;
@@ -633,7 +632,7 @@ async fn get_budget_items(
 
 async fn create_budget_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -702,7 +701,7 @@ async fn create_budget_item(
 )]
 async fn update_budget_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateBudgetItemRequest>,
 ) -> ApiResponse<BudgetItem> {
@@ -758,7 +757,7 @@ async fn update_budget_item(
 
 async fn delete_budget_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

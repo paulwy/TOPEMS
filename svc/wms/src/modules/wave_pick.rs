@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -98,7 +99,7 @@ pub async fn list_wave_picks(
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<WavePick>> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -196,7 +197,7 @@ pub async fn create_wave_pick(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateWavePickRequest>,
 ) -> ApiResponse<WavePick> {
@@ -308,7 +309,7 @@ pub async fn get_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -359,7 +360,7 @@ pub async fn update_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<WavePick> {
@@ -479,7 +480,7 @@ pub async fn delete_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -592,7 +593,7 @@ pub async fn list_wave_pick_items(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -657,7 +658,7 @@ pub async fn assign_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<AssignWavePickRequest>,
 ) -> ApiResponse<WavePick> {
@@ -766,7 +767,7 @@ pub async fn start_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -877,7 +878,7 @@ pub async fn complete_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -988,7 +989,7 @@ pub async fn cancel_wave_pick(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -1102,7 +1103,7 @@ pub async fn pick_line(
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1186,7 +1187,7 @@ pub async fn short_pick_line(
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {

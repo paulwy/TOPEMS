@@ -17,8 +17,7 @@ use crate::models::quality::{
 };
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 // ==================== Pure functions ====================
 
@@ -77,7 +76,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_quality_checks(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<QualityCheck>> {
     let mut guard = txn_arc.lock().await;
@@ -123,7 +122,7 @@ async fn get_project_quality_checks(
 )]
 async fn get_quality_check(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<QualityCheck> {
     let mut guard = txn_arc.lock().await;
@@ -156,7 +155,7 @@ async fn get_quality_check(
 
 async fn create_quality_check(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -211,7 +210,7 @@ async fn create_quality_check(
 
 async fn update_quality_check(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
 ) -> ApiResponse<QualityCheck> {
@@ -286,7 +285,7 @@ async fn update_quality_check(
 )]
 async fn get_project_defects(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Defect>> {
     let mut guard = txn_arc.lock().await;
@@ -332,7 +331,7 @@ async fn get_project_defects(
 )]
 async fn get_defect(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Defect> {
     let mut guard = txn_arc.lock().await;
@@ -366,7 +365,7 @@ async fn get_defect(
 
 async fn create_defect(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -419,7 +418,7 @@ async fn create_defect(
 
 async fn update_defect(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDefectRequest>,
 ) -> ApiResponse<Defect> {
@@ -474,7 +473,7 @@ async fn update_defect(
 
 async fn delete_defect(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;

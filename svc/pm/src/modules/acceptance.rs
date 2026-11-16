@@ -20,8 +20,7 @@ use crate::models::acceptance::{
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -65,7 +64,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn get_project_plans(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptancePlan>> {
     let mut guard = txn_arc.lock().await;
@@ -111,7 +110,7 @@ async fn get_project_plans(
 )]
 async fn get_plan(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AcceptancePlan> {
     let mut guard = txn_arc.lock().await;
@@ -145,7 +144,7 @@ async fn get_plan(
 
 async fn create_plan(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -233,7 +232,7 @@ async fn create_plan(
 
 async fn update_plan(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -346,7 +345,7 @@ async fn update_plan(
 )]
 async fn get_plan_items(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plan_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptanceItem>> {
     let mut guard = txn_arc.lock().await;
@@ -379,7 +378,7 @@ async fn get_plan_items(
 
 async fn create_plan_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -440,7 +439,7 @@ async fn create_plan_item(
 )]
 async fn update_plan_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceItemRequest>,
 ) -> ApiResponse<AcceptanceItem> {
@@ -485,7 +484,7 @@ async fn update_plan_item(
 
 async fn delete_plan_item(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -533,7 +532,7 @@ async fn delete_plan_item(
 )]
 async fn get_project_records(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptanceRecord>> {
     let mut guard = txn_arc.lock().await;
@@ -579,7 +578,7 @@ async fn get_project_records(
 )]
 async fn get_record(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AcceptanceRecord> {
     let mut guard = txn_arc.lock().await;
@@ -626,7 +625,7 @@ async fn get_record(
 )]
 async fn create_record(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -699,7 +698,7 @@ async fn create_record(
 
 async fn update_record(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceRecordRequest>,
 ) -> ApiResponse<AcceptanceRecord> {

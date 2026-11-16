@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -110,7 +111,7 @@ async fn list_analyses(
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
 
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -177,7 +178,7 @@ async fn list_analyses(
 async fn create_analysis(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
@@ -264,7 +265,7 @@ async fn get_analysis(
     Path(id): Path<Uuid>,
 
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -348,7 +349,7 @@ async fn get_entity_analyses(
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;

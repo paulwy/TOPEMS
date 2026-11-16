@@ -29,8 +29,7 @@ pub fn resource_utilization(allocated_hours: f64, actual_hours: f64) -> f64 {
     (actual_hours / allocated_hours) * 100.0
 }
 
-type RlsTxnArc =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -66,7 +65,7 @@ pub fn create_routes(db: Db) -> Router {
 )]
 async fn list_resources(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectResource>> {
     let mut guard = txn_arc.lock().await;
@@ -114,7 +113,7 @@ async fn list_resources(
 )]
 async fn add_resource(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -200,7 +199,7 @@ async fn add_resource(
 )]
 async fn get_resource(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectResource> {
     let mut guard = txn_arc.lock().await;
@@ -252,7 +251,7 @@ async fn get_resource(
 )]
 async fn update_resource(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateResourceRequest>,
 ) -> ApiResponse<ProjectResource> {
@@ -336,7 +335,7 @@ async fn update_resource(
 )]
 async fn remove_resource(
     State(db): State<Db>,
-    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;

@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -111,7 +112,7 @@ pub async fn list_customers(
     Query(params): Query<CustomerListParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PaginatedResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -217,7 +218,7 @@ pub async fn get_customer(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
@@ -262,7 +263,7 @@ pub async fn create_customer(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<CreateCustomerRequest>,
 ) -> ApiResponse<Customer> {
@@ -343,7 +344,7 @@ pub async fn update_customer(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<UpdateCustomerRequest>,
 ) -> ApiResponse<Customer> {
@@ -431,7 +432,7 @@ pub async fn delete_customer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -579,7 +580,7 @@ pub async fn batch_list_customers(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchListRequest>,
 ) -> ApiResponse<Vec<Customer>> {
@@ -636,7 +637,7 @@ pub async fn batch_create_customers(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchCreateRequest>,
 ) -> ApiResponse<Vec<Customer>> {
@@ -689,7 +690,7 @@ async fn batch_update_customers(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchUpdateRequest>,
 ) -> ApiResponse<Vec<Customer>> {
@@ -748,7 +749,7 @@ async fn batch_delete_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchDeleteRequest>,
 ) -> ApiResponse<String> {
@@ -829,7 +830,7 @@ pub async fn change_customer_status(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<StatusUpdateRequest>,
 ) -> ApiResponse<Customer> {
@@ -890,7 +891,7 @@ pub async fn batch_change_status(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchStatusRequest>,
 ) -> ApiResponse<Vec<Customer>> {
@@ -964,7 +965,7 @@ pub async fn batch_change_category(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(body): Json<BatchCategoryRequest>,
 ) -> ApiResponse<Vec<Customer>> {
@@ -1028,7 +1029,7 @@ pub async fn get_customer_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<CustomerStatsResponse> {
     let mut guard = txn_arc.lock().await;
@@ -1095,7 +1096,7 @@ pub async fn list_recent_customers(
     Query(params): Query<RecentParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<CustomerRecentResponse> {
     let mut guard = txn_arc.lock().await;

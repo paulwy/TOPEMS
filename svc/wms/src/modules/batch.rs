@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::{get, post},
@@ -48,7 +49,7 @@ pub async fn list_batches(
     headers: axum::http::HeaderMap,
     Query(params): Query<BatchQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -153,7 +154,7 @@ pub async fn create_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateBatchRequest>,
 ) -> ApiResponse<Batch> {
@@ -258,7 +259,7 @@ pub async fn get_batch(
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Batch> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -318,7 +319,7 @@ pub async fn update_batch(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateBatchRequest>,
 ) -> ApiResponse<Batch> {
@@ -435,7 +436,7 @@ pub async fn delete_batch(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -502,7 +503,7 @@ pub async fn get_batch_statistics(
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<BatchStatistics> {
     let mut guard = txn_arc.lock().await;
@@ -579,7 +580,7 @@ pub async fn get_expiring_soon(
     headers: axum::http::HeaderMap,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<Batch>> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -642,7 +643,7 @@ pub async fn get_expired(
     headers: axum::http::HeaderMap,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<Batch>> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -702,7 +703,7 @@ pub async fn adjust_quantity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<Batch> {
@@ -785,7 +786,7 @@ pub async fn transfer_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<Batch> {

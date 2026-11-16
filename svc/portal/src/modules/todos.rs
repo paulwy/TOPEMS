@@ -22,8 +22,7 @@ use crate::{
     utils::user_context::extract_bearer_token,
 };
 
-type RequestTxn =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 /// 待办读写一律要求请求令牌中带有合法非 nil 租户，不从 header 回退。
 fn require_todo_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiResponse<T>> {
@@ -37,7 +36,7 @@ fn require_todo_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiResponse<T>>
 
 async fn load_local_todos(
     db: &Db,
-    txn_arc: &RequestTxn,
+    txn_arc: &RlsTxnCell,
     user_id: &str,
     tenant_id: uuid::Uuid,
 ) -> Vec<Todo> {
@@ -131,7 +130,7 @@ fn default_todos() -> Vec<Todo> {
 
 async fn add_local_todo(
     db: &Db,
-    txn_arc: &RequestTxn,
+    txn_arc: &RlsTxnCell,
     user_id: &str,
     tenant_id: uuid::Uuid,
     todo: NewTodo,
@@ -191,7 +190,7 @@ async fn add_local_todo(
 
 async fn complete_local_todo(
     db: &Db,
-    txn_arc: &RequestTxn,
+    txn_arc: &RlsTxnCell,
     user_id: &str,
     tenant_id: uuid::Uuid,
     id: &str,
@@ -244,7 +243,7 @@ async fn complete_local_todo(
 
 async fn delete_local_todo(
     db: &Db,
-    txn_arc: &RequestTxn,
+    txn_arc: &RlsTxnCell,
     user_id: &str,
     tenant_id: uuid::Uuid,
     id: &str,
@@ -325,7 +324,7 @@ pub async fn get_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<RequestTxn>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Todo>> {
     let tenant_id = match require_todo_tenant(&claims) {
         Ok(t) => t,
@@ -479,7 +478,7 @@ fn format_service_name(service_type: &str) -> String {
 pub async fn add_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<RequestTxn>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(todo): Json<NewTodo>,
 ) -> ApiResponse<Todo> {
     let tenant_id = match require_todo_tenant(&claims) {
@@ -506,7 +505,7 @@ pub async fn add_todo(
 pub async fn complete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<RequestTxn>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = match require_todo_tenant(&claims) {
@@ -538,7 +537,7 @@ pub async fn complete_todo(
 pub async fn delete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<RequestTxn>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = match require_todo_tenant(&claims) {

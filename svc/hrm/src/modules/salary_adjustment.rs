@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, put},
@@ -64,7 +65,7 @@ pub async fn list_salary_adjustments(
     State(_state): State<ApiState>,
     Query(params): Query<SalaryAdjustmentPaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -164,7 +165,7 @@ pub async fn get_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
@@ -224,7 +225,7 @@ pub async fn get_salary_adjustment(
 pub async fn create_salary_adjustment(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSalaryAdjustmentRequest>,
 ) -> ApiResponse<SalaryAdjustment> {
@@ -303,7 +304,7 @@ pub async fn update_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
@@ -419,7 +420,7 @@ pub async fn approve_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApproveSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
@@ -481,7 +482,7 @@ pub async fn reject_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RejectSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {

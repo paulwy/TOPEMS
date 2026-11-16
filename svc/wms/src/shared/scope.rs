@@ -14,17 +14,13 @@
 //!
 //! 其余非库存写路由继续复用请求事务，只做租户收敛与 0 行校验。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::http::HeaderMap;
-use sqlx::{PgPool, Postgres, Transaction};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
-
-/// 中间件注入请求 extensions 的 RLS 事务单元。
-pub type RlsTxnCell = Arc<Mutex<Option<Transaction<'static, Postgres>>>>;
 
 /// WMS 模块的 `Db` 视图（`wms, public` 作用域）。
 pub fn wms_db(pool: &PgPool) -> Db {

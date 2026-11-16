@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use std::collections::HashMap;
@@ -22,7 +23,7 @@ pub async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Query(query): Query<HashMap<String, String>>,
 ) -> ApiResponse<Vec<mes_qms_integration::MesQmsSync>> {
@@ -76,7 +77,7 @@ pub async fn list_mes_qms_sync_api(
 pub async fn get_mes_qms_sync_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
@@ -114,7 +115,7 @@ pub async fn get_mes_qms_sync_api(
 pub async fn get_mes_qms_stats_api(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<mes_qms_integration::SyncStats> {
     let mut guard = txn_arc.lock().await;
@@ -153,7 +154,7 @@ pub async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
@@ -201,7 +202,7 @@ pub async fn sync_quality_result_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
@@ -252,7 +253,7 @@ pub async fn sync_trace_chain_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
@@ -300,7 +301,7 @@ pub async fn defect_handling_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
