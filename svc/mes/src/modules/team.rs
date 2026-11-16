@@ -13,6 +13,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::require_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -182,6 +183,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_teams(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListTeamsQuery>,
 ) -> ApiResponse<ListTeamsResponse> {
@@ -190,7 +192,13 @@ pub async fn list_teams(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -364,6 +372,7 @@ pub async fn list_teams(
 )]
 pub async fn get_team(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TeamResponse> {
@@ -372,7 +381,13 @@ pub async fn get_team(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -432,6 +447,7 @@ pub async fn get_team(
 
 pub async fn create_team(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateTeamRequest>,
@@ -455,7 +471,13 @@ pub async fn create_team(
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin scope for create_team: {}", e);
@@ -568,6 +590,7 @@ pub async fn create_team(
 
 pub async fn update_team(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTeamRequest>,
@@ -578,7 +601,13 @@ pub async fn update_team(
         return e;
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -667,6 +696,7 @@ pub async fn update_team(
 
 pub async fn delete_team(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -676,7 +706,13 @@ pub async fn delete_team(
         return e;
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -735,6 +771,7 @@ pub async fn delete_team(
 )]
 pub async fn get_team_members(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ListTeamMembersResponse> {
@@ -743,7 +780,13 @@ pub async fn get_team_members(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -799,6 +842,7 @@ pub async fn get_team_members(
 
 pub async fn add_team_member(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -820,7 +864,13 @@ pub async fn add_team_member(
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin scope for add_team_member: {}", e);
@@ -932,6 +982,7 @@ pub async fn add_team_member(
 )]
 pub async fn remove_team_member(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((id, member_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<String> {
@@ -943,7 +994,13 @@ pub async fn remove_team_member(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);

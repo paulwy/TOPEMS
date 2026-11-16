@@ -16,6 +16,7 @@ use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::aps_fsm::schedule_can_transition;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -222,6 +223,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 #[allow(clippy::as_conversions)]
 pub async fn list_production_schedules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProductionSchedulesQuery>,
 ) -> ApiResponse<ListProductionSchedulesResponse> {
@@ -237,7 +239,13 @@ pub async fn list_production_schedules(
 
     // 租户作用域读：production_schedules 受 RLS（ENABLE+FORCE）保护，
     // 裸 pool 不带 app.tenant_id GUC，策略收紧后恒为 0 行。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -453,6 +461,7 @@ pub async fn list_production_schedules(
 )]
 pub async fn create_production_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionScheduleRequest>,
 ) -> ApiResponse<ProductionScheduleResponse> {
@@ -470,7 +479,13 @@ pub async fn create_production_schedule(
     let now = Utc::now();
 
     // 写作用域：建成单与回查订单号同属一个租户事务，避免裸 pool 读写受 RLS 拒止。
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -596,6 +611,7 @@ Utc::now(),
 )]
 pub async fn get_production_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionScheduleResponse> {
@@ -611,7 +627,13 @@ pub async fn get_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -706,6 +728,7 @@ pub async fn get_production_schedule(
 )]
 pub async fn update_production_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionScheduleRequest>,
@@ -722,7 +745,13 @@ pub async fn update_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -831,6 +860,7 @@ pub async fn update_production_schedule(
 )]
 pub async fn delete_production_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -846,7 +876,13 @@ pub async fn delete_production_schedule(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -901,6 +937,7 @@ pub async fn delete_production_schedule(
 )]
 pub async fn adjust_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(_id): Path<String>,
     Json(req): Json<AdjustScheduleRequest>,
@@ -918,7 +955,13 @@ pub async fn adjust_schedule(
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -970,6 +1013,7 @@ pub async fn adjust_schedule(
 )]
 pub async fn get_gantt_data(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<GanttDataResponse> {
     if let Err(e) = check_permission(
@@ -984,7 +1028,13 @@ pub async fn get_gantt_data(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1208,6 +1258,7 @@ pub struct ScheduleActionResponse {
 async fn transition_schedule(
     state: &AppState,
     claims: &Claims,
+    txn_arc: &RlsTxnCell,
     id: Uuid,
     to_status: &str,
     comment: Option<String>,
@@ -1230,7 +1281,13 @@ async fn transition_schedule(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1323,11 +1380,12 @@ fn get_schedule_tenant_id(claims: &Claims) -> Option<Uuid> {
 )]
 pub async fn submit_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "released", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "released", req.comment).await
 }
 
 #[utoipa::path(
@@ -1345,11 +1403,12 @@ pub async fn submit_schedule(
 )]
 pub async fn release_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "released", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "released", req.comment).await
 }
 
 #[utoipa::path(
@@ -1367,11 +1426,12 @@ pub async fn release_schedule(
 )]
 pub async fn hold_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "pending", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "pending", req.comment).await
 }
 
 #[utoipa::path(
@@ -1389,11 +1449,12 @@ pub async fn hold_schedule(
 )]
 pub async fn start_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "running", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "running", req.comment).await
 }
 
 #[utoipa::path(
@@ -1411,11 +1472,12 @@ pub async fn start_schedule(
 )]
 pub async fn complete_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "completed", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "completed", req.comment).await
 }
 
 #[utoipa::path(
@@ -1433,9 +1495,10 @@ pub async fn complete_schedule(
 )]
 pub async fn cancel_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
 ) -> ApiResponse<ScheduleActionResponse> {
-    transition_schedule(&state, &claims, id, "cancelled", req.comment).await
+    transition_schedule(&state, &claims, &txn_arc, id, "cancelled", req.comment).await
 }

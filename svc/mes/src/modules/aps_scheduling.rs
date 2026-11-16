@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -960,6 +961,7 @@ async fn save_schedule_result(
 )]
 pub async fn execute_aps_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApsScheduleRequest>,
 ) -> ApiResponse<ApsScheduleResult> {
@@ -983,7 +985,13 @@ pub async fn execute_aps_schedule(
             .unwrap_or(Uuid::nil())
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1020,6 +1028,7 @@ pub async fn execute_aps_schedule(
 #[allow(clippy::as_conversions)]
 pub async fn simulate_aps_schedule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SimulateRequest>,
 ) -> ApiResponse<SimulateResult> {
@@ -1052,7 +1061,13 @@ pub async fn simulate_aps_schedule(
             .unwrap_or(Uuid::nil())
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1113,6 +1128,7 @@ pub async fn simulate_aps_schedule(
 )]
 pub async fn check_schedule_constraints(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConstraintCheckRequest>,
 ) -> ApiResponse<Vec<ConstraintCheckResult>> {
@@ -1126,7 +1142,13 @@ pub async fn check_schedule_constraints(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1367,6 +1389,7 @@ pub async fn check_schedule_constraints(
 #[allow(clippy::indexing_slicing)]
 pub async fn get_optimization_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<OptimizationReport> {
     if let Err(e) = check_permission(
@@ -1382,7 +1405,13 @@ pub async fn get_optimization_report(
     // 统计订单状态
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1542,6 +1571,7 @@ pub async fn get_optimization_report(
 )]
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<BottleneckAnalysis> {
@@ -1563,7 +1593,13 @@ pub async fn get_bottleneck_analysis(
     // 吞吐量分析
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1730,6 +1766,7 @@ pub async fn get_bottleneck_analysis(
 )]
 pub async fn check_order_feasibility(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> ApiResponse<ConstraintCheckResult> {
@@ -1750,7 +1787,13 @@ pub async fn check_order_feasibility(
         check_personnel: Some(true),
     };
 
-    let result = check_schedule_constraints(State(state), Extension(claims), Json(req)).await;
+    let result = check_schedule_constraints(
+        State(state),
+        Extension(txn_arc),
+        Extension(claims),
+        Json(req),
+    )
+    .await;
 
     // 从结果中提取第一个
     let data = result.data;

@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -202,13 +203,20 @@ pub struct WorkCalendarResponse {
 
 async fn list_workshops(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<ListQuery>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -287,13 +295,20 @@ async fn list_workshops(
 
 async fn get_workshop(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -330,6 +345,7 @@ async fn get_workshop(
 
 async fn create_workshop(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateWorkshopRequest>,
@@ -342,7 +358,13 @@ async fn create_workshop(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 车间创建开启事务失败: {}", e);
@@ -388,6 +410,7 @@ async fn create_workshop(
 
 async fn update_workshop(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkshopRequest>,
@@ -395,7 +418,13 @@ async fn update_workshop(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 车间更新开启事务失败: {}", e);
@@ -437,13 +466,20 @@ async fn update_workshop(
 
 async fn delete_workshop(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 车间删除开启事务失败: {}", e);
@@ -476,6 +512,7 @@ async fn delete_workshop(
 
 async fn list_production_lines(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<ListQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -484,7 +521,13 @@ async fn list_production_lines(
     {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -561,6 +604,7 @@ async fn list_production_lines(
 
 async fn get_production_line(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -569,7 +613,13 @@ async fn get_production_line(
     {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -605,6 +655,7 @@ async fn get_production_line(
 
 async fn create_production_line(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProductionLineRequest>,
@@ -619,7 +670,13 @@ async fn create_production_line(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 产线创建开启事务失败: {}", e);
@@ -664,6 +721,7 @@ async fn create_production_line(
 
 async fn update_production_line(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionLineRequest>,
@@ -673,7 +731,13 @@ async fn update_production_line(
     {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 产线更新开启事务失败: {}", e);
@@ -714,6 +778,7 @@ async fn update_production_line(
 
 async fn delete_production_line(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -722,7 +787,13 @@ async fn delete_production_line(
     {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 产线删除开启事务失败: {}", e);
@@ -755,13 +826,20 @@ async fn delete_production_line(
 
 async fn list_shifts(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<ListQuery>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftRead).await {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -840,13 +918,20 @@ async fn list_shifts(
 
 async fn get_shift(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftRead).await {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -884,6 +969,7 @@ async fn get_shift(
 
 async fn create_shift(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateShiftRequest>,
@@ -896,7 +982,13 @@ async fn create_shift(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 班次创建开启事务失败: {}", e);
@@ -943,6 +1035,7 @@ async fn create_shift(
 
 async fn update_shift(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateShiftRequest>,
@@ -950,7 +1043,13 @@ async fn update_shift(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 班次更新开启事务失败: {}", e);
@@ -994,13 +1093,20 @@ async fn update_shift(
 
 async fn delete_shift(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ShiftWrite).await {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 班次删除开启事务失败: {}", e);
@@ -1033,6 +1139,7 @@ async fn delete_shift(
 
 async fn list_work_calendars(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<ListQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1041,7 +1148,13 @@ async fn list_work_calendars(
     {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1120,6 +1233,7 @@ async fn list_work_calendars(
 
 async fn get_work_calendar(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1128,7 +1242,13 @@ async fn get_work_calendar(
     {
         return e;
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1166,6 +1286,7 @@ async fn get_work_calendar(
 
 async fn create_work_calendar(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateWorkCalendarRequest>,
@@ -1180,7 +1301,13 @@ async fn create_work_calendar(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 日历创建开启事务失败: {}", e);
@@ -1227,6 +1354,7 @@ async fn create_work_calendar(
 
 async fn update_work_calendar(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkCalendarRequest>,
@@ -1236,7 +1364,13 @@ async fn update_work_calendar(
     {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 日历更新开启事务失败: {}", e);
@@ -1280,6 +1414,7 @@ async fn update_work_calendar(
 
 async fn delete_work_calendar(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -1288,7 +1423,13 @@ async fn delete_work_calendar(
     {
         return e;
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[mes] 日历删除开启事务失败: {}", e);

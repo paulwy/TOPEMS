@@ -10,6 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use tracing::{error, info};
 
 use crate::shared::AppState;
@@ -207,6 +208,7 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn get_capacity_utilization(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<CapacityUtilizationResponse> {
@@ -215,7 +217,17 @@ pub async fn get_capacity_utilization(
     let tenant_id = get_tenant_id(&claims);
 
     // 租户作用域读：mes 分析表受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CapacityUtilizationResponse {
+            heatmap: vec![],
+            avg_utilization: 0.0,
+            total_equipment: 0,
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);
@@ -302,6 +314,7 @@ pub async fn get_capacity_utilization(
 )]
 pub async fn get_energy_cost(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<EnergyCostResponse> {
@@ -309,7 +322,18 @@ pub async fn get_energy_cost(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(EnergyCostResponse {
+            per_unit_trend: vec![],
+            energy_mix: vec![],
+            workshop_top_n: vec![],
+            total_cost: 0.0,
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);
@@ -456,6 +480,7 @@ pub async fn get_energy_cost(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_equipment_mtbf(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<EquipmentMtbfResponse> {
@@ -463,7 +488,18 @@ pub async fn get_equipment_mtbf(
     let days = query.days.unwrap_or(90);
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(EquipmentMtbfResponse {
+            by_equipment_type: vec![],
+            fault_reasons: vec![],
+            scatter: vec![],
+            avg_mtbf: 0.0,
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);
@@ -609,6 +645,7 @@ pub async fn get_equipment_mtbf(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_delivery_analytics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<DeliveryAnalyticsResponse> {
@@ -616,7 +653,18 @@ pub async fn get_delivery_analytics(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(DeliveryAnalyticsResponse {
+            trend: vec![],
+            on_time_rate: 0.0,
+            total_orders: 0,
+            delayed_orders: 0,
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);
@@ -710,6 +758,7 @@ pub async fn get_delivery_analytics(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_oee_dashboard(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<OeeDashboardResponse> {
@@ -717,7 +766,20 @@ pub async fn get_oee_dashboard(
     let days = query.days.unwrap_or(7);
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(OeeDashboardResponse {
+            avg_oee: 0.0,
+            avg_availability: 0.0,
+            avg_performance: 0.0,
+            avg_quality_rate: 0.0,
+            by_equipment: vec![],
+            trend: vec![],
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);
@@ -858,6 +920,7 @@ pub async fn get_oee_dashboard(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_pareto(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<QualityParetoResponse> {
@@ -865,7 +928,17 @@ pub async fn get_quality_pareto(
     let days = query.days.unwrap_or(30);
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(QualityParetoResponse {
+            pareto: vec![],
+            total_defects: 0,
+            pass_rate: 0.0,
+        });
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             error!("建立只读作用域失败: {}", e);

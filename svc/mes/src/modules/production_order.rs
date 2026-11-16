@@ -14,6 +14,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::resolve_create_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{commit_retry, EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
@@ -276,6 +277,7 @@ fn normalize_page_params(page: Option<i32>, page_size: Option<i32>) -> (i64, i64
 #[allow(clippy::as_conversions)]
 pub async fn list_production_orders(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProductionOrdersQuery>,
 ) -> ApiResponse<ListProductionOrdersResponse> {
@@ -323,7 +325,13 @@ pub async fn list_production_orders(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -480,6 +488,7 @@ pub async fn list_production_orders(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -511,7 +520,13 @@ pub async fn create_production_order(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin scope for create_production_order: {}", e);
@@ -638,6 +653,7 @@ req.planned_start_date.map(|d| d.date_naive()),
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_order_from_erp(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFromErpRequest>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -670,7 +686,13 @@ pub async fn create_order_from_erp(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to begin scope for create_order_from_erp: {}", e);
@@ -772,6 +794,7 @@ planned_start.date_naive(),
 )]
 pub async fn get_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -783,7 +806,13 @@ pub async fn get_production_order(
 
     // 详情读取同样按 Claims 租户隔离 + 过滤软删除，避免跨租户 200 或已删单可读。
     let tenant_id = get_tenant_id(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -901,6 +930,7 @@ pub async fn get_production_order(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionOrderRequest>,
@@ -919,7 +949,13 @@ pub async fn update_production_order(
     // `Db::scope()` 在独立事务上同时落 search_path 与请求租户 GUC，RLS 与内联谓词可见。
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1019,6 +1055,7 @@ pub async fn update_production_order(
 )]
 pub async fn delete_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -1034,7 +1071,13 @@ pub async fn delete_production_order(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1090,6 +1133,7 @@ pub async fn delete_production_order(
 )]
 pub async fn start_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -1106,7 +1150,13 @@ pub async fn start_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1195,6 +1245,7 @@ pub async fn start_production_order(
 )]
 pub async fn complete_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -1211,7 +1262,13 @@ pub async fn complete_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1301,6 +1358,7 @@ pub async fn complete_production_order(
 )]
 pub async fn cancel_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -1317,7 +1375,13 @@ pub async fn cancel_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1404,6 +1468,7 @@ pub async fn cancel_production_order(
 )]
 pub async fn release_production_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionOrderResponse> {
@@ -1420,7 +1485,13 @@ pub async fn release_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);

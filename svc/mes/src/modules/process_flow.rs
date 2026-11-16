@@ -13,6 +13,7 @@ use sqlx::{types::Uuid, Row};
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -206,6 +207,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 #[allow(clippy::as_conversions)]
 pub async fn list_process_flows(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProcessFlowsQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -219,7 +221,13 @@ pub async fn list_process_flows(
     let offset = (page - 1) * page_size;
 
     // 租户作用域读：process_flows 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -382,6 +390,7 @@ pub async fn list_process_flows(
 )]
 pub async fn get_process_flow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<ProcessFlowResponse> {
@@ -397,7 +406,13 @@ pub async fn get_process_flow(
         }
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -452,6 +467,7 @@ pub async fn get_process_flow(
 
 pub async fn create_process_flow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateProcessFlowRequest>,
 ) -> ApiResponse<ProcessFlowResponse> {
@@ -472,7 +488,13 @@ pub async fn create_process_flow(
         .unwrap_or_default();
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -556,6 +578,7 @@ struct ProcessFlowUpdateRow {
 
 pub async fn update_process_flow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateProcessFlowRequest>,
@@ -584,7 +607,13 @@ pub async fn update_process_flow(
         .unwrap_or_default();
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -661,6 +690,7 @@ pub async fn update_process_flow(
 
 pub async fn delete_process_flow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
@@ -679,7 +709,13 @@ pub async fn delete_process_flow(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -727,6 +763,7 @@ pub async fn delete_process_flow(
 )]
 pub async fn get_flow_steps(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
@@ -742,7 +779,13 @@ pub async fn get_flow_steps(
         }
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -813,6 +856,7 @@ pub async fn get_flow_steps(
 
 pub async fn add_flow_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<AddProcessFlowStepRequest>,
@@ -854,7 +898,13 @@ pub async fn add_flow_step(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -962,6 +1012,7 @@ pub async fn add_flow_step(
 )]
 pub async fn update_flow_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((_id, step_id)): Path<(String, String)>,
     Json(body): Json<UpdateProcessFlowStepRequest>,
@@ -993,7 +1044,13 @@ pub async fn update_flow_step(
             .collect()
     });
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1091,6 +1148,7 @@ pub async fn update_flow_step(
 
 pub async fn remove_flow_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((_id, step_id)): Path<(String, String)>,
 ) -> ApiResponse<String> {
@@ -1107,7 +1165,13 @@ pub async fn remove_flow_step(
         }
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1159,6 +1223,7 @@ pub async fn remove_flow_step(
 )]
 pub async fn reorder_flow_steps(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<ReorderFlowStepsRequest>,
@@ -1176,7 +1241,13 @@ pub async fn reorder_flow_steps(
         }
     };
 
-    let mut tx = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut tx = match state.db.scope_with(txn).await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -1184,8 +1255,9 @@ pub async fn reorder_flow_steps(
         }
     };
 
+    let mut write_error: Option<sqlx::Error> = None;
     for (idx, step_uuid) in body.step_ids.iter().enumerate() {
-        if let Err(e) = sqlx::query!(
+        match sqlx::query!(
             r#"
             UPDATE process_flow_steps
             SET sequence = $1
@@ -1198,9 +1270,19 @@ pub async fn reorder_flow_steps(
         .execute(&mut tx)
         .await
         {
-            tracing::error!("Failed to reorder step: {}", e);
-            return ApiResponse::server_error("重排序工艺流程步骤失败");
+            Ok(_) => {}
+            Err(e) => {
+                write_error = Some(e);
+                break;
+            }
         }
+    }
+    if let Some(e) = write_error {
+        // 写入失败返回 500：事务归属 tenant_middleware，非 2xx 由其 finalizer 统一回滚，
+        // 已写入的步骤不会落库（handler 持有的 ScopedTxn 无法自行回滚）。
+        // step_ids 为 Vec<Uuid>，反序列化阶段即完成校验，进入本循环时不存在「部分写入后才发现的非法入参」。
+        tracing::error!("Failed to reorder step: {}", e);
+        return ApiResponse::server_error("重排序工艺流程步骤失败");
     }
 
     if let Err(e) = tx.commit().await {
@@ -1208,7 +1290,7 @@ pub async fn reorder_flow_steps(
         return ApiResponse::server_error("重排序工艺流程步骤失败");
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1292,6 +1374,7 @@ pub async fn reorder_flow_steps(
 )]
 pub async fn analyze_capacity(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<CapacityAnalysisResponse> {
@@ -1307,7 +1390,13 @@ pub async fn analyze_capacity(
         }
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);

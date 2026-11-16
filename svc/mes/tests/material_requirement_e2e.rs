@@ -49,10 +49,17 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 }
 
 async fn body_of(pool: sqlx::PgPool) -> Value {
+    let txn_cell = app_state::request_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
     let q: ListMaterialRequirementsQuery = serde_json::from_value(json!({})).unwrap();
-    let resp = list_material_requirements(State(state), Extension(claims), Query(q)).await;
+    let resp = list_material_requirements(
+        State(state),
+        Extension(txn_cell),
+        Extension(claims),
+        Query(q),
+    )
+    .await;
     serde_json::to_value(
         resp.data
             .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),

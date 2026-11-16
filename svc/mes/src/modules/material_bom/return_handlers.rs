@@ -6,6 +6,7 @@ use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -17,6 +18,7 @@ use super::models::*;
 
 pub async fn create_material_return(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateMaterialReturnRequest>,
@@ -40,7 +42,13 @@ pub async fn create_material_return(
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -160,6 +168,7 @@ pub async fn create_material_return(
 #[allow(clippy::as_conversions)]
 pub async fn list_material_returns(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListMaterialReturnsQuery>,
 ) -> ApiResponse<ListMaterialReturnsResponse> {
@@ -168,7 +177,13 @@ pub async fn list_material_returns(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -324,6 +339,7 @@ pub async fn list_material_returns(
 )]
 pub async fn get_material_return(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -332,7 +348,13 @@ pub async fn get_material_return(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -414,6 +436,7 @@ pub async fn get_material_return(
 
 pub async fn update_material_return(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialReturnRequest>,
@@ -426,7 +449,13 @@ pub async fn update_material_return(
 
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -495,6 +524,7 @@ now,
 
 pub async fn delete_material_return(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -504,7 +534,13 @@ pub async fn delete_material_return(
         return e;
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);

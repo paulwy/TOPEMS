@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -136,6 +137,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 #[allow(clippy::unwrap_used)]
 pub async fn forward_traceability(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> ApiResponse<TraceChainResponse> {
@@ -149,7 +151,13 @@ pub async fn forward_traceability(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -307,6 +315,7 @@ pub async fn forward_traceability(
 )]
 pub async fn backward_traceability(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
 ) -> ApiResponse<TraceChainResponse> {
@@ -320,7 +329,13 @@ pub async fn backward_traceability(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -467,6 +482,7 @@ pub struct TraceChainQuery {
 )]
 pub async fn get_trace_chain(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TraceChainQuery>,
 ) -> ApiResponse<TraceChainResponse> {
@@ -488,11 +504,22 @@ pub async fn get_trace_chain(
     };
 
     if query.trace_type == "backward" {
-        return backward_traceability(State(state), Extension(claims), Path(query.identifier))
-            .await;
+        return backward_traceability(
+            State(state),
+            Extension(txn_arc),
+            Extension(claims),
+            Path(query.identifier),
+        )
+        .await;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -513,9 +540,19 @@ pub async fn get_trace_chain(
     .await;
     // 只读作用域无需 commit，显式 drop 后把 state 交给下游 handler
     drop(scope);
+    // 下游 handler 会重新取同一把请求事务锁，必须先释放
+    drop(guard);
 
     match order {
-        Ok(Some(_)) => forward_traceability(State(state), Extension(claims), Path(id)).await,
+        Ok(Some(_)) => {
+            forward_traceability(
+                State(state),
+                Extension(txn_arc),
+                Extension(claims),
+                Path(id),
+            )
+            .await
+        }
         Ok(None) => ApiResponse::not_found("追溯对象不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch trace chain: {}", e);
@@ -555,6 +592,7 @@ pub struct ListQualityRecordsResponse {
 )]
 pub async fn list_quality_records(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListQualityRecordsQuery>,
 ) -> ApiResponse<ListQualityRecordsResponse> {
@@ -568,7 +606,13 @@ pub async fn list_quality_records(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);

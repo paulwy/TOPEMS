@@ -20,6 +20,7 @@ use crate::modules::approval_common::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::approval::{
     create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
@@ -156,13 +157,20 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn list_anomaly_alerts(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
 ) -> ApiResponse<Vec<AnomalyAlert>> {
     let mut alerts = Vec::new();
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -233,11 +241,18 @@ pub async fn list_anomaly_alerts(
 )]
 pub async fn get_anomaly_summary(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<AnomalySummary> {
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -316,10 +331,17 @@ pub async fn get_anomaly_summary(
 )]
 pub async fn get_equipment_anomalies(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(equipment_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<AnomalyAlert>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -424,11 +446,18 @@ pub async fn update_anomaly_rule(
 )]
 pub async fn trigger_anomaly_scan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -473,6 +502,7 @@ pub async fn trigger_anomaly_scan(
 )]
 pub async fn get_anomaly_trend(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
 ) -> ApiResponse<Vec<DailyAnomalyCount>> {
@@ -493,7 +523,13 @@ pub async fn get_anomaly_trend(
         30
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);

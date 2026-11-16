@@ -68,6 +68,7 @@ async fn create(
 ) -> topems_shared_core::response::ApiResponse<topems_mes::modules::team::TeamResponse> {
     let mut claims = super_claims();
     claims.tenant_id = Some(tenant.to_string());
+    let txn_cell = app_state::request_txn_cell(&state.pool).await;
     scope_request_tenant(
         RlsRequestTenant {
             tenant: Uuid::parse_str(tenant).unwrap(),
@@ -75,6 +76,7 @@ async fn create(
         },
         create_team(
             State(state),
+            Extension(txn_cell),
             Extension(claims),
             HeaderMap::new(),
             axum::Json(req(team_code)),

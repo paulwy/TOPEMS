@@ -8,6 +8,7 @@ use serde::Serialize;
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -119,6 +120,7 @@ pub struct EquipmentStatusResponse {
 #[allow(clippy::cast_precision_loss, clippy::as_conversions)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<DashboardResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
@@ -128,7 +130,13 @@ pub async fn get_dashboard(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -561,6 +569,7 @@ pub async fn get_dashboard(
 #[allow(clippy::cast_precision_loss, clippy::as_conversions)]
 pub async fn get_order_progress(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OrderProgressResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
@@ -570,7 +579,13 @@ pub async fn get_order_progress(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -651,6 +666,7 @@ pub async fn get_order_progress(
 )]
 pub async fn get_workstation_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<WorkstationStatusResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
@@ -660,7 +676,13 @@ pub async fn get_workstation_status(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -766,6 +788,7 @@ pub async fn get_workstation_status(
 )]
 pub async fn get_quality_trend(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<QualityTrendResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
@@ -775,7 +798,13 @@ pub async fn get_quality_trend(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -862,6 +891,7 @@ pub async fn get_quality_trend(
 )]
 pub async fn get_equipment_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<EquipmentStatusResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
@@ -871,7 +901,13 @@ pub async fn get_equipment_status(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);

@@ -17,6 +17,7 @@ use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
@@ -50,6 +51,7 @@ pub fn create_routes() -> Router<AppState> {
 /// S2：WIP 调拨单详情——按 id 查 wip_transfers 表返回（非空）
 async fn stub_wip_transfer_detail(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
@@ -57,7 +59,13 @@ async fn stub_wip_transfer_detail(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -246,6 +254,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 #[allow(clippy::as_conversions)]
 pub async fn list_wips(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWipsQuery>,
 ) -> ApiResponse<ListWipResponse> {
@@ -253,7 +262,13 @@ pub async fn list_wips(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -429,6 +444,7 @@ pub async fn list_wips(
 )]
 pub async fn create_wip(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateWipRequest>,
@@ -444,7 +460,13 @@ pub async fn create_wip(
         rand::random::<u16>() % 10000
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin scope for create_wip: {}", e);
@@ -566,6 +588,7 @@ Utc::now(),
 )]
 pub async fn get_wip(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WipResponse> {
@@ -573,7 +596,13 @@ pub async fn get_wip(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -655,6 +684,7 @@ pub async fn get_wip(
 )]
 pub async fn update_wip(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWipRequest>,
@@ -663,7 +693,13 @@ pub async fn update_wip(
         return e;
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin scope for update_wip: {}", e);
@@ -759,6 +795,7 @@ pub async fn update_wip(
 )]
 pub async fn delete_wip(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -766,7 +803,13 @@ pub async fn delete_wip(
         return e;
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin scope for delete_wip: {}", e);
@@ -821,6 +864,7 @@ pub async fn delete_wip(
 )]
 pub async fn transfer_wip(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateWipTransferRequest>,
@@ -841,7 +885,13 @@ pub async fn transfer_wip(
         rand::random::<u16>() % 10000
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -1041,6 +1091,7 @@ pub async fn transfer_wip(
 )]
 pub async fn list_wip_transfers(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(wip_id): Path<Uuid>,
 ) -> ApiResponse<Vec<WipTransferResponse>> {
@@ -1048,7 +1099,13 @@ pub async fn list_wip_transfers(
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -1127,13 +1184,20 @@ pub async fn list_wip_transfers(
 )]
 pub async fn get_wip_statistics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<WipStatisticsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);

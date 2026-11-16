@@ -12,6 +12,7 @@ use topems_shared_core::error::TopemsError;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
@@ -190,6 +191,7 @@ pub struct TodayOutputQuery {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TodayOutputQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -212,7 +214,13 @@ pub async fn get_today_production_output(
     // 今日产量按本租户汇总：跨租户按操作员姓名汇总会把他人产量计入本租户看板，
     // 属数据越界。此处用请求租户的只读作用域 + 显式 tenant_id 谓词。
     let tenant_id = get_tenant_id(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -261,6 +269,7 @@ pub async fn get_today_production_output(
 #[allow(clippy::as_conversions)]
 pub async fn list_work_reports(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWorkReportsQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -274,7 +283,13 @@ pub async fn list_work_reports(
     let offset = (page - 1) * page_size;
 
     // 租户作用域读：work_reports 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -479,6 +494,7 @@ pub async fn list_work_reports(
 )]
 pub async fn get_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<WorkReportResponse> {
@@ -494,7 +510,13 @@ pub async fn get_work_report(
         }
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -567,6 +589,7 @@ pub async fn get_work_report(
 )]
 pub async fn create_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateWorkReportRequest>,
 ) -> ApiResponse<WorkReportResponse> {
@@ -616,7 +639,13 @@ pub async fn create_work_report(
     // 写作用域由 Db::scope() 统一设置 app.tenant_id / app.rls_system：
     // 改前这里对 nil 租户设置 GUC，却向真实租户 INSERT，fail-closed 策略下必然被
     // WITH CHECK 拒绝（0 行写入，接口 500）；现在 GUC 与插入行租户同源。
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -663,6 +692,21 @@ pub async fn create_work_report(
 
     match result {
         Ok(r) => {
+            // 提交前在请求事务内反查 ERP 订单号：原先放在提交后的 spawn 里另开租户只读事务，
+            // 既多占一条连接，也与请求上下文脱节；改为一并复用当前事务，spawn 内只发事件。
+            let erp_order_id: Option<Uuid> = match r.work_order_id {
+                Some(mes_order_id) => sqlx::query_scalar::<_, Option<Uuid>>(
+                    "SELECT source_order_id FROM production_orders WHERE id = $1",
+                )
+                .bind(mes_order_id)
+                .fetch_optional(&mut scope)
+                .await
+                .ok()
+                .flatten()
+                .flatten(),
+                None => None,
+            };
+
             if let Err(e) = scope.commit().await {
                 tracing::error!("Failed to commit tx for create_work_report: {}", e);
                 return ApiResponse::server_error("创建工报失败");
@@ -673,7 +717,6 @@ pub async fn create_work_report(
             // 幂等键 = work_report_id；DLQ 兜底由 erp 订阅器统一提供，不阻塞报工主流程。
             // erp_order_id 仍由工单 ID（work_order_id）反查本地 source_order_id 得到。
             let mes_order_id = r.work_order_id;
-            let db = state.db.clone();
             let report_tenant_id = tenant_id;
             let output_qty = big_decimal_to_f64(r.output_quantity.clone());
             let work_report_id = r.id;
@@ -682,28 +725,6 @@ pub async fn create_work_report(
                 (mes_order_id, state.event_publisher.clone())
             {
                 tokio::spawn(async move {
-                    // 反查工单使用本工报的租户作用域：改前用 nil 租户 GUC 裸连接查询
-                    // production_orders（跨租户、且策略收紧后必然 0 行）。
-                    let erp_order_id: Option<Uuid> =
-                        match db.scope_read_for_tenant(report_tenant_id).await {
-                            Ok(mut scope) => sqlx::query_scalar(
-                                "SELECT source_order_id FROM production_orders WHERE id = $1",
-                            )
-                            .bind(mes_order_id)
-                            .fetch_optional(&mut scope)
-                            .await
-                            .ok()
-                            .flatten(),
-                            Err(e) => {
-                                tracing::warn!(
-                                    "工报回传反查工单缺少租户上下文（tenant_id={}）：{}",
-                                    report_tenant_id,
-                                    e
-                                );
-                                None
-                            }
-                        };
-
                     let payload = MesWorkReportSubmittedPayload {
                         work_report_id,
                         report_no,
@@ -780,6 +801,7 @@ pub async fn create_work_report(
 )]
 pub async fn update_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateWorkReportRequest>,
@@ -833,7 +855,13 @@ pub async fn update_work_report(
 
     let tenant_id = get_tenant_id(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -946,6 +974,7 @@ pub async fn update_work_report(
 )]
 pub async fn delete_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
@@ -962,7 +991,13 @@ pub async fn delete_work_report(
         }
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1011,6 +1046,7 @@ pub async fn delete_work_report(
 )]
 pub async fn approve_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<WorkReportResponse> {
@@ -1029,7 +1065,13 @@ pub async fn approve_work_report(
 
     let approver = Uuid::parse_str(&claims.username).ok();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -1119,6 +1161,7 @@ pub async fn approve_work_report(
 )]
 pub async fn reject_work_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<RejectWorkReportRequest>,
@@ -1139,7 +1182,13 @@ pub async fn reject_work_report(
     let approver = Uuid::parse_str(&claims.username).ok();
     let remark = body.remark.unwrap_or_default();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);

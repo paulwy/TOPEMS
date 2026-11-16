@@ -17,6 +17,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{get_tenant_id_from_claims, resolve_create_tenant};
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -124,6 +125,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 )]
 pub async fn list_material_plans(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListMaterialPlansQuery>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -137,7 +139,13 @@ pub async fn list_material_plans(
     let plan_id = params.plan_id;
 
     // 租户作用域读：material_plans 受 RLS 保护，裸 pool 无 app.tenant_id GUC 会返回 0 行。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(internal_error("数据库事务上下文缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -214,10 +222,17 @@ pub async fn list_material_plans(
 )]
 pub async fn get_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(internal_error("数据库事务上下文缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立只读作用域失败: {}", e);
@@ -252,6 +267,7 @@ pub async fn get_material_plan(
 
 pub async fn create_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -271,7 +287,13 @@ pub async fn create_material_plan(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let required_date = parse_datetime(&req.required_date);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(internal_error("数据库事务上下文缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -320,13 +342,20 @@ pub async fn create_material_plan(
 
 pub async fn update_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let required_date = parse_datetime(&req.required_date);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(internal_error("数据库事务上下文缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -388,10 +417,17 @@ pub async fn update_material_plan(
 
 pub async fn delete_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(internal_error("数据库事务上下文缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立写作用域失败: {}", e);
@@ -437,8 +473,15 @@ async fn transition_status(
     id: Uuid,
     new_status: &str,
     tenant_id: Uuid,
+    txn_arc: &RlsTxnCell,
 ) -> Result<Option<sqlx::postgres::PgRow>, sqlx::Error> {
-    let mut scope = state.db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(sqlx::Error::Protocol("RLS 事务上下文缺失".into()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = state.db.scope_with(txn).await?;
     let row = sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
          WHERE id = $1 \
@@ -471,6 +514,7 @@ async fn transition_status(
 )]
 pub async fn submit_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -479,6 +523,7 @@ pub async fn submit_material_plan(
         id,
         "requisitioned",
         get_tenant_id_from_claims(&claims),
+        &txn_arc,
     )
     .await;
     match row {
@@ -509,10 +554,18 @@ pub async fn submit_material_plan(
 )]
 pub async fn requisition_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let row = transition_status(&state, id, "sourced", get_tenant_id_from_claims(&claims)).await;
+    let row = transition_status(
+        &state,
+        id,
+        "sourced",
+        get_tenant_id_from_claims(&claims),
+        &txn_arc,
+    )
+    .await;
     match row {
         Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已请购")),
         Ok(None) => Err((
@@ -541,10 +594,18 @@ pub async fn requisition_material_plan(
 )]
 pub async fn cancel_material_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
-    let row = transition_status(&state, id, "cancelled", get_tenant_id_from_claims(&claims)).await;
+    let row = transition_status(
+        &state,
+        id,
+        "cancelled",
+        get_tenant_id_from_claims(&claims),
+        &txn_arc,
+    )
+    .await;
     match row {
         Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已取消")),
         Ok(None) => Err((

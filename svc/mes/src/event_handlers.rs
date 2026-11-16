@@ -69,6 +69,7 @@ async fn handle_erp_production_order_dispatched(db: &Db, event: Event) -> Result
         ))
     })?;
 
+    // mes-txn-exempt: B4-01 后台事件消费（不经请求中间件、无请求上下文与请求事务；按事件 payload 的显式 tenant 走租户通道，tenant 缺失即拒绝并进 DLQ）
     let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
         TopemsError::DatabaseQuery(format!(
             "建立租户写作用域失败（tenant_id={}）: {}",

@@ -4,8 +4,16 @@
 use std::sync::Arc;
 use topems_mes::shared::AppState;
 use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+
+/// 直调 handler 的集成测试用：构造一个已开启的请求事务单元。
+/// 生产环境由 `tenant_middleware` 注入，这里手动补上，避免 handler 走 `scope_with` 时拿不到事务。
+pub async fn request_txn_cell(pool: &sqlx::PgPool) -> RlsTxnCell {
+    let txn = pool.begin().await.expect("开启测试请求事务失败");
+    Arc::new(tokio::sync::Mutex::new(Some(txn)))
+}
 
 pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
     AppState {

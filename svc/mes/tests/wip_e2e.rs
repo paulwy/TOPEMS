@@ -55,6 +55,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
+    let txn_cell = app_state::request_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
     let q: ListWipsQuery = serde_json::from_value(if let Some(s) = status {
@@ -63,7 +64,13 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         json!({})
     })
     .unwrap();
-    let resp = list_wips(State(state), Extension(claims), Query(q)).await;
+    let resp = list_wips(
+        State(state),
+        Extension(txn_cell),
+        Extension(claims),
+        Query(q),
+    )
+    .await;
     serde_json::to_value(
         resp.data
             .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),

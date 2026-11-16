@@ -302,3 +302,81 @@ HTTP 400
 - `pnpm check:ledger` → 通过（4 个基线 0d/90d，unregistered 0）。
 - `pnpm facts:check` → 一致（96 项）。
 - 本批未改动任何门禁基线/allowlist 文件；两组标记 18 处（W-01..W-10、R-01..R-06、B-01/B-02）与注册表一一对应。
+
+## 11. B4 收口验收（2026-11-16 深夜）
+
+### 11.1 各站处置一览（实测口径）
+
+计数方式（剔除整行注释，可逐次复核）：
+
+```bash
+# scope_with（已复用请求事务的调用点）
+grep -rn '\.scope_with(' --include='*.rs' svc/<站>/src | grep -vE ':[0-9]+:[[:space:]]*//' | wc -l
+# 仍在自开租户作用域（scope_for_tenant / scope_read_for_tenant）
+grep -rnE '\.scope_(read_)?for_tenant\(' --include='*.rs' svc/<站>/src | grep -vE ':[0-9]+:[[:space:]]*//' | wc -l
+```
+
+数字一律用本表口径（finance 为 **243 / 357**），此前口述的「327 / 129」不可复现，不再引用。
+
+#### 11.1.1 已收口站点
+
+| 站 | 迁移（实测） | 豁免 / 不迁（实测与理由） | 守卫 | 证据 |
+|---|---|---|---|---|
+| qms（第 1 站） | 请求路径 136 处自开作用域全部改复用请求事务（87 处 `for_tenant` → `scope_with`，49 处 `read_scope_for_claims` 增 `txn` 形参后内部走 `scope_with`）；现存 `scope_with=88`、`for_tenant=0` | 0 | `deny_request_tenant_scope`（`main.rs:230`） | §8.1 |
+| finance（第 2 站） | 243 处租户作用域调用点 → `scope_with`（handler 级 `Extension<RlsTxnCell>` 包装）；本批完成后 `scope_with=357`（含此前已迁的 accounting_subjects / currencies / operational / reconcile_orders 等），`for_tenant=9` | 9 处：全部在 `event_handlers/mod.rs`（232/711/891/1103/1154/1194/1228/1277/1311），后台事件消费无请求上下文，按事件 payload 显式 tenant 自开短事务 | `deny_request_own_txn` + `deny_request_tenant_scope`（`main.rs:229-230`） | §8.2、§8.4、§8.5 |
+| unified-core（第 3 站） | 15 → 3（迁 12 处 iam / tenant / settings / menu / audit 请求路径）；`scope_with=97`（含 iam 既有 5 处） | 2 处：`audit/service.rs:21`、`:66`；spawn 内按显式 tenant 走租户/系统通道，刻意不迁（迁了要依赖 task-local） | `deny_request_own_txn` + `deny_request_tenant_scope`（`main.rs:517-518`、`embedded.rs:206-208`）；操作审计中间件同批补挂载 | §9.1–§9.6 |
+| wms（第 4 站，C 路线） | 读路径 5 处改 release + 只读短事务；写路径保持独立短事务，`scope_with=0`、`for_tenant=23` | 23 处 = 写 16 + 读空窗 5 + 后台 2；代码登记 18 处标记（W-01..W-10、R-01..R-06、B-01/B-02），逐条对应 §10.2 注册表 | 未开：开了会把 21 处合法短事务打成 500；走 B 的三个前置条件登记在 [TODO.md §8.1](../../TODO.md) | §10.1–§10.7 |
+| mes（尾收） | `work_report` 的 ERP 订单号反查由「提交后 spawn 另开只读事务」迁入请求事务（1 处，提交前完成）；`scope_with=203`、`for_tenant=1` | 1 处：`event_handlers.rs:73` 后台事件消费（`mes-txn-exempt: B4-01`，无请求中间件、无请求上下文，按 payload 显式 tenant，缺失即拒并进 DLQ） | `deny_request_own_txn`（既有）+ 本轮补 `deny_request_tenant_scope`（`main.rs:247-248`） | §11.3 |
+| qms 尾部 | `shared/mod.rs` 的 `read_scope_for_claims(db, _claims, txn)` 统一 `db.scope_with(txn)`，16 个模块调用点全部透传请求事务（与 §8.1 同一改动，本轮复核 `for_tenant=0`） | 0 | `deny_request_tenant_scope`（已开） | §8.1、§11.3 |
+
+#### 11.1.2 单列为豁免的后台通道
+
+以下各站不进本波次请求事务化：剩余 `for_tenant` 调用点集中在事件消费、同步适配器、定时 sweep、文档处理与 WebSocket 等**无 HTTP 请求上下文**的路径，自开显式租户作用域是唯一可行通道。
+
+| 站 | `scope_with` | 剩余 `scope_*_for_tenant` | 位置与理由摘要 | 守卫 |
+|---|---:|---:|---|---|
+| ehs | 0 | 57 | **站级豁免，非后台通道**：该站用 `tenant_middleware_no_txn`（请求不建事务），剩余 57 处都在受保护路由的写 handler（`accident` 7 / `occupational_health` 7 / `hazard` 6 / `environmental_compliance` 5 / `training` 4 / `safety` 4 等），只能自开显式租户作用域；改造需先换中间件并重写全站 handler，属独立波次 | 未开 |
+| search | 4 | 5 | `mcp.rs` 3、`projection.rs` 1、`handlers.rs` 1；热度写回 / 投影任务，均为后台 spawn | 仅 `deny_request_own_txn` |
+| integration | 83 | 51 | `erp_wms_sync` 11 / `hrm_finance_sync` 10 / `crm_erp_sync` 10 / `crm_scm_sync` 9 / `mes_erp_sync` 5 等同步适配器；后台对账、重试与补偿 | 仅 `deny_request_own_txn` |
+| ai | 82 | 7 | `ai_knowledge/service.rs` 6（文档处理流水线，分阶段提交）、`event_handlers/mod.rs` 1 | 仅 `deny_request_own_txn` |
+| gis | 91 | 3 | `websocket.rs` 2、`event_handlers/mod.rs` 1 | 仅 `deny_request_own_txn` |
+| lims | 143 | 4 | `main.rs` 2（`tenant_sweep` 定时任务）、`event_handlers/mod.rs` 2 | 仅 `deny_request_own_txn` |
+| crm | 1 | 4 | 全部在 `event_handlers/mod.rs` | 未开 |
+| erp | 0 | 4 | 全部在 `event_handlers/mod.rs` | 未开 |
+| mobile | 132 | 1 | `event_handlers/mod.rs` | 仅 `deny_request_own_txn` |
+| master-data | 16 | 1 | `modules/supplier_sync.rs` 供应商同步 | 未开 |
+
+> 与「后台通道」口径的差异必须记明：**ehs 不是后台通道**，它是站级豁免（`no_txn` 中间件导致无请求事务可复用）。其余九站的剩余调用点确为后台路径。
+
+### 11.2 收口门禁（本次实跑）
+
+| 项 | 命令 | 结果 |
+|---|---|---|
+| 编译（mes） | `cargo check -p topems-mes --all-targets --offline` | 0 error（含 6 个 e2e 测试文件适配 `Extension<RlsTxnCell>`） |
+| 编译（qms 复核） | `cargo check -p topems-qms --all-targets --offline` | 0 error |
+| 租户上下文 | `node scripts/ci/check-tenant-context.cjs` | PASS：R1 0 处/0 文件，R2 972（基线 1094），无新增 |
+| 请求事务 | `node scripts/ci/check-request-txn.mjs` | `bare_txn=1656 own_txn=0`（与基线 1656 一致） |
+| 写后非 2xx | `python3 scripts/ci/check-txn-write-non2xx.py` | OK：未发现「请求事务内写入后返回非 2xx」 |
+| 账本 | `pnpm check:ledger` | 通过：4 个基线 0d/90d，`unregistered 0` |
+| facts | `pnpm facts:check` | 一致：96 项 |
+
+facts 快照（`docs/quality/facts-latest.json`，fingerprint 见文件）已按收口终态重生成：
+
+- `docs.todo_lines` **748 → 766**（+18）：唯一来源是 `TODO.md` 新增 §8.1「待决事项登记」——table 头 2 行 + 3 条 `DEC-WMS-B-*` 各 1 行 + 触发条件与说明，合计 18 行；本轮收口文档改动不涉及 `TODO.md`，该值稳定在 766。
+- `docs.todo_h2_sections=18` 不变（§8.1 是 `###` 三级标题）。
+
+### 11.3 本轮尾收代码改动明细
+
+- `svc/mes/src/modules/work_report.rs`：ERP 订单号反查从「`scope.commit()` 之后的 `tokio::spawn` 内 `scope_read_for_tenant`」前移到请求事务内（提交前），spawn 内只发事件、零 DB 访问；删除不再使用的 `db` 克隆与反查失败告警分支。
+- `svc/mes/src/main.rs`：在既有 `deny_request_own_txn()` 上补 `deny_request_tenant_scope()`（先迁移、后开守卫）。
+- `svc/mes/src/event_handlers.rs:73`：后台事件消费加 `mes-txn-exempt: B4-01` 标记与理由注释。
+- `svc/mes/tests/common/app_state.rs`：新增 `request_txn_cell(pool)`，为直调 handler 的集成测试补请求事务单元（生产由 `tenant_middleware` 注入）。
+- 6 个 e2e（`equipment` / `material_plan` / `material_requirement` / `team_create_conflict` / `wip` / `work_order`）：handler 签名补 `Extension<RlsTxnCell>` 后同步适配。
+- qms 尾部复核：`shared/mod.rs` helper 已统一 `scope_with(txn)`，`for_tenant` 实测 0，无残留。
+
+### 11.4 结论与边界
+
+- **B4 到此结束**：qms / finance / unified-core / wms / mes 五站处置完毕，qms 尾部 helper 复核无残留；`own_txn` 全仓为 0；请求内自开租户作用域只剩本表已登记豁免（后台通道九站 + ehs 站级豁免）。
+- 本表不再新增迁移项；若后续要动 ehs 站级豁免或 wms 走 B，属**新波次**，需按各自前置条件单独立项。
+- 下一步**不由本批自行启动**：进入 M-2/B3 执行还是开 B5，由用户决定。
+- 仍停下待问的五个口径：K12 聚合事务口径、K11 真实风险返回码、M-2 上线窗口、M-3 是否推广、`search_logs.duration_ms` 口径。

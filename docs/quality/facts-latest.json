@@ -1,0 +1,213 @@
+{
+  "generated_at": "2026-11-16T10:39:25.031Z",
+  "root": "/Users/xingzhai/TOPEMS",
+  "txn": {
+    "total": {
+      "bare_txn": 1656,
+      "own_txn": 0
+    },
+    "services": {
+      "ai": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "communication": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "crm": {
+        "bare_txn": 196,
+        "own_txn": 0
+      },
+      "erp": {
+        "bare_txn": 351,
+        "own_txn": 0
+      },
+      "finance": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "gis": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "hrm": {
+        "bare_txn": 232,
+        "own_txn": 0
+      },
+      "integration": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "lims": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "mes": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "mobile": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "monitor": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "plugin-registry": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "pm": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "portal": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "rd": {
+        "bare_txn": 163,
+        "own_txn": 0
+      },
+      "scm": {
+        "bare_txn": 211,
+        "own_txn": 0
+      },
+      "search": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "server": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "srm": {
+        "bare_txn": 211,
+        "own_txn": 0
+      },
+      "ticket": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "tms": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "unified-core": {
+        "bare_txn": 0,
+        "own_txn": 0
+      },
+      "wms": {
+        "bare_txn": 292,
+        "own_txn": 0
+      }
+    },
+    "services_with_bare_txn": 7,
+    "services_with_own_txn": 0,
+    "increases": 0,
+    "decreases": 0,
+    "gate_exit_ok": true
+  },
+  "schema_prefix": {
+    "scanned_files": 1431,
+    "sql_literals": 6493,
+    "violations": 1535,
+    "by_level": {
+      "AMBIGUOUS": 0,
+      "CROSS_SCHEMA": 0,
+      "SEARCH_PATH_DEPENDENT": 874,
+      "UNKNOWN": 661
+    },
+    "baseline_keys": 308,
+    "new_violations": 0,
+    "stale_keys": 0,
+    "stale_samples": [],
+    "gate_exit_ok": true
+  },
+  "txn_write_non2xx": {
+    "hits": 0,
+    "by_service": {},
+    "allowlist_entries": 96,
+    "unregistered": 0
+  },
+  "tenant_context": {
+    "r1_files": 0,
+    "r2_files": 104,
+    "r2_occurrences": 1094,
+    "generated_at": "2026-11-12T12:37:17.618Z"
+  },
+  "ledger": {
+    "ok": true,
+    "problems": 0,
+    "ledgers": [
+      {
+        "ledger": "scripts/ci/schema-prefix-baseline.json",
+        "owner": "db-platform",
+        "reviewed_at": "2026-11-16",
+        "expires_days": 90,
+        "stale_keys": 0,
+        "unregistered": null,
+        "ok": true
+      },
+      {
+        "ledger": "scripts/ci/request-txn-baseline.json",
+        "owner": "backend-platform",
+        "reviewed_at": "2026-11-16",
+        "expires_days": 90,
+        "stale_keys": 0,
+        "unregistered": null,
+        "ok": true
+      },
+      {
+        "ledger": "scripts/ci/tenant-context-baseline.json",
+        "owner": "backend-platform",
+        "reviewed_at": "2026-11-16",
+        "expires_days": 90,
+        "stale_keys": 0,
+        "unregistered": null,
+        "ok": true
+      },
+      {
+        "ledger": "scripts/ci/txn-write-non2xx-allowlist.json",
+        "owner": "backend-platform",
+        "reviewed_at": "2026-11-16",
+        "expires_days": 90,
+        "stale_keys": 0,
+        "unregistered": 0,
+        "ok": true
+      }
+    ]
+  },
+  "source": {
+    "search_path_set_var_files": 18,
+    "search_path_set_var_sites": 18,
+    "real_module_files": 28,
+    "real_module_with_set_var": 1
+  },
+  "docs": {
+    "todo_lines": 766,
+    "todo_h2_sections": 18
+  },
+  "external": {
+    "note": "以下数值需连库只读取数，本脚本不采集；更新时请同步修改本段与文档出处。",
+    "rls_policies": {
+      "source": "docs/database/known-gate-defects.md K10 / docs/database/scope-with-plan-20261116.md §7",
+      "total_select_all": 1030,
+      "with_tenant_predicate": 962,
+      "correct_fail_closed": 579,
+      "fail_open": 370,
+      "double_bypass": 12,
+      "non_tenant_predicate": 68
+    },
+    "permissions": {
+      "source": "TODO.md §2（数字已过期，待按线上只读实测更新）",
+      "db_codes": 1021,
+      "backend_security": 619,
+      "intersection": 138
+    },
+    "tenants_in_prod": 1
+  },
+  "fingerprint": "fbf6faea8a92ef9d087503c7df0e3c360c1762cf88fb70aedd9262d1199ac4e5"
+}

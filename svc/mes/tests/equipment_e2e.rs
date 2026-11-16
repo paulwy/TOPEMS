@@ -66,6 +66,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 /// 以租户 `tenant` 的身份调用 handler：Claims 与 task-local RLS 上下文一致，
 /// 与生产 `auth_middleware` → `Db::scope_read()` 的取数路径相同。
 async fn body_of(pool: sqlx::PgPool, tenant: Uuid, status: Option<&str>) -> Value {
+    let txn_cell = app_state::request_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let mut claims = super_claims();
     claims.tenant_id = Some(tenant.to_string());
@@ -79,7 +80,9 @@ async fn body_of(pool: sqlx::PgPool, tenant: Uuid, status: Option<&str>) -> Valu
             tenant,
             system: false,
         },
-        async move { list_equipment(State(state), Extension(claims), Query(q)).await },
+        async move {
+            list_equipment(State(state), Extension(txn_cell), Extension(claims), Query(q)).await
+        },
     )
     .await;
     serde_json::to_value(
@@ -141,13 +144,20 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn create_equipment_without_description_returns_400(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
+    let txn_cell = app_state::request_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let mut claims = super_claims();
     claims.tenant_id = Some(uuid::Uuid::new_v4().to_string());
 
     let req: CreateEquipmentRequest =
         serde_json::from_value(json!({ "name": "无描述机台" })).unwrap();
-    let resp = create_equipment(State(state), Extension(claims), Json(req)).await;
+    let resp = create_equipment(
+        State(state),
+        Extension(txn_cell),
+        Extension(claims),
+        Json(req),
+    )
+    .await;
 
     assert_eq!(
         resp.code, 400,

@@ -17,6 +17,7 @@ use uuid::Uuid;
 use crate::models::audit_log::AuditLog;
 use crate::shared::permission::{check_permission, MesPermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
@@ -73,6 +74,7 @@ pub struct ListAuditLogsQuery {
 )]
 async fn list_audit_logs(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -85,7 +87,13 @@ async fn list_audit_logs(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取审计日志失败（作用域开启失败）: {}", e);
@@ -183,6 +191,7 @@ async fn list_audit_logs(
 )]
 async fn get_audit_log(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -191,7 +200,13 @@ async fn get_audit_log(
         Err(e) => return e,
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取审计日志失败（作用域开启失败）: {}", e);
