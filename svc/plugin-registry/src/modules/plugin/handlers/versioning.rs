@@ -1,8 +1,9 @@
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    Json,
+    Extension, Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 
 use super::super::models::*;
@@ -153,13 +154,18 @@ fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionC
 )]
 pub async fn check_plugin_updates(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -257,6 +263,7 @@ fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
 )]
 pub async fn rollback_plugin_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((plugin_code, target_version)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<RollbackResult>> {
@@ -267,7 +274,11 @@ pub async fn rollback_plugin_version(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -357,12 +368,17 @@ pub async fn rollback_plugin_version(
 )]
 pub async fn check_all_updates(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
     tracing::info!("[Plugin] Checking updates for all plugins");
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);

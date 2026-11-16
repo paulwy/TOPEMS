@@ -8,6 +8,7 @@ use uuid::Uuid;
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 
@@ -98,13 +99,18 @@ pub fn requires_confirmation(tier: &str) -> bool {
 /// Get tenant's installed plugins
 pub async fn list_tenant_plugins(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(tenant_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<TenantPluginWithDetails>>> {
     tracing::info!("[Plugin] Listing plugins for tenant: {}", tenant_id);
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -153,6 +159,7 @@ pub async fn list_tenant_plugins(
 )]
 pub async fn list_my_plugins(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -169,7 +176,11 @@ pub async fn list_my_plugins(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -210,6 +221,7 @@ async fn install_plugin_inner(
     tenant_id: Uuid,
     plugin_code: String,
     headers: &HeaderMap,
+    txn_arc: &RlsTxnCell,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Installing plugin {} for tenant: {}",
@@ -218,7 +230,11 @@ async fn install_plugin_inner(
     );
 
     let locale = Locale::from_headers(headers).as_sql();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -342,10 +358,11 @@ async fn install_plugin_inner(
 /// Install plugin for tenant
 pub async fn install_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    install_plugin_inner(state, tenant_id, plugin_code, &headers).await
+    install_plugin_inner(state, tenant_id, plugin_code, &headers, &txn_arc).await
 }
 
 /// Install plugin for current user's tenant
@@ -361,6 +378,7 @@ pub async fn install_plugin(
 )]
 pub async fn install_my_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
@@ -385,7 +403,7 @@ pub async fn install_my_plugin(
         tenant_id
     );
 
-    install_plugin_inner(state, tenant_id, plugin_code, &headers).await
+    install_plugin_inner(state, tenant_id, plugin_code, &headers, &txn_arc).await
 }
 
 async fn uninstall_plugin_inner(
@@ -394,6 +412,7 @@ async fn uninstall_plugin_inner(
     plugin_code: String,
     req: UninstallRequest,
     headers: &HeaderMap,
+    txn_arc: &RlsTxnCell,
 ) -> Json<CoreResponse<UninstallResult>> {
     tracing::info!(
         "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
@@ -414,7 +433,11 @@ async fn uninstall_plugin_inner(
     }
 
     let locale = Locale::from_headers(headers).as_sql();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -626,11 +649,12 @@ async fn uninstall_plugin_inner(
 )]
 pub async fn uninstall_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
     headers: HeaderMap,
     Json(req): Json<UninstallRequest>,
 ) -> Json<CoreResponse<UninstallResult>> {
-    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers).await
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers, &txn_arc).await
 }
 
 /// Uninstall plugin for current user's tenant (with three-tier strategy)
@@ -649,6 +673,7 @@ pub async fn uninstall_plugin(
 )]
 pub async fn uninstall_my_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
@@ -675,13 +700,14 @@ pub async fn uninstall_my_plugin(
         req.uninstall_tier
     );
 
-    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers).await
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers, &txn_arc).await
 }
 
 async fn activate_plugin_inner(
     state: AppState,
     tenant_id: Uuid,
     plugin_code: String,
+    txn_arc: &RlsTxnCell,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Activating plugin {} for tenant: {}",
@@ -689,7 +715,11 @@ async fn activate_plugin_inner(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -743,9 +773,10 @@ async fn activate_plugin_inner(
 )]
 pub async fn activate_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    activate_plugin_inner(state, tenant_id, plugin_code).await
+    activate_plugin_inner(state, tenant_id, plugin_code, &txn_arc).await
 }
 
 /// Activate plugin for current user's tenant
@@ -764,6 +795,7 @@ pub async fn activate_plugin(
 )]
 pub async fn activate_my_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<TenantPlugin>> {
@@ -787,13 +819,14 @@ pub async fn activate_my_plugin(
         tenant_id
     );
 
-    activate_plugin_inner(state, tenant_id, plugin_code).await
+    activate_plugin_inner(state, tenant_id, plugin_code, &txn_arc).await
 }
 
 async fn deactivate_plugin_inner(
     state: AppState,
     tenant_id: Uuid,
     plugin_code: String,
+    txn_arc: &RlsTxnCell,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Deactivating plugin {} for tenant: {}",
@@ -801,7 +834,11 @@ async fn deactivate_plugin_inner(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -855,9 +892,10 @@ async fn deactivate_plugin_inner(
 )]
 pub async fn deactivate_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    deactivate_plugin_inner(state, tenant_id, plugin_code).await
+    deactivate_plugin_inner(state, tenant_id, plugin_code, &txn_arc).await
 }
 
 /// Deactivate plugin for current user's tenant
@@ -876,6 +914,7 @@ pub async fn deactivate_plugin(
 )]
 pub async fn deactivate_my_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<TenantPlugin>> {
@@ -899,7 +938,7 @@ pub async fn deactivate_my_plugin(
         tenant_id
     );
 
-    deactivate_plugin_inner(state, tenant_id, plugin_code).await
+    deactivate_plugin_inner(state, tenant_id, plugin_code, &txn_arc).await
 }
 
 const PLUGIN_CATEGORIES: [&str; 9] = [
@@ -930,6 +969,7 @@ const PLUGIN_CATEGORIES: [&str; 9] = [
 )]
 pub async fn get_available_plugins(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(tenant_id): Path<Uuid>,
     Query(filters): Query<PluginFilters>,
     headers: HeaderMap,
@@ -951,7 +991,11 @@ pub async fn get_available_plugins(
         pattern
     });
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -1009,11 +1053,16 @@ pub async fn get_available_plugins(
 )]
 pub async fn upload_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UploadPluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Uploading new plugin: {}", req.name);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -1091,6 +1140,7 @@ pub async fn upload_plugin(
 )]
 pub async fn upload_plugin_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
     Json(req): Json<UploadVersionRequest>,
@@ -1103,7 +1153,11 @@ pub async fn upload_plugin_version(
 
     // Get plugin id
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -1199,11 +1253,16 @@ pub async fn upload_plugin_version(
 )]
 pub async fn publish_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Publishing plugin: {}", plugin_code);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -1256,11 +1315,16 @@ pub async fn publish_plugin(
 )]
 pub async fn unpublish_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Unpublishing plugin: {}", plugin_code);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -1313,12 +1377,17 @@ pub async fn unpublish_plugin(
 )]
 pub async fn update_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
     Json(req): Json<UpdatePluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Updating plugin: {}", plugin_code);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);

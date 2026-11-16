@@ -59,7 +59,7 @@ pub async fn get_marketplace_summary(
 
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -129,7 +129,7 @@ pub async fn list_categories(
 ) -> Json<CoreResponse<Vec<PluginCategory>>> {
     tracing::info!("[Plugin] Listing categories");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -193,7 +193,7 @@ pub async fn list_plugins(
     });
     let is_free = filters.is_free;
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -269,7 +269,7 @@ pub async fn get_plugin(
     tracing::info!("[Plugin] Getting plugin: {}", code);
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -311,7 +311,7 @@ pub async fn get_plugin_versions(
 ) -> Json<CoreResponse<Vec<PluginVersion>>> {
     tracing::info!("[Plugin] Getting versions for plugin: {}", plugin_id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -355,7 +355,7 @@ pub async fn get_plugin_reviews(
 ) -> Json<CoreResponse<Vec<PluginReview>>> {
     tracing::info!("[Plugin] Getting reviews for plugin: {}", plugin_id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -408,7 +408,7 @@ pub async fn create_review(
     let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
     let user_name = claims.username.clone();
 
-    let mut scope = match state.db.scope().await {
+    let mut scope = match state.db.scope_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open write scope: {}", e);

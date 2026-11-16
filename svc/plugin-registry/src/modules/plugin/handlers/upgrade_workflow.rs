@@ -1,8 +1,9 @@
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    Json,
+    Extension, Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
@@ -78,6 +79,7 @@ pub fn is_safe_upgrade(current: &str, target: &str) -> bool {
 )]
 pub async fn start_plugin_upgrade(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
     Json(req): Json<UpgradeRequest>,
@@ -89,7 +91,11 @@ pub async fn start_plugin_upgrade(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -135,6 +141,7 @@ pub async fn start_plugin_upgrade(
     }
 
     let _ = scope.commit().await;
+    drop(guard);
 
     let task_id = uuid::Uuid::new_v4();
 
@@ -145,6 +152,7 @@ pub async fn start_plugin_upgrade(
         &current_version,
         &req.target_version,
         req.backup.unwrap_or(true),
+        &txn_arc,
     )
     .await;
 
@@ -158,6 +166,7 @@ async fn execute_upgrade(
     from_version: &str,
     to_version: &str,
     backup: bool,
+    txn_arc: &RlsTxnCell,
 ) -> UpgradeResult {
     // Step 1: Backup current version
     let backup_created = if backup {
@@ -184,7 +193,19 @@ async fn execute_upgrade(
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     // Step 4: Update plugin version in database
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return UpgradeResult {
+            task_id,
+            from_version: from_version.to_string(),
+            to_version: to_version.to_string(),
+            success: false,
+            message: "数据库事务上下文缺失：请求事务未注入".to_string(),
+            backup_created: Some(backup_created),
+            rollback_available: backup_created,
+        };
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -256,6 +277,7 @@ async fn execute_upgrade(
 )]
 pub async fn verify_plugin_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((plugin_code, version)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Json<CoreResponse<VerificationResult>> {
@@ -266,7 +288,11 @@ pub async fn verify_plugin_version(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);

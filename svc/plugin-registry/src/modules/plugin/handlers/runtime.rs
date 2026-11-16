@@ -4,6 +4,7 @@ use axum::{
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::Claims;
 
 use super::super::models::*;
@@ -104,11 +105,11 @@ pub async fn register_plugin(
 
     // 1. 创建或更新插件记录（含依赖和导航配置）
     // 插件注册是全局服务级操作（X-Plugin-Token 认证，非租户用户请求）：
-    // 在事务内显式设置 nil 租户上下文，满足 core_plugins 表 RLS 的 service 豁免条件
+    // 用 scope_system 落地 nil 租户 + service 豁免，满足 core_plugins 表 RLS 条件
     let deps_json: serde_json::Value =
         serde_json::to_value(&req.dependencies).unwrap_or(serde_json::json!([]));
 
-    let mut scope = match state.db.scope().await {
+    let mut scope = match state.db.scope_system().await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[Plugin] Failed to begin scope: {}", e);
@@ -118,19 +119,6 @@ pub async fn register_plugin(
             )));
         }
     };
-
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(uuid::Uuid::nil().to_string())
-        .execute(&mut scope)
-        .await
-    {
-        tracing::error!("[Plugin] Failed to set nil tenant context: {}", e);
-        let _ = scope.rollback().await;
-        return Json(CoreResponse::error(&format!(
-            "Failed to create plugin: {}",
-            e
-        )));
-    }
 
     let plugin_result = sqlx::query_as(
         r#"
@@ -250,6 +238,7 @@ pub async fn register_plugin(
 )]
 pub async fn update_plugin_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
     Json(req): Json<PluginHeartbeatRequest>,
 ) -> Json<CoreResponse<()>> {
@@ -259,7 +248,11 @@ pub async fn update_plugin_status(
         req.status
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -311,11 +304,16 @@ pub async fn update_plugin_status(
 )]
 pub async fn get_plugin_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<PluginInstance>> {
     tracing::debug!("[Plugin] Getting status for plugin: {}", plugin_code);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -362,11 +360,16 @@ pub async fn get_plugin_status(
 )]
 pub async fn unregister_plugin(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<()>> {
     tracing::info!("[Plugin] Unregistering plugin: {}", plugin_code);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -408,10 +411,15 @@ pub async fn unregister_plugin(
 )]
 pub async fn list_plugins_with_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Json<CoreResponse<Vec<PluginWithRuntimeStatus>>> {
     tracing::info!("[Plugin] Listing plugins with runtime status");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -455,6 +463,7 @@ pub async fn list_plugins_with_status(
 )]
 pub async fn get_navigation_config(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     tracing::info!(
@@ -470,7 +479,11 @@ pub async fn get_navigation_config(
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
 
     let use_tenant_filter = !claims.is_superuser && tenant_uuid.is_some();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
