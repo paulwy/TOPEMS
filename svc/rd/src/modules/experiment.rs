@@ -100,7 +100,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 )]
 pub async fn list_experiments(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -108,14 +108,6 @@ pub async fn list_experiments(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -128,16 +120,14 @@ pub async fn list_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR project_id = $4)
-          AND ($5::text IS NULL OR experiment_type = $5)
+          WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR project_id = $3)
+          AND ($4::text IS NULL OR experiment_type = $4)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -152,14 +142,13 @@ pub async fn list_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR project_id = $4)
-                  AND ($5::text IS NULL OR experiment_type = $5)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR project_id = $3)
+                  AND ($4::text IS NULL OR experiment_type = $4)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -325,7 +314,7 @@ pub async fn create_experiment(
 pub async fn get_experiment(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Experiment> {
     let mut guard = txn_arc.lock().await;
@@ -333,25 +322,16 @@ pub async fn get_experiment(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, Experiment>(
         r#"
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM rs.experiments WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.experiments WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -368,7 +348,7 @@ pub async fn get_experiment(
 pub async fn update_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateExperimentRequest>,
@@ -378,19 +358,10 @@ pub async fn update_experiment(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -429,7 +400,7 @@ pub async fn update_experiment(
         UPDATE rs.experiments SET
             name = $2, status = $3, results = $4, conclusions = $5,
             completed_at = $6, batch_number = $7, scale = $8, scale_unit = $9, updated_at = $10
-        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
+        WHERE id = $1
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
@@ -446,7 +417,6 @@ pub async fn update_experiment(
     .bind(scale)
     .bind(scale_unit)
     .bind(now)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -502,7 +472,7 @@ pub async fn update_experiment(
 pub async fn delete_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
@@ -511,21 +481,10 @@ pub async fn delete_experiment(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query(
-        "UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
-    )
-    .bind(id)
-    .bind(tenant_opt)
-    .execute(&mut **txn)
-    .await;
+    let result = sqlx::query("UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(&mut **txn)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -597,21 +556,13 @@ pub async fn delete_experiment(
 pub async fn get_experiment_records(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
@@ -629,11 +580,10 @@ pub async fn get_experiment_records(
         ) as records
         FROM rs.experiment_records er
         JOIN rs.experiments e ON er.experiment_id = e.id
-        WHERE er.experiment_id = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
+        WHERE er.experiment_id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -657,21 +607,13 @@ pub async fn get_experiment_records(
 pub async fn list_experiments_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Experiment>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -681,12 +623,10 @@ pub async fn list_experiments_by_project(
                created_by, created_at, updated_at
         FROM rs.experiments
         WHERE deleted_at IS NULL AND project_id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at DESC
         "#,
     )
     .bind(project_id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -765,7 +705,7 @@ pub async fn create_experiment_record(
 )]
 pub async fn list_lab_experiments(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -773,14 +713,6 @@ pub async fn list_lab_experiments(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -793,15 +725,13 @@ pub async fn list_lab_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND phase = 'lab'
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+          WHERE phase = 'lab'
+          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -814,13 +744,12 @@ pub async fn list_lab_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL
                   AND phase = 'lab'
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -857,7 +786,7 @@ pub async fn list_lab_experiments(
 )]
 pub async fn list_pilot_experiments(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -865,14 +794,6 @@ pub async fn list_pilot_experiments(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -885,15 +806,13 @@ pub async fn list_pilot_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND phase = 'pilot'
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+          WHERE phase = 'pilot'
+          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -906,13 +825,12 @@ pub async fn list_pilot_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL
                   AND phase = 'pilot'
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -949,7 +867,7 @@ pub async fn list_pilot_experiments(
 )]
 pub async fn list_scaleup_experiments(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -957,14 +875,6 @@ pub async fn list_scaleup_experiments(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -977,15 +887,13 @@ pub async fn list_scaleup_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND phase = 'scaleup'
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+          WHERE phase = 'scaleup'
+          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -998,13 +906,12 @@ pub async fn list_scaleup_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL
                   AND phase = 'scaleup'
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -1045,7 +952,7 @@ pub async fn list_scaleup_experiments(
 pub async fn advance_phase(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AdvancePhaseRequest>,
 ) -> ApiResponse<Experiment> {
@@ -1054,19 +961,10 @@ pub async fn advance_phase(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1087,7 +985,7 @@ pub async fn advance_phase(
         r#"
         UPDATE rs.experiments SET
             phase = $2, status = $3, updated_at = $4
-        WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5)
+        WHERE id = $1
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
@@ -1098,7 +996,6 @@ pub async fn advance_phase(
     .bind(new_phase)
     .bind(req.new_status.unwrap_or("in_progress".to_string()))
     .bind(Utc::now())
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1135,21 +1032,13 @@ pub async fn advance_phase(
 pub async fn trace_batch(
     State(_state): State<super::ApiState>,
     Path(batch_number): Path<String>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
@@ -1169,11 +1058,10 @@ pub async fn trace_batch(
         ) as trace_items
         FROM rs.experiments e
         LEFT JOIN rs.formulas f ON e.formula_id = f.id
-        WHERE e.batch_number = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
+        WHERE e.batch_number = $1
         "#,
     )
     .bind(batch_number)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 

@@ -89,7 +89,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 )]
 pub async fn list_projects(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     Query(params): Query<ListProjectsQuery>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -98,14 +98,6 @@ pub async fn list_projects(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -121,14 +113,12 @@ pub async fn list_projects(
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM rs.projects
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -142,12 +132,11 @@ pub async fn list_projects(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.projects
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -379,14 +368,6 @@ pub async fn get_project(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Read).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -407,11 +388,10 @@ pub async fn get_project(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM rs.projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.projects WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
@@ -460,24 +440,15 @@ pub async fn update_project(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Update).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM rs.projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM rs.projects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -511,7 +482,7 @@ pub async fn update_project(
         UPDATE rs.projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
-        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
+        WHERE id = $1
         RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
                   created_by, created_at, updated_at, project_config, benefit_target,
@@ -528,7 +499,6 @@ pub async fn update_project(
     .bind(budget)
     .bind(progress)
     .bind(now)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -613,25 +583,15 @@ pub async fn delete_project(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     match check_project_owner(&mut **txn, &claims, &id).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result =
-        sqlx::query("UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
-            .bind(id)
-            .bind(tenant_opt)
-            .execute(&mut **txn)
-            .await;
+    let result = sqlx::query("UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(&mut **txn)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -869,7 +829,7 @@ pub async fn batch_create_projects(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn batch_delete_projects(
     State(state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BatchDeleteRequest>,
@@ -879,25 +839,14 @@ pub async fn batch_delete_projects(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     if req.ids.is_empty() {
         return ApiResponse::bad_request("未提供要删除的项目 ID");
     }
 
-    let result = sqlx::query(
-        r#"UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
-    .bind(&req.ids)
-    .bind(tenant_opt)
-    .execute(&mut **txn)
-    .await;
+    let result = sqlx::query(r#"UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1)"#)
+        .bind(&req.ids)
+        .execute(&mut **txn)
+        .await;
 
     match result {
         Ok(r) => {
@@ -988,7 +937,7 @@ pub async fn batch_delete_projects(
 )]
 pub async fn export_projects(
     State(state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Response {
@@ -1003,14 +952,6 @@ pub async fn export_projects(
                 .into_response()
         }
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, tenant_id, name, code, description, project_type, status, leader,
@@ -1018,11 +959,9 @@ pub async fn export_projects(
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM rs.projects
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1462,7 +1401,7 @@ pub struct ProjectDashboardResponse {
 pub async fn get_project_dashboard(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectDashboardResponse> {
     let mut guard = txn_arc.lock().await;
@@ -1470,25 +1409,16 @@ pub async fn get_project_dashboard(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let project_result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at,
                project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
-        FROM rs.projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.projects WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1666,7 +1596,7 @@ pub struct ProjectGanttResponse {
 pub async fn get_project_gantt(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectGanttResponse> {
     let mut guard = txn_arc.lock().await;
@@ -1674,24 +1604,15 @@ pub async fn get_project_gantt(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
         r#"
         SELECT id, tenant_id, project_id, phase_number, name, description, start_date, end_date,
                planned_duration_days, actual_duration_days, status, progress, weight,
                predecessor_id, created_at, updated_at
-        FROM rs.project_phases WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY phase_number
+        FROM rs.project_phases WHERE project_id = $1 ORDER BY phase_number
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

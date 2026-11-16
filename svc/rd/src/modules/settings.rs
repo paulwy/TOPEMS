@@ -45,25 +45,13 @@ pub struct UpdateSettingsRequest {
 )]
 pub async fn get_settings(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(category): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
-
-    let result = sqlx::query(
-        "SELECT key, value FROM rs.module_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND category = $2",
-    )
-    .bind(tenant_opt)
-    .bind(&category)
-    .fetch_all(&state.db)
-    .await;
+    let result = sqlx::query("SELECT key, value FROM rs.module_settings WHERE category = $1")
+        .bind(&category)
+        .fetch_all(&state.db)
+        .await;
 
     match result {
         Ok(rows) => {

@@ -191,14 +191,6 @@ pub async fn get_project_phases(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     match check_project_permission(&mut **txn, &claims, &project_id, &ProjectPermission::Read).await
     {
         Ok(_) => {}
@@ -225,12 +217,11 @@ pub async fn get_project_phases(
                   start_date, end_date, planned_duration_days, actual_duration_days,
                   status, progress, weight, predecessor_id, created_at, updated_at
         FROM rs.project_phases 
-        WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE project_id = $1
         ORDER BY phase_number
         "#,
     )
     .bind(project_id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -286,19 +277,10 @@ pub async fn update_phase(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT project_id FROM rs.project_phases WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -355,7 +337,7 @@ pub async fn update_phase(
             weight = COALESCE($8, weight),
             predecessor_id = COALESCE($9, predecessor_id),
             updated_at = NOW()
-        WHERE id = $1 AND ($10::uuid IS NULL OR tenant_id = $10)
+        WHERE id = $1
         RETURNING id, tenant_id, project_id, phase_number, name, description, 
                   start_date, end_date, planned_duration_days, actual_duration_days,
                   status, progress, weight, predecessor_id, created_at, updated_at
@@ -370,7 +352,6 @@ pub async fn update_phase(
     .bind(payload.progress)
     .bind(payload.weight)
     .bind(payload.predecessor_id)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -451,14 +432,6 @@ pub async fn delete_phase(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -469,22 +442,21 @@ pub async fn delete_phase(
     );
 
     let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT project_id FROM rs.project_phases WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(pid)) => pid,
         Ok(None) => {
             if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
+                if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-            return ApiResponse::server_error("事务提交失败");
-        }
-    }
-            return ApiResponse::not_found("阶段不存在")
+                    return ApiResponse::server_error("事务提交失败");
+                }
+            }
+            return ApiResponse::not_found("阶段不存在");
         }
 
         Err(e) => {
@@ -507,11 +479,10 @@ pub async fn delete_phase(
 
     let get_result = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        SELECT project_id FROM rs.project_phases WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -531,11 +502,10 @@ pub async fn delete_phase(
     let result = sqlx::query(
         r#"
         DELETE FROM rs.project_phases 
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

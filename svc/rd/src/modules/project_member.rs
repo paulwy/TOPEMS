@@ -162,21 +162,13 @@ pub async fn create_member(
 pub async fn get_project_members(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -189,10 +181,9 @@ pub async fn get_project_members(
 
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"SELECT id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
-           FROM rs.project_members WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY join_date"#,
+           FROM rs.project_members WHERE project_id = $1 ORDER BY join_date"#,
     )
     .bind(project_id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -238,7 +229,7 @@ pub async fn get_project_members(
 pub async fn update_member(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> ApiResponse<ProjectMember> {
@@ -246,14 +237,6 @@ pub async fn update_member(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -289,7 +272,7 @@ pub async fn update_member(
             budgeted_hours = COALESCE($9, budgeted_hours),
             actual_hours = COALESCE($10, actual_hours),
             updated_at = NOW()
-        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
+        WHERE id = $1
         RETURNING id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
         "#,
     )
@@ -303,7 +286,6 @@ pub async fn update_member(
     .bind(payload.cost_rate)
     .bind(payload.budgeted_hours)
     .bind(payload.actual_hours)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -373,21 +355,13 @@ pub async fn update_member(
 pub async fn delete_member(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -398,13 +372,10 @@ pub async fn delete_member(
         "删除项目成员请求开始"
     );
 
-    let result = sqlx::query(
-        r#"DELETE FROM rs.project_members WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
-    .bind(id)
-    .bind(tenant_opt)
-    .execute(&mut **txn)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM rs.project_members WHERE id = $1"#)
+        .bind(id)
+        .execute(&mut **txn)
+        .await;
 
     let duration = Utc::now() - start_time;
 

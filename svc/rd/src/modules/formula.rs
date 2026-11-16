@@ -96,7 +96,7 @@ pub fn create_write_routes() -> Router<super::ApiState> {
 )]
 pub async fn list_formulas(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -104,14 +104,6 @@ pub async fn list_formulas(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -125,21 +117,19 @@ pub async fn list_formulas(
                created_by, created_at, updated_at
         FROM rs.formulas
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR project_id = $4)
+          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR project_id = $3)
           -- 批 38：评审状态过滤。"none" 表示筛出尚未提交评审的配方
           AND (
-              $7::text IS NULL
-              OR ($7::text = 'none' AND approval_status IS NULL)
-              OR (approval_status = NULLIF($7::text, 'none'))
+              $6::text IS NULL
+              OR ($6::text = 'none' AND approval_status IS NULL)
+              OR (approval_status = NULLIF($6::text, 'none'))
           )
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -154,18 +144,17 @@ pub async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.formulas
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR project_id = $4)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR project_id = $3)
                   AND (
-                      $5::text IS NULL
-                      OR ($5::text = 'none' AND approval_status IS NULL)
-                      OR (approval_status = NULLIF($5::text, 'none'))
+                      $4::text IS NULL
+                      OR ($4::text = 'none' AND approval_status IS NULL)
+                      OR (approval_status = NULLIF($4::text, 'none'))
                   )
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -334,7 +323,7 @@ pub async fn create_formula(
 )]
 pub async fn get_formula(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Formula> {
@@ -343,25 +332,16 @@ pub async fn get_formula(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, Formula>(
         r#"
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.formulas WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -377,7 +357,7 @@ pub async fn get_formula(
 
 pub async fn update_formula(
     State(state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -388,25 +368,16 @@ pub async fn update_formula(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let existing = sqlx::query_as::<_, Formula>(
         r#"
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.formulas WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -444,7 +415,7 @@ pub async fn update_formula(
             name = $2, category = $3, description = $4, status = $5,
             effective_date = $6, expiration_date = $7,
             ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
-        WHERE id = $1 AND ($12::uuid IS NULL OR tenant_id = $12)
+        WHERE id = $1
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -462,7 +433,6 @@ pub async fn update_formula(
     .bind(&process_steps)
     .bind(properties)
     .bind(now)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -517,7 +487,7 @@ pub async fn update_formula(
 
 pub async fn delete_formula(
     State(state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -527,20 +497,10 @@ pub async fn delete_formula(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
-    let result =
-        sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
-            .bind(id)
-            .bind(tenant_opt)
-            .execute(&mut **txn)
-            .await;
+    let result = sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(&mut **txn)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -611,7 +571,7 @@ pub async fn delete_formula(
 )]
 pub async fn get_formula_versions(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<FormulaVersion>> {
@@ -619,14 +579,6 @@ pub async fn get_formula_versions(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     // rs.formula_versions 实际不含 approval_status/approved_by/approved_at
     // （列漂移），用 NULL 别名补齐 FormulaVersion 的 Option 字段。
@@ -639,12 +591,11 @@ pub async fn get_formula_versions(
                NULL::timestamptz AS approved_at,
                created_by, created_at, updated_at
         FROM rs.formula_versions
-        WHERE formula_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE formula_id = $1
         ORDER BY version DESC, created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -688,11 +639,10 @@ pub async fn create_formula_version(
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.formulas WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -741,7 +691,7 @@ pub async fn create_formula_version(
                 r#"
                 UPDATE rs.formulas SET
                     version = $2, ingredients = $3, process_steps = $4, updated_at = $5
-                WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
+                WHERE id = $1
                 "#,
             )
             .bind(id)
@@ -749,7 +699,6 @@ pub async fn create_formula_version(
             .bind(serde_json::to_value(ingredients).unwrap_or(serde_json::Value::Array(vec![])))
             .bind(&req.process_steps)
             .bind(now)
-            .bind(tenant_opt)
             .execute(&mut **txn)
             .await
             .ok();
@@ -795,7 +744,7 @@ pub async fn create_formula_version(
 ///   - reject  评审驳回  -> approval_status='rejected'，写 approved_by/approved_at，status='draft'
 pub async fn review_formula(
     State(_state): State<super::ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<crate::models::ReviewFormulaRequest>,
@@ -804,14 +753,6 @@ pub async fn review_formula(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
-    };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let now = Utc::now();
 
@@ -849,7 +790,7 @@ pub async fn review_formula(
             approved_by = $4,
             approved_at = $5,
             updated_at = $6
-        WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)
+        WHERE id = $1
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -862,7 +803,6 @@ pub async fn review_formula(
     .bind(reviewer.as_deref())
     .bind(if write_reviewer { Some(now) } else { None })
     .bind(now)
-    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
