@@ -147,7 +147,7 @@ pub async fn create_map(
 pub async fn list_maps(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -159,16 +159,7 @@ pub async fn list_maps(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
-        .bind(tenant_opt)
+    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps ORDER BY created_at DESC"))
         .fetch_all(&mut scope)
         .await;
     if let Err(e) = scope.commit().await {
@@ -204,7 +195,7 @@ pub async fn list_maps(
 pub async fn get_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Map> {
     let mut guard = txn_arc.lock().await;
@@ -217,17 +208,8 @@ pub async fn get_map(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
+    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1"))
         .bind(id)
-        .bind(tenant_opt)
         .fetch_one(&mut scope)
         .await;
     if let Err(e) = scope.commit().await {
@@ -370,7 +352,7 @@ pub async fn delete_map(
 pub async fn list_map_layers(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -383,19 +365,10 @@ pub async fn list_map_layers(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, MapLayer>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM gis.map_layers WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY z_index DESC, created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM gis.map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC"),
     )
     .bind(map_id)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     if let Err(e) = scope.commit().await {

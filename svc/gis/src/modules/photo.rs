@@ -36,7 +36,7 @@ pub struct CreateLocationPhoto {
 pub async fn list_location_photos(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -48,18 +48,9 @@ pub async fn list_location_photos(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, LocationPhoto>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos ORDER BY created_at DESC"),
     )
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     let commit_res = match &result {
@@ -97,7 +88,7 @@ pub async fn list_location_photos(
 pub async fn get_location_photo(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LocationPhoto> {
     let mut guard = txn_arc.lock().await;
@@ -110,17 +101,8 @@ pub async fn get_location_photo(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
+    let result = sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1"))
         .bind(id)
-        .bind(tenant_opt)
         .fetch_one(&mut scope)
         .await;
     let commit_res = match &result {
@@ -297,7 +279,7 @@ pub async fn delete_location_photo(
 pub async fn list_location_photos_by_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -310,19 +292,10 @@ pub async fn list_location_photos_by_map(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, LocationPhoto>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     let commit_res = match &result {

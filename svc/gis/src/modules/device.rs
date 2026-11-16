@@ -132,7 +132,7 @@ pub async fn register_device(
 pub async fn list_devices(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -144,16 +144,7 @@ pub async fn list_devices(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
-        .bind(tenant_opt)
+    let result = sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC"))
         .fetch_all(&mut scope)
         .await;
     let commit_res = match &result {
@@ -193,7 +184,7 @@ pub async fn list_devices(
 pub async fn get_device(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Device> {
     let mut guard = txn_arc.lock().await;
@@ -206,19 +197,10 @@ pub async fn get_device(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, Device>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -256,14 +238,6 @@ pub async fn update_device(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, Device>(only_own_schema_query!(
         "gis",
@@ -271,7 +245,7 @@ pub async fn update_device(
         UPDATE gis.devices 
         SET device_name = $1, device_type = $2, description = $3, 
             properties = $4, status = COALESCE($5, status), updated_at = NOW()
-        WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)
+        WHERE id = $6
         RETURNING *
         "#
     ))
@@ -281,7 +255,6 @@ pub async fn update_device(
     .bind(&payload.properties)
     .bind(&payload.status)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {

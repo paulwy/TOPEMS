@@ -35,9 +35,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, FactoryMap>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 100"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {
@@ -96,10 +95,9 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, FactoryMap>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1"),
         )
         .bind(id)
-        .bind(self.tenant_id)
         .fetch_optional(&mut scope)
         .await;
         if result.is_ok() {
@@ -133,7 +131,7 @@ impl TenantService {
                 map_type = COALESCE($4, map_type), file_url = COALESCE($5, file_url),
                 bounds = COALESCE($6, bounds), description = COALESCE($7, description),
                 updated_at = NOW()
-            WHERE id = $1 AND ($8::uuid IS NULL OR tenant_id = $8)
+            WHERE id = $1
             RETURNING *
             "#
         ))
@@ -144,7 +142,6 @@ impl TenantService {
         .bind(file_url)
         .bind(bounds)
         .bind(description)
-        .bind(self.tenant_id)
         .fetch_optional(&mut scope)
         .await;
         if result.is_ok() {
@@ -166,10 +163,9 @@ impl TenantService {
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query(only_own_schema_query!(
             "gis",
-            "UPDATE gis.factory_maps SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+            "UPDATE gis.factory_maps SET deleted_at = NOW() WHERE id = $1"
         ))
         .bind(id)
-        .bind(self.tenant_id)
         .execute(&mut scope)
         .await?;
         scope.commit().await?;
@@ -187,9 +183,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, DeviceLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations ORDER BY created_at DESC"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {
@@ -206,9 +201,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, Pipeline>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines ORDER BY created_at DESC"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {
@@ -228,9 +222,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {
@@ -247,9 +240,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, Location>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations ORDER BY created_at DESC"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {
@@ -266,9 +258,8 @@ impl TenantService {
         // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
         let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, Device>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC"),
         )
-        .bind(self.tenant_id)
         .fetch_all(&mut scope)
         .await;
         if result.is_ok() {

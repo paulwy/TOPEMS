@@ -264,7 +264,7 @@ async fn insert_warehouse_location(
 pub async fn export_geojson(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -276,19 +276,10 @@ pub async fn export_geojson(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let mut features: Vec<serde_json::Value> = Vec::new();
 
-    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
-        .bind(tenant_opt)
+    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations"))
         .fetch_all(&mut scope)
         .await
     {
@@ -307,8 +298,7 @@ pub async fn export_geojson(
         }
     }
 
-    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
-        .bind(tenant_opt)
+    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines"))
         .fetch_all(&mut scope)
         .await
     {
@@ -328,8 +318,7 @@ pub async fn export_geojson(
     }
 
     if let Ok(warehouses) =
-        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
-            .bind(tenant_opt)
+        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations"))
             .fetch_all(&mut scope)
             .await
     {
@@ -348,8 +337,7 @@ pub async fn export_geojson(
         }
     }
 
-    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
-        .bind(tenant_opt)
+    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations"))
         .fetch_all(&mut scope)
         .await
     {

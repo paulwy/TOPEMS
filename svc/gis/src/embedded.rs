@@ -449,7 +449,7 @@ pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router
 async fn list_device_locations_by_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(map_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -462,19 +462,10 @@ async fn list_device_locations_by_map(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, DeviceLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     if let Err(e) = scope.commit().await {
@@ -570,19 +561,11 @@ async fn update_device_location(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| uuid::Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.device_locations
         SET map_id = $1, device_name = $2, device_code = $3, device_type = $4, position = $5, status = $6, description = $7, updated_at = NOW()
-        WHERE id = $8 AND ($9::uuid IS NULL OR tenant_id = $9)
+        WHERE id = $8
         RETURNING *
         "#),
     )
@@ -594,7 +577,6 @@ async fn update_device_location(
     .bind(&payload.status)
     .bind(&payload.description)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await;
     match result {
@@ -632,20 +614,11 @@ async fn delete_device_location(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| uuid::Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "gis",
-        "DELETE FROM gis.device_locations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "DELETE FROM gis.device_locations WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut scope)
     .await;
     match result {

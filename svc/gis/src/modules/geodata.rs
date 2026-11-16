@@ -211,7 +211,7 @@ async fn insert_feature(
 pub async fn list_geodata(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -223,16 +223,7 @@ pub async fn list_geodata(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
-        .bind(tenant_opt)
+    let result = sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata ORDER BY created_at DESC"))
         .fetch_all(&mut scope)
         .await;
     let commit_res = match &result {
@@ -258,7 +249,7 @@ pub async fn list_geodata(
 pub async fn get_geodata(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeoData> {
     let mut guard = txn_arc.lock().await;
@@ -271,19 +262,10 @@ pub async fn get_geodata(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, GeoData>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -321,20 +303,12 @@ pub async fn update_geodata(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.geodata 
         SET name = $1, data_type = $2, metadata = $3, status = COALESCE($4, status), updated_at = NOW()
-        WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6)
+        WHERE id = $5
         RETURNING *
         "#),
     )
@@ -343,7 +317,6 @@ pub async fn update_geodata(
     .bind(&payload.metadata)
     .bind(&payload.status)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -521,7 +494,7 @@ fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
 pub async fn list_geofeatures(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -534,19 +507,10 @@ pub async fn list_geofeatures(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, GeoFeature>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     let commit_res = match &result {

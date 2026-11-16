@@ -288,11 +288,10 @@ async fn handle_socket(
                                                     let rows = sqlx::query_scalar(
                                                         only_own_schema_query!(
                                                             "gis",
-                                                            "SELECT device_code FROM gis.devices WHERE deleted_at IS NULL AND device_code = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"
+                                                            "SELECT device_code FROM gis.devices WHERE deleted_at IS NULL AND device_code = ANY($1)"
                                                         ),
                                                     )
                                                     .bind(&device_codes)
-                                                    .bind(tenant_filter)
                                                     .fetch_all(&mut scope)
                                                     .await
                                                     .unwrap_or_default();
@@ -444,10 +443,9 @@ async fn handle_device_socket(
                     Ok(mut scope) => {
                         let status = sqlx::query_scalar(only_own_schema_query!(
                             "gis",
-                            "SELECT status FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+                            "SELECT status FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"
                         ))
                         .bind(&device_code)
-                        .bind(tenant_filter)
                         .fetch_optional(&mut scope)
                         .await
                         .unwrap_or(None);

@@ -37,7 +37,7 @@ pub struct GisStatistics {
 pub async fn get_statistics(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<GisStatistics> {
     // 只读作用域：10 条统计查询共用同一事务（SET LOCAL search_path=gis, public）。
     let mut guard = txn_arc.lock().await;
@@ -50,20 +50,11 @@ pub async fn get_statistics(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let device_points: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.device_locations"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -71,9 +62,8 @@ pub async fn get_statistics(
 
     let pipelines: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.pipelines"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -81,9 +71,8 @@ pub async fn get_statistics(
 
     let storage_locations: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.warehouse_locations"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -91,9 +80,8 @@ pub async fn get_statistics(
 
     let evidence_records: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.evidence_records WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.evidence_records"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -101,9 +89,8 @@ pub async fn get_statistics(
 
     let business_locations: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.business_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.business_locations"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -111,9 +98,8 @@ pub async fn get_statistics(
 
     let factory_maps: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.factory_maps WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.factory_maps"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -121,9 +107,8 @@ pub async fn get_statistics(
 
     let map_markers: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.map_markers WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.map_markers"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -131,9 +116,8 @@ pub async fn get_statistics(
 
     let location_photos: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.location_photos"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -141,9 +125,8 @@ pub async fn get_statistics(
 
     let active_devices: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.device_locations WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.device_locations WHERE status = 'active'"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -151,9 +134,8 @@ pub async fn get_statistics(
 
     let active_pipelines: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.pipelines WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM gis.pipelines WHERE status = 'active'"
     ))
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))

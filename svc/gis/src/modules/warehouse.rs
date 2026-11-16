@@ -35,7 +35,7 @@ pub struct CreateWarehouseLocation {
 pub async fn list_warehouse_locations(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -48,14 +48,6 @@ pub async fn list_warehouse_locations(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
     let page_size: i64 = params
         .get("page_size")
@@ -66,35 +58,31 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_opt)
     } else {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_opt)
     };
 
     match query.fetch_all(&mut scope).await {
         Ok(locations) => {
             let total_query = if !search.is_empty() {
                 sqlx::query(
-                    only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+                    only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1"),
                 )
                 .bind(format!("%{}%", search))
-                .bind(tenant_opt)
             } else {
                 sqlx::query(only_own_schema_query!(
                     "gis",
-                    "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)"
+                    "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL"
                 ))
-                .bind(tenant_opt)
             };
             let total: i64 = total_query
                 .fetch_one(&mut scope)
@@ -194,7 +182,7 @@ pub async fn create_warehouse_location(
 pub async fn get_warehouse_location(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WarehouseLocation> {
     let mut guard = txn_arc.lock().await;
@@ -207,19 +195,10 @@ pub async fn get_warehouse_location(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -270,19 +249,11 @@ pub async fn update_warehouse_location(
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     let status = payload.status.unwrap_or_else(|| "active".to_string());
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query_as::<_, WarehouseLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.warehouse_locations 
         SET warehouse_name = $1, zone = $2, position = $3, status = $4, description = $5, updated_at = NOW()
-        WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)
+        WHERE id = $6
         RETURNING *
         "#),
     )
@@ -292,7 +263,6 @@ pub async fn update_warehouse_location(
     .bind(&status)
     .bind(&payload.description)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -386,7 +356,7 @@ pub async fn delete_warehouse_location(
 pub async fn list_warehouse_locations_by_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -399,19 +369,10 @@ pub async fn list_warehouse_locations_by_map(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     let commit_res = match &result {

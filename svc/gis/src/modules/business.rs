@@ -38,7 +38,7 @@ pub struct CreateBusinessLocation {
 pub async fn list_business_locations(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -51,14 +51,6 @@ pub async fn list_business_locations(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
     let page_size: i64 = params
@@ -70,34 +62,31 @@ pub async fn list_business_locations(
 
     let query = if let Some(ref bt) = business_type {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(bt)
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_opt)
     } else {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_opt)
     };
 
     match query.fetch_all(&mut scope).await {
         Ok(locations) => {
             let total_query = if let Some(ref bt) = business_type {
-                sqlx::query(only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
+                sqlx::query(only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1"))
                     .bind(bt)
             } else {
                 sqlx::query(only_own_schema_query!(
                     "gis",
-                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)"
+                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND "
                 ))
             };
             let total: i64 = total_query
-                .bind(tenant_opt)
                 .fetch_one(&mut scope)
                 .await
                 .map(|row| row.get::<i64, _>(0))
@@ -200,7 +189,7 @@ pub async fn create_business_location(
 pub async fn get_business_location(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<BusinessLocation> {
     let mut guard = txn_arc.lock().await;
@@ -213,20 +202,10 @@ pub async fn get_business_location(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let result = sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
     let commit_res = match &result {
@@ -378,7 +357,7 @@ pub async fn delete_business_location(
 pub async fn list_business_locations_by_type(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(business_type): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -391,20 +370,10 @@ pub async fn list_business_locations_by_type(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let result = sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC"),
     )
     .bind(business_type)
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await;
     let commit_res = match &result {
