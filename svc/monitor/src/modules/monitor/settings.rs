@@ -19,6 +19,7 @@ use sqlx::Row;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -69,11 +70,19 @@ pub async fn list_settings(
     State(state): State<AppState>,
     Query(params): Query<SettingsQuery>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<std::collections::HashMap<String, JsonValue>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    // 读出作用域（只读事务 + SET LOCAL search_path=public）。
-    let mut scope = match state.db.scope_read().await {
+    // 读出作用域（请求事务内只读查询 + SET LOCAL search_path=public）。
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
@@ -142,6 +151,7 @@ pub async fn list_settings(
 pub async fn batch_update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<BatchUpdateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -149,8 +159,15 @@ pub async fn batch_update_settings(
 
     for (key, value) in &payload.settings {
         let category = key.split('_').next().map(|s| s.to_string());
-        // 逐 key 独立事务：与改造前的 autocommit 语义一致（单条失败不影响其它 key）。
-        let mut scope = match state.db.scope().await {
+        // M-1: 复用请求事务；整批设置随请求原子提交/回滚。
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return ApiResponse::from(TopemsError::internal(
+                "数据库事务上下文缺失：请求事务未注入",
+                sqlx::Error::Protocol("RLS 事务缺失".into()),
+            ));
+        };
+        let mut scope = match state.db.scope_with(txn).await {
             Ok(s) => s,
             Err(e) => {
                 tracing::error!("设置保存作用域创建失败: {}", e);
@@ -199,10 +216,18 @@ pub async fn get_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SettingItem> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::<SettingItem>::from(TopemsError::internal("操作失败", e)),
     };
@@ -257,6 +282,7 @@ pub async fn update_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<SingleUpdateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -264,7 +290,14 @@ pub async fn update_setting(
         .category
         .or_else(|| key.split('_').next().map(|s| s.to_string()));
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
@@ -314,10 +347,18 @@ pub async fn delete_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))

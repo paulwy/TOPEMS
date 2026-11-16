@@ -42,7 +42,8 @@ async fn main() -> anyhow::Result<()> {
     let start_time = Instant::now();
     let app_state = AppState {
         // 沿用模块原有 SEARCH_PATH：public。
-        db: Db::new(ctx.db.clone(), "public"),
+        // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
+        db: Db::new(ctx.db.clone(), "public").deny_request_own_txn(),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,

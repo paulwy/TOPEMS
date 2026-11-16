@@ -11,6 +11,8 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize)]
@@ -438,6 +440,7 @@ pub(crate) fn get_memory_usage() -> (f64, f64, f64, f64) {
 pub async fn get_realtime_metrics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<RealtimeMetricsResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = chrono::Utc::now();
@@ -469,7 +472,14 @@ pub async fn get_realtime_metrics(
     } else {
         0.0
     };
-    let (active_alerts, critical_alerts, warning_alerts) = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let (active_alerts, critical_alerts, warning_alerts) = match state.db.scope_with(txn).await {
         Ok(mut scope) => {
             let fetched = sqlx::query(
                 "SELECT COUNT(*) FILTER (WHERE status='active') AS active,

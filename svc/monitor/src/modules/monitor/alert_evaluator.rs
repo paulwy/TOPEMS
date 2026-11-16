@@ -11,6 +11,7 @@ use crate::modules::monitor::metrics;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -322,10 +323,18 @@ fn collect_realtime_snapshot(state: &AppState) -> MetricSnapshot {
 pub async fn list_thresholds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<AlertThreshold>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值列表失败", e)),
     };
@@ -369,11 +378,19 @@ pub async fn list_thresholds(
 pub async fn create_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("创建阈值失败", e)),
     };
@@ -431,11 +448,19 @@ pub async fn create_threshold(
 pub async fn get_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("获取阈值详情失败", e)),
     };
@@ -482,12 +507,20 @@ pub async fn get_threshold(
 pub async fn update_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("更新阈值失败", e)),
     };
@@ -553,12 +586,20 @@ pub async fn update_threshold(
 pub async fn delete_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 软删除：与 alerts 模块一致置 deleted_at，不物理删行
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("删除阈值失败", e)),
     };
@@ -604,11 +645,19 @@ pub async fn delete_threshold(
 pub async fn evaluate_thresholds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<AlertEvaluationResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 1. 从库加载当前租户启用的阈值（不再使用空内存 Evaluator）
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失：请求事务未注入",
+            sqlx::Error::Protocol("RLS 事务缺失".into()),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值失败", e)),
     };
