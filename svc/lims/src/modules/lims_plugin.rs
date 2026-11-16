@@ -180,7 +180,9 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     tag = "lims_plugin"
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<PluginHealth> {
-    let db_status = match state.db.scope_read().await {
+    // 插件健康探针挂在 public 路由（不经过 tenant_middleware，无请求租户上下文），
+    // 且只执行 SELECT 1，因此走系统只读作用域而非请求事务。
+    let db_status = match state.db.scope_read_system().await {
         Ok(mut scope) => {
             let status = sqlx::query("SELECT 1").fetch_one(&mut scope).await.is_ok();
             let _ = scope.commit().await;

@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -160,6 +161,7 @@ const BARCODE_TYPES: &[(&str, &str)] = &[
 )]
 pub async fn list_barcodes(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(query): axum::extract::Query<BarcodeQuery>,
 ) -> ApiResponse<Vec<SampleBarcode>> {
     let page = query.page.unwrap_or(1);
@@ -225,7 +227,13 @@ pub async fn list_barcodes(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取条码列表读作用域创建失败: {}", e);
@@ -267,6 +275,7 @@ pub async fn list_barcodes(
 
 pub async fn generate_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateBarcodeRequest>,
 ) -> ApiResponse<Vec<SampleBarcode>> {
     let valid_type = BARCODE_TYPES.iter().any(|(t, _)| *t == req.barcode_type);
@@ -279,7 +288,13 @@ pub async fn generate_barcode(
         return ApiResponse::bad_request("生成数量必须在1-100之间");
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 生成条码写作用域创建失败: {}", e);
@@ -386,6 +401,7 @@ pub async fn generate_barcode(
 )]
 pub async fn get_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SampleBarcode> {
     let id = match Uuid::parse_str(&id) {
@@ -393,7 +409,13 @@ pub async fn get_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取条码读作用域创建失败: {}", e);
@@ -441,6 +463,7 @@ pub async fn get_barcode(
 
 pub async fn update_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateBarcodeRequest>,
 ) -> ApiResponse<SampleBarcode> {
@@ -449,7 +472,13 @@ pub async fn update_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 更新条码写作用域创建失败: {}", e);
@@ -517,6 +546,7 @@ pub async fn update_barcode(
 )]
 pub async fn print_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SampleBarcode> {
     let id = match Uuid::parse_str(&id) {
@@ -524,7 +554,13 @@ pub async fn print_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 条码打印写作用域创建失败: {}", e);
@@ -583,13 +619,20 @@ pub struct PrintBarcodesBatchRequest {
 
 pub async fn print_barcodes_batch(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PrintBarcodesBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let copies = req.copies.unwrap_or(1).max(1);
     if req.barcode_ids.is_empty() {
         return ApiResponse::bad_request("barcode_ids 不能为空");
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 条码批量打印写作用域创建失败: {}", e);
@@ -630,6 +673,7 @@ pub async fn print_barcodes_batch(
 
 pub async fn delete_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -637,7 +681,13 @@ pub async fn delete_barcode(
         Err(_) => return ApiResponse::bad_request("无效的条码ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 条码删除写作用域创建失败: {}", e);
@@ -677,6 +727,7 @@ pub async fn delete_barcode(
 )]
 pub async fn scan_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<BarcodeScanRequest>,
 ) -> ApiResponse<BarcodeScanRecord> {
@@ -685,7 +736,13 @@ pub async fn scan_barcode(
         return ApiResponse::bad_request("无效的扫描类型");
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 条码扫描登记写作用域创建失败: {}", e);
@@ -882,6 +939,7 @@ pub async fn update_print_config(Json(req): Json<PrintConfig>) -> ApiResponse<se
 )]
 pub async fn list_rfid_tags(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(query): axum::extract::Query<RfidTagQuery>,
 ) -> ApiResponse<Vec<RfidTag>> {
     let page = query.page.unwrap_or(1);
@@ -918,7 +976,13 @@ pub async fn list_rfid_tags(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取RFID标签列表读作用域创建失败: {}", e);
@@ -957,12 +1021,19 @@ pub async fn list_rfid_tags(
 
 pub async fn create_rfid_tag(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateRfidTagRequest>,
 ) -> ApiResponse<RfidTag> {
     let tag_type = req.tag_type.unwrap_or_else(|| "uhf".to_string());
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] RFID标签创建写作用域创建失败: {}", e);
@@ -1030,6 +1101,7 @@ pub async fn create_rfid_tag(
 )]
 pub async fn assign_rfid_tag(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path((tag_id, sample_id)): axum::extract::Path<(String, String)>,
 ) -> ApiResponse<RfidTag> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
@@ -1042,7 +1114,13 @@ pub async fn assign_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] RFID标签绑定写作用域创建失败: {}", e);
@@ -1121,6 +1199,7 @@ pub async fn assign_rfid_tag(
 )]
 pub async fn unassign_rfid_tag(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(tag_id): axum::extract::Path<String>,
 ) -> ApiResponse<RfidTag> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
@@ -1128,7 +1207,13 @@ pub async fn unassign_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的RFID标签ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] RFID标签解绑写作用域创建失败: {}", e);
@@ -1196,6 +1281,7 @@ pub async fn unassign_rfid_tag(
 )]
 pub async fn delete_rfid_tag(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -1203,7 +1289,13 @@ pub async fn delete_rfid_tag(
         Err(_) => return ApiResponse::bad_request("无效的RFID标签ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] RFID标签删除写作用域创建失败: {}", e);
@@ -1246,9 +1338,16 @@ pub async fn delete_rfid_tag(
 )]
 pub async fn trace_sample_by_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(barcode): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 样品追溯查询读作用域创建失败: {}", e);

@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 
 pub fn create_routes() -> Router<AppState> {
@@ -106,6 +107,7 @@ pub struct CalibrationRequest {
 )]
 pub async fn list_instruments(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -157,7 +159,13 @@ pub async fn list_instruments(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取仪器列表读作用域创建失败: {}", e);
@@ -208,6 +216,7 @@ pub async fn list_instruments(
 )]
 pub async fn create_instrument(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateInstrumentRequest>,
 ) -> ApiResponse<Instrument> {
@@ -217,7 +226,13 @@ pub async fn create_instrument(
     );
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器创建写作用域创建失败: {}", e);
@@ -283,6 +298,7 @@ pub async fn create_instrument(
 )]
 pub async fn get_instrument(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -299,7 +315,13 @@ pub async fn get_instrument(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取仪器读作用域创建失败: {}", e);
@@ -346,6 +368,7 @@ pub async fn get_instrument(
 
 pub async fn update_instrument(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInstrumentRequest>,
@@ -356,7 +379,13 @@ pub async fn update_instrument(
     };
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器更新写作用域创建失败: {}", e);
@@ -426,6 +455,7 @@ pub async fn update_instrument(
 )]
 pub async fn calibrate(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CalibrationRequest>,
@@ -436,7 +466,13 @@ pub async fn calibrate(
     };
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器校准写作用域创建失败: {}", e);
@@ -486,6 +522,7 @@ pub async fn calibrate(
 
 pub async fn delete_instrument(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -495,7 +532,13 @@ pub async fn delete_instrument(
     };
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器删除写作用域创建失败: {}", e);
@@ -594,6 +637,7 @@ pub struct CreateCalibrationScheduleRequest {
 )]
 pub async fn get_calibration_history(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<CalibrationRecord>> {
     let id = match Uuid::parse_str(&instrument_id) {
@@ -601,7 +645,13 @@ pub async fn get_calibration_history(
         Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取校准历史读作用域创建失败: {}", e);
@@ -657,6 +707,7 @@ pub async fn get_calibration_history(
 
 pub async fn create_calibration_record(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     headers: HeaderMap,
     Json(req): Json<CreateCalibrationRecordRequest>,
@@ -667,7 +718,13 @@ pub async fn create_calibration_record(
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 创建校准记录写作用域创建失败: {}", e);
@@ -769,8 +826,15 @@ pub async fn create_calibration_record(
 
 pub async fn get_calibration_schedule(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<CalibrationSchedule>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取校准计划读作用域创建失败: {}", e);
@@ -847,8 +911,15 @@ pub async fn get_calibration_schedule(
 
 pub async fn get_overdue_calibrations(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<CalibrationSchedule>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取过期校准读作用域创建失败: {}", e);
@@ -964,6 +1035,7 @@ const MAINTENANCE_COLUMNS: &str = "id::TEXT, instrument_id::TEXT, maintenance_ty
 )]
 pub async fn list_maintenance(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
@@ -977,7 +1049,13 @@ pub async fn list_maintenance(
     } else {
         Some(ctx.tenant_id)
     };
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取维护记录读作用域创建失败: {}", e);
@@ -1034,10 +1112,17 @@ pub async fn list_maintenance(
 )]
 pub async fn create_maintenance(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMaintenanceRequest>,
 ) -> ApiResponse<MaintenanceRecord> {
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 创建维护记录写作用域创建失败: {}", e);
@@ -1104,6 +1189,7 @@ pub async fn create_maintenance(
 )]
 pub async fn update_maintenance(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaintenanceRequest>,
@@ -1112,7 +1198,13 @@ pub async fn update_maintenance(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 更新维护记录写作用域创建失败: {}", e);
@@ -1166,6 +1258,7 @@ pub async fn update_maintenance(
 
 pub async fn delete_maintenance(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -1173,7 +1266,13 @@ pub async fn delete_maintenance(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 删除维护记录写作用域创建失败: {}", e);

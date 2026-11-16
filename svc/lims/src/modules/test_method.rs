@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -212,6 +213,7 @@ const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, 
 )]
 pub async fn list_methods(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
@@ -257,7 +259,13 @@ pub async fn list_methods(
         offset_idx
     );
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户只读作用域失败: {}", e);
@@ -324,12 +332,19 @@ pub async fn list_methods(
 
 pub async fn create_method(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTestMethodRequest>,
 ) -> ApiResponse<TestMethod> {
     let version = "1.0".to_string();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -429,6 +444,7 @@ pub async fn create_method(
 )]
 pub async fn get_method(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -449,7 +465,13 @@ pub async fn get_method(
         return ApiResponse::success(cached, "从内存缓存获取检测方法成功");
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户只读作用域失败: {}", e);
@@ -514,6 +536,7 @@ pub async fn get_method(
 
 pub async fn update_method(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTestMethodRequest>,
@@ -523,7 +546,13 @@ pub async fn update_method(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -629,6 +658,7 @@ pub async fn update_method(
 
 pub async fn delete_method(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -637,7 +667,13 @@ pub async fn delete_method(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -687,6 +723,7 @@ pub async fn delete_method(
 )]
 pub async fn list_categories(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
@@ -707,7 +744,13 @@ pub async fn list_categories(
         query_builder = query_builder.bind(pid_uuid);
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户只读作用域失败: {}", e);
@@ -745,12 +788,19 @@ pub async fn list_categories(
 
 pub async fn create_category(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodCategoryRequest>,
 ) -> ApiResponse<MethodCategory> {
     let sort_order = req.sort_order.unwrap_or(0);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -818,6 +868,7 @@ pub async fn create_category(
 )]
 pub async fn update_category(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMethodCategoryRequest>,
@@ -827,7 +878,13 @@ pub async fn update_category(
         Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -891,6 +948,7 @@ pub async fn update_category(
 
 pub async fn delete_category(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -899,7 +957,13 @@ pub async fn delete_category(
         Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -942,6 +1006,7 @@ pub async fn delete_category(
 )]
 pub async fn list_validations(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
@@ -962,7 +1027,13 @@ pub async fn list_validations(
         query_builder = query_builder.bind(mid_uuid);
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户只读作用域失败: {}", e);
@@ -1005,6 +1076,7 @@ pub async fn list_validations(
 
 pub async fn create_validation(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodValidationRequest>,
 ) -> ApiResponse<MethodValidationRecord> {
@@ -1013,7 +1085,13 @@ pub async fn create_validation(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);
@@ -1130,6 +1208,7 @@ pub async fn create_validation(
 )]
 pub async fn list_method_versions(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
@@ -1145,7 +1224,13 @@ pub async fn list_method_versions(
         Some(ctx.tenant_id)
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户只读作用域失败: {}", e);
@@ -1208,6 +1293,7 @@ pub async fn list_method_versions(
 )]
 pub async fn create_new_version(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
@@ -1217,7 +1303,13 @@ pub async fn create_new_version(
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("建立租户写作用域失败: {}", e);

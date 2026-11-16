@@ -10,6 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
@@ -81,6 +82,7 @@ fn resolve_tenant(ctx: &TenantContext, claims: &Claims) -> Option<Uuid> {
 
 async fn list_analytes(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyteQuery>,
@@ -116,7 +118,13 @@ async fn list_analytes(
     for p in &params {
         count_query = count_query.bind(p);
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 查询检验项目读作用域创建失败: {}", e);
@@ -172,6 +180,7 @@ async fn list_analytes(
 
 async fn get_analyte(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -186,7 +195,13 @@ async fn get_analyte(
         sql = format!("{sql} AND tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 查询检验项目读作用域创建失败: {}", e);
@@ -223,13 +238,20 @@ async fn get_analyte(
 
 async fn create_analyte(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAnalyteRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = ctx.tenant_id;
     let _ = claims;
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检验项目创建写作用域创建失败: {}", e);
@@ -275,6 +297,7 @@ async fn create_analyte(
 
 async fn update_analyte(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -287,7 +310,13 @@ async fn update_analyte(
         limit_value = COALESCE($6, limit_value), accuracy = COALESCE($7, accuracy), \
         status = COALESCE($8, status), description = COALESCE($9, description), \
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检验项目更新写作用域创建失败: {}", e);
@@ -345,12 +374,19 @@ async fn update_analyte(
 
 async fn delete_analyte(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let filter = resolve_tenant(&ctx, &claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检验项目删除写作用域创建失败: {}", e);

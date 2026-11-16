@@ -1,6 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{InstrumentData, ParseDataRequest, ParseResult, TestItemResult};
@@ -20,6 +21,7 @@ use super::models::{InstrumentData, ParseDataRequest, ParseResult, TestItemResul
 )]
 pub async fn parse_instrument_data(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<InstrumentData> {
     let id = match Uuid::parse_str(&id) {
@@ -27,7 +29,13 @@ pub async fn parse_instrument_data(
         Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器数据解析写作用域创建失败: {}", e);

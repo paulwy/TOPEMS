@@ -9,10 +9,11 @@
 //! - 任务集成创建：task_no UNIQUE，ON CONFLICT DO UPDATE（承接直写 #2/#5）
 
 use crate::shared::AppState;
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{extract::State, routing::post, Extension, Json, Router};
 use serde::Deserialize;
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 pub fn integration_routes() -> Router<AppState> {
@@ -39,13 +40,20 @@ pub struct CreateIntegrationSampleRequest {
 
 pub async fn create_integration_sample(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateIntegrationSampleRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let sample_type = req.sample_type.unwrap_or_else(|| "通用".to_string());
     let source = req.source.unwrap_or_else(|| "系统集成".to_string());
     let status = req.status.unwrap_or_else(|| "registered".to_string());
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 集成样本创建写作用域创建失败: {}", e);
@@ -103,10 +111,17 @@ pub struct CreateIntegrationTaskRequest {
 
 pub async fn create_integration_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateIntegrationTaskRequest>,
 ) -> ApiResponse<serde_json::Value> {
     // qa_lab_tasks.sample_id 为 NOT NULL：按 sample_no 关联解析样本（integration 仅提供 sample_no）
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 集成任务创建写作用域创建失败: {}", e);

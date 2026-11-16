@@ -2,6 +2,7 @@ use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Route
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -60,10 +61,17 @@ pub struct UpdateProcessRequest {
 )]
 pub async fn list_processes(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<InspectionProcess>> {
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取检验流程列表读作用域创建失败: {}", e);
@@ -124,6 +132,7 @@ pub async fn list_processes(
 )]
 pub async fn get_process(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<InspectionProcess> {
@@ -133,7 +142,13 @@ pub async fn get_process(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取检验流程读作用域创建失败: {}", e);
@@ -178,10 +193,17 @@ pub async fn get_process(
 
 pub async fn create_process(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateProcessRequest>,
 ) -> ApiResponse<InspectionProcess> {
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 创建检验流程写作用域创建失败: {}", e);
@@ -230,6 +252,7 @@ pub async fn create_process(
 
 pub async fn update_process(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateProcessRequest>,
 ) -> ApiResponse<InspectionProcess> {
@@ -240,7 +263,13 @@ pub async fn update_process(
 
     let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 更新检验流程写作用域创建失败: {}", e);
@@ -291,6 +320,7 @@ pub async fn update_process(
 
 pub async fn delete_process(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<String> {
     let uuid = match Uuid::parse_str(&id) {
@@ -298,7 +328,13 @@ pub async fn delete_process(
         Err(_) => return ApiResponse::bad_request("Invalid process ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 删除检验流程写作用域创建失败: {}", e);

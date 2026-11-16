@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 
 pub fn create_routes() -> Router<AppState> {
@@ -86,6 +87,7 @@ pub struct UpdateReagentRequest {
 )]
 pub async fn list_reagents(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -137,7 +139,13 @@ pub async fn list_reagents(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取试剂列表读作用域创建失败: {}", e);
@@ -190,6 +198,7 @@ pub async fn list_reagents(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_reagent(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateReagentRequest>,
 ) -> ApiResponse<Reagent> {
@@ -199,7 +208,13 @@ pub async fn create_reagent(
     );
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 试剂创建写作用域创建失败: {}", e);
@@ -306,6 +321,7 @@ pub async fn create_reagent(
 )]
 pub async fn get_reagent(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -322,7 +338,13 @@ pub async fn get_reagent(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取试剂读作用域创建失败: {}", e);
@@ -370,6 +392,7 @@ pub async fn get_reagent(
 
 pub async fn update_reagent(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateReagentRequest>,
@@ -380,7 +403,13 @@ pub async fn update_reagent(
     };
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 试剂更新写作用域创建失败: {}", e);
@@ -440,6 +469,7 @@ pub async fn update_reagent(
 
 pub async fn delete_reagent(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -449,7 +479,13 @@ pub async fn delete_reagent(
     };
     let tenant_id = ctx.tenant_id;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 试剂删除写作用域创建失败: {}", e);

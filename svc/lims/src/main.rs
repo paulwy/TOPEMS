@@ -89,7 +89,10 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     // 模块级数据库句柄：所有租户数据查询经 Db 作用域（事务级 search_path）
-    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared");
+    // M-1：请求链路内禁止自开事务，handler 复用 tenant_middleware 的请求事务；
+    // 后台订阅（无请求上下文）不受影响，仍可自开事务。
+    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared")
+        .deny_request_own_txn();
 
     if let Err(e) = models::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("LIMS schema defense warning: {}", e);

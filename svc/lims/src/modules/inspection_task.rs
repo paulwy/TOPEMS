@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{commit_retry, CacheInvalidatedPayload, EventType};
@@ -137,6 +138,7 @@ fn task_from_row(row: &sqlx::postgres::PgRow) -> InspectionTask {
 )]
 pub async fn list_tasks_by_sample(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
@@ -151,7 +153,13 @@ pub async fn list_tasks_by_sample(
         Some(ctx.tenant_id)
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取样品检测任务读作用域创建失败: {}", e);
@@ -197,6 +205,7 @@ pub async fn list_tasks_by_sample(
 )]
 pub async fn complete_step(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CompleteStepRequest>,
@@ -206,7 +215,13 @@ pub async fn complete_step(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 步骤记录写作用域创建失败: {}", e);
@@ -300,6 +315,7 @@ pub async fn complete_step(
 )]
 pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<InspectionTask>> {
@@ -318,7 +334,13 @@ pub async fn list_tasks(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取检测任务列表读作用域创建失败: {}", e);
@@ -386,6 +408,7 @@ pub async fn list_tasks(
 )]
 pub async fn create_task(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTaskRequest>,
 ) -> ApiResponse<InspectionTask> {
@@ -394,7 +417,13 @@ pub async fn create_task(
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检测任务创建写作用域创建失败: {}", e);
@@ -505,6 +534,7 @@ pub async fn create_task(
 )]
 pub async fn get_task(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -528,7 +558,13 @@ pub async fn get_task(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取检测任务读作用域创建失败: {}", e);
@@ -585,6 +621,7 @@ pub async fn get_task(
 
 pub async fn update_task(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTaskRequest>,
@@ -599,7 +636,13 @@ pub async fn update_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检测任务更新写作用域创建失败: {}", e);
@@ -692,6 +735,7 @@ pub async fn update_task(
 )]
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitResultRequest>,
@@ -701,7 +745,13 @@ pub async fn submit_result(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检测结果提交写作用域创建失败: {}", e);
@@ -842,6 +892,7 @@ pub async fn submit_result(
 
 pub async fn delete_task(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
@@ -850,7 +901,13 @@ pub async fn delete_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 检测任务删除写作用域创建失败: {}", e);

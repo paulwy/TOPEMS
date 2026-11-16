@@ -1,5 +1,7 @@
 use axum::extract::State;
+use axum::Extension;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{InstrumentDataStatistics, ProtocolStat};
@@ -16,8 +18,15 @@ use super::models::{InstrumentDataStatistics, ProtocolStat};
 )]
 pub async fn get_instrument_data_statistics(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<InstrumentDataStatistics> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 仪器数据统计读作用域创建失败: {}", e);

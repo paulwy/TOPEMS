@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -224,6 +225,7 @@ pub struct TypeBCalculationRequest {
 )]
 pub async fn list_projects(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(query): axum::extract::Query<UncertaintyProjectQuery>,
 ) -> ApiResponse<Vec<UncertaintyProject>> {
     let page = query.page.unwrap_or(1);
@@ -299,7 +301,13 @@ pub async fn list_projects(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取不确定度评定项目列表读作用域创建失败: {}", e);
@@ -347,6 +355,7 @@ pub async fn list_projects(
 
 pub async fn create_project(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyProjectRequest>,
 ) -> ApiResponse<UncertaintyProject> {
@@ -355,7 +364,13 @@ pub async fn create_project(
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度评定项目创建写作用域创建失败: {}", e);
@@ -444,6 +459,7 @@ pub async fn create_project(
 )]
 pub async fn get_project(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<UncertaintyProject> {
     let id = match Uuid::parse_str(&id) {
@@ -451,7 +467,13 @@ pub async fn get_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取不确定度评定项目读作用域创建失败: {}", e);
@@ -505,6 +527,7 @@ pub async fn get_project(
 
 pub async fn update_project(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyProjectRequest>,
 ) -> ApiResponse<UncertaintyProject> {
@@ -513,7 +536,13 @@ pub async fn update_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度评定项目更新写作用域创建失败: {}", e);
@@ -605,6 +634,7 @@ pub async fn update_project(
 
 pub async fn delete_project(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -612,7 +642,13 @@ pub async fn delete_project(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度评定项目删除写作用域创建失败: {}", e);
@@ -656,6 +692,7 @@ pub async fn delete_project(
 )]
 pub async fn list_sources(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<UncertaintySource>> {
     let id = match Uuid::parse_str(&project_id) {
@@ -663,7 +700,13 @@ pub async fn list_sources(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取不确定度来源列表读作用域创建失败: {}", e);
@@ -726,6 +769,7 @@ pub async fn list_sources(
 )]
 pub async fn create_source(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintySourceRequest>,
 ) -> ApiResponse<UncertaintySource> {
@@ -736,7 +780,13 @@ pub async fn create_source(
 
     let sort_order = req.sort_order.unwrap_or(0);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度来源创建写作用域创建失败: {}", e);
@@ -811,6 +861,7 @@ pub async fn create_source(
 )]
 pub async fn update_source(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintySourceRequest>,
 ) -> ApiResponse<UncertaintySource> {
@@ -819,7 +870,13 @@ pub async fn update_source(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度来源更新写作用域创建失败: {}", e);
@@ -887,6 +944,7 @@ pub async fn update_source(
 
 pub async fn delete_source(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -894,7 +952,13 @@ pub async fn delete_source(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度来源删除写作用域创建失败: {}", e);
@@ -938,6 +1002,7 @@ pub async fn delete_source(
 )]
 pub async fn list_components(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<UncertaintyComponent>> {
     let id = match Uuid::parse_str(&project_id) {
@@ -945,7 +1010,13 @@ pub async fn list_components(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取不确定度分量列表读作用域创建失败: {}", e);
@@ -1015,6 +1086,7 @@ pub async fn list_components(
 )]
 pub async fn create_component(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyComponentRequest>,
 ) -> ApiResponse<UncertaintyComponent> {
@@ -1028,7 +1100,13 @@ pub async fn create_component(
         Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度分量创建写作用域创建失败: {}", e);
@@ -1128,6 +1206,7 @@ pub async fn create_component(
 )]
 pub async fn update_component(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyComponentRequest>,
 ) -> ApiResponse<UncertaintyComponent> {
@@ -1136,7 +1215,13 @@ pub async fn update_component(
         Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度分量更新写作用域创建失败: {}", e);
@@ -1214,6 +1299,7 @@ pub async fn update_component(
 
 pub async fn delete_component(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -1221,7 +1307,13 @@ pub async fn delete_component(
         Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 不确定度分量删除写作用域创建失败: {}", e);
@@ -1263,6 +1355,7 @@ pub async fn delete_component(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn calculate_type_a(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeACalculationRequest>,
 ) -> ApiResponse<UncertaintyComponent> {
@@ -1305,7 +1398,13 @@ pub async fn calculate_type_a(
         "count": n
     });
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] A类不确定度计算写作用域创建失败: {}", e);
@@ -1384,6 +1483,7 @@ pub async fn calculate_type_a(
 )]
 pub async fn calculate_type_b(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeBCalculationRequest>,
 ) -> ApiResponse<UncertaintyComponent> {
@@ -1415,7 +1515,13 @@ pub async fn calculate_type_b(
         "divisor": divisor
     });
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] B类不确定度计算写作用域创建失败: {}", e);
@@ -1498,6 +1604,7 @@ pub async fn calculate_type_b(
 )]
 pub async fn calculate_combined(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&project_id) {
@@ -1505,7 +1612,13 @@ pub async fn calculate_combined(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 合成不确定度计算写作用域创建失败: {}", e);
@@ -1618,6 +1731,7 @@ pub async fn calculate_combined(
 
 pub async fn generate_report(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&project_id) {
@@ -1625,7 +1739,13 @@ pub async fn generate_report(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 生成不确定度评定报告读作用域创建失败: {}", e);

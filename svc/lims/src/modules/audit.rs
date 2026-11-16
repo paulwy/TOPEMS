@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
     routing::get,
-    Router,
+    Extension, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -12,6 +12,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::shared::AppState;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 fn validate_date_format(date_str: &str) -> bool {
@@ -83,6 +84,7 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +103,13 @@ pub async fn list_audit_logs(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取审计日志读作用域创建失败: {}", e);
@@ -215,9 +223,16 @@ pub async fn list_audit_logs(
 )]
 pub async fn get_audit_log(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AuditLog> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 获取审计日志读作用域创建失败: {}", e);
@@ -280,6 +295,7 @@ pub async fn get_audit_log(
 )]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,
 ) -> impl IntoResponse {
     if let Some(ref start_date) = params.start_date {
@@ -300,7 +316,14 @@ pub async fn export_audit_logs(
         }
     }
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::<serde_json::Value>::server_error("数据库事务上下文缺失")
+            .into_response();
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 导出审计日志读作用域创建失败: {}", e);

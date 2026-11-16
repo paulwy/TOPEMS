@@ -1,6 +1,7 @@
 use axum::{extract::State, Extension, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
@@ -18,13 +19,20 @@ use super::models::{CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdatePar
 )]
 pub async fn list_parse_rules(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(query): axum::extract::Query<ParseRuleQuery>,
 ) -> ApiResponse<Vec<ParseRule>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 解析规则列表读作用域创建失败: {}", e);
@@ -129,6 +137,7 @@ pub async fn list_parse_rules(
 )]
 pub async fn get_parse_rule(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ParseRule> {
     let id = match Uuid::parse_str(&id) {
@@ -136,7 +145,13 @@ pub async fn get_parse_rule(
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 解析规则详情读作用域创建失败: {}", e);
@@ -189,13 +204,20 @@ pub async fn get_parse_rule(
 
 pub async fn create_parse_rule(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateParseRuleRequest>,
 ) -> ApiResponse<ParseRule> {
     let rule_id = Uuid::new_v4();
     let rule_no = format!("PR-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 解析规则创建写作用域创建失败: {}", e);
@@ -261,6 +283,7 @@ pub async fn create_parse_rule(
 
 pub async fn update_parse_rule(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateParseRuleRequest>,
 ) -> ApiResponse<ParseRule> {
@@ -269,7 +292,13 @@ pub async fn update_parse_rule(
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 解析规则更新写作用域创建失败: {}", e);
@@ -338,6 +367,7 @@ pub async fn update_parse_rule(
 
 pub async fn delete_parse_rule(
     State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
@@ -345,7 +375,13 @@ pub async fn delete_parse_rule(
         Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[lims] 解析规则删除写作用域创建失败: {}", e);
