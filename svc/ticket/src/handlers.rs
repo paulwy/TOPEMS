@@ -11,6 +11,7 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -50,6 +51,7 @@ impl TicketService {
         reporter_id: Option<Uuid>,
         req: CreateTicketRequest,
         locale: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Ticket, sqlx::Error> {
         let ticket_no = self.generate_ticket_no();
         let ticket_type = req.ticket_type.clone();
@@ -66,7 +68,11 @@ impl TicketService {
             .map(|h| Utc::now() + Duration::hours(h as i64));
         let ticket_id = Uuid::new_v4();
         let now = Utc::now();
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         sqlx::query(
             r#"
@@ -167,15 +173,21 @@ impl TicketService {
         .await?;
 
         scope.commit().await?;
-        self.get_ticket(tenant_id, ticket_id).await
+        drop(guard);
+        self.get_ticket(tenant_id, ticket_id, txn_arc).await
     }
 
     pub async fn get_ticket(
         &self,
         tenant_id: Uuid,
         ticket_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Ticket, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let ticket = sqlx::query_as::<_, Ticket>(
             r#"
             SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status,
@@ -199,11 +211,16 @@ impl TicketService {
         &self,
         tenant_id: Uuid,
         query: TicketQuery,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketListResponse, sqlx::Error> {
         let page = query.page.unwrap_or(1).max(1);
         let page_size = query.page_size.unwrap_or(20).min(100);
         let offset = ((page - 1) * page_size) as i64;
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         let rows = sqlx::query_as::<_, Ticket>(
             r#"
@@ -278,8 +295,9 @@ impl TicketService {
         ticket_id: Uuid,
         user_id: Option<Uuid>,
         req: UpdateTicketRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Ticket, TopemsError> {
-        let existing = self.get_ticket(tenant_id, ticket_id).await?;
+        let existing = self.get_ticket(tenant_id, ticket_id, txn_arc).await?;
         let now = Utc::now();
 
         // 状态机白名单：仅允许合法状态值与合法状态转移，非法转移直接拒绝。
@@ -308,7 +326,11 @@ impl TicketService {
         } else {
             existing.closed_at
         };
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()).into());
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         sqlx::query(
             r#"
@@ -385,7 +407,8 @@ impl TicketService {
         }
 
         scope.commit().await?;
-        self.get_ticket(tenant_id, ticket_id)
+        drop(guard);
+        self.get_ticket(tenant_id, ticket_id, txn_arc)
             .await
             .map_err(Into::into)
     }
@@ -397,11 +420,16 @@ impl TicketService {
         user_id: Uuid,
         user_name: Option<String>,
         req: AddCommentRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketComment, sqlx::Error> {
         let comment_id = Uuid::new_v4();
         let now = Utc::now();
         let is_internal = req.is_internal.unwrap_or(false);
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         sqlx::query(
             r#"
@@ -449,8 +477,13 @@ impl TicketService {
         &self,
         tenant_id: Uuid,
         ticket_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketComment>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let comments = sqlx::query_as::<_, TicketComment>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
@@ -472,8 +505,13 @@ impl TicketService {
         &self,
         tenant_id: Uuid,
         ticket_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketActivity>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let activities = sqlx::query_as::<_, TicketActivity>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at
@@ -496,8 +534,13 @@ impl TicketService {
         tenant_id: Uuid,
         ticket_id: Uuid,
         user_id: Option<Uuid>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<bool, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query(
             r#"
             UPDATE ticket.core_tickets SET status = 'cancelled', closed_at = $1, updated_at = $1
@@ -535,8 +578,16 @@ impl TicketService {
         }
     }
 
-    pub async fn get_stats(&self, tenant_id: Uuid) -> Result<TicketStats, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+    pub async fn get_stats(
+        &self,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<TicketStats, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let total: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1")
                 .bind(tenant_id)
@@ -652,6 +703,7 @@ impl TicketService {
 // ==================== HTTP Handlers ====================
 
 pub async fn create_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -664,7 +716,7 @@ pub async fn create_ticket_handler(
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service
-        .create_ticket(tenant_id, reporter_id, req, locale)
+        .create_ticket(tenant_id, reporter_id, req, locale, &txn_arc)
         .await
     {
         Ok(ticket) => ApiResponse::success(ticket, "工单创建成功"),
@@ -673,6 +725,7 @@ pub async fn create_ticket_handler(
 }
 
 pub async fn list_tickets_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TicketQuery>,
@@ -681,13 +734,14 @@ pub async fn list_tickets_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.list_tickets(tenant_id, query).await {
+    match service.list_tickets(tenant_id, query, &txn_arc).await {
         Ok(list) => ApiResponse::success(list, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
 }
 
 pub async fn get_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -696,7 +750,7 @@ pub async fn get_ticket_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.get_ticket(tenant_id, id).await {
+    match service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(ticket) => ApiResponse::success(ticket, "查询成功"),
         Err(e) => ApiResponse::from({
             tracing::warn!("工单不存在: {}", e);
@@ -706,6 +760,7 @@ pub async fn get_ticket_handler(
 }
 
 pub async fn update_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -716,7 +771,10 @@ pub async fn update_ticket_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
-    match service.update_ticket(tenant_id, id, user_id, req).await {
+    match service
+        .update_ticket(tenant_id, id, user_id, req, &txn_arc)
+        .await
+    {
         Ok(ticket) => ApiResponse::success(ticket, "工单更新成功"),
         // 状态机白名单拒绝（非法状态值/非法转移）→ 400
         Err(TopemsError::ValidationFailed(msg)) => ApiResponse::bad_request(&msg),
@@ -727,6 +785,7 @@ pub async fn update_ticket_handler(
 }
 
 pub async fn delete_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -736,7 +795,10 @@ pub async fn delete_ticket_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
-    match service.delete_ticket(tenant_id, id, user_id).await {
+    match service
+        .delete_ticket(tenant_id, id, user_id, &txn_arc)
+        .await
+    {
         Ok(true) => ApiResponse::success(json!({"cancelled": true}), "工单已取消"),
         Ok(false) => ApiResponse::not_found("工单不存在或已关闭"),
         Err(e) => ApiResponse::from(TopemsError::internal("取消工单失败", e)),
@@ -744,6 +806,7 @@ pub async fn delete_ticket_handler(
 }
 
 pub async fn add_comment_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -759,7 +822,7 @@ pub async fn add_comment_handler(
     let user_name = Some(claims.username.clone());
 
     match service
-        .add_comment(tenant_id, id, user_id, user_name, req)
+        .add_comment(tenant_id, id, user_id, user_name, req, &txn_arc)
         .await
     {
         Ok(comment) => ApiResponse::success(comment, "评论已添加"),
@@ -768,6 +831,7 @@ pub async fn add_comment_handler(
 }
 
 pub async fn list_comments_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -776,13 +840,14 @@ pub async fn list_comments_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.list_comments(tenant_id, id).await {
+    match service.list_comments(tenant_id, id, &txn_arc).await {
         Ok(list) => ApiResponse::success(list, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询评论失败", e)),
     }
 }
 
 pub async fn list_activities_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -791,13 +856,14 @@ pub async fn list_activities_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.list_activities(tenant_id, id).await {
+    match service.list_activities(tenant_id, id, &txn_arc).await {
         Ok(list) => ApiResponse::success(list, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
     }
 }
 
 pub async fn get_stats_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<TicketStats> {
@@ -805,7 +871,7 @@ pub async fn get_stats_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.get_stats(tenant_id).await {
+    match service.get_stats(tenant_id, &txn_arc).await {
         Ok(stats) => ApiResponse::success(stats, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询统计失败", e)),
     }
@@ -814,6 +880,7 @@ pub async fn get_stats_handler(
 // ==================== SLA Handlers ====================
 
 pub async fn get_ticket_sla_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -823,7 +890,7 @@ pub async fn get_ticket_sla_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    let ticket = match ticket_service.get_ticket(tenant_id, id).await {
+    let ticket = match ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => t,
         Err(e) => {
             return ApiResponse::from({
@@ -833,13 +900,14 @@ pub async fn get_ticket_sla_handler(
         }
     };
 
-    match sla_service.calculate_sla(&ticket).await {
+    match sla_service.calculate_sla(&ticket, &txn_arc).await {
         Ok(sla) => ApiResponse::success(sla, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("计算SLA失败", e)),
     }
 }
 
 pub async fn trigger_sla_escalation_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -849,7 +917,7 @@ pub async fn trigger_sla_escalation_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    let ticket = match ticket_service.get_ticket(tenant_id, id).await {
+    let ticket = match ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => t,
         Err(e) => {
             return ApiResponse::from({
@@ -859,13 +927,14 @@ pub async fn trigger_sla_escalation_handler(
         }
     };
 
-    match sla_service.check_and_escalate(&ticket).await {
+    match sla_service.check_and_escalate(&ticket, &txn_arc).await {
         Ok(events) => ApiResponse::success(events, "SLA 升级检查完成"),
         Err(e) => ApiResponse::from(TopemsError::internal("SLA 升级检查失败", e)),
     }
 }
 
 pub async fn get_sla_stats_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<TicketSlaStats> {
@@ -879,7 +948,7 @@ pub async fn get_sla_stats_handler(
         )
     };
 
-    match service.get_sla_stats(opt_tenant_id).await {
+    match service.get_sla_stats(opt_tenant_id, &txn_arc).await {
         Ok(stats) => ApiResponse::success(stats, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询SLA统计失败", e)),
     }
@@ -897,6 +966,7 @@ pub async fn get_sla_stats_handler(
     )
 )]
 pub async fn create_sla_policy_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -907,7 +977,10 @@ pub async fn create_sla_policy_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.create_policy(tenant_id, req, locale).await {
+    match service
+        .create_policy(tenant_id, req, locale, &txn_arc)
+        .await
+    {
         Ok(policy) => ApiResponse::success(policy, "SLA策略创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建SLA策略失败", e)),
     }
@@ -924,6 +997,7 @@ pub async fn create_sla_policy_handler(
     )
 )]
 pub async fn list_sla_policies_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -939,7 +1013,7 @@ pub async fn list_sla_policies_handler(
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.list_policies(opt_tenant_id, locale).await {
+    match service.list_policies(opt_tenant_id, locale, &txn_arc).await {
         Ok(policies) => ApiResponse::success(policies, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询SLA策略失败", e)),
     }
@@ -956,6 +1030,7 @@ pub async fn list_sla_policies_handler(
     tag = "sla"
 )]
 pub async fn get_sla_policy_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -972,7 +1047,10 @@ pub async fn get_sla_policy_handler(
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.get_policy(opt_tenant_id, id, locale).await {
+    match service
+        .get_policy(opt_tenant_id, id, locale, &txn_arc)
+        .await
+    {
         Ok(policy) => ApiResponse::success(policy, "查询成功"),
         Err(e) => ApiResponse::from({
             tracing::warn!("SLA策略不存在: {}", e);
@@ -992,6 +1070,7 @@ pub async fn get_sla_policy_handler(
     tag = "sla"
 )]
 pub async fn update_sla_policy_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1003,7 +1082,10 @@ pub async fn update_sla_policy_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.update_policy(tenant_id, id, req, locale).await {
+    match service
+        .update_policy(tenant_id, id, req, locale, &txn_arc)
+        .await
+    {
         Ok(policy) => ApiResponse::success(policy, "SLA策略更新成功"),
         // 假 UUID 探测：结尾 get_policy 走 fetch_one RowNotFound → 内层 404（HTTP200）
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("SLA策略不存在"),
@@ -1022,6 +1104,7 @@ pub async fn update_sla_policy_handler(
     tag = "sla"
 )]
 pub async fn delete_sla_policy_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1030,7 +1113,7 @@ pub async fn delete_sla_policy_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
-    match service.delete_policy(tenant_id, id).await {
+    match service.delete_policy(tenant_id, id, &txn_arc).await {
         Ok(true) => ApiResponse::success(json!({"deleted": true}), "SLA策略已删除"),
         Ok(false) => ApiResponse::not_found("SLA策略不存在或为默认策略不可删除"),
         Err(e) => ApiResponse::from(TopemsError::internal("删除SLA策略失败", e)),
@@ -1051,6 +1134,7 @@ pub async fn delete_sla_policy_handler(
     )
 )]
 pub async fn create_automation_rule_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAutomationRuleRequest>,
@@ -1061,7 +1145,14 @@ pub async fn create_automation_rule_handler(
     let now = Utc::now();
     let priority = req.priority.unwrap_or(100);
     let enabled = req.enabled.unwrap_or(true);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1109,6 +1200,7 @@ pub async fn create_automation_rule_handler(
     )
 )]
 pub async fn list_automation_rules_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -1122,7 +1214,14 @@ pub async fn list_automation_rules_handler(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1160,6 +1259,7 @@ pub async fn list_automation_rules_handler(
     )
 )]
 pub async fn get_automation_rule_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1174,7 +1274,14 @@ pub async fn get_automation_rule_handler(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1218,6 +1325,7 @@ pub async fn get_automation_rule_handler(
     )
 )]
 pub async fn update_automation_rule_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1226,7 +1334,14 @@ pub async fn update_automation_rule_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1289,13 +1404,21 @@ pub async fn update_automation_rule_handler(
     )
 )]
 pub async fn delete_automation_rule_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1336,6 +1459,7 @@ pub async fn delete_automation_rule_handler(
     )
 )]
 pub async fn create_knowledge_article_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateKnowledgeArticleRequest>,
@@ -1345,7 +1469,14 @@ pub async fn create_knowledge_article_handler(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let keywords = req.keywords.unwrap_or_default();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1389,6 +1520,7 @@ pub async fn create_knowledge_article_handler(
     )
 )]
 pub async fn list_knowledge_articles_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
@@ -1404,7 +1536,14 @@ pub async fn list_knowledge_articles_handler(
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let q = params.get("q").cloned().unwrap_or_default();
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1458,6 +1597,7 @@ pub async fn list_knowledge_articles_handler(
     )
 )]
 pub async fn get_knowledge_article_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1472,7 +1612,14 @@ pub async fn get_knowledge_article_handler(
     };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1515,6 +1662,7 @@ pub async fn get_knowledge_article_handler(
     )
 )]
 pub async fn update_knowledge_article_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1523,7 +1671,14 @@ pub async fn update_knowledge_article_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1578,13 +1733,21 @@ pub async fn update_knowledge_article_handler(
     )
 )]
 pub async fn delete_knowledge_article_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1627,13 +1790,21 @@ fn tenant_id_of(claims: &Claims) -> Uuid {
 
 /// PUT /tickets/{id}/comments/{comment_id} —— 更新评论内容
 pub async fn update_comment_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateCommentRequest>,
 ) -> ApiResponse<TicketComment> {
     let tenant_id = tenant_id_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1683,12 +1854,20 @@ pub async fn update_comment_handler(
 
 /// DELETE /tickets/{id}/comments/{comment_id} —— 删除评论
 pub async fn delete_comment_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1721,12 +1900,20 @@ pub async fn delete_comment_handler(
 
 /// GET /tickets/{id}/activities/{activity_id} —— 单条活动
 pub async fn get_activity_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, activity_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<TicketActivity> {
     let tenant_id = tenant_id_of(&claims);
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1758,13 +1945,17 @@ pub async fn get_activity_handler(
 
 /// GET /tickets/{id}/activities/timeline —— 活动时间线（复用活动列表查询）
 pub async fn list_activities_timeline_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(ticket_id): Path<Uuid>,
 ) -> ApiResponse<Vec<TicketActivity>> {
     let service = TicketService::new(db);
     let tenant_id = tenant_id_of(&claims);
-    match service.list_activities(tenant_id, ticket_id).await {
+    match service
+        .list_activities(tenant_id, ticket_id, &txn_arc)
+        .await
+    {
         Ok(list) => ApiResponse::success(list, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
     }
@@ -1774,6 +1965,7 @@ pub async fn list_activities_timeline_handler(
 
 /// POST /tickets/{id}/assign —— 指派处理人
 pub async fn assign_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1781,7 +1973,7 @@ pub async fn assign_ticket_handler(
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
-    if let Err(e) = service.get_ticket(tenant_id, id).await {
+    if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
             other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
@@ -1792,7 +1984,14 @@ pub async fn assign_ticket_handler(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
     if let Some(a) = assignee_id {
-        let mut scope = match db.scope().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return ApiResponse::from(TopemsError::internal(
+                "数据库事务上下文缺失",
+                "请求事务未注入",
+            ));
+        };
+        let mut scope = match db.scope_with(txn).await {
             Ok(s) => s,
             Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
         };
@@ -1814,7 +2013,7 @@ pub async fn assign_ticket_handler(
             return ApiResponse::from(TopemsError::internal("提交失败", e));
         }
     }
-    match service.get_ticket(tenant_id, id).await {
+    match service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => ApiResponse::success(t, "工单已指派"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
@@ -1822,6 +2021,7 @@ pub async fn assign_ticket_handler(
 
 /// POST /tickets/{id}/resolve —— 标记解决
 pub async fn resolve_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1829,14 +2029,21 @@ pub async fn resolve_ticket_handler(
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
-    if let Err(e) = service.get_ticket(tenant_id, id).await {
+    if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
             other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     let now = Utc::now();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1857,7 +2064,7 @@ pub async fn resolve_ticket_handler(
     if let Err(e) = scope.commit().await {
         return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
-    match service.get_ticket(tenant_id, id).await {
+    match service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => ApiResponse::success(t, "工单已解决"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
@@ -1865,6 +2072,7 @@ pub async fn resolve_ticket_handler(
 
 /// POST /tickets/{id}/close —— 关闭工单
 pub async fn close_ticket_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1872,14 +2080,21 @@ pub async fn close_ticket_handler(
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
-    if let Err(e) = service.get_ticket(tenant_id, id).await {
+    if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
             other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     let now = Utc::now();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1900,7 +2115,7 @@ pub async fn close_ticket_handler(
     if let Err(e) = scope.commit().await {
         return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
-    match service.get_ticket(tenant_id, id).await {
+    match service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => ApiResponse::success(t, "工单已关闭"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
@@ -1910,6 +2125,7 @@ pub async fn close_ticket_handler(
 
 /// GET /tickets/{id}/sla/escalations —— SLA 升级历史
 pub async fn list_sla_escalations_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1917,13 +2133,16 @@ pub async fn list_sla_escalations_handler(
     let ticket_service = TicketService::new(db.clone());
     let sla_service = TicketSlaService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
-    if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
+    if let Err(e) = ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
             other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
-    match sla_service.get_escalation_history(tenant_id, id).await {
+    match sla_service
+        .get_escalation_history(tenant_id, id, &txn_arc)
+        .await
+    {
         Ok(events) => ApiResponse::success(events, "SLA升级历史"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询SLA升级失败", e)),
     }
@@ -1931,6 +2150,7 @@ pub async fn list_sla_escalations_handler(
 
 /// POST /tickets/{id}/sla/calculate —— 重算工单 SLA
 pub async fn calculate_ticket_sla_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1938,12 +2158,12 @@ pub async fn calculate_ticket_sla_handler(
     let ticket_service = TicketService::new(db.clone());
     let sla_service = TicketSlaService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
-    let ticket = match ticket_service.get_ticket(tenant_id, id).await {
+    let ticket = match ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => t,
         Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("工单不存在"),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     };
-    match sla_service.calculate_sla(&ticket).await {
+    match sla_service.calculate_sla(&ticket, &txn_arc).await {
         Ok(info) => ApiResponse::success(info, "SLA计算完成"),
         Err(e) => ApiResponse::from(TopemsError::internal("计算SLA失败", e)),
     }
@@ -1953,6 +2173,7 @@ pub async fn calculate_ticket_sla_handler(
 
 /// GET /tickets/dashboard/summary —— 汇总（按状态实时聚合 core_tickets）
 pub async fn dashboard_summary_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1961,7 +2182,14 @@ pub async fn dashboard_summary_handler(
     } else {
         Some(tenant_id_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -2060,12 +2288,20 @@ pub async fn dashboard_assignee_load_handler() -> ApiResponse<serde_json::Value>
 
 /// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）
 pub async fn dashboard_my_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
     let me = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

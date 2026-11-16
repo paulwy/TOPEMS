@@ -2,6 +2,7 @@ use chrono::Datelike;
 use chrono::Timelike;
 use chrono::{DateTime, Duration, Utc, Weekday};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -178,8 +179,12 @@ impl TicketSlaService {
         current
     }
 
-    pub async fn calculate_sla(&self, ticket: &Ticket) -> Result<TicketSlaInfo, sqlx::Error> {
-        let policy = self.match_policy(ticket).await?;
+    pub async fn calculate_sla(
+        &self,
+        ticket: &Ticket,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<TicketSlaInfo, sqlx::Error> {
+        let policy = self.match_policy(ticket, txn_arc).await?;
 
         let (response_hours, resolution_hours) = match &policy {
             Some(p) => (p.response_hours, p.resolution_hours),
@@ -236,7 +241,7 @@ impl TicketSlaService {
         };
 
         let escalation_history = self
-            .get_escalation_history(ticket.tenant_id, ticket.id)
+            .get_escalation_history(ticket.tenant_id, ticket.id, txn_arc)
             .await
             .unwrap_or_default();
 
@@ -261,8 +266,16 @@ impl TicketSlaService {
         })
     }
 
-    async fn match_policy(&self, ticket: &Ticket) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+    async fn match_policy(
+        &self,
+        ticket: &Ticket,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, name, description, ticket_type, severity, response_hours, resolution_hours, escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3, working_hours_only, business_hours_start, business_hours_end, weekend_excluded, is_default, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
@@ -292,8 +305,13 @@ impl TicketSlaService {
         &self,
         tenant_id: Uuid,
         ticket_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
             SELECT id, ticket_id, tenant_id, level, escalation_time, escalated_to, reason, created_at FROM ticket.core_ticket_sla_escalations
@@ -318,9 +336,10 @@ impl TicketSlaService {
     pub async fn check_and_escalate(
         &self,
         ticket: &Ticket,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
-        let sla_info = self.calculate_sla(ticket).await?;
-        let policy = self.match_policy(ticket).await?;
+        let sla_info = self.calculate_sla(ticket, txn_arc).await?;
+        let policy = self.match_policy(ticket, txn_arc).await?;
 
         if policy.is_none() {
             return Ok(vec![]);
@@ -367,6 +386,7 @@ impl TicketSlaService {
                             ticket.id,
                             level,
                             Some(format!("SLA 第{}级升级：超过 {} 小时未解决", level, hours)),
+                            txn_arc,
                         )
                         .await?;
                     new_escalations.push(event);
@@ -383,10 +403,15 @@ impl TicketSlaService {
         ticket_id: Uuid,
         level: i32,
         reason: Option<String>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<SlaEscalationEvent, sqlx::Error> {
         let event_id = Uuid::new_v4();
         let now = Utc::now();
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         sqlx::query(
             r#"
@@ -439,10 +464,15 @@ impl TicketSlaService {
         tenant_id: Uuid,
         req: CreateSlaPolicyRequest,
         locale: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy_id = Uuid::new_v4();
         let now = Utc::now();
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         if req.is_default.unwrap_or(false) {
             sqlx::query(
@@ -493,7 +523,9 @@ impl TicketSlaService {
         .await?;
 
         scope.commit().await?;
-        self.get_policy(Some(tenant_id), policy_id, locale).await
+        drop(guard);
+        self.get_policy(Some(tenant_id), policy_id, locale, txn_arc)
+            .await
     }
 
     pub async fn get_policy(
@@ -501,8 +533,13 @@ impl TicketSlaService {
         tenant_id: Option<Uuid>,
         policy_id: Uuid,
         locale: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
@@ -529,8 +566,13 @@ impl TicketSlaService {
         &self,
         tenant_id: Option<Uuid>,
         locale: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
@@ -559,9 +601,14 @@ impl TicketSlaService {
         policy_id: Uuid,
         req: UpdateSlaPolicyRequest,
         locale: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let now = Utc::now();
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
 
         if req.is_default.unwrap_or(false) {
             sqlx::query(
@@ -616,15 +663,22 @@ impl TicketSlaService {
         .await?;
 
         scope.commit().await?;
-        self.get_policy(Some(tenant_id), policy_id, locale).await
+        drop(guard);
+        self.get_policy(Some(tenant_id), policy_id, locale, txn_arc)
+            .await
     }
 
     pub async fn delete_policy(
         &self,
         tenant_id: Uuid,
         policy_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<bool, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query(
             r#"
             UPDATE ticket.core_ticket_sla_policies SET deleted_at = NOW()
@@ -644,8 +698,13 @@ impl TicketSlaService {
     pub async fn get_sla_stats(
         &self,
         tenant_id: Option<Uuid>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<TicketSlaStats, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ticket.core_tickets

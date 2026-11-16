@@ -17,6 +17,7 @@ use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -142,6 +143,7 @@ pub struct ListFeedbackParams {
 )]
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn create_feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFeedbackRequest>,
@@ -156,7 +158,11 @@ pub async fn create_feedback(
         "response": "",
     });
 
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open scope: {}", e);
@@ -206,6 +212,7 @@ pub async fn create_feedback(
     tag = "FeedbackCompat"
 )]
 pub async fn get_feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -214,7 +221,11 @@ pub async fn get_feedback(
         Ok(t) => t,
         Err(msg) => return ApiResponse::bad_request(msg),
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open scope: {}", e);
@@ -249,6 +260,7 @@ pub async fn get_feedback(
 
 /// 反馈列表（兼容端点）
 pub async fn list_feedbacks(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListFeedbackParams>,
@@ -294,7 +306,11 @@ pub async fn list_feedbacks(
         where_clause
     );
 
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open scope: {}", e);
@@ -341,6 +357,7 @@ pub async fn list_feedbacks(
 
 /// 响应反馈（兼容端点，更新 ticket.metadata.response 并标记 resolved）
 pub async fn response_feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -355,7 +372,11 @@ pub async fn response_feedback(
         Err(msg) => return ApiResponse::bad_request(msg),
     };
 
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open scope: {}", e);
@@ -395,6 +416,7 @@ pub async fn response_feedback(
 
 /// 删除反馈（兼容端点，软删除 ticket）
 pub async fn delete_feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -404,7 +426,11 @@ pub async fn delete_feedback(
         Err(msg) => return ApiResponse::bad_request(msg),
     };
 
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失：请求事务未注入");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open scope: {}", e);

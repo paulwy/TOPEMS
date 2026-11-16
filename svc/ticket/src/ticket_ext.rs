@@ -14,6 +14,7 @@ use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -204,6 +205,7 @@ pub struct WorkflowRuleView {
     tag = "TicketExt"
 )]
 pub async fn list_workflow_automation_rules(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -214,7 +216,14 @@ pub async fn list_workflow_automation_rules(
         Some(tenant_of(&claims))
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -270,13 +279,21 @@ pub struct WorkflowToggleRequest {
     tag = "TicketExt"
 )]
 pub async fn toggle_workflow_automation_rule(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<WorkflowToggleRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -404,6 +421,7 @@ pub struct TransitionRequest {
     tag = "TicketExt"
 )]
 pub async fn get_ticket_transitions(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -413,7 +431,14 @@ pub async fn get_ticket_transitions(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -464,6 +489,7 @@ pub async fn get_ticket_transitions(
     tag = "TicketExt"
 )]
 pub async fn apply_transition(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -471,7 +497,14 @@ pub async fn apply_transition(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -596,6 +629,7 @@ struct TagRequest {
     tag = "TicketExt"
 )]
 pub async fn get_ticket_tags(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -605,7 +639,14 @@ pub async fn get_ticket_tags(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -632,6 +673,7 @@ pub async fn get_ticket_tags(
 }
 
 async fn add_ticket_tag(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -642,7 +684,14 @@ async fn add_ticket_tag(
     if tag.is_empty() {
         return ApiResponse::bad_request("标签不能为空");
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -701,12 +750,20 @@ async fn add_ticket_tag(
     tag = "TicketExt"
 )]
 pub async fn remove_ticket_tag(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, tag)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -762,6 +819,7 @@ pub async fn remove_ticket_tag(
     tag = "TicketExt"
 )]
 pub async fn list_tag_directory(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
@@ -770,7 +828,14 @@ pub async fn list_tag_directory(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -823,6 +888,7 @@ async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
     tag = "TicketExt"
 )]
 pub async fn get_tag_stub(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
@@ -832,7 +898,14 @@ pub async fn get_tag_stub(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -897,6 +970,7 @@ fn ids_param(req: &BatchIdsRequest) -> Vec<Uuid> {
     tag = "TicketExt"
 )]
 pub async fn batch_update_tickets(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -906,7 +980,14 @@ pub async fn batch_update_tickets(
     if ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -951,6 +1032,7 @@ pub async fn batch_update_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_assign_tickets(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -961,7 +1043,14 @@ pub async fn batch_assign_tickets(
         Some(a) => a,
         None => return ApiResponse::bad_request("assignee_id 必填"),
     };
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -998,13 +1087,21 @@ pub async fn batch_assign_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_close_tickets(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1040,13 +1137,21 @@ pub async fn batch_close_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_delete_tickets(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1082,13 +1187,21 @@ pub async fn batch_delete_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_escalate_tickets(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1155,6 +1268,7 @@ fn decode_file_data(raw: &str) -> Vec<u8> {
     tag = "TicketExt"
 )]
 pub async fn list_attachments(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1164,7 +1278,14 @@ pub async fn list_attachments(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1206,6 +1327,7 @@ pub async fn list_attachments(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn upload_attachment(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1221,7 +1343,14 @@ async fn upload_attachment(
         .as_deref()
         .map(decode_file_data)
         .unwrap_or_default();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1272,6 +1401,7 @@ async fn upload_attachment(
     tag = "TicketExt"
 )]
 pub async fn get_attachment(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
@@ -1281,7 +1411,14 @@ pub async fn get_attachment(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1322,6 +1459,7 @@ pub async fn get_attachment(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn update_attachment(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
@@ -1333,7 +1471,14 @@ async fn update_attachment(
         .as_deref()
         .map(decode_file_data)
         .unwrap_or_default();
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1370,12 +1515,20 @@ async fn update_attachment(
 }
 
 async fn delete_attachment(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1420,6 +1573,7 @@ async fn delete_attachment(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn batch_upload_attachments(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1428,7 +1582,14 @@ pub async fn batch_upload_attachments(
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
     let mut created = 0usize;
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(t) => t,
         Err(e) => return ApiResponse::from(TopemsError::internal("事务失败", e)),
     };
@@ -1479,6 +1640,7 @@ pub async fn batch_upload_attachments(
     tag = "TicketExt"
 )]
 pub async fn batch_delete_attachments(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1488,7 +1650,14 @@ pub async fn batch_delete_attachments(
     if req.ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1528,6 +1697,7 @@ pub async fn batch_delete_attachments(
     tag = "TicketExt"
 )]
 pub async fn get_attachment_stats(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1537,7 +1707,14 @@ pub async fn get_attachment_stats(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1582,6 +1759,7 @@ pub async fn get_attachment_stats(
     tag = "TicketExt"
 )]
 pub async fn get_attachments_by_type(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
@@ -1591,7 +1769,14 @@ pub async fn get_attachments_by_type(
     } else {
         Some(tenant_of(&claims))
     };
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "请求事务未注入",
+        ));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -1647,6 +1832,7 @@ pub async fn get_attachments_by_type(
     tag = "TicketExt"
 )]
 pub async fn download_attachment_handler(
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
@@ -1656,8 +1842,14 @@ pub async fn download_attachment_handler(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(axum::response::Response::new(axum::body::Body::from(
+            "数据库事务上下文缺失：请求事务未注入",
+        )));
+    };
     let mut scope = db
-        .scope_read()
+        .scope_with(txn)
         .await
         .map_err(|_| axum::response::Response::new(axum::body::Body::from("数据库连接失败")))?;
     let row = sqlx::query(

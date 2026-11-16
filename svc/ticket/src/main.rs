@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service_shared(&config).await?;
     // 连接治理 B：共享池之上固化本模块 search_path（显式传值，不依赖 .env）
-    let db = Db::new(ctx.db.clone(), "ticket, public");
+    let db = Db::new(ctx.db.clone(), "ticket, public").deny_request_own_txn();
     tracing::info!("🚀 TOPEMS Ticket Service starting...");
 
     // ── 模块级数据库初始化（DDL 走 owner 迁移连接池，受限业务用户无表 owner 权限）────
