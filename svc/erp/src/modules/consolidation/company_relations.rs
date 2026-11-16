@@ -249,7 +249,7 @@ pub async fn update_company_relation(
         r#"
         SELECT parent_company_id, child_company_id FROM erp.company_relations
         WHERE id = $1 AND deleted_at IS NULL
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+          AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         "#,
     )
     .bind(relation_id)
@@ -280,7 +280,7 @@ pub async fn update_company_relation(
             expiry_date = COALESCE($4, expiry_date),
             status = COALESCE($5, status),
             updated_at = NOW()
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         RETURNING *
         "#,
     )
@@ -346,7 +346,7 @@ pub async fn delete_company_relation(
         r#"
         SELECT parent_company_id, child_company_id FROM erp.company_relations
         WHERE id = $1 AND deleted_at IS NULL
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+          AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         "#,
     )
     .bind(relation_id)
@@ -369,7 +369,7 @@ pub async fn delete_company_relation(
             return company_scope_error(e);
         }
     }
-    match sqlx::query("UPDATE erp.company_relations SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    match sqlx::query("UPDATE erp.company_relations SET deleted_at = NOW() WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)")
         .bind(relation_id)
         .execute(&mut **txn)
         .await

@@ -177,7 +177,7 @@ pub async fn update_scope_company(
         r#"
         SELECT company_id FROM erp.consolidation_scope_companies
         WHERE id = $1 AND deleted_at IS NULL
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+          AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         "#,
     )
     .bind(company_id)
@@ -208,7 +208,7 @@ pub async fn update_scope_company(
             consolidation_percentage = COALESCE($4, consolidation_percentage),
             minority_interest = COALESCE($5, minority_interest),
             expiry_date = COALESCE($6, expiry_date)
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         RETURNING *
         "#,
     )
@@ -277,7 +277,7 @@ pub async fn remove_scope_company(
         r#"
         SELECT company_id FROM erp.consolidation_scope_companies
         WHERE id = $1 AND deleted_at IS NULL
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+          AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         "#,
     )
     .bind(company_id)
@@ -301,7 +301,7 @@ pub async fn remove_scope_company(
         return company_scope_error(e);
     }
     match sqlx::query(
-        "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)",
     )
     .bind(company_id)
     .execute(&mut **txn)

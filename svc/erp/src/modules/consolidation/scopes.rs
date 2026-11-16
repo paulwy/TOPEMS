@@ -205,7 +205,7 @@ pub async fn update_scope(
             consolidation_method = COALESCE($4, consolidation_method),
             status = COALESCE($5, status),
             updated_at = NOW()
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         RETURNING *
         "#,
     )
@@ -262,7 +262,7 @@ pub async fn delete_scope(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    match sqlx::query("UPDATE erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    match sqlx::query("UPDATE erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)")
         .bind(scope_id)
         .execute(&mut **txn)
         .await

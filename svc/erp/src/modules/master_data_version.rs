@@ -312,7 +312,7 @@ pub async fn rollback_to_version(
                 "erp",
                 r#"UPDATE erp.erp_master_data_refs
                    SET name = $1, status = $2, updated_at = $3, last_synced_at = $3
-                   WHERE master_data_id = $4 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#
+                   WHERE master_data_id = $4 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)"#
             ))
             .bind(&name)
             .bind(&status)

@@ -439,7 +439,7 @@ pub async fn delete_report(
         None => unreachable!("rls txn missing"),
     };
     match sqlx::query(
-        "UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)",
     )
         .bind(report_id)
         .execute(&mut **txn)

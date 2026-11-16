@@ -230,7 +230,7 @@ pub async fn update_elimination_rule(
             auto_elimination = COALESCE($9, auto_elimination),
             priority = COALESCE($10, priority),
             updated_at = NOW()
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
         RETURNING *
         "#,
     )
@@ -292,7 +292,7 @@ pub async fn delete_elimination_rule(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    match sqlx::query("UPDATE erp.elimination_rules SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    match sqlx::query("UPDATE erp.elimination_rules SET deleted_at = NOW() WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)")
         .bind(rule_id)
         .execute(&mut **txn)
         .await
