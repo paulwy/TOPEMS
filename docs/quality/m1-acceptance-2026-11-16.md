@@ -126,7 +126,7 @@ HTTP 400
 - 243 处 `scope_for_tenant`/`scope_read_for_tenant`（audit_v52 28 / risk_v59 25 / decision_v60 25 / reports_v57 23 / treasury_v58 19 / risk_v54 19 / tax_v56 18 / settlement_v55 18 / compliance_v51 16 / sales_invoice 10 / voucher_template_entries 9 / voucher_template 8 / financial_reports 7 / forecast_v53 4 / modules::mod 4 / bootstrap 1）→ `scope_with(txn)`。
 - 仅剩 `svc/finance/src/event_handlers/mod.rs` 9 处租户作用域：后台事件消费无请求上下文，守卫不触发，保留原状。
 - `svc/finance/src/main.rs` 开启 `deny_request_tenant_scope()`（与 `deny_request_own_txn()` 并存）。
-- `forecast_v53` 的 3 个 `#[sqlx::test]` 用例补 `scope_request_tenant` + 显式事务；本地无建库权限（`permission denied to create database`）仍无法执行，属环境受限。
+- `forecast_v53` 的 3 个 `#[sqlx::test]` 用例补 `scope_request_tenant` + 显式事务；**2026-11-16 夜已实跑通过（3/3）**。此前「本地无建库权限（`permission denied to create database`）」的根因是测试按 `.env` 连 `topems_prod`（`rolcreatedb=false`），不是用例本身受限；改用本机专用测试角色 `topems_test_runner`（`rolcreatedb=true`，同名库已存在）作 `DATABASE_URL` 即可创建 `#[sqlx::test]` 临时库，`topems_prod` 全程零写入。
 - 数字口径（可复现口径，正式）：**243 = finance 租户作用域调用点 = handler 级 `Extension<RlsTxnCell>` 包装数**；**357 = `db.scope_with(txn)` 真实调用点**（含此前已迁移的 accounting_subjects / currencies / operational / reconcile_orders 等）。两者是包含关系：243 是本批新迁的租户作用域调用点，357 是本批完成后 finance 代码里 `scope_with` 的全部出现次数。
 - 说明：此前口头提到的「327 处事务包装 / finance 129 处」属**不可复现的口述数**（无法由脚本或代码检索复算出同一分母），自本条起不再作为事实引用，一律以 243 / 357 为准。
 
@@ -362,7 +362,7 @@ grep -rnE '\.scope_(read_)?for_tenant\(' --include='*.rs' svc/<站>/src | grep -
 
 facts 快照（`docs/quality/facts-latest.json`，fingerprint 见文件）已按收口终态重生成：
 
-- `docs.todo_lines` **748 → 766**（+18）：唯一来源是 `TODO.md` 新增 §8.1「待决事项登记」——table 头 2 行 + 3 条 `DEC-WMS-B-*` 各 1 行 + 触发条件与说明，合计 18 行；本轮收口文档改动不涉及 `TODO.md`，该值稳定在 766。
+- `docs.todo_lines` **748 → 766 → 773 → 779**：+18 来自 `TODO.md` §8.1「待决事项登记」（table 头 2 行 + 3 条 `DEC-WMS-B-*` 各 1 行 + 触发条件与说明），+7 为 §8.1 后续 DEC 登记，+6 为 2026-11-16 尾收补记 §17.4「请求事务化回归补跑」；快照已按当前工作区重生成，`pnpm facts:check` 与 779 一致。
 - `docs.todo_h2_sections=18` 不变（§8.1 是 `###` 三级标题）。
 
 ### 11.3 本轮尾收代码改动明细
@@ -371,7 +371,8 @@ facts 快照（`docs/quality/facts-latest.json`，fingerprint 见文件）已按
 - `svc/mes/src/main.rs`：在既有 `deny_request_own_txn()` 上补 `deny_request_tenant_scope()`（先迁移、后开守卫）。
 - `svc/mes/src/event_handlers.rs:73`：后台事件消费加 `mes-txn-exempt: B4-01` 标记与理由注释。
 - `svc/mes/tests/common/app_state.rs`：新增 `request_txn_cell(pool)`，为直调 handler 的集成测试补请求事务单元（生产由 `tenant_middleware` 注入）。
-- 6 个 e2e（`equipment` / `material_plan` / `material_requirement` / `team_create_conflict` / `wip` / `work_order`）：handler 签名补 `Extension<RlsTxnCell>` 后同步适配。
+- 6 个 e2e（`equipment` / `material_plan` / `material_requirement` / `team_create_conflict` / `wip` / `work_order`）：handler 签名补 `Extension<RlsTxnCell>` 后同步适配（当轮只做编译适配，未实跑）。
+- 2026-11-16 尾收补跑：`material_plan_e2e` 3 个用例此前实跑全 500，根因是用例陈旧——未注入 task-local 租户上下文（`Db::scope_with` 直接报 `RLS context missing`）且插入行不写 `tenant_id`，与 `tenant_id = $4::uuid` 谓词永远不匹配。已按 `equipment_e2e.rs` 既有范式（`claims.tenant_id` + `scope_request_tenant` + 跨租户数据）修正，实跑 **3/3 通过**；生产代码未改。
 - qms 尾部复核：`shared/mod.rs` helper 已统一 `scope_with(txn)`，`for_tenant` 实测 0，无残留。
 
 ### 11.4 结论与边界

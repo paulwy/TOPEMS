@@ -770,3 +770,9 @@ handler 内若再调用 `Db::scope_for_tenant()` / `scope()`（QMS 86 处、PM 1
 本轮只改 SCM 同步链路这一处（`purchase-to-inbound` 两个入口 + `record_sync_log` 事务化），
 其余模块按服务分批另立窗口；排查清单可由
 `rg 'ApiResponse::success\(\s*serde_json::json!\(\{\s*"success":\s*false' svc/` 起步。
+
+### 17.4 请求事务化回归补跑（2026-11-16 尾收，已完成）
+
+- `svc/mes/tests/material_plan_e2e.rs`：旧用例实跑全 500。根因是用例陈旧——未注入 task-local 租户上下文（`Db::scope_with` 直接报 `RLS context missing`）且插入行不写 `tenant_id`，与 handler 的 `tenant_id = $4::uuid` 谓词永不匹配。已按 `equipment_e2e.rs` 范式补 `claims.tenant_id` + `scope_request_tenant` + 跨租户数据，实跑 **3/3 通过**（生产代码未改）。
+- `svc/finance/src/modules/forecast_v53.rs` 的 3 个 `#[sqlx::test]`（`predict_matches_text_entity_id` / `predict_without_history_maps_to_400` / `retrain_without_history_maps_to_400`）实跑 **3/3 通过**。
+- 环境结论：此前「`permission denied to create database`」源于测试按 `.env` 连 `topems_prod`（`rolcreatedb=false`）；本机 `topems_test_runner`（`rolcreatedb=true`）可承载 `#[sqlx::test]` 临时库，`topems_prod` 全程零写入。详见 `docs/quality/m1-acceptance-2026-11-16.md` §8.2、§11.3。
