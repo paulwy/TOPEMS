@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_success, ApiResponse};
@@ -534,12 +535,11 @@ pub async fn create_uom(
     Json(req): Json<CreateUomRequest>,
 ) -> ApiResponse<Uom> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
-    // 创建路径：租户已知时写入真实租户；确实无上下文（服务令牌）时写 nil。
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let row: Option<Uom> = match sqlx::query_as(
         r#"INSERT INTO master_data.uoms
             (uom_code, uom_name, name_en, uom_type, category, status, description, tenant_id, created_by)
@@ -837,12 +837,11 @@ pub async fn create_sample(
     Json(req): Json<CreateSampleRequest>,
 ) -> ApiResponse<Sample> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
-    // 创建路径：租户已知时写入真实租户；确实无上下文（服务令牌）时写 nil。
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let row: Option<Sample> = match sqlx::query_as(
         r#"INSERT INTO master_data.samples
             (sample_code, sample_name, name_en, sample_type, source, status, description, tenant_id, created_by)
