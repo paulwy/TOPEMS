@@ -12,7 +12,7 @@ use topems_shared_auth::auth::Claims;
 use tracing::info;
 use uuid::Uuid;
 
-use super::begin_tenant_txn;
+use super::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -300,8 +300,8 @@ pub async fn create_subscription(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_subscriptions (id, template_id, user_id, email, frequency, enabled)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO report_subscriptions (id, template_id, user_id, email, frequency, enabled, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
     )
     .bind(id)
@@ -310,6 +310,7 @@ pub async fn create_subscription(
     .bind(&req.email)
     .bind(req.frequency.to_string())
     .bind(true)
+    .bind(tenant_uuid(&claims))
     .execute(&mut *tx)
     .await;
 
