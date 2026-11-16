@@ -70,7 +70,8 @@ pub async fn build_router(
 
     // 连接治理 B：共享运行时池之上固化本模块 search_path（public 在前，
     // 否则裸表名 core_faqs/core_guides 会解析到 portal 的空副本）。
-    let scoped_db = topems_shared_db::scope::Db::new(db.clone(), "public, portal");
+    let scoped_db =
+        topems_shared_db::scope::Db::new(db.clone(), "public, portal").deny_request_own_txn();
     let app_state = AppState::new(scoped_db, event_publisher.clone())
         .await
         .with_permission_resolver(db.clone());
@@ -339,7 +340,12 @@ pub async fn build_router(
         "/api/portal/graphql",
         post({
             let schema = graphql_schema.clone();
-            move |headers: axum::http::HeaderMap, req: async_graphql_axum::GraphQLRequest| {
+            let db_for_graphql = app_state.db.clone();
+            move |headers: axum::http::HeaderMap,
+                  axum::Extension(txn_arc): axum::Extension<
+                topems_shared_auth::middleware::tenant::RlsTxnCell,
+            >,
+                  req: async_graphql_axum::GraphQLRequest| {
                 let schema = schema.clone();
                 async move {
                     let inner = req.into_inner();
@@ -456,6 +462,16 @@ pub async fn build_router(
                         }
                     }
 
+                    // M-1: 请求事务注入 GraphQL 上下文（解析器与 DataLoader 复用同一事务）
+                    let inner = inner.data(txn_arc.clone()).data(
+                        async_graphql::dataloader::DataLoader::new(
+                            modules::graphql_dataloader::TodoLoader::with_request_txn(
+                                db_for_graphql.clone(),
+                                txn_arc,
+                            ),
+                            tokio::spawn,
+                        ),
+                    );
                     let start = std::time::Instant::now();
                     let result = schema.execute(inner).await;
                     let duration_ms = start.elapsed().as_millis() as u64;
@@ -485,7 +501,12 @@ pub async fn build_router(
         })
         .get({
             let schema = graphql_schema.clone();
-            move |headers: axum::http::HeaderMap, req: async_graphql_axum::GraphQLRequest| {
+            let db_for_graphql = app_state.db.clone();
+            move |headers: axum::http::HeaderMap,
+                  axum::Extension(txn_arc): axum::Extension<
+                topems_shared_auth::middleware::tenant::RlsTxnCell,
+            >,
+                  req: async_graphql_axum::GraphQLRequest| {
                 let schema = schema.clone();
                 async move {
                     let inner = req.into_inner();
@@ -680,6 +701,16 @@ pub async fn build_router(
                         }
                     }
 
+                    // M-1: 请求事务注入 GraphQL 上下文（解析器与 DataLoader 复用同一事务）
+                    let inner = inner.data(txn_arc.clone()).data(
+                        async_graphql::dataloader::DataLoader::new(
+                            modules::graphql_dataloader::TodoLoader::with_request_txn(
+                                db_for_graphql.clone(),
+                                txn_arc,
+                            ),
+                            tokio::spawn,
+                        ),
+                    );
                     let start = std::time::Instant::now();
                     let result = schema.execute(inner).await;
                     let duration_ms = start.elapsed().as_millis() as u64;
@@ -736,7 +767,12 @@ pub async fn build_router(
                         .into_response()
                 }
             }
-        }),
+        })
+        // M-1: GraphQL 执行链补齐请求事务（与 REST protected 路由一致）
+        .layer(axum::middleware::from_fn_with_state(
+            db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        )),
     )
     // V39.0 Track E: 查询白名单管理端点
     // GET /api/portal/graphql/whitelist — 返回白名单状态和前 10 个哈希

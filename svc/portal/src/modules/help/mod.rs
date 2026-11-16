@@ -9,7 +9,8 @@ use topems_shared_db::scope::Db;
 /// portal schema 的副本已废弃（prod 全 0 行），权威写入目标是 `public`（prod faq/guide 各 12 行）。
 /// 禁止把 search_path 顺序改回 `portal, public`，否则种子数据会写进废弃副本。
 async fn seed_help_data(db: &Db) -> Result<(), sqlx::Error> {
-    let mut scope = db.scope().await?;
+    // 种子数据为全租户共享的初始化写入（tenant_id = nil），无请求上下文，走系统作用域
+    let mut scope = db.scope_system().await?;
     let faq_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_faqs")
         .fetch_one(&mut scope)
         .await?;

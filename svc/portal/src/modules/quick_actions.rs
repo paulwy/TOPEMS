@@ -74,7 +74,8 @@ async fn save_favorites(state: &AppState, headers: &HeaderMap, favorites: &[Stri
 }
 
 async fn load_quick_actions(db: &Db, state: &AppState, headers: &HeaderMap) -> Vec<QuickAction> {
-    let mut scope = match db.scope_read().await {
+    // 平台级全局配置表（nil 租户行，无租户谓词），按系统通道读取
+    let mut scope = match db.scope_read_system().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("Failed to open quick actions scope: {}, using defaults", e);

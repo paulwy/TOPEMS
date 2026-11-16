@@ -5,11 +5,12 @@
 //! （prod `public.core_guides` 12 行）。禁止把 search_path 顺序改回 `portal, public`。
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -113,6 +114,7 @@ pub struct CompleteLessonRequest {
 pub async fn list_guides(
     State(state): State<AppState>,
     Query(query): Query<GuideQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<GuideListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -121,7 +123,13 @@ pub async fn list_guides(
     let category = query.category.clone();
     let keyword = query.keyword.clone();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "数据库事务上下文缺失：请求事务未注入".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("开启指南只读作用域失败: {}", e);
@@ -199,8 +207,15 @@ pub async fn list_guides(
 pub async fn get_guide(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<GuideDetailResponse> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "数据库事务上下文缺失：请求事务未注入".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("开启指南只读作用域失败: {}", e);
@@ -267,6 +282,7 @@ pub async fn get_guide(
 )]
 pub async fn create_guide(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateGuideRequest>,
 ) -> ApiResponse<Guide> {
     if req.title.trim().is_empty() {
@@ -276,7 +292,13 @@ pub async fn create_guide(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "数据库事务上下文缺失：请求事务未注入".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("开启指南写作用域失败: {}", e);
@@ -333,6 +355,7 @@ pub async fn create_guide(
 pub async fn add_lesson(
     State(state): State<AppState>,
     Path(guide_id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateLessonRequest>,
 ) -> ApiResponse<GuideLesson> {
     if req.title.trim().is_empty() {
@@ -344,7 +367,13 @@ pub async fn add_lesson(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "数据库事务上下文缺失：请求事务未注入".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("开启指南写作用域失败: {}", e);
@@ -400,8 +429,17 @@ pub async fn add_lesson(
     ),
     tag = "Guide"
 )]
-pub async fn get_guide_categories(State(state): State<AppState>) -> ApiResponse<Vec<String>> {
-    let mut scope = match state.db.scope_read().await {
+pub async fn get_guide_categories(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<String>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal(
+            "数据库事务上下文缺失：请求事务未注入".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("开启指南只读作用域失败: {}", e);

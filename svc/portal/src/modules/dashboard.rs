@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::time::Duration;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
@@ -55,6 +56,7 @@ pub const CACHE_TTL: u64 = 30;
 pub async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<crate::models::DashboardStats> {
     let public_stats = get_public_stats(&state).await;
@@ -62,7 +64,7 @@ pub async fn get_dashboard_stats(
     let (notif_unread, pending_approvals, local_pending, mes_stats) = tokio::join!(
         fetch_user_notification_unread(&state, &headers),
         fetch_user_pending_approvals(&state, &claims.sub, &headers),
-        fetch_user_local_pending_tasks(&state, &claims),
+        fetch_user_local_pending_tasks(&state, &claims, &txn_arc),
         fetch_mes_stats(&state),
     );
 
@@ -198,9 +200,18 @@ async fn fetch_user_pending_approvals(state: &AppState, user_id: &str, headers: 
 }
 
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-async fn fetch_user_local_pending_tasks(state: &AppState, claims: &Claims) -> u64 {
+async fn fetch_user_local_pending_tasks(
+    state: &AppState,
+    claims: &Claims,
+    txn_arc: &RlsTxnCell,
+) -> u64 {
     let user_id = &claims.sub;
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::warn!("数据库事务上下文缺失：请求事务未注入，本地待办按 0 处理");
+        return 0;
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("Failed to open local pending tasks scope: {}", e);

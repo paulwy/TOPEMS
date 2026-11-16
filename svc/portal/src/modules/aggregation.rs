@@ -18,6 +18,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
@@ -156,6 +157,7 @@ pub async fn get_business_stats(
 pub async fn get_unified_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<UnifiedTodosAggregation> {
     let token = extract_bearer_token(&headers);
@@ -163,7 +165,7 @@ pub async fn get_unified_todos(
 
     let (workflow_todos, local_todos, notification_todos) = tokio::join!(
         fetch_workflow_todos(&state, token.as_deref()),
-        fetch_local_todos(&state, user_id),
+        fetch_local_todos(&state, user_id, &txn_arc),
         fetch_notification_todos(&state, token.as_deref()),
     );
 
@@ -421,8 +423,17 @@ async fn fetch_workflow_todos(state: &AppState, token: Option<&str>) -> Vec<Unif
     }
 }
 
-async fn fetch_local_todos(state: &AppState, user_id: &str) -> Vec<UnifiedTodoItem> {
-    let mut scope = match state.db.scope_read().await {
+async fn fetch_local_todos(
+    state: &AppState,
+    user_id: &str,
+    txn_arc: &RlsTxnCell,
+) -> Vec<UnifiedTodoItem> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::warn!("数据库事务上下文缺失：请求事务未注入，本地待办按空处理");
+        return Vec::new();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("Failed to open local todos scope: {}", e);

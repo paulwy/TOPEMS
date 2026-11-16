@@ -13,6 +13,7 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::Context;
 use futures_util::future::join_all;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::modules::graphql_dataloader::*;
 use crate::modules::graphql_helpers::*;
@@ -71,6 +72,65 @@ pub async fn impl_business_stats(ctx: &Context<'_>) -> async_graphql::Result<Bus
     })
 }
 
+/// 通过请求事务读取本地待办（portal_todos 为逐租户个人数据，必须带 tenant_id 谓词）。
+/// 无请求事务（如订阅路径）时 fail-closed 返回空，不读全表。
+async fn load_local_pending_todos(
+    state: &AppState,
+    ctx: &Context<'_>,
+    tenant: uuid::Uuid,
+) -> Vec<UnifiedTodoGql> {
+    let Ok(txn_arc) = ctx.data::<RlsTxnCell>() else {
+        tracing::warn!("portal_todos: 缺少请求事务上下文，跳过本地待办查询（fail-closed）");
+        return Vec::new();
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::warn!("portal_todos: 请求事务未注入，跳过本地待办查询（fail-closed）");
+        return Vec::new();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("开启待办只读作用域失败: {}", e);
+            return Vec::new();
+        }
+    };
+    let rows = sqlx::query(
+        r#"SELECT id, title, created_at FROM portal.portal_todos
+           WHERE tenant_id = $1 AND deleted_at IS NULL AND completed = FALSE
+           ORDER BY created_at DESC LIMIT 10"#,
+    )
+    .bind(tenant)
+    .fetch_all(&mut scope)
+    .await;
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("提交待办只读作用域失败: {}", e);
+    }
+
+    let mut todos = Vec::new();
+    if let Ok(rows) = rows {
+        use sqlx::Row;
+        for row in rows {
+            let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
+            let title: String = row.try_get("title").unwrap_or_default();
+            let created_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("created_at")
+                .unwrap_or_else(|_| chrono::Utc::now());
+            if !title.is_empty() {
+                todos.push(UnifiedTodoGql {
+                    id: id.to_string(),
+                    title,
+                    source: "portal".into(),
+                    priority: 0,
+                    status: "pending".into(),
+                    created_at,
+                });
+            }
+        }
+    }
+    todos
+}
+
 pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<UnifiedTodoGql>> {
     let state = ctx.data::<AppState>()?;
     let mut todos = Vec::new();
@@ -101,39 +161,7 @@ pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<
         .filter(|ctx| !ctx.system && !ctx.tenant.is_nil())
         .map(|ctx| ctx.tenant);
     if let Some(tenant) = tenant {
-        if let Ok(mut scope) = state.db.scope_read().await {
-            let rows = sqlx::query(
-                r#"SELECT id, title, created_at FROM portal.portal_todos
-               WHERE tenant_id = $1 AND deleted_at IS NULL AND completed = FALSE
-               ORDER BY created_at DESC LIMIT 10"#,
-            )
-            .bind(tenant)
-            .fetch_all(&mut scope)
-            .await;
-            if let Err(e) = scope.commit().await {
-                tracing::warn!("提交待办只读作用域失败: {}", e);
-            }
-            if let Ok(rows) = rows {
-                use sqlx::Row;
-                for row in rows {
-                    let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
-                    let title: String = row.try_get("title").unwrap_or_default();
-                    let created_at: chrono::DateTime<chrono::Utc> = row
-                        .try_get("created_at")
-                        .unwrap_or_else(|_| chrono::Utc::now());
-                    if !title.is_empty() {
-                        todos.push(UnifiedTodoGql {
-                            id: id.to_string(),
-                            title,
-                            source: "portal".into(),
-                            priority: 0,
-                            status: "pending".into(),
-                            created_at,
-                        });
-                    }
-                }
-            }
-        }
+        todos.extend(load_local_pending_todos(state, ctx, tenant).await);
     } else {
         tracing::warn!("portal_todos: 缺少请求租户上下文，跳过本地待办查询（fail-closed）");
     }

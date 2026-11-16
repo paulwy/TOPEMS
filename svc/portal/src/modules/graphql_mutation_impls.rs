@@ -14,6 +14,7 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::Context;
 use futures_util::future::join_all;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::modules::graphql_dataloader::*;
 use crate::modules::graphql_helpers::*;
@@ -95,9 +96,16 @@ pub async fn impl_create_todo(
     let state = ctx.data::<AppState>()?;
     let uid = user_id.unwrap_or_else(|| "system".to_string());
 
+    let txn_arc = ctx.data::<RlsTxnCell>()?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(async_graphql::Error::new(
+            "数据库事务上下文缺失：请求事务未注入",
+        ));
+    };
     let mut scope = state
         .db
-        .scope()
+        .scope_with(txn)
         .await
         .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
     let row = sqlx::query(
@@ -139,9 +147,16 @@ pub async fn impl_complete_todo(ctx: &Context<'_>, id: String) -> async_graphql:
     let uuid = uuid::Uuid::parse_str(&id)
         .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
 
+    let txn_arc = ctx.data::<RlsTxnCell>()?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(async_graphql::Error::new(
+            "数据库事务上下文缺失：请求事务未注入",
+        ));
+    };
     let mut scope = state
         .db
-        .scope()
+        .scope_with(txn)
         .await
         .map_err(|e| async_graphql::Error::new(format!("更新待办失败: {}", e)))?;
     let result = sqlx::query(
@@ -166,9 +181,16 @@ pub async fn impl_delete_todo(ctx: &Context<'_>, id: String) -> async_graphql::R
     let uuid = uuid::Uuid::parse_str(&id)
         .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
 
+    let txn_arc = ctx.data::<RlsTxnCell>()?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(async_graphql::Error::new(
+            "数据库事务上下文缺失：请求事务未注入",
+        ));
+    };
     let mut scope = state
         .db
-        .scope()
+        .scope_with(txn)
         .await
         .map_err(|e| async_graphql::Error::new(format!("删除待办失败: {}", e)))?;
     let result = sqlx::query(
