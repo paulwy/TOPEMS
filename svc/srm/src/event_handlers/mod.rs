@@ -7,9 +7,9 @@ use topems_shared_core::cache::{
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
-    PurchaseOrderCreatedPayload, ScmPurchasePlanCreatedPayload, ScmSupplierEvaluatedPayload,
-    SupplierDataSyncRequestedPayload,
+    require_event_tenant, CacheInvalidatedPayload, Event, EventPublisher, EventResult,
+    EventSubscriber, EventType, PurchaseOrderCreatedPayload, ScmPurchasePlanCreatedPayload,
+    ScmSupplierEvaluatedPayload, SupplierDataSyncRequestedPayload,
 };
 use uuid::Uuid;
 
@@ -73,6 +73,15 @@ impl SrmEventHandlers {
             TopemsError::ValidationFailed(format!("解析采购计划创建事件 payload 失败: {}", e))
         })?;
 
+        // 该表有租户维度且事件本应携带租户：缺失时告警并跳过联动，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!("[srm] 跳过采购计划→询价单联动：事件缺少租户上下文（{}）", e);
+                return Ok(());
+            }
+        };
+
         tracing::debug!(
             "[srm] 采购计划创建: {} ({})，金额: {:?}，周期: {:?}",
             payload.plan_name,
@@ -91,7 +100,7 @@ impl SrmEventHandlers {
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO srm.inquiries (inquiry_no, title, description, status, creator, tenant_id, created_at, updated_at)
-             VALUES ($1, $2, $3, 'draft', $4, '00000000-0000-0000-0000-000000000000', $5, $6)
+             VALUES ($1, $2, $3, 'draft', $4, $7, $5, $6)
              RETURNING id",
         )
         .bind(&inquiry_no)
@@ -100,6 +109,7 @@ impl SrmEventHandlers {
         .bind(payload.created_by.unwrap_or_else(|| "system".to_string()))
         .bind(now)
         .bind(now)
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await;
 
@@ -188,6 +198,18 @@ impl SrmEventHandlers {
             TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e))
         })?;
 
+        // 该表有租户维度且事件本应携带租户：缺失时告警并跳过履约同步，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!(
+                    "[srm] 跳过采购订单→供应商履约同步：事件缺少租户上下文（{}）",
+                    e
+                );
+                return Ok(());
+            }
+        };
+
         tracing::debug!(
             "[srm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
             payload.order_no,
@@ -207,7 +229,7 @@ impl SrmEventHandlers {
 
             let result = sqlx::query(
                 "INSERT INTO srm.supplier_performance (supplier_id, order_count, total_amount, last_order_date, tenant_id, created_at, updated_at)
-                 VALUES ($1, 1, $2, $3, '00000000-0000-0000-0000-000000000000', $4, $4)
+                 VALUES ($1, 1, $2, $3, $5, $4, $4)
                  ON CONFLICT (supplier_id, tenant_id) DO UPDATE SET
                      order_count = srm.supplier_performance.order_count + 1,
                      total_amount = srm.supplier_performance.total_amount + EXCLUDED.total_amount,
@@ -218,6 +240,7 @@ impl SrmEventHandlers {
             .bind(payload.total_amount.unwrap_or(rust_decimal::Decimal::ZERO))
             .bind(Utc::now().date_naive())
             .bind(Utc::now())
+            .bind(tenant_id)
             .execute(&self.db)
             .await;
 
