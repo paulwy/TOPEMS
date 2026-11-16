@@ -151,10 +151,19 @@ pub async fn list_production_orders(
 )]
 pub async fn create_production_order(
     State(_state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrder> {
+    // 写操作必须携带有效租户：缺失/零租户返回 400，禁止落零 UUID。
+    let Some(tenant_id) = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .filter(|t| !t.is_nil())
+    else {
+        return ApiResponse::error(400, "缺少租户上下文：拒绝创建生产订单");
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -182,7 +191,7 @@ pub async fn create_production_order(
             $1, $2, $3, $4, $5, 0, 'pending', $6,
             $7, $8, $9, $10, $11, $12, $13, $14,
             $15, $15
-        , COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        , $16)
         RETURNING id, order_no, product_id, product_name, product_code,
                   quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
@@ -207,6 +216,7 @@ pub async fn create_production_order(
     .bind(req.priority.unwrap_or(0))
     .bind(&req.notes)
     .bind(now.naive_utc())
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
