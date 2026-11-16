@@ -4,6 +4,7 @@
 // SCM 仅保留只读引用用于采购执行链路
 // ═══════════════════════════════════════════════════════════
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -344,7 +345,7 @@ pub async fn list_suppliers(
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -485,7 +486,7 @@ pub async fn create_supplier(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -675,7 +676,7 @@ pub async fn get_supplier(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -780,7 +781,7 @@ pub async fn update_supplier(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -1001,7 +1002,7 @@ pub async fn delete_supplier(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;

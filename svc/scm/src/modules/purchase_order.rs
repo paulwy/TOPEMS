@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -49,7 +50,7 @@ pub async fn list_orders(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -142,7 +143,7 @@ pub async fn create_order(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -250,7 +251,7 @@ pub async fn get_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -307,7 +308,7 @@ pub async fn update_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -436,7 +437,7 @@ pub async fn delete_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -542,7 +543,7 @@ pub async fn approve_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -742,7 +743,7 @@ pub async fn reject_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -878,7 +879,7 @@ async fn transition_order(
     claims: Extension<Claims>,
     id: Uuid,
     headers: HeaderMap,
-    txn_arc: std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    txn_arc: RlsTxnCell,
     req: Json<ApprovalRequest>,
     allowed_states: &[&str],
     target_status: &'static str,
@@ -1018,7 +1019,7 @@ pub async fn confirm_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     txn_arc: Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -1052,7 +1053,7 @@ pub async fn cancel_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     txn_arc: Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
@@ -1086,7 +1087,7 @@ pub async fn close_order(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     txn_arc: Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {

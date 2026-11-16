@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -360,7 +361,7 @@ pub async fn list_quotes(
     Query(params): Query<InquiryPaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -449,7 +450,7 @@ pub async fn create_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -526,7 +527,7 @@ pub async fn get_quote(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -597,7 +598,7 @@ pub async fn update_quote(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -668,7 +669,7 @@ pub async fn submit_quote(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -732,7 +733,7 @@ pub async fn list_comparisons(
     Query(params): Query<InquiryPaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -815,7 +816,7 @@ pub async fn create_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreatePriceComparisonRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -945,7 +946,7 @@ pub async fn get_comparison(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1033,7 +1034,7 @@ pub async fn approve_comparison(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1088,7 +1089,7 @@ pub async fn update_comparison(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdatePriceComparisonRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1160,7 +1161,7 @@ pub async fn delete_comparison(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

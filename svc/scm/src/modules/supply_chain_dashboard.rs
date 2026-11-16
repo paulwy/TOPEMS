@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     http::HeaderMap,
@@ -49,7 +50,7 @@ pub async fn overview(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -239,7 +240,7 @@ pub async fn purchase_inbound_outbound_stats(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -410,7 +411,7 @@ pub async fn supplier_performance(
     Query(params): Query<DashboardQueryParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -619,7 +620,7 @@ pub async fn real_time_status(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

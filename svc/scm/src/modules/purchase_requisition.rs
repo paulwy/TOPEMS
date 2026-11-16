@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -66,7 +67,7 @@ pub async fn list_requisitions(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseRequisitionQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -126,7 +127,7 @@ pub async fn create_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<CreatePurchaseRequisitionRequest>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -231,7 +232,7 @@ pub async fn get_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PurchaseRequisition> {
     let mut guard = txn_arc.lock().await;
@@ -282,7 +283,7 @@ pub async fn update_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<UpdatePurchaseRequisitionRequest>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -370,7 +371,7 @@ pub async fn delete_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -440,7 +441,7 @@ pub async fn submit_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -519,7 +520,7 @@ pub async fn approve_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -606,7 +607,7 @@ pub async fn reject_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -693,7 +694,7 @@ pub async fn cancel_requisition(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseRequisition> {
@@ -772,7 +773,7 @@ pub async fn convert_to_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PurchaseRequisition> {
     let mut guard = txn_arc.lock().await;

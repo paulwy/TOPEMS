@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -53,7 +54,7 @@ pub async fn list_admissions(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierAdmissionQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -113,7 +114,7 @@ pub async fn create_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<CreateSupplierAdmissionRequest>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -199,7 +200,7 @@ pub async fn get_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -250,7 +251,7 @@ pub async fn update_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<UpdateSupplierAdmissionRequest>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -350,7 +351,7 @@ pub async fn delete_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -422,7 +423,7 @@ pub async fn submit_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -501,7 +502,7 @@ pub async fn approve_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -589,7 +590,7 @@ pub async fn reject_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -677,7 +678,7 @@ pub async fn audit_admission(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<AuditRequest>,
 ) -> ApiResponse<SupplierAdmission> {
@@ -801,7 +802,7 @@ pub async fn activate_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;

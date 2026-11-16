@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
@@ -47,7 +48,7 @@ pub async fn get_settings(
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -124,7 +125,7 @@ pub async fn update_settings(
     Path(category): Path<String>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> ApiResponse<serde_json::Value> {

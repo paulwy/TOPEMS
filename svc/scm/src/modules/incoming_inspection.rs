@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -261,7 +262,7 @@ pub async fn list_notices(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -363,7 +364,7 @@ pub async fn create_notice(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateIncomingNoticeRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -481,7 +482,7 @@ pub async fn get_notice(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -537,7 +538,7 @@ pub async fn update_notice(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateIncomingNoticeRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -667,7 +668,7 @@ pub async fn list_inspections(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -769,7 +770,7 @@ pub async fn create_inspection(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateInspectionRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -902,7 +903,7 @@ pub async fn get_inspection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -958,7 +959,7 @@ pub async fn update_inspection(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateInspectionRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1096,7 +1097,7 @@ pub async fn inspection_pass(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<InspectionResultRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1244,7 +1245,7 @@ pub async fn inspection_fail(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<InspectionResultRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1435,7 +1436,7 @@ pub async fn list_inspection_records(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1494,7 +1495,7 @@ pub async fn create_inspection_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1584,7 +1585,7 @@ pub async fn get_inspection_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1636,7 +1637,7 @@ pub async fn update_inspection_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateInspectionRecordRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1720,7 +1721,7 @@ pub async fn delete_inspection_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

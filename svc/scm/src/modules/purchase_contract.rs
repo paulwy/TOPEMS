@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -53,7 +54,7 @@ pub async fn list_contracts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseContractQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -127,7 +128,7 @@ pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<CreatePurchaseContractRequest>,
 ) -> ApiResponse<PurchaseContract> {
@@ -249,7 +250,7 @@ pub async fn get_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -340,7 +341,7 @@ pub async fn update_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<UpdatePurchaseContractRequest>,
 ) -> ApiResponse<PurchaseContract> {
@@ -499,7 +500,7 @@ pub async fn delete_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -583,7 +584,7 @@ pub async fn submit_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
@@ -662,7 +663,7 @@ pub async fn approve_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
@@ -749,7 +750,7 @@ pub async fn reject_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
@@ -836,7 +837,7 @@ pub async fn cancel_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
@@ -915,7 +916,7 @@ pub async fn terminate_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
@@ -994,7 +995,7 @@ pub async fn renew_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;

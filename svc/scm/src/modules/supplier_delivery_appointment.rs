@@ -1,3 +1,4 @@
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -353,7 +354,7 @@ pub async fn list_appointments(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierDeliveryAppointmentQueryParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -459,7 +460,7 @@ pub async fn create_appointment(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CreateSupplierDeliveryAppointmentRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -601,7 +602,7 @@ pub async fn get_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -650,7 +651,7 @@ pub async fn update_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<UpdateSupplierDeliveryAppointmentRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -809,7 +810,7 @@ pub async fn delete_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -921,7 +922,7 @@ pub async fn approve_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalBody>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -1076,7 +1077,7 @@ pub async fn reject_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ApprovalBody>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -1234,7 +1235,7 @@ pub async fn confirm_arrival(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<ArrivalConfirmRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -1379,7 +1380,7 @@ pub async fn complete_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CompleteRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -1521,7 +1522,7 @@ pub async fn cancel_appointment(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<CancelRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
@@ -1659,7 +1660,7 @@ pub async fn appointment_stats(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

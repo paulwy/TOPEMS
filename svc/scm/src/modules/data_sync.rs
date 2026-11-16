@@ -31,6 +31,7 @@
 //!   2. 幂等键冲突：本模块按 id 匹配，mdm 同步按 supplier_no 匹配，混用会导致重复行。
 //!   3. 标记列：sync_from_srm / sync_from_scm 的语义需统一（本模块写 TRUE，mdm 写 FALSE）。
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::post,
@@ -148,7 +149,7 @@ pub async fn purchase_to_inbound(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<PurchaseToInboundRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -233,7 +234,7 @@ pub async fn create_inbound_from_purchase(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -912,7 +913,7 @@ pub async fn sync_supplier_from_srm(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<SyncSupplierRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1199,7 +1200,7 @@ pub async fn sync_all_suppliers_from_srm(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1381,7 +1382,7 @@ pub async fn get_sync_logs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<SyncLogsRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1472,7 +1473,7 @@ pub async fn retry_failed_syncs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
     Json(req): Json<RetryFailedRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1621,7 +1622,7 @@ pub async fn get_sync_statistics(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
@@ -1818,7 +1819,7 @@ pub async fn batch_sync_purchase_to_wms(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<BatchSyncResult> {
     let mut guard = txn_arc.lock().await;
@@ -2133,7 +2134,7 @@ pub async fn check_consistency(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+        RlsTxnCell,
     >,
 ) -> ApiResponse<Vec<ConsistencyCheckResult>> {
     let mut guard = txn_arc.lock().await;
