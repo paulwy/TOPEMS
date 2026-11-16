@@ -6,7 +6,9 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
@@ -285,9 +287,15 @@ pub async fn list_by_experiment(
 pub async fn create_material_test(
     State(state): State<super::ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> ApiResponse<MaterialTest> {
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -312,9 +320,7 @@ pub async fn create_material_test(
         INSERT INTO rs.material_tests (
             id, project_id, experiment_id, material_name, supplier, batch_number,
             test_results, conclusion, tested_by, tested_at, created_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID,
-                           '00000000-0000-0000-0000-000000000000'::UUID))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, project_id, experiment_id, material_name, supplier, batch_number,
                   test_results, conclusion, tested_by, tested_at, created_at
         "#,
@@ -330,6 +336,7 @@ pub async fn create_material_test(
     .bind(&req.tested_by)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
