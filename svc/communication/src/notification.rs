@@ -192,14 +192,26 @@ pub async fn send_notification(
     let title = truncate_notification_title(&req.title, 255);
     let channels = select_channels(&notification_type, &["all"]);
 
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 通知写入必须携带有效租户：缺失/零租户返回 400，禁止落零 UUID。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "缺少租户上下文：拒绝发送通知",
+                    "data": null,
+                    "code": 400
+                })),
+            )
+                .into_response();
+        }
     };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
@@ -369,14 +381,26 @@ pub async fn broadcast_notification(
                 continue;
             }
         }
-        let tenant_bind = if claims.is_superuser {
-            Uuid::nil()
-        } else {
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|t| Uuid::parse_str(t).ok())
-                .unwrap_or(Uuid::nil())
+        // 通知写入必须携带有效租户：缺失/零租户返回 400，禁止落零 UUID。
+        let tenant_bind = match claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .filter(|t| !t.is_nil())
+        {
+            Some(t) => t,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": "缺少租户上下文：拒绝广播通知",
+                        "data": null,
+                        "code": 400
+                    })),
+                )
+                    .into_response();
+            }
         };
         let id = Uuid::new_v4();
         let result = sqlx::query(
@@ -2624,14 +2648,22 @@ pub async fn create_template(
         .unwrap_or_else(|| "info".to_string());
     let priority = req.priority.unwrap_or(0);
 
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 模板写入必须携带有效租户：缺失/零租户返回 400，禁止落零 UUID。
+    let tenant_bind = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "缺少租户上下文：拒绝创建通知模板",
+                "data": null,
+                "code": 400
+            }));
+        }
     };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
@@ -3160,12 +3192,23 @@ pub async fn create_channel(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与本文件其他写入一致）
-    let tenant_id = claims
+    // tenant_id 列为 uuid；信用渠道写入必须携带有效租户，缺失/零租户返回 400。
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "缺少租户上下文：拒绝创建通知渠道",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
     let id = Uuid::new_v4();
     let config = req.config.unwrap_or_else(|| serde_json::json!({}));
     let is_default = req.is_default.unwrap_or(false);
@@ -3254,12 +3297,23 @@ pub async fn update_channel(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与 create_channel 一致）
-    let tenant_id = claims
+    // tenant_id 列为 uuid；信用渠道写入必须携带有效租户，缺失/零租户返回 400。
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "缺少租户上下文：拒绝更新通知渠道",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
 
     // 如果设为默认，先取消其他默认
     if req.is_default.unwrap_or(false) {
@@ -3353,12 +3407,23 @@ pub async fn delete_channel(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil
-    let tenant_id = claims
+    // tenant_id 列为 uuid；删除渠道必须携带有效租户，缺失/零租户返回 400。
+    let tenant_id = match claims
         .tenant_id
         .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or(Uuid::nil());
+        .filter(|t| !t.is_nil())
+    {
+        Some(t) => t,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "缺少租户上下文：拒绝删除通知渠道",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
     match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)

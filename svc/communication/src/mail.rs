@@ -364,14 +364,22 @@ pub async fn send_email(
     match result {
         Ok(_) => {
             let email_id = Uuid::new_v4();
-            let tenant_bind = if claims.is_superuser {
-                Uuid::nil()
-            } else {
-                claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|t| Uuid::parse_str(t).ok())
-                    .unwrap_or(Uuid::nil())
+            // 邮件写入必须携带有效租户：缺失/零租户返回 400，禁止落零 UUID。
+            let tenant_bind = match claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| Uuid::parse_str(t).ok())
+                .filter(|t| !t.is_nil())
+            {
+                Some(t) => t,
+                None => {
+                    return Json(serde_json::json!({
+                        "success": false,
+                        "message": "缺少租户上下文：拒绝发送邮件",
+                        "data": null,
+                        "code": 400
+                    }));
+                }
             };
             let _ = sqlx::query(
                 only_own_schema_query!("public", r#"
