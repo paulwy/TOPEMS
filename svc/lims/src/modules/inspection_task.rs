@@ -139,18 +139,13 @@ fn task_from_row(row: &sqlx::postgres::PgRow) -> InspectionTask {
 pub async fn list_tasks_by_sample(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<InspectionTask>> {
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的样品ID"),
-    };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
     };
 
     let mut guard = txn_arc.lock().await;
@@ -168,11 +163,10 @@ pub async fn list_tasks_by_sample(
     };
 
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 ORDER BY created_at DESC",
         TASK_SELECT_COLS
     )))
     .bind(sample_uuid)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
 
@@ -349,10 +343,9 @@ pub async fn list_tasks(
     };
 
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC",
         TASK_SELECT_COLS
     )))
-    .bind(ctx.tenant_id)
     .fetch_all(&mut scope)
     .await;
 
@@ -573,11 +566,10 @@ pub async fn get_task(
     };
 
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1",
         TASK_SELECT_COLS
     )))
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 

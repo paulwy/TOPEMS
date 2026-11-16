@@ -181,20 +181,15 @@ async fn list_analytes(
 async fn get_analyte(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let filter = resolve_tenant(&ctx, &claims);
-    let mut sql = String::from(
+    let sql = String::from(
         "SELECT id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description \
          FROM lims.qa_lims_analytes WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
-    if let Some(t) = filter {
-        sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
-    }
+    let q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");

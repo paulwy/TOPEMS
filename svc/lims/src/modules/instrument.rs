@@ -108,29 +108,24 @@ pub struct CalibrationRequest {
 pub async fn list_instruments(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<InstrumentQuery>,
 ) -> ApiResponse<Vec<Instrument>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
-    };
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND status = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
             query_builder = query_builder
@@ -299,19 +294,14 @@ pub async fn create_instrument(
 pub async fn get_instrument(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Instrument> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
-    };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -329,10 +319,9 @@ pub async fn get_instrument(
         }
     };
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(locale)
     .fetch_one(&mut scope)
     .await;
@@ -1063,11 +1052,10 @@ pub async fn list_maintenance(
         }
     };
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            "SELECT {MAINTENANCE_COLUMNS} FROM lims.maintenance_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND instrument_id = $2 AND deleted_at IS NULL ORDER BY performed_at DESC NULLS LAST, created_at DESC"
+            "SELECT {MAINTENANCE_COLUMNS} FROM lims.maintenance_records WHERE instrument_id = $1 AND deleted_at IS NULL ORDER BY performed_at DESC NULLS LAST, created_at DESC"
         ),
     ),
     )
-    .bind(ctx.tenant_id)
     .bind(id)
     .fetch_all(&mut scope)
     .await;

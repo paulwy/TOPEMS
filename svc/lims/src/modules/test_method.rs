@@ -214,24 +214,16 @@ const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, 
 pub async fn list_methods(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
 ) -> ApiResponse<Vec<TestMethod>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
-    };
 
-    let mut where_clauses: Vec<String> = vec![
-        "m.deleted_at IS NULL".to_string(),
-        "($1::uuid IS NULL OR m.tenant_id = $1)".to_string(),
-    ];
-    let mut param_idx = 2usize;
+    let mut where_clauses: Vec<String> = vec!["m.deleted_at IS NULL".to_string()];
+    let mut param_idx = 1usize;
     if query.status.is_some() {
         where_clauses.push(format!("m.status = ${}", param_idx));
         param_idx += 1;
@@ -273,7 +265,7 @@ pub async fn list_methods(
         }
     };
 
-    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     if let Some(st) = query.status.as_ref() {
         query_builder = query_builder.bind(st);
     }
@@ -484,12 +476,11 @@ pub async fn get_method(
         SELECT {}
         FROM qa_lims_test_methods m
         LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id
-        WHERE m.id = $1 AND ($2::uuid IS NULL OR m.tenant_id = $2)
+        WHERE m.id = $1
         "#,
         METHOD_SELECT_COLS
     )))
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -724,21 +715,16 @@ pub async fn delete_method(
 pub async fn list_categories(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
 ) -> ApiResponse<Vec<MethodCategory>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
-    };
     let sql = match query.parent_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id = $1 ORDER BY sort_order ASC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
-    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     if let Some(pid) = query.parent_id.as_ref() {
         let pid_uuid = Uuid::parse_str(pid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(pid_uuid);
@@ -1007,21 +993,16 @@ pub async fn delete_category(
 pub async fn list_validations(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
 ) -> ApiResponse<Vec<MethodValidationRecord>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
-    };
     let sql = match query.method_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations WHERE method_id = $2 AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC LIMIT 100",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations WHERE method_id = $1 ORDER BY validation_date DESC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations ORDER BY validation_date DESC, created_at DESC LIMIT 100",
     };
 
-    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     if let Some(mid) = query.method_id.as_ref() {
         let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(mid_uuid);
@@ -1209,19 +1190,13 @@ pub async fn create_validation(
 pub async fn list_method_versions(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
-    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<MethodVersion>> {
     let id = match Uuid::parse_str(&method_id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的方法ID"),
-    };
-
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(ctx.tenant_id)
     };
 
     let mut guard = txn_arc.lock().await;
@@ -1242,12 +1217,11 @@ pub async fn list_method_versions(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at
         FROM qa_lims_method_versions
-        WHERE method_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE method_id = $1
         ORDER BY created_at DESC
         "#
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
 
