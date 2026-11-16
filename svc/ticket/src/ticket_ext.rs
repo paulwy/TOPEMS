@@ -207,14 +207,9 @@ pub struct WorkflowRuleView {
 pub async fn list_workflow_automation_rules(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<WorkflowRuleView>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let locale = Locale::from_headers(&headers).as_sql();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -228,10 +223,9 @@ pub async fn list_workflow_automation_rules(
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     match sqlx::query(
-        "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, condition_field, action_type, enabled
-         FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
+        "SELECT id, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, condition_field, action_type, enabled
+         FROM ticket.ticket_automation_rules ORDER BY priority ASC, created_at ASC",
     )
-    .bind(opt_tenant_id)
     .bind(locale)
     .fetch_all(&mut scope)
     .await
@@ -423,14 +417,9 @@ pub struct TransitionRequest {
 pub async fn get_ticket_transitions(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -442,13 +431,11 @@ pub async fn get_ticket_transitions(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
-    let row = sqlx::query(
-        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
-    )
-    .bind(id)
-    .bind(opt_tenant_id)
-    .fetch_optional(&mut scope)
-    .await;
+    let row =
+        sqlx::query("SELECT status FROM ticket.core_tickets WHERE id = $1 AND deleted_at IS NULL")
+            .bind(id)
+            .fetch_optional(&mut scope)
+            .await;
 
     let row = match row {
         Ok(Some(r)) => r,
@@ -510,10 +497,9 @@ pub async fn apply_transition(
     };
 
     let current: String = match sqlx::query_scalar::<_, String>(
-        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -631,14 +617,9 @@ struct TagRequest {
 pub async fn get_ticket_tags(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -651,10 +632,9 @@ pub async fn get_ticket_tags(
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     let tags: Option<Vec<String>> = match sqlx::query_scalar(
-        "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+        "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(opt_tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -821,13 +801,8 @@ pub async fn remove_ticket_tag(
 pub async fn list_tag_directory(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -841,10 +816,9 @@ pub async fn list_tag_directory(
     };
     let rows = sqlx::query(
         "SELECT unnest(tags) AS tag, count(*) AS count \
-         FROM ticket.core_tickets WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
+         FROM ticket.core_tickets WHERE deleted_at IS NULL \
          GROUP BY tag ORDER BY count DESC",
     )
-    .bind(opt_tenant_id)
     .fetch_all(&mut scope)
     .await;
     let rows = match rows {
@@ -890,14 +864,9 @@ async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
 pub async fn get_tag_stub(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -911,9 +880,8 @@ pub async fn get_tag_stub(
     };
     let count: i64 = match sqlx::query_scalar(
         "SELECT count(*) FROM ticket.core_tickets \
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND $2 = ANY(tags)",
+         WHERE deleted_at IS NULL AND $1 = ANY(tags)",
     )
-    .bind(opt_tenant_id)
     .bind(&tag)
     .fetch_one(&mut scope)
     .await
@@ -1270,14 +1238,9 @@ fn decode_file_data(raw: &str) -> Vec<u8> {
 pub async fn list_attachments(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1292,10 +1255,9 @@ pub async fn list_attachments(
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_by, created_at \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL ORDER BY created_at DESC",
+         WHERE ticket_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC",
     )
     .bind(id)
-    .bind(opt_tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1403,14 +1365,9 @@ async fn upload_attachment(
 pub async fn get_attachment(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1425,11 +1382,10 @@ pub async fn get_attachment(
     let row = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_at \
          FROM ticket.ticket_attachments \
-         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",
+         WHERE id = $1 AND ticket_id = $2 AND deleted_at IS NULL",
     )
     .bind(attachment_id)
     .bind(id)
-    .bind(opt_tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -1699,14 +1655,9 @@ pub async fn batch_delete_attachments(
 pub async fn get_attachment_stats(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1721,10 +1672,9 @@ pub async fn get_attachment_stats(
     let row = match sqlx::query(
         "SELECT count(*) AS total, COALESCE(sum(file_size), 0)::bigint AS total_bytes \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+         WHERE ticket_id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(opt_tenant_id)
     .fetch_one(&mut scope)
     .await
     {
@@ -1761,14 +1711,9 @@ pub async fn get_attachment_stats(
 pub async fn get_attachments_by_type(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1783,11 +1728,10 @@ pub async fn get_attachments_by_type(
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, created_at \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND file_type = $3 AND deleted_at IS NULL \
+         WHERE ticket_id = $1 AND file_type = $2 AND deleted_at IS NULL \
          ORDER BY created_at DESC",
     )
     .bind(id)
-    .bind(opt_tenant_id)
     .bind(&file_type)
     .fetch_all(&mut scope)
     .await
@@ -1834,14 +1778,9 @@ pub async fn get_attachments_by_type(
 pub async fn download_attachment_handler(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
-    claims: axum::Extension<Claims>,
+    _claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::response::Response, axum::response::Response> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Err(axum::response::Response::new(axum::body::Body::from(
@@ -1854,11 +1793,10 @@ pub async fn download_attachment_handler(
         .map_err(|_| axum::response::Response::new(axum::body::Body::from("数据库连接失败")))?;
     let row = sqlx::query(
         "SELECT file_name, mime_type, file_data FROM ticket.ticket_attachments \
-         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",
+         WHERE id = $1 AND ticket_id = $2 AND deleted_at IS NULL",
     )
     .bind(attachment_id)
     .bind(id)
-    .bind(opt_tenant_id)
     .fetch_optional(&mut scope)
     .await
     .map_err(|_| axum::response::Response::new(axum::body::Body::from("查询失败")))?;

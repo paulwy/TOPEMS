@@ -279,10 +279,10 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, name, description, ticket_type, severity, response_hours, resolution_hours, escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3, working_hours_only, business_hours_start, business_hours_end, weekend_excluded, is_default, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+            WHERE deleted_at IS NULL
               AND is_active = true
-              AND (ticket_type IS NULL OR ticket_type = $2)
-              AND (severity IS NULL OR severity = $3)
+              AND (ticket_type IS NULL OR ticket_type = $1)
+              AND (severity IS NULL OR severity = $2)
             ORDER BY
               CASE WHEN ticket_type IS NOT NULL THEN 0 ELSE 1 END,
               CASE WHEN severity IS NOT NULL THEN 0 ELSE 1 END,
@@ -291,7 +291,6 @@ impl TicketSlaService {
             LIMIT 1
             "#,
         )
-        .bind(ticket.tenant_id)
         .bind(&ticket.ticket_type)
         .bind(&ticket.severity)
         .fetch_optional(&mut scope)
@@ -303,7 +302,7 @@ impl TicketSlaService {
 
     pub async fn get_escalation_history(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         ticket_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
@@ -315,12 +314,11 @@ impl TicketSlaService {
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
             SELECT id, ticket_id, tenant_id, level, escalation_time, escalated_to, reason, created_at FROM ticket.core_ticket_sla_escalations
-            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE ticket_id = $1
             ORDER BY level ASC, created_at ASC
             "#,
         )
         .bind(ticket_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -530,7 +528,7 @@ impl TicketSlaService {
 
     pub async fn get_policy(
         &self,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         policy_id: Uuid,
         locale: &str,
         txn_arc: &RlsTxnCell,
@@ -543,17 +541,16 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
-              CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+              CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
               description, ticket_type, severity, response_hours, resolution_hours,
               escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3,
               working_hours_only, business_hours_start, business_hours_end, weekend_excluded,
               is_default, is_active, created_at, updated_at
             FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE deleted_at IS NULL AND id = $1
             "#,
         )
         .bind(policy_id)
-        .bind(tenant_id)
         .bind(locale)
         .fetch_one(&mut scope)
         .await?;
@@ -564,7 +561,7 @@ impl TicketSlaService {
 
     pub async fn list_policies(
         &self,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         locale: &str,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
@@ -576,17 +573,16 @@ impl TicketSlaService {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
-              CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+              CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
               description, ticket_type, severity, response_hours, resolution_hours,
               escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3,
               working_hours_only, business_hours_start, business_hours_end, weekend_excluded,
               is_default, is_active, created_at, updated_at
             FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+            WHERE deleted_at IS NULL
             ORDER BY is_default DESC, created_at DESC
             "#,
         )
-        .bind(tenant_id)
         .bind(locale)
         .fetch_all(&mut scope)
         .await?;
@@ -697,7 +693,7 @@ impl TicketSlaService {
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_sla_stats(
         &self,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         txn_arc: &RlsTxnCell,
     ) -> Result<TicketSlaStats, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -707,24 +703,20 @@ impl TicketSlaService {
         let mut scope = self.db.scope_with(txn).await?;
         let total: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM ticket.core_tickets
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sla_due_at IS NOT NULL
+            SELECT COUNT(*) FROM ticket.core_tickets WHERE sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
             "#,
         )
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
 
         let breached: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM ticket.core_tickets
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sla_due_at IS NOT NULL
+            SELECT COUNT(*) FROM ticket.core_tickets WHERE sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
               AND resolved_at > sla_due_at
             "#,
         )
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
 
@@ -738,11 +730,9 @@ impl TicketSlaService {
         let avg_resolution: Option<f64> = sqlx::query_scalar(
             r#"
             SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 60)
-            FROM ticket.core_tickets
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND resolved_at IS NOT NULL
+            FROM ticket.core_tickets WHERE resolved_at IS NOT NULL
             "#,
         )
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
 
@@ -752,13 +742,11 @@ impl TicketSlaService {
             FROM (
               SELECT t.created_at, MIN(c.created_at) as first_response_at
               FROM ticket.core_tickets t
-              JOIN ticket.core_ticket_comments c ON t.id = c.ticket_id
-              WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND c.user_id != t.reporter_id
+              JOIN ticket.core_ticket_comments c ON t.id = c.ticket_id WHERE c.user_id != t.reporter_id
               GROUP BY t.id, t.created_at
             ) sub
             "#,
         )
-        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await?
         .flatten();
@@ -769,13 +757,11 @@ impl TicketSlaService {
               t.severity,
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
-            FROM ticket.core_tickets t
-            WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND t.sla_due_at IS NOT NULL
+            FROM ticket.core_tickets t WHERE t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.severity
             "#,
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -803,13 +789,11 @@ impl TicketSlaService {
               t.ticket_type,
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
-            FROM ticket.core_tickets t
-            WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND t.sla_due_at IS NOT NULL
+            FROM ticket.core_tickets t WHERE t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.ticket_type
             "#,
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -838,14 +822,12 @@ impl TicketSlaService {
               COUNT(*) as total,
               SUM(CASE WHEN sla_due_at IS NOT NULL AND resolved_at > sla_due_at THEN 1 ELSE 0 END) as breached
             FROM ticket.core_tickets
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND created_at >= NOW() - INTERVAL '30 days'
+              WHERE created_at >= NOW() - INTERVAL '30 days'
             GROUP BY DATE(created_at)
             ORDER BY date DESC
             LIMIT 30
             "#,
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 

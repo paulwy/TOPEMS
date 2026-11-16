@@ -105,10 +105,9 @@ impl TicketService {
 
         // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
         let rules = sqlx::query_as::<_, AutomationRule>(
-            "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-             FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND enabled = true",
+            "SELECT id, tenant_id, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+             FROM ticket.ticket_automation_rules WHERE enabled = true",
         )
-        .bind(tenant_id)
         .bind(locale)
         .fetch_all(&mut scope)
         .await?;
@@ -179,7 +178,7 @@ impl TicketService {
 
     pub async fn get_ticket(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         ticket_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Ticket, sqlx::Error> {
@@ -194,11 +193,10 @@ impl TicketService {
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
             FROM ticket.core_tickets
-            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE id = $1
             "#,
         )
         .bind(ticket_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
 
@@ -228,20 +226,18 @@ impl TicketService {
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
             FROM ticket.core_tickets
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
-              AND ($2::text IS NULL OR status = $2)
-              AND ($3::text IS NULL OR severity = $3)
-              AND ($4::text IS NULL OR ticket_type = $4)
-              AND ($5::uuid IS NULL OR assignee_id = $5)
-              AND ($6::uuid IS NULL OR reporter_id = $6)
-              AND ($7::text IS NULL OR source_service = $7)
-              AND ($8::text IS NULL OR source_business_id = $8)
-              AND ($9::bool IS NULL OR (sla_due_at IS NOT NULL AND sla_due_at < NOW() AND status NOT IN ('resolved', 'closed', 'cancelled')) = $9)
+              WHERE ($1::text IS NULL OR status = $1)
+              AND ($2::text IS NULL OR severity = $2)
+              AND ($3::text IS NULL OR ticket_type = $3)
+              AND ($4::uuid IS NULL OR assignee_id = $4)
+              AND ($5::uuid IS NULL OR reporter_id = $5)
+              AND ($6::text IS NULL OR source_service = $6)
+              AND ($7::text IS NULL OR source_business_id = $7)
+              AND ($8::bool IS NULL OR (sla_due_at IS NOT NULL AND sla_due_at < NOW() AND status NOT IN ('resolved', 'closed', 'cancelled')) = $8)
             ORDER BY created_at DESC
-            LIMIT $10 OFFSET $11
+            LIMIT $9 OFFSET $10
             "#,
         )
-        .bind(tenant_id)
         .bind(&query.status)
         .bind(&query.severity)
         .bind(&query.ticket_type)
@@ -475,7 +471,7 @@ impl TicketService {
 
     pub async fn list_comments(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         ticket_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketComment>, sqlx::Error> {
@@ -488,12 +484,11 @@ impl TicketService {
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
             FROM ticket.core_ticket_comments
-            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE ticket_id = $1
             ORDER BY created_at ASC
             "#,
         )
         .bind(ticket_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -503,7 +498,7 @@ impl TicketService {
 
     pub async fn list_activities(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         ticket_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<TicketActivity>, sqlx::Error> {
@@ -516,12 +511,11 @@ impl TicketService {
             r#"
             SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at
             FROM ticket.core_ticket_activities
-            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE ticket_id = $1
             ORDER BY created_at ASC
             "#,
         )
         .bind(ticket_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -1220,17 +1214,9 @@ pub async fn create_automation_rule_handler(
 pub async fn list_automation_rules_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AutomationRule>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let locale = Locale::from_headers(&headers).as_sql();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1244,10 +1230,9 @@ pub async fn list_automation_rules_handler(
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     match sqlx::query_as::<_, AutomationRule>(
-        "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
+        "SELECT id, tenant_id, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+         FROM ticket.ticket_automation_rules ORDER BY priority ASC, created_at ASC",
     )
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_all(&mut scope)
     .await
@@ -1279,18 +1264,10 @@ pub async fn list_automation_rules_handler(
 pub async fn get_automation_rule_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<AutomationRule> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let locale = Locale::from_headers(&headers).as_sql();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1304,11 +1281,10 @@ pub async fn get_automation_rule_handler(
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     match sqlx::query_as::<_, AutomationRule>(
-        "SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket.ticket_automation_rules WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+         FROM ticket.ticket_automation_rules WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut scope)
     .await
@@ -1549,14 +1525,6 @@ pub async fn list_knowledge_articles_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<KnowledgeArticle>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let q = params.get("q").cloned().unwrap_or_default();
@@ -1573,9 +1541,8 @@ pub async fn list_knowledge_articles_handler(
     };
     let articles = match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket.ticket_knowledge_articles WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY updated_at DESC",
+         FROM ticket.ticket_knowledge_articles ORDER BY updated_at DESC",
     )
-    .bind(tenant_opt)
     .fetch_all(&mut scope)
     .await
     {
@@ -1626,14 +1593,6 @@ pub async fn get_knowledge_article_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<KnowledgeArticle> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let mut guard = txn_arc.lock().await;
@@ -1649,10 +1608,9 @@ pub async fn get_knowledge_article_handler(
     };
     match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket.ticket_knowledge_articles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+         FROM ticket.ticket_knowledge_articles WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut scope)
     .await
     {
@@ -1942,10 +1900,9 @@ pub async fn delete_comment_handler(
 pub async fn get_activity_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path((ticket_id, activity_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<TicketActivity> {
-    let tenant_id = tenant_id_of(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1960,11 +1917,10 @@ pub async fn get_activity_handler(
     match sqlx::query_as::<_, TicketActivity>(
         "SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at \
          FROM ticket.core_ticket_activities \
-         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)",
+         WHERE id = $1 AND ticket_id = $2",
     )
     .bind(activity_id)
     .bind(ticket_id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -2215,13 +2171,8 @@ pub async fn calculate_ticket_sla_handler(
 pub async fn dashboard_summary_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let opt_tenant: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id_of(&claims))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -2235,9 +2186,8 @@ pub async fn dashboard_summary_handler(
     };
     let rows = match sqlx::query(
         "SELECT status, count(*)::bigint AS c FROM ticket.core_tickets \
-         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
+         WHERE deleted_at IS NULL GROUP BY status",
     )
-    .bind(opt_tenant)
     .fetch_all(&mut scope)
     .await
     {
