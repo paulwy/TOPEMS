@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -8,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -84,9 +84,7 @@ pub async fn get_performance_reports(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -286,9 +284,7 @@ pub async fn get_performance_report(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -502,9 +498,7 @@ pub async fn compare_supplier_performance(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareParams>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -649,9 +643,7 @@ pub async fn get_performance_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendParams>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -774,9 +766,7 @@ pub async fn get_top_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -912,9 +902,7 @@ pub async fn export_performance_report(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1057,9 +1045,7 @@ pub async fn get_score_level_distribution(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1158,9 +1144,7 @@ pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

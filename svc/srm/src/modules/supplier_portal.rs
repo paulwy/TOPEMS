@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::get,
@@ -6,6 +5,7 @@ use axum::{
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -66,9 +66,7 @@ pub async fn get_supplier_portal_stats(
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -205,9 +203,7 @@ pub async fn get_supplier_portal_orders(
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<PurchaseOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -277,9 +273,7 @@ pub async fn get_supplier_portal_invoices(
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
@@ -342,9 +336,7 @@ pub async fn get_supplier_portal_deliveries(
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
@@ -406,9 +398,7 @@ pub async fn get_supplier_portal_announcements(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {

@@ -3,10 +3,10 @@
 //! 提供主数据血缘关系图，包括全局血缘图、指定主数据血缘、域血缘、上游血缘和下游血缘。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use utoipa::IntoParams;
@@ -57,9 +57,7 @@ pub struct LineageQuery {
 pub async fn get_lineage_graph(
     State(_state): State<ApiState>,
     Query(params): Query<LineageQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -330,9 +328,7 @@ async fn build_full_lineage_graph(
 pub async fn get_lineage_upstream(
     State(_state): State<ApiState>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -417,9 +413,7 @@ pub async fn get_lineage_upstream(
 pub async fn get_lineage_downstream(
     State(_state): State<ApiState>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

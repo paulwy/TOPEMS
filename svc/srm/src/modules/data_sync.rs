@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Json, State},
     routing::post,
@@ -8,6 +7,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPool, Row};
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
@@ -79,9 +79,7 @@ pub async fn sync_supplier_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncSupplierFromScmRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -342,9 +340,7 @@ pub async fn sync_all_suppliers_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -514,9 +510,7 @@ pub async fn sync_supplier_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncSupplierToScmRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -712,9 +706,7 @@ pub async fn sync_all_suppliers_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -847,9 +839,7 @@ pub async fn get_sync_logs(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncLogsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

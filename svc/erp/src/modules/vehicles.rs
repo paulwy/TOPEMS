@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -63,9 +63,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_vehicles(
     State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -142,9 +140,7 @@ pub async fn list_vehicles(
 pub async fn create_vehicle(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -256,9 +252,7 @@ pub async fn create_vehicle(
 pub async fn get_vehicle(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -302,9 +296,7 @@ pub async fn update_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequest>,
 ) -> ApiResponse<Vehicle> {
@@ -431,9 +423,7 @@ pub async fn delete_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -544,9 +534,7 @@ const COUNT_VEHICLE_REQUESTS_SQL: &str = only_own_schema_query!(
 pub async fn list_vehicle_requests(
     State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -603,9 +591,7 @@ pub async fn list_vehicle_requests(
 pub async fn create_vehicle_request(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequestRequest>,
 ) -> ApiResponse<VehicleApplication> {
@@ -756,9 +742,7 @@ pub async fn create_vehicle_request(
 pub async fn get_vehicle_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<VehicleApplication> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -802,9 +786,7 @@ pub async fn update_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequestRequest>,
 ) -> ApiResponse<VehicleApplication> {
@@ -921,9 +903,7 @@ pub async fn delete_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -1011,9 +991,7 @@ pub async fn delete_vehicle_request(
 pub async fn get_vehicle_requests(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

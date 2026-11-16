@@ -4,7 +4,6 @@
 // 契约 5 方法（list/get/create/update/delete），此前后端无路由（审计 P0）。
 // 表：erp.bank_accounts（迁移 20260908000002）
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::StatusCode,
@@ -14,6 +13,7 @@ use axum::{
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -101,9 +101,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_bank_accounts(
     State(_state): State<ApiState>,
     Query(params): Query<ListBankAccountsQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -191,9 +189,7 @@ pub async fn list_bank_accounts(
 pub async fn get_bank_account(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -226,9 +222,7 @@ pub async fn get_bank_account(
 
 pub async fn create_bank_account(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateBankAccountRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
@@ -278,9 +272,7 @@ pub async fn create_bank_account(
 pub async fn update_bank_account(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateBankAccountRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
@@ -336,9 +328,7 @@ pub async fn update_bank_account(
 pub async fn delete_bank_account(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

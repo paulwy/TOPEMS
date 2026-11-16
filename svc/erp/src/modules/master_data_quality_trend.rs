@@ -3,10 +3,10 @@
 //! 提供主数据质量趋势查询，支持按时间段和域筛选，返回质量评分趋势和变化方向。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Query, State};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use utoipa::IntoParams;
@@ -53,9 +53,7 @@ pub struct QualityTrendQuery {
 pub async fn get_quality_trend(
     State(_state): State<ApiState>,
     Query(params): Query<QualityTrendQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<QualityTrend> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

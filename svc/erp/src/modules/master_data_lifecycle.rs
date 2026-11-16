@@ -4,11 +4,11 @@
 //! 以及已归档和待销毁主数据列表查询。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -109,9 +109,7 @@ pub async fn archive_master_data_ref(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ArchiveRequest>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -235,9 +233,7 @@ pub async fn restore_master_data_ref(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RestoreRequest>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -355,9 +351,7 @@ pub async fn schedule_destruction(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ScheduleDestructionRequest>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -481,9 +475,7 @@ pub async fn cancel_destruction(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -600,9 +592,7 @@ pub async fn destroy_master_data_ref(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<DestroyRequest>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
@@ -724,9 +714,7 @@ pub async fn destroy_master_data_ref(
 pub async fn list_archived(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -807,9 +795,7 @@ pub async fn list_archived(
 pub async fn list_pending_destruction(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

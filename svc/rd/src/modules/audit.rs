@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode},
@@ -9,6 +8,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -58,9 +58,7 @@ pub struct ListAuditLogsQuery {
 async fn list_audit_logs(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -162,9 +160,7 @@ async fn list_audit_logs(
 async fn get_audit_log(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<AuditLog> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -281,9 +277,7 @@ pub async fn log_audit_event(
 async fn export_audit_logs(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

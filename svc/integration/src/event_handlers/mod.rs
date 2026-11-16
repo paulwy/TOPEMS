@@ -90,9 +90,8 @@ impl IntegrationEventHandlers {
 
         // tenant-system: 后台事件编排无请求上下文，同步日志为 nil 租户共享写入，走系统通道。
         let scope_res = self.db.scope_system().await;
-        let mut scope = scope_res.map_err(|e| {
-            TopemsError::BusinessLogic(format!("建立同步日志作用域失败: {}", e))
-        })?;
+        let mut scope = scope_res
+            .map_err(|e| TopemsError::BusinessLogic(format!("建立同步日志作用域失败: {}", e)))?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("integration", "INSERT INTO integration_sync_logs (id, sync_type, source_system, target_system, status, trace_id, details, started_at, source_type, source_id, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '00000000-0000-0000-0000-000000000000')

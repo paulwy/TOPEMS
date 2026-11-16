@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -26,9 +26,7 @@ use super::ApiState;
 pub async fn list_reports(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -103,9 +101,7 @@ pub async fn list_reports(
 pub async fn get_report(
     State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -170,9 +166,7 @@ pub async fn generate_report(
 pub async fn get_report_lines(
     State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ConsolidationReportLine>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -224,9 +218,7 @@ pub async fn submit_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -321,9 +313,7 @@ pub async fn approve_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -441,9 +431,7 @@ pub async fn delete_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

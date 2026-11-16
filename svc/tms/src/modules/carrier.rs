@@ -1,6 +1,5 @@
 //! Carrier handlers - 承运商管理
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
@@ -10,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -89,9 +89,7 @@ pub async fn list_carriers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -233,9 +231,7 @@ pub async fn create_carrier(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCarrierRequest>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
@@ -324,9 +320,7 @@ pub async fn get_carrier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -387,9 +381,7 @@ pub async fn update_carrier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateCarrierRequest>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
@@ -484,9 +476,7 @@ pub async fn delete_carrier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -580,9 +570,7 @@ pub async fn submit_qualification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
@@ -647,9 +635,7 @@ pub async fn approve_carrier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
@@ -743,9 +729,7 @@ pub async fn reject_carrier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;

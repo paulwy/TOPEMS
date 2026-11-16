@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -8,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -56,9 +56,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 pub async fn list_quotations(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<ListQuotationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Quotation>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -112,9 +110,7 @@ pub async fn list_quotations(
 pub async fn create_quotation(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateQuotationRequest>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -242,9 +238,7 @@ pub async fn create_quotation(
 pub async fn get_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -280,9 +274,7 @@ pub async fn update_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateQuotationRequest>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
@@ -366,9 +358,7 @@ pub async fn delete_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -429,9 +419,7 @@ pub async fn award_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -500,9 +488,7 @@ pub async fn reject_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

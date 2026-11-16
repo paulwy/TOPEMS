@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -63,9 +63,7 @@ pub async fn list_audit_logs(
     Query(params): Query<ListAuditLogsQuery>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -183,9 +181,7 @@ pub async fn get_audit_log(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<AuditLog> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,

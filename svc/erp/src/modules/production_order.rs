@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -6,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
@@ -71,9 +71,7 @@ pub async fn list_production_orders(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ProductionOrderListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ListProductionOrdersResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -154,9 +152,7 @@ pub async fn list_production_orders(
 pub async fn create_production_order(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
@@ -246,9 +242,7 @@ pub async fn get_production_order(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -296,9 +290,7 @@ pub async fn update_production_order(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
@@ -378,9 +370,7 @@ pub async fn delete_production_order(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -435,9 +425,7 @@ pub async fn update_production_progress(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
@@ -510,9 +498,7 @@ pub async fn update_production_status(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
@@ -643,9 +629,7 @@ pub struct MesProgressUpdate {
 pub async fn receive_mes_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<MesProgressUpdate>,
 ) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;

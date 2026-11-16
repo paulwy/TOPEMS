@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -6,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -71,9 +71,7 @@ async fn list_inventory_movements(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InventoryMovementQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -194,9 +192,7 @@ async fn create_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInventoryMovementRequest>,
 ) -> ApiResponse<InventoryMovement> {
     let mut guard = txn_arc.lock().await;
@@ -299,9 +295,7 @@ async fn get_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     _headers: HeaderMap,
 ) -> ApiResponse<InventoryMovement> {
     let mut guard = txn_arc.lock().await;

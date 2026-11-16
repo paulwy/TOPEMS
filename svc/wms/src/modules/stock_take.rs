@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -16,9 +16,7 @@ use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{
-    arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
-};
+use crate::shared::scope::{arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -127,9 +125,7 @@ pub async fn list_stock_takes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<StockTakePaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -228,9 +224,7 @@ pub async fn create_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateStockTakeRequest>,
 ) -> ApiResponse<StockTake> {
     let mut guard = txn_arc.lock().await;
@@ -338,9 +332,7 @@ pub async fn get_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -397,9 +389,7 @@ pub async fn update_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStockTakeRequest>,
 ) -> ApiResponse<StockTake> {
     let mut guard = txn_arc.lock().await;
@@ -532,9 +522,7 @@ pub async fn delete_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -634,9 +622,7 @@ pub async fn start_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
@@ -846,9 +832,7 @@ pub async fn list_stock_take_items(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -938,9 +922,7 @@ pub async fn create_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateStockTakeItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1080,9 +1062,7 @@ pub async fn count_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(items): Json<Vec<CountItemRequest>>,
 ) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
@@ -1223,9 +1203,7 @@ pub async fn get_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1280,9 +1258,7 @@ pub async fn update_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStockTakeItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1438,9 +1414,7 @@ pub async fn delete_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -1535,9 +1509,7 @@ pub async fn complete_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
@@ -1799,9 +1771,7 @@ pub async fn adjust_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
@@ -2020,9 +1990,7 @@ pub async fn start_stock_take_approval(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -2094,9 +2062,7 @@ pub async fn approve_stock_take(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -2192,9 +2158,7 @@ pub async fn reject_stock_take(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -7,6 +6,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 fn escape_sql_identifier(identifier: &str) -> String {
     format!("\"{}\"", identifier.replace('"', "\"\""))
@@ -91,9 +91,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_tables(
     State(_state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<TableInfo>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -135,9 +133,7 @@ pub async fn list_tables(
 pub async fn get_table_detail(
     State(_state): State<ApiState>,
     Path(table_name): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TableDetail> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -201,9 +197,7 @@ pub async fn get_table_detail(
 )]
 pub async fn preview_add_column(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> ApiResponse<SqlPreview> {
     let mut guard = txn_arc.lock().await;
@@ -339,9 +333,7 @@ pub async fn execute_drop_column(
 pub async fn list_db_changes(
     State(_state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<DbChange>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

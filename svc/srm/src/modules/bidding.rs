@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -8,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -61,9 +61,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 pub async fn list_biddings(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<ListBiddingParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -140,9 +138,7 @@ pub async fn list_biddings(
 pub async fn create_bidding(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateBiddingRequest>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -243,9 +239,7 @@ pub async fn create_bidding(
 pub async fn get_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -278,9 +272,7 @@ pub async fn update_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateBiddingRequest>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -367,9 +359,7 @@ pub async fn delete_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -430,9 +420,7 @@ pub async fn publish_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -500,9 +488,7 @@ pub async fn open_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -570,9 +556,7 @@ pub async fn evaluate_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -639,9 +623,7 @@ pub async fn award_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AwardBiddingRequest>,
 ) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
@@ -725,9 +707,7 @@ pub async fn award_bidding(
 pub async fn list_bidding_suppliers(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

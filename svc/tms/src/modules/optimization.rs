@@ -10,7 +10,6 @@
 //! - POST /routes/optimize
 //! - POST /freight/quote
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{FromRef, State},
     routing::post,
@@ -19,6 +18,7 @@ use axum::{
 use bigdecimal::{BigDecimal, FromPrimitive};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
@@ -235,9 +235,7 @@ pub fn calculate_freight(
 pub async fn plan_assignment(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AssignmentPlanRequest>,
 ) -> ApiResponse<AssignmentResult> {
     let mut guard = txn_arc.lock().await;
@@ -258,9 +256,7 @@ pub async fn plan_assignment(
 pub async fn optimize_route_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RouteOptimizeRequest>,
 ) -> ApiResponse<RouteOptimizeResponse> {
     let mut guard = txn_arc.lock().await;
@@ -295,9 +291,7 @@ pub async fn optimize_route_handler(
 pub async fn freight_quote_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<FreightQuoteRequest>,
 ) -> ApiResponse<FreightQuote> {
     let mut guard = txn_arc.lock().await;

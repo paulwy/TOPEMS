@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -63,9 +63,7 @@ pub async fn list_cycle_count_configs(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Query(params): Query<CycleCountQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -153,9 +151,7 @@ pub async fn create_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCycleCountConfigRequest>,
 ) -> ApiResponse<CycleCountConfig> {
     let mut guard = txn_arc.lock().await;
@@ -279,9 +275,7 @@ pub async fn get_cycle_count_config(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<CycleCountConfig> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -329,9 +323,7 @@ pub async fn update_cycle_count_config(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCycleCountConfigRequest>,
 ) -> ApiResponse<CycleCountConfig> {
     let mut guard = txn_arc.lock().await;
@@ -442,9 +434,7 @@ pub async fn delete_cycle_count_config(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -546,9 +536,7 @@ pub async fn generate_cycle_count(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -710,9 +698,7 @@ pub async fn generate_all_cycle_counts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

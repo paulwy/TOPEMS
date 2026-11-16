@@ -1,10 +1,10 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, put},
     Json, Router,
 };
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -64,9 +64,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_salary_adjustments(
     State(_state): State<ApiState>,
     Query(params): Query<SalaryAdjustmentPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -164,9 +162,7 @@ pub async fn list_salary_adjustments(
 pub async fn get_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -224,9 +220,7 @@ pub async fn get_salary_adjustment(
 )]
 pub async fn create_salary_adjustment(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSalaryAdjustmentRequest>,
 ) -> ApiResponse<SalaryAdjustment> {
     let mut guard = txn_arc.lock().await;
@@ -303,9 +297,7 @@ pub async fn create_salary_adjustment(
 pub async fn update_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
@@ -419,9 +411,7 @@ pub async fn update_salary_adjustment(
 pub async fn approve_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApproveSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
@@ -481,9 +471,7 @@ pub async fn approve_salary_adjustment(
 pub async fn reject_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RejectSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;

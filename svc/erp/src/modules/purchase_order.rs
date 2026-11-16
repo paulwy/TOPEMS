@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -7,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -52,9 +52,7 @@ pub async fn list_purchase_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<PurchaseOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -146,9 +144,7 @@ pub async fn get_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -189,9 +185,7 @@ pub async fn get_purchase_order(
 pub async fn create_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -331,9 +325,7 @@ pub async fn update_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -406,9 +398,7 @@ pub async fn delete_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -468,9 +458,7 @@ pub async fn approve_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -577,9 +565,7 @@ pub async fn cancel_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

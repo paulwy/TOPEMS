@@ -3,11 +3,11 @@
 //! 提供主数据冲突检测、冲突列表查询、冲突详情、手动解决冲突和自动合并功能。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -134,9 +134,7 @@ pub struct AutoMergeRequest {
 )]
 pub async fn detect_conflicts(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<DetectConflictsRequest>,
 ) -> ApiResponse<ConflictDetectionResult> {
     let mut guard = txn_arc.lock().await;
@@ -384,9 +382,7 @@ pub async fn detect_conflicts(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_conflicts(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ConflictQuery>,
 ) -> ApiResponse<PaginatedResponse<MasterDataConflict>> {
     let mut guard = txn_arc.lock().await;
@@ -502,9 +498,7 @@ pub async fn list_conflicts(
 pub async fn get_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataConflict> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -557,9 +551,7 @@ pub async fn get_conflict(
 pub async fn resolve_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ResolveConflictRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -645,9 +637,7 @@ pub async fn resolve_conflict(
 pub async fn auto_merge_conflict(
     State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AutoMergeRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

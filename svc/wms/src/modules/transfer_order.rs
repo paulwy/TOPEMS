@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -60,9 +60,7 @@ pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TransferOrderQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -146,9 +144,7 @@ pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateTransferOrderRequest>,
 ) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
@@ -296,9 +292,7 @@ pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -345,9 +339,7 @@ pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -399,9 +391,7 @@ pub async fn update_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
@@ -513,9 +503,7 @@ pub async fn delete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -593,9 +581,7 @@ pub async fn confirm_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -675,9 +661,7 @@ pub async fn ship_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TransferOrder> {
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
@@ -1017,9 +1001,7 @@ pub async fn receive_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<TransferOrder> {
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
@@ -1373,9 +1355,7 @@ pub async fn complete_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1531,9 +1511,7 @@ pub async fn start_transfer_approval(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1609,9 +1587,7 @@ pub async fn approve_transfer(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1711,9 +1687,7 @@ pub async fn reject_transfer(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

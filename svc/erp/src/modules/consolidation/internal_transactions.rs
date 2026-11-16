@@ -1,10 +1,10 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
 use rust_decimal::Decimal;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -29,9 +29,7 @@ use super::ApiState;
 pub async fn list_internal_transactions(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<InternalTransaction>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -119,9 +117,7 @@ pub async fn list_internal_transactions(
 pub async fn get_internal_transaction(
     State(_state): State<ApiState>,
     Path(transaction_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<InternalTransaction> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -180,9 +176,7 @@ pub async fn create_internal_transaction(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-ledger:write") {
@@ -335,9 +329,7 @@ pub async fn update_internal_transaction(
     Path(transaction_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-ledger:write") {
@@ -476,9 +468,7 @@ pub async fn confirm_internal_transaction(
     Path(transaction_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<InternalTransaction> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-ledger:approve") {
         return e.0;
@@ -569,9 +559,7 @@ pub async fn dispute_internal_transaction(
     Path(transaction_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<DisputeInternalTransactionRequest>,
 ) -> ApiResponse<InternalTransaction> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-ledger:write") {

@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -6,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use bigdecimal::BigDecimal;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 
 /// U6-2：hrm 内部 BigDecimal -> 事件 rust_decimal::Decimal，字符串往返精确（不经过 f64，避免尾差）。
@@ -155,9 +155,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_payroll_runs(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -222,9 +220,7 @@ pub async fn list_payroll_runs(
 pub async fn create_payroll_run(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePayrollRunRequest>,
 ) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
@@ -320,9 +316,7 @@ pub async fn create_payroll_run(
 pub async fn get_payroll_run(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -363,9 +357,7 @@ pub async fn delete_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -460,9 +452,7 @@ struct PayrollSourceEmployee {
 pub async fn calculate_payroll_run(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -618,9 +608,7 @@ pub async fn calculate_payroll_run(
 pub async fn pay_payroll_run(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -708,9 +696,7 @@ pub async fn pay_payroll_run(
 pub async fn list_payroll_items(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -793,9 +779,7 @@ pub async fn list_payroll_items(
 pub async fn get_payroll_item(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -845,9 +829,7 @@ pub async fn get_payroll_item(
 pub async fn list_payroll_details(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -903,9 +885,7 @@ pub async fn list_payroll_details(
 
 pub async fn create_payroll_detail(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PayrollDetail>,
 ) -> ApiResponse<PayrollDetail> {
     let mut guard = txn_arc.lock().await;
@@ -965,9 +945,7 @@ pub async fn create_payroll_detail(
 pub async fn generate_payroll_voucher(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<GeneratePayrollVoucherRequest>,
 ) -> ApiResponse<PayrollVoucherResponse> {
     let mut guard = txn_arc.lock().await;
@@ -1173,9 +1151,7 @@ pub struct PayrollSlip {
 pub async fn list_payroll_slips(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");

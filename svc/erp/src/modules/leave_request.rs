@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -162,9 +162,7 @@ pub async fn list_leave_requests(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LeaveRequestQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -261,9 +259,7 @@ pub async fn create_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -390,9 +386,7 @@ pub async fn get_leave_request(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -447,9 +441,7 @@ pub async fn update_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -600,9 +592,7 @@ pub async fn delete_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -692,9 +682,7 @@ pub async fn submit_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -794,9 +782,7 @@ pub async fn approve_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApproveLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -905,9 +891,7 @@ pub async fn reject_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RejectLeaveRequestRequest>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
@@ -1020,9 +1004,7 @@ pub async fn cancel_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

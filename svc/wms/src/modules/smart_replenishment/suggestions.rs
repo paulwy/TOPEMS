@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -6,14 +5,13 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{
-    arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
-};
+use crate::shared::scope::{arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -64,9 +62,7 @@ pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -161,9 +157,7 @@ pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -213,9 +207,7 @@ pub async fn compute_replenishment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ReplenishmentComputeRequest>,
 ) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
@@ -453,9 +445,7 @@ pub async fn confirm_suggestion(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ConfirmSuggestionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -584,9 +574,7 @@ pub async fn get_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

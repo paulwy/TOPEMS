@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::locale::Locale;
@@ -58,9 +58,7 @@ pub async fn list_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ScoringDimension>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -122,9 +120,7 @@ pub async fn list_active_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ScoringDimension>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -190,9 +186,7 @@ pub async fn get_dimension(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -244,9 +238,7 @@ pub async fn create_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateScoringDimensionRequest>,
 ) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
@@ -347,9 +339,7 @@ pub async fn update_dimension(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateScoringDimensionRequest>,
 ) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
@@ -479,9 +469,7 @@ pub async fn delete_dimension(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -1,6 +1,5 @@
 //! Route handlers - 路线管理
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
@@ -10,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -82,9 +82,7 @@ pub async fn list_routes(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -179,9 +177,7 @@ pub async fn create_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateRouteRequest>,
 ) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
@@ -247,9 +243,7 @@ pub async fn get_route(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -312,9 +306,7 @@ pub async fn update_route(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateRouteRequest>,
 ) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
@@ -386,9 +378,7 @@ pub async fn delete_route(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

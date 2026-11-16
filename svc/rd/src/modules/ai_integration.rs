@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -9,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
@@ -110,9 +110,7 @@ async fn list_analyses(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
 
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -177,9 +175,7 @@ async fn list_analyses(
 )]
 async fn create_analysis(
     State(_state): State<super::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -264,9 +260,7 @@ async fn get_analysis(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -348,9 +342,7 @@ async fn get_entity_analyses(
     State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

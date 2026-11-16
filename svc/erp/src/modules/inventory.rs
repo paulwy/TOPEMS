@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
     Json, Router,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -43,9 +43,7 @@ pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Inventory>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -138,9 +136,7 @@ pub async fn get_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -181,9 +177,7 @@ pub async fn get_inventory(
 pub async fn create_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreateInventoryRequest>,
 ) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
@@ -273,9 +267,7 @@ pub async fn update_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<UpdateInventoryRequest>,
 ) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
@@ -355,9 +347,7 @@ pub async fn delete_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -404,9 +394,7 @@ pub async fn delete_inventory(
 pub async fn get_low_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Inventory>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

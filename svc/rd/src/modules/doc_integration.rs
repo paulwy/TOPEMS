@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use topems_shared_core::error::TopemsError;
@@ -79,9 +79,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
 pub async fn list_documents(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -146,9 +144,7 @@ pub async fn list_documents(
 )]
 pub async fn create_document_relation(
     State(_state): State<super::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -224,9 +220,7 @@ pub async fn create_document_relation(
 pub async fn get_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -279,9 +273,7 @@ pub async fn get_document_relation(
 pub async fn delete_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -341,9 +333,7 @@ pub async fn delete_document_relation(
 pub async fn get_entity_documents(
     State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

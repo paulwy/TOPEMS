@@ -1,8 +1,8 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{extract::State, routing::get, Extension, Router};
 use sqlx::postgres::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::models::Supplier;
@@ -183,9 +183,7 @@ pub async fn get_statistics(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -299,9 +297,7 @@ pub async fn get_detailed_statistics(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -567,9 +563,7 @@ pub async fn get_suppliers_with_stats(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

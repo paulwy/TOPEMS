@@ -2,7 +2,6 @@
 //! 数据源：wms.wave_picks（按 assigned_to 聚合）+ wms.labor_shifts（班次持久化）
 //! 权限：WavePickRead；走 RLS txn（tenant_middleware 注入）
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::get,
@@ -11,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -125,9 +125,7 @@ pub async fn list_labor_efficiency(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -159,9 +157,7 @@ pub async fn user_labor_efficiency(
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
     Query(params): Query<LaborQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -214,9 +210,7 @@ pub async fn labor_productivity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProductivityStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -314,9 +308,7 @@ pub async fn labor_workload(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<WorkloadItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -404,9 +396,7 @@ pub async fn labor_performance_dashboard(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LaborQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PerformanceDashboard> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -539,9 +529,7 @@ pub async fn list_labor_shifts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<LaborShift>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -604,9 +592,7 @@ pub async fn list_labor_shifts(
 pub async fn create_labor_shift(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateShiftRequest>,
 ) -> ApiResponse<LaborShift> {
     let mut guard = txn_arc.lock().await;

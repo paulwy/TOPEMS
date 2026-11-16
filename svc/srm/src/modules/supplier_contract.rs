@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -9,6 +8,7 @@ use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -72,9 +72,7 @@ pub async fn list_contracts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContractQueryParams>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -176,9 +174,7 @@ pub async fn create_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierContractRequest>,
 ) -> ApiResponse<SupplierContract> {
     let mut guard = txn_arc.lock().await;
@@ -333,9 +329,7 @@ pub async fn get_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SupplierContract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -384,9 +378,7 @@ pub async fn update_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSupplierContractRequest>,
 ) -> ApiResponse<SupplierContract> {
     let mut guard = txn_arc.lock().await;
@@ -528,9 +520,7 @@ pub async fn delete_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -601,9 +591,7 @@ pub async fn get_contract_terms(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ContractTerm>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

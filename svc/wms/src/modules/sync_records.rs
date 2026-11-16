@@ -4,7 +4,6 @@
 //! 与 scm.sync_records 同构；前端 sync.ts 契约：
 //!   list/get/items/retry/retry-items/statistics + POST /sync/scm{,/inventory,/orders}
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::{get, post},
@@ -13,6 +12,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -142,9 +142,7 @@ where
 pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListSyncParams>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -229,9 +227,7 @@ pub async fn list_sync_records(
 pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SyncRecord> {
     let mut guard = txn_arc.lock().await;
@@ -273,9 +269,7 @@ pub async fn get_sync_record(
 pub async fn create_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSyncRequest>,
 ) -> ApiResponse<SyncRecord> {
     let mut guard = txn_arc.lock().await;
@@ -365,9 +359,7 @@ pub async fn create_sync_record(
 pub async fn list_sync_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(sync_id): Path<Uuid>,
     Query(params): Query<ListSyncParams>,
 ) -> ApiResponse<serde_json::Value> {
@@ -436,9 +428,7 @@ pub async fn list_sync_items(
 pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SyncResult> {
     let mut guard = txn_arc.lock().await;
@@ -503,9 +493,7 @@ pub async fn retry_sync_record(
 pub async fn retry_failed_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<RetryItemsRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -563,9 +551,7 @@ pub async fn retry_failed_items(
 pub async fn get_sync_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -659,9 +645,7 @@ pub async fn get_sync_statistics(
 async fn trigger_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     sync_type: String,
     payload: serde_json::Value,
 ) -> ApiResponse<SyncResult> {
@@ -730,9 +714,7 @@ async fn trigger_sync(
 pub async fn trigger_scm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {
     let sync_type = payload
@@ -754,9 +736,7 @@ pub async fn trigger_scm_sync(
 pub async fn trigger_scm_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {
     trigger_sync(
@@ -773,9 +753,7 @@ pub async fn trigger_scm_inventory(
 pub async fn trigger_scm_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<SyncResult> {
     trigger_sync(

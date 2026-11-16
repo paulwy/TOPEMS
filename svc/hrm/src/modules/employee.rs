@@ -1,6 +1,6 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{extract::Extension, routing::*, Router};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
@@ -135,9 +135,7 @@ pub async fn list_employees(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<EmployeePaginationParams>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ListResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
@@ -197,9 +195,7 @@ pub async fn get_employee(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -295,9 +291,7 @@ pub async fn get_employee_details(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -391,9 +385,7 @@ pub async fn create_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
@@ -551,9 +543,7 @@ pub async fn update_employee(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Json(req): axum::extract::Json<UpdateEmployeeRequest>,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
@@ -702,9 +692,7 @@ pub async fn delete_employee(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -830,9 +818,7 @@ pub async fn export_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Json(req): axum::extract::Json<ExportRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

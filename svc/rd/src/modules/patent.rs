@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -10,6 +9,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -163,9 +163,7 @@ fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
 pub async fn list_patents(
     State(_state): State<crate::modules::ApiState>,
     Query(params): Query<ListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -249,9 +247,7 @@ pub async fn list_patents(
 pub async fn list_patents_by_project(
     State(_state): State<crate::modules::ApiState>,
     Path(project_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Patent>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -286,9 +282,7 @@ pub async fn list_patents_by_project(
 
 pub async fn create_patent(
     State(_state): State<crate::modules::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePatentRequest>,
 ) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
@@ -362,9 +356,7 @@ pub async fn create_patent(
 pub async fn get_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -397,9 +389,7 @@ pub async fn update_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePatentRequest>,
 ) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
@@ -478,9 +468,7 @@ pub async fn update_patent(
 pub async fn delete_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

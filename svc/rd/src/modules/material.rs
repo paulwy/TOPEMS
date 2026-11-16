@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
@@ -126,9 +126,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn list_material_tests(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -210,9 +208,7 @@ pub async fn list_material_tests(
 pub async fn list_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -257,9 +253,7 @@ pub async fn list_by_project(
 pub async fn list_by_experiment(
     State(_state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -291,9 +285,7 @@ pub async fn list_by_experiment(
 pub async fn create_material_test(
     State(state): State<super::ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
@@ -405,9 +397,7 @@ pub async fn create_material_test(
 pub async fn get_material_test(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -439,9 +429,7 @@ pub async fn update_material_test(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
@@ -541,9 +529,7 @@ pub async fn delete_material_test(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

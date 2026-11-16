@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -7,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -85,9 +85,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn get_project_summary(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectSummary> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -172,9 +170,7 @@ pub async fn get_project_summary(
 pub async fn get_project_trends(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<TrendData>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -244,9 +240,7 @@ pub async fn get_project_trends(
 )]
 pub async fn get_project_type_stats(
     State(_state): State<super::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ProjectTypeStats>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -302,9 +296,7 @@ pub async fn get_project_type_stats(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_performance_metrics(
     State(_state): State<super::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PerformanceMetrics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -432,9 +424,7 @@ pub struct ProjectDetailReport {
 pub async fn get_project_detail_report(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectDetailReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

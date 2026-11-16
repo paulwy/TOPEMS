@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -88,9 +88,7 @@ pub async fn list_expiring_tail(
 pub async fn list_contracts(
     State(_state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -176,9 +174,7 @@ pub async fn list_contracts(
 pub async fn list_expiring_contracts(
     State(_state): State<ApiState>,
     Query(params): Query<ExpiringParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -272,9 +268,7 @@ pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateContractRequest>,
 ) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
@@ -416,9 +410,7 @@ pub async fn create_contract(
 pub async fn get_contract(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -490,9 +482,7 @@ pub async fn update_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateContractRequest>,
 ) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
@@ -649,9 +639,7 @@ pub async fn delete_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -735,9 +723,7 @@ pub async fn create_renewal(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateRenewalRequest>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
@@ -805,9 +791,7 @@ pub async fn create_renewal(
 pub async fn list_renewals(
     State(_state): State<ApiState>,
     Query(params): Query<RenewalParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -897,9 +881,7 @@ pub struct RenewalParams {
 pub async fn get_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -930,9 +912,7 @@ pub async fn update_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateRenewalRequest>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
@@ -996,9 +976,7 @@ pub async fn delete_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1054,9 +1032,7 @@ pub async fn approve_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1124,9 +1100,7 @@ pub async fn reject_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RejectRequest>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
@@ -1201,9 +1175,7 @@ pub async fn execute_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");

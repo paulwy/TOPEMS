@@ -2,7 +2,6 @@
 //! 数据源：wms.wave_picks + wms.wave_pick_items（与 wave_pick 模块同源，只读聚合视图）
 //! 权限：WavePickRead；走 RLS txn（tenant_middleware 注入）
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::get,
@@ -11,6 +10,7 @@ use axum::{
 use serde::Serialize;
 use serde_json::json;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -46,9 +46,7 @@ pub async fn list_picking_lists(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -138,9 +136,7 @@ pub async fn get_picking_list(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -220,9 +216,7 @@ pub struct PickingStats {
 pub async fn picking_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PickingStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

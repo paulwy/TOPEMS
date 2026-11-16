@@ -4,7 +4,6 @@
 //!
 //! Implements the plugin interface protocol for integration with unified-core
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     routing::{get, post},
@@ -12,6 +11,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::env;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::ApiState;
@@ -217,9 +217,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
 )]
 pub async fn plugin_health_check(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

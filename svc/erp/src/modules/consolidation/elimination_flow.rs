@@ -5,7 +5,6 @@
 //!   - 仅同一 active scope 内、期间内双方均在有效期内的公司对参与。
 //!   - 金额全链路 Decimal，比较前量化到分（容差 0.00）。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     Json,
@@ -14,6 +13,7 @@ use rust_decimal::Decimal;
 use sqlx::FromRow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -313,9 +313,7 @@ fn scan_pairs(companies: &[EligibleCompany], entries: &[LedgerEntry]) -> (Vec<Ma
 pub async fn scan_elimination_candidates(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ScanCandidatesRequest>,
 ) -> ApiResponse<ScanCandidatesResult> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-scan:write") {
@@ -478,9 +476,7 @@ pub(crate) async fn scan_core(
 pub async fn list_elimination_candidates(
     Extension(claims): Extension<Claims>,
     Query(query): Query<CandidateListQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<EliminationCandidate>> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-reconcile:read") {
         return e.0;
@@ -642,9 +638,7 @@ fn company_name(companies: &[EligibleCompany], id: Uuid) -> String {
 pub async fn get_reconciliation_summary(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ReconciliationQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ReconciliationSummary> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-reconcile:read") {
         return e.0;
@@ -778,9 +772,7 @@ fn draft_voucher(agg: &PairAggregate, amount: Decimal) -> Option<EliminationDraf
 )]
 pub async fn preview_eliminations(
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<EliminationPreviewRequest>,
 ) -> ApiResponse<EliminationPreview> {
     if let Err(e) = require_action_permission(&claims, "erp:consolidation-reconcile:read") {

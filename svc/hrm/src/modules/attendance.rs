@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{Datelike, Utc};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -54,9 +54,7 @@ pub struct TodayStatusParams {
 pub async fn get_today_status(
     State(_state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -177,9 +175,7 @@ pub async fn list_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AttendancePaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -268,9 +264,7 @@ pub async fn create_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateAttendanceRequest>,
 ) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
@@ -381,9 +375,7 @@ pub async fn create_attendance(
 pub async fn get_attendance(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -429,9 +421,7 @@ pub async fn get_attendance(
 pub async fn update_attendance(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateAttendanceRequest>,
 ) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
@@ -519,9 +509,7 @@ pub async fn delete_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -688,9 +676,7 @@ pub struct AttendanceRecordsParams {
 pub async fn list_attendance_records(
     State(_state): State<ApiState>,
     Query(params): Query<AttendanceRecordsParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -778,9 +764,7 @@ pub async fn list_attendance_records(
 )]
 pub async fn check_in(
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CheckRequest>,
 ) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
@@ -889,9 +873,7 @@ pub async fn check_in(
 )]
 pub async fn check_out(
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CheckRequest>,
 ) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
@@ -977,9 +959,7 @@ pub async fn check_out(
 pub async fn get_attendance_stats(
     State(_state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");

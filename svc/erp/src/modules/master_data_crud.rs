@@ -1,9 +1,9 @@
 // ==================== 核心 CRUD 类型定义 ====================
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_auth::auth::Claims;
@@ -176,9 +176,7 @@ pub async fn list_master_data_refs(
     State(_state): State<ApiState>,
     Query(params): Query<MasterDataRefQuery>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -265,9 +263,7 @@ pub async fn get_master_data_ref(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -318,9 +314,7 @@ pub async fn get_master_data_ref_by_code(
     State(_state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -3,10 +3,10 @@
 //! 提供治理仪表盘统计数据，包括主数据总量、质量、冲突、版本、审计等指标。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, State};
 use serde::Serialize;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -47,9 +47,7 @@ pub struct GovernanceDashboardStats {
 )]
 pub async fn get_governance_dashboard(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<GovernanceDashboardStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

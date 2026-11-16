@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -11,6 +10,7 @@ use axum::{
 };
 use chrono::Utc;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::resolve_create_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{PaginatedResponse, PaginationParams};
@@ -44,9 +44,7 @@ pub async fn list_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -119,9 +117,7 @@ pub async fn create_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateAssetRequest>,
 ) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
@@ -248,9 +244,7 @@ pub async fn get_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -299,9 +293,7 @@ pub async fn update_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateAssetRequest>,
 ) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
@@ -444,9 +436,7 @@ pub async fn delete_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

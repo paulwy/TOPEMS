@@ -81,7 +81,13 @@ async fn body_of(pool: sqlx::PgPool, tenant: Uuid, status: Option<&str>) -> Valu
             system: false,
         },
         async move {
-            list_equipment(State(state), Extension(txn_cell), Extension(claims), Query(q)).await
+            list_equipment(
+                State(state),
+                Extension(txn_cell),
+                Extension(claims),
+                Query(q),
+            )
+            .await
         },
     )
     .await;

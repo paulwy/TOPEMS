@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -73,9 +73,7 @@ pub async fn list_discrepancies(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DiscrepancyQueryParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -208,9 +206,7 @@ pub async fn get_discrepancy(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DiscrepancyRecord> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -259,9 +255,7 @@ pub async fn create_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateDiscrepancyRequest>,
 ) -> ApiResponse<DiscrepancyRecord> {
     let mut guard = txn_arc.lock().await;
@@ -423,9 +417,7 @@ pub async fn approve_discrepancy(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApproveDiscrepancyRequest>,
 ) -> ApiResponse<DiscrepancyRecord> {
     let mut guard = txn_arc.lock().await;
@@ -551,9 +543,7 @@ pub async fn adjust_inventory(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -733,9 +723,7 @@ pub async fn process_stock_take_discrepancies(
     Extension(claims): Extension<Claims>,
     Path(stock_take_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

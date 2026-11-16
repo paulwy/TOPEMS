@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     body::Body,
     extract::{Extension, Path, Query, State},
@@ -10,6 +9,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -252,9 +252,7 @@ pub async fn list_dict_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DictTypeQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -369,9 +367,7 @@ pub async fn create_dict_type(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
@@ -494,9 +490,7 @@ pub async fn create_dict_type(
 pub async fn get_dict_type(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -537,9 +531,7 @@ pub async fn update_dict_type(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
@@ -676,9 +668,7 @@ pub async fn delete_dict_type(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -800,9 +790,7 @@ pub async fn list_dict_items(
     State(_state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -872,9 +860,7 @@ pub async fn list_dict_items(
 pub async fn create_dict_item(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
@@ -971,9 +957,7 @@ pub async fn create_dict_item(
 pub async fn get_dict_item(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DictItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1012,9 +996,7 @@ pub async fn update_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
@@ -1133,9 +1115,7 @@ pub async fn delete_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -1219,9 +1199,7 @@ pub async fn delete_dict_item(
 pub async fn batch_create_dict_items(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchCreateDictItemRequest>,
 ) -> ApiResponse<Vec<DictItem>> {
@@ -1309,9 +1287,7 @@ pub async fn batch_create_dict_items(
 pub async fn export_dict_items(
     State(_state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Response<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -9,8 +9,8 @@ use api_state::{api_state, tenant_claims, test_tenant};
 use axum::extract::State;
 use axum::Extension;
 use serde_json::Value;
-use topems_wms::modules::analytics::{get_dashboard_summary, get_flow_trend, AnalyticsQueryParams};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_wms::modules::analytics::{get_dashboard_summary, get_flow_trend, AnalyticsQueryParams};
 
 /// 直调 handler 的测试没有 tenant_middleware，用空事务单元代替（release 为空操作）。
 fn no_txn_cell() -> Extension<RlsTxnCell> {

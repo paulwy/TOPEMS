@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -98,9 +98,7 @@ pub async fn list_wave_picks(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<WavePick>> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -196,9 +194,7 @@ pub async fn create_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateWavePickRequest>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -308,9 +304,7 @@ pub async fn get_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -359,9 +353,7 @@ pub async fn update_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -479,9 +471,7 @@ pub async fn delete_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -592,9 +582,7 @@ pub async fn list_wave_pick_items(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
         Ok(t) => t,
@@ -657,9 +645,7 @@ pub async fn assign_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AssignWavePickRequest>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
@@ -766,9 +752,7 @@ pub async fn start_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -877,9 +861,7 @@ pub async fn complete_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -988,9 +970,7 @@ pub async fn cancel_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1102,9 +1082,7 @@ pub async fn pick_line(
     Extension(claims): Extension<Claims>,
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {
@@ -1186,9 +1164,7 @@ pub async fn short_pick_line(
     Extension(claims): Extension<Claims>,
     Path((task_id, line_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PickLineRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = match tenant_of(&claims, &headers) {

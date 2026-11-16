@@ -3,11 +3,11 @@
 //! 记录主数据版本快照，支持查询版本历史、获取版本详情和回滚到指定版本。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -77,9 +77,7 @@ pub struct VersionQuery {
 pub async fn record_version(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RecordVersionRequest>,
 ) -> ApiResponse<MasterDataVersion> {
     let mut guard = txn_arc.lock().await;
@@ -165,9 +163,7 @@ pub async fn get_versions(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Query(params): Query<VersionQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<MasterDataVersion>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -234,9 +230,7 @@ pub async fn get_versions(
 pub async fn get_version(
     State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataVersion> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -284,9 +278,7 @@ pub async fn get_version(
 pub async fn rollback_to_version(
     State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

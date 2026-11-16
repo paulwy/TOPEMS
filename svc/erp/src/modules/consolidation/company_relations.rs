@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -34,9 +34,7 @@ pub async fn list_company_relations(
     State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<CompanyRelation>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -94,9 +92,7 @@ pub async fn list_company_relations(
 pub async fn get_company_tree(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<CompanyTreeNode>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -169,9 +165,7 @@ pub async fn create_company_relation(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCompanyRelationRequest>,
 ) -> ApiResponse<CompanyRelation> {
     let mut guard = txn_arc.lock().await;
@@ -243,9 +237,7 @@ pub async fn update_company_relation(
     Path(relation_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateCompanyRelationRequest>,
 ) -> ApiResponse<CompanyRelation> {
     let mut guard = txn_arc.lock().await;
@@ -343,9 +335,7 @@ pub async fn delete_company_relation(
     Path(relation_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -428,9 +418,7 @@ pub async fn get_company_financial_data(
     State(_state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<ConsolidationListParams>,
 ) -> ApiResponse<CompanyFinancialData> {
     let mut guard = txn_arc.lock().await;

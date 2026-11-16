@@ -2,7 +2,6 @@
 //! 数据源：srm.inquiries（event_handlers 写入，收敛自 srm_inquiries）
 //! 走 RLS txn（tenant_middleware 注入）
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -12,6 +11,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -94,9 +94,7 @@ pub async fn list_inquiries(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ListInquiryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -175,9 +173,7 @@ pub async fn get_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inquiry> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -218,9 +214,7 @@ pub async fn get_inquiry(
 pub async fn create_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInquiryRequest>,
 ) -> ApiResponse<Inquiry> {
     let mut guard = txn_arc.lock().await;
@@ -270,9 +264,7 @@ pub async fn update_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInquiryRequest>,
 ) -> ApiResponse<Inquiry> {
     let mut guard = txn_arc.lock().await;
@@ -321,9 +313,7 @@ pub async fn delete_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -372,9 +362,7 @@ pub async fn publish_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inquiry> {
     transition_inquiry(id, "published", &["draft", "closed"], "发布", txn_arc).await
 }
@@ -396,9 +384,7 @@ pub async fn close_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inquiry> {
     transition_inquiry(id, "closed", &["published"], "关闭", txn_arc).await
 }

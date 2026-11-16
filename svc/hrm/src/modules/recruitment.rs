@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -9,6 +8,7 @@ use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -205,9 +205,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_job_openings(
     State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -284,9 +282,7 @@ pub async fn create_job_opening(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateJobOpeningRequest>,
 ) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
@@ -396,9 +392,7 @@ pub async fn create_job_opening(
 pub async fn get_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -422,9 +416,7 @@ pub async fn get_job_opening(
 pub async fn update_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateJobOpeningRequest>,
 ) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
@@ -487,9 +479,7 @@ pub async fn delete_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -573,9 +563,7 @@ pub async fn delete_job_opening(
 pub async fn publish_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -628,9 +616,7 @@ pub async fn publish_job_opening(
 pub async fn close_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -680,9 +666,7 @@ pub async fn close_job_opening(
 pub async fn list_candidates(
     State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -754,9 +738,7 @@ pub async fn create_candidate(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCandidateRequest>,
 ) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
@@ -863,9 +845,7 @@ pub async fn create_candidate(
 pub async fn get_candidate(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -889,9 +869,7 @@ pub async fn get_candidate(
 pub async fn update_candidate(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateCandidateRequest>,
 ) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
@@ -950,9 +928,7 @@ pub async fn delete_candidate(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1032,9 +1008,7 @@ pub async fn delete_candidate(
 pub async fn list_interviews(
     State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1100,9 +1074,7 @@ pub async fn list_interviews(
 pub async fn create_interview(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInterviewRequest>,
 ) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
@@ -1169,9 +1141,7 @@ pub async fn create_interview(
 pub async fn get_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1195,9 +1165,7 @@ pub async fn get_interview(
 pub async fn update_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
@@ -1257,9 +1225,7 @@ pub async fn update_interview(
 pub async fn delete_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1304,9 +1270,7 @@ pub async fn delete_interview(
 pub async fn complete_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;

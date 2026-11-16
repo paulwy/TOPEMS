@@ -14,11 +14,11 @@
 //!
 //! 其余非库存写路由继续复用请求事务，只做租户收敛与 0 行校验。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::http::HeaderMap;
 use sqlx::PgPool;
 use std::time::Instant;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;

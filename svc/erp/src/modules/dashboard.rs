@@ -1,10 +1,10 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     Router,
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -109,9 +109,7 @@ async fn count_table_with_status(
 pub async fn get_dashboard(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ErpDashboardStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

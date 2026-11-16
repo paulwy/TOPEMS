@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -25,9 +25,7 @@ pub async fn list_scope_companies(
     State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ConsolidationScopeCompany>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -89,9 +87,7 @@ pub async fn add_scope_company(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AddScopeCompanyRequest>,
 ) -> ApiResponse<ConsolidationScopeCompany> {
     let mut guard = txn_arc.lock().await;
@@ -169,9 +165,7 @@ pub async fn update_scope_company(
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateScopeCompanyRequest>,
 ) -> ApiResponse<ConsolidationScopeCompany> {
     let mut guard = txn_arc.lock().await;
@@ -272,9 +266,7 @@ pub async fn remove_scope_company(
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

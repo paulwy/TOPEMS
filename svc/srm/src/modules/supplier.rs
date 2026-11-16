@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -8,6 +7,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use utoipa::ToSchema;
@@ -326,9 +326,7 @@ pub async fn list_suppliers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -485,9 +483,7 @@ pub async fn create_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -698,9 +694,7 @@ pub async fn get_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -783,9 +777,7 @@ pub async fn update_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -984,9 +976,7 @@ pub async fn delete_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1118,9 +1108,7 @@ pub async fn get_supplier_products(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SupplierProduct>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1185,9 +1173,7 @@ pub async fn get_supplier_contracts(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SupplierContract>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1252,9 +1238,7 @@ pub async fn get_supplier_performance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SupplierPerformance> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1475,9 +1459,7 @@ pub async fn start_supplier_approval(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<StartApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1643,9 +1625,7 @@ pub async fn approve_supplier(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1783,9 +1763,7 @@ pub async fn reject_supplier(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

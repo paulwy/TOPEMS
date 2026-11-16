@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -26,9 +26,7 @@ pub async fn list_scopes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ConsolidationListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<ConsolidationScope>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -97,9 +95,7 @@ pub async fn list_scopes(
 pub async fn get_scope(
     State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -132,9 +128,7 @@ pub async fn get_scope(
 pub async fn create_scope(
     State(state): State<ApiState>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateConsolidationScopeRequest>,
 ) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
@@ -195,9 +189,7 @@ pub async fn update_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateConsolidationScopeRequest>,
 ) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
@@ -263,9 +255,7 @@ pub async fn delete_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

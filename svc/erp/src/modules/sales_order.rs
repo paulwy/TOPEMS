@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -7,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -79,9 +79,7 @@ pub async fn list_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -173,9 +171,7 @@ pub async fn get_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -216,9 +212,7 @@ pub async fn get_sales_order(
 pub async fn create_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreateSalesOrderRequest>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -353,9 +347,7 @@ pub async fn update_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<UpdateSalesOrderRequest>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
@@ -433,9 +425,7 @@ pub async fn delete_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -540,9 +530,7 @@ pub async fn approve_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -618,9 +606,7 @@ pub async fn ship_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -661,9 +647,7 @@ pub async fn complete_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -704,9 +688,7 @@ pub async fn cancel_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -798,9 +780,7 @@ const SALES_ORDER_SELECT_COLS: &str = "id, order_no, customer_id, customer_name,
 async fn batch_create_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchCreateOrdersRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -864,9 +844,7 @@ async fn batch_create_sales_orders(
 async fn batch_update_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchUpdateOrdersRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -970,9 +948,7 @@ async fn batch_update_status(
 pub async fn batch_approve_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchIdsRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -1018,9 +994,7 @@ pub async fn batch_approve_sales_orders(
 pub async fn batch_ship_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchShipRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -1066,9 +1040,7 @@ pub async fn batch_ship_sales_orders(
 pub async fn batch_complete_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchIdsRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -1114,9 +1086,7 @@ pub async fn batch_complete_sales_orders(
 pub async fn batch_cancel_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchCancelRequest>,
 ) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
@@ -1162,9 +1132,7 @@ pub async fn batch_cancel_sales_orders(
 pub async fn get_sales_order_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SalesOrderStatsResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -1,10 +1,10 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, State},
     routing::get,
     Router,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -44,9 +44,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 )]
 pub async fn get_statistics(
     State(_state): State<super::ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<RsStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

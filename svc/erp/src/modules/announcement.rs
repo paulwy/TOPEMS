@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use super::ApiState;
 use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -12,6 +11,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::PaginatedResponse;
@@ -57,9 +57,7 @@ pub async fn list_announcements(
     headers: HeaderMap,
     Query(params): Query<AnnouncementQueryParams>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -148,9 +146,7 @@ pub async fn create_announcement(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
@@ -262,9 +258,7 @@ pub async fn get_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -321,9 +315,7 @@ pub async fn update_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
@@ -453,9 +445,7 @@ pub async fn delete_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -548,9 +538,7 @@ pub async fn publish_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -654,9 +642,7 @@ pub async fn unpublish_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

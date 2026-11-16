@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{delete, get, post, put},
@@ -7,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::Error as SqlxError;
 use std::time::Duration;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
@@ -41,9 +41,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn create_milestone(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
@@ -163,9 +161,7 @@ pub async fn get_project_milestones(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -258,9 +254,7 @@ pub async fn update_milestone(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
@@ -400,9 +394,7 @@ pub async fn delete_milestone(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

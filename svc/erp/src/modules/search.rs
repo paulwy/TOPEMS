@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     routing::*,
@@ -6,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -87,9 +87,7 @@ pub struct SearchResult {
 async fn global_search(
     State(_state): State<ApiState>,
     Query(params): Query<SearchParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SearchResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

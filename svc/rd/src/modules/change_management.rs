@@ -9,7 +9,6 @@
 //! - POST /change-requests/{id}/transition（状态流转，非法流转 400）
 //! - POST /change-requests/{id}/change-orders（仅 Approved 可建变更单）、GET /change-orders
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -20,6 +19,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -154,9 +154,7 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn create_change_request(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateChangeRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -235,9 +233,7 @@ pub async fn create_change_request(
 pub async fn list_change_requests(
     State(_state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -319,9 +315,7 @@ pub async fn list_change_requests(
 pub async fn get_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -356,9 +350,7 @@ pub async fn get_change_request(
 pub async fn update_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateChangeRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -431,9 +423,7 @@ pub async fn update_change_request(
 pub async fn delete_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -492,9 +482,7 @@ pub async fn delete_change_request(
 pub async fn transition_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<TransitionRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -591,9 +579,7 @@ pub async fn transition_change_request(
 pub async fn create_change_order(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateChangeOrder>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -690,9 +676,7 @@ pub async fn create_change_order(
 )]
 pub async fn list_change_orders(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

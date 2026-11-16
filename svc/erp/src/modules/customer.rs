@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -6,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -111,9 +111,7 @@ pub async fn list_customers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerListParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -217,9 +215,7 @@ pub async fn get_customer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -262,9 +258,7 @@ pub async fn create_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreateCustomerRequest>,
 ) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
@@ -343,9 +337,7 @@ pub async fn update_customer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<UpdateCustomerRequest>,
 ) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
@@ -431,9 +423,7 @@ pub async fn delete_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -579,9 +569,7 @@ pub async fn batch_list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchListRequest>,
 ) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -636,9 +624,7 @@ pub async fn batch_create_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchCreateRequest>,
 ) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -689,9 +675,7 @@ async fn batch_update_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchUpdateRequest>,
 ) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -748,9 +732,7 @@ async fn batch_update_customers(
 async fn batch_delete_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchDeleteRequest>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
@@ -829,9 +811,7 @@ pub async fn change_customer_status(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<StatusUpdateRequest>,
 ) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
@@ -890,9 +870,7 @@ pub async fn batch_change_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchStatusRequest>,
 ) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -964,9 +942,7 @@ pub async fn batch_change_category(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<BatchCategoryRequest>,
 ) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
@@ -1028,9 +1004,7 @@ pub async fn batch_change_category(
 pub async fn get_customer_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<CustomerStatsResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1095,9 +1069,7 @@ pub async fn list_recent_customers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecentParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<CustomerRecentResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

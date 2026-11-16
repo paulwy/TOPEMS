@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{get, post},
@@ -10,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use sqlx::FromRow;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
@@ -114,9 +114,7 @@ pub async fn list_tenders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -186,9 +184,7 @@ pub async fn create_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -305,9 +301,7 @@ pub async fn get_tender(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -383,9 +377,7 @@ pub async fn update_tender(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -502,9 +494,7 @@ pub async fn delete_tender(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -578,9 +568,7 @@ pub async fn get_tender_bids(
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -661,9 +649,7 @@ pub async fn create_tender_bid(
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -812,9 +798,7 @@ pub async fn award_tender(
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -986,9 +970,7 @@ pub async fn list_tender_awards(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     body::Bytes,
     extract::{Extension, Path, Query, State},
@@ -10,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use sqlx::Row;
 use utoipa::{IntoParams, ToSchema};
@@ -92,9 +92,7 @@ pub async fn list_projects(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Query(params): Query<ListProjectsQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -192,9 +190,7 @@ pub async fn create_project(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateProjectRequest>,
 ) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
@@ -376,9 +372,7 @@ pub async fn get_project(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -458,9 +452,7 @@ pub async fn update_project(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateProjectRequest>,
 ) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
@@ -614,9 +606,7 @@ pub async fn delete_project(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -717,9 +707,7 @@ pub async fn batch_create_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BatchCreateRequest>,
 ) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
@@ -883,9 +871,7 @@ pub async fn batch_delete_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BatchDeleteRequest>,
 ) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
@@ -1004,9 +990,7 @@ pub async fn export_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Response {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1242,9 +1226,7 @@ pub async fn import_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     bytes: Bytes,
 ) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
@@ -1481,9 +1463,7 @@ pub async fn get_project_dashboard(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectDashboardResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1687,9 +1667,7 @@ pub async fn get_project_gantt(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ProjectGanttResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

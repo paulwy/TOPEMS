@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -6,6 +5,7 @@ use axum::{
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -99,9 +99,7 @@ pub async fn list_materials(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<MaterialListParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Material>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -196,9 +194,7 @@ pub async fn get_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -241,9 +237,7 @@ pub async fn get_material(
 pub async fn create_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreateMaterialRequest>,
 ) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
@@ -313,9 +307,7 @@ pub async fn update_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<UpdateMaterialRequest>,
 ) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
@@ -377,9 +369,7 @@ pub async fn delete_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -436,9 +426,7 @@ pub struct MaterialImportResult {
 pub async fn import_materials(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<Vec<CreateMaterialRequest>>,
 ) -> ApiResponse<MaterialImportResult> {
     let mut guard = txn_arc.lock().await;

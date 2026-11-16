@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -6,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -68,9 +68,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_plans(
     State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -131,9 +129,7 @@ pub async fn list_plans(
 pub async fn create_plan(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateTrainingPlanRequest>,
 ) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
@@ -206,9 +202,7 @@ pub async fn create_plan(
 pub async fn get_plan(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -258,9 +252,7 @@ pub async fn get_plan(
 pub async fn update_plan(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateTrainingPlanRequest>,
 ) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
@@ -315,9 +307,7 @@ pub async fn update_plan(
 pub async fn delete_plan(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -368,9 +358,7 @@ pub async fn delete_plan(
 pub async fn list_courses(
     State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -440,9 +428,7 @@ pub async fn list_courses(
 pub async fn create_course(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateTrainingCourseRequest>,
 ) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
@@ -524,9 +510,7 @@ pub async fn create_course(
 pub async fn get_course(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -556,9 +540,7 @@ pub async fn get_course(
 pub async fn update_course(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateTrainingCourseRequest>,
 ) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
@@ -624,9 +606,7 @@ pub async fn update_course(
 pub async fn delete_course(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -677,9 +657,7 @@ pub async fn delete_course(
 pub async fn list_records(
     State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -749,9 +727,7 @@ pub async fn list_records(
 pub async fn create_record(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateTrainingRecordRequest>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
@@ -820,9 +796,7 @@ pub async fn enroll_course(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<EnrollRequest>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
@@ -895,9 +869,7 @@ pub struct EnrollRequest {
 pub async fn get_record(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -927,9 +899,7 @@ pub async fn get_record(
 pub async fn update_record(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateTrainingRecordRequest>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
@@ -985,9 +955,7 @@ pub async fn update_record(
 pub async fn delete_record(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1034,9 +1002,7 @@ pub async fn get_course_records(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1106,9 +1072,7 @@ pub async fn get_employee_records(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1212,9 +1176,7 @@ async fn set_plan_status(
 pub async fn activate_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingPlan> {
     set_plan_status(&state, &txn_arc, id, "active", "培训计划已启用").await
 }
@@ -1223,9 +1185,7 @@ pub async fn activate_plan(
 pub async fn deactivate_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingPlan> {
     set_plan_status(&state, &txn_arc, id, "inactive", "培训计划已停用").await
 }
@@ -1234,9 +1194,7 @@ pub async fn deactivate_plan(
 pub async fn complete_record(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");

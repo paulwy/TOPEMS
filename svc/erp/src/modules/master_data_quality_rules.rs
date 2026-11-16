@@ -4,10 +4,10 @@
 //! 支持 6 种规则类型：必填、格式（正则）、范围（min/max）、唯一性、引用完整性、自定义 SQL。
 //! 从 master_data_refs.rs 拆分。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -256,9 +256,7 @@ fn is_valid_identifier(s: &str) -> bool {
 )]
 pub async fn create_quality_rule(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
@@ -338,9 +336,7 @@ pub async fn create_quality_rule(
 pub async fn list_quality_rules(
     State(_state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -437,9 +433,7 @@ pub async fn list_quality_rules(
 pub async fn get_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -487,9 +481,7 @@ pub async fn get_quality_rule(
 pub async fn update_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
@@ -599,9 +591,7 @@ pub async fn update_quality_rule(
 pub async fn delete_quality_rule(
     State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -661,9 +651,7 @@ pub async fn delete_quality_rule(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn run_quality_check(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> ApiResponse<QualityReport> {
     let mut guard = txn_arc.lock().await;
@@ -767,9 +755,7 @@ pub async fn run_quality_check(
 pub async fn get_quality_report(
     State(_state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<QualityReport>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

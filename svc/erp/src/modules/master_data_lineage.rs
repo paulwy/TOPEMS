@@ -3,10 +3,10 @@
 //! 展示主数据在各服务间的引用关系（来源服务 → 本地引用）。
 //! 从 master_data_refs.rs 拆分，保持独立模块。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use serde::Serialize;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -49,9 +49,7 @@ pub struct DataLineageResponse {
 pub async fn get_data_lineage(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DataLineageResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
