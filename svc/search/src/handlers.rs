@@ -306,6 +306,8 @@ pub async fn search_handler(
     Query(req): Query<SearchRequest>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SearchResponse> {
+    // 服务端处理耗时口径：本 handler 内的处理时间（不含后台双写与网络传输）。
+    let started_at = std::time::Instant::now();
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -405,6 +407,8 @@ pub async fn search_handler(
     let recent_keyword = keyword.clone();
     let recent_db = db.clone();
     let total_count = total;
+    // 服务端处理耗时（毫秒整数），在调度后台写之前定格；未采集时写 NULL，不写 0。
+    let elapsed_ms: i64 = started_at.elapsed().as_millis() as i64;
     tokio::spawn(async move {
         // 后台任务无请求事务：按显式租户短事务写入。
         let Ok(mut scope) = recent_db.scope_for_tenant(recent_tenant_id).await else {
@@ -421,15 +425,16 @@ pub async fn search_handler(
         .await;
 
         // 2) 聚合级：append-only，无去重（suggestions 侧 GROUP BY 自行聚合）
-        // duration_ms 近似取 0（请求响应耗时不在此路径采集）；created_at 用列默认值 CURRENT_TIMESTAMP
+        // duration_ms 记服务端处理耗时（毫秒整数）；created_at 用列默认值 CURRENT_TIMESTAMP
         let _ = sqlx::query(
             "INSERT INTO public.search_logs (tenant_id, user_id, query, result_count, duration_ms) \
-             VALUES ($1, $2, $3, $4, 0)",
+             VALUES ($1, $2, $3, $4, $5)",
         )
         .bind(recent_tenant_id)
         .bind(recent_user_id)
         .bind(recent_keyword.as_str())
         .bind(total_count as i32)
+        .bind(elapsed_ms)
         .execute(&mut scope)
         .await;
 
