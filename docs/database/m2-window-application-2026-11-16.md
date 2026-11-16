@@ -106,7 +106,7 @@
 | batch03 | 2026-11-16 演练 | 41 | 0 残留 | 0（基线 0） | 0 | 0 = 基线 0 | 未执行（无服务栈） | 是，MD5 一致 |
 | batch04 | 2026-11-16 演练 | 46 | 0 残留 | 0（基线 0） | 0 | 0 = 基线 0 | 未执行（无服务栈） | 是，MD5 一致 |
 | batch05 | 2026-11-16 演练 | 54 | 0 残留 | 0（基线 22） | 0 | 22 = 基线 22 | 未执行（无服务栈） | 是，MD5 一致 |
-| batch06 | 2026-11-16 演练 | 54 | 0 残留 | 0（基线 24） | 0 | 24 = 基线 24 | 未执行（无服务栈） | 是，MD5 一致 |
+| batch06 | 2026-11-16 演练 | 54 | 0 残留 | 0（基线 24） | 0 | 0 = 基线 0（② 的 24 行为 `public.core_faqs`/`core_guides` 零租户行，本租户本就不可见，见 §8.1） | 未执行（无服务栈） | 是，MD5 一致 |
 | batch07 | 2026-11-16 演练 | 95 | 0 残留 | 0（基线 5） | 0 | 5 = 基线 5 | 未执行（无服务栈） | 是，MD5 一致 |
 | batch08 | 2026-11-16 演练 | 27 | 0 残留 | 0（基线 0） | 0 | 0 = 基线 0 | 未执行（无服务栈） | 是，MD5 一致 |
 
@@ -127,10 +127,111 @@
 
 | 表 | 零租户行数 | 真实租户可见：收口前 → 收口后 | 影响判据 | 处置 |
 |---|---:|---|---|---|
-| `core.ai_faqs` | 15 | 17 → 2 | ④（batch02） | 只记录、不推进；归属待清洗，见 `TODO.md` §8.1 `DEC-M2-02` |
+| `core.ai_faqs` | 15 | 17 → 2（批级）／该表 15 → 0 | ④（batch02） | 只记录、不推进；归属待清洗，见 `TODO.md` §8.1 `DEC-M2-02` |
 | `public.core_faqs` | 12 | 0 → 0（原策略无行值分支，本来就不可见） | 无 | 同上并案登记 |
 | `public.core_guides` | 12 | 0 → 0（同上） | 无 | 同上并案登记 |
 
 > 口径：④ 的「应有值」= 基线 − 上表零租户行中原本对真实租户可见的部分。演练中仅 `core.ai_faqs` 触发扣除；其余批次 ④ 与基线完全相等。
 
-> 状态：材料备齐 + 克隆库全量演练完成，生产仍**零 DDL**，等窗口排期。窗口内按上表逐批填写真实执行时间、冒烟结果与回滚次数。
+> 状态：克隆库全量演练完成；生产已于 2026-11-16 21:36–21:37 完成 8 批应用并原样拉起，实测记录见 §9。
+
+## 9. 生产应用记录（2026-11-16）
+
+### 9.1 停机与拉起
+
+| 项 | 值 |
+|---|---|
+| 目标库 | `topems_prod`（`postgres://topems_prod@127.0.0.1:5432/topems_prod`） |
+| 停服方式 | `launchctl bootout gui/$UID/com.topems.server`（`KeepAlive=true`，必须 bootout 才能停住） |
+| 优雅停机完成 | 2026-11-16 21:36:28（本地，日志 UTC 13:36:28） |
+| 停服前 pid | 73907（`topems-server` 模块化单体，erp/mes/wms/crm/finance/analytics/unified_core 均为其内部模块，各模块独立 sqlx 池） |
+| 业务连接清空 | bootout 后 `pg_stat_activity` 仅剩本会话，无残留业务连接 |
+| 拉起方式 | `launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.topems.server.plist` |
+| 新 pid | 94814（启动 21:37:49） |
+| 端口监听 | 21:37:50 `topems-server 监听于 http://127.0.0.1:8099` |
+| `/health` | 200 `{"code":200,"success":true,"data":"healthy"}` |
+| 停机窗口 | 约 82 s（21:36:28 → 21:37:50），其中 DDL 应用约 0.27 s |
+
+### 9.2 备份与基线
+
+| 项 | 值 |
+|---|---|
+| 全量备份 | `/Users/xingzhai/topems/backups/m2-pre-apply-20261116-2200.dump` |
+| 备份大小 | 10,779,769 字节（约 10 MB，`pg_dump -Fc`） |
+| 备份时间 | 2026-11-16 21:36 |
+| 策略 MD5 基线（收口前） | 01 `78bb516875482ad082fd711ff1dfa960` / 02 `8e812498db8ae2ec4d5606e4d8bdffba` / 03 `819a0315b37bc1d304dea804f6b15961` / 04 `f3d846736e7390b248c0f5f6c8f691be` / 05 `40e6275fa06bd76dca309085bb0a8e00` / 06 `c32d6108b7820430c5da4d9f3dfa6ae2` / 07 `50d3f6b0b1e791e6da7ba56fa1e751b4` / 08 `abc011bf096e22f7081e353fbcd0ff7b` |
+| 四档基线（收口前） | b01 ②0/④0；b02 ②17/③15/④17；b03 ②0/④0；b04 ②0/④0；b05 ②22/④22；b06 ②24/④0；b07 ②5/④5；b08 ②0/④0 |
+
+### 9.3 逐批应用与四档读数（收口后实测）
+
+每批 = `BEGIN` → 逐条 `ALTER POLICY` → `COMMIT`，短事务不叠加。四档以**非 superuser、非 BYPASSRLS** 的 `topems_prod` 角色在只读事务内实测。
+
+| 批次 | 条数 | apply 耗时 (ms) | ① 缺 `rls_system` | ② 空/未设 GUC | ③ 假租户 `…00ff` | ④ 真实租户 `…0001` | 结论 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| batch01 | 21 | 29 | 0 | 0 | 0 | 0（基线 0） | 通过 |
+| batch02 | 44 | 35 | 0 | 0 | 0 | 2（预期：`bi.reports` 1 + `core.ai_conversations` 1） | 通过 |
+| batch03 | 41 | 45 | 0 | 0 | 0 | 0（基线 0） | 通过 |
+| batch04 | 46 | 25 | 0 | 0 | 0 | 0（基线 0） | 通过 |
+| batch05 | 54 | 35 | 0 | 0 | 0 | 22（`hrm.companies/departments/employees/positions` 合计） | 通过 |
+| batch06 | 54 | 33 | 0 | 0 | 0 | 0（② 的 24 行为 `public.core_faqs` 12 + `core_guides` 12 零租户行，本租户本就不可见） | 通过（已登记，见 §8.1） |
+| batch07 | 95 | 41 | 0 | 0 | 0 | 5（`master_data.mdm_suppliers` 1 + `mdm_sync_dead_letter` 4） | 通过 |
+| batch08 | 27 | 29 | 0 | 0 | 0 | 0（基线 0） | 通过 |
+| **合计** | **382** | **272** | **0** | **0** | **0** | — | **8/8 通过，0 批回滚** |
+
+- 系统通道全量对照（`rls_system=on`）：b01 0 / b02 17 / b03 0 / b04 0 / b05 22 / b06 24 / b07 5 / b08 0，与收口前数据总量一致，未丢行。
+- 判据 ④ 与克隆库演练（§8）逐批一致：b02 = 2、b05 = 22、b06 = 0、b07 = 5、其余 0；唯一扣减项 `core.ai_faqs` 15 行零租户为已登记缺陷，未按偏差处理。
+- 注：apply 耗时为应用时会话实测输出（`/tmp/m2drill/prod_apply_0N.log` 因未重定向为空文件，以会话记录为准）；生产 272 ms 略高于克隆库 199 ms，属正常抖动，均远低于预估窗口。
+
+### 9.4 收口后形态复核
+
+- 382 条目标策略：0 条缺失、0 条不符合 B 范式（缺 `NULLIF(current_setting('app.tenant_id'...)`）、0 条缺 `rls_system`。
+- 全库策略 1030 条，其中 973 条含 `rls_system`（382 条本批 + 591 条既有正确态）；其余 57 条为非租户表策略。
+- 未新增策略、未改策略数量、未改迁移文件。
+
+### 9.5 双租户互不可见抽查（收口后，实测）
+
+以 `topems_prod` 角色、`app.rls_system='off'`，分别设 `app.tenant_id = …0001` / `…0002`：
+
+| 表 | tenant `…0001` | tenant `…0002` | 判定 |
+|---|---:|---:|---|
+| `hrm.positions` | 12 | 0 | 互不可见，本租户有数据 |
+| `hrm.departments` | 8 | 0 | 互不可见 |
+| `finance.core_finance_ledger` | 4 | 0 | 互不可见 |
+| `master_data.mdm_sync_dead_letter` | 4 | 0 | 互不可见 |
+| `core.ai_faqs` | 0 | 0 | 15 行均为零租户 UUID，属 §8.1 已登记缺陷 |
+| `public.core_faqs` | 0 | 0 | 12 行零租户，属 §8.1 已登记缺陷 |
+| `erp.audit_logs` | 0 | 0 | 审计表设计为仅系统通道（`app.rls_system='on'`），业务租户不可见属预期 |
+
+系统通道下 `erp.audit_logs` = 13 行（`…0001` 8 + `…0002` 5），证明数据未丢、仅按设计隔离。
+
+### 9.6 逐模块端点验证（拉起后）
+
+| 模块 | 端点 | HTTP | 结果 | 判定 |
+|---|---|---|---:|---|
+| erp | `/api/erp/audit-logs` | 200 | 13 条 | ✅ 有数据（审计表系统通道，跨租户可见为设计） |
+| finance | `/api/finance/currencies` | 200 | 16 条 | ✅ 有数据（8 条 `tenant_id` 为 NULL 是库内既存数据） |
+| finance | `/api/finance/accounts/tree` | 200 | 28 条 | ✅ |
+| finance | `/api/finance/periods` | 200 | 1 条 | ✅ |
+| finance | `/api/finance/ledger` | 200 | 4 条（均 `…0001`） | ✅ |
+| unified_core | `/api/core/iam/users` | 200 | 5 条 | ✅ 有数据（前缀实为 `/api/core`） |
+| unified_core | `/api/core/iam/roles` | 200 | 4 条 | ✅ |
+| analytics | `/api/bi/reports` | 200 | **0 条** | ⚠️ 见 §9.7，库内有 1 行 `…0001` 却读不到 |
+| wms | `/api/wms/audit-logs` | 200 | 0 条 | ✅ 库本无业务数据（全库真实行数扫描：wms 仅 `schema_defense_ledger` 1 行） |
+| mes | `/api/mes/audit-logs` | 200 | 0 条 | ✅ 库本无业务数据（同上，仅 `schema_defense_ledger` 1 行） |
+| crm | `/api/crm/returns` | 200 | 0 条 | ✅ 库本无业务数据（crm 仅 `schema_defense_ledger` 1 行；`reltuples` 17 为统计估算过期，实际 0 行） |
+
+补充：`/api/erp/announcements`、`/api/wms/warehouses`、`/api/wms/inventory-alerts`、`/api/finance/budgets` 均 200 且 0 条，与库内实际 0 行一致，非 RLS 拒绝。
+
+### 9.7 未解决项：analytics report 子系统未带租户上下文
+
+- 现象：`bi.reports` 有 1 行 `tenant_id = …0001`（Smoke Report），`/api/bi/reports` 返回 200 但 `total = 0`。
+- 根因：`svc/analytics/src/modules/report/report.rs:58-66` 的 `list_reports` 直接 `SELECT … FROM bi.reports`，既未 `set_config('app.tenant_id')` 也未走 `scope_with`；收口后 RLS fail-closed，过滤为 0 行。同模块 `dataset.rs`/`datasource.rs` 已有 `set_config` 实现，属 report 子系统遗漏，非全局。
+- 处置：按约定**不放宽策略、不改判据**，仅记录。是否补齐模块侧租户上下文另立任务。
+- 其它前缀修正：analytics 实际前缀 `/api/bi`（非 `/api/analytics`）；unified_core 实际前缀 `/api/core`（非 `/api/unified-core`）。
+
+### 9.8 约束遵守与残留
+
+- 未 push、未 amend、未改迁移文件、未改任何策略内容；382 条 DDL 仅为既定 B 范式改写。
+- 克隆库 `m2_dryrun_20261116` 保留未动，可作对照。
+- 备份 `backups/m2-pre-apply-20261116-2200.dump` 保留；8 批回滚段 `docs/database/rls-policy-backup-batch01..08.sql` 仍可整批回滚。
+- 服务已原样拉起，`/health` 200，8099 可访问。
