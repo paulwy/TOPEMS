@@ -6,6 +6,7 @@ use topems_shared_core::response::ApiResponse;
 use crate::modules::models::*;
 use crate::shared::AppState;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub struct AnalysisApi;
 
@@ -73,6 +74,7 @@ mod tests {
     tag = "ai"
 )]
 pub async fn sentiment(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -83,7 +85,7 @@ pub async fn sentiment(
     let details = Some(serde_json::json!({"text_length": req.text.len()}));
     match state
         .analysis_service
-        .analyze_sentiment(&req.text, tenant_id)
+        .analyze_sentiment(&req.text, tenant_id, &txn_arc)
         .await
     {
         Ok(response) => {
@@ -126,6 +128,7 @@ pub async fn sentiment(
 
 /// POST /api/analysis/classify - 文本分类
 pub async fn classify(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -136,7 +139,7 @@ pub async fn classify(
     let details = Some(serde_json::json!({"categories": req.categories}));
     match state
         .analysis_service
-        .classify_text(&req.text, req.categories.as_deref(), tenant_id)
+        .classify_text(&req.text, req.categories.as_deref(), tenant_id, &txn_arc)
         .await
     {
         Ok(response) => {
@@ -179,6 +182,7 @@ pub async fn classify(
 
 /// POST /api/analysis/entities - 实体提取
 pub async fn extract_entities(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExtractEntitiesRequest>,
@@ -186,7 +190,7 @@ pub async fn extract_entities(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .analysis_service
-        .extract_entities(&req.text, req.entity_types.as_deref(), tenant_id)
+        .extract_entities(&req.text, req.entity_types.as_deref(), tenant_id, &txn_arc)
         .await
     {
         Ok(response) => ApiResponse::success(response, "Success"),
@@ -208,6 +212,7 @@ pub async fn extract_entities(
     tag = "ai"
 )]
 pub async fn extract_keywords(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExtractKeywordsRequest>,
@@ -215,7 +220,7 @@ pub async fn extract_keywords(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .analysis_service
-        .extract_keywords(&req.text, req.max_keywords, tenant_id)
+        .extract_keywords(&req.text, req.max_keywords, tenant_id, &txn_arc)
         .await
     {
         Ok(response) => ApiResponse::success(response, "Success"),
@@ -232,6 +237,7 @@ pub async fn extract_keywords(
 )]
 /// GET /api/analysis/history - 获取分析历史
 pub async fn history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalysisHistoryRequest>,
@@ -240,7 +246,7 @@ pub async fn history(
     let limit = req.limit.unwrap_or(50);
     match state
         .analysis_service
-        .get_analysis_history(req.analysis_type.as_deref(), limit, tenant_id)
+        .get_analysis_history(req.analysis_type.as_deref(), limit, tenant_id, &txn_arc)
         .await
     {
         Ok(history) => {

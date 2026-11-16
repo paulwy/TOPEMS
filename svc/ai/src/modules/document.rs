@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -29,6 +30,7 @@ pub struct DocumentApi;
 )]
 #[allow(clippy::as_conversions)]
 pub async fn upload(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -175,6 +177,7 @@ pub async fn upload(
             file_size,
             mime_type.clone(),
             tenant_id,
+            &txn_arc,
         )
         .await
     {
@@ -279,6 +282,7 @@ pub async fn upload(
     tag = "ai"
 )]
 pub async fn process(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ProcessDocumentRequest>,
@@ -287,7 +291,7 @@ pub async fn process(
     // 获取文档
     match state
         .document_service
-        .get_document(req.document_id, tenant_id)
+        .get_document(req.document_id, tenant_id, &txn_arc)
         .await
     {
         Ok(Some(_doc)) => {
@@ -314,12 +318,17 @@ pub async fn process(
 
 /// GET /api/documents/{id} - 获取文档信息
 pub async fn get(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<crate::services::vector::Document>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match state.document_service.get_document(id, tenant_id).await {
+    match state
+        .document_service
+        .get_document(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(Some(doc)) => Json(ApiResponse::success(doc, "Success")),
         Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::not_found(
             "文档不存在",
@@ -337,12 +346,17 @@ pub async fn get(
 /// application/octet-stream + Content-Disposition attachment 附件响应。
 /// 记录不存在 → 内层 404；记录存在但本地文件缺失 → 404「文件不存在」。
 pub async fn download(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let doc = match state.document_service.get_document(id, tenant_id).await {
+    let doc = match state
+        .document_service
+        .get_document(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(Some(doc)) => doc,
         Ok(None) => {
             return Json(ApiResponse::<serde_json::Value>::not_found("文档不存在")).into_response()
@@ -392,6 +406,7 @@ pub async fn download(
 
 /// DELETE /api/documents/{id} - 删除文档
 pub async fn delete(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
@@ -399,7 +414,11 @@ pub async fn delete(
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    match state.document_service.delete_document(id, tenant_id).await {
+    match state
+        .document_service
+        .delete_document(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(true) => {
             if let Err(e) = state
                 .audit
@@ -453,11 +472,16 @@ pub async fn delete(
 
 /// GET /api/documents - 获取文档列表
 pub async fn list(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<crate::services::vector::Document>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match state.document_service.list_documents(tenant_id).await {
+    match state
+        .document_service
+        .list_documents(tenant_id, &txn_arc)
+        .await
+    {
         Ok(docs) => Json(ApiResponse::success(docs, "Success")),
         Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::from(
             TopemsError::internal("获取文档列表失败", e),
@@ -504,17 +528,22 @@ pub async fn update(
     tag = "ai"
 )]
 pub async fn extract(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExtractDocumentRequest>,
 ) -> Json<ApiResponse<ExtractDocumentResponse>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match state.document_service.get_document(id, tenant_id).await {
+    match state
+        .document_service
+        .get_document(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(Some(doc)) => {
             let chunks = match state
                 .document_service
-                .get_document_chunks(id, tenant_id)
+                .get_document_chunks(id, tenant_id, &txn_arc)
                 .await
             {
                 Ok(c) => c,
@@ -677,6 +706,7 @@ pub async fn extract(
     tag = "ai"
 )]
 pub async fn vectorize_from_file(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<VectorizeFromFileRequest>,
@@ -684,7 +714,7 @@ pub async fn vectorize_from_file(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .document_service
-        .vectorize_from_file_service(req.file_id, tenant_id)
+        .vectorize_from_file_service(req.file_id, tenant_id, &txn_arc)
         .await
     {
         Ok(result) => Json(ApiResponse::success(
@@ -707,6 +737,7 @@ pub async fn vectorize_from_file(
 
 /// POST /api/documents/{id}/summarize - 生成文档摘要
 pub async fn summarize(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -715,7 +746,7 @@ pub async fn summarize(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .document_service
-        .generate_document_summary(id, req.max_length, tenant_id)
+        .generate_document_summary(id, req.max_length, tenant_id, &txn_arc)
         .await
     {
         Ok(summary) => Json(ApiResponse::success(
@@ -746,6 +777,7 @@ pub async fn summarize(
     tag = "ai"
 )]
 pub async fn extract_key_points(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -754,7 +786,7 @@ pub async fn extract_key_points(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .document_service
-        .extract_document_key_points(id, req.max_points, tenant_id)
+        .extract_document_key_points(id, req.max_points, tenant_id, &txn_arc)
         .await
     {
         Ok(points) => Json(ApiResponse::success(
@@ -790,6 +822,7 @@ pub async fn extract_key_points(
     tag = "ai"
 )]
 pub async fn document_qa(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<DocumentQAQuestionRequest>,
@@ -799,7 +832,13 @@ pub async fn document_qa(
 
     match state
         .document_service
-        .ask_document_qa(&req.question, req.document_ids.as_deref(), top_k, tenant_id)
+        .ask_document_qa(
+            &req.question,
+            req.document_ids.as_deref(),
+            top_k,
+            tenant_id,
+            &txn_arc,
+        )
         .await
     {
         Ok(result) => Json(ApiResponse::success(
@@ -833,8 +872,12 @@ pub async fn document_qa(
 
 /// 校验文档是否存在；不存在则提前返回内层 404 Json。
 macro_rules! doc_not_found_or_ok {
-    ($state:expr, $id:expr, $tenant:expr) => {
-        match $state.document_service.get_document($id, $tenant).await {
+    ($state:expr, $id:expr, $tenant:expr, $txn:expr) => {
+        match $state
+            .document_service
+            .get_document($id, $tenant, $txn)
+            .await
+        {
             Ok(Some(_)) => {}
             Ok(None) => {
                 return Json(ApiResponse::<serde_json::Value>::not_found("文档不存在"));
@@ -850,13 +893,14 @@ macro_rules! doc_not_found_or_ok {
 
 /// POST /api/documents/{id}/translate - 文档翻译（待上游支持）
 pub async fn translate(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    doc_not_found_or_ok!(state, id, tenant_id);
+    doc_not_found_or_ok!(state, id, tenant_id, &txn_arc);
     Json(ApiResponse::success(
         serde_json::json!({
             "document_id": id,
@@ -871,12 +915,13 @@ pub async fn translate(
 
 /// POST /api/documents/{id}/ocr - 文档 OCR（待上游支持）
 pub async fn ocr(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    doc_not_found_or_ok!(state, id, tenant_id);
+    doc_not_found_or_ok!(state, id, tenant_id, &txn_arc);
     Json(ApiResponse::success(
         serde_json::json!({
             "document_id": id,
@@ -891,12 +936,13 @@ pub async fn ocr(
 
 /// POST /api/documents/{id}/classify - 文档分类（待上游支持）
 pub async fn classify(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    doc_not_found_or_ok!(state, id, tenant_id);
+    doc_not_found_or_ok!(state, id, tenant_id, &txn_arc);
     Json(ApiResponse::success(
         serde_json::json!({
             "document_id": id,
@@ -911,12 +957,13 @@ pub async fn classify(
 
 /// POST /api/documents/{id}/entities - 文档实体抽取（待上游支持）
 pub async fn entities(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    doc_not_found_or_ok!(state, id, tenant_id);
+    doc_not_found_or_ok!(state, id, tenant_id, &txn_arc);
     Json(ApiResponse::success(
         serde_json::json!({
             "document_id": id,

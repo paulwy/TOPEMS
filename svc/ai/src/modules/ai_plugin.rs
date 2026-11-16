@@ -145,7 +145,8 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     ),
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
-    let db_status = match state.db.scope_read().await {
+    // 公开健康探针（无 tenant_middleware）：走系统通读，不参与请求事务门禁
+    let db_status = match state.db.scope_read_system().await {
         Ok(mut scope) => sqlx::query(only_own_schema_query!("ai", "SELECT 1", "plugin_ai"))
             .fetch_one(&mut scope)
             .await

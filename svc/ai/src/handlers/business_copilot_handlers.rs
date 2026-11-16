@@ -28,6 +28,7 @@ use crate::dsh::business_copilot::{
 };
 use crate::shared::permission::{has_ai_permission, AiPermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 /// 全局默认 FAQ 行的 tenant_id（全零 UUID，RLS 策略对所有租户放行）。
@@ -231,6 +232,7 @@ pub struct ApiError {
     tag = "ai"
 )]
 pub async fn create_session(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Json(req): Json<CreateSessionRequest>,
 ) -> impl IntoResponse {
@@ -245,7 +247,11 @@ pub async fn create_session(
         .unwrap_or_else(uuid::Uuid::nil);
 
     // A-2b：真表落库（core.ai_conversations）
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("create_session begin failed: {}", e);
@@ -314,6 +320,7 @@ pub async fn create_session(
 
 /// 获取会话信息
 pub async fn get_session(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Path(session_id): Path<String>,
 ) -> impl IntoResponse {
@@ -331,7 +338,18 @@ pub async fn get_session(
         }
     };
     // A-2b：真表查询
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: format!("Session {} not found", session_id),
+            }),
+        )
+            .into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(_) => {
             return (
@@ -386,6 +404,7 @@ pub async fn get_session(
 
 /// 删除会话
 pub async fn delete_session(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Path(session_id): Path<String>,
 ) -> impl IntoResponse {
@@ -394,7 +413,11 @@ pub async fn delete_session(
         Err(_) => return StatusCode::NOT_FOUND.into_response(),
     };
     // A-2b：软删
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
@@ -491,6 +514,7 @@ pub async fn send_message(
 /// 复用 CopilotSessionManager.update_selected_records 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
 pub async fn update_selected_records(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Path(session_id): Path<String>,
     Json(req): Json<UpdateSelectedRecordsRequest>,
@@ -509,7 +533,11 @@ pub async fn update_selected_records(
         }
     };
     // A-2b：jsonb 落库
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
@@ -548,6 +576,7 @@ pub async fn update_selected_records(
 /// 复用 CopilotSessionManager.set_context_data 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
 pub async fn set_context_data(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Path(session_id): Path<String>,
     Json(req): Json<SetContextDataRequest>,
@@ -566,7 +595,11 @@ pub async fn set_context_data(
         }
     };
     // A-2b：jsonb 落库（key 合并进 context_data）
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
@@ -603,20 +636,30 @@ pub async fn set_context_data(
 }
 
 /// 获取活跃会话列表
-pub async fn list_active_sessions(State(state): State<CopilotAppState>) -> impl IntoResponse {
+pub async fn list_active_sessions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<CopilotAppState>,
+) -> impl IntoResponse {
     // A-2b：真表计数
-    let total: i64 = match state.db.scope_read().await {
-        Ok(mut scope) => {
-            let total = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL",
-            )
-            .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
-            let _ = scope.commit().await;
-            total
-        }
-        Err(_) => 0,
+    let total: i64 = {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        };
+        let x = match state.db.scope_with(txn).await {
+            Ok(mut scope) => {
+                let total = sqlx::query_scalar(
+                    "SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL",
+                )
+                .fetch_one(&mut scope)
+                .await
+                .unwrap_or(0);
+                let _ = scope.commit().await;
+                total
+            }
+            Err(_) => 0,
+        };
+        x
     };
     (
         StatusCode::OK,
@@ -739,6 +782,7 @@ pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse 
     tag = "ai"
 )]
 pub async fn search_faq(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Extension(claims): Extension<Claims>,
     Path(module): Path<String>,
@@ -754,8 +798,12 @@ pub async fn search_faq(
     let q = query.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
 
     // 1. DB 查询（本租户 ∪ 全局行）
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
     let db_result: Result<Vec<(String, String, serde_json::Value, String)>, sqlx::Error> =
-        match state.db.scope_read().await {
+        match state.db.scope_with(txn).await {
             Ok(mut scope) => match q {
                 Some(q) => {
                     sqlx::query_as(
@@ -865,6 +913,7 @@ fn faq_admin_forbidden() -> (StatusCode, Json<ApiError>) {
     tag = "ai"
 )]
 pub async fn list_admin_faqs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AdminFaqQuery>,
@@ -879,7 +928,11 @@ pub async fn list_admin_faqs(
         .unwrap_or_else(Uuid::nil);
 
     // 超管不加租户过滤；普通管理员只看本租户行
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("list_admin_faqs begin failed: {}", e);
@@ -1031,6 +1084,7 @@ pub async fn list_admin_faqs(
     tag = "ai"
 )]
 pub async fn create_admin_faq(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFaqRequest>,
@@ -1077,8 +1131,12 @@ pub async fn create_admin_faq(
     let keywords_json = serde_json::to_value(&keywords_vec).unwrap_or(serde_json::json!([]));
     let category = req.category.unwrap_or_default();
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
     let row: Result<(Uuid, chrono::DateTime<chrono::Utc>), sqlx::Error> =
-        match state.db.scope().await {
+        match state.db.scope_with(txn).await {
             Ok(mut scope) => {
                 let row = sqlx::query_as(
                 "INSERT INTO core.ai_faqs (tenant_id, module, question, answer, keywords, category)
@@ -1148,6 +1206,7 @@ pub async fn create_admin_faq(
     tag = "ai"
 )]
 pub async fn delete_admin_faq(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1175,7 +1234,11 @@ pub async fn delete_admin_faq(
         .unwrap_or_else(Uuid::nil);
 
     // 超管不加租户过滤；普通管理员仅软删本租户行
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("delete_admin_faq begin failed: {}", e);
@@ -1241,6 +1304,7 @@ pub async fn delete_admin_faq(
     tag = "ai"
 )]
 pub async fn update_admin_faq(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1302,7 +1366,11 @@ pub async fn update_admin_faq(
         .map(|k| serde_json::to_value(k).unwrap_or(serde_json::json!([])));
 
     // COALESCE 部分更新：传 NULL 的列保持原值；超管不加租户过滤
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("update_admin_faq begin failed: {}", e);

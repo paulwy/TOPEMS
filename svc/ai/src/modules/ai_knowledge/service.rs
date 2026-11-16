@@ -10,6 +10,7 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType, UnifiedAIClient};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -52,6 +53,7 @@ pub fn create_ai_client() -> UnifiedAIClient {
 /// 查询知识库列表（带分页与过滤）
 pub async fn list_knowledge_bases(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     query: &KbQuery,
 ) -> Result<Vec<KnowledgeBase>, sqlx::Error> {
@@ -59,7 +61,11 @@ pub async fn list_knowledge_bases(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
-    let mut scope = db.scope_read().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
 
     let items: Vec<KnowledgeBase> = sqlx::query_as(only_own_schema_query!(
         "ai",
@@ -89,10 +95,15 @@ pub async fn list_knowledge_bases(
 /// 获取知识库详情
 pub async fn get_knowledge_base(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     kb_id: Uuid,
 ) -> Result<Option<KnowledgeBase>, sqlx::Error> {
-    let mut scope = db.scope_read().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let item: Option<KnowledgeBase> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"SELECT id, tenant_id, name, description, kb_type, status,
@@ -112,11 +123,16 @@ pub async fn get_knowledge_base(
 /// 创建知识库
 pub async fn create_knowledge_base(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     req: &CreateKbRequest,
     created_by: Uuid,
 ) -> Result<KnowledgeBase, sqlx::Error> {
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let item: KnowledgeBase = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"INSERT INTO core.knowledge_bases
@@ -141,17 +157,22 @@ pub async fn create_knowledge_base(
 /// 更新知识库
 pub async fn update_knowledge_base(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     kb_id: Uuid,
     req: &UpdateKbRequest,
 ) -> Result<Option<KnowledgeBase>, sqlx::Error> {
     // 先校验存在且属于该租户
-    let existing = get_knowledge_base(db, tenant_id, kb_id).await?;
+    let existing = get_knowledge_base(db, txn_arc, tenant_id, kb_id).await?;
     if existing.is_none() {
         return Ok(None);
     }
 
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let item: KnowledgeBase = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_bases
@@ -181,10 +202,15 @@ pub async fn update_knowledge_base(
 /// 删除知识库（级联删除文档与分块）
 pub async fn delete_knowledge_base(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     kb_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let result = sqlx::query(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_bases SET deleted_at = NOW()
@@ -207,6 +233,7 @@ pub async fn delete_knowledge_base(
 /// 查询文档列表
 pub async fn list_documents(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     query: &DocumentQuery,
 ) -> Result<Vec<KnowledgeDocument>, sqlx::Error> {
@@ -214,7 +241,11 @@ pub async fn list_documents(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
-    let mut scope = db.scope_read().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
 
     let items: Vec<KnowledgeDocument> = sqlx::query_as(only_own_schema_query!(
         "ai",
@@ -247,10 +278,15 @@ pub async fn list_documents(
 /// 获取文档详情（含分块）
 pub async fn get_document_detail(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     document_id: Uuid,
 ) -> Result<Option<DocumentDetail>, sqlx::Error> {
-    let mut scope = db.scope_read().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let document: Option<KnowledgeDocument> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"SELECT id, tenant_id, kb_id, title, content, doc_type, file_path,
@@ -294,18 +330,23 @@ pub async fn get_document_detail(
 /// 2. 异步处理：解析 → 分块 → 向量化 → 入库
 pub async fn create_document_from_content(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     req: &CreateDocumentRequest,
     created_by: Uuid,
 ) -> Result<KnowledgeDocument, sqlx::Error> {
     // 校验知识库存在
-    let kb_exists = get_knowledge_base(db, tenant_id, req.kb_id).await?;
+    let kb_exists = get_knowledge_base(db, txn_arc, tenant_id, req.kb_id).await?;
     if kb_exists.is_none() {
         return Err(sqlx::Error::RowNotFound);
     }
 
     // 插入文档记录
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let document: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"INSERT INTO core.knowledge_documents
@@ -336,6 +377,7 @@ pub async fn create_document_from_content(
 /// 与 create_document_from_content 类似，但保留原始文件路径与大小
 pub async fn create_document_from_file(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     kb_id: Uuid,
     title: &str,
@@ -346,12 +388,16 @@ pub async fn create_document_from_file(
     created_by: Uuid,
 ) -> Result<KnowledgeDocument, sqlx::Error> {
     // 校验知识库存在
-    let kb_exists = get_knowledge_base(db, tenant_id, kb_id).await?;
+    let kb_exists = get_knowledge_base(db, txn_arc, tenant_id, kb_id).await?;
     if kb_exists.is_none() {
         return Err(sqlx::Error::RowNotFound);
     }
 
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let document: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"INSERT INTO core.knowledge_documents
@@ -384,17 +430,22 @@ pub async fn create_document_from_file(
 /// 如果内容被更新，会将状态重置为 pending 并触发重新处理。
 pub async fn update_document(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     document_id: Uuid,
     req: &UpdateDocumentRequest,
 ) -> Result<Option<KnowledgeDocument>, sqlx::Error> {
-    let existing = get_document_detail(db, tenant_id, document_id).await?;
+    let existing = get_document_detail(db, txn_arc, tenant_id, document_id).await?;
     if existing.is_none() {
         return Ok(None);
     }
 
     let content_changed = req.content.is_some();
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
 
     let item: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
         "ai",
@@ -478,11 +529,16 @@ pub async fn update_document(
 /// 删除文档（级联删除分块）
 pub async fn delete_document(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     document_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
     // 先获取文档，以便后续更新知识库的 document_count
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let doc: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"SELECT kb_id FROM core.knowledge_documents
@@ -561,7 +617,7 @@ pub async fn process_document(
 ) -> Result<(), ProcessorError> {
     // 1. 标记为 processing
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启事务失败: {}", e)))?;
     let _ = sqlx::query(only_own_schema_query!(
@@ -582,7 +638,7 @@ pub async fn process_document(
 
     // 2. 读取文档
     let mut scope = db
-        .scope_read()
+        .scope_read_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启读事务失败: {}", e)))?;
     let doc: Option<(Uuid, String, Option<String>, String)> =
@@ -644,7 +700,7 @@ pub async fn process_document(
 
     // 5. 删除旧分块（重新处理场景）
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启事务失败: {}", e)))?;
     let _ = sqlx::query(only_own_schema_query!(
@@ -664,7 +720,7 @@ pub async fn process_document(
 
     // 6. 写入分块（带向量）
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启事务失败: {}", e)))?;
 
@@ -721,7 +777,7 @@ pub async fn process_document(
 
     // 8. 更新知识库 document_count
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启事务失败: {}", e)))?;
     let _ = sqlx::query(only_own_schema_query!(
@@ -745,7 +801,7 @@ pub async fn process_document(
 
 /// 标记文档处理失败
 async fn mark_document_failed(db: &Db, tenant_id: Uuid, document_id: Uuid, error_msg: &str) {
-    let Ok(mut scope) = db.scope().await else {
+    let Ok(mut scope) = db.scope_for_tenant(tenant_id).await else {
         return;
     };
     let _ = sqlx::query(only_own_schema_query!(
@@ -770,6 +826,7 @@ async fn mark_document_failed(db: &Db, tenant_id: Uuid, document_id: Uuid, error
 /// 查询问答历史
 pub async fn list_qa_history(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     user_id: Option<Uuid>,
     query: &QaHistoryQuery,
@@ -777,7 +834,11 @@ pub async fn list_qa_history(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    let mut scope = db.scope_read().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
 
     let items: Vec<QaHistory> = sqlx::query_as(only_own_schema_query!(
         "ai",
@@ -805,6 +866,7 @@ pub async fn list_qa_history(
 /// 更新问答反馈
 pub async fn update_qa_feedback(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     tenant_id: Uuid,
     qa_id: Uuid,
     feedback: i32,
@@ -813,7 +875,11 @@ pub async fn update_qa_feedback(
         return Ok(false);
     }
 
-    let mut scope = db.scope().await?;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = db.scope_with(txn).await?;
     let result = sqlx::query(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_qa_history
@@ -838,13 +904,15 @@ pub async fn update_qa_feedback(
 /// 语义检索（不调用 LLM 生成答案，仅返回相关分块）
 pub async fn semantic_search(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     ai_client: &Arc<UnifiedAIClient>,
     tenant_id: Uuid,
     req: &SearchRequest,
 ) -> Result<Vec<AnswerSource>, ProcessorError> {
-    let chunks: Vec<RetrievedChunk> =
-        rag::retrieve_relevant_chunks(db, ai_client, tenant_id, req.kb_id, &req.query, req.top_k)
-            .await?;
+    let chunks: Vec<RetrievedChunk> = rag::retrieve_relevant_chunks(
+        db, txn_arc, ai_client, tenant_id, req.kb_id, &req.query, req.top_k,
+    )
+    .await?;
 
     let results: Vec<AnswerSource> = chunks
         .iter()

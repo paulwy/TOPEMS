@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -93,6 +94,7 @@ impl MultimodalService {
     pub async fn analyze_image(
         &self,
         request: ImageAnalysisRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<ImageAnalysisResponse, TopemsError> {
         let image_id = Uuid::new_v4().to_string();
 
@@ -104,10 +106,10 @@ impl MultimodalService {
             "objects" => self.detect_objects(&request.image_base64).await?,
             "text" => self.extract_text(&request.image_base64).await?,
             "describe" => {
-                self.describe_image(&request.image_base64, &request.prompt)
+                self.describe_image(&request.image_base64, &request.prompt, txn_arc)
                     .await?
             }
-            _ => self.analyze_general(&request).await?,
+            _ => self.analyze_general(&request, txn_arc).await?,
         };
 
         Ok(ImageAnalysisResponse {
@@ -258,6 +260,7 @@ impl MultimodalService {
         &self,
         _image_base64: &str,
         prompt: &Option<String>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<serde_json::Value, TopemsError> {
         let custom_prompt = prompt.clone().unwrap_or("请详细描述这张图片".to_string());
 
@@ -268,7 +271,7 @@ impl MultimodalService {
 
         let response = self
             .qa_service
-            .ask(&prompt_text, None, 5, Uuid::nil(), None)
+            .ask(&prompt_text, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
 
@@ -281,6 +284,7 @@ impl MultimodalService {
     pub async fn analyze_general(
         &self,
         request: &ImageAnalysisRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<serde_json::Value, TopemsError> {
         let prompt = format!(
             "分析图片内容，类型：{}，提示：{}",
@@ -290,7 +294,7 @@ impl MultimodalService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil(), None)
+            .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
 
@@ -303,6 +307,7 @@ impl MultimodalService {
     pub async fn analyze_video(
         &self,
         request: VideoAnalysisRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<VideoAnalysisResponse, TopemsError> {
         let video_id = Uuid::new_v4().to_string();
 
@@ -310,7 +315,7 @@ impl MultimodalService {
             "summary" => self.summarize_video(&request.video_url).await?,
             "scene_detection" => self.detect_scenes(&request.video_url).await?,
             "object_tracking" => self.track_objects(&request.video_url).await?,
-            _ => self.analyze_video_general(&request).await?,
+            _ => self.analyze_video_general(&request, txn_arc).await?,
         };
 
         Ok(VideoAnalysisResponse {
@@ -352,6 +357,7 @@ impl MultimodalService {
     async fn analyze_video_general(
         &self,
         request: &VideoAnalysisRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<serde_json::Value, TopemsError> {
         let prompt = format!(
             "分析视频内容：{}，类型：{}",
@@ -359,7 +365,7 @@ impl MultimodalService {
         );
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil(), None)
+            .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
 
@@ -631,6 +637,7 @@ impl MultimodalService {
         &self,
         image1_base64: &str,
         image2_base64: &str,
+        txn_arc: &RlsTxnCell,
     ) -> Result<serde_json::Value, TopemsError> {
         let similarity = 0.5
             + ((image1_base64.len() as f64 - image2_base64.len() as f64).abs() / 1000.0).min(0.3);
@@ -649,7 +656,7 @@ impl MultimodalService {
 
         let ai_comparison = self
             .qa_service
-            .ask(&prompt, None, 3, Uuid::nil(), None)
+            .ask(&prompt, None, 3, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)
             .unwrap_or_default();

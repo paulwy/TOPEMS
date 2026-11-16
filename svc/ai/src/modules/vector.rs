@@ -5,6 +5,7 @@ use axum::{
 };
 use std::time::Instant;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -27,6 +28,7 @@ pub struct VectorApi;
     tag = "ai"
 )]
 pub async fn store(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -46,7 +48,7 @@ pub async fn store(
 
     match state
         .vector_service
-        .save_vectors(&[vector_req], tenant_id)
+        .save_vectors(&[vector_req], tenant_id, &txn_arc)
         .await
     {
         Ok(_) => {
@@ -108,6 +110,7 @@ pub async fn store(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn search(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<VectorSearchRequest>,
@@ -123,7 +126,7 @@ pub async fn search(
 
     match state
         .vector_service
-        .search_similar(&query_embedding, top_k, tenant_id)
+        .search_similar(&query_embedding, top_k, tenant_id, &txn_arc)
         .await
     {
         Ok(results) => {
@@ -145,12 +148,17 @@ pub async fn search(
 
 /// GET /api/vectors/{id} - 获取向量信息
 pub async fn get(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<crate::services::vector::VectorEmbedding>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match state.vector_service.get_vector(id, tenant_id).await {
+    match state
+        .vector_service
+        .get_vector(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(Some(vec)) => Json(ApiResponse::success(vec, "Success")),
         Ok(None) => {
             Json(ApiResponse::<crate::services::vector::VectorEmbedding>::not_found("向量不存在"))
@@ -179,6 +187,7 @@ pub async fn get(
     tag = "ai"
 )]
 pub async fn delete(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
@@ -186,7 +195,11 @@ pub async fn delete(
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    match state.vector_service.delete_vector(id, tenant_id).await {
+    match state
+        .vector_service
+        .delete_vector(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(true) => {
             if let Err(e) = state
                 .audit
@@ -255,6 +268,7 @@ pub async fn delete(
     clippy::cast_possible_wrap
 )]
 pub async fn batch_store(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -276,7 +290,11 @@ pub async fn batch_store(
         })
         .collect();
 
-    match state.vector_service.save_vectors(&vectors, tenant_id).await {
+    match state
+        .vector_service
+        .save_vectors(&vectors, tenant_id, &txn_arc)
+        .await
+    {
         Ok(_) => {
             if let Err(e) = state
                 .audit
@@ -336,6 +354,7 @@ pub async fn batch_store(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn hybrid_search(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<HybridSearchRequest>,
@@ -359,6 +378,7 @@ pub async fn hybrid_search(
             vector_weight,
             keyword_weight,
             tenant_id,
+            &txn_arc,
         )
         .await
     {
@@ -380,8 +400,11 @@ pub async fn hybrid_search(
 }
 
 /// GET /api/vectors/stats - 获取向量统计信息
-pub async fn stats(State(state): State<AppState>) -> Json<ApiResponse<VectorStats>> {
-    match state.vector_service.get_stats().await {
+pub async fn stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<VectorStats>> {
+    match state.vector_service.get_stats(&txn_arc).await {
         Ok(stats) => Json(ApiResponse::success(
             VectorStats {
                 total_documents: stats.total_documents,
@@ -409,8 +432,11 @@ pub async fn stats(State(state): State<AppState>) -> Json<ApiResponse<VectorStat
     ),
     tag = "ai"
 )]
-pub async fn clear_all(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    match state.vector_service.clear_all().await {
+pub async fn clear_all(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<String>> {
+    match state.vector_service.clear_all(&txn_arc).await {
         Ok(_) => Json(ApiResponse::success(
             "所有向量数据已清空".to_string(),
             "Success",

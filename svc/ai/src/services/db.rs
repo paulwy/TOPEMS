@@ -24,16 +24,6 @@ impl Database {
         &self.db
     }
 
-    /// 读作用域：只读事务 + 事务级 search_path。
-    pub async fn scope_read(&self) -> sqlx::Result<ScopedTxn<'_>> {
-        self.db.scope_read().await
-    }
-
-    /// 写作用域：读写事务 + 事务级 search_path。
-    pub async fn scope(&self) -> sqlx::Result<ScopedTxn<'_>> {
-        self.db.scope().await
-    }
-
     /// 复用请求级 RLS 事务：只叠加事务级 search_path，不接管提交/回滚。
     pub async fn scope_with<'a>(
         &self,

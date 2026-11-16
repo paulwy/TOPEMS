@@ -416,6 +416,23 @@ impl McpServer {
             return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
         }
 
+        // 外部 search MCP 端点不挂租户中间件：由 AI 侧用当前请求租户补齐 tenant_id，
+        // LLM 无需感知租户（内部工具不受影响）。
+        let mut arguments = arguments;
+        if tool_name.starts_with("ext.search.search.") && arguments.get("tenant_id").is_none() {
+            if let Some(tenant) = topems_shared_auth::middleware::tenant::current_request_tenant() {
+                // 系统通道（超管）无具体租户，保持缺失交由 search 侧 fail-closed。
+                if !tenant.system {
+                    if let Some(obj) = arguments.as_object_mut() {
+                        obj.insert(
+                            "tenant_id".to_string(),
+                            serde_json::json!(tenant.tenant.to_string()),
+                        );
+                    }
+                }
+            }
+        }
+
         match self.tools.call_tool(&tool_name, arguments).await {
             Ok(result) => {
                 let result_value = match serde_json::to_value(result) {

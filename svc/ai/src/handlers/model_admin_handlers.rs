@@ -20,6 +20,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
@@ -82,11 +83,18 @@ pub struct FeatureUsageItem {
     tag = "ai"
 )]
 pub async fn get_dashboard_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DashboardStats>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<DashboardStats>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<DashboardStats>::from(TopemsError::internal(
@@ -146,6 +154,7 @@ pub async fn get_dashboard_stats(
     tag = "ai"
 )]
 pub async fn get_activity_trend(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<ActivityTrendQuery>,
     Extension(claims): Extension<Claims>,
@@ -176,7 +185,13 @@ pub async fn get_activity_trend(
         }
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<Vec<TrendPoint>>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<Vec<TrendPoint>>::from(TopemsError::internal(
@@ -230,11 +245,18 @@ pub async fn get_activity_trend(
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_feature_usage(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FeatureUsageItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<Vec<FeatureUsageItem>>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(
@@ -330,13 +352,20 @@ pub struct ModelConfigUpdate {
     tag = "ai"
 )]
 pub async fn list_models(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ModelItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<Vec<ModelItem>>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
@@ -419,6 +448,7 @@ pub async fn list_models(
     tag = "ai"
 )]
 pub async fn get_model_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(model_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
@@ -432,7 +462,13 @@ pub async fn get_model_config(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<ModelConfig>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
@@ -478,13 +514,20 @@ pub async fn get_model_config(
 
 /// PUT /models/{id}/config
 pub async fn update_model_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(model_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<ModelConfigUpdate>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<serde_json::Value>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<serde_json::Value>::from(
@@ -565,12 +608,19 @@ pub struct UsageStats {
     tag = "ai"
 )]
 pub async fn get_model_usage(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<UsageStatsQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<UsageStats>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<UsageStats>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<UsageStats>::from(TopemsError::internal(

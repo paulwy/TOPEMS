@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Extension, State},
+    Json,
+};
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -115,10 +119,11 @@ mod tests {
     tag = "ai"
 )]
 pub async fn analyze_image(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageAnalysisRequest>,
 ) -> ApiResponse<ImageAnalysisResponse> {
-    match state.multimodal_service.analyze_image(req).await {
+    match state.multimodal_service.analyze_image(req, &txn_arc).await {
         Ok(response) => ApiResponse::success(response, "图片分析成功"),
         Err(e) => {
             ApiResponse::<ImageAnalysisResponse>::from(TopemsError::internal("图像分析失败", e))
@@ -137,12 +142,17 @@ pub async fn analyze_image(
     tag = "ai"
 )]
 pub async fn generate_caption(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageAnalysisRequest>,
 ) -> ApiResponse<ImageAnalysisResponse> {
     let mut request = req;
     request.analysis_type = "caption".to_string();
-    match state.multimodal_service.analyze_image(request).await {
+    match state
+        .multimodal_service
+        .analyze_image(request, &txn_arc)
+        .await
+    {
         Ok(response) => ApiResponse::success(response, "图片标题生成成功"),
         Err(e) => {
             ApiResponse::<ImageAnalysisResponse>::from(TopemsError::internal("图像描述生成失败", e))
@@ -161,12 +171,17 @@ pub async fn generate_caption(
     tag = "ai"
 )]
 pub async fn detect_objects(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageAnalysisRequest>,
 ) -> ApiResponse<ImageAnalysisResponse> {
     let mut request = req;
     request.analysis_type = "objects".to_string();
-    match state.multimodal_service.analyze_image(request).await {
+    match state
+        .multimodal_service
+        .analyze_image(request, &txn_arc)
+        .await
+    {
         Ok(response) => ApiResponse::success(response, "物体检测成功"),
         Err(e) => {
             ApiResponse::<ImageAnalysisResponse>::from(TopemsError::internal("目标检测失败", e))
@@ -185,12 +200,17 @@ pub async fn detect_objects(
     tag = "ai"
 )]
 pub async fn extract_text(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageAnalysisRequest>,
 ) -> ApiResponse<ImageAnalysisResponse> {
     let mut request = req;
     request.analysis_type = "text".to_string();
-    match state.multimodal_service.analyze_image(request).await {
+    match state
+        .multimodal_service
+        .analyze_image(request, &txn_arc)
+        .await
+    {
         Ok(response) => ApiResponse::success(response, "文字提取成功"),
         Err(e) => {
             ApiResponse::<ImageAnalysisResponse>::from(TopemsError::internal("文字识别失败", e))
@@ -209,12 +229,17 @@ pub async fn extract_text(
     tag = "ai"
 )]
 pub async fn describe_image(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageAnalysisRequest>,
 ) -> ApiResponse<ImageAnalysisResponse> {
     let mut request = req;
     request.analysis_type = "describe".to_string();
-    match state.multimodal_service.analyze_image(request).await {
+    match state
+        .multimodal_service
+        .analyze_image(request, &txn_arc)
+        .await
+    {
         Ok(response) => ApiResponse::success(response, "图片描述成功"),
         Err(e) => {
             ApiResponse::<ImageAnalysisResponse>::from(TopemsError::internal("图像描述失败", e))
@@ -233,10 +258,11 @@ pub async fn describe_image(
     tag = "ai"
 )]
 pub async fn analyze_video(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<VideoAnalysisRequest>,
 ) -> ApiResponse<VideoAnalysisResponse> {
-    match state.multimodal_service.analyze_video(req).await {
+    match state.multimodal_service.analyze_video(req, &txn_arc).await {
         Ok(response) => ApiResponse::success(response, "视频分析成功"),
         Err(e) => {
             ApiResponse::<VideoAnalysisResponse>::from(TopemsError::internal("视频分析失败", e))
@@ -255,12 +281,17 @@ pub async fn analyze_video(
     tag = "ai"
 )]
 pub async fn summarize_video(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<VideoAnalysisRequest>,
 ) -> ApiResponse<VideoAnalysisResponse> {
     let mut request = req;
     request.analysis_type = "summary".to_string();
-    match state.multimodal_service.analyze_video(request).await {
+    match state
+        .multimodal_service
+        .analyze_video(request, &txn_arc)
+        .await
+    {
         Ok(response) => ApiResponse::success(response, "视频摘要生成成功"),
         Err(e) => {
             ApiResponse::<VideoAnalysisResponse>::from(TopemsError::internal("视频摘要失败", e))
@@ -317,12 +348,13 @@ pub async fn detect_faces(
 }
 
 pub async fn compare_images(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<ImageCompareRequest>,
 ) -> ApiResponse<serde_json::Value> {
     match state
         .multimodal_service
-        .compare_images(&req.image1_base64, &req.image2_base64)
+        .compare_images(&req.image1_base64, &req.image2_base64, &txn_arc)
         .await
     {
         Ok(response) => ApiResponse::success(response, "图片比较成功"),

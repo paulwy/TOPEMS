@@ -1,11 +1,12 @@
 use axum::{
-    extract::State,
+    extract::{Extension, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -40,7 +41,10 @@ pub struct UpdateAiSettingsRequest {
         (status = 200, description = "获取成功", body = Value)
     )
 )]
-pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
+pub async fn get_settings(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+) -> Json<Value> {
     // 从请求头获取租户ID
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
@@ -61,7 +65,14 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
     };
 
     // 从数据库查询配置
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(json!({
+            "success": false,
+            "message": "数据库事务上下文缺失"
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("获取AI配置失败: {}", e);
@@ -140,6 +151,7 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
     )
 )]
 pub async fn update_settings(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<UpdateAiSettingsRequest>,
 ) -> Response {
@@ -152,7 +164,15 @@ pub async fn update_settings(
         }
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(json!({
+            "success": false,
+            "message": "数据库事务上下文缺失"
+        }))
+        .into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("更新AI配置失败: {}", e);

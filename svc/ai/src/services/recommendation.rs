@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
@@ -58,22 +59,41 @@ impl RecommendationService {
     pub async fn recommend(
         &self,
         request: RecommendationRequest,
+        txn_arc: &RlsTxnCell,
     ) -> Result<RecommendationResponse, TopemsError> {
         let top_k = request.top_k.unwrap_or(10);
         let rec_type = &request.recommendation_type;
         let tenant_id = request.tenant_id;
 
         let mut items = match rec_type.as_str() {
-            "documents" => self.recommend_documents(&request, top_k, tenant_id).await?,
-            "products" => self.recommend_products(&request, top_k, tenant_id).await?,
+            "documents" => {
+                self.recommend_documents(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
+            "products" => {
+                self.recommend_products(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
             "opportunities" => self.recommend_opportunities(&request, top_k).await?,
-            "tasks" => self.recommend_tasks(&request, top_k, tenant_id).await?,
-            "knowledge" => self.recommend_knowledge(&request, top_k, tenant_id).await?,
+            "tasks" => {
+                self.recommend_tasks(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
+            "knowledge" => {
+                self.recommend_knowledge(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
             "similar" => self.recommend_similar(&request, top_k, tenant_id).await?,
-            "articles" => self.recommend_articles(&request, top_k, tenant_id).await?,
+            "articles" => {
+                self.recommend_articles(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
             "events" => self.recommend_events(&request, top_k).await?,
             "users" => self.recommend_users(&request, top_k).await?,
-            "content" => self.recommend_content(&request, top_k, tenant_id).await?,
+            "content" => {
+                self.recommend_content(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
             "personalized" => {
                 self.recommend_personalized(&request, top_k, tenant_id)
                     .await?
@@ -83,14 +103,17 @@ impl RecommendationService {
                     .await?
             }
             "up-sell" => self.recommend_up_sell(&request, top_k, tenant_id).await?,
-            _ => self.recommend_general(&request, top_k, tenant_id).await?,
+            _ => {
+                self.recommend_general(&request, top_k, tenant_id, txn_arc)
+                    .await?
+            }
         };
 
         if let Some(user_id) = request.user_id {
-            items = self.apply_personalization(user_id, items).await?;
+            items = self.apply_personalization(user_id, items, txn_arc).await?;
         }
 
-        items = self.generate_reasoning(&request, items).await?;
+        items = self.generate_reasoning(&request, items, txn_arc).await?;
 
         let total_found = items.len();
         Ok(RecommendationResponse {
@@ -107,10 +130,17 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
         let query = sqlx::query(only_own_schema_query!(
@@ -158,6 +188,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
@@ -169,7 +200,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, tenant_id, None)
+            .ask(&prompt, None, 5, tenant_id, None, txn_arc)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -224,6 +255,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
@@ -235,7 +267,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, tenant_id, None)
+            .ask(&prompt, None, 5, tenant_id, None, txn_arc)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -255,6 +287,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = request
             .context
@@ -264,7 +297,7 @@ impl RecommendationService {
 
         let search_results = self
             .qa_service
-            .semantic_search(query, top_k, tenant_id)
+            .semantic_search(query, top_k, tenant_id, txn_arc)
             .await?;
 
         let items: Vec<RecommendationItem> = search_results
@@ -315,6 +348,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
@@ -326,7 +360,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil(), None)
+            .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -381,10 +415,20 @@ impl RecommendationService {
         }
     }
 
-    pub async fn get_user_profile(&self, user_id: Uuid) -> Result<UserProfile, TopemsError> {
+    pub async fn get_user_profile(
+        &self,
+        user_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<UserProfile, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询用户画像失败: {}", e)))?;
         let profile = sqlx::query(only_own_schema_query!(
@@ -427,12 +471,19 @@ impl RecommendationService {
         &self,
         user_id: Uuid,
         updates: serde_json::Value,
+        txn_arc: &RlsTxnCell,
     ) -> Result<UserProfile, TopemsError> {
         let now = chrono::Utc::now();
 
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
         let _ = sqlx::query(
@@ -458,7 +509,7 @@ impl RecommendationService {
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
 
-        self.get_user_profile(user_id).await
+        self.get_user_profile(user_id, txn_arc).await
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -467,10 +518,17 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;
         let query = sqlx::query(only_own_schema_query!(
@@ -578,6 +636,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = request
             .context
@@ -586,7 +645,7 @@ impl RecommendationService {
             .unwrap_or("");
         let search_results = self
             .qa_service
-            .semantic_search(query, top_k, tenant_id)
+            .semantic_search(query, top_k, tenant_id, txn_arc)
             .await?;
 
         let items: Vec<RecommendationItem> = search_results
@@ -698,8 +757,9 @@ impl RecommendationService {
         &self,
         user_id: Uuid,
         items: Vec<RecommendationItem>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
-        let profile = self.get_user_profile(user_id).await?;
+        let profile = self.get_user_profile(user_id, txn_arc).await?;
 
         let preferences: Vec<String> = profile
             .preferences
@@ -740,6 +800,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         items: Vec<RecommendationItem>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
@@ -754,7 +815,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 3, Uuid::nil(), None)
+            .ask(&prompt, None, 3, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response

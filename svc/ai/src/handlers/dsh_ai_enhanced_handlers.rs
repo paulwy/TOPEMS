@@ -2,7 +2,7 @@
 //!
 //! 提供知识图谱、RAG、多 Agent 协作等高级 AI 能力的 REST API 端点。
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
@@ -448,6 +448,7 @@ pub struct RagRetrieveRequest {
     tag = "ai"
 )]
 pub async fn rag_retrieve(
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<RagRetrieveRequest>,
 ) -> Json<ApiResponse<crate::dsh::rag::RetrievalResponse>> {
@@ -475,7 +476,7 @@ pub async fn rag_retrieve(
         request.similarity_threshold = Some(threshold);
     }
 
-    let response = rag_engine.retrieve(request).await;
+    let response = rag_engine.retrieve(request, Some(&txn_arc)).await;
     debug!(
         query = %query,
         documents = response.documents.len(),

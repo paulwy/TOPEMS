@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::modules::models::*;
 use crate::shared::AppState;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AskStructuredRequest {
@@ -332,6 +333,7 @@ mod tests {
     tag = "ai"
 )]
 pub async fn ask(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -352,7 +354,7 @@ pub async fn ask(
 
     let context_chunks = state
         .vector_service
-        .search_similar(&query_embedding, top_k, tenant_id)
+        .search_similar(&query_embedding, top_k, tenant_id, &txn_arc)
         .await
         .unwrap_or_default();
 
@@ -372,7 +374,14 @@ pub async fn ask(
     // 调用 QA 服务
     match state
         .qa_service
-        .ask(&req.question, context.as_deref(), top_k, tenant_id, user_id)
+        .ask(
+            &req.question,
+            context.as_deref(),
+            top_k,
+            tenant_id,
+            user_id,
+            &txn_arc,
+        )
         .await
     {
         Ok((answer, sources, qa_id, confidence)) => {
@@ -436,6 +445,7 @@ pub async fn ask(
     tag = "ai"
 )]
 pub async fn ask_with_context(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -454,7 +464,7 @@ pub async fn ask_with_context(
     for doc_id in &req.document_ids {
         if let Ok(chunks) = state
             .vector_service
-            .get_document_chunks(*doc_id, tenant_id)
+            .get_document_chunks(*doc_id, tenant_id, &txn_arc)
             .await
         {
             for chunk in chunks {
@@ -481,6 +491,7 @@ pub async fn ask_with_context(
             &context_chunks,
             tenant_id,
             user_id,
+            &txn_arc,
         )
         .await
     {
@@ -512,6 +523,7 @@ pub async fn ask_with_context(
     tag = "ai"
 )]
 pub async fn ask_structured(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AskStructuredRequest>,
@@ -525,7 +537,7 @@ pub async fn ask_structured(
         for doc_id in doc_ids {
             if let Ok(chunks) = state
                 .vector_service
-                .get_document_chunks(*doc_id, tenant_id)
+                .get_document_chunks(*doc_id, tenant_id, &txn_arc)
                 .await
             {
                 for chunk in chunks {
@@ -578,6 +590,7 @@ pub async fn ask_structured(
     tag = "ai"
 )]
 pub async fn ask_conversation(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AskWithConversationRequest>,
@@ -591,7 +604,7 @@ pub async fn ask_conversation(
         for doc_id in doc_ids {
             if let Ok(chunks) = state
                 .vector_service
-                .get_document_chunks(*doc_id, tenant_id)
+                .get_document_chunks(*doc_id, tenant_id, &txn_arc)
                 .await
             {
                 for chunk in chunks {
@@ -620,7 +633,13 @@ pub async fn ask_conversation(
     // 调用多轮对话服务
     match state
         .qa_service
-        .ask_with_conversation(&req.question, &history, &context_chunks, tenant_id)
+        .ask_with_conversation(
+            &req.question,
+            &history,
+            &context_chunks,
+            tenant_id,
+            &txn_arc,
+        )
         .await
     {
         Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(
@@ -660,6 +679,7 @@ pub async fn classify(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// GET /api/qa/history - 获取问答历史（支持分页和搜索）
 pub async fn history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<QaHistoryQuery>,
     Extension(claims): Extension<Claims>,
@@ -672,12 +692,12 @@ pub async fn history(
     let (history, total) = if let Some(query) = params.query.as_deref() {
         match state
             .qa_service
-            .search_qa_history(query, offset, page_size, tenant_id)
+            .search_qa_history(query, offset, page_size, tenant_id, &txn_arc)
             .await
         {
             Ok(history) => match state
                 .qa_service
-                .search_qa_history_count(query, tenant_id)
+                .search_qa_history_count(query, tenant_id, &txn_arc)
                 .await
             {
                 Ok(total) => (history, total as i32),
@@ -696,10 +716,14 @@ pub async fn history(
     } else {
         match state
             .qa_service
-            .get_qa_history_paged(offset, page_size, tenant_id)
+            .get_qa_history_paged(offset, page_size, tenant_id, &txn_arc)
             .await
         {
-            Ok(history) => match state.qa_service.get_qa_history_count(tenant_id).await {
+            Ok(history) => match state
+                .qa_service
+                .get_qa_history_count(tenant_id, &txn_arc)
+                .await
+            {
                 Ok(total) => (history, total as i32),
                 Err(e) => {
                     return Json(ApiResponse::<QAHistoryResponse>::from(
@@ -736,12 +760,17 @@ pub async fn history(
     tag = "ai"
 )]
 pub async fn delete_history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match state.qa_service.delete_qa_history(id, tenant_id).await {
+    match state
+        .qa_service
+        .delete_qa_history(id, tenant_id, &txn_arc)
+        .await
+    {
         Ok(true) => Json(ApiResponse::success("删除成功".to_string(), "Success")),
         Ok(false) => Json(ApiResponse::<String>::not_found("记录不存在")),
         Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal(
@@ -764,6 +793,7 @@ pub async fn delete_history(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn batch_delete_history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDeleteRequest>,
@@ -771,7 +801,7 @@ pub async fn batch_delete_history(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .qa_service
-        .batch_delete_qa_history(&req.ids, tenant_id)
+        .batch_delete_qa_history(&req.ids, tenant_id, &txn_arc)
         .await
     {
         Ok(count) => Json(ApiResponse::success(
@@ -789,6 +819,7 @@ pub async fn batch_delete_history(
 
 /// POST /api/qa/feedback - 提交答案反馈
 pub async fn feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<FeedbackRequest>,
@@ -796,7 +827,7 @@ pub async fn feedback(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .qa_service
-        .submit_feedback(req.qa_id, &req.feedback, req.rating, tenant_id)
+        .submit_feedback(req.qa_id, &req.feedback, req.rating, tenant_id, &txn_arc)
         .await
     {
         Ok(_) => Json(ApiResponse::success(

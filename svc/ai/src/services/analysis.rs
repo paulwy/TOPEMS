@@ -6,6 +6,7 @@ use crate::services::db::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -38,6 +39,7 @@ impl AnalysisService {
         &self,
         text: &str,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<SentimentAnalysisResponse, TopemsError> {
         let prompt = format!(
             "请分析以下文本的情感倾向。返回 JSON 格式结果：\n\
@@ -59,6 +61,7 @@ impl AnalysisService {
             &result,
             result.get("confidence").and_then(|v| v.as_f64()),
             tenant_id,
+            txn_arc,
         )
         .await?;
 
@@ -82,6 +85,7 @@ impl AnalysisService {
         text: &str,
         categories: Option<&[String]>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<ClassifyTextResponse, TopemsError> {
         let categories_str = if let Some(cats) = categories {
             cats.join(", ")
@@ -109,6 +113,7 @@ impl AnalysisService {
             &result,
             result.get("confidence").and_then(|v| v.as_f64()),
             tenant_id,
+            txn_arc,
         )
         .await?;
 
@@ -148,6 +153,7 @@ impl AnalysisService {
         text: &str,
         entity_types: Option<&[String]>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<ExtractEntitiesResponse, TopemsError> {
         let entity_types_str = if let Some(types) = entity_types {
             types.join(", ")
@@ -169,7 +175,7 @@ impl AnalysisService {
             .map_err(|e| TopemsError::ValidationFailed(format!("解析实体提取结果失败: {}", e)))?;
 
         // 保存分析结果
-        self.save_analysis_result("entities", text, &result, None, tenant_id)
+        self.save_analysis_result("entities", text, &result, None, tenant_id, txn_arc)
             .await?;
 
         let entities: Vec<Entity> = result
@@ -203,6 +209,7 @@ impl AnalysisService {
         text: &str,
         max_keywords: Option<i32>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<ExtractKeywordsResponse, TopemsError> {
         let max_count = max_keywords.unwrap_or(10);
 
@@ -220,7 +227,7 @@ impl AnalysisService {
             .map_err(|e| TopemsError::ValidationFailed(format!("解析关键词提取结果失败: {}", e)))?;
 
         // 保存分析结果
-        self.save_analysis_result("keywords", text, &result, None, tenant_id)
+        self.save_analysis_result("keywords", text, &result, None, tenant_id, txn_arc)
             .await?;
 
         let keywords: Vec<Keyword> = result
@@ -249,10 +256,17 @@ impl AnalysisService {
         analysis_type: Option<&str>,
         limit: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<AnalysisResult>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询分析历史失败: {}", e)))?;
         let query = if let Some(type_) = analysis_type {
@@ -396,10 +410,17 @@ impl AnalysisService {
         result: &serde_json::Value,
         confidence: Option<f64>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("保存分析结果失败: {}", e)))?;
         sqlx::query(

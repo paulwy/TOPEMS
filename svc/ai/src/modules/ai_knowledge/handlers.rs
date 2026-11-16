@@ -18,6 +18,7 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::document_processor::parse_document;
 use super::models::*;
@@ -75,12 +76,13 @@ fn make_ai_client() -> Arc<UnifiedAIClient> {
     tag = "ai"
 )]
 pub async fn list_knowledge_bases(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<KbQuery>,
 ) -> Json<ApiResponse<Vec<KnowledgeBase>>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_knowledge_bases(&state.db, tenant_id, &query).await {
+    match service::list_knowledge_bases(&state.db, &txn_arc, tenant_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_knowledge_bases 失败: {}", e);
@@ -103,6 +105,7 @@ pub async fn list_knowledge_bases(
     tag = "ai"
 )]
 pub async fn create_knowledge_base(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateKbRequest>,
@@ -124,7 +127,7 @@ pub async fn create_knowledge_base(
         return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
-    match service::create_knowledge_base(&state.db, tenant_id, &req, creator).await {
+    match service::create_knowledge_base(&state.db, &txn_arc, tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[AiKnowledge] create_knowledge_base 失败: {}", e);
@@ -150,12 +153,13 @@ pub async fn create_knowledge_base(
     tag = "ai"
 )]
 pub async fn get_knowledge_base(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<KnowledgeBase>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_knowledge_base(&state.db, tenant_id, id).await {
+    match service::get_knowledge_base(&state.db, &txn_arc, tenant_id, id).await {
         Ok(Some(item)) => Json(api_success(item)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -184,6 +188,7 @@ pub async fn get_knowledge_base(
     tag = "ai"
 )]
 pub async fn update_knowledge_base(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
@@ -206,7 +211,7 @@ pub async fn update_knowledge_base(
     }
 
     let tenant_id = current_tenant_id(&claims);
-    match service::update_knowledge_base(&state.db, tenant_id, id, &req).await {
+    match service::update_knowledge_base(&state.db, &txn_arc, tenant_id, id, &req).await {
         Ok(Some(item)) => Json(api_success(item)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -235,12 +240,13 @@ pub async fn update_knowledge_base(
     tag = "ai"
 )]
 pub async fn delete_knowledge_base(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::delete_knowledge_base(&state.db, tenant_id, id).await {
+    match service::delete_knowledge_base(&state.db, &txn_arc, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -270,12 +276,13 @@ pub async fn delete_knowledge_base(
     tag = "ai"
 )]
 pub async fn list_documents(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DocumentQuery>,
 ) -> Json<ApiResponse<Vec<KnowledgeDocument>>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_documents(&state.db, tenant_id, &query).await {
+    match service::list_documents(&state.db, &txn_arc, tenant_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_documents 失败: {}", e);
@@ -301,6 +308,7 @@ pub async fn list_documents(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_document(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
@@ -412,6 +420,7 @@ pub async fn upload_document(
     // 创建文档记录（status=pending）
     let document = match service::create_document_from_file(
         &state.db,
+        &txn_arc,
         tenant_id,
         kb_id,
         &file_name,
@@ -475,12 +484,13 @@ pub async fn upload_document(
     tag = "ai"
 )]
 pub async fn get_document(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<DocumentDetail>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_document_detail(&state.db, tenant_id, id).await {
+    match service::get_document_detail(&state.db, &txn_arc, tenant_id, id).await {
         Ok(Some(detail)) => Json(api_success(detail)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "文档不存在".to_string(),
@@ -509,6 +519,7 @@ pub async fn get_document(
     tag = "ai"
 )]
 pub async fn update_document(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
@@ -516,7 +527,7 @@ pub async fn update_document(
 ) -> Json<ApiResponse<KnowledgeDocument>> {
     let tenant_id = current_tenant_id(&claims);
 
-    match service::update_document(&state.db, tenant_id, id, &req).await {
+    match service::update_document(&state.db, &txn_arc, tenant_id, id, &req).await {
         Ok(Some(doc)) => {
             if req.content.is_some() {
                 let pool_clone = state.db.clone();
@@ -569,12 +580,13 @@ pub async fn update_document(
     tag = "ai"
 )]
 pub async fn delete_document(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::delete_document(&state.db, tenant_id, id).await {
+    match service::delete_document(&state.db, &txn_arc, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "文档不存在".to_string(),
@@ -607,6 +619,7 @@ pub async fn delete_document(
     tag = "ai"
 )]
 pub async fn reprocess_document(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
@@ -614,7 +627,7 @@ pub async fn reprocess_document(
     let tenant_id = current_tenant_id(&claims);
 
     // 校验文档存在
-    match service::get_document_detail(&state.db, tenant_id, id).await {
+    match service::get_document_detail(&state.db, &txn_arc, tenant_id, id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -662,6 +675,7 @@ pub async fn reprocess_document(
     tag = "ai"
 )]
 pub async fn ask_question(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AskRequest>,
@@ -683,7 +697,7 @@ pub async fn ask_question(
     };
 
     // 校验知识库存在
-    match service::get_knowledge_base(&state.db, tenant_id, req.kb_id).await {
+    match service::get_knowledge_base(&state.db, &txn_arc, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -701,6 +715,7 @@ pub async fn ask_question(
     let ai_client = make_ai_client();
     match rag::ask_question(
         &state.db,
+        &txn_arc,
         &ai_client,
         tenant_id,
         req.kb_id,
@@ -733,13 +748,14 @@ pub async fn ask_question(
     tag = "ai"
 )]
 pub async fn list_qa_history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<QaHistoryQuery>,
 ) -> Json<ApiResponse<Vec<QaHistory>>> {
     let tenant_id = current_tenant_id(&claims);
     let user_id = current_user_id(&claims);
-    match service::list_qa_history(&state.db, tenant_id, user_id, &query).await {
+    match service::list_qa_history(&state.db, &txn_arc, tenant_id, user_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_qa_history 失败: {}", e);
@@ -765,6 +781,7 @@ pub async fn list_qa_history(
     tag = "ai"
 )]
 pub async fn submit_feedback(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<Uuid>,
@@ -777,7 +794,7 @@ pub async fn submit_feedback(
     }
 
     let tenant_id = current_tenant_id(&claims);
-    match service::update_qa_feedback(&state.db, tenant_id, id, req.feedback).await {
+    match service::update_qa_feedback(&state.db, &txn_arc, tenant_id, id, req.feedback).await {
         Ok(true) => Json(api_success(json!({ "updated": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "问答记录不存在".to_string(),
@@ -809,6 +826,7 @@ pub async fn submit_feedback(
     tag = "ai"
 )]
 pub async fn semantic_search(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SearchRequest>,
@@ -827,7 +845,7 @@ pub async fn semantic_search(
     let tenant_id = current_tenant_id(&claims);
 
     // 校验知识库存在
-    match service::get_knowledge_base(&state.db, tenant_id, req.kb_id).await {
+    match service::get_knowledge_base(&state.db, &txn_arc, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -844,7 +862,7 @@ pub async fn semantic_search(
 
     let ai_client = make_ai_client();
     let query_clone = req.query.clone();
-    match service::semantic_search(&state.db, &ai_client, tenant_id, &req).await {
+    match service::semantic_search(&state.db, &txn_arc, &ai_client, tenant_id, &req).await {
         Ok(results) => Json(api_success(SearchResponse {
             query: query_clone,
             results,

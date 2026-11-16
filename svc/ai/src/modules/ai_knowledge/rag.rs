@@ -9,6 +9,7 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_ai::ai_client::{ChatMessage, UnifiedAIClient};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -41,6 +42,7 @@ pub struct RetrievedChunk {
 /// - `top_k`：返回的分块数量
 pub async fn retrieve_relevant_chunks(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     ai_client: &Arc<UnifiedAIClient>,
     tenant_id: Uuid,
     kb_id: Uuid,
@@ -50,8 +52,14 @@ pub async fn retrieve_relevant_chunks(
     // 1. 生成问题向量
     let query_vector = generate_embedding(ai_client, question).await?;
     let vector_str = vector_to_pgvector_string(&query_vector);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(ProcessorError::EmbeddingError(
+            "RLS 事务缺失：请求事务未注入".to_string(),
+        ));
+    };
     let mut scope = db
-        .scope_read()
+        .scope_with(txn)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启检索事务失败: {}", e)))?;
 
@@ -182,6 +190,7 @@ pub async fn generate_answer(
 /// `AskResponse`：包含答案、引用来源、置信度、历史记录 ID
 pub async fn ask_question(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     ai_client: &Arc<UnifiedAIClient>,
     tenant_id: Uuid,
     kb_id: Uuid,
@@ -190,7 +199,8 @@ pub async fn ask_question(
     top_k: i32,
 ) -> Result<AskResponse, ProcessorError> {
     // 1. 检索相关分块
-    let chunks = retrieve_relevant_chunks(db, ai_client, tenant_id, kb_id, question, top_k).await?;
+    let chunks =
+        retrieve_relevant_chunks(db, txn_arc, ai_client, tenant_id, kb_id, question, top_k).await?;
 
     // 2. 生成答案
     let answer = generate_answer(ai_client, question, &chunks).await?;
@@ -219,8 +229,14 @@ pub async fn ask_question(
     let sources_json = serde_json::to_value(&sources).unwrap_or(serde_json::Value::Null);
 
     // 6. 记录问答历史
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err(ProcessorError::EmbeddingError(
+            "RLS 事务缺失：请求事务未注入".to_string(),
+        ));
+    };
     let mut scope = db
-        .scope()
+        .scope_with(txn)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("保存问答历史失败: {}", e)))?;
     let history_row: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(

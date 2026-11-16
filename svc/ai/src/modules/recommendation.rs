@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::services::recommendation::{RecommendationRequest, RecommendationResponse, UserProfile};
 use crate::shared::AppState;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 pub struct RecommendationApi;
 
@@ -20,10 +21,11 @@ pub struct RecommendationApi;
     tag = "ai"
 )]
 pub async fn recommend(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<RecommendationRequest>,
 ) -> Json<ApiResponse<RecommendationResponse>> {
-    match state.recommendation_service.recommend(req).await {
+    match state.recommendation_service.recommend(req, &txn_arc).await {
         Ok(response) => Json(ApiResponse::success(response, "推荐成功")),
         Err(e) => Json(ApiResponse::<RecommendationResponse>::from(
             TopemsError::internal("推荐失败", e),
@@ -42,43 +44,7 @@ pub async fn recommend(
     tag = "ai"
 )]
 pub async fn get_user_profile(
-    State(state): State<AppState>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<UserProfile>> {
-    let user_id_str = req
-        .get("user_id")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default();
-    let user_id = match Uuid::parse_str(user_id_str) {
-        Ok(id) => id,
-        Err(e) => {
-            return Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
-                "无效的用户ID",
-                e,
-            )));
-        }
-    };
-
-    match state.recommendation_service.get_user_profile(user_id).await {
-        Ok(response) => Json(ApiResponse::success(response, "获取用户画像成功")),
-        Err(e) => Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
-            "获取用户画像失败",
-            e,
-        ))),
-    }
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/profile/update",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ai"
-)]
-pub async fn update_user_profile(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<UserProfile>> {
@@ -98,7 +64,49 @@ pub async fn update_user_profile(
 
     match state
         .recommendation_service
-        .update_user_profile(user_id, req)
+        .get_user_profile(user_id, &txn_arc)
+        .await
+    {
+        Ok(response) => Json(ApiResponse::success(response, "获取用户画像成功")),
+        Err(e) => Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
+            "获取用户画像失败",
+            e,
+        ))),
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/profile/update",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn update_user_profile(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<UserProfile>> {
+    let user_id_str = req
+        .get("user_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+    let user_id = match Uuid::parse_str(user_id_str) {
+        Ok(id) => id,
+        Err(e) => {
+            return Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
+                "无效的用户ID",
+                e,
+            )));
+        }
+    };
+
+    match state
+        .recommendation_service
+        .update_user_profile(user_id, req, &txn_arc)
         .await
     {
         Ok(response) => Json(ApiResponse::success(response, "更新用户画像成功")),
@@ -120,6 +128,7 @@ pub async fn update_user_profile(
     tag = "ai"
 )]
 pub async fn recommend_documents(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<serde_json::Value>,
@@ -133,7 +142,11 @@ pub async fn recommend_documents(
         filters: None,
         tenant_id,
     };
-    match state.recommendation_service.recommend(request).await {
+    match state
+        .recommendation_service
+        .recommend(request, &txn_arc)
+        .await
+    {
         Ok(response) => Json(ApiResponse::success(response, "文档推荐成功")),
         Err(e) => Json(ApiResponse::<RecommendationResponse>::from(
             TopemsError::internal("文档推荐失败", e),
@@ -152,6 +165,7 @@ pub async fn recommend_documents(
     tag = "ai"
 )]
 pub async fn recommend_opportunities(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<serde_json::Value>,
@@ -165,7 +179,11 @@ pub async fn recommend_opportunities(
         filters: None,
         tenant_id,
     };
-    match state.recommendation_service.recommend(request).await {
+    match state
+        .recommendation_service
+        .recommend(request, &txn_arc)
+        .await
+    {
         Ok(response) => Json(ApiResponse::success(response, "商机推荐成功")),
         Err(e) => Json(ApiResponse::<RecommendationResponse>::from(
             TopemsError::internal("商机推荐失败", e),
@@ -184,6 +202,7 @@ pub async fn recommend_opportunities(
     tag = "ai"
 )]
 pub async fn recommend_knowledge(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<serde_json::Value>,
@@ -197,7 +216,11 @@ pub async fn recommend_knowledge(
         filters: None,
         tenant_id,
     };
-    match state.recommendation_service.recommend(request).await {
+    match state
+        .recommendation_service
+        .recommend(request, &txn_arc)
+        .await
+    {
         Ok(response) => Json(ApiResponse::success(response, "知识推荐成功")),
         Err(e) => Json(ApiResponse::<RecommendationResponse>::from(
             TopemsError::internal("知识推荐失败", e),

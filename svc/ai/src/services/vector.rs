@@ -1,6 +1,7 @@
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -71,8 +72,16 @@ impl VectorService {
     }
 
     /// 创建文档记录
-    pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+    pub async fn create_document(
+        &self,
+        doc: &CreateDocumentRequest,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<Uuid, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let id: Uuid = sqlx::query_scalar(
             only_own_schema_query!("ai", r#"
             INSERT INTO ai.documents (tenant_id, title, file_name, file_path, file_size, mime_type, category, tags, description, status)
@@ -104,8 +113,13 @@ impl VectorService {
         status: &str,
         error_message: Option<&str>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -131,8 +145,13 @@ impl VectorService {
         &self,
         id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Option<Document>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let doc = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -153,8 +172,16 @@ impl VectorService {
     }
 
     /// 获取所有文档
-    pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+    pub async fn list_documents(
+        &self,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<Vec<Document>, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let docs = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -176,8 +203,17 @@ impl VectorService {
     }
 
     /// 删除文档（级联删除向量）
-    pub async fn delete_document(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+    pub async fn delete_document(
+        &self,
+        id: Uuid,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<bool, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             "UPDATE ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -197,8 +233,13 @@ impl VectorService {
         &self,
         chunk: &SaveChunkRequest,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Uuid, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -225,8 +266,13 @@ impl VectorService {
         &self,
         vectors: &[SaveVectorRequest],
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         for vector in vectors {
             sqlx::query(only_own_schema_query!(
                 "ai",
@@ -255,6 +301,7 @@ impl VectorService {
         query_embedding: &[f32],
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
         // 构建查询向量字符串
         let embedding_str = format!(
@@ -266,7 +313,11 @@ impl VectorService {
                 .join(",")
         );
 
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -312,8 +363,12 @@ impl VectorService {
         clippy::cast_sign_loss
     )]
     /// 获取统计信息
-    pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+    pub async fn get_stats(&self, txn_arc: &RlsTxnCell) -> Result<VectorStats, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let doc_count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             "SELECT COUNT(*) FROM ai.documents",
@@ -352,8 +407,12 @@ impl VectorService {
     }
 
     /// 清空所有向量数据
-    pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+    pub async fn clear_all(&self, txn_arc: &RlsTxnCell) -> Result<(), sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!(
             "ai",
             "DELETE FROM ai.document_chunks",
@@ -379,8 +438,13 @@ impl VectorService {
         query: &str,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -430,15 +494,16 @@ impl VectorService {
         vector_weight: f64,
         keyword_weight: f64,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<crate::modules::models::HybridSearchResult>, sqlx::Error> {
         // 向量搜索
         let vector_results = self
-            .search_similar(query_embedding, top_k * 2, tenant_id)
+            .search_similar(query_embedding, top_k * 2, tenant_id, txn_arc)
             .await?;
 
         // 关键词搜索
         let keyword_results = self
-            .keyword_search(query_text, top_k * 2, tenant_id)
+            .keyword_search(query_text, top_k * 2, tenant_id, txn_arc)
             .await?;
 
         // 合并结果
@@ -502,8 +567,13 @@ impl VectorService {
         &self,
         document_id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<DocumentChunk>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let chunks = sqlx::query_as::<_, DocumentChunkRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -528,8 +598,13 @@ impl VectorService {
         &self,
         id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Option<VectorEmbedding>, sqlx::Error> {
-        let mut scope = self.db.scope_read().await?;
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let row = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -562,8 +637,17 @@ impl VectorService {
     }
 
     /// 删除向量记录
-    pub async fn delete_vector(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
-        let mut scope = self.db.scope().await?;
+    pub async fn delete_vector(
+        &self,
+        id: Uuid,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<bool, sqlx::Error> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+        };
+        let mut scope = self.db.scope_with(txn).await?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             "UPDATE ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",

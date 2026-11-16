@@ -21,6 +21,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
@@ -135,6 +136,7 @@ fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, TopemsError>
     tag = "ai"
 )]
 pub async fn list_prompt_templates(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<PromptTemplateListQuery>,
     Extension(claims): Extension<Claims>,
@@ -163,33 +165,54 @@ pub async fn list_prompt_templates(
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
     );
 
-    let total: i64 = match state.db.scope_read().await {
-        Ok(mut scope) => {
-            match sqlx::query(sqlx::AssertSqlSafe(q_count))
-                .bind(tenant_id)
-                .bind(&search)
-                .bind(&category)
-                .bind(is_fav)
-                .fetch_one(&mut scope)
-                .await
-            {
-                Ok(row) => row.get(0),
-                Err(e) => {
-                    return Json(ApiResponse::<PromptTemplateList>::from(
-                        TopemsError::internal("获取提示词模板列表失败", e),
-                    ))
-                }
+    let total: i64 = {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Json(ApiResponse::<PromptTemplateList>::server_error(
+                "RLS 事务中间件未注入",
+            ));
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
             }
-        }
-        Err(e) => {
-            return Json(ApiResponse::<PromptTemplateList>::from(
-                TopemsError::internal("获取提示词模板列表失败", e),
-            ))
+        };
+        match sqlx::query(sqlx::AssertSqlSafe(q_count))
+            .bind(tenant_id)
+            .bind(&search)
+            .bind(&category)
+            .bind(is_fav)
+            .fetch_one(&mut scope)
+            .await
+        {
+            Ok(row) => row.get(0),
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
+            }
         }
     };
 
-    let items = match state.db.scope_read().await {
-        Ok(mut scope) => match sqlx::query(sqlx::AssertSqlSafe(q_list))
+    let items = {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Json(ApiResponse::<PromptTemplateList>::server_error(
+                "RLS 事务中间件未注入",
+            ));
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
+            }
+        };
+        match sqlx::query(sqlx::AssertSqlSafe(q_list))
             .bind(tenant_id)
             .bind(&search)
             .bind(&category)
@@ -219,11 +242,6 @@ pub async fn list_prompt_templates(
                     TopemsError::internal("获取提示词模板列表失败", e),
                 ))
             }
-        },
-        Err(e) => {
-            return Json(ApiResponse::<PromptTemplateList>::from(
-                TopemsError::internal("获取提示词模板列表失败", e),
-            ))
         }
     };
 
@@ -258,6 +276,7 @@ pub async fn list_prompt_templates(
     tag = "ai"
 )]
 pub async fn get_prompt_template(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
@@ -265,7 +284,13 @@ pub async fn get_prompt_template(
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<PromptTemplateOut>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<PromptTemplateOut>::from(
@@ -296,12 +321,19 @@ pub async fn get_prompt_template(
 
 /// POST /prompts/templates
 pub async fn create_prompt_template(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<PromptTemplatePayload>,
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<PromptTemplateOut>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<PromptTemplateOut>::from(
@@ -338,13 +370,20 @@ pub async fn create_prompt_template(
 
 /// PUT /prompts/templates/{id}
 pub async fn update_prompt_template(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<PromptTemplatePayload>,
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<PromptTemplateOut>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<PromptTemplateOut>::from(
@@ -384,12 +423,17 @@ pub async fn update_prompt_template(
 
 /// DELETE /prompts/templates/{id}
 pub async fn delete_prompt_template(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<String>::server_error("RLS 事务中间件未注入"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<String>::from(TopemsError::internal(
@@ -431,12 +475,19 @@ pub async fn delete_prompt_template(
     tag = "ai"
 )]
 pub async fn toggle_prompt_favorite(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FavoriteResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<FavoriteResult>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<FavoriteResult>::from(TopemsError::internal(
@@ -483,11 +534,18 @@ pub async fn toggle_prompt_favorite(
     tag = "ai"
 )]
 pub async fn get_prompt_categories(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<PromptCategory>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<Vec<PromptCategory>>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<Vec<PromptCategory>>::from(
@@ -536,13 +594,20 @@ pub async fn get_prompt_categories(
     tag = "ai"
 )]
 pub async fn use_prompt_template(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UsePromptRequest>,
 ) -> Json<ApiResponse<UsePromptResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::<UsePromptResult>::server_error(
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(

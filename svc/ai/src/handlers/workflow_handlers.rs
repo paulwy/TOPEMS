@@ -5,9 +5,10 @@
 
 use crate::services::agent::{WorkflowExecutionRequest, WorkflowOrchestrator};
 use crate::shared::AppState;
-use axum::extract::State;
+use axum::extract::{Extension, State};
 use axum::Json;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 type ApiOk<T> = Json<ApiResponse<T>>;
@@ -90,11 +91,12 @@ pub async fn get_workflow(
     tag = "ai"
 )]
 pub async fn execute_workflow(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<WorkflowExecutionRequest>,
 ) -> ApiOk<serde_json::Value> {
     let orchestrator: Arc<WorkflowOrchestrator> = state.workflow_orchestrator.clone();
-    match orchestrator.execute_workflow(req).await {
+    match orchestrator.execute_workflow(req, &txn_arc).await {
         Ok(resp) => Json(ApiResponse::success(
             serde_json::json!({
                 "execution_id": resp.execution_id,

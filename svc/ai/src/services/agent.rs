@@ -96,7 +96,11 @@ impl AgentService {
         }
     }
 
-    pub async fn run(&self, request: AgentRequest) -> Result<AgentResponse, TopemsError> {
+    pub async fn run(
+        &self,
+        request: AgentRequest,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
+    ) -> Result<AgentResponse, TopemsError> {
         let conversation_id = request
             .conversation_id
             .unwrap_or_else(|| Uuid::new_v4().to_string());
@@ -133,7 +137,7 @@ impl AgentService {
             state.current_iteration += 1;
 
             let tool_calls = self
-                .decide_tools(&state, &available_tools)
+                .decide_tools(&state, &available_tools, txn_arc)
                 .await
                 .map_err(|e| TopemsError::NetworkRequest(format!("决策工具失败: {}", e)))?;
 
@@ -146,7 +150,7 @@ impl AgentService {
             let mut tool_results: Vec<ToolResult> = Vec::new();
 
             for tool_call in &tool_calls {
-                let result = self.execute_tool(tool_call).await;
+                let result = self.execute_tool(tool_call, txn_arc).await;
                 tools_used.push(tool_call.tool.to_string());
 
                 let success = result.success;
@@ -186,7 +190,7 @@ impl AgentService {
         }
 
         let final_answer = self
-            .generate_final_answer(&state)
+            .generate_final_answer(&state, txn_arc)
             .await
             .map_err(|e| TopemsError::NetworkRequest(format!("生成最终答案失败: {}", e)))?;
 
@@ -203,6 +207,7 @@ impl AgentService {
         &self,
         state: &AgentState,
         available_tools: &[AgentTool],
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
     ) -> Result<Vec<ToolCall>, TopemsError> {
         let messages_str = state
             .messages
@@ -224,7 +229,7 @@ impl AgentService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil(), None)
+            .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)?;
 
@@ -276,10 +281,14 @@ impl AgentService {
         Ok(tool_calls)
     }
 
-    async fn execute_tool(&self, tool_call: &ToolCall) -> ToolResult {
+    async fn execute_tool(
+        &self,
+        tool_call: &ToolCall,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
+    ) -> ToolResult {
         match tool_call.tool {
-            AgentTool::Search => self.execute_search(tool_call).await,
-            AgentTool::DocumentQA => self.execute_document_qa(tool_call).await,
+            AgentTool::Search => self.execute_search(tool_call, txn_arc).await,
+            AgentTool::DocumentQA => self.execute_document_qa(tool_call, txn_arc).await,
             AgentTool::Calculator => self.execute_calculator(tool_call).await,
             AgentTool::Weather => self.execute_weather(tool_call).await,
             AgentTool::DatabaseQuery => self.execute_database_query(tool_call).await,
@@ -288,14 +297,21 @@ impl AgentService {
         }
     }
 
-    async fn execute_search(&self, tool_call: &ToolCall) -> ToolResult {
+    async fn execute_search(
+        &self,
+        tool_call: &ToolCall,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
+    ) -> ToolResult {
         let query = tool_call
             .arguments
             .get("query")
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self.qa_service.semantic_search(query, 5, Uuid::nil()).await;
+        let result = self
+            .qa_service
+            .semantic_search(query, 5, Uuid::nil(), txn_arc)
+            .await;
 
         match result {
             Ok(results) => {
@@ -320,7 +336,11 @@ impl AgentService {
         }
     }
 
-    async fn execute_document_qa(&self, tool_call: &ToolCall) -> ToolResult {
+    async fn execute_document_qa(
+        &self,
+        tool_call: &ToolCall,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
+    ) -> ToolResult {
         let question = tool_call
             .arguments
             .get("question")
@@ -329,7 +349,7 @@ impl AgentService {
 
         let result = self
             .qa_service
-            .ask(question, None, 5, Uuid::nil(), None)
+            .ask(question, None, 5, Uuid::nil(), None, txn_arc)
             .await;
 
         match result {
@@ -680,7 +700,11 @@ impl AgentService {
             .join("\n\n")
     }
 
-    async fn generate_final_answer(&self, state: &AgentState) -> Result<String, TopemsError> {
+    async fn generate_final_answer(
+        &self,
+        state: &AgentState,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
+    ) -> Result<String, TopemsError> {
         let messages_str = state
             .messages
             .iter()
@@ -705,7 +729,7 @@ impl AgentService {
         );
 
         self.qa_service
-            .ask(&prompt, None, 5, Uuid::nil(), None)
+            .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
             .await
             .map(|r| r.0)
     }
@@ -1002,6 +1026,7 @@ impl WorkflowOrchestrator {
     pub async fn execute_workflow(
         &self,
         request: WorkflowExecutionRequest,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
     ) -> Result<WorkflowExecutionResponse, TopemsError> {
         let workflow = self
             .workflows
@@ -1040,7 +1065,7 @@ impl WorkflowOrchestrator {
             let mut step_error: Option<String> = None;
 
             for retry in 0..=step.retry_count {
-                match self.execute_step(step, &context).await {
+                match self.execute_step(step, &context, txn_arc).await {
                     Ok(output) => {
                         step_success = true;
                         step_output = Some(output);
@@ -1127,6 +1152,7 @@ impl WorkflowOrchestrator {
         &self,
         step: &WorkflowStep,
         context: &HashMap<String, serde_json::Value>,
+        txn_arc: &topems_shared_auth::middleware::tenant::RlsTxnCell,
     ) -> Result<String, TopemsError> {
         // Dify executor: delegate to DifyService.chat() (blocking mode)
         if step.executor.as_deref() == Some("dify") {
@@ -1168,7 +1194,7 @@ impl WorkflowOrchestrator {
                 thought: step.description.clone(),
             };
 
-            let result = self.agent_service.execute_tool(&tool_call).await;
+            let result = self.agent_service.execute_tool(&tool_call, txn_arc).await;
             if result.success {
                 Ok(result.result)
             } else {
@@ -1180,7 +1206,7 @@ impl WorkflowOrchestrator {
             // Direct QA without tool
             self.agent_service
                 .qa_service
-                .ask(&prompt, None, 5, Uuid::nil(), None)
+                .ask(&prompt, None, 5, Uuid::nil(), None, txn_arc)
                 .await
                 .map_err(|e| TopemsError::BusinessLogic(e.to_string()))
                 .map(|r| r.0)

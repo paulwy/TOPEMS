@@ -9,11 +9,12 @@
 //! 数据模型：core.ai_conversations（与 ai_knowledge 同 schema 防御模式）
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::HeaderMap,
     Json,
 };
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{auth::Claims, get_tenant_id_from_claims};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -43,6 +44,7 @@ impl From<&sqlx::postgres::PgRow> for ConversationDto {
 
 /// GET /api/ai/conversations
 pub async fn list_conversations(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     _claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -54,7 +56,11 @@ pub async fn list_conversations(
         .unwrap_or("topems-user")
         .to_string();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::server_error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("list_conversations failed: {e}");
@@ -86,6 +92,7 @@ pub async fn list_conversations(
 
 /// GET /api/ai/conversations/{id}
 pub async fn get_conversation(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     _claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -98,7 +105,11 @@ pub async fn get_conversation(
         .unwrap_or("topems-user")
         .to_string();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::server_error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("get_conversation failed: {e}");
@@ -136,6 +147,7 @@ pub struct CreateConversationRequest {
 
 /// POST /api/ai/conversations
 pub async fn create_conversation(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     _claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -149,7 +161,11 @@ pub async fn create_conversation(
         .to_string();
     let title = req.title.unwrap_or_else(|| "新对话".to_string());
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::server_error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("create_conversation failed: {e}");
@@ -183,6 +199,7 @@ pub async fn create_conversation(
 
 /// DELETE /api/ai/conversations/{id}
 pub async fn delete_conversation(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     _claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -195,7 +212,11 @@ pub async fn delete_conversation(
         .unwrap_or("topems-user")
         .to_string();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::server_error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("delete_conversation failed: {e}");
@@ -251,13 +272,18 @@ pub fn create_routes() -> axum::Router<AppState> {
 
 /// GET /api/ai/conversations/{id}/messages - 会话消息列表（待上游支持，返回空）
 pub async fn list_messages(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     _claims: axum::Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     // 会话存在性校验：不存在则内层 404（语义与 get_conversation 一致）
     let tenant_id = get_tenant_id_from_claims(&_claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(ApiResponse::server_error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("list_messages failed: {e}");
@@ -297,9 +323,10 @@ pub async fn regenerate_message(
 
 /// GET /api/ai/conversations/{id}/messages/{tail} - 折叠产物兜底（忽略尾部段，逻辑同 list_messages）
 pub async fn list_messages_with_tail(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     state: State<AppState>,
     claims: axum::Extension<Claims>,
     Path((id, _tail)): Path<(uuid::Uuid, String)>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    list_messages(state, claims, Path(id)).await
+    list_messages(Extension(txn_arc), state, claims, Path(id)).await
 }

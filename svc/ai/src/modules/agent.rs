@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, State},
+    extract::{Extension, Json, State},
     routing::{get, post},
     Router,
 };
@@ -22,10 +22,11 @@ pub fn create_routes() -> Router<crate::shared::AppState> {
     ),
 )]
 pub async fn agent_run(
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     State(state): State<crate::shared::AppState>,
     Json(req): Json<crate::services::AgentRequest>,
 ) -> Json<ApiResponse<crate::services::AgentResponse>> {
-    match state.agent_service.run(req).await {
+    match state.agent_service.run(req, &txn_arc).await {
         Ok(response) => Json(ApiResponse::success(response, "Agent 执行成功")),
         Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }

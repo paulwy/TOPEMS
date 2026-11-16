@@ -12,6 +12,7 @@ use std::io::{BufReader, Read};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use topems_shared_ai::file_client::FileServiceClient;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
@@ -73,9 +74,10 @@ impl DocumentService {
         &self,
         document_id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<crate::services::vector::DocumentChunk>, TopemsError> {
         let vs = self.vector_service.read().await;
-        vs.get_document_chunks(document_id, tenant_id)
+        vs.get_document_chunks(document_id, tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("获取文档分块失败: {}", e)))
     }
@@ -94,6 +96,7 @@ impl DocumentService {
         file_size: u64,
         mime_type: Option<String>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<String, TopemsError> {
         let mime = mime_type.as_deref().unwrap_or("application/octet-stream");
 
@@ -112,7 +115,7 @@ impl DocumentService {
 
         let doc_id = {
             let vs = self.vector_service.read().await;
-            vs.create_document(&doc_request)
+            vs.create_document(&doc_request, txn_arc)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("创建文档记录失败: {}", e)))?
         };
@@ -140,7 +143,7 @@ impl DocumentService {
 
         if chunks.is_empty() {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "empty", Some("文档内容为空"), tenant_id)
+            vs.update_document_status(doc_id, "empty", Some("文档内容为空"), tenant_id, txn_arc)
                 .await
                 .ok();
             return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
@@ -149,13 +152,13 @@ impl DocumentService {
         tracing::info!("📄 文档 '{}' 分割为 {} 个块", filename, chunks.len());
 
         // 保存分块和向量
-        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id)
+        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id, txn_arc)
             .await?;
 
         // 更新文档状态
         {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "processed", None, tenant_id)
+            vs.update_document_status(doc_id, "processed", None, tenant_id, txn_arc)
                 .await
                 .ok();
         }
@@ -306,6 +309,7 @@ impl DocumentService {
         doc_id: uuid::Uuid,
         chunks: &[String],
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), TopemsError> {
         let vs = self.vector_service.read().await;
         let total_chunks = chunks.len();
@@ -327,7 +331,7 @@ impl DocumentService {
             };
 
             let chunk_id = vs
-                .save_chunk(&chunk_request, tenant_id)
+                .save_chunk(&chunk_request, tenant_id, txn_arc)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("保存分块失败: {}", e)))?;
 
@@ -342,9 +346,10 @@ impl DocumentService {
         &self,
         id: uuid::Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<bool, TopemsError> {
         let vs = self.vector_service.read().await;
-        vs.delete_document(id, tenant_id)
+        vs.delete_document(id, tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("删除文档失败: {}", e)))
     }
@@ -353,9 +358,10 @@ impl DocumentService {
     pub async fn list_documents(
         &self,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<crate::services::vector::Document>, TopemsError> {
         let vs = self.vector_service.read().await;
-        vs.list_documents(tenant_id)
+        vs.list_documents(tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档列表失败: {}", e)))
     }
@@ -365,9 +371,10 @@ impl DocumentService {
         &self,
         id: uuid::Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Option<crate::services::vector::Document>, TopemsError> {
         let vs = self.vector_service.read().await;
-        vs.get_document(id, tenant_id)
+        vs.get_document(id, tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))
     }
@@ -377,6 +384,7 @@ impl DocumentService {
         &self,
         file_id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<VectorizeResult, TopemsError> {
         let file_client = self
             .file_client
@@ -419,7 +427,7 @@ impl DocumentService {
 
         // 5. 保存分块
         let doc_id = Uuid::new_v4();
-        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id)
+        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id, txn_arc)
             .await?;
 
         Ok(VectorizeResult {
@@ -740,14 +748,15 @@ impl DocumentService {
         document_ids: Option<&[Uuid]>,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<DocumentQAAnswer, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let context_chunks = if let Some(doc_ids) = document_ids {
-            self.search_relevant_chunks(question, doc_ids, top_k, tenant_id)
+            self.search_relevant_chunks(question, doc_ids, top_k, tenant_id, txn_arc)
                 .await?
         } else {
-            self.search_all_relevant_chunks(question, top_k, tenant_id)
+            self.search_all_relevant_chunks(question, top_k, tenant_id, txn_arc)
                 .await?
         };
 
@@ -826,13 +835,14 @@ impl DocumentService {
         document_ids: &[Uuid],
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
         let vs = self.vector_service.read().await;
         let mut all_chunks: Vec<SearchResult> = Vec::new();
 
         for doc_id in document_ids {
-            if let Ok(chunks) = vs.get_document_chunks(*doc_id, tenant_id).await {
-                if let Ok(doc) = vs.get_document(*doc_id, tenant_id).await {
+            if let Ok(chunks) = vs.get_document_chunks(*doc_id, tenant_id, txn_arc).await {
+                if let Ok(doc) = vs.get_document(*doc_id, tenant_id, txn_arc).await {
                     let doc_title = doc.map(|d| d.title);
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
@@ -864,10 +874,11 @@ impl DocumentService {
         question: &str,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
         let vs = self.vector_service.read().await;
 
-        if let Ok(docs) = vs.list_documents(tenant_id).await {
+        if let Ok(docs) = vs.list_documents(tenant_id, txn_arc).await {
             let mut all_chunks: Vec<SearchResult> = Vec::new();
 
             for doc in docs {
@@ -875,7 +886,7 @@ impl DocumentService {
                     continue;
                 }
 
-                if let Ok(chunks) = vs.get_document_chunks(doc.id, tenant_id).await {
+                if let Ok(chunks) = vs.get_document_chunks(doc.id, tenant_id, txn_arc).await {
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
                         if similarity > 0.1 {
@@ -964,6 +975,7 @@ impl DocumentService {
         document_id: Uuid,
         max_length: Option<i32>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<String, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
@@ -971,7 +983,7 @@ impl DocumentService {
             .vector_service
             .read()
             .await
-            .get_document_chunks(document_id, tenant_id)
+            .get_document_chunks(document_id, tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("获取文档分块失败: {}", e)))?;
 
@@ -1000,6 +1012,7 @@ impl DocumentService {
         document_id: Uuid,
         max_points: Option<i32>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<String>, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
@@ -1007,7 +1020,7 @@ impl DocumentService {
             .vector_service
             .read()
             .await
-            .get_document_chunks(document_id, tenant_id)
+            .get_document_chunks(document_id, tenant_id, txn_arc)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("获取文档分块失败: {}", e)))?;
 

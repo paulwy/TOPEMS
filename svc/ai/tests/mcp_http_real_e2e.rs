@@ -50,10 +50,13 @@ async fn dsh_consumes_real_search_mcp_over_http() {
     }
 
     // 真实调用：全局检索（本机投影表为空 → 0 条属数据面正常，与 HTTP /api/search 同源）
+    // search /mcp 端点要求显式 tenant_id（端点无租户中间件），无数据租户只验证返回形状。
+    let tenant_id = std::env::var("REAL_MCP_TENANT_ID")
+        .unwrap_or_else(|_| "00000000-0000-0000-0000-000000000001".to_string());
     let result = registry
         .call_tool(
             "ext.search.search.global",
-            json!({ "query": "订单", "limit": 5 }),
+            json!({ "query": "订单", "limit": 5, "tenant_id": tenant_id }),
         )
         .await
         .expect("ext.search.search.global 应可调用");
@@ -67,7 +70,10 @@ async fn dsh_consumes_real_search_mcp_over_http() {
 
     // 真实调用：搜索建议（空数据面仍返回合法形状）
     let suggest = registry
-        .call_tool("ext.search.search.suggest", json!({ "q": "订" }))
+        .call_tool(
+            "ext.search.search.suggest",
+            json!({ "q": "订", "tenant_id": tenant_id }),
+        )
         .await
         .expect("ext.search.search.suggest 应可调用");
     let _ = match &suggest.content[0] {

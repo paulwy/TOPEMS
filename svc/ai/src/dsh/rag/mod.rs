@@ -652,7 +652,11 @@ impl RagEngine {
         clippy::cast_precision_loss
     )]
     /// 处理检索请求
-    pub async fn retrieve(&self, request: RetrievalRequest) -> RetrievalResponse {
+    pub async fn retrieve(
+        &self,
+        request: RetrievalRequest,
+        txn_arc: Option<&topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    ) -> RetrievalResponse {
         let start_time = std::time::Instant::now();
         let mut stats = RetrievalStats::default();
 
@@ -676,7 +680,7 @@ impl RagEngine {
         // 2. 检索（这里简化实现，实际应该调用向量检索服务）
         let retrieval_start = std::time::Instant::now();
         let documents = self
-            .perform_retrieval(&rewritten_query, &expanded_queries, &request)
+            .perform_retrieval(&rewritten_query, &expanded_queries, &request, txn_arc)
             .await;
         stats.retrieval_duration_ms = retrieval_start.elapsed().as_millis() as u64;
         stats.vector_results = documents.len();
@@ -742,6 +746,7 @@ impl RagEngine {
         _query: &str,
         expanded_queries: &[String],
         _request: &RetrievalRequest,
+        txn_arc: Option<&topems_shared_auth::middleware::tenant::RlsTxnCell>,
     ) -> Vec<RetrievedDocument> {
         // P2-c：若已注入 pool + ai_client，走真实 pgvector 检索（复用 ai_knowledge 同构 SQL）；
         // 否则返回空（兼容旧 with_defaults 调用，如 main.rs 测试态）。
@@ -753,7 +758,7 @@ impl RagEngine {
         let mut seen_doc_ids = std::collections::HashSet::new();
 
         for q in expanded_queries.iter() {
-            match Self::vector_search(db, ai_client, q, 20).await {
+            match Self::vector_search(db, ai_client, q, 20, txn_arc).await {
                 Ok(docs) => {
                     for doc in docs {
                         if !seen_doc_ids.contains(&doc.doc_id) {
@@ -781,6 +786,7 @@ impl RagEngine {
         ai_client: &Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
         query: &str,
         limit: i32,
+        txn_arc: Option<&topems_shared_auth::middleware::tenant::RlsTxnCell>,
     ) -> Result<Vec<RetrievedDocument>, Box<dyn std::error::Error + Send + Sync>> {
         // 复用 ai_knowledge 的 embedding 生成（不重复造向量）
         let query_vector =
@@ -791,7 +797,14 @@ impl RagEngine {
                 &query_vector,
             );
 
-        let mut scope = db.scope_read().await?;
+        let Some(txn_arc) = txn_arc else {
+            return Err("RAG 检索缺少请求事务上下文".into());
+        };
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err("RLS 事务缺失：请求事务未注入".into());
+        };
+        let mut scope = db.scope_with(txn).await?;
 
         let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> =
             sqlx::query_as(only_own_schema_query!(
@@ -1044,7 +1057,7 @@ mod tests {
             filters: None,
             metadata_filters: None,
         };
-        let response = engine.retrieve(request).await;
+        let response = engine.retrieve(request, None).await;
         assert!(response.documents.is_empty());
         assert!(response.context.is_empty());
         assert_eq!(response.stats.vector_results, 0);

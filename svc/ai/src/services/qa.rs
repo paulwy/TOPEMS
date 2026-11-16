@@ -7,6 +7,7 @@ use sqlx::Row;
 use topems_shared_ai::ai_client::{
     create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -166,6 +167,7 @@ impl QAService {
         _top_k: usize,
         tenant_id: Uuid,
         user_name: Option<&str>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建提示词
         let prompt = if let Some(ctx) = context {
@@ -196,11 +198,20 @@ impl QAService {
                 context.map(|c| serde_json::json!({ "context": c })),
                 None,
                 tenant_id,
+                txn_arc,
             )
             .await?;
 
         let _ = self
-            .save_usage_log(qa_id, user_name, tenant_id, "success", duration_ms, tokens)
+            .save_usage_log(
+                qa_id,
+                user_name,
+                tenant_id,
+                "success",
+                duration_ms,
+                tokens,
+                txn_arc,
+            )
             .await;
 
         Ok((answer, vec![], qa_id, confidence))
@@ -215,6 +226,7 @@ impl QAService {
         context_chunks: &[SearchResult],
         tenant_id: Uuid,
         user_name: Option<&str>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建上下文
         let context = context_chunks
@@ -253,11 +265,20 @@ impl QAService {
                 Some(serde_json::json!({ "document_ids": document_ids })),
                 Some(context_chunks),
                 tenant_id,
+                txn_arc,
             )
             .await?;
 
         let _ = self
-            .save_usage_log(qa_id, user_name, tenant_id, "success", duration_ms, tokens)
+            .save_usage_log(
+                qa_id,
+                user_name,
+                tenant_id,
+                "success",
+                duration_ms,
+                tokens,
+                txn_arc,
+            )
             .await;
 
         Ok((answer, context_chunks.to_vec(), qa_id, confidence))
@@ -268,8 +289,10 @@ impl QAService {
         &self,
         limit: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<QAHistory>, TopemsError> {
-        self.get_qa_history_paged(0, limit, tenant_id).await
+        self.get_qa_history_paged(0, limit, tenant_id, txn_arc)
+            .await
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -279,10 +302,17 @@ impl QAService {
         offset: usize,
         limit: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<QAHistory>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
         let rows = sqlx::query(only_own_schema_query!(
@@ -330,10 +360,20 @@ impl QAService {
     }
 
     /// 获取问答历史总数
-    pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, TopemsError> {
+    pub async fn get_qa_history_count(
+        &self,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<i64, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -363,10 +403,17 @@ impl QAService {
         offset: usize,
         limit: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<QAHistory>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
         let rows = sqlx::query(only_own_schema_query!(
@@ -420,10 +467,17 @@ impl QAService {
         &self,
         query: &str,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<i64, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -453,10 +507,17 @@ impl QAService {
         &self,
         qa_id: Uuid,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<bool, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("删除问答历史失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
@@ -487,10 +548,17 @@ impl QAService {
         &self,
         qa_ids: &[Uuid],
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<i64, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("批量删除问答历史失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
@@ -522,10 +590,17 @@ impl QAService {
         feedback: &str,
         rating: Option<i32>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新反馈失败: {}", e)))?;
         sqlx::query(only_own_schema_query!(
@@ -579,14 +654,21 @@ impl QAService {
         status: &str,
         duration_ms: i32,
         tokens: Option<(u64, u64)>,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(), TopemsError> {
         let (tokens_in, tokens_out) = match tokens {
             Some((i, o)) => (Some(i as i64), Some(o as i64)),
             None => (None, None),
         };
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         // 显式设置租户上下文（与 save_qa_history 一致，保证 RLS 租户隔离正确）
@@ -846,6 +928,7 @@ impl QAService {
         history: &[(String, String)],
         context_chunks: &[SearchResult],
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建对话历史
         let history_str: String = history
@@ -904,6 +987,7 @@ impl QAService {
                 })),
                 Some(context_chunks),
                 tenant_id,
+                txn_arc,
             )
             .await?;
 
@@ -918,10 +1002,17 @@ impl QAService {
         context: Option<serde_json::Value>,
         sources: Option<&[SearchResult]>,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Uuid, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         // 显式设置租户上下文（连接池共享连接，避免残留/缺失 GUC 触发 RLS 误判）
@@ -1027,6 +1118,7 @@ impl QAService {
         query: &str,
         top_k: usize,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
         let query_embedding = self.generate_query_embedding(query).await?;
 
@@ -1034,9 +1126,15 @@ impl QAService {
             return Ok(Vec::new());
         }
 
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;
         let results = sqlx::query(only_own_schema_query!(
@@ -1097,12 +1195,21 @@ impl QAService {
         vector_weight: f64,
         keyword_weight: f64,
         tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
-        let vector_results = self.semantic_search(query, top_k * 2, tenant_id).await?;
+        let vector_results = self
+            .semantic_search(query, top_k * 2, tenant_id, txn_arc)
+            .await?;
 
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "RLS 事务缺失：请求事务未注入".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("关键词搜索失败: {}", e)))?;
         let keyword_results = sqlx::query(only_own_schema_query!(
