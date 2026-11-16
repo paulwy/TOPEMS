@@ -5,7 +5,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{commit_test_txn, super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde_json::Value;
@@ -85,12 +85,15 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
         icon: Some("home".to_string()),
         sort_order: Some(1),
     };
+    let txn = test_txn_cell(pool).await;
     let resp = create_group(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(req),
     )
     .await;
+    commit_test_txn(&txn).await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("create_group error: {:?}", resp.message));
@@ -105,6 +108,7 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
 async fn list_groups_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = list_groups(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Extension(super_claims()),
         Query(empty_group_query()),
@@ -122,6 +126,7 @@ async fn create_group_and_list(pool: sqlx::PgPool) {
     let id = create_group_via_handler(&pool, "grp-core", "核心分组").await;
 
     let resp = list_groups(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Query(empty_group_query()),
@@ -141,15 +146,19 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = create_group_via_handler(&pool, "grp-tmp", "临时分组").await;
 
+    let txn = test_txn_cell(&pool).await;
     let del = delete_group(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Path(id),
     )
     .await;
+    commit_test_txn(&txn).await;
     assert!(del.data.is_some(), "delete failed: {:?}", del.message);
 
     let resp = list_groups(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Extension(super_claims()),
         Query(empty_group_query()),
@@ -165,6 +174,7 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
 async fn list_menus_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = list_menus(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Extension(super_claims()),
         Query(empty_menu_query()),
@@ -191,12 +201,15 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
         sort_order: Some(1),
         permissions: Some(serde_json::json!(["dashboard:read"])),
     };
+    let txn = test_txn_cell(&pool).await;
     let created = create_menu(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(req),
     )
     .await;
+    commit_test_txn(&txn).await;
     let data = created
         .data
         .unwrap_or_else(|| panic!("create_menu error: {:?}", created.message));
@@ -205,6 +218,7 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
     assert_eq!(menu["code"], "dashboard");
 
     let resp = list_menus(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Extension(super_claims()),
         Query(empty_menu_query()),
@@ -231,12 +245,15 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         sort_order: None,
         permissions: None,
     };
+    let txn = test_txn_cell(&pool).await;
     let created = create_menu(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(req),
     )
     .await;
+    commit_test_txn(&txn).await;
     let menu_id: uuid::Uuid = serde_json::to_value(
         created
             .data
@@ -248,7 +265,12 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         .parse()
         .unwrap();
 
-    let resp = get_menu(State(test_app_state(pool)), Path(menu_id)).await;
+    let resp = get_menu(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Path(menu_id),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("get_menu error: {:?}", resp.message));
@@ -311,6 +333,7 @@ async fn menu_hits_public_when_flow_shadow_exists(pool: sqlx::PgPool) {
     assert_eq!(public_groups, 1, "菜单必须写入 public 权威表");
 
     let resp = list_groups(
+        Extension(test_txn_cell(&prod_pool).await),
         State(test_app_state(prod_pool)),
         Extension(super_claims()),
         Query(empty_group_query()),

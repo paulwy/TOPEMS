@@ -14,7 +14,9 @@ use uuid::Uuid;
 use crate::models::transfer_order::*;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
+use crate::shared::scope::{
+    arm_short_txn, movement_no, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
+};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -697,7 +699,9 @@ pub async fn ship_transfer(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("transfer.ship");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-08 调拨发货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -705,6 +709,11 @@ pub async fn ship_transfer(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     let order: Option<(String, Uuid)> = match sqlx::query_as(only_own_schema_query!(
         "wms",
@@ -964,7 +973,9 @@ pub async fn ship_transfer(
         tracing::error!("调拨发货事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("发货失败".to_string()));
     }
+    txn_timer.finish();
 
+    // wms-short-txn-exempt: R-05 提交后只读回读（独立只读短事务，不占请求事务连接；见 m1-acceptance §10）
     let mut read_scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1031,7 +1042,9 @@ pub async fn receive_transfer(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("transfer.receive");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-09 调拨收货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1039,6 +1052,11 @@ pub async fn receive_transfer(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     let order: Option<(String, Uuid)> = match sqlx::query_as(only_own_schema_query!(
         "wms",
@@ -1311,7 +1329,9 @@ pub async fn receive_transfer(
         tracing::error!("调拨收货事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("收货失败".to_string()));
     }
+    txn_timer.finish();
 
+    // wms-short-txn-exempt: R-06 提交后只读回读（独立只读短事务，不占请求事务连接；见 m1-acceptance §10）
     let mut read_scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {

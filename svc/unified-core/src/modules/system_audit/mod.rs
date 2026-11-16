@@ -2,10 +2,12 @@
 
 use crate::AppState;
 use axum::extract::{Path, Query, State};
+use axum::Extension;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -61,6 +63,7 @@ pub struct AuditStatsParams {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 pub async fn list_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<AuditLog>> {
@@ -75,7 +78,12 @@ pub async fn list_audit_logs(
     let search = params.search.clone().unwrap_or_default();
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -141,11 +149,17 @@ pub async fn list_audit_logs(
 }
 
 pub async fn get_audit_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AuditLog> {
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -174,6 +188,7 @@ pub async fn get_audit_log(
 }
 
 pub async fn export_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<Value> {
@@ -184,7 +199,12 @@ pub async fn export_audit_logs(
     let search = params.search.clone().unwrap_or_default();
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -231,6 +251,7 @@ pub async fn export_audit_logs(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_audit_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditStatsParams>,
 ) -> ApiResponse<Value> {
@@ -240,7 +261,12 @@ pub async fn get_audit_stats(
         .unwrap_or_else(|| "action".to_string());
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);

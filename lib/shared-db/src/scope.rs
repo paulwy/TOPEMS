@@ -47,6 +47,11 @@ use uuid::Uuid;
 pub struct Db {
     pool: PgPool,
     search_path: Arc<str>,
+    /// 请求上下文守卫（M-1）：开启后请求链路内禁止 `scope()` / `scope_read()` 自开事务。
+    deny_request_own_txn: bool,
+    /// 请求上下文守卫（M-1/B4）：开启后请求链路内禁止 `scope_for_tenant()` /
+    /// `scope_read_for_tenant()` 自开租户事务。按服务逐个开启，不做全局切换。
+    deny_request_tenant_scope: bool,
 }
 
 impl Db {
@@ -55,15 +60,73 @@ impl Db {
         Self {
             pool,
             search_path: Arc::from(search_path.into()),
+            deny_request_own_txn: false,
+            deny_request_tenant_scope: false,
         }
+    }
+
+    /// 开启请求上下文守卫（M-1 试点）：请求链路内调用 [`Db::scope`] / [`Db::scope_read`]
+    /// 直接返回 `Protocol` 错误，强制改用 [`Db::scope_with`] 复用请求事务。
+    ///
+    /// 只影响存在请求租户上下文的调用；后台任务/脚本/显式租户遍历没有上下文，不受影响。
+    /// 这是类型化 `RequestTxn` 落地前的运行期兜底：按服务逐个开启，先保证该服务的
+    /// `own_txn` 归零，再推广到全仓。
+    pub fn deny_request_own_txn(mut self) -> Self {
+        self.deny_request_own_txn = true;
+        self
+    }
+
+    /// 开启「请求链路禁止自开租户作用域」守卫（M-1/B4）。
+    ///
+    /// 开启后，请求上下文内调用 [`Db::scope_for_tenant`] / [`Db::scope_read_for_tenant`]
+    /// 直接返回 `Protocol` 错误，强制改用 [`Db::scope_with`] 复用请求事务。
+    ///
+    /// **按服务显式开启**：只有该服务的请求 handler 全部迁移完成后才允许打开，
+    /// 后台任务/脚本/显式租户遍历没有请求上下文，不受影响。
+    pub fn deny_request_tenant_scope(mut self) -> Self {
+        self.deny_request_tenant_scope = true;
+        self
     }
 
     pub fn search_path(&self) -> &str {
         &self.search_path
     }
 
+    /// 请求上下文里自开事务 = 一个请求占用两条连接且外层回滚失效（§17.2）。
+    fn guard_request_own_txn(&self, entry: &'static str) -> sqlx::Result<()> {
+        if self.deny_request_own_txn
+            && topems_shared_auth::middleware::tenant::current_request_tenant().is_some()
+        {
+            return Err(sqlx::Error::Protocol(
+                format!(
+                    "请求上下文禁止 {entry} 自开事务：请改用 Db::scope_with(&mut req_txn) 复用请求事务；\
+                     后台任务/脚本请用 Db::scope_system()/scope_read_system()"
+                )
+                .into(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// 请求上下文里自开租户事务 = 一个请求占用两条连接且外层回滚失效（M-1/B4）。
+    fn guard_request_tenant_scope(&self, entry: &'static str) -> sqlx::Result<()> {
+        if self.deny_request_tenant_scope
+            && topems_shared_auth::middleware::tenant::current_request_tenant().is_some()
+        {
+            return Err(sqlx::Error::Protocol(
+                format!(
+                    "请求上下文禁止 {entry} 自开租户事务：请改用 Db::scope_with(&mut req_txn) 复用请求事务；\
+                     后台任务/脚本请用 Db::scope_for_tenant()/scope_read_for_tenant() 的独立上下文"
+                )
+                .into(),
+            ));
+        }
+        Ok(())
+    }
+
     /// 读作用域（只读事务 + 事务级 `search_path`）。
     pub async fn scope_read(&self) -> sqlx::Result<ScopedTxn<'_>> {
+        self.guard_request_own_txn("scope_read")?;
         let mut tx = self.pool.begin().await?;
         // 必须是事务内第一条语句。
         sqlx::query("SET TRANSACTION READ ONLY")
@@ -80,6 +143,7 @@ impl Db {
 
     /// 写作用域（读写事务 + 事务级 `search_path`）。
     pub async fn scope(&self) -> sqlx::Result<ScopedTxn<'_>> {
+        self.guard_request_own_txn("scope")?;
         let tx = self.pool.begin().await?;
         let mut scope = ScopedTxn {
             inner: TxRef::Owned(tx),
@@ -129,6 +193,7 @@ impl Db {
     /// `tenant` 为 nil 视为缺少租户上下文，直接报 `Protocol`，不降级为
     /// nil 租户（否则超管/服务身份会静默读写公共行）。
     pub async fn scope_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        self.guard_request_tenant_scope("scope_read_for_tenant")?;
         if tenant.is_nil() {
             return Err(sqlx::Error::Protocol(
                 "RLS context missing: scope_read_for_tenant 收到 nil 租户；\
@@ -154,6 +219,7 @@ impl Db {
     /// 同 [`Db::scope_read_for_tenant`]，仅用于按租户遍历的后台/批处理路径。
     /// `tenant` 为 nil 视为缺少租户上下文，直接报 `Protocol`。
     pub async fn scope_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        self.guard_request_tenant_scope("scope_for_tenant")?;
         if tenant.is_nil() {
             return Err(sqlx::Error::Protocol(
                 "RLS context missing: scope_for_tenant 收到 nil 租户；\
@@ -193,12 +259,33 @@ impl Db {
     }
 
     /// 复用请求级 RLS 事务：只叠加 `SET LOCAL search_path`，不接管提交/回滚。
+    ///
+    /// 事务形参生命周期是泛化的：既接受中间的 `&mut Transaction<'static, _>`，
+    /// 也接受 SAVEPOINT 嵌套事务（`Transaction<'_, _>`）。
     pub async fn scope_with<'a>(
         &self,
-        tx: &'a mut Transaction<'static, Postgres>,
+        tx: &'a mut Transaction<'_, Postgres>,
     ) -> sqlx::Result<ScopedTxn<'a>> {
         let mut scope = ScopedTxn {
-            inner: TxRef::Borrowed(tx),
+            inner: TxRef::Borrowed(&mut **tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_request_tenant().await?;
+        Ok(scope)
+    }
+
+    /// 在给定事务内开一个 SAVEPOINT 子事务作用域（逐行容错导入/批量操作）。
+    ///
+    /// `commit()` 释放保存点，`rollback()` 回滚到保存点，外层请求事务继续可用；
+    /// 未显式收尾时由 sqlx 在连接写缓冲中执行 `ROLLBACK TO SAVEPOINT`（下一次语句前生效）。
+    pub async fn scope_savepoint<'a>(
+        &self,
+        tx: &'a mut Transaction<'_, Postgres>,
+    ) -> sqlx::Result<ScopedTxn<'a>> {
+        let savepoint = sqlx::Acquire::begin(tx).await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Savepoint(savepoint),
             search_path: Arc::clone(&self.search_path),
         };
         scope.apply_search_path().await?;
@@ -225,7 +312,10 @@ pub struct DbPoolStats {
 
 enum TxRef<'a> {
     Owned(Transaction<'static, Postgres>),
-    Borrowed(&'a mut Transaction<'static, Postgres>),
+    /// 借用的事务只取它的连接（请求事务 / SAVEPOINT 子事务），提交回滚不归作用域管。
+    Borrowed(&'a mut PgConnection),
+    /// SAVEPOINT 子事务：`commit` = RELEASE，`rollback`/`Drop` = ROLLBACK TO。
+    Savepoint(Transaction<'a, Postgres>),
     /// `commit` / `rollback` / `Drop` 已接管，避免二次收尾。
     Consumed,
 }
@@ -245,7 +335,8 @@ impl ScopedTxn<'_> {
     fn conn_mut(&mut self) -> &mut PgConnection {
         match &mut self.inner {
             TxRef::Owned(tx) => &mut **tx,
-            TxRef::Borrowed(tx) => &mut ***tx,
+            TxRef::Borrowed(conn) => conn,
+            TxRef::Savepoint(tx) => &mut **tx,
             TxRef::Consumed => unreachable!("ScopedTxn 已收尾，不能再访问连接"),
         }
     }
@@ -294,18 +385,20 @@ impl ScopedTxn<'_> {
         Ok(())
     }
 
-    /// 提交（仅自有事务生效；借用的事务由请求中间件统一提交）。
+    /// 提交（自有事务真正提交；SAVEPOINT 释放保存点；借用的事务由请求中间件统一提交）。
     pub async fn commit(mut self) -> sqlx::Result<()> {
         match std::mem::replace(&mut self.inner, TxRef::Consumed) {
             TxRef::Owned(tx) => tx.commit().await,
+            TxRef::Savepoint(tx) => tx.commit().await,
             TxRef::Borrowed(_) | TxRef::Consumed => Ok(()),
         }
     }
 
-    /// 显式回滚（未显式收尾的自有事务由 `Drop` 交给后台 driver 回滚）。
+    /// 显式回滚（自有事务回滚；SAVEPOINT 回滚到保存点；借用的事务交给中间件）。
     pub async fn rollback(mut self) -> sqlx::Result<()> {
         match std::mem::replace(&mut self.inner, TxRef::Consumed) {
             TxRef::Owned(tx) => tx.rollback().await,
+            TxRef::Savepoint(tx) => tx.rollback().await,
             TxRef::Borrowed(_) | TxRef::Consumed => Ok(()),
         }
     }
@@ -417,5 +510,64 @@ mod tenant_guard_tests {
             matches!(&err, Some(sqlx::Error::Protocol(m)) if m.contains("RLS context missing")),
             "scope_for_tenant(nil) 应返回 Protocol: {err:?}"
         );
+    }
+
+    /// M-1 试点：开启守卫后，请求上下文内 `scope()` / `scope_read()` 必须直接报错，
+    /// 不允许"看起来成功"地再开一条连接/事务。
+    #[tokio::test]
+    async fn request_context_rejects_own_txn_when_guarded() {
+        let Ok(pool) = PgPoolOptions::new().connect_lazy("postgres://u:p@127.0.0.1:1/none") else {
+            return;
+        };
+        let db = Db::new(pool, "tms, public").deny_request_own_txn();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: Uuid::new_v4(),
+            system: false,
+        };
+
+        let (read, write) =
+            topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+                let read = db.scope_read().await.err();
+                let write = db.scope().await.err();
+                (read, write)
+            })
+            .await;
+
+        for err in [read, write] {
+            assert!(
+                matches!(&err, Some(sqlx::Error::Protocol(m)) if m.contains("禁止")),
+                "请求上下文内自开事务应被拒绝，实际: {err:?}"
+            );
+        }
+    }
+
+    /// M-1/B4：开启租户作用域守卫后，请求上下文内
+    /// `scope_for_tenant()` / `scope_read_for_tenant()` 必须直接报错。
+    #[tokio::test]
+    async fn request_context_rejects_tenant_scope_when_guarded() {
+        let Ok(pool) = PgPoolOptions::new().connect_lazy("postgres://u:p@127.0.0.1:1/none") else {
+            return;
+        };
+        let db = Db::new(pool, "qms, public").deny_request_tenant_scope();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: Uuid::new_v4(),
+            system: false,
+        };
+        let tenant = ctx.tenant;
+
+        let (read, write) =
+            topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+                let read = db.scope_read_for_tenant(tenant).await.err();
+                let write = db.scope_for_tenant(tenant).await.err();
+                (read, write)
+            })
+            .await;
+
+        for err in [read, write] {
+            assert!(
+                matches!(&err, Some(sqlx::Error::Protocol(m)) if m.contains("禁止")),
+                "请求上下文内自开租户作用域应被拒绝，实际: {err:?}"
+            );
+        }
     }
 }

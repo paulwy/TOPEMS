@@ -203,7 +203,9 @@ async fn build_router_inner(
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
-        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "public, shared"),
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
         pool: ctx.db.clone(),
         health_config,
         ws_state: ws_state.clone(),

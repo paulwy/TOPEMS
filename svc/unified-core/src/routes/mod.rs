@@ -51,12 +51,12 @@ use axum::routing::{any, get, post};
 use axum::Router;
 
 use topems_shared_auth::auth::auth_middleware;
+use topems_shared_auth::middleware::tenant::tenant_middleware;
 use topems_shared_core::api_version::get_api_info_handler;
 use topems_shared_core::api_version::register_routes_with_legacy_alias;
 
 use crate::handlers;
 use crate::middleware;
-use crate::middleware::tenant_rls::tenant_rls_middleware;
 use crate::modules;
 use crate::AppState;
 
@@ -212,6 +212,19 @@ pub fn create_routes(
         // [2026-10-24] V436 Business Tools 端点（/business-tools + permissions/audit 写路由）：
         // 由 public_routes（无 auth）迁入 auth 层保护集；嵌入模式随之挂载（此前整体丢弃）。
         .merge(business_tools::business_tools_routes())
+        // 请求事务复用（M-1）：auth_middleware 在外层注入 Claims 与租户 task-local，
+        // 本层在内侧开启请求事务并注入 RlsTxnCell，handler 用 scope_with 复用。
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            tenant_middleware(),
+        ))
+        // 业务操作审计（写 core_operation_logs）：放在 auth 之内（可读取 Claims）、
+        // tenant 之外（能看到请求事务收尾后的最终状态码，含 commit 失败改写为 500 的情形）。
+        // 只覆盖受保护业务路由；健康检查/静态/公开路由（含登录注册）不在本层，天然跳过。
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            modules::audit::operation_audit_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -262,10 +275,6 @@ pub fn create_routes(
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             handlers::body_limit_middleware_fn,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            tenant_rls_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),

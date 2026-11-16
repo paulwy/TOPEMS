@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -29,6 +30,7 @@ use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserRespo
 )]
 #[axum::debug_handler]
 pub async fn list_users(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListUsersParams>,
@@ -46,7 +48,15 @@ pub async fn list_users(
 
     // 登录后的列表读取必须走请求作用域（租户通道）。裸池在严格 RLS 下读
     // `core_tenant_users` 会得到 0 行，导致非超管用户列表恒为空。
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -212,6 +222,7 @@ struct CreateUserRequest {
 )]
 #[axum::debug_handler]
 pub async fn create_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
@@ -221,7 +232,7 @@ pub async fn create_user(
 
     let operator_id = &claims.sub;
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => {
             return tenant_scope::forbidden("缺少租户上下文，无法创建租户用户");
@@ -371,8 +382,21 @@ pub async fn create_user(
     //
     // 写入必须带显式租户通道：`core_tenant_users` 已 FORCE RLS，裸池无 GUC 时
     // INSERT 会被 fail-closed 策略拒绝（42501）。平台通道走系统作用域。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
-        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "数据库事务上下文缺失",
+                    )),
+                );
+            };
+            state.db.scope_with(txn).await
+        }
         IamScope::Platform => state.db.scope_system().await,
     };
     let mut tx = match tx_result {
@@ -503,6 +527,7 @@ pub async fn create_user(
 }
 
 pub async fn get_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -524,12 +549,14 @@ pub async fn get_user(
         }
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, &txn_arc, scope, user_id, claims.is_superuser)
+        .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -624,6 +651,7 @@ pub async fn get_user(
 }
 
 pub async fn update_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -648,12 +676,14 @@ pub async fn update_user(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法修改用户"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, &txn_arc, scope, user_id, claims.is_superuser)
+        .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -795,6 +825,7 @@ pub async fn update_user(
 }
 
 pub async fn delete_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -828,12 +859,14 @@ pub async fn delete_user(
         );
     }
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:delete") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法删除用户"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, &txn_arc, scope, user_id, claims.is_superuser)
+        .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权删除超级管理员"),

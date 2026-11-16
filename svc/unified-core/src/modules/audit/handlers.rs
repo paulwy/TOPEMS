@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
@@ -34,6 +35,7 @@ pub(crate) fn claims_tenant_filter(claims: &Claims) -> Option<Uuid> {
 }
 
 pub async fn list_operation_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<OperationLogQuery>,
@@ -43,7 +45,12 @@ pub async fn list_operation_logs(
     let offset = (page - 1) * page_size;
 
     let tenant_id = claims_tenant_filter(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计查询作用域创建失败: {}", e);
@@ -163,12 +170,18 @@ pub async fn list_operation_logs(
 }
 
 pub async fn get_operation_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OperationLog> {
     let tenant_id = claims_tenant_filter(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计详情作用域创建失败: {}", e);
@@ -208,11 +221,17 @@ pub async fn get_operation_log(
 }
 
 pub async fn get_operation_log_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<OperationLogStatsResponse> {
     let tenant_id = claims_tenant_filter(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计统计作用域创建失败: {}", e);
@@ -283,6 +302,7 @@ pub async fn get_operation_log_stats(
 // ===== 权限变更审计 handlers（调用 audit_query 真实实现） =====
 
 pub async fn list_permission_changes(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -302,7 +322,9 @@ pub async fn list_permission_changes(
         page: query.page,
         page_size: query.page_size,
     };
-    let result = super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
+    let result =
+        super::audit_query::query_audit_logs(Extension(txn_arc), State(state), Query(audit_params))
+            .await;
     match result.data {
         Some(paginated) => {
             let items: Vec<serde_json::Value> = paginated
@@ -326,10 +348,16 @@ pub async fn list_permission_changes(
 }
 
 pub async fn get_permission_change(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("权限变更详情作用域创建失败: {}", e);
@@ -381,6 +409,7 @@ pub async fn get_permission_change(
 }
 
 pub async fn get_permission_change_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
 ) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
@@ -399,7 +428,12 @@ pub async fn get_permission_change_stats(
         page: None,
         page_size: None,
     };
-    let result = super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
+    let result = super::audit_query::get_audit_log_stats(
+        Extension(txn_arc),
+        State(state),
+        Query(audit_params),
+    )
+    .await;
     match result.data {
         Some(stats) => {
             let by_action: std::collections::HashMap<String, i64> = stats
@@ -440,6 +474,7 @@ pub async fn get_permission_change_stats(
 }
 
 pub async fn export_permission_changes(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
 ) -> axum::response::Response {
@@ -453,7 +488,13 @@ pub async fn export_permission_changes(
         user_id: query.user_id.clone(),
         search: None,
     };
-    match super::audit_query::export_audit_logs(State(state), Query(export_params)).await {
+    match super::audit_query::export_audit_logs(
+        Extension(txn_arc),
+        State(state),
+        Query(export_params),
+    )
+    .await
+    {
         Ok(resp) => resp,
         Err(resp) => resp,
     }
@@ -462,6 +503,7 @@ pub async fn export_permission_changes(
 // ===== 访问控制审计 handlers（调用 audit_query 真实实现） =====
 
 pub async fn list_access_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -481,7 +523,9 @@ pub async fn list_access_logs(
         page: query.page,
         page_size: query.page_size,
     };
-    let result = super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
+    let result =
+        super::audit_query::query_audit_logs(Extension(txn_arc), State(state), Query(audit_params))
+            .await;
     match result.data {
         Some(paginated) => {
             let items: Vec<serde_json::Value> = paginated
@@ -505,10 +549,16 @@ pub async fn list_access_logs(
 }
 
 pub async fn get_access_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -567,7 +617,10 @@ pub async fn get_access_log(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_access_log_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+pub async fn get_access_log_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
         source: Some("audit_logs".to_string()),
         user_id: None,
@@ -584,7 +637,12 @@ pub async fn get_access_log_stats(State(state): State<AppState>) -> ApiResponse<
         page: None,
         page_size: None,
     };
-    let result = super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
+    let result = super::audit_query::get_audit_log_stats(
+        Extension(txn_arc),
+        State(state),
+        Query(audit_params),
+    )
+    .await;
     match result.data {
         Some(stats) => {
             let _by_action: std::collections::HashMap<String, i64> = stats
@@ -612,6 +670,7 @@ pub async fn get_access_log_stats(State(state): State<AppState>) -> ApiResponse<
 }
 
 pub async fn export_access_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
 ) -> axum::response::Response {
@@ -625,7 +684,13 @@ pub async fn export_access_logs(
         user_id: query.user_id.clone(),
         search: None,
     };
-    match super::audit_query::export_audit_logs(State(state), Query(export_params)).await {
+    match super::audit_query::export_audit_logs(
+        Extension(txn_arc),
+        State(state),
+        Query(export_params),
+    )
+    .await
+    {
         Ok(resp) => resp,
         Err(resp) => resp,
     }

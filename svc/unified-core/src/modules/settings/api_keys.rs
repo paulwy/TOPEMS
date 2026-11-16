@@ -17,6 +17,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
@@ -68,6 +69,7 @@ fn is_allowed_type(t: &str) -> bool {
 
 /// `GET /system/api-keys`
 pub async fn list_api_keys(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ApiKeyEntry>> {
@@ -78,7 +80,15 @@ pub async fn list_api_keys(
     };
     let pattern = format!("{}%", API_KEY_PREFIX);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "获取 API Key 列表失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create API key read scope: {}", e);
@@ -131,6 +141,7 @@ pub async fn list_api_keys(
 
 /// `POST /system/api-keys`
 pub async fn create_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateApiKeyRequest>,
@@ -173,7 +184,15 @@ pub async fn create_api_key(
         }
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "创建 API Key 失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create API key write scope: {}", e);
@@ -209,6 +228,7 @@ pub async fn create_api_key(
 
 /// `DELETE /system/api-keys/{id}`
 pub async fn delete_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -216,7 +236,15 @@ pub async fn delete_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "删除 API Key 失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create API key write scope: {}", e);
@@ -247,6 +275,7 @@ pub async fn delete_api_key(
 
 /// `GET /system/api-keys/{id}`
 pub async fn get_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -254,7 +283,15 @@ pub async fn get_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "获取 API Key 详情失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create API key read scope: {}", e);
@@ -309,6 +346,7 @@ pub struct UpdateApiKeyRequest {
 
 /// `PUT /system/api-keys/{id}`
 pub async fn update_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -317,7 +355,15 @@ pub async fn update_api_key(
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "更新 API Key 失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create API key write scope: {}", e);

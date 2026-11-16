@@ -40,6 +40,22 @@ fn jwt_secret() -> String {
     "topems-test-jwt-secret-key-0123456789abcdef-0123456789".to_string()
 }
 
+/// 请求事务句柄：与 tenant_middleware 注入的 `RlsTxnCell` 等价。
+pub type TestTxnCell = topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+/// 开启一个测试请求事务，供 handler 通过 `Extension(txn)` 复用。
+pub async fn test_txn_cell(pool: &sqlx::PgPool) -> TestTxnCell {
+    let txn = pool.begin().await.expect("begin test request txn");
+    Arc::new(TokioMutex::new(Some(txn)))
+}
+
+/// 提交并释放请求事务（模拟 tenant_middleware 收尾提交）。
+pub async fn commit_test_txn(cell: &TestTxnCell) {
+    if let Some(txn) = cell.lock().await.take() {
+        txn.commit().await.expect("commit test request txn");
+    }
+}
+
 /// 构造完整 AppState（dyn trait 用 InMemory 实现，encryption 置 None）。
 pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
     let auth_state = AuthState::new(jwt_secret(), jwt_secret(), 24);

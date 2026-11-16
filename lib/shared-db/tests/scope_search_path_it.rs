@@ -354,3 +354,63 @@ async fn scope_for_tenant_sets_guc() {
     assert_eq!(system, "off");
     scope.commit().await.unwrap();
 }
+
+/// K14 试点：请求事务内逐行 SAVEPOINT —— 单行失败只回滚该行，后续行仍可写入，
+/// 且失败行不会被外层请求事务提交。临时表随事务回滚消失，不落任何持久副作用。
+#[tokio::test]
+async fn scope_savepoint_isolates_failed_rows() {
+    let Some(url) = database_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+    let pool = pool_with_baseline(&url, 1).await;
+    let db = Db::new(pool.clone(), "public");
+    let mut txn = pool.begin().await.unwrap();
+    sqlx::query("CREATE TEMP TABLE sp_pilot (id int PRIMARY KEY) ON COMMIT DROP")
+        .execute(&mut *txn)
+        .await
+        .unwrap();
+
+    let ctx = RlsRequestTenant {
+        tenant: test_tenant(),
+        system: false,
+    };
+    scope_request_tenant(ctx, async {
+        // 行 1：成功 → RELEASE 保存点
+        let mut s = db.scope_savepoint(&mut txn).await.unwrap();
+        sqlx::query("INSERT INTO sp_pilot (id) VALUES (1)")
+            .execute(&mut s)
+            .await
+            .unwrap();
+        s.commit().await.unwrap();
+
+        // 行 2：主键冲突 → 回滚到保存点，外层事务不进入 aborted
+        let mut s = db.scope_savepoint(&mut txn).await.unwrap();
+        let err = sqlx::query("INSERT INTO sp_pilot (id) VALUES (1)")
+            .execute(&mut s)
+            .await
+            .expect_err("重复主键应报错");
+        println!("[row2 failed] {err}");
+        s.rollback().await.unwrap();
+
+        // 行 3：失败行之后仍可继续写入（原「独立事务」语义）
+        let mut s = db.scope_savepoint(&mut txn).await.unwrap();
+        sqlx::query("INSERT INTO sp_pilot (id) VALUES (3)")
+            .execute(&mut s)
+            .await
+            .unwrap();
+        s.commit().await.unwrap();
+
+        let mut s = db.scope_with(&mut txn).await.unwrap();
+        let ids: Vec<i32> = sqlx::query_scalar("SELECT id FROM sp_pilot ORDER BY id")
+            .fetch_all(&mut s)
+            .await
+            .unwrap();
+        s.commit().await.unwrap();
+        println!("[after rows] ids = {ids:?}");
+        assert_eq!(ids, vec![1, 3], "失败行不得写入，成功行必须保留");
+    })
+    .await;
+
+    txn.rollback().await.unwrap();
+}

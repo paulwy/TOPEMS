@@ -14,6 +14,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
@@ -121,11 +122,12 @@ async fn resolve_tenant(
 
 async fn check_user(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     claims: &Claims,
     scope: IamScope,
     user_id: Uuid,
 ) -> Result<(), (StatusCode, Json<serde_json::Value>)> {
-    match tenant_scope::check_user_target(db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(db, txn_arc, scope, user_id, claims.is_superuser).await {
         Ok(UserTarget::Ok) => Ok(()),
         Ok(UserTarget::NotFound) => Err(tenant_scope::not_found_detail("用户不存在")),
         Ok(UserTarget::Superuser) => Err(tenant_scope::forbidden("无权修改超级管理员")),
@@ -174,6 +176,7 @@ async fn list_scopes(
     )
 )]
 pub async fn get_user_company_scopes(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
@@ -184,11 +187,11 @@ pub async fn get_user_company_scopes(
         Err(resp) => return resp,
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看主体范围"),
     };
-    if let Err(resp) = check_user(&state.db, &claims, scope, user_uuid).await {
+    if let Err(resp) = check_user(&state.db, &txn_arc, &claims, scope, user_uuid).await {
         return resp;
     }
 
@@ -236,6 +239,7 @@ pub async fn get_user_company_scopes(
     )
 )]
 pub async fn update_user_company_scopes(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
@@ -247,11 +251,11 @@ pub async fn update_user_company_scopes(
         Err(resp) => return resp,
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法配置主体范围"),
     };
-    if let Err(resp) = check_user(&state.db, &claims, scope, user_uuid).await {
+    if let Err(resp) = check_user(&state.db, &txn_arc, &claims, scope, user_uuid).await {
         return resp;
     }
 

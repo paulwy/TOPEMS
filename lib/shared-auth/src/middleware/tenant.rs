@@ -153,6 +153,75 @@ pub fn register_request_finalizer(task: tokio::task::JoinHandle<()>) -> bool {
         .is_ok()
 }
 
+/// 提交后动作：返回一个可等待的 future，由中间件在事务提交成功后调用。
+pub type PostCommitAction =
+    Box<dyn FnOnce() -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> + Send>;
+
+/// 请求级「提交后动作」队列（K13 试点）。
+///
+/// handler 把「必须在事务提交后才生效」的副作用（目前只有事件发布）登记进来，
+/// 由 `tenant_middleware` 在事务提交成功后统一执行；事务回滚 / 非 2xx / 提交失败时
+/// 整队丢弃，因此不会出现「事件已发出、数据已回滚」的幻影事件。
+///
+/// 只有显式登记的调用方受影响；未登记的发布路径行为不变。
+#[derive(Default)]
+pub struct PostCommitQueue {
+    actions: std::sync::Mutex<Vec<PostCommitAction>>,
+}
+
+impl PostCommitQueue {
+    pub fn new() -> std::sync::Arc<Self> {
+        std::sync::Arc::new(Self::default())
+    }
+
+    fn push(&self, action: PostCommitAction) {
+        // 锁中毒只影响登记是否成功，不影响已入队动作的执行。
+        if let Ok(mut actions) = self.actions.lock() {
+            actions.push(action);
+        }
+    }
+
+    /// 已登记、尚未执行的动作数量。
+    pub fn len(&self) -> usize {
+        self.actions.lock().map_or(0, |actions| actions.len())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    fn take(&self) -> Vec<PostCommitAction> {
+        match self.actions.lock() {
+            Ok(mut actions) => std::mem::take(&mut *actions),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    /// 事务提交成功后按登记顺序执行；单个动作失败由动作自行处理，不阻断后续动作。
+    pub async fn flush(&self) {
+        for action in self.take() {
+            action().await;
+        }
+    }
+
+    /// 事务未提交时丢弃全部动作，返回丢弃数量（仅用于日志）。
+    pub fn discard(&self) -> usize {
+        self.take().len()
+    }
+}
+
+tokio::task_local! {
+    static POST_COMMIT_QUEUE: std::sync::Arc<PostCommitQueue>;
+}
+
+/// 登记一个「提交后执行」的动作；返回 `false` 表示当前不在请求事务作用域内
+/// （后台任务/事件桥/CLI），调用方应保持原有的立即执行语义。
+pub fn defer_post_commit(action: PostCommitAction) -> bool {
+    POST_COMMIT_QUEUE
+        .try_with(|queue| queue.push(action))
+        .is_ok()
+}
+
 /// 请求收尾统一处理：2xx 提交，非 2xx 回滚。
 ///
 /// `sqlx::Transaction` 未显式 commit 时 drop 即 ROLLBACK（写丢失）。handler 可能
@@ -189,11 +258,28 @@ async fn finish_response(
     method: &axum::http::Method,
     path: &str,
     finalizers: std::sync::Arc<RequestFinalizers>,
+    post_commit: std::sync::Arc<PostCommitQueue>,
 ) -> Response {
     let status = resp.status();
     let finalize_result = finalize_request_txn(cell, status, method, path).await;
     // handler 内 `ScopedTxn` 的回滚必须在这里等完：否则响应先返回，连接还开着事务。
     finalizers.drain().await;
+    // 只有「事务确实提交成功」才执行提交后动作；回滚/非 2xx 整队丢弃。
+    if finalize_result.is_ok() && status.is_success() {
+        post_commit.flush().await;
+    } else {
+        let discarded = post_commit.discard();
+        if discarded > 0 {
+            tracing::info!(
+                target: "rls_txn",
+                method = %method,
+                path = %path,
+                status = status.as_u16(),
+                discarded,
+                "事务未提交，丢弃待发事件"
+            );
+        }
+    }
     match finalize_result {
         Ok(()) => resp,
         Err(e) => {
@@ -557,10 +643,14 @@ pub fn tenant_middleware() -> impl Fn(
             let method = req.method().clone();
             let path = req.uri().path().to_string();
             let finalizers = RequestFinalizers::new();
-            let resp = REQUEST_FINALIZERS
-                .scope(finalizers.clone(), next.run(req))
+            let post_commit = PostCommitQueue::new();
+            let resp = POST_COMMIT_QUEUE
+                .scope(
+                    post_commit.clone(),
+                    REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req)),
+                )
                 .await;
-            finish_response(resp, txn_cell, &method, &path, finalizers).await
+            finish_response(resp, txn_cell, &method, &path, finalizers, post_commit).await
         })
     }
 }
@@ -886,5 +976,60 @@ mod request_finalizer_tests {
             .await;
         assert!(inside, "请求作用域内应登记成功");
         finalizers.drain().await;
+    }
+
+    #[test]
+    fn defer_post_commit_requires_request_scope() {
+        assert!(
+            !defer_post_commit(Box::new(|| Box::pin(async {}))),
+            "无请求作用域时应返回 false，由调用方保持立即发布"
+        );
+    }
+
+    #[tokio::test]
+    async fn flush_runs_post_commit_actions() {
+        let queue = PostCommitQueue::new();
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let c = counter.clone();
+        let registered = POST_COMMIT_QUEUE
+            .scope(queue.clone(), async move {
+                defer_post_commit(Box::new(move || {
+                    let c = c.clone();
+                    Box::pin(async move {
+                        c.fetch_add(1, Ordering::SeqCst);
+                    })
+                }))
+            })
+            .await;
+        assert!(registered, "请求作用域内应登记成功");
+        assert_eq!(queue.len(), 1);
+        queue.flush().await;
+        assert_eq!(counter.load(Ordering::SeqCst), 1, "提交成功后必须执行");
+        assert_eq!(queue.len(), 0);
+    }
+
+    /// 回滚 / 非 2xx 路径的证据：中间件丢弃队列后，动作不会被执行。
+    #[tokio::test]
+    async fn discard_drops_post_commit_actions() {
+        let queue = PostCommitQueue::new();
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let c = counter.clone();
+        POST_COMMIT_QUEUE
+            .scope(queue.clone(), async move {
+                assert!(defer_post_commit(Box::new(move || {
+                    let c = c.clone();
+                    Box::pin(async move {
+                        c.fetch_add(1, Ordering::SeqCst);
+                    })
+                })));
+            })
+            .await;
+        assert_eq!(queue.discard(), 1, "回滚时应丢弃 1 个待发事件");
+        queue.flush().await;
+        assert_eq!(
+            counter.load(Ordering::SeqCst),
+            0,
+            "被丢弃的事件不得在后续 flush 中补发"
+        );
     }
 }

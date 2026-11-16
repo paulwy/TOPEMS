@@ -16,7 +16,9 @@ use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{release_request_txn, tenant_of, wms_db};
+use crate::shared::scope::{
+    arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
+};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
@@ -650,7 +652,9 @@ pub async fn start_stock_take(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("stock_take.start");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-01 盘点开始独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -658,6 +662,11 @@ pub async fn start_stock_take(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     // 状态类 0 行 → 409；不存在 → 404。
     let started = sqlx::query(only_own_schema_query!(
@@ -753,7 +762,9 @@ pub async fn start_stock_take(
         tracing::error!("盘点事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("开始盘点失败".to_string()));
     }
+    txn_timer.finish();
 
+    // wms-short-txn-exempt: R-01 提交后只读回读（独立只读短事务，不占请求事务连接；见 m1-acceptance §10）
     let mut read_scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1088,7 +1099,9 @@ pub async fn count_stock_take(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("stock_take.count");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-02 盘点计数独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1096,6 +1109,11 @@ pub async fn count_stock_take(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     for item in &items {
         if item.counted_quantity < 0.0 {
@@ -1186,6 +1204,7 @@ pub async fn count_stock_take(
         tracing::error!("盘点计数事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("盘点计数失败".to_string()));
     }
+    txn_timer.finish();
 
     ApiResponse::success(
         serde_json::json!({ "message": "盘点计数完成" }),
@@ -1534,7 +1553,9 @@ pub async fn complete_stock_take(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("stock_take.complete");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-03 盘点完成独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1542,6 +1563,11 @@ pub async fn complete_stock_take(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     let stats_result = sqlx::query(
         only_own_schema_query!("wms", r#"
@@ -1682,7 +1708,9 @@ pub async fn complete_stock_take(
         tracing::error!("完成盘点事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("完成盘点失败".to_string()));
     }
+    txn_timer.finish();
 
+    // wms-short-txn-exempt: R-02 提交后只读回读（独立只读短事务，不占请求事务连接；见 m1-acceptance §10）
     let mut read_scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1789,7 +1817,9 @@ pub async fn adjust_stock_take(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("stock_take.adjust");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-04 盘点调整独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1797,6 +1827,11 @@ pub async fn adjust_stock_take(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     let organization_id = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
         "wms",
@@ -1956,6 +1991,7 @@ pub async fn adjust_stock_take(
         tracing::error!("库存调整事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()));
     }
+    txn_timer.finish();
 
     ApiResponse::success(
         serde_json::json!({ "message": "库存调整完成" }),

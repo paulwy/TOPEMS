@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::modules::iam::tenant_scope::{self, IamScope, RoleTarget};
@@ -99,11 +100,13 @@ struct RoleResponse {
     )
 )]
 pub async fn list_roles(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
+    let mut guard = txn_arc.lock().await;
     // `core_roles` 是 FORCE RLS 表：租户管理员必须走租户读通道才能看到本租户角色；
     // 裸池无 GUC 时只能看到全局角色，新建的租户域角色会“建完即消失”。
     let result = if claims.is_superuser {
@@ -120,9 +123,13 @@ pub async fn list_roles(
             Err(e) => Err(e),
         }
     } else {
-        match tenant_scope::read_scope(&claims) {
+        match tenant_scope::iam_read_scope(&claims) {
             Ok(IamScope::Tenant(tenant_id)) => {
-                match state.db.scope_read_for_tenant(tenant_id).await {
+                let Some(txn) = guard.as_mut() else {
+                    tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                    return json_error(500, "数据库事务上下文缺失");
+                };
+                match state.db.scope_with(txn).await {
                     Ok(mut scope) => {
                         let result = sqlx::query_as::<_, RoleRow>(
                         "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1 OR tenant_id IS NULL) ORDER BY created_at DESC",
@@ -179,6 +186,7 @@ pub async fn list_roles(
 }
 
 pub async fn create_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
@@ -207,7 +215,7 @@ pub async fn create_role(
     )
     .unwrap_or_default();
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法创建角色"),
     };
@@ -236,9 +244,16 @@ pub async fn create_role(
     // `core_roles` 是 FORCE RLS 表：裸池无 GUC 时 INSERT 会被 42501 拒绝。
     // 租户管理员写本租户角色走租户通道；平台分支写的是全局/平台角色，
     // tenant-system: 该分支的 `tenant_id` 允许为空/平台值，必须走系统写通道，
-    // 且只有 write_scope 判定为 Platform（超管或 admin:iam:write）才会进入。
+    // 且只有 iam_write_scope 判定为 Platform（超管或 admin:iam:write）才会进入。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
-        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
         IamScope::Platform => state.db.scope_system().await,
     };
     let mut tx = match tx_result {
@@ -345,6 +360,7 @@ pub async fn create_role(
     )
 )]
 pub async fn get_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -361,7 +377,7 @@ pub async fn get_role(
         }
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法查看角色"),
     };
@@ -371,9 +387,16 @@ pub async fn get_role(
     };
 
     // 与 list_roles 同口径：租户域角色必须经租户读通道才可见。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
         IamScope::Platform => state.db.scope_read_system().await,
-        IamScope::Tenant(tenant_id) => state.db.scope_read_for_tenant(tenant_id).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
     };
     let mut tx = match tx_result {
         Ok(tx) => tx,
@@ -432,6 +455,7 @@ pub async fn get_role(
 }
 
 pub async fn update_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -454,14 +478,14 @@ pub async fn update_role(
     };
 
     // 写作用域：平台管理员全量；租户管理员仅本租户，缺租户上下文直接拒绝。
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法更新角色"),
     };
 
     // 存在性与可写性判定必须走作用域事务：core_roles 是 FORCE RLS 表，
     // 裸池无 GUC 时本租户角色会被过滤成“不存在”，SQL 错误也不得伪装成 404。
-    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_write_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(tenant_scope::RoleWriteTarget::Ok) => {}
         Ok(tenant_scope::RoleWriteTarget::NotFound) => {
             return json_error(404, "角色不存在");
@@ -502,9 +526,16 @@ pub async fn update_role(
     };
 
     // 作用域写事务：core_roles 为 FORCE RLS，裸池事务在严格策略下会 0 行更新。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
         IamScope::Platform => state.db.scope_system().await,
-        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
     };
     let mut tx = match tx_result {
         Ok(tx) => tx,
@@ -656,6 +687,7 @@ pub async fn update_role(
 }
 
 pub async fn delete_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -673,13 +705,13 @@ pub async fn delete_role(
     };
 
     // 写作用域：平台管理员全量；租户管理员仅本租户，缺租户上下文直接拒绝。
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:delete") {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法删除角色"),
     };
 
     // 存在性与可写性判定走作用域事务：裸池无 GUC 时本租户角色被 RLS 过滤成“不存在”。
-    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_write_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(tenant_scope::RoleWriteTarget::Ok) => {}
         Ok(tenant_scope::RoleWriteTarget::NotFound) => {
             return json_error(404, "角色不存在");
@@ -694,9 +726,16 @@ pub async fn delete_role(
     }
 
     // 作用域写事务：core_roles 为 FORCE RLS，裸池事务无法删除租户域角色。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
         IamScope::Platform => state.db.scope_system().await,
-        IamScope::Tenant(tenant_id) => state.db.scope_for_tenant(tenant_id).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
     };
     let mut tx = match tx_result {
         Ok(tx) => tx,
@@ -806,6 +845,7 @@ pub async fn delete_role(
 
 /// GET /roles/{id}/permissions — 列出角色已授权的权限 code 列表
 pub async fn get_role_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -820,12 +860,12 @@ pub async fn get_role_permissions(
         }
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法查看角色权限"),
     };
 
-    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         // 集合类：角色不存在或跨租户/平台角色时返回空列表，不泄露存在性
         Ok(RoleTarget::NotFound) => {
@@ -865,6 +905,7 @@ pub async fn get_role_permissions(
 /// POST /roles/{id}/permissions — 为角色授权权限
 /// body 兼容三种形态：{permission_id}、{permission_code}、{permission_ids:[...]}
 pub async fn add_role_permission(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -880,13 +921,13 @@ pub async fn add_role_permission(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法授权角色"),
     };
 
     // 写路径只允许本租户角色：全局角色为所有租户共用，租户管理员不得改动其权限面。
-    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_write_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(tenant_scope::RoleWriteTarget::Ok) => {}
         Ok(tenant_scope::RoleWriteTarget::NotFound) => {
             return json_error(404, "角色不存在");
@@ -976,6 +1017,7 @@ pub async fn add_role_permission(
 
 /// DELETE /roles/{id}/permissions/{permission_id} — 移除角色的权限授权
 pub async fn remove_role_permission(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, permission_id)): Path<(String, String)>,
@@ -999,13 +1041,13 @@ pub async fn remove_role_permission(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:delete") {
         Ok(scope) => scope,
         Err(_) => return json_error(403, "缺少租户上下文，无法移除角色权限"),
     };
 
     // 写路径只允许本租户角色：全局角色为所有租户共用，租户管理员不得改动其权限面。
-    match tenant_scope::check_role_write_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_write_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(tenant_scope::RoleWriteTarget::Ok) => {}
         Ok(tenant_scope::RoleWriteTarget::NotFound) => {
             return json_error(404, "角色不存在");

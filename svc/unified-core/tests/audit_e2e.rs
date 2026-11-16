@@ -5,7 +5,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Query, State};
 use axum::Extension;
 use topems_unified_core::modules::audit::handlers::list_operation_logs;
@@ -109,6 +109,7 @@ async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
     assert_eq!(created.data.as_ref().unwrap().username, "alice");
 
     let resp = list_login_logs(
+        Extension(test_txn_cell(&pool).await),
         State(state),
         Extension(super_claims()),
         Query(empty_login_query()),
@@ -123,8 +124,10 @@ async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn operation_logs_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let resp = list_operation_logs(
+        Extension(txn),
         State(state),
         Extension(super_claims()),
         Query(empty_op_query()),
@@ -151,8 +154,10 @@ async fn operation_logs_with_data_lists_one(pool: sqlx::PgPool) {
     .await
     .unwrap();
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let resp = list_operation_logs(
+        Extension(txn),
         State(state),
         Extension(super_claims()),
         Query(empty_op_query()),
@@ -245,8 +250,14 @@ async fn audit_query_excludes_soft_deleted_rows(pool: sqlx::PgPool) {
         .unwrap();
     }
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let resp = query_audit_logs(State(state.clone()), Query(empty_audit_query())).await;
+    let resp = query_audit_logs(
+        Extension(txn.clone()),
+        State(state.clone()),
+        Query(empty_audit_query()),
+    )
+    .await;
     assert!(resp.success, "query_audit_logs failed: {:?}", resp.message);
     let body = resp.data.expect("data missing");
     assert_eq!(body.total, 2, "软删行不应计入 total");
@@ -256,7 +267,7 @@ async fn audit_query_excludes_soft_deleted_rows(pool: sqlx::PgPool) {
         "软删行 delete_project 不应返回"
     );
 
-    let stats = get_audit_log_stats(State(state), Query(empty_audit_query())).await;
+    let stats = get_audit_log_stats(Extension(txn), State(state), Query(empty_audit_query())).await;
     assert!(
         stats.success,
         "get_audit_log_stats failed: {:?}",

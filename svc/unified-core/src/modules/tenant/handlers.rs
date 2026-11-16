@@ -12,10 +12,12 @@ use super::models::*;
 use crate::modules::iam::auth::validate_password_strength;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<ListTenantsQuery>,
 ) -> Json<CoreResponse<ListTenantsResponse>> {
@@ -26,7 +28,12 @@ pub async fn list_tenants(
     let offset = (page - 1) * page_size;
 
     let search = params.search.clone();
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户列表读作用域失败: {}", e);
@@ -163,12 +170,18 @@ pub async fn list_tenants(
 
 /// Get tenant by ID
 pub async fn get_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -191,12 +204,18 @@ pub async fn get_tenant(
 
 /// Get tenant by code (for subdomain routing)
 pub async fn get_tenant_by_code(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(code): Path<String>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -219,12 +238,18 @@ pub async fn get_tenant_by_code(
 
 /// Create new tenant
 pub async fn create_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<CreateTenantRequest>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Creating tenant: {}", req.name);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create tenant: {}", e);
@@ -531,6 +556,7 @@ async fn activate_basic_modules(
 /// row, seed the default admin user + membership + role assignment, and
 /// persist the default department setting. Backs `POST /tenant/onboard`.
 pub async fn onboard_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Json(req): Json<OnboardTenantRequest>,
 ) -> Json<CoreResponse<OnboardTenantResponse>> {
@@ -546,7 +572,13 @@ pub async fn onboard_tenant(
         return Json(CoreResponse::error(&message));
     }
 
-    let mut tx = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    // SAVEPOINT：失败路径的 rollback 回滚到保存点，避免把半成品写入随请求事务一起提交。
+    let mut tx = match state.db.scope_savepoint(txn).await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin onboarding transaction: {}", e);
@@ -642,13 +674,19 @@ pub async fn onboard_tenant(
 
 /// Update tenant
 pub async fn update_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTenantRequest>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Updating tenant: {}", id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -710,12 +748,18 @@ pub async fn update_tenant(
 
 /// Activate tenant
 pub async fn activate_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Activating tenant: {}", id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -745,12 +789,18 @@ pub async fn activate_tenant(
 
 /// Suspend tenant
 pub async fn suspend_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Suspending tenant: {}", id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -781,12 +831,18 @@ pub async fn suspend_tenant(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Get tenant quota and usage
 pub async fn get_tenant_quota(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -862,12 +918,18 @@ pub async fn get_tenant_quota(
 
 /// List tenant modules
 pub async fn list_tenant_modules(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<Vec<TenantModule>>> {
     tracing::info!("[Tenant] Listing modules for tenant: {}", tenant_id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户模块读作用域失败: {}", e);
@@ -889,6 +951,7 @@ pub async fn list_tenant_modules(
 
 /// Activate module for tenant
 pub async fn activate_module(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path((tenant_id, module_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantModule>> {
@@ -898,7 +961,12 @@ pub async fn activate_module(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to activate module: {}", e);
@@ -939,6 +1007,7 @@ pub async fn activate_module(
 
 /// Deactivate module for tenant
 pub async fn deactivate_module(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path((tenant_id, module_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantModule>> {
@@ -948,7 +1017,12 @@ pub async fn deactivate_module(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建模块写作用域失败: {}", e);
@@ -979,12 +1053,18 @@ pub async fn deactivate_module(
 
 /// Delete tenant
 pub async fn delete_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<String>> {
     tracing::info!("[Tenant] Deleting tenant: {}", id);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -1008,6 +1088,7 @@ pub async fn delete_tenant(
 
 /// Get tenant users with pagination
 pub async fn get_tenant_users(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
     Query(params): Query<ListTenantUsersQuery>,
@@ -1018,7 +1099,12 @@ pub async fn get_tenant_users(
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户成员读作用域失败: {}", e);
@@ -1158,6 +1244,7 @@ pub async fn get_tenant_users(
 
 /// Invite member to tenant
 pub async fn invite_member(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
     Json(req): Json<InviteMemberRequest>,
@@ -1179,7 +1266,12 @@ pub async fn invite_member(
         last_login: None,
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to invite member: {}", e);
@@ -1222,6 +1314,7 @@ pub async fn invite_member(
 
 /// Remove member from tenant
 pub async fn remove_member(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path((tenant_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Json<CoreResponse<String>> {
@@ -1231,7 +1324,12 @@ pub async fn remove_member(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户成员写作用域失败: {}", e);
@@ -1258,6 +1356,7 @@ pub async fn remove_member(
 
 /// Update member role
 pub async fn update_member_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path((tenant_id, user_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMemberRoleRequest>,
@@ -1268,7 +1367,12 @@ pub async fn update_member_role(
         tenant_id
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户成员写作用域失败: {}", e);
@@ -1301,12 +1405,18 @@ pub async fn update_member_role(
 
 /// Get tenant stats
 pub async fn get_tenant_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<TenantStats>> {
     tracing::info!("[Tenant] Getting stats for tenant: {}", id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户统计读作用域失败: {}", e);
@@ -1379,12 +1489,18 @@ pub async fn get_tenant_stats(
 
 /// Get usage metrics
 pub async fn get_usage_metrics(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<UsageMetrics>> {
     tracing::info!("[Tenant] Getting usage metrics for tenant: {}", id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
@@ -1447,12 +1563,18 @@ pub async fn get_usage_metrics(
 
 /// Get billing info
 pub async fn get_billing_info(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<TenantBillingInfo>> {
     tracing::info!("[Tenant] Getting billing info for tenant: {}", id);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
@@ -1501,6 +1623,7 @@ pub async fn get_invoices(
 
 /// Get current tenant context
 pub async fn get_current_tenant_context(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<TenantContext>> {
@@ -1524,7 +1647,12 @@ pub async fn get_current_tenant_context(
         }
     } else {
         // Look up user's first active tenant membership
-        let mut scope = match state.db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return Json(CoreResponse::error("数据库事务上下文缺失"));
+        };
+        let mut scope = match state.db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("[Tenant] DB query error: {}", e);
@@ -1566,6 +1694,7 @@ pub async fn get_current_tenant_context(
 
 /// Get my tenants
 pub async fn get_my_tenants(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<Vec<Tenant>>> {
@@ -1584,7 +1713,12 @@ pub async fn get_my_tenants(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建我的租户读作用域失败: {}", e);
@@ -1624,6 +1758,7 @@ pub struct SwitchTenantResponse {
 )]
 /// Switch tenant
 pub async fn switch_tenant(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SwitchTenantRequest>,
@@ -1645,7 +1780,12 @@ pub async fn switch_tenant(
     };
 
     // 验证用户是否属于该租户
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户切换读作用域失败: {}", e);
@@ -1724,12 +1864,18 @@ pub async fn switch_tenant(
 
 /// Get tenant by slug (alias for code)
 pub async fn get_tenant_by_slug(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by slug: {}", slug);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -1758,9 +1904,18 @@ async fn tenant_setting_get(
     state: &AppState,
     tenant_id: &Uuid,
     prefix: &str,
+    txn_arc: &RlsTxnCell,
 ) -> Result<serde_json::Value, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("读取租户配置失败", e)),
     };
@@ -1788,12 +1943,21 @@ async fn tenant_setting_put(
     tenant_id: &Uuid,
     prefix: &str,
     value: &serde_json::Value,
+    txn_arc: &RlsTxnCell,
 ) -> Result<(), TopemsError> {
-    ensure_tenant_exists(state, tenant_id).await?;
+    ensure_tenant_exists(state, tenant_id, txn_arc).await?;
     let key = format!("{}{}", prefix, tenant_id);
     let serialized =
         serde_json::to_string(value).map_err(|e| TopemsError::internal("序列化租户配置失败", e))?;
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("写入租户配置失败", e)),
     };
@@ -1819,11 +1983,12 @@ async fn tenant_setting_put(
 
 /// `GET /tenant/{id}/settings`
 pub async fn get_tenant_settings(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, TENANT_SETTINGS_PREFIX).await {
+    match tenant_setting_get(&state, &tenant_id, TENANT_SETTINGS_PREFIX, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Tenant settings retrieved")),
         Err(e) => {
             tracing::error!("[Tenant] get settings failed: {}", e);
@@ -1834,12 +1999,21 @@ pub async fn get_tenant_settings(
 
 /// `PUT /tenant/{id}/settings`
 pub async fn update_tenant_settings(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, TENANT_SETTINGS_PREFIX, &payload).await {
+    match tenant_setting_put(
+        &state,
+        &tenant_id,
+        TENANT_SETTINGS_PREFIX,
+        &payload,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(()) => Json(CoreResponse::success(payload, "Tenant settings updated")),
         Err(e) => {
             tracing::error!("[Tenant] update settings failed: {}", e);
@@ -1850,11 +2024,12 @@ pub async fn update_tenant_settings(
 
 /// `GET /tenant/{id}/branding`
 pub async fn get_tenant_branding(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, TENANT_BRANDING_PREFIX).await {
+    match tenant_setting_get(&state, &tenant_id, TENANT_BRANDING_PREFIX, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Tenant branding retrieved")),
         Err(e) => {
             tracing::error!("[Tenant] get branding failed: {}", e);
@@ -1865,12 +2040,21 @@ pub async fn get_tenant_branding(
 
 /// `PUT /tenant/{id}/branding`
 pub async fn update_tenant_branding(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, TENANT_BRANDING_PREFIX, &payload).await {
+    match tenant_setting_put(
+        &state,
+        &tenant_id,
+        TENANT_BRANDING_PREFIX,
+        &payload,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(()) => Json(CoreResponse::success(payload, "Tenant branding updated")),
         Err(e) => {
             tracing::error!("[Tenant] update branding failed: {}", e);
@@ -1883,8 +2067,17 @@ pub async fn update_tenant_branding(
 async fn tenant_features_read(
     state: &AppState,
     tenant_id: &Uuid,
+    txn_arc: &RlsTxnCell,
 ) -> Result<serde_json::Map<String, serde_json::Value>, TopemsError> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("读取租户特性失败", e)),
     };
@@ -1915,9 +2108,18 @@ async fn tenant_features_write(
     state: &AppState,
     tenant_id: &Uuid,
     features: &serde_json::Map<String, serde_json::Value>,
+    txn_arc: &RlsTxnCell,
 ) -> Result<(), TopemsError> {
     let value = serde_json::Value::Object(features.clone());
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("写入租户特性失败", e)),
     };
@@ -1946,11 +2148,12 @@ fn tenant_features_to_array(map: &serde_json::Map<String, serde_json::Value>) ->
 
 /// `GET /tenant/{id}/features`
 pub async fn get_tenant_features(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_features_read(&state, &tenant_id).await {
+    match tenant_features_read(&state, &tenant_id, &txn_arc).await {
         Ok(m) => Json(CoreResponse::success(
             tenant_features_to_array(&m),
             "Tenant features retrieved",
@@ -1964,6 +2167,7 @@ pub async fn get_tenant_features(
 
 /// `PUT /tenant/{id}/features`
 pub async fn update_tenant_features(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
@@ -1975,7 +2179,7 @@ pub async fn update_tenant_features(
             return Json(CoreResponse::error("缺少 features 字段"));
         }
     };
-    match tenant_features_write(&state, &tenant_id, &map).await {
+    match tenant_features_write(&state, &tenant_id, &map, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(
             tenant_features_to_array(&map),
             "Tenant features updated",
@@ -1992,20 +2196,22 @@ async fn tenant_features_set(
     tenant_id: &Uuid,
     feature: &str,
     enabled: bool,
+    txn_arc: &RlsTxnCell,
 ) -> Result<serde_json::Value, TopemsError> {
-    let mut map = tenant_features_read(state, tenant_id).await?;
+    let mut map = tenant_features_read(state, tenant_id, txn_arc).await?;
     map.insert(feature.to_string(), serde_json::json!(enabled));
-    tenant_features_write(state, tenant_id, &map).await?;
+    tenant_features_write(state, tenant_id, &map, txn_arc).await?;
     Ok(serde_json::json!({ "feature": feature, "enabled": enabled }))
 }
 
 /// `POST /tenant/{id}/features/{feature}/enable`
 pub async fn enable_tenant_feature(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, feature)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_features_set(&state, &tenant_id, &feature, true).await {
+    match tenant_features_set(&state, &tenant_id, &feature, true, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Feature enabled")),
         Err(e) => {
             tracing::error!("[Tenant] enable feature failed: {}", e);
@@ -2016,11 +2222,12 @@ pub async fn enable_tenant_feature(
 
 /// `POST /tenant/{id}/features/{feature}/disable`
 pub async fn disable_tenant_feature(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, feature)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_features_set(&state, &tenant_id, &feature, false).await {
+    match tenant_features_set(&state, &tenant_id, &feature, false, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Feature disabled")),
         Err(e) => {
             tracing::error!("[Tenant] disable feature failed: {}", e);
@@ -2037,9 +2244,18 @@ async fn tenant_setting_array(
     state: &AppState,
     tenant_id: &Uuid,
     prefix: &str,
+    txn_arc: &RlsTxnCell,
 ) -> Result<Vec<serde_json::Value>, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("读取租户域名失败", e)),
     };
@@ -2066,11 +2282,12 @@ async fn tenant_setting_array(
 
 /// `GET /tenant/{id}/domains`
 pub async fn get_tenant_domains(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "Tenant domains retrieved",
@@ -2084,6 +2301,7 @@ pub async fn get_tenant_domains(
 
 /// `POST /tenant/{id}/domains`
 pub async fn add_tenant_domain(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
@@ -2093,13 +2311,14 @@ pub async fn add_tenant_domain(
     if domain.is_empty() {
         return Json(CoreResponse::error("缺少 domain 字段"));
     }
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] add domain read failed: {}", e);
-            return Json(CoreResponse::error("读取租户域名失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] add domain read failed: {}", e);
+                return Json(CoreResponse::error("读取租户域名失败"));
+            }
+        };
     if arr
         .iter()
         .any(|d| d.get("domain").and_then(|v| v.as_str()) == Some(domain))
@@ -2112,7 +2331,9 @@ pub async fn add_tenant_domain(
         "created_at": chrono::Utc::now().to_rfc3339(),
     });
     arr.push(entry.clone());
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] add domain write failed: {}", e);
         return Json(CoreResponse::error("写入租户域名失败"));
     }
@@ -2121,19 +2342,23 @@ pub async fn add_tenant_domain(
 
 /// `DELETE /tenant/{id}/domains/{domain}`
 pub async fn remove_tenant_domain(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, domain)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<String>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] remove domain read failed: {}", e);
-            return Json(CoreResponse::error("读取租户域名失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] remove domain read failed: {}", e);
+                return Json(CoreResponse::error("读取租户域名失败"));
+            }
+        };
     arr.retain(|d| d.get("domain").and_then(|v| v.as_str()) != Some(domain.as_str()));
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] remove domain write failed: {}", e);
         return Json(CoreResponse::error("写入租户域名失败"));
     }
@@ -2142,11 +2367,12 @@ pub async fn remove_tenant_domain(
 
 /// `GET /tenant/{id}/email-config`
 pub async fn get_tenant_email_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, TENANT_EMAIL_PREFIX).await {
+    match tenant_setting_get(&state, &tenant_id, TENANT_EMAIL_PREFIX, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Tenant email config retrieved")),
         Err(e) => {
             tracing::error!("[Tenant] get email config failed: {}", e);
@@ -2157,12 +2383,13 @@ pub async fn get_tenant_email_config(
 
 /// `PUT /tenant/{id}/email-config`
 pub async fn update_tenant_email_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, TENANT_EMAIL_PREFIX, &payload).await {
+    match tenant_setting_put(&state, &tenant_id, TENANT_EMAIL_PREFIX, &payload, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(
             payload,
             "Tenant email config updated",
@@ -2179,8 +2406,19 @@ const TENANT_INTEGRATIONS_PREFIX: &str = "tenant_integrations_";
 const TENANT_WEBHOOKS_PREFIX: &str = "tenant_webhooks_";
 
 /// 写租户设置前先校验租户存在（防御：假 uuid 直写会触发 core_tenant_settings FK 违规）
-async fn ensure_tenant_exists(state: &AppState, tenant_id: &Uuid) -> Result<(), TopemsError> {
-    let mut scope = match state.db.scope_read().await {
+async fn ensure_tenant_exists(
+    state: &AppState,
+    tenant_id: &Uuid,
+    txn_arc: &RlsTxnCell,
+) -> Result<(), TopemsError> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::DatabaseQuery(
+            "RLS 事务缺失：请求事务未注入".into(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::DatabaseQuery(format!("查询租户失败: {}", e))),
     };
@@ -2208,12 +2446,21 @@ async fn tenant_coll_write(
     tenant_id: &Uuid,
     prefix: &str,
     arr: &[serde_json::Value],
+    txn_arc: &RlsTxnCell,
 ) -> Result<(), TopemsError> {
-    ensure_tenant_exists(state, tenant_id).await?;
+    ensure_tenant_exists(state, tenant_id, txn_arc).await?;
     let key = format!("{}{}", prefix, tenant_id);
     let serialized = serde_json::to_string(&serde_json::Value::Array(arr.to_vec()))
         .map_err(|e| TopemsError::internal("序列化失败", e))?;
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(TopemsError::internal(
+            "数据库事务上下文缺失",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("写入失败", e)),
     };
@@ -2239,11 +2486,12 @@ async fn tenant_coll_write(
 
 /// `GET /tenant/{id}/integrations`
 pub async fn list_tenant_integrations(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "Integrations retrieved",
@@ -2257,12 +2505,20 @@ pub async fn list_tenant_integrations(
 
 /// `POST /tenant/{id}/integrations`
 pub async fn create_tenant_integration(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+    let mut arr = match tenant_setting_array(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] create integration read failed: {}", e);
@@ -2284,7 +2540,15 @@ pub async fn create_tenant_integration(
         });
     }
     arr.push(entry.clone());
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+    if let Err(e) = tenant_coll_write(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &arr,
+        &txn_arc,
+    )
+    .await
+    {
         tracing::error!("[Tenant] create integration write failed: {}", e);
         return Json(CoreResponse::error("写入租户集成失败"));
     }
@@ -2293,12 +2557,20 @@ pub async fn create_tenant_integration(
 
 /// `PUT /tenant/{id}/integrations/{integration_id}`
 pub async fn update_tenant_integration(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, integration_id)): Path<(Uuid, String)>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+    let mut arr = match tenant_setting_array(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] update integration read failed: {}", e);
@@ -2319,7 +2591,15 @@ pub async fn update_tenant_integration(
         }
     }
     let entry = entry.clone();
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+    if let Err(e) = tenant_coll_write(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &arr,
+        &txn_arc,
+    )
+    .await
+    {
         tracing::error!("[Tenant] update integration write failed: {}", e);
         return Json(CoreResponse::error("写入租户集成失败"));
     }
@@ -2328,11 +2608,19 @@ pub async fn update_tenant_integration(
 
 /// `DELETE /tenant/{id}/integrations/{integration_id}`
 pub async fn delete_tenant_integration(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, integration_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<String>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+    let mut arr = match tenant_setting_array(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] delete integration read failed: {}", e);
@@ -2340,7 +2628,15 @@ pub async fn delete_tenant_integration(
         }
     };
     arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(integration_id.as_str()));
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+    if let Err(e) = tenant_coll_write(
+        &state,
+        &tenant_id,
+        TENANT_INTEGRATIONS_PREFIX,
+        &arr,
+        &txn_arc,
+    )
+    .await
+    {
         tracing::error!("[Tenant] delete integration write failed: {}", e);
         return Json(CoreResponse::error("写入租户集成失败"));
     }
@@ -2349,11 +2645,12 @@ pub async fn delete_tenant_integration(
 
 /// `GET /tenant/{id}/webhooks`
 pub async fn list_tenant_webhooks(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "Webhooks retrieved",
@@ -2367,18 +2664,20 @@ pub async fn list_tenant_webhooks(
 
 /// `POST /tenant/{id}/webhooks`
 pub async fn create_tenant_webhook(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] create webhook read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 Webhook 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] create webhook read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 Webhook 失败"));
+            }
+        };
     let mut entry = payload;
     if let Some(obj) = entry.as_object_mut() {
         obj.entry("id".to_string())
@@ -2394,7 +2693,9 @@ pub async fn create_tenant_webhook(
         });
     }
     arr.push(entry.clone());
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] create webhook write failed: {}", e);
         return Json(CoreResponse::error("写入租户 Webhook 失败"));
     }
@@ -2403,18 +2704,20 @@ pub async fn create_tenant_webhook(
 
 /// `PUT /tenant/{id}/webhooks/{webhook_id}`
 pub async fn update_tenant_webhook(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] update webhook read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 Webhook 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] update webhook read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 Webhook 失败"));
+            }
+        };
     let Some(entry) = arr
         .iter_mut()
         .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(webhook_id.as_str()))
@@ -2429,7 +2732,9 @@ pub async fn update_tenant_webhook(
         }
     }
     let entry = entry.clone();
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] update webhook write failed: {}", e);
         return Json(CoreResponse::error("写入租户 Webhook 失败"));
     }
@@ -2438,19 +2743,23 @@ pub async fn update_tenant_webhook(
 
 /// `DELETE /tenant/{id}/webhooks/{webhook_id}`
 pub async fn delete_tenant_webhook(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<String>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] delete webhook read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 Webhook 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] delete webhook read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 Webhook 失败"));
+            }
+        };
     arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(webhook_id.as_str()));
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] delete webhook write failed: {}", e);
         return Json(CoreResponse::error("写入租户 Webhook 失败"));
     }
@@ -2459,11 +2768,13 @@ pub async fn delete_tenant_webhook(
 
 /// `POST /tenant/{id}/webhooks/{webhook_id}/test`
 pub async fn test_tenant_webhook(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &txn_arc).await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] test webhook read failed: {}", e);
@@ -2494,11 +2805,12 @@ const TENANT_SEC_KEYS_PREFIX: &str = "tenant_security_apikeys_";
 
 /// `GET /tenant/{id}/security`
 pub async fn get_tenant_security(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+    match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX, &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Tenant security retrieved")),
         Err(e) => {
             tracing::error!("[Tenant] get security failed: {}", e);
@@ -2509,12 +2821,13 @@ pub async fn get_tenant_security(
 
 /// `PUT /tenant/{id}/security`
 pub async fn update_tenant_security(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &payload).await {
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &payload, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(payload, "Tenant security updated")),
         Err(e) => {
             tracing::error!("[Tenant] update security failed: {}", e);
@@ -2525,11 +2838,12 @@ pub async fn update_tenant_security(
 
 /// `GET /tenant/{id}/security/password-policy`
 pub async fn get_tenant_password_policy(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, "tenant_security_ppolicy_").await {
+    match tenant_setting_get(&state, &tenant_id, "tenant_security_ppolicy_", &txn_arc).await {
         Ok(v) => Json(CoreResponse::success(v, "Tenant password policy retrieved")),
         Err(e) => {
             tracing::error!("[Tenant] get password policy failed: {}", e);
@@ -2540,12 +2854,21 @@ pub async fn get_tenant_password_policy(
 
 /// `PUT /tenant/{id}/security/password-policy`
 pub async fn update_tenant_password_policy(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, "tenant_security_ppolicy_", &payload).await {
+    match tenant_setting_put(
+        &state,
+        &tenant_id,
+        "tenant_security_ppolicy_",
+        &payload,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(()) => Json(CoreResponse::success(
             payload,
             "Tenant password policy updated",
@@ -2559,11 +2882,12 @@ pub async fn update_tenant_password_policy(
 
 /// `POST /tenant/{id}/security/enable-2fa`
 pub async fn enable_tenant_2fa(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX, &txn_arc).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("[Tenant] enable 2fa read failed: {}", e);
@@ -2573,7 +2897,7 @@ pub async fn enable_tenant_2fa(
     if let Some(obj) = v.as_object_mut() {
         obj.insert("two_factor_enabled".to_string(), serde_json::json!(true));
     }
-    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v).await {
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(
             serde_json::json!({"enabled": true}),
             "2FA enabled",
@@ -2587,11 +2911,12 @@ pub async fn enable_tenant_2fa(
 
 /// `POST /tenant/{id}/security/disable-2fa`
 pub async fn disable_tenant_2fa(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX, &txn_arc).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("[Tenant] disable 2fa read failed: {}", e);
@@ -2601,7 +2926,7 @@ pub async fn disable_tenant_2fa(
     if let Some(obj) = v.as_object_mut() {
         obj.insert("two_factor_enabled".to_string(), serde_json::json!(false));
     }
-    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v).await {
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(
             serde_json::json!({"enabled": false}),
             "2FA disabled",
@@ -2615,11 +2940,12 @@ pub async fn disable_tenant_2fa(
 
 /// `GET /tenant/{id}/security/api-keys`
 pub async fn list_tenant_api_keys(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "API keys retrieved",
@@ -2633,18 +2959,20 @@ pub async fn list_tenant_api_keys(
 
 /// `POST /tenant/{id}/security/generate-api-key`
 pub async fn generate_tenant_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] generate api key read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 API Key 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] generate api key read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 API Key 失败"));
+            }
+        };
     let name = payload
         .get("name")
         .and_then(|v| v.as_str())
@@ -2659,7 +2987,9 @@ pub async fn generate_tenant_api_key(
         "last_used_at": serde_json::Value::Null,
     });
     arr.push(entry.clone());
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] generate api key write failed: {}", e);
         return Json(CoreResponse::error("写入租户 API Key 失败"));
     }
@@ -2668,17 +2998,19 @@ pub async fn generate_tenant_api_key(
 
 /// `POST /tenant/{id}/security/rotate-api-key/{key_id}`
 pub async fn rotate_tenant_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, key_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] rotate api key read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 API Key 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] rotate api key read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 API Key 失败"));
+            }
+        };
     let Some(entry) = arr
         .iter_mut()
         .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(key_id.as_str()))
@@ -2694,7 +3026,9 @@ pub async fn rotate_tenant_api_key(
         );
     }
     let result = entry.clone();
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] rotate api key write failed: {}", e);
         return Json(CoreResponse::error("写入租户 API Key 失败"));
     }
@@ -2703,19 +3037,23 @@ pub async fn rotate_tenant_api_key(
 
 /// `DELETE /tenant/{id}/security/api-keys/{key_id}`
 pub async fn delete_tenant_api_key(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, key_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<String>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] delete api key read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 API Key 失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] delete api key read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 API Key 失败"));
+            }
+        };
     arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(key_id.as_str()));
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] delete api key write failed: {}", e);
         return Json(CoreResponse::error("写入租户 API Key 失败"));
     }
@@ -2728,11 +3066,12 @@ const TENANT_SEC_IPLIST_PREFIX: &str = "tenant_security_iplist_";
 
 /// `GET /tenant/{id}/security/audit-logs`
 pub async fn list_tenant_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "Audit logs retrieved",
@@ -2746,11 +3085,12 @@ pub async fn list_tenant_audit_logs(
 
 /// `GET /tenant/{id}/security/audit-logs/export`
 pub async fn export_tenant_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::json!({
                 "format": "json",
@@ -2769,17 +3109,19 @@ pub async fn export_tenant_audit_logs(
 
 /// `GET /tenant/{id}/security/audit-logs/{log_id}`
 pub async fn get_tenant_audit_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, log_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] get audit log read failed: {}", e);
-            return Json(CoreResponse::error("读取租户审计日志失败"));
-        }
-    };
+    let arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] get audit log read failed: {}", e);
+                return Json(CoreResponse::error("读取租户审计日志失败"));
+            }
+        };
     match arr
         .iter()
         .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(log_id.as_str()))
@@ -2791,11 +3133,12 @@ pub async fn get_tenant_audit_log(
 
 /// `GET /tenant/{id}/security/sessions`
 pub async fn list_tenant_sessions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &txn_arc).await {
         Ok(a) => Json(CoreResponse::success(
             serde_json::Value::Array(a),
             "Sessions retrieved",
@@ -2809,11 +3152,14 @@ pub async fn list_tenant_sessions(
 
 /// `POST /tenant/{id}/security/sessions/revoke-all`
 pub async fn revoke_all_tenant_sessions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &txn_arc)
+        .await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] revoke-all read failed: {}", e);
@@ -2821,7 +3167,15 @@ pub async fn revoke_all_tenant_sessions(
         }
     };
     let count = arr.len();
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &[]).await {
+    if let Err(e) = tenant_coll_write(
+        &state,
+        &tenant_id,
+        TENANT_SEC_SESSIONS_PREFIX,
+        &[],
+        &txn_arc,
+    )
+    .await
+    {
         tracing::error!("[Tenant] revoke-all write failed: {}", e);
         return Json(CoreResponse::error("撤销租户会话失败"));
     }
@@ -2833,11 +3187,19 @@ pub async fn revoke_all_tenant_sessions(
 
 /// `POST /tenant/{id}/security/sessions/{session_id}/revoke`
 pub async fn revoke_tenant_session(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, session_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+    let mut arr = match tenant_setting_array(
+        &state,
+        &tenant_id,
+        TENANT_SEC_SESSIONS_PREFIX,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("[Tenant] revoke session read failed: {}", e);
@@ -2849,7 +3211,15 @@ pub async fn revoke_tenant_session(
     if arr.len() == before {
         return Json(CoreResponse::error("会话不存在"));
     }
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &arr).await {
+    if let Err(e) = tenant_coll_write(
+        &state,
+        &tenant_id,
+        TENANT_SEC_SESSIONS_PREFIX,
+        &arr,
+        &txn_arc,
+    )
+    .await
+    {
         tracing::error!("[Tenant] revoke session write failed: {}", e);
         return Json(CoreResponse::error("撤销租户会话失败"));
     }
@@ -2861,18 +3231,20 @@ pub async fn revoke_tenant_session(
 
 /// `POST /tenant/{id}/security/ip-whitelist`
 pub async fn add_tenant_ip_whitelist(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] add ip read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 IP 白名单失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] add ip read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 IP 白名单失败"));
+            }
+        };
     let mut entry = payload;
     if let Some(obj) = entry.as_object_mut() {
         obj.entry("id".to_string())
@@ -2888,7 +3260,9 @@ pub async fn add_tenant_ip_whitelist(
         });
     }
     arr.push(entry.clone());
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] add ip write failed: {}", e);
         return Json(CoreResponse::error("写入租户 IP 白名单失败"));
     }
@@ -2897,19 +3271,23 @@ pub async fn add_tenant_ip_whitelist(
 
 /// `DELETE /tenant/{id}/security/ip-whitelist/{ip_id}`
 pub async fn remove_tenant_ip_whitelist(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path((tenant_id, ip_id)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<String>> {
-    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("[Tenant] remove ip read failed: {}", e);
-            return Json(CoreResponse::error("读取租户 IP 白名单失败"));
-        }
-    };
+    let mut arr =
+        match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &txn_arc).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("[Tenant] remove ip read failed: {}", e);
+                return Json(CoreResponse::error("读取租户 IP 白名单失败"));
+            }
+        };
     arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(ip_id.as_str()));
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr, &txn_arc).await
+    {
         tracing::error!("[Tenant] remove ip write failed: {}", e);
         return Json(CoreResponse::error("写入租户 IP 白名单失败"));
     }
@@ -2920,8 +3298,17 @@ pub async fn remove_tenant_ip_whitelist(
 const TENANT_BILL_SUB_PREFIX: &str = "tenant_billing_sub_";
 const TENANT_BILL_CARD_PREFIX: &str = "tenant_billing_card_";
 
-async fn tenant_billing_default(state: &AppState, tenant_id: &Uuid) -> serde_json::Value {
-    let mut scope = match state.db.scope_read().await {
+async fn tenant_billing_default(
+    state: &AppState,
+    tenant_id: &Uuid,
+    txn_arc: &RlsTxnCell,
+) -> serde_json::Value {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return serde_json::json!({"plan": "free", "status": "inactive"});
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
@@ -2952,15 +3339,16 @@ async fn tenant_billing_default(state: &AppState, tenant_id: &Uuid) -> serde_jso
 
 /// `GET /tenant/{id}/billing/subscription`
 pub async fn get_tenant_subscription(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_get(&state, &tenant_id, TENANT_BILL_SUB_PREFIX).await {
+    match tenant_setting_get(&state, &tenant_id, TENANT_BILL_SUB_PREFIX, &txn_arc).await {
         Ok(v) => {
             // 未配置=从 core_tenants 派生
             let v = if v.is_null() || v.as_object().map(|o| o.is_empty()).unwrap_or(false) {
-                tenant_billing_default(&state, &tenant_id).await
+                tenant_billing_default(&state, &tenant_id, &txn_arc).await
             } else {
                 v
             };
@@ -2975,12 +3363,21 @@ pub async fn get_tenant_subscription(
 
 /// `POST /tenant/{id}/billing/plan`
 pub async fn update_tenant_plan(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    match tenant_setting_put(&state, &tenant_id, TENANT_BILL_SUB_PREFIX, &payload).await {
+    match tenant_setting_put(
+        &state,
+        &tenant_id,
+        TENANT_BILL_SUB_PREFIX,
+        &payload,
+        &txn_arc,
+    )
+    .await
+    {
         Ok(()) => Json(CoreResponse::success(payload, "Plan updated")),
         Err(e) => {
             tracing::error!("[Tenant] update plan failed: {}", e);
@@ -2991,11 +3388,12 @@ pub async fn update_tenant_plan(
 
 /// `POST /tenant/{id}/billing/subscription/cancel`
 pub async fn cancel_tenant_subscription(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut v = tenant_billing_default(&state, &tenant_id).await;
+    let mut v = tenant_billing_default(&state, &tenant_id, &txn_arc).await;
     if let Some(obj) = v.as_object_mut() {
         obj.insert("status".to_string(), serde_json::json!("canceled"));
         obj.insert(
@@ -3003,7 +3401,7 @@ pub async fn cancel_tenant_subscription(
             serde_json::json!(chrono::Utc::now().to_rfc3339()),
         );
     }
-    match tenant_setting_put(&state, &tenant_id, TENANT_BILL_SUB_PREFIX, &v).await {
+    match tenant_setting_put(&state, &tenant_id, TENANT_BILL_SUB_PREFIX, &v, &txn_arc).await {
         Ok(()) => Json(CoreResponse::success(v, "Subscription canceled")),
         Err(e) => {
             tracing::error!("[Tenant] cancel subscription failed: {}", e);
@@ -3014,6 +3412,7 @@ pub async fn cancel_tenant_subscription(
 
 /// `POST /tenant/{id}/billing/card`
 pub async fn add_tenant_card(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
@@ -3035,6 +3434,7 @@ pub async fn add_tenant_card(
         &tenant_id,
         TENANT_BILL_CARD_PREFIX,
         &[entry.clone()],
+        &txn_arc,
     )
     .await
     {
@@ -3046,11 +3446,14 @@ pub async fn add_tenant_card(
 
 /// `DELETE /tenant/{id}/billing/card`
 pub async fn remove_tenant_card(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<String>> {
-    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_BILL_CARD_PREFIX, &[]).await {
+    if let Err(e) =
+        tenant_coll_write(&state, &tenant_id, TENANT_BILL_CARD_PREFIX, &[], &txn_arc).await
+    {
         tracing::error!("[Tenant] remove card write failed: {}", e);
         return Json(CoreResponse::error("写入租户支付方式失败"));
     }
@@ -3082,11 +3485,17 @@ pub async fn pay_tenant_invoice(
 
 /// `GET /tenant/{id}/analytics/overview`
 pub async fn get_tenant_analytics_overview(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户分析读作用域失败: {}", e);
@@ -3145,11 +3554,17 @@ pub async fn get_tenant_analytics_overview(
 
 /// `GET /tenant/{id}/analytics/usage`
 pub async fn get_tenant_usage(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
@@ -3185,12 +3600,18 @@ pub async fn get_tenant_usage(
 
 /// `GET /tenant/{id}/analytics/api-usage`
 pub async fn get_tenant_api_usage(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs（请求审计中间件写入）按租户成员反查聚合
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3229,12 +3650,18 @@ pub async fn get_tenant_api_usage(
 
 /// `GET /tenant/{id}/analytics/activity`（无活动记录表=真实空）
 pub async fn get_tenant_activity(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按日聚合
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3263,12 +3690,18 @@ pub async fn get_tenant_activity(
 
 /// `GET /tenant/{id}/analytics/top-endpoints`（无端点统计表=真实空）
 pub async fn get_tenant_top_endpoints(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3297,11 +3730,17 @@ pub async fn get_tenant_top_endpoints(
 
 /// `GET /tenant/{id}/analytics/user-stats`
 pub async fn get_tenant_user_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用户统计读作用域失败: {}", e);
@@ -3330,11 +3769,17 @@ pub async fn get_tenant_user_stats(
 
 /// `GET /tenant/{id}/analytics/real-time`
 pub async fn get_tenant_real_time(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户实时指标读作用域失败: {}", e);
@@ -3373,10 +3818,16 @@ pub async fn get_tenant_real_time(
 
 /// `GET /governance/trends`（治理面板趋势：读 core_tenant_usage 近 6 期，真实数据）
 pub async fn get_governance_trends(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建治理趋势读作用域失败: {}", e);
@@ -3423,11 +3874,17 @@ pub async fn refresh_governance(
 /// `POST /internal/usage/collect`（系统完善：core_tenant_usage 幂等聚合采集——当前月快照）
 /// 数据源：core_tenants（active）+ core_tenant_users（成员计数）；storage/api_calls 无采集源置 0。
 pub async fn collect_tenant_usage(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // INSERT 内含 public.audit_logs 聚合子查询；写事务才能同时满足读 RLS 与写入。
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(CoreResponse::error("数据库事务上下文缺失"));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3454,10 +3911,16 @@ pub async fn collect_tenant_usage(
     .execute(&mut scope)
     .await;
     let _ = scope.commit().await;
+    drop(guard);
     match result {
         Ok(r) => {
             let rows = r.rows_affected();
-            let mut scope = match state.db.scope_read().await {
+            let mut guard = txn_arc.lock().await;
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return Json(CoreResponse::error("数据库事务上下文缺失"));
+            };
+            let mut scope = match state.db.scope_with(txn).await {
                 Ok(scope) => scope,
                 Err(e) => {
                     tracing::error!("[Tenant] 创建用量读作用域失败: {}", e);

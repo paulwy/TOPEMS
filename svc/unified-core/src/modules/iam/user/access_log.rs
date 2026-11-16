@@ -8,6 +8,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -155,6 +156,7 @@ pub async fn get_login_history_with_tail(
 
 /// GET /access-logs?limit=10&offset=0 — 返回访问日志列表
 pub async fn list_access_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<AccessLogQuery>,
@@ -165,7 +167,18 @@ pub async fn list_access_logs(
     let offset = query.offset.unwrap_or(0).max(0);
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -238,6 +251,7 @@ pub async fn list_access_logs(
 
 /// GET /access-logs/user/{userId}?limit=10&offset=0 — 返回指定用户访问日志
 pub async fn get_user_access_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
@@ -266,7 +280,18 @@ pub async fn get_user_access_logs(
     let offset = query.offset.unwrap_or(0).max(0);
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -341,6 +366,7 @@ pub async fn get_user_access_logs(
 
 /// POST /access-logs — 创建访问日志
 pub async fn create_access_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
@@ -395,24 +421,25 @@ pub async fn create_access_log(
     let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let db = Db::new(state.pool.clone(), "public, shared");
-    let mut scope =
-        match if topems_shared_auth::middleware::tenant::current_request_tenant().is_some() {
-            db.scope().await
-        } else {
-            db.scope_system().await
-        } {
-            Ok(scope) => scope,
-            Err(e) => {
-                tracing::error!("数据库作用域创建失败: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("数据库作用域创建失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let mut guard = txn_arc.lock().await;
+    let scope_result = if let Some(txn) = guard.as_mut() {
+        db.scope_with(txn).await
+    } else {
+        db.scope_system().await
+    };
+    let mut scope = match scope_result {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("数据库作用域创建失败: {}", e),
+                )),
+            );
+        }
+    };
 
     let result = sqlx::query(
         r#"

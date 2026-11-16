@@ -90,7 +90,7 @@ SELECT * FROM t WHERE qual NOT LIKE '%current_setting(''app.tenant_id''::text, t
 
 - A 表级 370 = 373 条宽松中**去掉** 3 条「宽松只由 `tenant_uid` 列承载、无任何会话级绕过」的策略（`master_data.mdm_v60_lineage_nodes/edges/graphs`），这 3 条转入 B。
 - B 列级 12 = 上述 3 条 `tenant_uid` 列级 + 9 条 erp 严格/函数级（8 条 `group_tenant_of` + `erp.erp_production_orders`）。
-- C（口径的「1 条未设即拒」）= `erp.event_idempotency`（基础设施幂等表，非租户业务数据，严格拒最该保留原样待单独决策）。
+- C（口径的「1 条未设即拒」）= `erp.event_idempotency`：既无逃生口也不缺租户谓词，**按 §B-附 单列例外**，不并入分批清单，保持原样待单独决策。
 
 也就是说：**B 的 12 条里有 9 条实际是「严格型」而非「放行型」**，它们被纳入 B 的理由是「谓词不落在表级 `tenant_id` 等值上，需按列级/函数级判据单独复核」。这是一处**判断切分**，不是目录天然分界；重切只需改 §0.1 的 SQL ④，行数据不变。
 
@@ -500,6 +500,14 @@ SELECT * FROM t WHERE qual NOT LIKE '%current_setting(''app.tenant_id''::text, t
 
 小计：**12 条 / 12 张表**（每条策略一张表）。
 
+### B-附. 例外单列：`erp.event_idempotency`（不并入 382 分批清单）
+
+- 策略：`erp.event_idempotency`（`cmd=ALL`，`relrowsecurity` / `relforcerowsecurity` 均 on），谓词为列 `tenant_id` 严格判等（`tid = NULLIF(guc, '')`）。
+- 判定：**既不是逃生口，也不是缺租户谓词**——没有 `rls_system` 宽松分支（不进 A），谓词又确实落在表级 `tenant_id` 等值（不进 B），所以 §7 口径把它记为「未设即拒 1 条」。
+- 用途：事件消费幂等去重表（基础设施表，一行一个已处理事件键），不是租户业务数据；缺租户时严格拒最符合其语义（避免跨租户读到/覆盖幂等键）。
+- 处理：**单列为例外，不并入 382 条的分批清单（含 batch08）**。它的改造方向与其余表相反（后台系统通道要能写，只能补 `app.rls_system` 逃生口），需单独决策、单独备份与单独回滚脚本；本轮只读盘点不启动。
+- 注意：现有 `rls-policy-backup-batch01..08.sql` **不含该表**，将来若处理须先单独补一份现状快照。
+
 ## C. 分批方案（batch01 – batch08）
 
 分 8 批，**按服务（schema 前缀）切**，量级故意不均：批 01 用最小批跑通模板，批 07 靠模板统一而放大到 95 条，批 08 用最小但语义最难的批收尾。原则：
@@ -676,13 +684,13 @@ SELECT * FROM t WHERE qual NOT LIKE '%current_setting(''app.tenant_id''::text, t
 **为什么这样分批**
 
 - 27 条 / 20 表，量不大但**语义最特殊**：8 条用 `erp.group_tenant_of(tenant)` 把租户映射到集团，属于**有意设计的跨租户共享**（合并报表、内部交易、抵消分录）。
-- 另 2 条是纯严格判等（`erp_production_orders`、`event_idempotency`），本身不放行但**缺 `rls_system` 逃生口** → 系统通道与后台任务不可用，改动方向与其他批相反（补逃生口，不是收紧）。
+- 另 1 条是纯严格判等（`erp.erp_production_orders`），本身不放行但**缺 `rls_system` 逃生口** → 系统通道与后台任务不可用，改动方向与其他批相反（补逃生口，不是收紧）。`erp.event_idempotency` 同类但已按 §B-附 单列例外，不计入本批 27 条。
 - 合并报表/抵消逻辑一旦误伤，需要人工重算，成本最高 → 放最后，单独窗口，单独回滚。
 
 **前置检查**
 
 - 先单独确认 `erp.group_tenant_of()` 的语义与集团表数据（`core_tenants.group_id` 或等价列），确认收口**保留**集团级放宽。
-- 确认 `event_idempotency` 的写入方（事件消费者/后台），它当前严格拒 → 收口后必须能通过系统通道写入。
+- `erp.event_idempotency` 不在本批执行范围（§B-附 单列例外）；本批不修改它，写入方与系统通道问题留待例外单独立项。
 - 准备合并报表（consolidation）与内部交易（internal_transactions）两条基线。
 
 **验收判据**：见 §D `batch08` 清单（结构断言 + 3 档 RLS 负向/正向判据 + 端点冒烟）。

@@ -6,6 +6,7 @@
 
 use axum::{http::StatusCode, Json};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -63,7 +64,7 @@ impl From<ScopeError> for topems_shared_core::error::TopemsError {
 }
 
 /// 读作用域：与既有实现保持一致——只有超管看全量，其余一律按租户过滤。
-pub fn read_scope(claims: &Claims) -> Result<IamScope, ScopeError> {
+pub fn iam_read_scope(claims: &Claims) -> Result<IamScope, ScopeError> {
     if claims.is_superuser {
         Ok(IamScope::Platform)
     } else {
@@ -76,7 +77,7 @@ pub fn read_scope(claims: &Claims) -> Result<IamScope, ScopeError> {
 /// 写/删作用域：持有平台码或超管 -> 平台；否则必须有租户。
 ///
 /// `tenant_admin` 身份始终收敛到租户作用域，不因历史遗留平台码而放大。
-pub fn write_scope(claims: &Claims, platform_permission: &str) -> Result<IamScope, ScopeError> {
+pub fn iam_write_scope(claims: &Claims, platform_permission: &str) -> Result<IamScope, ScopeError> {
     if claims.is_superuser
         || (!is_tenant_admin_claims(claims) && claims.has_permission(platform_permission))
     {
@@ -162,15 +163,17 @@ pub enum UserTarget {
 /// 平台模式不做租户过滤，但仍禁止非超管修改超管目标。
 ///
 /// 判定依赖 `public.core_tenant_users`，必须走作用域事务：
-/// - 租户模式 → `scope_read_for_tenant`（租户通道，只能看到本租户 membership）；
+/// - 租户模式 → 复用请求事务（`scope_with`），只能看到本租户 membership；
 /// - 平台模式 → `scope_read_system`（系统通道，CASE 短路不查 membership，但保持口径一致）。
 /// 裸池在严格 RLS 下会让 `EXISTS` 恒为 false，把正常用户误判为越权。
 pub async fn check_user_target(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     scope: IamScope,
     user_id: Uuid,
     operator_is_superuser: bool,
 ) -> Result<UserTarget, sqlx::Error> {
+    let mut guard = txn_arc.lock().await;
     let tenant_filter = match scope {
         IamScope::Platform => None,
         IamScope::Tenant(t) => Some(t),
@@ -178,7 +181,12 @@ pub async fn check_user_target(
 
     let mut txn = match scope {
         IamScope::Platform => db.scope_read_system().await?,
-        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                return Err(sqlx::Error::Protocol("数据库事务上下文缺失".into()));
+            };
+            db.scope_with(txn).await?
+        }
     };
 
     let row: Option<(bool, bool)> = sqlx::query_as(
@@ -230,12 +238,19 @@ pub enum RoleTarget {
 /// 误判为不存在。
 async fn fetch_role_tenant(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     scope: IamScope,
     role_id: Uuid,
 ) -> Result<Option<Option<Uuid>>, sqlx::Error> {
+    let mut guard = txn_arc.lock().await;
     let mut txn = match scope {
         IamScope::Platform => db.scope_read_system().await?,
-        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                return Err(sqlx::Error::Protocol("数据库事务上下文缺失".into()));
+            };
+            db.scope_with(txn).await?
+        }
     };
 
     let row: Option<Option<Uuid>> = sqlx::query_scalar(
@@ -254,10 +269,11 @@ async fn fetch_role_tenant(
 /// `role_permission_codes` 校验）；他租户角色按不存在处理，避免泄露。
 pub async fn check_role_target(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     scope: IamScope,
     role_id: Uuid,
 ) -> Result<RoleTarget, sqlx::Error> {
-    let row = fetch_role_tenant(db, scope, role_id).await?;
+    let row = fetch_role_tenant(db, txn_arc, scope, role_id).await?;
 
     Ok(match (scope, row) {
         (_, None) => RoleTarget::NotFound,
@@ -285,10 +301,11 @@ pub enum RoleWriteTarget {
 /// 平台模式（超管或平台管理员）保持既有全量行为。
 pub async fn check_role_write_target(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     scope: IamScope,
     role_id: Uuid,
 ) -> Result<RoleWriteTarget, sqlx::Error> {
-    let row = fetch_role_tenant(db, scope, role_id).await?;
+    let row = fetch_role_tenant(db, txn_arc, scope, role_id).await?;
 
     Ok(match (scope, row) {
         (_, None) => RoleWriteTarget::NotFound,
@@ -305,12 +322,19 @@ pub async fn check_role_write_target(
 /// 角色当前持有的权限码集合，用于“授予不得超出操作者权限集”的校验。
 pub async fn role_permission_codes(
     db: &Db,
+    txn_arc: &RlsTxnCell,
     scope: IamScope,
     role_id: Uuid,
 ) -> Result<Vec<String>, sqlx::Error> {
+    let mut guard = txn_arc.lock().await;
     let mut txn = match scope {
         IamScope::Platform => db.scope_read_system().await?,
-        IamScope::Tenant(t) => db.scope_read_for_tenant(t).await?,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                return Err(sqlx::Error::Protocol("数据库事务上下文缺失".into()));
+            };
+            db.scope_with(txn).await?
+        }
     };
 
     let codes = sqlx::query_scalar(
@@ -365,24 +389,24 @@ mod tests {
     }
 
     #[test]
-    fn read_scope_platform_only_for_superuser() {
+    fn iam_read_scope_platform_only_for_superuser() {
         let tenant = "00000000-0000-0000-0000-000000000001";
         assert_eq!(
-            read_scope(&claims(&["iam:read"], Some(tenant), true)).unwrap(),
+            iam_read_scope(&claims(&["iam:read"], Some(tenant), true)).unwrap(),
             IamScope::Platform
         );
         // 非超管即使持有 iam:read，也仍按租户过滤（保持既有行为）
         assert_eq!(
-            read_scope(&claims(&["iam:read"], Some(tenant), false)).unwrap(),
+            iam_read_scope(&claims(&["iam:read"], Some(tenant), false)).unwrap(),
             IamScope::Tenant(Uuid::parse_str(tenant).unwrap())
         );
     }
 
     #[test]
-    fn write_scope_requires_tenant_for_tenant_admin() {
+    fn iam_write_scope_requires_tenant_for_tenant_admin() {
         let tenant = "00000000-0000-0000-0000-000000000001";
         assert_eq!(
-            write_scope(
+            iam_write_scope(
                 &claims(&[TENANT_USER_WRITE], Some(tenant), false),
                 "admin:iam:write"
             )
@@ -390,14 +414,14 @@ mod tests {
             IamScope::Tenant(Uuid::parse_str(tenant).unwrap())
         );
         assert_eq!(
-            write_scope(
+            iam_write_scope(
                 &claims(&[TENANT_USER_WRITE], None, false),
                 "admin:iam:write"
             ),
             Err(ScopeError::MissingTenant)
         );
         assert_eq!(
-            write_scope(
+            iam_write_scope(
                 &claims(&["admin:iam:write"], Some(tenant), false),
                 "admin:iam:write"
             )
@@ -483,7 +507,7 @@ mod tests {
         // 即便历史上误授了平台码，身份仍收敛到租户作用域。
         assert!(!is_platform_admin(&tenant_admin));
         assert_eq!(
-            write_scope(&tenant_admin, "admin:iam:write").unwrap(),
+            iam_write_scope(&tenant_admin, "admin:iam:write").unwrap(),
             IamScope::Tenant(Uuid::parse_str(tenant).unwrap())
         );
         // 也不能把这些平台码再授予任何租户角色。

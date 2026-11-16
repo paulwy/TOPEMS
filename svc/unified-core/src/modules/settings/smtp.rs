@@ -17,6 +17,7 @@ use lettre::{Message, Transport};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
@@ -67,6 +68,7 @@ pub struct TestEmailRequest {
 
 /// `GET /system/settings/smtp`
 pub async fn get_smtp_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SmtpConfig> {
@@ -76,7 +78,15 @@ pub async fn get_smtp_config(
         Some(tenant_uuid(&claims))
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "获取 SMTP 配置失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create SMTP config read scope: {}", e);
@@ -130,13 +140,22 @@ pub async fn get_smtp_config(
 
 /// `PUT /system/settings/smtp`
 pub async fn update_smtp_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SmtpConfig>,
 ) -> ApiResponse<SmtpConfig> {
     let tenant_id = tenant_uuid(&claims);
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal(
+            "保存 SMTP 配置失败",
+            "RLS 事务中间件未注入",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create SMTP config write scope: {}", e);
@@ -209,6 +228,7 @@ pub async fn update_smtp_config(
 
 /// `POST /system/settings/smtp/test`
 pub async fn test_smtp_config(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TestEmailRequest>,
@@ -222,7 +242,15 @@ pub async fn test_smtp_config(
         cfg
     } else {
         let tenant_id = tenant_uuid(&claims);
-        let mut scope = match state.db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return ApiResponse::from(TopemsError::internal(
+                "读取 SMTP 配置失败",
+                "RLS 事务中间件未注入",
+            ));
+        };
+        let mut scope = match state.db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("Failed to create SMTP config read scope: {}", e);

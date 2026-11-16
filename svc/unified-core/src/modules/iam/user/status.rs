@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use super::models::record_audit_log;
@@ -13,6 +14,7 @@ use crate::modules::iam::auth::validate_password_strength;
 use crate::modules::iam::tenant_scope::{self, UserTarget};
 
 pub async fn disable_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -35,12 +37,14 @@ pub async fn disable_user(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法停用用户"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, &txn_arc, scope, user_id, claims.is_superuser)
+        .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权停用超级管理员"),
@@ -110,6 +114,7 @@ pub async fn disable_user(
 }
 
 pub async fn enable_user(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -132,12 +137,14 @@ pub async fn enable_user(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法启用用户"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_id, claims.is_superuser).await {
+    match tenant_scope::check_user_target(&state.db, &txn_arc, scope, user_id, claims.is_superuser)
+        .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权启用超级管理员"),

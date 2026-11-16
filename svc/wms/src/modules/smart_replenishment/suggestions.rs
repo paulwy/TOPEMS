@@ -11,7 +11,9 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{release_request_txn, tenant_of, wms_db};
+use crate::shared::scope::{
+    arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
+};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -232,7 +234,9 @@ pub async fn compute_replenishment(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("replenishment.compute");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-10 补货建议计算独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut tx = match db.scope_for_tenant(tenant).await {
         Ok(tx) => tx,
         Err(e) => {
@@ -240,6 +244,11 @@ pub async fn compute_replenishment(
             return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
         }
     };
+    if let Err(e) = arm_short_txn(&mut tx).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = tx.rollback().await;
+        return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
+    }
 
     let clear_result = sqlx::query(
         "UPDATE wms.replenishment_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND tenant_id = $1",
@@ -395,6 +404,7 @@ pub async fn compute_replenishment(
         tracing::error!("提交事务失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
     }
+    txn_timer.finish();
 
     let items_json: Vec<serde_json::Value> = items.iter().map(suggestion_row_to_json).collect();
     let count = items.len() as i64;

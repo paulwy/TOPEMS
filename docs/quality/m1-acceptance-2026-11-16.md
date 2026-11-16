@@ -155,3 +155,150 @@ HTTP 400
 - `svc/finance/src/modules/mod.rs`：`submit_approval` / `approve_approval` / `reject_approval` 改为取 `Extension<RlsTxnCell>`，用 `state.db` + `*_db_txn`，3 处 `Db::new(state.pool)` 与 `// tenant-system:` 注释全部删除。
 - 兼容性边界：无请求上下文时 `scope_with` 直接报 Protocol（fail-closed），后台任务继续走原 `*_db`（自开作用域，行为不变）。
 - 证据：`cargo check -p topems-shared-db -p topems-finance -p topems-qms --offline` 通过；`check-tenant-context.cjs` PASS（R1 0 / R2 972，无新增）；`check-request-txn.mjs` bare 1656 / own 0（基线 1656）；TXN-2XX 门禁 OK；`pnpm check:ledger`、`pnpm facts:check` 全绿。
+
+## 9. B4 分站推进：unified-core（第 3 站，2026-11-16 晚）
+
+### 9.1 迁移口径：15 → 3
+
+`svc/unified-core/src` 的 `scope_for_tenant|scope_read_for_tenant` 由 15 处降到 3 处：
+
+- 已迁 12 处（Tenant 分支 → `db.scope_with(txn)`，Platform 分支与只读 system 通道原样保留）：
+  - `modules/iam/role.rs` 5：`list_roles` / `create_role` / `get_role` / `update_role` / `delete_role`；
+  - `modules/iam/tenant_scope.rs` 3：`check_user_target` / `fetch_role_tenant` / `role_permission_codes`（签名加 `txn_arc: &RlsTxnCell`，调用方全量透传）；
+  - `modules/iam/user/crud.rs` 1：`create_user`；
+  - `modules/iam/user/roles.rs` 2：两个读通道。
+  - 连带为 `check_role_target` / `check_role_write_target` / `company_scope::check_user` 补 txn 形参，相关 handler 统一加 `Extension<RlsTxnCell>`。
+- **剩余 3 处均在 `modules/audit/service.rs`，属刻意外显通道，不迁**：`record_operation_log` 的唯一调用点是 `modules/audit/middleware.rs:163` 的 `tokio::spawn`，task-local 上下文会丢失，必须按显式 `tenant_id` 选 `scope_for_tenant` / `scope_system`；`get_operation_log` 当前无调用方。该文件不依赖请求事务，守卫不会命中，也不需要为守卫改通道语义。
+- Platform 通道证据：`role.rs` L113/257/392/531/731、`crud.rs` L400、`roles.rs` L111/L375、`tenant_scope.rs` L183/247/331 仍为 `scope_system` / `scope_read_system`；SQL、返回码、`iam_read_scope` / `iam_write_scope` 判定未动。
+- `scope_with` 在 iam 目录共 17 处 = 本次 12 + 既有 5（`access_log.rs` 3、`permission.rs` 2）。
+
+### 9.2 守卫开启（先迁移、后开守卫）
+
+- `main.rs` L516-518：既有 `deny_request_own_txn()` 后追加 `deny_request_tenant_scope()`。
+- `embedded.rs` L206-208：原先两个守卫都没有，按「没有的两个一起开」补齐；embedded 的 `create_routes` 内部同样挂 `tenant_middleware`（`routes/mod.rs` L217-220），两入口口径一致。
+- 守卫语义：仅在 `current_request_tenant()` 存在时 fail；`audit/service.rs` 的 spawn 路径无请求上下文，不命中。
+
+### 9.3 验收证据
+
+- `cargo check -p topems-unified-core --all-targets --offline` → 通过（20.36s，无警告）。
+- `check-tenant-context.cjs` → PASS（R1 0 / R2 972，基线 1094，无新增）。
+- `check-request-txn.mjs` → bare 1656 / own 0（基线 1656）。
+- `check-txn-write-non2xx.py` → OK。
+- `pnpm check:ledger` → 通过（4 个基线 0d/90d，allowlist unregistered 0）。
+- `pnpm facts:check` → 一致（96 项）。
+
+### 9.4 运行时探针（重建 + 重启后验证）
+
+- 重建：`cargo build --release -p topems-server --offline`（10m51s）；新二进制 205,528,016B、sha256 前 16 位 `86dcd784a6fbd631`；旧二进制备份 `bin/topems-server-82c1088b4-pre-probe-20261116.bak`；`launchctl kickstart -k gui/501/com.topems.server` 重启，新 pid 78890，`GET /health` → 200。重启前已确认树内只有本批守卫/迁移（wms 读路径改动临时 stash，未编入）。
+- IAM 读端点（本地按 `JWT_SECRET` 签发超管 JWT + `x-tenant-id: 00000000-0000-0000-0000-000000000001`）：
+  - `GET /api/core/iam/roles` → 200（16 个角色）；
+  - `GET /api/core/iam/users` → 200（正常用户列表）；
+  - `GET /api/core/iam/users/{id}/roles` → 200 `data:[]`；
+  - `GET /api/core/iam/roles/{id}/permissions` → 200（1084 条权限码）。
+- 缺租户头：`GET /api/core/iam/roles`（无 `x-tenant-id`）→ 400「缺少租户上下文」，非 500。
+- 日志：重启后无 `RLS context missing`、无「请求上下文禁止」、无 ERROR；全程生产库只读（仅 SELECT）。
+- audit spawn 路径：探针时 `operation_audit_middleware` 全仓无挂载点（`routes/mod.rs` 只挂 shared-auth 的 HTTP `audit_logger_middleware`，不写 `core_operation_logs`），`record_operation_log` 在 HTTP 侧不可达——写请求后 `public.core_operation_logs` 仍为 0 行。该缺口已在本轮定性并补齐，见 §9.6。
+- 守卫正例（请求内仍自开租户作用域应被拒）已无残留违规路径可触发，证据止于「代码开启 + 探针无假阳性」。
+
+### 9.5 已知边界
+
+- `system_audit` / `access_log` / `user/models` / `master/handlers` / `audit/login_log_handlers` 仍有 `Db::new(state.pool…)` 的局部 Db 实例（不带守卫），本批未动；它们不使用 `scope_for_tenant`，不构成守卫绕过，但属后续可收口的重复构造。
+- 读路径迁 `scope_with` 会丢掉 `SET TRANSACTION READ ONLY`，本批未对只读通道做此类迁移（Platform 读仍是 `scope_read_system`）。
+
+### 9.6 操作审计中间件：判定与补挂载（2026-11-16 深夜）
+
+**判定：② 遗漏（不是被 shared-auth 审计替代）**
+
+- 引入即未挂载：`4fdcc1f32`（V24.0 组件库统一）新增 `modules/audit/middleware.rs`，同批只加了定义与 re-export；`git grep operation_audit_middleware -- '*.rs'` 在该提交上无路由挂载；`git log -S"operation_audit" -- routes/mod.rs main.rs embedded.rs` 为空（从未挂载，也无摘除记录）。
+- 不构成替代：shared-auth `AuditLoggerMiddleware` 写 `public.audit_logs`（`lib/shared-auth/src/security/audit_logger.rs:465`，action/entity_type/entity_id/request_details/response_details/status），是 HTTP 请求级；`core_operation_logs` 是业务 CRUD 级，不同表、不同粒度。
+- 使用方齐全：查询侧 `/audit/operations*` 已挂载（`modules/audit/mod.rs:51-56`）；`docs/reports/audit/README.md:15` 明确该表由 `operation_audit_middleware` 自动记录；前端 `apps/web/src/api/admin/operationAudit.ts` 依赖该表。
+
+**挂载与阻断缺陷修复**
+
+- 挂载：`routes/mod.rs` 的 `core_protected_routes`，置于 `tenant_middleware` 与 `auth_middleware` 之间（auth 内、tenant 外，可见事务收尾后的最终状态码）。`main.rs` 与 `embedded.rs:245` 同走 `create_routes`，两种形态一处生效；登录/注册/健康检查/静态在 public 路由，不经过本层。
+- 缺陷：原实现 `axum::body::to_bytes(body, 8KB)` 超限即 `Err`，随后用 `Bytes::new()` 重建请求，会把 >8KB 的写请求体清空。现改为：仅 `application/json` / `*+json` 读 body（上限 10MB，与 `input_validation::max_body_bytes` 同口径），快照前 8KB；multipart / octet-stream 不读、原样透传；读取失败返回 413，绝不回退空 body。
+- 通道语义未变：`audit/service.rs` 仍是显式 tenant → `scope_for_tenant`、nil → `scope_system`，`tokio::spawn` 内不依赖 task-local；写失败只打 error + `AUDIT_WRITE_FAILURES_TOTAL`。
+
+**dev 验证（临时实例 :18000 + `topems_test`；生产 8099 未重启）**
+
+| 项 | 改前（原 body 逻辑） | 改后 |
+|---|---|---|
+| 写请求落库 | — | `DELETE /api/core/iam/roles/{不存在}` → 新增行：module=roles / operation=delete / resource_type=roles / response_status=200 / tenant_id=…0001 |
+| 10KB JSON 写请求 | `Failed to parse the request body as JSON: EOF while parsing a value at line 1 column 0`（body 被清空） | `{"code":400,"message":"用户名是必填字段"}`（body 完整） |
+| 20KB multipart | `{"failed":[],"files":[]}`（handler 看不到文件） | `{"failed":["big.bin: 不支持的文件类型"]}`（multipart 未被消费） |
+
+- 耗时（同一 DELETE，30 次 curl wall-clock）：未挂载 avg 11.68 / p50 11.02 / p95 14.71 ms；挂载后 avg 12.78 / p50 12.46 / p95 15.50 ms → +1ms 量级（同数量级；DB 写在独立连接异步执行，不在响应关键路径）。
+- 编译/格式：`cargo check -p topems-unified-core --all-targets --offline` 0 error；`cargo fmt -p topems-unified-core -- --check` 0 diff。
+
+## 10. B4 分站推进：wms（第 4 站，C 路线，2026-11-16 晚）
+
+四项取舍已由用户拍板：接受写路径豁免、读路径走只读短事务、短事务 2s 超时配 500ms 告警、走 B 的前提先记录。**wms 不开 `deny_request_tenant_scope()`。**
+
+### 10.1 口径与路线
+
+`svc/wms/src` 的 `scope_for_tenant` / `scope_read_for_tenant` 共 23 处（另有 1 处注释提及），按用途分三类：
+
+- **写路径 16 处（保持独立短事务，登记豁免）**：10 个 handler 的写事务 + 6 处提交后只读回读；
+- **请求读路径 5 处（本次改造）**：`modules/analytics.rs` 改为「先 `release_request_txn` 再开只读短事务」，保留 `SET TRANSACTION READ ONLY`；
+- **后台事件消费 2 处（继续豁免）**：`event_handlers/mod.rs`，不经请求中间件。
+
+为什么 wms 不开守卫：守卫（`deny_request_tenant_scope`）在 `current_request_tenant()` 存在时直接 fail，而 wms 的写路径与读路径都刻意用 `scope_for_tenant` / `scope_read_for_tenant` 开独立短事务（`release_request_txn` 只清空事务单元，不清 task-local）。开守卫会把 21 处合法短事务全部打成 500，因此本批以「登记豁免 + 文档判据」替代，不开守卫。
+
+### 10.2 豁免注册表（代码标记 `wms-short-txn-exempt:`）
+
+| 编号 | 位置 | handler / 用途 |
+| --- | --- | --- |
+| W-01 | `modules/stock_take.rs` | `start_stock_take` 盘点开始写事务 |
+| W-02 | `modules/stock_take.rs` | `count_stock_take` 盘点计数写事务 |
+| W-03 | `modules/stock_take.rs` | `complete_stock_take` 盘点完成写事务 |
+| W-04 | `modules/stock_take.rs` | `adjust_stock_take` 盘点调整写事务 |
+| W-05 | `modules/inbound_order.rs` | `receive_inbound_order` 入库收货写事务 |
+| W-06 | `modules/outbound_order.rs` | `ship_outbound_order` 出库发货写事务 |
+| W-07 | `modules/inventory.rs` | `update_inventory` 库存绝对值调整写事务 |
+| W-08 | `modules/transfer_order.rs` | `ship_transfer` 调拨发货写事务 |
+| W-09 | `modules/transfer_order.rs` | `receive_transfer` 调拨收货写事务 |
+| W-10 | `modules/smart_replenishment/suggestions.rs` | `compute_replenishment` 补货建议计算写事务 |
+| R-01 | `modules/stock_take.rs` | `start_stock_take` 提交后只读回读 |
+| R-02 | `modules/stock_take.rs` | `complete_stock_take` 提交后只读回读 |
+| R-03 | `modules/inbound_order.rs` | `receive_inbound_order` 提交后只读回读 |
+| R-04 | `modules/outbound_order.rs` | `ship_outbound_order` 提交后只读回读 |
+| R-05 | `modules/transfer_order.rs` | `ship_transfer` 提交后只读回读 |
+| R-06 | `modules/transfer_order.rs` | `receive_transfer` 提交后只读回读 |
+| B-01 | `event_handlers/mod.rs` | `handle_inbound_order_requested` 后台事件消费 |
+| B-02 | `event_handlers/mod.rs` | `store_po_snapshot` 后台事件消费 |
+
+### 10.3 写路径豁免判据（三条）
+
+1. **连接 GUC 收敛防 RLS 误过滤**：每个短事务在独立连接上 `SET LOCAL app.tenant_id`，事务结束即失效；若并入请求事务，GUC 的生命周期被拉长到整个 handler，后续任意查询都可能落在错误租户口径上。
+2. **行锁边界**：短事务只覆盖行锁段（`SELECT ... FOR UPDATE` / 条件 `UPDATE`），提交即释放；迁入请求事务会把行锁持有期延长到提交后回读结束，放大锁等待与死锁面。
+3. **每请求连接占用**：`release_request_txn` 先回滚释放请求事务，再开独立短事务，同一请求任意时刻只占用 1 条连接（配合 wms 连接池上限，见 `w7-b4-wms-plan-2026-11-12.md` §7）。
+
+读路径同理：迁 `scope_with` 会丢掉 `SET TRANSACTION READ ONLY`，属加固降级，因此不迁。
+
+### 10.4 请求读路径改造（5 处）
+
+`get_flow_trend` / `get_dashboard_summary` / `get_inventory_distribution` / `get_inventory_types` / `get_daily_trend`：handler 新增 `Extension<RlsTxnCell>`，开作用域前 `release_request_txn(&txn_arc).await`，随后仍用 `scope_read_for_tenant`。每请求并发连接由 2 条（请求事务 + 只读事务）降为 1 条；`SET TRANSACTION READ ONLY` 保留。
+
+### 10.5 短事务加固：`lock_timeout` 与耗时观测
+
+- `shared/scope.rs`：`arm_short_txn()` 用 `set_config('lock_timeout','2s',true)`（等价 `SET LOCAL`，连接归还池不残留）；`ShortTxnTimer` 在提交后计时，≥500ms 输出 `tracing::warn!(target:"wms.txn", op, elapsed_ms, threshold_ms)`，否则 `debug`。沿用现有 tracing 日志体系，不新建指标栈。
+- 覆盖范围：W-01..W-10 十处写短事务；设置失败即回滚并返回 500。
+
+### 10.6 将来走 B 的前置条件（待定，不推进）
+
+- 需要独立窗口（不与其它站点交叉改同一工作区）；
+- 20 线程同 SKU 并发压测，验证迁移后行锁等待不劣化；
+- p99 与锁等待阈值由业务方定；
+- 以上三条落定前不推进 B，写路径保持短事务豁免。
+
+> 登记处：以上三条已提炼为 `TODO.md` §8.1 的 `DEC-WMS-B-01` / `DEC-WMS-B-02` / `DEC-WMS-B-03`（状态「只记录、不推进」），并写明决策人与立项所需证据。本节仅保留上下文说明。
+
+### 10.7 验收证据
+
+- `cargo check -p topems-wms --all-targets --offline` → 通过（0 warning）。
+- `check-tenant-context.cjs` → PASS（R1 0 处；R2 972 处，基线 1094，无新增）。
+- `check-request-txn.mjs` → bare 1656 / own 0（基线 1656；wms 分项 bare 292 / own 0）。
+- `check-txn-write-non2xx.py` → OK（未发现「请求事务内写入后返回非 2xx」的路径）。
+- `pnpm check:ledger` → 通过（4 个基线 0d/90d，unregistered 0）。
+- `pnpm facts:check` → 一致（96 项）。
+- 本批未改动任何门禁基线/allowlist 文件；两组标记 18 处（W-01..W-10、R-01..R-06、B-01/B-02）与注册表一一对应。

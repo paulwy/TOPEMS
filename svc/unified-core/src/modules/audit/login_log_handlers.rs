@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
@@ -68,6 +69,7 @@ pub async fn record_login(
 }
 
 pub async fn list_login_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<LoginLogQuery>,
@@ -77,7 +79,12 @@ pub async fn list_login_logs(
     let offset = (page - 1) * page_size;
 
     let tenant_id = super::handlers::claims_tenant_filter(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("登录日志查询作用域创建失败: {}", e);
@@ -185,12 +192,18 @@ pub async fn list_login_logs(
 }
 
 pub async fn get_login_log(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LoginLog> {
     let tenant_id = super::handlers::claims_tenant_filter(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("登录日志详情作用域创建失败: {}", e);

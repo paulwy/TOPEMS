@@ -9,6 +9,7 @@ use axum::response::{Html, Json};
 use axum::routing::get;
 use axum::Router;
 use utoipa::OpenApi;
+#[cfg(feature = "swagger-ui")]
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::modules::openapi::IamApiDoc;
@@ -111,22 +112,29 @@ async fn api_docs() -> Html<String> {
 }
 
 /// 注册 OpenAPI 文档路由
+///
+/// `swagger-ui` feature 关闭时（`topems-server` 聚合层即以 `default-features = false`
+/// 引用本 crate，避免构建期联网下载资源）不注册 `/swagger-ui`，其余文档端点不变。
 pub fn openapi_routes() -> Router<AppState> {
-    Router::new()
-        // Swagger UI：自托管交互式调试页（utoipa-swagger-ui，无需外网 CDN）。
-        // utoipa-swagger-ui 10 的 .url() 第二参数为 OpenApi 实例（SwaggerUi 自行托管 spec），
-        // spec 路径放在 SwaggerUi 前缀下，避免与现有 /api-docs/openapi.json（Redoc 用）路由冲突。
-        .merge(
-            SwaggerUi::new("/swagger-ui")
-                .url("/swagger-ui/api-docs/openapi.json", IamApiDoc::openapi()),
-        )
+    let router = Router::new()
         .route("/api-docs", get(api_docs))
         .route("/api-docs/openapi.json", get(openapi_json))
         // 兼容常见路径
         .route("/docs", get(api_docs))
         .route("/docs/openapi.json", get(openapi_json))
         .route("/swagger", get(api_docs))
-        .route("/swagger.json", get(openapi_json))
+        .route("/swagger.json", get(openapi_json));
+
+    // Swagger UI：自托管交互式调试页（utoipa-swagger-ui，无需外网 CDN）。
+    // utoipa-swagger-ui 10 的 .url() 第二参数为 OpenApi 实例（SwaggerUi 自行托管 spec），
+    // spec 路径放在 SwaggerUi 前缀下，避免与现有 /api-docs/openapi.json（Redoc 用）路由冲突。
+    #[cfg(feature = "swagger-ui")]
+    let router = router.merge(
+        SwaggerUi::new("/swagger-ui")
+            .url("/swagger-ui/api-docs/openapi.json", IamApiDoc::openapi()),
+    );
+
+    router
 }
 
 #[cfg(test)]

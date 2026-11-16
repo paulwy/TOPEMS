@@ -11,6 +11,7 @@ use axum::{
     extract::{Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
+    Extension,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -141,10 +143,16 @@ fn parse_datetime(value: Option<&str>) -> Option<DateTime<Utc>> {
 
 /// 查询审计日志
 pub async fn query_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<PaginatedAuditLogs> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计查询作用域创建失败: {}", e);
@@ -419,10 +427,16 @@ pub async fn query_audit_logs(
 
 /// 审计日志统计
 pub async fn get_audit_log_stats(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<AuditLogStats> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计统计作用域创建失败: {}", e);
@@ -466,6 +480,7 @@ pub async fn get_audit_log_stats(
             // 释放连接后再调用辅助查询（辅助函数内部自成作用域），
             // 否则单请求同时占用两条连接，小池下会 acquire 超时表现为请求挂死。
             let _ = scope.commit().await;
+            drop(guard);
 
             stats.by_action = load_top_by_column(
                 &state,
@@ -473,6 +488,7 @@ pub async fn get_audit_log_stats(
                 "action",
                 start_date,
                 end_date,
+                &txn_arc,
             )
             .await;
         }
@@ -504,8 +520,9 @@ pub async fn get_audit_log_stats(
 
             // 同上：先释放连接，再走辅助查询。
             let _ = scope.commit().await;
+            drop(guard);
 
-            stats.by_user = load_login_top_users(&state).await;
+            stats.by_user = load_login_top_users(&state, &txn_arc).await;
         }
         _ => {
             // 复用函数入口已开启的作用域：此处再开一个会同时占用两条连接，
@@ -534,13 +551,20 @@ pub async fn get_audit_log_stats(
             .unwrap_or(0);
 
             let _ = scope.commit().await;
+            drop(guard);
 
             stats.failure_total = stats.total - stats.success_total;
 
-            stats.by_action =
-                load_top_by_column(&state, "public.audit_logs", "action", start_date, end_date)
-                    .await;
-            stats.by_user = load_audit_top_users(&state).await;
+            stats.by_action = load_top_by_column(
+                &state,
+                "public.audit_logs",
+                "action",
+                start_date,
+                end_date,
+                &txn_arc,
+            )
+            .await;
+            stats.by_user = load_audit_top_users(&state, &txn_arc).await;
         }
     }
 
@@ -552,7 +576,7 @@ pub async fn get_audit_log_stats(
         })
         .collect();
 
-    stats.trend = load_trend(&state, source, start_date, end_date).await;
+    stats.trend = load_trend(&state, source, start_date, end_date, &txn_arc).await;
 
     api_success(stats)
 }
@@ -563,6 +587,7 @@ async fn load_top_by_column(
     column: &str,
     start_date: Option<DateTime<Utc>>,
     end_date: Option<DateTime<Utc>>,
+    txn_arc: &RlsTxnCell,
 ) -> Vec<AuditLogCount> {
     let date_col = if table.contains("login") {
         "login_time"
@@ -593,7 +618,12 @@ async fn load_top_by_column(
     );
     let rows = if table == "public.audit_logs" {
         let db = state.db.clone();
-        let mut scope = match db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return Vec::new();
+        };
+        let mut scope = match db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("数据库作用域创建失败: {}", e);
@@ -609,7 +639,12 @@ async fn load_top_by_column(
         let _ = scope.commit().await;
         rows
     } else {
-        let mut scope = match state.db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return Vec::new();
+        };
+        let mut scope = match state.db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("数据库作用域创建失败: {}", e);
@@ -633,9 +668,14 @@ async fn load_top_by_column(
         .collect()
 }
 
-async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
+async fn load_audit_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<AuditLogCount> {
     let db = state.db.clone();
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Vec::new();
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -665,8 +705,13 @@ async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
         .collect()
 }
 
-async fn load_login_top_users(state: &AppState) -> Vec<AuditLogCount> {
-    let mut scope = match state.db.scope_read().await {
+async fn load_login_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<AuditLogCount> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Vec::new();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -700,6 +745,7 @@ async fn load_trend(
     source: &str,
     start_date: Option<DateTime<Utc>>,
     end_date: Option<DateTime<Utc>>,
+    txn_arc: &RlsTxnCell,
 ) -> Vec<AuditLogTrend> {
     let (table, date_col) = match source {
         "permission_audit_logs" => ("public.permission_audit_logs", "changed_at"),
@@ -729,7 +775,12 @@ async fn load_trend(
     );
     let rows = if table == "public.audit_logs" {
         let db = state.db.clone();
-        let mut scope = match db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return Vec::new();
+        };
+        let mut scope = match db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("数据库作用域创建失败: {}", e);
@@ -745,7 +796,12 @@ async fn load_trend(
         let _ = scope.commit().await;
         rows
     } else {
-        let mut scope = match state.db.scope_read().await {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            return Vec::new();
+        };
+        let mut scope = match state.db.scope_with(txn).await {
             Ok(scope) => scope,
             Err(e) => {
                 tracing::error!("数据库作用域创建失败: {}", e);
@@ -773,6 +829,7 @@ async fn load_trend(
 ///
 /// 支持 CSV / JSON 两种格式。
 pub async fn export_audit_logs(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<ExportQueryParams>,
 ) -> Result<Response, Response> {
@@ -781,7 +838,7 @@ pub async fn export_audit_logs(
     let start_date = parse_datetime(params.start_date.as_deref());
     let end_date = parse_datetime(params.end_date.as_deref());
 
-    let items = fetch_export_rows(&state, source, &params, start_date, end_date)
+    let items = fetch_export_rows(&state, source, &params, start_date, end_date, &txn_arc)
         .await
         .map_err(|_| {
             (
@@ -859,8 +916,14 @@ async fn fetch_export_rows(
     params: &ExportQueryParams,
     start_date: Option<DateTime<Utc>>,
     end_date: Option<DateTime<Utc>>,
+    txn_arc: &RlsTxnCell,
 ) -> Result<Vec<ExportRow>, sqlx::Error> {
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Err(sqlx::Error::Protocol("RLS 事务缺失：请求事务未注入".into()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("审计导出作用域创建失败: {}", e);

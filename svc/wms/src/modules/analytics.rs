@@ -16,8 +16,9 @@ use uuid::Uuid;
 
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::wms_db;
+use crate::shared::scope::{release_request_txn, wms_db};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -454,6 +455,7 @@ pub async fn get_flow_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<FlowTrendResponse> {
     // 报表读权限：与 /api/wms/analytics/* 的 OpenAPI security 声明
     // （wms:read）及同模块其它读接口一致，DashboardRead → wms:read。
@@ -474,6 +476,12 @@ pub async fn get_flow_trend(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    // 只读路径不再复用请求事务：先回滚释放（此前未写入），再开独立的只读短事务，
+    // 每请求由「请求事务 + 只读事务」两条并发连接降为一条。
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
     let db = wms_db(&state.db);
     let mut scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
@@ -1051,6 +1059,7 @@ pub struct DashboardSummary {
 pub async fn get_dashboard_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DashboardSummary> {
     tracing::info!("获取WMS Dashboard汇总数据");
 
@@ -1060,6 +1069,10 @@ pub async fn get_dashboard_summary(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
     let db = wms_db(&state.db);
     let mut scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
@@ -1175,6 +1188,7 @@ pub async fn get_inventory_distribution(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<InventoryDistributionItem>> {
     tracing::info!("获取WMS库存分布数据");
 
@@ -1183,6 +1197,10 @@ pub async fn get_inventory_distribution(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
     let db = wms_db(&state.db);
     let mut scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
@@ -1238,6 +1256,7 @@ pub async fn get_inventory_distribution(
 pub async fn get_inventory_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<InventoryTypeItem>> {
     tracing::info!("获取WMS库存类型分布");
 
@@ -1246,6 +1265,10 @@ pub async fn get_inventory_types(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
     let db = wms_db(&state.db);
     let mut scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
@@ -1310,6 +1333,7 @@ pub async fn get_inventory_types(
 pub async fn get_daily_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<DailyTrendItem>> {
     tracing::info!("获取WMS每日出入库趋势");
 
@@ -1318,6 +1342,10 @@ pub async fn get_daily_trend(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    if let Err(e) = release_request_txn(&txn_arc).await {
+        tracing::error!("释放请求事务失败: {}", e);
+        return ApiResponse::server_error("事务释放失败");
+    }
     let db = wms_db(&state.db);
     let mut scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,

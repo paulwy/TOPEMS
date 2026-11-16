@@ -6,6 +6,13 @@ authors.workspace = true
 license.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + AI"
 
+[features]
+# Swagger UI 调试页默认随本服务独立启动时启用；但 `topems-server`（模块化单体）以
+# `default-features = false` 引用本 crate，避免把需要联网下载静态资源的
+# utoipa-swagger-ui 带上聚合层，从而保证 `cargo check -p topems-server --offline` 可用。
+default = ["swagger-ui"]
+swagger-ui = ["dep:utoipa-swagger-ui"]
+
 [dependencies]
 topems-shared = { workspace = true }
 topems-shared-event = { workspace = true }
@@ -25,7 +32,7 @@ topems-shared-bootstrap = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
-utoipa-swagger-ui.workspace = true
+utoipa-swagger-ui = { workspace = true, optional = true }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true

@@ -5,7 +5,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{commit_test_txn, super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Extension, State};
 use axum::Json;
 use topems_unified_core::modules::settings::api_keys::{
@@ -49,7 +49,12 @@ fn smtp_payload() -> SmtpConfig {
 #[sqlx::test(migrations = false)]
 async fn list_api_keys_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_api_keys(State(test_app_state(pool)), Extension(super_claims())).await;
+    let resp = list_api_keys(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -64,12 +69,15 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
         key_type: "other".to_string(),
         secret: "sk-abcdef1234".to_string(),
     };
+    let txn = test_txn_cell(&pool).await;
     let resp = create_api_key(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(payload),
     )
     .await;
+    commit_test_txn(&txn).await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -77,6 +85,7 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
     assert!(data.secret.contains("****"));
 
     let resp = list_api_keys(
+        Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
     )
@@ -96,25 +105,36 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
         key_type: "other".to_string(),
         secret: "sk-xyz".to_string(),
     };
+    let txn = test_txn_cell(&pool).await;
     let created = create_api_key(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(payload),
     )
     .await;
+    commit_test_txn(&txn).await;
     let entry: ApiKeyEntry = created
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", created.message));
 
+    let txn = test_txn_cell(&pool).await;
     let del = delete_api_key(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         axum::extract::Path(entry.id),
     )
     .await;
+    commit_test_txn(&txn).await;
     assert!(del.data.is_some());
 
-    let resp = list_api_keys(State(test_app_state(pool)), Extension(super_claims())).await;
+    let resp = list_api_keys(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+    )
+    .await;
     let items = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -124,7 +144,12 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn get_smtp_returns_default_when_unset(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = get_smtp_config(State(test_app_state(pool)), Extension(super_claims())).await;
+    let resp = get_smtp_config(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -135,15 +160,23 @@ async fn get_smtp_returns_default_when_unset(pool: sqlx::PgPool) {
 async fn update_smtp_persists_and_reads_back(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let payload = smtp_payload();
+    let txn = test_txn_cell(&pool).await;
     let upd = update_smtp_config(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Extension(super_claims()),
         Json(payload),
     )
     .await;
+    commit_test_txn(&txn).await;
     assert!(upd.data.is_some(), "update failed: {:?}", upd.message);
 
-    let resp = get_smtp_config(State(test_app_state(pool)), Extension(super_claims())).await;
+    let resp = get_smtp_config(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));

@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
@@ -31,6 +32,7 @@ const MENU_COLUMNS: &str =
     "id, tenant_id, group_id, parent_id, name, code, path, icon, sort_order, status, permissions, created_at, updated_at";
 
 pub async fn list_groups(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MenuGroupQuery>,
@@ -47,7 +49,12 @@ pub async fn list_groups(
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单分组读作用域失败: {}", e);
@@ -111,6 +118,7 @@ pub async fn list_groups(
 }
 
 pub async fn get_group(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MenuGroup> {
@@ -119,7 +127,12 @@ pub async fn get_group(
         MENU_GROUP_COLUMNS
     );
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单分组读作用域失败: {}", e);
@@ -148,6 +161,7 @@ pub async fn get_group(
 }
 
 pub async fn create_group(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuGroupRequest>,
@@ -171,7 +185,12 @@ pub async fn create_group(
         MENU_GROUP_COLUMNS
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单分组写作用域失败: {}", e);
@@ -201,6 +220,7 @@ pub async fn create_group(
 }
 
 pub async fn update_group(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -227,7 +247,12 @@ pub async fn update_group(
         MENU_GROUP_COLUMNS
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单分组写作用域失败: {}", e);
@@ -263,6 +288,7 @@ pub async fn update_group(
 }
 
 pub async fn delete_group(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -275,7 +301,12 @@ pub async fn delete_group(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单分组写作用域失败: {}", e);
@@ -302,6 +333,7 @@ pub async fn delete_group(
 }
 
 pub async fn list_menus(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MenuQuery>,
@@ -320,7 +352,12 @@ pub async fn list_menus(
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单项读作用域失败: {}", e);
@@ -391,13 +428,22 @@ pub async fn list_menus(
     })
 }
 
-pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Menu> {
+pub async fn get_menu(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<Menu> {
     let sql = format!(
         r#"SELECT {} FROM public.core_menus WHERE deleted_at IS NULL AND id = $1"#,
         MENU_COLUMNS
     );
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单项读作用域失败: {}", e);
@@ -426,6 +472,7 @@ pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> Ap
 }
 
 pub async fn create_menu(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuRequest>,
@@ -449,7 +496,12 @@ pub async fn create_menu(
         MENU_COLUMNS
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单项写作用域失败: {}", e);
@@ -483,6 +535,7 @@ pub async fn create_menu(
 }
 
 pub async fn update_menu(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -513,7 +566,12 @@ pub async fn update_menu(
         MENU_COLUMNS
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单项写作用域失败: {}", e);
@@ -553,6 +611,7 @@ pub async fn update_menu(
 }
 
 pub async fn delete_menu(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -565,7 +624,12 @@ pub async fn delete_menu(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建菜单项写作用域失败: {}", e);
@@ -723,6 +787,7 @@ fn menu_etag(payload: &[u8]) -> String {
 }
 
 pub async fn my_menu_tree(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -749,7 +814,15 @@ pub async fn my_menu_tree(
                    ORDER BY sort_order ASC, code ASC"#,
                 MENU_READ_COLUMNS
             );
-            let mut scope = match state.db.scope_read().await {
+            let mut guard = txn_arc.lock().await;
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return ApiResponse::<MenuTreeResponse>::from(TopemsError::Internal(
+                    "数据库事务上下文缺失".to_string(),
+                ))
+                .into_response();
+            };
+            let mut scope = match state.db.scope_with(txn).await {
                 Ok(scope) => scope,
                 Err(e) => {
                     tracing::error!("创建角色化菜单读作用域失败: {}", e);

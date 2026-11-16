@@ -5,8 +5,8 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::test_app_state;
-use axum::extract::{Path, Query, State};
+use app_state::{commit_test_txn, test_app_state, test_txn_cell};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde_json::Value;
 use topems_unified_core::modules::tenant::handlers::{
@@ -69,11 +69,14 @@ fn create_req(code: &str, name: &str) -> CreateTenantRequest {
 }
 
 async fn create_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -> uuid::Uuid {
+    let txn = test_txn_cell(pool).await;
     let resp = create_tenant(
+        Extension(txn.clone()),
         State(test_app_state(pool.clone())),
         Json(create_req(code, name)),
     )
     .await;
+    commit_test_txn(&txn).await;
     let data = resp
         .data
         .clone()
@@ -88,7 +91,12 @@ async fn create_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -> uuid
 #[sqlx::test(migrations = false)]
 async fn list_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_tenants(State(test_app_state(pool)), Query(empty_query())).await;
+    let resp = list_tenants(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Query(empty_query()),
+    )
+    .await;
     let data = resp
         .data
         .clone()
@@ -102,7 +110,12 @@ async fn create_and_list(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = create_via_handler(&pool, "ten-alpha", "阿尔法租户").await;
 
-    let resp = list_tenants(State(test_app_state(pool.clone())), Query(empty_query())).await;
+    let resp = list_tenants(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool.clone())),
+        Query(empty_query()),
+    )
+    .await;
     let data = resp
         .data
         .clone()
@@ -118,7 +131,12 @@ async fn get_by_id(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = create_via_handler(&pool, "ten-beta", "贝塔租户").await;
 
-    let resp = get_tenant(State(test_app_state(pool)), Path(id)).await;
+    let resp = get_tenant(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Path(id),
+    )
+    .await;
     let data = resp
         .data
         .clone()
@@ -133,7 +151,12 @@ async fn get_by_code(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     create_via_handler(&pool, "ten-gamma", "伽马租户").await;
 
-    let resp = get_tenant_by_code(State(test_app_state(pool)), Path("ten-gamma".to_string())).await;
+    let resp = get_tenant_by_code(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Path("ten-gamma".to_string()),
+    )
+    .await;
     let data = resp
         .data
         .clone()
@@ -147,10 +170,22 @@ async fn delete_removes(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = create_via_handler(&pool, "ten-tmp", "临时租户").await;
 
-    let del = delete_tenant(State(test_app_state(pool.clone())), Path(id)).await;
+    let txn = test_txn_cell(&pool).await;
+    let del = delete_tenant(
+        Extension(txn.clone()),
+        State(test_app_state(pool.clone())),
+        Path(id),
+    )
+    .await;
+    commit_test_txn(&txn).await;
     assert!(del.0.data.is_some(), "delete failed: {:?}", del.0.message);
 
-    let resp = list_tenants(State(test_app_state(pool)), Query(empty_query())).await;
+    let resp = list_tenants(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Query(empty_query()),
+    )
+    .await;
     let data = resp
         .data
         .clone()

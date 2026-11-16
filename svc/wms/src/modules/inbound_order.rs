@@ -16,7 +16,9 @@ use crate::models::inbound_order::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::{movement_no, release_request_txn, tenant_of, wms_db};
+use crate::shared::scope::{
+    arm_short_txn, movement_no, release_request_txn, tenant_of, wms_db, ShortTxnTimer,
+};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::require_tenant;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
@@ -1346,7 +1348,9 @@ pub async fn receive_inbound_order(
         tracing::error!("释放请求事务失败: {}", e);
         return ApiResponse::server_error("事务释放失败");
     }
+    let txn_timer = ShortTxnTimer::start("inbound.receive");
     let db = wms_db(&state.db);
+    // wms-short-txn-exempt: W-05 入库收货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {
@@ -1354,6 +1358,11 @@ pub async fn receive_inbound_order(
             return ApiResponse::server_error("开启事务失败");
         }
     };
+    if let Err(e) = arm_short_txn(&mut scope).await {
+        tracing::error!("设置短事务 lock_timeout 失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("开启事务失败");
+    }
 
     // P2 收货数量前置校验：received_quantity 非负且不超过明细应收(expected_quantity)。
     // 防 GUC 条件 UPDATE 静默不生效（rows_affected=0）或负数/超收直接落库。
@@ -1568,8 +1577,10 @@ pub async fn receive_inbound_order(
         tracing::error!("入库事务提交失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("入库操作失败".to_string()));
     }
+    txn_timer.finish();
 
     // 响应读取使用独立只读作用域（请求事务已释放）。
+    // wms-short-txn-exempt: R-03 提交后只读回读（独立只读短事务，不占请求事务连接；见 m1-acceptance §10）
     let mut read_scope = match db.scope_read_for_tenant(tenant).await {
         Ok(s) => s,
         Err(e) => {

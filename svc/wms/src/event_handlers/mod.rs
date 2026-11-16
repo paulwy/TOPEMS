@@ -137,6 +137,7 @@ impl WmsEventHandlers {
             ))
         })?;
         let scope_db = topems_shared_db::scope::Db::new(self.db.clone(), "wms, public");
+        // wms-short-txn-exempt: B-01 后台事件消费（不经请求中间件、无请求事务；按事件 payload 租户开独立短事务，tenant_of 缺失即失败）
         let mut scope = scope_db
             .scope_for_tenant(tenant_id)
             .await
@@ -425,6 +426,7 @@ async fn store_po_snapshot(
         return;
     };
     let scope_db = topems_shared_db::scope::Db::new(db.clone(), "wms, public");
+    // wms-short-txn-exempt: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务，租户缺失即跳过）
     let mut scope = match scope_db.scope_for_tenant(tenant_id).await {
         Ok(s) => s,
         Err(e) => {

@@ -6,7 +6,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Path, Query, State};
 use axum::Extension;
 use topems_unified_core::modules::audit::handlers::{
@@ -86,9 +86,16 @@ async fn insert_log(
 }
 
 async fn call_list(pool: sqlx::PgPool, query: OperationLogQuery) -> OperationLogListResponse {
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = list_operation_logs(State(state), Extension(claims), Query(query)).await;
+    let resp = list_operation_logs(
+        Extension(txn),
+        State(state),
+        Extension(claims),
+        Query(query),
+    )
+    .await;
     resp.data.unwrap()
 }
 
@@ -160,9 +167,10 @@ async fn get_operation_log_returns_log(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = insert_log(&pool, "alice", "finance", 200).await;
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_operation_log(State(state), Extension(claims), Path(id)).await;
+    let resp = get_operation_log(Extension(txn), State(state), Extension(claims), Path(id)).await;
     let log: OperationLog = resp.data.unwrap();
     assert_eq!(log.id, id);
     assert_eq!(log.user_name, "alice");
@@ -173,9 +181,16 @@ async fn get_operation_log_returns_log(pool: sqlx::PgPool) {
 async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_operation_log(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
+    let resp = get_operation_log(
+        Extension(txn),
+        State(state),
+        Extension(claims),
+        Path(uuid::Uuid::new_v4()),
+    )
+    .await;
     assert!(resp.data.is_none());
 }
 
@@ -183,9 +198,10 @@ async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
 async fn stats_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_operation_log_stats(State(state), Extension(claims)).await;
+    let resp = get_operation_log_stats(Extension(txn), State(state), Extension(claims)).await;
     let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
@@ -197,9 +213,10 @@ async fn stats_counts_inserted_rows(pool: sqlx::PgPool) {
     insert_log(&pool, "bob", "wms", 200).await;
     insert_log(&pool, "carol", "finance", 500).await;
 
+    let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_operation_log_stats(State(state), Extension(claims)).await;
+    let resp = get_operation_log_stats(Extension(txn), State(state), Extension(claims)).await;
     let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 3);
 }

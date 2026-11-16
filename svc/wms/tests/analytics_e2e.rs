@@ -10,6 +10,12 @@ use axum::extract::State;
 use axum::Extension;
 use serde_json::Value;
 use topems_wms::modules::analytics::{get_dashboard_summary, get_flow_trend, AnalyticsQueryParams};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+/// 直调 handler 的测试没有 tenant_middleware，用空事务单元代替（release 为空操作）。
+fn no_txn_cell() -> Extension<RlsTxnCell> {
+    Extension(std::sync::Arc::new(tokio::sync::Mutex::new(None)))
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -96,7 +102,7 @@ async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {
 
     let state = api_state(pool);
     let claims = tenant_claims();
-    let resp = get_dashboard_summary(State(state), Extension(claims)).await;
+    let resp = get_dashboard_summary(State(state), Extension(claims), no_txn_cell()).await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -150,6 +156,7 @@ async fn flow_trend_requires_wms_read(pool: sqlx::PgPool) {
         State(state),
         Extension(claims),
         axum::extract::Query(flow_params()),
+        no_txn_cell(),
     )
     .await;
     assert_eq!(resp.code, 403, "无 wms:read 应 403: {}", resp.message);
@@ -202,6 +209,7 @@ async fn flow_trend_allows_wms_read(pool: sqlx::PgPool) {
         State(state),
         Extension(claims),
         axum::extract::Query(flow_params()),
+        no_txn_cell(),
     )
     .await;
     assert_eq!(resp.code, 200, "wms:read 应放行: {}", resp.message);

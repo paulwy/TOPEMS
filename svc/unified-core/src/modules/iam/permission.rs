@@ -4,6 +4,7 @@ use crate::AppState;
 use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 struct PermissionRow {
@@ -38,10 +39,21 @@ struct PermissionResponse {
         (status = 500, description = "服务内部错误"),
     )
 )]
-pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+) -> Json<serde_json::Value> {
     tracing::info!("IAM permission list_permissions called");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("权限目录作用域创建失败: {}", e);
@@ -112,12 +124,21 @@ fn to_response(p: PermissionRow) -> PermissionResponse {
     )
 )]
 pub async fn list_grantable_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM permission list_grantable_permissions called");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("可授权限作用域创建失败: {}", e);

@@ -5,8 +5,8 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::test_app_state;
-use axum::extract::{Path, Query, State};
+use app_state::{test_app_state, test_txn_cell};
+use axum::extract::{Extension, Path, Query, State};
 use serde_json::Value;
 use topems_unified_core::modules::system_audit::{
     export_audit_logs, get_audit_log, get_audit_stats, list_audit_logs, AuditLogQueryParams,
@@ -68,7 +68,12 @@ async fn insert_log(pool: &sqlx::PgPool, action: &str) -> uuid::Uuid {
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_audit_logs(State(test_app_state(pool)), Query(empty_params())).await;
+    let resp = list_audit_logs(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Query(empty_params()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -80,7 +85,12 @@ async fn list_returns_inserted(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     insert_log(&pool, "create").await;
 
-    let resp = list_audit_logs(State(test_app_state(pool.clone())), Query(empty_params())).await;
+    let resp = list_audit_logs(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool.clone())),
+        Query(empty_params()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -94,7 +104,12 @@ async fn get_returns_log(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = insert_log(&pool, "update").await;
 
-    let resp = get_audit_log(State(test_app_state(pool)), Path(id)).await;
+    let resp = get_audit_log(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Path(id),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -108,7 +123,12 @@ async fn export_returns_csv_rows(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     insert_log(&pool, "create").await;
 
-    let resp = export_audit_logs(State(test_app_state(pool)), Query(empty_params())).await;
+    let resp = export_audit_logs(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Query(empty_params()),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
@@ -127,7 +147,12 @@ async fn stats_groups_by_action(pool: sqlx::PgPool) {
         end_date: None,
         group_by: Some("action".to_string()),
     };
-    let resp = get_audit_stats(State(test_app_state(pool)), Query(params)).await;
+    let resp = get_audit_stats(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Query(params),
+    )
+    .await;
     let data = resp
         .data
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));

@@ -5,11 +5,11 @@
 //! CRUD 操作审计，区别于登录日志（`core_login_logs`）。
 
 use axum::{
-    body::{Body, Bytes},
+    body::Body,
     extract::{Request, State},
-    http::Method,
+    http::{header, Method, StatusCode},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
 };
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
@@ -21,6 +21,11 @@ use super::service::{infer_module_and_operation, record_operation_log};
 
 /// 限制请求体快照长度，避免超大 body 撑爆数据库行
 const MAX_REQUEST_SNAPSHOT_BYTES: usize = 8 * 1024;
+
+/// 允许读取并原样转发的最长 JSON 请求体，与 `middleware::input_validation`
+/// 的 `max_body_bytes`（10MB）同口径。外层 body_limit 已先拦截更大请求；
+/// 此处超限直接返回 413，绝不把请求体回退成空 body（否则会打断主流程）。
+const BODY_READ_LIMIT: usize = 10 * 1024 * 1024;
 
 /// 跳过审计的路径前缀（健康检查、内部探针等不需要写入业务审计）
 const SKIP_PATH_PREFIXES: &[&str] = &[
@@ -94,26 +99,56 @@ pub async fn operation_audit_middleware(
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    // 读取 body（最多 MAX_REQUEST_SNAPSHOT_BYTES 字节，超出截断）
-    let bytes = match axum::body::to_bytes(body, MAX_REQUEST_SNAPSHOT_BYTES).await {
-        Ok(b) => b,
-        Err(_) => Bytes::new(),
-    };
+    // 仅 JSON 请求才读取 body 做快照：multipart / octet-stream 等一律不读、原样透传，
+    // 既避免把上传流缓冲进内存，也避免读取失败时把请求体吞掉。
+    let is_json = parts
+        .headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(|ct| {
+            ct.split(';')
+                .next()
+                .unwrap_or(ct)
+                .trim()
+                .to_ascii_lowercase()
+        })
+        .is_some_and(|ct| ct == "application/json" || ct.ends_with("+json"));
 
-    let request_data: Option<serde_json::Value> = if bytes.is_empty() {
-        None
+    let (request_data, forwarded_body) = if is_json {
+        match axum::body::to_bytes(body, BODY_READ_LIMIT).await {
+            Ok(bytes) => {
+                // 只保留前 8KB 做快照；截断后的 JSON 解析失败则记 None，不影响转发。
+                let snapshot_len = bytes.len().min(MAX_REQUEST_SNAPSHOT_BYTES);
+                let request_data = if snapshot_len == 0 {
+                    None
+                } else {
+                    serde_json::from_slice::<serde_json::Value>(&bytes[..snapshot_len]).ok()
+                };
+                (request_data, Body::from(bytes))
+            }
+            Err(e) => {
+                // 外层 body_limit 已把超限请求拦在前面，走到这里说明读取异常；
+                // 直接 413，绝不把请求体回退成空 body 交给下游。
+                tracing::warn!(
+                    audit_kind = "operation_log",
+                    path = %path,
+                    error = %e,
+                    "[OperationAudit] 请求体读取超限或中断，返回 413"
+                );
+                return (
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    r#"{"success":false,"message":"请求体过大","code":413}"#,
+                )
+                    .into_response();
+            }
+        }
     } else {
-        // 截断超大 body
-        let snapshot = if bytes.len() > MAX_REQUEST_SNAPSHOT_BYTES {
-            &bytes[..MAX_REQUEST_SNAPSHOT_BYTES]
-        } else {
-            &bytes[..]
-        };
-        serde_json::from_slice::<serde_json::Value>(snapshot).ok()
+        (None, body)
     };
 
     // 重新组装请求交给下游
-    let request = Request::from_parts(parts, Body::from(bytes));
+    let request = Request::from_parts(parts, forwarded_body);
     let response = next.run(request).await;
 
     let response_status = response.status().as_u16() as i32;

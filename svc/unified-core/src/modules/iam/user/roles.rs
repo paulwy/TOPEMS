@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Serialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -47,6 +48,7 @@ struct UserPermissionRow {
     )
 )]
 pub async fn get_user_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
@@ -71,12 +73,20 @@ pub async fn get_user_permissions(
         }
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户权限"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
+    match tenant_scope::check_user_target(
+        &state.db,
+        &txn_arc,
+        scope,
+        user_uuid,
+        claims.is_superuser,
+    )
+    .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -96,9 +106,22 @@ pub async fn get_user_permissions(
     // 一律不可见，导致响应里的角色（以及由角色推导权限的消费方）少报。
     // 读取必须走调用者作用域：平台管理员用系统读，租户管理员用本租户读
     // （目标用户的租户可见性已由 check_user_target 校验）。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
         IamScope::Platform => state.db.scope_read_system().await,
-        IamScope::Tenant(tenant) => state.db.scope_read_for_tenant(tenant).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "数据库事务上下文缺失",
+                    )),
+                );
+            };
+            state.db.scope_with(txn).await
+        }
     };
     let mut tx = match tx_result {
         Ok(tx) => tx,
@@ -296,6 +319,7 @@ pub async fn get_user_permissions(
 
 /// GET /users/{userId}/roles — 返回指定用户角色列表
 pub async fn get_user_roles(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
@@ -316,12 +340,20 @@ pub async fn get_user_roles(
         }
     };
 
-    let scope = match tenant_scope::read_scope(&claims) {
+    let scope = match tenant_scope::iam_read_scope(&claims) {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法查看用户角色"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
+    match tenant_scope::check_user_target(
+        &state.db,
+        &txn_arc,
+        scope,
+        user_uuid,
+        claims.is_superuser,
+    )
+    .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权查看超级管理员"),
@@ -338,9 +370,22 @@ pub async fn get_user_roles(
     }
 
     // 同 get_user_permissions：`core_roles` 严格 RLS 下裸池读不到租户域角色。
+    let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
         IamScope::Platform => state.db.scope_read_system().await,
-        IamScope::Tenant(tenant) => state.db.scope_read_for_tenant(tenant).await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "数据库事务上下文缺失",
+                    )),
+                );
+            };
+            state.db.scope_with(txn).await
+        }
     };
     let mut tx = match tx_result {
         Ok(tx) => tx,
@@ -420,6 +465,7 @@ pub async fn get_user_roles(
 
 /// POST /users/{userId}/roles/{roleId} — 为用户分配角色
 pub async fn assign_user_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((user_id, role_id)): Path<(String, String)>,
@@ -460,12 +506,20 @@ pub async fn assign_user_role(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:write") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:write") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法分配角色"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
+    match tenant_scope::check_user_target(
+        &state.db,
+        &txn_arc,
+        scope,
+        user_uuid,
+        claims.is_superuser,
+    )
+    .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -481,7 +535,7 @@ pub async fn assign_user_role(
         }
     }
 
-    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
         Err(e) => {
@@ -499,7 +553,7 @@ pub async fn assign_user_role(
     // 租户管理员只能分配本租户内、且权限集不超出自身权限集/不含平台层码的角色，
     // 防止借已有角色提权。
     if let IamScope::Tenant(_) = scope {
-        match tenant_scope::role_permission_codes(&state.db, scope, role_uuid).await {
+        match tenant_scope::role_permission_codes(&state.db, &txn_arc, scope, role_uuid).await {
             Ok(codes) => {
                 if !tenant_scope::can_grant_codes(&claims, &codes) {
                     return tenant_scope::forbidden("不能授予平台层权限或超出自身权限集的角色");
@@ -576,6 +630,7 @@ pub async fn assign_user_role(
 
 /// DELETE /users/{userId}/roles/{roleId} — 移除用户角色
 pub async fn remove_user_role(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((user_id, role_id)): Path<(String, String)>,
@@ -616,12 +671,20 @@ pub async fn remove_user_role(
         }
     };
 
-    let scope = match tenant_scope::write_scope(&claims, "admin:iam:delete") {
+    let scope = match tenant_scope::iam_write_scope(&claims, "admin:iam:delete") {
         Ok(scope) => scope,
         Err(_) => return tenant_scope::forbidden("缺少租户上下文，无法移除角色"),
     };
 
-    match tenant_scope::check_user_target(&state.db, scope, user_uuid, claims.is_superuser).await {
+    match tenant_scope::check_user_target(
+        &state.db,
+        &txn_arc,
+        scope,
+        user_uuid,
+        claims.is_superuser,
+    )
+    .await
+    {
         Ok(UserTarget::Ok) => {}
         Ok(UserTarget::NotFound) => return tenant_scope::not_found_detail("用户不存在"),
         Ok(UserTarget::Superuser) => return tenant_scope::forbidden("无权修改超级管理员"),
@@ -637,7 +700,7 @@ pub async fn remove_user_role(
         }
     }
 
-    match tenant_scope::check_role_target(&state.db, scope, role_uuid).await {
+    match tenant_scope::check_role_target(&state.db, &txn_arc, scope, role_uuid).await {
         Ok(RoleTarget::Ok) => {}
         Ok(RoleTarget::NotFound) => return tenant_scope::not_found_detail("角色不存在"),
         Err(e) => {
