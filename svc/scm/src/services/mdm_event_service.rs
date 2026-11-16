@@ -47,7 +47,7 @@ impl MdmEventService {
         });
 
         let mut event = MasterDataEvent::new(
-            Uuid::nil(), // SCM 暂不使用租户隔离
+            topems_shared_db::scope::PLATFORM_TENANT_ID, // SCM 事件无租户维度：显式平台通道常量
             MasterDataDomain::Supplier,
             action,
             master_data_id.clone(),

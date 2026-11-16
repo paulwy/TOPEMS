@@ -2897,8 +2897,24 @@ async fn send_notification_email(
     })?;
 
     if let Some(email) = email {
+        let tenant_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+                .fetch_one(&mut *scope)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to read tenant context: {}", e);
+                })?;
+        // 邮件队列行必须落调用方租户：缺失/零租户时告警跳过，禁止写零 UUID。
+        let Some(tenant_id) = tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[communication] 通知邮件缺少租户上下文，跳过入队 - user_id={}",
+                req.user_id
+            );
+            return Ok(());
+        };
         let queue_id = crate::mail::queue_email(
             db,
+            tenant_id,
             "system@topems.io".to_string(),
             email,
             req.title.clone(),

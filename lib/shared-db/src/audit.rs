@@ -276,6 +276,8 @@ impl AuditLogService {
 
         // status: VARCHAR(20) 直接写字符串（"success"/"failed" 等）
         // ip_address: VARCHAR(45) 直接写 TEXT，不再强制 INET cast
+        // 审计行的 tenant_id 兜底是「平台通道」语义（无请求租户的登录/注册/系统审计），
+        // 显式绑定 PLATFORM_TENANT_ID，不用裸零 UUID 字面量。
         let record = sqlx::query_as::<_, AuditLogRecord>(
             r#"
             INSERT INTO public.audit_logs (
@@ -283,7 +285,7 @@ impl AuditLogService {
                 user_id, user_name, request_details, response_details,
                 status, error_message, ip_address, user_agent
             ) VALUES (
-                COALESCE($1, '00000000-0000-0000-0000-000000000000'::uuid), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+                COALESCE($1, $14), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
             )
             RETURNING
                 id,
@@ -316,6 +318,7 @@ impl AuditLogService {
         .bind(request.error_message.as_deref())
         .bind(ip_address)
         .bind(user_agent)
+        .bind(crate::scope::PLATFORM_TENANT_ID)
         .fetch_one(&mut *scope)
         .await?;
 
@@ -721,7 +724,7 @@ impl SchemaAwareAuditLogService {
                 tenant_id, action, entity_type, entity_id, entity_ids,
                 user_id, user_name, request_details, response_details,
                 status, error_message, ip_address, user_agent
-            ) VALUES (COALESCE($1, '00000000-0000-0000-0000-000000000000'::uuid),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            ) VALUES (COALESCE($1, $14),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
             RETURNING
                 id, tenant_id, action, entity_type, entity_id, entity_ids,
                 user_id::TEXT, user_name, request_details, response_details,
@@ -744,6 +747,7 @@ impl SchemaAwareAuditLogService {
             .bind(request.error_message.as_deref())
             .bind(ip_address)
             .bind(user_agent)
+            .bind(crate::scope::PLATFORM_TENANT_ID)
             .fetch_one(&mut scope)
             .await?;
 

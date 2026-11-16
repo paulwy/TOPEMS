@@ -106,11 +106,13 @@ impl AsyncProjector {
             }
             None => {
                 let mut tx = self.db.scope_system().await?;
+                // CQRS 投影进度是系统基础设施行，无业务租户维度：
+                // 显式使用平台通道常量，不写裸零 UUID。
                 sqlx::query(
                     only_own_schema_query!("finance", "INSERT INTO finance.cqrs_projection_progress (view_name, processed_count, error_count, tenant_id) VALUES ($1, 0, 0, $2)"),
                 )
                 .bind(view_name)
-                .bind(Uuid::nil())
+                .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
                 .execute(&mut tx)
                 .await
                 ?;

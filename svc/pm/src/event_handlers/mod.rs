@@ -4,9 +4,10 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload, RdProjectCreatedPayload, SettlementApprovedPayload,
-    SettlementCreatedPayload, WorkflowApprovedPayload, WorkflowRejectedPayload,
+    require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, RdProjectCreatedPayload,
+    SettlementApprovedPayload, SettlementCreatedPayload, WorkflowApprovedPayload,
+    WorkflowRejectedPayload,
 };
 use uuid::Uuid;
 
@@ -252,6 +253,10 @@ impl PmEventHandlers {
             payload.owner_name
         );
 
+        // 事件必须携带合法租户：缺失/零租户直接拒绝处理，禁止写零 UUID。
+        let tenant = require_event_tenant(&event)?;
+        let tenant_id = tenant.get();
+
         let now = Utc::now();
         let project_code = payload
             .project_code
@@ -270,7 +275,7 @@ impl PmEventHandlers {
         .bind(format!("RD 项目同步 - {}", payload.project_name))
         .bind(payload.owner_name)
         .bind(payload.created_at.unwrap_or(now))
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .bind(now)
         .fetch_optional(&self.db)
         .await;

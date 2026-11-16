@@ -347,6 +347,15 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] SalesOrderApproved 缺少租户，跳过处理 - order_id={}",
+                payload.order_id
+            );
+            return Ok(());
+        };
+
         let order: Option<(Option<rust_decimal::Decimal>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
             r#"SELECT total_amount, customer_id, customer_name, order_date FROM erp.sales_orders WHERE id = $1"#,
         )
@@ -379,7 +388,7 @@ impl ErpEventHandlers {
             .bind(amount)
             .bind(order_date)
             .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+            .bind(tenant_id)
             .execute(&mut *tx)
             .await;
 
@@ -426,6 +435,15 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] PurchaseOrderApproved 缺少租户，跳过处理 - order_id={}",
+                payload.order_id
+            );
+            return Ok(());
+        };
+
         let order: Option<(Option<f64>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
             r#"SELECT total_amount, supplier_id, supplier_name, order_date FROM erp.purchase_orders WHERE id = $1"#,
         )
@@ -458,7 +476,7 @@ impl ErpEventHandlers {
             .bind(amount)
             .bind(order_date)
             .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+            .bind(tenant_id)
             .execute(&mut *tx)
             .await;
 
@@ -574,7 +592,14 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
         let onboard_date = payload.onboard_date.unwrap_or(now);
-        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] EmployeeOnboarded 缺少租户，跳过处理 - employee_id={}",
+                payload.employee_id
+            );
+            return Ok(());
+        };
 
         // 入职成本是租户级固定规则，落到配置而不是写死：读取
         // public.core_tenant_settings('erp.employee_onboarding_cost')。
@@ -720,7 +745,14 @@ impl ErpEventHandlers {
         let now = chrono::Utc::now();
         let settled_at = payload.settled_at.unwrap_or(now);
         let receivable_no = format!("REC-PROJ-{}", payload.project_id);
-        let tenant_id = payload.tenant_id.unwrap_or(uuid::Uuid::nil());
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] PmProjectSettled 缺少租户，跳过项目应收账款 - project_id={}",
+                payload.project_id
+            );
+            return Ok(());
+        };
 
         let receivable_result = sqlx::query(
             r#"INSERT INTO erp.receivables
@@ -771,6 +803,15 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] OpportunityWon 缺少租户，跳过处理 - opportunity_id={}",
+                payload.opportunity_id
+            );
+            return Ok(());
+        };
+
         // 幂等检查：同一商机不会重复创建销售订单
         let existing_order: Option<(uuid::Uuid,)> =
             sqlx::query_as(r#"SELECT id FROM erp.sales_orders WHERE remark = $1"#)
@@ -813,7 +854,7 @@ impl ErpEventHandlers {
         .bind(payload.amount.unwrap_or(rust_decimal::Decimal::ZERO))
         .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -1465,13 +1506,22 @@ impl ErpEventHandlers {
 
         // C-1：幂等账本表由迁移链权威创建（运行时自建表已移除），直接进入幂等写入
 
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
+            tracing::warn!(
+                "[erp] MesWorkReportSubmitted 缺少租户，跳过处理 - work_report_id={}",
+                payload.work_report_id
+            );
+            return Ok(());
+        };
+
         // 幂等：账本插入冲突 = 已处理过，直接收敛返回
         let key = format!("mes_work_report:{}", payload.work_report_id);
         let inserted = sqlx::query(
             "INSERT INTO erp.event_idempotency (idempotency_key, event_type, tenant_id) VALUES ($1, 'MesWorkReportSubmitted', $2) ON CONFLICT (idempotency_key) DO NOTHING",
         )
         .bind(&key)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("写入幂等账本失败: {}", e)))?;

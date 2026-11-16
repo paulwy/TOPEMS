@@ -69,7 +69,8 @@ pub async fn create_integration_action(
             "qms"
         ),
     )
-    .bind(Uuid::nil())
+    // 跨租户基础设施行（无业务租户维度）：显式使用平台通道常量，不写裸零 UUID。
+    .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
     .bind(&req.action_no)
     .bind(req.issue_id)
     .bind(&req.title)

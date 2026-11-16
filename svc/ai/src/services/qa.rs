@@ -119,6 +119,37 @@ const ANSWER_QUALITY_PROMPT: &str = r#"
 "#;
 
 impl QAService {
+    /// AI 问答历史/用量与租户知识库都必须落调用方租户：调用方传入 nil 时从事务
+    /// GUC 读取；仍取不到则拒绝处理，禁止静默以零 UUID 运行。
+    async fn require_qa_tenant(
+        &self,
+        tenant_id: Uuid,
+        txn_arc: &RlsTxnCell,
+    ) -> Result<Uuid, TopemsError> {
+        if !tenant_id.is_nil() {
+            return Ok(tenant_id);
+        }
+        let resolved: Option<Uuid> = {
+            let mut guard = txn_arc.lock().await;
+            let Some(txn) = guard.as_mut() else {
+                return Err(TopemsError::DatabaseQuery(
+                    "RLS 事务缺失：请求事务未注入".to_string(),
+                ));
+            };
+            let mut scope =
+                self.db.scope_with(txn).await.map_err(|e| {
+                    TopemsError::DatabaseQuery(format!("读取租户上下文失败: {}", e))
+                })?;
+            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+                .fetch_one(&mut scope)
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("读取租户上下文失败: {}", e)))?
+        };
+        resolved.filter(|t| !t.is_nil()).ok_or_else(|| {
+            TopemsError::ValidationFailed("缺少租户上下文：拒绝 AI 问答处理".to_string())
+        })
+    }
+
     pub fn new(db: Database, config: QAConfig) -> Self {
         let ai_client = create_client(config.chat_model);
         let embedding_client = create_client(config.embedding_model);
@@ -169,6 +200,7 @@ impl QAService {
         user_name: Option<&str>,
         txn_arc: &RlsTxnCell,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
+        let tenant_id = self.require_qa_tenant(tenant_id, txn_arc).await?;
         // 构建提示词
         let prompt = if let Some(ctx) = context {
             format!(
@@ -1120,6 +1152,7 @@ impl QAService {
         tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
+        let tenant_id = self.require_qa_tenant(tenant_id, txn_arc).await?;
         let query_embedding = self.generate_query_embedding(query).await?;
 
         if query_embedding.is_empty() {

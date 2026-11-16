@@ -1032,6 +1032,7 @@ pub fn send_email_async(
 /// 3. 落库失败时退化为纯内存队列兜底（仍尝试即时发送），并记录 error 日志。
 pub fn queue_email(
     db: &Db,
+    tenant_id: Uuid,
     from: String,
     to: String,
     subject: String,
@@ -1040,6 +1041,8 @@ pub fn queue_email(
     cc: Option<Vec<String>>,
     bcc: Option<Vec<String>>,
 ) -> String {
+    // 队列行必须落调用方租户：tenant_id 由调用方从请求作用域读取，
+    // 后台发送任务不再以零 UUID 占位（零 UUID 仅供平台内置共享语料）。
     let id = Uuid::new_v4().to_string();
     let queued_email = QueuedEmail {
         id: id.clone(),
@@ -1079,7 +1082,7 @@ pub fn queue_email(
                 .bind(&html_body)
                 .bind(cc.unwrap_or_default())
                 .bind(bcc.unwrap_or_default())
-                .bind(Uuid::nil())
+                .bind(tenant_id)
                 .execute(&mut scope)
                 .await
                 {
@@ -1791,6 +1794,7 @@ mod tests {
         let db = Db::new(pool, "communication, public");
         let id = queue_email(
             &db,
+            Uuid::new_v4(),
             "from@x.com".to_string(),
             "to@x.com".to_string(),
             "subject".to_string(),
