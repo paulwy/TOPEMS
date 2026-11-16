@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -9,6 +8,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -360,9 +360,7 @@ pub async fn list_quotes(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -449,9 +447,7 @@ pub async fn list_quotes(
 pub async fn create_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -526,9 +522,7 @@ pub async fn get_quote(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -597,9 +591,7 @@ pub async fn update_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -668,9 +660,7 @@ pub async fn submit_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -732,9 +722,7 @@ pub async fn list_comparisons(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -815,9 +803,7 @@ pub async fn list_comparisons(
 pub async fn create_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePriceComparisonRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -945,9 +931,7 @@ pub async fn get_comparison(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1033,9 +1017,7 @@ pub async fn approve_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1088,9 +1070,7 @@ pub async fn update_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePriceComparisonRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1160,9 +1140,7 @@ pub async fn delete_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

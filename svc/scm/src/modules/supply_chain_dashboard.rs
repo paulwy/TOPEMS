@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -49,9 +49,7 @@ pub async fn overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -239,9 +237,7 @@ pub async fn purchase_inbound_outbound_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -410,9 +406,7 @@ pub async fn supplier_performance(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -619,9 +613,7 @@ pub async fn real_time_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

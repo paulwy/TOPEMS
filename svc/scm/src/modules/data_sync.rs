@@ -31,7 +31,6 @@
 //!   2. 幂等键冲突：本模块按 id 匹配，mdm 同步按 supplier_no 匹配，混用会导致重复行。
 //!   3. 标记列：sync_from_srm / sync_from_scm 的语义需统一（本模块写 TRUE，mdm 写 FALSE）。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::post,
@@ -40,6 +39,7 @@ use axum::{
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -148,9 +148,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn purchase_to_inbound(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PurchaseToInboundRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -233,9 +231,7 @@ pub async fn create_inbound_from_purchase(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     if guard.is_none() {
@@ -912,9 +908,7 @@ async fn record_failed_sync_attempt(
 pub async fn sync_supplier_from_srm(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncSupplierRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1199,9 +1193,7 @@ pub async fn sync_supplier_from_srm(
 pub async fn sync_all_suppliers_from_srm(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1381,9 +1373,7 @@ pub struct SyncLogsRequest {
 pub async fn get_sync_logs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncLogsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1472,9 +1462,7 @@ pub async fn get_sync_logs(
 pub async fn retry_failed_syncs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RetryFailedRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1621,9 +1609,7 @@ pub async fn retry_failed_syncs(
 pub async fn get_sync_statistics(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1818,9 +1804,7 @@ async fn sync_single_purchase_order(
 pub async fn batch_sync_purchase_to_wms(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<BatchSyncResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -2133,9 +2117,7 @@ pub struct InconsistencyDetail {
 pub async fn check_consistency(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ConsistencyCheckResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

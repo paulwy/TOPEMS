@@ -4,7 +4,6 @@
 // SCM 仅保留只读引用用于采购执行链路
 // ═══════════════════════════════════════════════════════════
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -15,6 +14,7 @@ use chrono::Utc;
 use serde_json;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -344,9 +344,7 @@ pub async fn list_suppliers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -485,9 +483,7 @@ pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -675,9 +671,7 @@ pub async fn get_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -780,9 +774,7 @@ pub async fn update_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
@@ -1001,9 +993,7 @@ pub async fn delete_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

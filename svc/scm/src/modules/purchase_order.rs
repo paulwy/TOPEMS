@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -49,9 +49,7 @@ pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -142,9 +140,7 @@ pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -250,9 +246,7 @@ pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -307,9 +301,7 @@ pub async fn update_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -436,9 +428,7 @@ pub async fn delete_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -542,9 +532,7 @@ pub async fn approve_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -742,9 +730,7 @@ pub async fn reject_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
@@ -1018,9 +1004,7 @@ pub async fn confirm_order(
     claims: Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    txn_arc: Extension<
-        RlsTxnCell,
-    >,
+    txn_arc: Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     transition_order(
@@ -1052,9 +1036,7 @@ pub async fn cancel_order(
     claims: Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    txn_arc: Extension<
-        RlsTxnCell,
-    >,
+    txn_arc: Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     transition_order(
@@ -1086,9 +1068,7 @@ pub async fn close_order(
     claims: Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    txn_arc: Extension<
-        RlsTxnCell,
-    >,
+    txn_arc: Extension<RlsTxnCell>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<PurchaseOrder> {
     transition_order(

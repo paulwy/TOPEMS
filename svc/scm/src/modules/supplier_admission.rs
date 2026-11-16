@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
     Json, Router,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -53,9 +53,7 @@ pub async fn list_admissions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierAdmissionQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -113,9 +111,7 @@ pub async fn list_admissions(
 pub async fn create_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<CreateSupplierAdmissionRequest>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -199,9 +195,7 @@ pub async fn get_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -250,9 +244,7 @@ pub async fn update_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<UpdateSupplierAdmissionRequest>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -350,9 +342,7 @@ pub async fn delete_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -422,9 +412,7 @@ pub async fn submit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -501,9 +489,7 @@ pub async fn approve_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -589,9 +575,7 @@ pub async fn reject_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -677,9 +661,7 @@ pub async fn audit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<AuditRequest>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
@@ -801,9 +783,7 @@ pub async fn activate_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

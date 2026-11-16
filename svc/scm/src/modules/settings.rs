@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
@@ -9,6 +8,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
 use super::ApiState;
@@ -47,9 +47,7 @@ pub async fn get_settings(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -124,9 +122,7 @@ pub async fn update_settings(
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

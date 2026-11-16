@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Timelike, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -353,9 +353,7 @@ pub async fn list_appointments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierDeliveryAppointmentQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -459,9 +457,7 @@ pub async fn create_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSupplierDeliveryAppointmentRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -601,9 +597,7 @@ pub async fn get_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -650,9 +644,7 @@ pub async fn update_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSupplierDeliveryAppointmentRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -809,9 +801,7 @@ pub async fn delete_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -921,9 +911,7 @@ pub async fn approve_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalBody>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -1076,9 +1064,7 @@ pub async fn reject_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ApprovalBody>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -1234,9 +1220,7 @@ pub async fn confirm_arrival(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ArrivalConfirmRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -1379,9 +1363,7 @@ pub async fn complete_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CompleteRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -1521,9 +1503,7 @@ pub async fn cancel_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CancelRequest>,
 ) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
@@ -1659,9 +1639,7 @@ pub async fn appointment_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

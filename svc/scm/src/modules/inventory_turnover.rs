@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -6,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -260,9 +260,7 @@ pub async fn calculate_turnover(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
     Query(pagination): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -459,9 +457,7 @@ pub async fn turnover_days(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -589,9 +585,7 @@ pub async fn abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -736,9 +730,7 @@ pub async fn turnover_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -854,9 +846,7 @@ pub async fn get_turnover_detail(
     Extension(claims): Extension<Claims>,
     Path(material_code): Path<String>,
     Query(params): Query<TurnoverQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

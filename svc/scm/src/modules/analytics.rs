@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::modules::ApiState;
 use crate::shared::permission::require_tenant_bind;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -58,6 +59,7 @@ pub struct SupplierRankingItem {
 pub async fn get_purchase_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<PurchaseTrendItem>> {
     tracing::info!("获取SCM采购趋势数据");
     let tenant_bind = match require_tenant_bind(&claims) {
@@ -66,8 +68,13 @@ pub async fn get_purchase_trend(
     };
 
     // B-2 之后 scm 全表 fail-closed：裸池读会 0 行，必须走带租户 GUC 的读作用域。
-    let db = Db::new(state.db.clone(), "scm, public, shared");
-    let mut scope = match db.scope_read().await {
+    // M-1：复用 tenant_middleware 注入的请求事务，禁止再自开事务。
+    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 SCM 采购趋势读作用域失败: {}", e);
@@ -137,6 +144,7 @@ pub async fn get_purchase_trend(
 pub async fn get_purchase_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<PurchaseStatusItem>> {
     tracing::info!("获取SCM采购状态分布");
     let tenant_bind = match require_tenant_bind(&claims) {
@@ -144,8 +152,12 @@ pub async fn get_purchase_status(
         Err(e) => return e.0,
     };
 
-    let db = Db::new(state.db.clone(), "scm, public, shared");
-    let mut scope = match db.scope_read().await {
+    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 SCM 采购状态读作用域失败: {}", e);
@@ -225,6 +237,7 @@ pub async fn get_purchase_status(
 pub async fn get_supplier_ranking(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<SupplierRankingItem>> {
     tracing::info!("获取SCM供应商采购排名");
@@ -233,8 +246,12 @@ pub async fn get_supplier_ranking(
         Err(e) => return e.0,
     };
 
-    let db = Db::new(state.db.clone(), "scm, public, shared");
-    let mut scope = match db.scope_read().await {
+    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 SCM 供应商排名读作用域失败: {}", e);

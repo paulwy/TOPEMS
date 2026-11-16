@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
     Json, Router,
 };
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -53,9 +53,7 @@ pub async fn list_contracts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseContractQueryParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -127,9 +125,7 @@ pub async fn list_contracts(
 pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<CreatePurchaseContractRequest>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -249,9 +245,7 @@ pub async fn get_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -340,9 +334,7 @@ pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<UpdatePurchaseContractRequest>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -499,9 +491,7 @@ pub async fn delete_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -583,9 +573,7 @@ pub async fn submit_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -662,9 +650,7 @@ pub async fn approve_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -749,9 +735,7 @@ pub async fn reject_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -836,9 +820,7 @@ pub async fn cancel_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -915,9 +897,7 @@ pub async fn terminate_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(data): Json<serde_json::Value>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
@@ -994,9 +974,7 @@ pub async fn renew_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PurchaseContract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -261,9 +261,7 @@ pub async fn list_notices(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -363,9 +361,7 @@ pub async fn create_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateIncomingNoticeRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -481,9 +477,7 @@ pub async fn get_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -537,9 +531,7 @@ pub async fn update_notice(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateIncomingNoticeRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -667,9 +659,7 @@ pub async fn list_inspections(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -769,9 +759,7 @@ pub async fn create_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInspectionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -902,9 +890,7 @@ pub async fn get_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -958,9 +944,7 @@ pub async fn update_inspection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInspectionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1096,9 +1080,7 @@ pub async fn inspection_pass(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<InspectionResultRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1244,9 +1226,7 @@ pub async fn inspection_fail(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<InspectionResultRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1435,9 +1415,7 @@ pub async fn list_inspection_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1494,9 +1472,7 @@ pub async fn create_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1584,9 +1560,7 @@ pub async fn get_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1636,9 +1610,7 @@ pub async fn update_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInspectionRecordRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -1720,9 +1692,7 @@ pub async fn delete_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
