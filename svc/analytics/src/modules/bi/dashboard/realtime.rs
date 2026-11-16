@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     Json,
 };
 use chrono::Utc;
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::{info, warn};
 
+use crate::modules::bi::begin_tenant_txn;
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::modules::bi::widget::WIDGET_CACHE;
 use crate::shared::AppState;
@@ -23,15 +25,26 @@ use super::models::SetAutoRefreshRequest;
 #[allow(clippy::as_conversions)]
 pub async fn query_dashboard_realtime_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Querying real-time data for dashboard: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let dashboard = match sqlx::query!(
         r#"SELECT id, name FROM analytics_dashboards WHERE id = $1"#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -60,7 +73,7 @@ pub async fn query_dashboard_realtime_data(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -71,6 +84,7 @@ pub async fn query_dashboard_realtime_data(
             ));
         }
     };
+    drop(tx);
 
     let chart_service = ChartService::new(state.pool.clone());
     let mut widget_data = Vec::new();
@@ -167,11 +181,22 @@ pub async fn query_dashboard_realtime_data(
 )]
 pub async fn refresh_dashboard_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Refreshing dashboard data: {}", id);
 
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -183,21 +208,38 @@ pub async fn refresh_dashboard_data(
         now,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
         Ok(Some(row)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard refresh: {}", e),
+                ));
+            }
+            let mut wtx = match begin_tenant_txn(&state.pool, &claims).await {
+                Ok(wtx) => wtx,
+                Err(_) => {
+                    return Json(serde_json::json!({
+                        "success": true,
+                        "message": "Refresh dashboard data",
+                        "data": { "id": row.id, "name": row.name, "last_refreshed": now }
+                    }));
+                }
+            };
             let widgets = match sqlx::query!(
                 r#"SELECT id FROM analytics_widgets WHERE dashboard_id = $1"#,
                 id,
             )
-            .fetch_all(&state.pool)
+            .fetch_all(&mut *wtx)
             .await
             {
                 Ok(rows) => rows,
                 Err(_) => vec![],
             };
+            drop(wtx);
 
             for widget in widgets {
                 WIDGET_CACHE.invalidate(&widget.id);
@@ -235,12 +277,23 @@ pub async fn refresh_dashboard_data(
 )]
 pub async fn set_auto_refresh(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<SetAutoRefreshRequest>,
 ) -> Json<serde_json::Value> {
     info!("Setting auto-refresh for dashboard: {}", id);
 
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -256,19 +309,27 @@ pub async fn set_auto_refresh(
         now,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Set auto-refresh",
-            "data": {
-                "id": row.id,
-                "auto_refresh_enabled": row.auto_refresh_enabled.unwrap_or(false),
-                "auto_refresh_interval": row.auto_refresh_interval,
+        Ok(Some(row)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit auto-refresh: {}", e),
+                ));
             }
-        })),
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Set auto-refresh",
+                "data": {
+                    "id": row.id,
+                    "auto_refresh_enabled": row.auto_refresh_enabled.unwrap_or(false),
+                    "auto_refresh_interval": row.auto_refresh_interval,
+                }
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Dashboard not found",

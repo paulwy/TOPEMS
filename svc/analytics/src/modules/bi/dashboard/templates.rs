@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     Json,
 };
 use chrono::Utc;
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::info;
 
+use crate::modules::bi::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 use super::models::{
@@ -82,12 +84,23 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
 )]
 pub async fn create_dashboard_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDashboardTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating dashboard template: {}", req.name);
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -105,28 +118,36 @@ pub async fn create_dashboard_template(
         true,
 now,
 now,
-        Uuid::nil(),
+        tenant_uuid(&claims),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create dashboard template",
-                            "data": DashboardTemplateResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                layout: row.layout.unwrap_or(serde_json::json!({})),
-                                preview_image: row.preview_image,
-                                category: row.category,
-                                tags: row.tags,
-                                is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard template: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create dashboard template",
+                                "data": DashboardTemplateResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    layout: row.layout.unwrap_or(serde_json::json!({})),
+                                    preview_image: row.preview_image,
+                                    category: row.category,
+                                    tags: row.tags,
+                                    is_active: row.is_active.unwrap_or(true),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create template: {}", e),
@@ -321,10 +342,21 @@ pub async fn delete_dashboard_template(
 )]
 pub async fn create_dashboard_from_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<CreateDashboardRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating dashboard from template: {}", template_id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -334,7 +366,7 @@ pub async fn create_dashboard_from_template(
         "#,
         template_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -365,26 +397,34 @@ pub async fn create_dashboard_from_template(
                 req.is_public.unwrap_or(false),
 now,
 now,
-                Uuid::nil(),
+                tenant_uuid(&claims),
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut *tx)
             .await;
 
             match result {
-                Ok(new_row) => Json(serde_json::json!({
-                                                    "success": true,
-                                                    "message": "Create dashboard from template",
-                                                    "data": DashboardResponse {
-                                                        id: new_row.id,
-                                                        name: new_row.name,
-                                                        description: new_row.description,
-                                                        layout: new_row.layout,
-                                                        owner_id: new_row.owner_id,
-                                                        is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at,
-                updated_at: new_row.updated_at,
-                                                    }
-                                                })),
+                Ok(new_row) => {
+                    if let Err(e) = tx.commit().await {
+                        return Json(topems_shared_core::response::error_value(
+                            500,
+                            &format!("Failed to commit dashboard: {}", e),
+                        ));
+                    }
+                    Json(serde_json::json!({
+                                                        "success": true,
+                                                        "message": "Create dashboard from template",
+                                                        "data": DashboardResponse {
+                                                            id: new_row.id,
+                                                            name: new_row.name,
+                                                            description: new_row.description,
+                                                            layout: new_row.layout,
+                                                            owner_id: new_row.owner_id,
+                                                            is_public: new_row.is_public.unwrap_or(false),
+                    created_at: new_row.created_at,
+                    updated_at: new_row.updated_at,
+                                                        }
+                                                    }))
+                }
                 Err(e) => Json(topems_shared_core::response::error_value(
                     500,
                     &format!("Failed to create dashboard: {}", e),

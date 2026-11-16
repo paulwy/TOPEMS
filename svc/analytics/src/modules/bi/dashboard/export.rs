@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
@@ -7,8 +7,10 @@ use axum::{
 use chrono::Utc;
 use lopdf::{Dictionary, Document, Object, Stream};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::{info, warn};
 
+use crate::modules::bi::begin_tenant_txn;
 use crate::shared::AppState;
 
 use super::models::ExportFormatQuery;
@@ -23,10 +25,21 @@ use super::models::ExportFormatQuery;
 )]
 pub async fn export_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(query): Query<ExportFormatQuery>,
 ) -> Json<serde_json::Value> {
     info!("Exporting dashboard: {} format: {:?}", id, query.format);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -36,7 +49,7 @@ pub async fn export_dashboard(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -47,6 +60,7 @@ pub async fn export_dashboard(
             ));
         }
     };
+    drop(tx);
 
     match row {
         Some(row) => {
@@ -89,9 +103,18 @@ pub async fn export_dashboard(
 )]
 pub async fn export_dashboard_pdf(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     info!("Exporting dashboard as PDF: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            warn!("Failed to open tenant txn for PDF export: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -101,7 +124,7 @@ pub async fn export_dashboard_pdf(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -124,7 +147,7 @@ pub async fn export_dashboard_pdf(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -257,9 +280,18 @@ fn escape_pdf_string(s: &str) -> String {
 )]
 pub async fn export_dashboard_excel(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     info!("Exporting dashboard as Excel/CSV: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            warn!("Failed to open tenant txn for Excel export: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -269,7 +301,7 @@ pub async fn export_dashboard_excel(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -292,7 +324,7 @@ pub async fn export_dashboard_excel(
         "#,
         id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,

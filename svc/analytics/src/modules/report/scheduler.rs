@@ -128,8 +128,7 @@ impl ReportScheduler {
                             let sname = job_name.clone();
                             let tid = job_tenant;
                             tokio::spawn(async move {
-                                if let Err(e) =
-                                    execute_schedule_job(&pool, sid, &sname, tid).await
+                                if let Err(e) = execute_schedule_job(&pool, sid, &sname, tid).await
                                 {
                                     error!("Failed to execute schedule {}: {}", sname, e);
                                 }
@@ -359,10 +358,7 @@ pub async fn execute_schedule_job(
     Ok(())
 }
 
-async fn run_report(
-    conn: &mut PgConnection,
-    schedule_id: Uuid,
-) -> Result<String, TopemsError> {
+async fn run_report(conn: &mut PgConnection, schedule_id: Uuid) -> Result<String, TopemsError> {
     let schedule = sqlx::query!(
         r#"
         SELECT template_id, parameters

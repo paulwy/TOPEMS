@@ -3,15 +3,17 @@
 //! Provides full CRUD + retry operations for BI data-source sync records.
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
+use crate::modules::bi::begin_tenant_txn;
 use crate::shared::AppState;
 
 // ==================== Data Structures ====================
@@ -284,6 +286,7 @@ pub async fn get_sync_record(
 )]
 pub async fn create_sync_record(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -296,11 +299,21 @@ pub async fn create_sync_record(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let started_at = req.started_at.unwrap_or_else(Utc::now);
 
-    // Verify data source exists
+    // Verify data source exists (analytics_datasources 受 RLS 约束，需带租户上下文)
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
+
     let ds_exists: Option<Uuid> =
         match sqlx::query_scalar("SELECT id FROM analytics_datasources WHERE id = $1")
             .bind(req.data_source_id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut *tx)
             .await
         {
             Ok(r) => r,
@@ -311,6 +324,7 @@ pub async fn create_sync_record(
                 ));
             }
         };
+    drop(tx);
     if ds_exists.is_none() {
         return Json(topems_shared_core::response::error_value(
             404,

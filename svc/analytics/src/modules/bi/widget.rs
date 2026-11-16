@@ -1,12 +1,14 @@
-use axum::{extract::Path, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::State, Json};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::{info, warn};
 use utoipa::ToSchema;
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
+use crate::modules::bi::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -141,8 +143,21 @@ pub static WIDGET_CACHE: Lazy<WidgetCache> = Lazy::new(WidgetCache::new);
     )
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_widgets(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing widgets");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -151,7 +166,7 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
         ORDER BY created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -198,9 +213,20 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_widgets_by_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(dashboard_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Listing widgets for dashboard: {}", dashboard_id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -211,7 +237,7 @@ pub async fn get_widgets_by_dashboard(
         "#,
         dashboard_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -267,6 +293,7 @@ pub async fn get_widgets_by_dashboard(
 )]
 pub async fn create_widget(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWidgetRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -276,6 +303,16 @@ pub async fn create_widget(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -294,29 +331,37 @@ pub async fn create_widget(
         req.cache_ttl_seconds,
 now,
 now,
-        Uuid::nil(),
+        tenant_uuid(&claims),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create widget",
-                            "data": WidgetResponse {
-                                id: row.id,
-                                dashboard_id: row.dashboard_id,
-                                name: row.name,
-                                widget_type: row.widget_type,
-                                config: row.config,
-                                position: row.position,
-                                datasource_id: row.datasource_id,
-                                query_config: row.query_config,
-                                cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit widget: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create widget",
+                                "data": WidgetResponse {
+                                    id: row.id,
+                                    dashboard_id: row.dashboard_id,
+                                    name: row.name,
+                                    widget_type: row.widget_type,
+                                    config: row.config,
+                                    position: row.position,
+                                    datasource_id: row.datasource_id,
+                                    query_config: row.query_config,
+                                    cache_ttl_seconds: row.cache_ttl_seconds,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create widget: {}", e),
@@ -339,9 +384,20 @@ now,
 )]
 pub async fn get_widget(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting widget: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -351,7 +407,7 @@ pub async fn get_widget(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -408,12 +464,23 @@ pub async fn get_widget(
 )]
 pub async fn update_widget(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWidgetRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating widget: {}", id);
 
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -439,11 +506,17 @@ pub async fn update_widget(
 now,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
         Ok(Some(row)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit widget update: {}", e),
+                ));
+            }
             // Invalidate cache when widget is updated
             WIDGET_CACHE.invalidate(&id);
             Json(serde_json::json!({
@@ -492,9 +565,20 @@ now,
 )]
 pub async fn delete_widget(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting widget: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -504,11 +588,17 @@ pub async fn delete_widget(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
         Ok(Some(_)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit widget delete: {}", e),
+                ));
+            }
             WIDGET_CACHE.invalidate(&id);
             Json(serde_json::json!({
                 "success": true,
@@ -536,9 +626,20 @@ pub async fn delete_widget(
 #[allow(clippy::as_conversions)]
 pub async fn get_widget_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting widget data: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -548,7 +649,7 @@ pub async fn get_widget_data(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -559,6 +660,7 @@ pub async fn get_widget_data(
             ));
         }
     };
+    drop(tx);
 
     match row {
         Some(row) => {
@@ -662,6 +764,7 @@ pub async fn get_widget_data(
 /// Query real-time data for a widget using ChartService with caching
 pub async fn get_widget_data_realtime(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting real-time widget data: {}", id);
@@ -681,6 +784,16 @@ pub async fn get_widget_data_realtime(
         }));
     }
 
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
+
     let row = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
@@ -689,7 +802,7 @@ pub async fn get_widget_data_realtime(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -700,6 +813,7 @@ pub async fn get_widget_data_realtime(
             ));
         }
     };
+    drop(tx);
 
     match row {
         Some(row) => {

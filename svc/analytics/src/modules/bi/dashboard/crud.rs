@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     Json,
 };
 use chrono::Utc;
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::info;
 
+use crate::modules::bi::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 use super::models::{
@@ -27,8 +29,21 @@ use super::models::{
     )
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_dashboards(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing dashboards");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -37,7 +52,7 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
         ORDER BY created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -95,12 +110,23 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
 )]
 pub async fn create_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDashboardRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating dashboard: {}", req.name);
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -115,26 +141,34 @@ pub async fn create_dashboard(
         req.is_public.unwrap_or(false),
 now,
 now,
-        Uuid::nil(),
+        tenant_uuid(&claims),
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Create dashboard",
-            "data": DashboardResponse {
-                id,
-                name: req.name,
-                description: req.description,
-                layout: req.layout,
-                owner_id: req.owner_id,
-                is_public: req.is_public.unwrap_or(false),
-                created_at: now,
-                updated_at: now,
+        Ok(_) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard: {}", e),
+                ));
             }
-        })),
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Create dashboard",
+                "data": DashboardResponse {
+                    id,
+                    name: req.name,
+                    description: req.description,
+                    layout: req.layout,
+                    owner_id: req.owner_id,
+                    is_public: req.is_public.unwrap_or(false),
+                    created_at: now,
+                    updated_at: now,
+                }
+            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create dashboard: {}", e),
@@ -160,9 +194,20 @@ now,
 )]
 pub async fn get_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting dashboard: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -172,7 +217,7 @@ pub async fn get_dashboard(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -229,12 +274,23 @@ pub async fn get_dashboard(
 )]
 pub async fn update_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDashboardRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating dashboard: {}", id);
 
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -254,24 +310,32 @@ pub async fn update_dashboard(
         now,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update dashboard",
-                            "data": DashboardResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                layout: row.layout,
-                                owner_id: row.owner_id,
-                                is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard update: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update dashboard",
+                                "data": DashboardResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    layout: row.layout,
+                                    owner_id: row.owner_id,
+                                    is_public: row.is_public.unwrap_or(false),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Dashboard not found",
@@ -301,9 +365,20 @@ pub async fn update_dashboard(
 )]
 pub async fn delete_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting dashboard: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -313,14 +388,22 @@ pub async fn delete_dashboard(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete dashboard"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard delete: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete dashboard"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Dashboard not found",
@@ -340,8 +423,21 @@ pub async fn delete_dashboard(
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn get_public_dashboards(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing public dashboards");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -351,7 +447,7 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
         ORDER BY created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -398,9 +494,20 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_user_dashboards(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(owner_id): Path<String>,
 ) -> Json<serde_json::Value> {
     info!("Listing dashboards for user: {}", owner_id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -411,7 +518,7 @@ pub async fn get_user_dashboards(
         "#,
         owner_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -457,9 +564,20 @@ pub async fn get_user_dashboards(
 )]
 pub async fn clone_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Cloning dashboard: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -469,7 +587,7 @@ pub async fn clone_dashboard(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -501,26 +619,34 @@ pub async fn clone_dashboard(
                 false,
 now,
 now,
-                Uuid::nil(),
+                tenant_uuid(&claims),
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut *tx)
             .await;
 
             match result {
-                Ok(new_row) => Json(serde_json::json!({
-                                                    "success": true,
-                                                    "message": "Clone dashboard",
-                                                    "data": DashboardResponse {
-                                                        id: new_row.id,
-                                                        name: new_row.name,
-                                                        description: new_row.description,
-                                                        layout: new_row.layout,
-                                                        owner_id: new_row.owner_id,
-                                                        is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at,
-                updated_at: new_row.updated_at,
-                                                    }
-                                                })),
+                Ok(new_row) => {
+                    if let Err(e) = tx.commit().await {
+                        return Json(topems_shared_core::response::error_value(
+                            500,
+                            &format!("Failed to commit dashboard clone: {}", e),
+                        ));
+                    }
+                    Json(serde_json::json!({
+                                                        "success": true,
+                                                        "message": "Clone dashboard",
+                                                        "data": DashboardResponse {
+                                                            id: new_row.id,
+                                                            name: new_row.name,
+                                                            description: new_row.description,
+                                                            layout: new_row.layout,
+                                                            owner_id: new_row.owner_id,
+                                                            is_public: new_row.is_public.unwrap_or(false),
+                    created_at: new_row.created_at,
+                    updated_at: new_row.updated_at,
+                                                        }
+                                                    }))
+                }
                 Err(e) => Json(topems_shared_core::response::error_value(
                     500,
                     &format!("Failed to clone dashboard: {}", e),
@@ -544,12 +670,23 @@ now,
 )]
 pub async fn import_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ImportDashboardRequest>,
 ) -> Json<serde_json::Value> {
     info!("Importing dashboard: {}", req.name);
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open tenant txn: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -565,26 +702,34 @@ pub async fn import_dashboard(
         req.is_public.unwrap_or(false),
 now,
 now,
-        Uuid::nil(),
+        tenant_uuid(&claims),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Import dashboard",
-                            "data": DashboardResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                layout: row.layout,
-                                owner_id: row.owner_id,
-                                is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit dashboard import: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Import dashboard",
+                                "data": DashboardResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    layout: row.layout,
+                                    owner_id: row.owner_id,
+                                    is_public: row.is_public.unwrap_or(false),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to import dashboard: {}", e),
