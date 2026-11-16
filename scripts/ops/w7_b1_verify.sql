@@ -4,6 +4,14 @@
 -- 用法：psql -v ON_ERROR_STOP=1 -d <db> -f scripts/ops/w7_b1_verify.sql
 --       （本文件自带事务边界与 ROLLBACK，不修改数据）
 --
+-- 对应窗口：W7 · B1（迁移 20261110100100_* 应用之后的生产窗口）
+-- 执行条件：
+--   1. 迁移 20261110100100_* 已 apply；scripts/ops/w7_b1_tenant_indexes.sql
+--      已在同一窗口内单独执行（CONCURRENTLY，不在迁移链内）。
+--   2. 以「非 superuser 且非 BYPASSRLS」的租户角色执行（-v app_role=<role>），
+--      见第 31 行起的硬拦；用超户跑，RLS 断言全部失真。
+--   3. ON_ERROR_STOP=1，遇错即停；写探测全部在事务内 ROLLBACK，不落数据。
+--
 -- 覆盖设计 §6.2 四层中的第 1、2 层：
 --   A. 结构断言：策略数 / FORCE / USING(true)=0 / nil 分支 / 列侧 cast
 --   B. 双身份：超管（系统通道） vs 租户（...0001）可见行数

@@ -4,6 +4,11 @@
 -- 用法：psql -v ON_ERROR_STOP=1 -f scripts/ops/w7_b1_rollback.sql
 --       （本文件自带 BEGIN/COMMIT，不要加 --single-transaction）
 --
+-- 对应窗口：W7 · B1（迁移 20261110100100_* 已 apply 之后；窗口外执行会把
+--           已归一的全局行再次翻回 ...0001，须先核对 w7_b1_verify.sql 的输出）
+-- 执行条件：仅在 B1 窗口内或急停时由值班 DBA 手工执行；执行前先跑
+--           w7_b1_verify.sql 留基线，执行后按第 2 段末的复核断言确认。
+--
 -- 分两段，按需执行：
 --   第 1 段（数据回滚）：core_menus / core_menu_groups / core_dict_types /
 --          core_dict_items 的 NULL 行改回 ...0001；core_roles 的 NULL 行改回
