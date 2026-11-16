@@ -404,29 +404,21 @@ pub async fn list_alert_rules(
             return ApiResponse::server_error("获取预警规则列表失败");
         }
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let rules = match (query.alert_type.as_ref(), query.status.as_ref()) {
-        (Some(at), Some(st)) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 AND status = $2 AND ($5::uuid IS NULL OR tenant_id = $5) ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(at).bind(st).bind(page_size).bind(offset).bind(tenant_opt)
+        (Some(at), Some(st)) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(at).bind(st).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (Some(at), None) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(at).bind(page_size).bind(offset).bind(tenant_opt)
+        (Some(at), None) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(at).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (None, Some(st)) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND status = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(st).bind(page_size).bind(offset).bind(tenant_opt)
+        (None, Some(st)) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(st).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (None, None) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"#)).bind(page_size).bind(offset).bind(tenant_opt)
+        (None, None) => sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules ORDER BY created_at DESC LIMIT $1 OFFSET $2"#)).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
     };
@@ -523,20 +515,12 @@ pub async fn get_alert_rule(
             return ApiResponse::server_error("获取预警规则失败");
         }
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的预警规则ID"),
     };
 
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
     .fetch_one(&mut scope)
     .await;
 
@@ -706,29 +690,21 @@ pub async fn list_alert_messages(
             return ApiResponse::server_error("获取预警消息列表失败");
         }
     };
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
 
     let messages = match (query.severity.as_ref(), query.status.as_ref()) {
-        (Some(sv), Some(st)) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE severity = $1 AND status = $2 AND ($5::uuid IS NULL OR tenant_id = $5) ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(sv).bind(st).bind(page_size).bind(offset).bind(tenant_opt)
+        (Some(sv), Some(st)) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE severity = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(sv).bind(st).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (Some(sv), None) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE severity = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(sv).bind(page_size).bind(offset).bind(tenant_opt)
+        (Some(sv), None) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (None, Some(st)) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE status = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(st).bind(page_size).bind(offset).bind(tenant_opt)
+        (None, Some(st)) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(st).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
-        (None, None) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"#)).bind(page_size).bind(offset).bind(tenant_opt)
+        (None, None) => sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at FROM qms.qa_alert_messages ORDER BY created_at DESC LIMIT $1 OFFSET $2"#)).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
     };

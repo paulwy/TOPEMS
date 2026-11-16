@@ -87,17 +87,9 @@ pub struct DefectRecord {
 /// GET /quality-tasks —— 质检任务列表（数据源 qa_quality_inspections）
 pub async fn list_quality_tasks(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<QualityTaskQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -108,12 +100,10 @@ pub async fn list_quality_tasks(
         r#"
         SELECT COUNT(*) FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3)
+          AND ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
     "#
     ))
-    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
     .fetch_one(&state.pool)
@@ -146,14 +136,12 @@ pub async fn list_quality_tasks(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3)
+          AND ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
     "#
     ))
-    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
     .bind(page_size)
@@ -177,17 +165,9 @@ pub async fn list_quality_tasks(
 /// GET /quality-tasks/{id} —— 质检任务详情
 pub async fn get_quality_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的质检任务ID"),
@@ -212,11 +192,10 @@ pub async fn get_quality_task(
                created_at,
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
-        WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND deleted_at IS NULL
     "#
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await;
 
@@ -302,17 +281,9 @@ pub async fn update_quality_task_status(
 /// GET /defect-records —— 缺陷记录列表（数据源 qa_inspection_results，未合格项）
 pub async fn list_defect_records(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<DefectRecordQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -322,10 +293,8 @@ pub async fn list_defect_records(
         r#"
         SELECT COUNT(*) FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
-          AND ($1::uuid IS NULL OR tenant_id = $1)
     "#
     ))
-    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -350,12 +319,10 @@ pub async fn list_defect_records(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
-          AND ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $1 OFFSET $2
     "#
     ))
-    .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)

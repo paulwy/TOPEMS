@@ -108,14 +108,14 @@ pub async fn list_standards(
     record_cache_miss("qms", "quality_standard", "list");
 
     let _params: Vec<serde_json::Value> = Vec::new();
-    let where_clause = String::from(" WHERE ($1::uuid IS NULL OR tenant_id = $1)");
+    let where_clause = String::from("");
 
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM qms.qa_standards{}",
         where_clause
     );
 
-    let count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql)).bind(tenant_opt);
+    let count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
 
     let total: Option<i64> = match count_query.fetch_one(&mut scope).await {
         Ok(c) => c,
@@ -298,21 +298,13 @@ pub async fn get_standard(
             return ApiResponse::server_error("获取质量标准失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
-    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
     .fetch_one(&mut scope)
     .await;
 
@@ -560,21 +552,13 @@ pub async fn list_revisions(
             return ApiResponse::server_error("获取质量标准修订记录失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
-    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at FROM qms.qa_standard_revisions WHERE standard_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
+    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at FROM qms.qa_standard_revisions WHERE standard_id = $1 ORDER BY created_at DESC"#)).bind(id)
     .fetch_all(&mut scope)
     .await;
 

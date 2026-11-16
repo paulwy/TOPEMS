@@ -277,21 +277,13 @@ pub async fn get_eightd_report(
             return ApiResponse::server_error("获取8D报告失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
     .fetch_one(&mut scope)
     .await;
 
@@ -1072,21 +1064,13 @@ pub async fn get_eightd_audit_logs(
             return ApiResponse::server_error("获取8D审核日志失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
-    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_id::TEXT AS report_id, action, step, operator, comment, created_at FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
+    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_id::TEXT AS report_id, action, step, operator, comment, created_at FROM qms.qa_eightd_audit_logs WHERE report_id = $1 ORDER BY created_at DESC"#)).bind(id)
     .fetch_all(&mut scope)
     .await;
 

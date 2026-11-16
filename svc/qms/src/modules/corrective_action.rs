@@ -273,21 +273,13 @@ pub async fn get_action(
             return ApiResponse::server_error("获取整改措施失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
     .fetch_one(&mut scope)
     .await;
 
@@ -333,21 +325,13 @@ pub async fn get_action_items(
             return ApiResponse::server_error("获取措施明细失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
-    let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_id::TEXT, item_name, responsible, due_date, status, completed_at, remark, created_at FROM qms.qa_corrective_action_items WHERE action_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
+    let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_id::TEXT, item_name, responsible, due_date, status, completed_at, remark, created_at FROM qms.qa_corrective_action_items WHERE action_id = $1 ORDER BY created_at"#)).bind(id)
     .fetch_all(&mut scope)
     .await;
 

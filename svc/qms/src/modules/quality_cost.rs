@@ -258,21 +258,13 @@ pub async fn get_quality_cost(
             return ApiResponse::server_error("获取质量成本记录失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
     .fetch_one(&mut scope)
     .await;
 

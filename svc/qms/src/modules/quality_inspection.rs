@@ -61,14 +61,6 @@ pub async fn list_inspections(
             return ApiResponse::server_error("获取质量检查列表失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -79,13 +71,12 @@ pub async fn list_inspections(
     let total: Option<i64> = match sqlx::query_scalar(
         only_own_schema_query!("qms", r#"
         SELECT COUNT(*) as total FROM qms.qa_quality_inspections
-        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR inspection_type = $3)
-          AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR inspection_type = $2)
+          AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3 OR inspector ILIKE $3 OR assignee ILIKE $3)
         "#),
     )
-    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
@@ -102,21 +93,19 @@ pub async fn list_inspections(
     let data = match sqlx::query_as::<_, Inspection>(
         only_own_schema_query!("qms", r#"
         SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id,
-            CASE WHEN $7 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
+            CASE WHEN $6 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
             standard_id, quantity, qualified_quantity, unqualified_quantity,
             qualification_rate, status, inspector, assignee,
             inspected_at, result, memo, created_by,
             created_at, updated_at
         FROM qms.qa_quality_inspections
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR inspection_type = $3)
-          AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
+          WHERE ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR inspection_type = $2)
+          AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3 OR inspector ILIKE $3 OR assignee ILIKE $3)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#),
     )
-    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
@@ -264,21 +253,13 @@ pub async fn get_inspection(
             return ApiResponse::server_error("获取质量检查失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
-    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id.to_string()).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $2 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1"#)).bind(id.to_string()).bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut scope)
     .await;
 
@@ -1080,21 +1061,13 @@ pub async fn get_inspection_results(
             return ApiResponse::server_error("获取检查结果明细失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
-    let results = sqlx::query_as::<_, InspectionResult>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, CASE WHEN $3 = 'en' THEN COALESCE(item_name_en, item_name) ELSE item_name END AS item_name, standard_value, measured_value, is_qualified, remark, created_at FROM qms.qa_inspection_results WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
+    let results = sqlx::query_as::<_, InspectionResult>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, CASE WHEN $2 = 'en' THEN COALESCE(item_name_en, item_name) ELSE item_name END AS item_name, standard_value, measured_value, is_qualified, remark, created_at FROM qms.qa_inspection_results WHERE inspection_id = $1 ORDER BY created_at"#)).bind(id).bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut scope)
     .await;
 
@@ -1138,21 +1111,13 @@ pub async fn get_inspection_audits(
             return ApiResponse::server_error("获取检查审核记录失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的检查ID"),
     };
 
-    let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
+    let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at FROM qms.qa_inspection_audits WHERE inspection_id = $1 ORDER BY created_at"#)).bind(id)
     .fetch_all(&mut scope)
     .await;
 

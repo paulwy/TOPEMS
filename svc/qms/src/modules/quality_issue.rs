@@ -63,27 +63,18 @@ pub async fn list_issues(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
 
     // 多语言：title 按 locale 切换；各分支 locale 绑定在参数末尾，序号随分支不同。
     let issues = match (query.status.as_ref(), query.severity.as_ref()) {
         (Some(st), Some(sv)) => {
-            let cols = issue_select_cols("$6");
+            let cols = issue_select_cols("$5");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND status = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
-                .bind(tenant_opt)
                 .bind(st)
                 .bind(sv)
                 .bind(page_size)
@@ -93,13 +84,12 @@ pub async fn list_issues(
                 .await
         }
         (Some(st), None) => {
-            let cols = issue_select_cols("$5");
+            let cols = issue_select_cols("$4");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
-                .bind(tenant_opt)
                 .bind(st)
                 .bind(page_size)
                 .bind(offset)
@@ -108,13 +98,12 @@ pub async fn list_issues(
                 .await
         }
         (None, Some(sv)) => {
-            let cols = issue_select_cols("$5");
+            let cols = issue_select_cols("$4");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
-                .bind(tenant_opt)
                 .bind(sv)
                 .bind(page_size)
                 .bind(offset)
@@ -123,13 +112,12 @@ pub async fn list_issues(
                 .await
         }
         (None, None) => {
-            let cols = issue_select_cols("$4");
+            let cols = issue_select_cols("$3");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
-                .bind(tenant_opt)
                 .bind(page_size)
                 .bind(offset)
                 .bind(locale)
@@ -309,14 +297,6 @@ pub async fn get_issue(
             return ApiResponse::server_error("获取质量问题失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
@@ -324,11 +304,13 @@ pub async fn get_issue(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let cols = issue_select_cols("$3");
+    let cols = issue_select_cols("$2");
     let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1",
         cols
-    ))).bind(id).bind(tenant_opt).bind(locale)
+    )))
+    .bind(id)
+    .bind(locale)
     .fetch_one(&mut scope)
     .await;
 

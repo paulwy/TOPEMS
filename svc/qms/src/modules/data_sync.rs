@@ -82,14 +82,6 @@ pub async fn list_sync_records(
             return ApiResponse::server_error("获取同步记录列表失败");
         }
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -97,21 +89,20 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (Some(_), None) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, Some(_)) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, None) => {
-            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
     };
 
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
-    query_builder = query_builder.bind(tenant_opt);
     match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(ty), Some(st)) => {
             query_builder = query_builder.bind(ty).bind(st).bind(page_size).bind(offset);
@@ -191,21 +182,12 @@ pub async fn get_sync_record(
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
+        only_own_schema_query!("qms", "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id::TEXT, target_service, target_id::TEXT, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE id = $1")
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
 
