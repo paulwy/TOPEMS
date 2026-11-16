@@ -1,6 +1,306 @@
 {
-  "_comment": "误报登记：UPDATE/DELETE ... RETURNING 命中 0 行时返回 404，未产生任何写入，属合法分支。新增条目必须写清 reason。",
+  "_comment": "误报登记：非 2xx 全部发生在「写入未发生」的分支（0 行 / RETURNING 空 / execute Err / 守卫缺失 SQL 未执行），未产生任何写入。新增条目必须写清 reason。",
   "allow": [
+    {
+      "file": "svc/ai/src/handlers/business_copilot_handlers.rs",
+      "function": "delete_admin_faq",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/ai/src/handlers/business_copilot_handlers.rs",
+      "function": "set_context_data",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/ai/src/handlers/business_copilot_handlers.rs",
+      "function": "update_admin_faq",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/ai/src/handlers/business_copilot_handlers.rs",
+      "function": "update_selected_records",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/crm/src/modules/customer_scoring.rs",
+      "function": "delete_customer_score",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/crm/src/modules/sales_forecast.rs",
+      "function": "delete_sales_forecast",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/announcement.rs",
+      "function": "publish_announcement",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/announcement.rs",
+      "function": "unpublish_announcement",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation/company_relations.rs",
+      "function": "delete_company_relation",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation/elimination_rules.rs",
+      "function": "delete_elimination_rule",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation/reports.rs",
+      "function": "delete_report",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation/scope_companies.rs",
+      "function": "remove_scope_company",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation/scopes.rs",
+      "function": "delete_scope",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/dict.rs",
+      "function": "delete_dict_item",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/dict.rs",
+      "function": "delete_dict_type",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/fixed_asset.rs",
+      "function": "delete_fixed_asset",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request.rs",
+      "function": "approve_leave_request",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request.rs",
+      "function": "cancel_leave_request",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request.rs",
+      "function": "delete_leave_request",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request.rs",
+      "function": "reject_leave_request",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request.rs",
+      "function": "submit_leave_request",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_room.rs",
+      "function": "delete_booking",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_room.rs",
+      "function": "delete_room",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/purchase_order.rs",
+      "function": "update_purchase_order",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicles.rs",
+      "function": "delete_vehicle",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicles.rs",
+      "function": "delete_vehicle_request",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/attendance.rs",
+      "function": "delete_attendance",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/contract.rs",
+      "function": "delete_contract",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/leave.rs",
+      "function": "delete_leave",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/payroll.rs",
+      "function": "delete_payroll_run",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/performance.rs",
+      "function": "delete_goal",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/performance.rs",
+      "function": "delete_review",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/recruitment.rs",
+      "function": "delete_candidate",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/hrm/src/modules/recruitment.rs",
+      "function": "delete_job_opening",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/integration/src/external_erp.rs",
+      "function": "sync_entity",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/lims/src/modules/analyte.rs",
+      "function": "update_analyte",
+      "reason": "guard.as_mut() 为 None 时提前返回 500，SQL 未执行，未发生写入"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "function": "delete_dict_item",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "function": "delete_dict_type",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "function": "update_dict_item",
+      "reason": "guard.as_mut() 为 None 时提前返回 500，SQL 未执行，未发生写入"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "function": "update_dict_type",
+      "reason": "guard.as_mut() 为 None 时提前返回 500，SQL 未执行，未发生写入"
+    },
+    {
+      "file": "svc/master-data/src/modules/versioning_v54.rs",
+      "function": "export_audit_log",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/barcode_scanner.rs",
+      "function": "delete_scan_record",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "activate_device",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "disable_device",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "register_device",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "unregister_device",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "update_device",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/device.rs",
+      "function": "update_push_token",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/media.rs",
+      "function": "upload_media",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/offline.rs",
+      "function": "sync_offline_data",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/patrol.rs",
+      "function": "create_patrol_record",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/patrol.rs",
+      "function": "delete_patrol_record",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/patrol.rs",
+      "function": "update_patrol_record",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/shortcut.rs",
+      "function": "create_shortcut",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/task.rs",
+      "function": "complete_task",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/task.rs",
+      "function": "create_task",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/task.rs",
+      "function": "delete_task",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/task.rs",
+      "function": "reopen_task",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/task.rs",
+      "function": "update_task",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/mobile/src/modules/user.rs",
+      "function": "update_profile",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
     {
       "file": "svc/scm/src/modules/supplier.rs",
       "function": "delete_supplier",
@@ -15,6 +315,171 @@
       "file": "svc/scm/src/modules/sync_records.rs",
       "function": "retry_sync_record",
       "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/tms/src/modules/carrier.rs",
+      "function": "approve_carrier",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/carrier.rs",
+      "function": "delete_carrier",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/carrier.rs",
+      "function": "reject_carrier",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/carrier.rs",
+      "function": "update_carrier",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/driver.rs",
+      "function": "approve_driver",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/driver.rs",
+      "function": "delete_driver",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/driver.rs",
+      "function": "reject_driver",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/driver.rs",
+      "function": "submit_verification",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/driver.rs",
+      "function": "update_driver",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/route.rs",
+      "function": "delete_route",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/route.rs",
+      "function": "update_route",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "approve_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "arrive_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "cancel_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "delete_shipment",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "dispatch_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "reject_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "submit_approval",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment.rs",
+      "function": "update_shipment",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/vehicle.rs",
+      "function": "approve_vehicle",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/vehicle.rs",
+      "function": "delete_vehicle",
+      "reason": "写语句 execute 返回 Err：未发生写入，返回 500 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/vehicle.rs",
+      "function": "reject_vehicle",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/vehicle.rs",
+      "function": "submit_inspection",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/tms/src/modules/vehicle.rs",
+      "function": "update_vehicle",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "create_group",
+      "reason": "INSERT ... RETURNING：Err 表示插入失败，未产生写入，仅返回 500"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "create_menu",
+      "reason": "INSERT ... RETURNING：Err 表示插入失败，未产生写入，仅返回 500"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "delete_group",
+      "reason": "DELETE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "delete_menu",
+      "reason": "DELETE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "update_group",
+      "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "function": "update_menu",
+      "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，仅返回 404"
+    },
+    {
+      "file": "svc/wms/src/modules/discrepancy.rs",
+      "function": "approve_discrepancy",
+      "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/wms/src/modules/smart_replenishment/orders.rs",
+      "function": "delete_order",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/wms/src/modules/sync_records.rs",
+      "function": "create_sync_record",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
     }
   ]
 }

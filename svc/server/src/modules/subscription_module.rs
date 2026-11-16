@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::tier::{resolve_effective_tier, SubscriptionStatus, Tier};
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
@@ -73,6 +74,7 @@ const SUB_RETURN: &str =
 pub async fn get_current_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<EffectiveSubscription> {
     let tenant_id = claims
         .tenant_id
@@ -80,7 +82,11 @@ pub async fn get_current_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::DatabaseTransaction("请求事务缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("获取订阅失败", e)),
     };
@@ -131,6 +137,7 @@ pub async fn get_current_subscription(
 pub async fn upsert_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
     if Tier::from_str(&req.tier).is_none() {
@@ -147,7 +154,11 @@ pub async fn upsert_subscription(
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::DatabaseTransaction("请求事务缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("保存订阅失败", e)),
     };
@@ -190,6 +201,7 @@ pub async fn upsert_subscription(
 pub async fn cancel_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Subscription> {
     let tenant_id = claims
@@ -198,7 +210,11 @@ pub async fn cancel_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::DatabaseTransaction("请求事务缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("取消订阅失败", e)),
     };
@@ -252,7 +268,8 @@ impl SubscriptionModule {
         };
         let ctx = bootstrap_service_shared(&config).await?;
         // 作用域沿用模块原有 SEARCH_PATH：public。
-        let db = Db::new(ctx.db.clone(), "public");
+        // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务。
+        let db = Db::new(ctx.db.clone(), "public").deny_request_own_txn();
         db.check_health().await?;
 
         // C-1：subscriptions 表由迁移链权威创建（运行时自建表已移除）
@@ -270,7 +287,13 @@ impl SubscriptionModule {
             .layer(axum::middleware::from_fn(require_permission(
                 "subscription:admin",
             )));
-        let protected = read_routes.merge(write_routes).with_state(state);
+        let protected = read_routes
+            .merge(write_routes)
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
+            .with_state(state);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected)
             .layer(axum::middleware::from_fn_with_state(

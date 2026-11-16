@@ -54,7 +54,8 @@ impl AiRealModule {
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // AI 专用 Database：共享池 + 事务级 search_path = ai, public
-        let ai_db = Db::new(ctx.db.clone(), "ai, public");
+        // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务。
+        let ai_db = Db::new(ctx.db.clone(), "ai, public").deny_request_own_txn();
         let db = Database::from_parts(ai_db.clone(), ctx.migrate_pool.clone());
 
         // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）
@@ -312,7 +313,8 @@ impl Module for AiRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = match self.db.scope_read().await {
+        // 探针无请求租户上下文，走系统只读作用域（不产生业务事务）。
+        let db_healthy = match self.db.scope_read_system().await {
             Ok(mut scope) => sqlx::query("SELECT 1").execute(&mut scope).await.is_ok(),
             Err(_) => false,
         };

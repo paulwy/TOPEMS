@@ -38,7 +38,9 @@ topems-gis = { path = "../gis", optional = true }
 topems-portal = { path = "../portal", optional = true }
 topems-master-data = { path = "../master-data", optional = true }
 topems-analytics = { path = "../analytics", optional = true }
-topems-unified-core = { path = "../unified-core", optional = true }
+# 聚合层不启用 unified-core 的 `swagger-ui` 默认 feature：该 feature 会引入
+# utoipa-swagger-ui（构建期需联网下载静态资源），使 `cargo check -p topems-server --offline` 不可用。
+topems-unified-core = { path = "../unified-core", default-features = false, optional = true }
 topems-monitor = { path = "../monitor", optional = true }
 topems-plugin-registry = { path = "../plugin-registry", optional = true }
 topems-search = { path = "../search", optional = true }

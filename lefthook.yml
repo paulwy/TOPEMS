@@ -147,11 +147,11 @@ pre-commit:
         }
 
     # [Gate TXN-2XX] 请求事务内写入后返回非 2xx（= 中间件回滚，写入被静默丢弃）
-    # 触发：scm 服务 .rs 变更（B 窗口引入；后续可扩到全部服务）
+    # 触发：任一侧 svc/**/*.rs 变更（B2 起由 scm 扩到全部服务）
     txn-write-non2xx:
       tags: rust rls transaction
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/scm/.*\.rs$|^scripts/ci/check-txn-write-non2xx' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^scripts/ci/check-txn-write-non2xx' || true)
         [ -z "$STAGED" ] && exit 0
         python3 scripts/ci/check-txn-write-non2xx.py --changed-only
 
