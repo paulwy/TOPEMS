@@ -339,6 +339,17 @@ pub async fn upload_media(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
+    // 上传落库必须落调用方租户：超管未指定租户时拒绝写入，不再以零 UUID 兜底。
+    let tenant_id = match tenant_filter {
+        Some(t) if !t.is_nil() => t,
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::bad_request("缺少租户上下文：拒绝上传"),
+            )
+        }
+    };
+
     let valid_types = ["photo", "audio", "video"];
     if !valid_types.contains(&file_type.as_str()) {
         return (
@@ -415,7 +426,7 @@ pub async fn upload_media(
     .bind(&user_id)
     .bind(&description)
     .bind(Utc::now())
-    .bind(tenant_filter.unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .execute(&mut scope)
     .await
     {
