@@ -318,3 +318,45 @@ OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
 3. 锁影响：`ADD COLUMN` 无默认值（瞬时元数据）；0 行表 `CREATE INDEX`（非 CONCURRENTLY）瞬时；`ENABLE/FORCE RLS` 需 `ACCESS EXCLUSIVE`（瞬时）；`SET NOT NULL` 需全表校验（0 行即瞬时）。均为短事务，无长锁。
 4. 回滚：执行 `database/rollback/20261116180000_...rollback.sql`；有业务数据时列会被保留并 `NOTICE`（不丢租户信息），需回退二进制或停服后再执行。
 5. 生产库当前仍为原状：两表无 `tenant_id`、无策略、0 行（本轮已复核）。
+
+## 11. 生产只读授权记录（2026-11-16 22:51 CST）
+
+### 11.1 背景与范围
+
+`rls-permissions` 预提交钩子在暂存迁移文件时触发，读取 `.env` 的 `MIGRATE_URL`（指向 `topems_prod`）执行 `scripts/ci/check-rls-permissions.cjs`，报 `topems_app` 在 `iam.users`、`iam.roles`、`mes.work_orders`、`wms.inventory`、`crm.customers`、`erp.sales_orders` 上缺 SELECT，阻塞了 §10 迁移的提交。
+
+审查 `scripts/db/grant-topems-app.sql` 发现其第 4 步对全库表授 `SELECT, INSERT, UPDATE, DELETE`、第 6 步 `ALTER DEFAULT PRIVILEGES` 亦含 DML，超出「只读授权」口径，故**未执行脚本原件**，改为执行只读授权子集：
+
+| 对象 | 授权 | 条数 |
+| --- | --- | --- |
+| 非系统 schema | `GRANT USAGE` | 59 |
+| 非系统 BASE TABLE | `GRANT SELECT` | 1345 |
+| 非系统 sequence | `GRANT USAGE, SELECT` | 7 |
+
+- 未授任何 `INSERT/UPDATE/DELETE`；未执行 `ALTER DEFAULT PRIVILEGES`；未改角色属性（`rolcanlogin` 保持 f）。
+- 耗时 0.06 s。
+- 前后快照：schema USAGE 0 → 59；有 SELECT 的表 25 → 1345；序列授权 0 → 7；DML 授权数 25/25/25 不变；`pg_default_acl` 条目 0 → 0。
+- 复跑 `node scripts/ci/check-rls-permissions.cjs`：6 张关键表全部「已授权」，输出「RLS权限校验通过！」，exit 0（仅剩非阻断警告「默认权限未设置」）。
+
+### 11.2 回滚方式
+
+按 schema 逐条撤销本次新增的只读授权（幂等）：
+
+```sql
+DO $$ DECLARE r RECORD; BEGIN
+  FOR r IN SELECT nspname FROM pg_namespace
+            WHERE nspname NOT IN ('pg_catalog','information_schema') AND nspname NOT LIKE 'pg\_%' LOOP
+    EXECUTE format('REVOKE USAGE ON SCHEMA %I FROM topems_app', r.nspname);
+    EXECUTE format('REVOKE SELECT ON ALL TABLES IN SCHEMA %I FROM topems_app', r.nspname);
+    EXECUTE format('REVOKE USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I FROM topems_app', r.nspname);
+  END LOOP;
+END $$;
+```
+
+注意：原有 25 张表的 CRUD 授权早于本次变更，不应连带撤销；需精确回滚时只撤本次新增的 SELECT/USAGE。
+
+### 11.3 待办：钩子角色与生产运行角色口径错位（只登记，不改钩子）
+
+- `scripts/ci/check-rls-permissions.cjs` 校验的运行角色是 `topems_app`；而生产 8099 服务实际以 `topems_prod` 连接（见 launchd plist 中的 DSN），且 `topems_app` 在生产 `rolcanlogin=f`、此前 schema USAGE 为 0。
+- 即：该钩子校验的是一个生产的“遗留/未启用”角色，校验通过不代表生产运行角色授权完整，反之缺授权也不代表服务不可用。本次仅补齐只读授权以解除阻塞，未改钩子逻辑与角色属性。
+- 待办：后续评估钩子应改为按环境取实际运行角色（生产 `topems_prod` / 开发 `topems_app`），或在 `.env` 中显式区分 `MIGRATE_URL` 与运行角色校验目标；调整前不要删除 `topems_app` 的只读授权。
