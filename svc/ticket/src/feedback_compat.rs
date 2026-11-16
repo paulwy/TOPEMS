@@ -149,8 +149,14 @@ pub async fn create_feedback(
     Json(payload): Json<CreateFeedbackRequest>,
 ) -> ApiResponse<FeedbackCompat> {
     let ticket_no = generate_ticket_number("FB", Utc::now().timestamp_millis() as u64);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝反馈写操作"),
+    };
     let metadata = serde_json::json!({
         "type": payload.type_,
         "screenshots": payload.screenshots.unwrap_or_default(),

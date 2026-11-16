@@ -710,8 +710,10 @@ pub async fn create_ticket_handler(
     Json(req): Json<CreateTicketRequest>,
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let reporter_id = Uuid::parse_str(&claims.sub).ok();
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -767,8 +769,10 @@ pub async fn update_ticket_handler(
     Json(req): Json<UpdateTicketRequest>,
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     match service
@@ -791,8 +795,10 @@ pub async fn delete_ticket_handler(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let service = TicketService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     match service
@@ -813,8 +819,10 @@ pub async fn add_comment_handler(
     Json(req): Json<AddCommentRequest>,
 ) -> ApiResponse<TicketComment> {
     let service = TicketService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(u) => u,
         Err(_) => return ApiResponse::unauthorized("Invalid user id"),
@@ -914,8 +922,10 @@ pub async fn trigger_sla_escalation_handler(
 ) -> ApiResponse<Vec<SlaEscalationEvent>> {
     let ticket_service = TicketService::new(db.clone());
     let sla_service = TicketSlaService::new(db.clone());
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let ticket = match ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => t,
@@ -973,8 +983,10 @@ pub async fn create_sla_policy_handler(
     Json(req): Json<CreateSlaPolicyRequest>,
 ) -> ApiResponse<TicketSlaPolicy> {
     let service = TicketSlaService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service
@@ -1078,8 +1090,10 @@ pub async fn update_sla_policy_handler(
     Json(req): Json<UpdateSlaPolicyRequest>,
 ) -> ApiResponse<TicketSlaPolicy> {
     let service = TicketSlaService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service
@@ -1110,8 +1124,10 @@ pub async fn delete_sla_policy_handler(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let service = TicketSlaService::new(db);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     match service.delete_policy(tenant_id, id, &txn_arc).await {
         Ok(true) => ApiResponse::success(json!({"deleted": true}), "SLA策略已删除"),
@@ -1139,8 +1155,10 @@ pub async fn create_automation_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAutomationRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let priority = req.priority.unwrap_or(100);
@@ -1331,8 +1349,10 @@ pub async fn update_automation_rule_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAutomationRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1409,8 +1429,10 @@ pub async fn delete_automation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1464,8 +1486,10 @@ pub async fn create_knowledge_article_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateKnowledgeArticleRequest>,
 ) -> ApiResponse<KnowledgeArticle> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let keywords = req.keywords.unwrap_or_default();
@@ -1668,8 +1692,10 @@ pub async fn update_knowledge_article_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateKnowledgeArticleRequest>,
 ) -> ApiResponse<KnowledgeArticle> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1738,8 +1764,10 @@ pub async fn delete_knowledge_article_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1786,6 +1814,18 @@ pub struct UpdateCommentRequest {
 
 fn tenant_id_of(claims: &Claims) -> Uuid {
     Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil())
+}
+
+/// 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止把业务数据写入零 UUID 区间。
+fn require_tenant_id<T>(claims: &Claims) -> Result<Uuid, ApiResponse<T>> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => Err(ApiResponse::error(400, "缺少租户上下文：拒绝工单写操作")),
+    }
 }
 
 /// PUT /tickets/{id}/comments/{comment_id} —— 更新评论内容
