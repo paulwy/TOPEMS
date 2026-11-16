@@ -61,7 +61,7 @@ where
 pub async fn list_reconciliations(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &ReconciliationListQuery,
 ) -> Result<Vec<UnifiedReconciliation>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -78,15 +78,13 @@ pub async fn list_reconciliations(
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
            FROM finance.reconciliation_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR status = $2)
-             AND ($3::text IS NULL OR recon_type = $3)
-             AND ($4::text IS NULL OR period = $4)
-             AND ($5::text IS NULL OR recon_name ILIKE $5)
+             WHERE ($1::text IS NULL OR status = $1)
+             AND ($2::text IS NULL OR recon_type = $2)
+             AND ($3::text IS NULL OR period = $3)
+             AND ($4::text IS NULL OR recon_name ILIKE $4)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#
+           LIMIT $5 OFFSET $6"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .bind(&query.status)
     .bind(&query.recon_type)
     .bind(&query.period)
@@ -103,7 +101,7 @@ pub async fn list_reconciliations(
 pub async fn get_reconciliation_detail(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     recon_id: Uuid,
 ) -> Result<Option<ReconciliationDetail>, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
@@ -114,10 +112,9 @@ pub async fn get_reconciliation_detail(
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
            FROM finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(recon_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_optional(&mut scope)
     .await?;
 
@@ -135,11 +132,9 @@ pub async fn get_reconciliation_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.settlement_snapshots s ON s.id = l.settlement_id
            WHERE l.reconciliation_id = $1
-             AND ($2::uuid IS NULL OR l.tenant_id = $2)
              AND l.status != 'cancelled'"#
     ))
     .bind(recon_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_all(&mut scope)
     .await?;
 
@@ -191,10 +186,9 @@ pub async fn create_reconciliation(
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
            FROM finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_one(&mut scope)
     .await?;
 
@@ -271,7 +265,7 @@ pub async fn manual_reconcile(
            SET matched_count = $1, unmatched_count = $2,
                total_debit = $3, total_credit = $4, difference = $5,
                updated_at = NOW(), synced_at = NOW()
-           WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)"#
+           WHERE id = $6"#
     ))
     .bind(stats.0)
     .bind(stats.1)
@@ -279,7 +273,6 @@ pub async fn manual_reconcile(
     .bind(stats.3)
     .bind(difference)
     .bind(recon_id)
-    .bind(tenant_id_opt(tenant_id))
     .execute(&mut scope)
     .await?;
 
@@ -312,7 +305,7 @@ pub async fn manual_reconcile(
 pub async fn auto_reconcile(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     req: &AutoReconcileRequest,
 ) -> Result<i64, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
@@ -325,9 +318,8 @@ pub async fn auto_reconcile(
            FROM finance.reconciliation_snapshots r
            WHERE ri.recon_id = r.id
              AND r.period = $1
-             AND ($2::uuid IS NULL OR r.tenant_id = $2)
-             AND ($3::text IS NULL OR r.recon_type = $3)
-             AND ($4::uuid IS NULL OR r.entity_id = $4)
+             AND ($2::text IS NULL OR r.recon_type = $2)
+             AND ($3::uuid IS NULL OR r.entity_id = $3)
              AND ri.match_status <> 'matched'
              AND EXISTS (
                SELECT 1 FROM finance.reconciliation_item_snapshots ri2
@@ -337,7 +329,6 @@ pub async fn auto_reconcile(
              )"#
     ))
     .bind(&req.period)
-    .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
     .bind(req.entity_id)
     .execute(&mut scope)
@@ -366,16 +357,14 @@ pub async fn auto_reconcile(
                WHERE recon_id IN (
                    SELECT id FROM finance.reconciliation_snapshots
                    WHERE period = $1
-                     AND ($2::uuid IS NULL OR tenant_id = $2)
-                     AND ($3::text IS NULL OR recon_type = $3)
-                     AND ($4::uuid IS NULL OR entity_id = $4)
+                     AND ($2::text IS NULL OR recon_type = $2)
+                     AND ($3::uuid IS NULL OR entity_id = $3)
                )
                GROUP BY recon_id
            ) s
            WHERE r.id = s.recon_id"#
     ))
     .bind(&req.period)
-    .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
     .bind(req.entity_id)
     .execute(&mut scope)
@@ -388,7 +377,7 @@ pub async fn auto_reconcile(
 pub async fn list_settlements(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &SettlementListQuery,
 ) -> Result<Vec<UnifiedSettlement>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -415,15 +404,13 @@ pub async fn list_settlements(
                   approved_at,
                   created_at, updated_at
            FROM finance.settlement_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR status = $2)
-             AND ($3::text IS NULL OR settlement_type = $3)
-             AND ($4::uuid IS NULL OR project_id = $4)
-             AND ($5::text IS NULL OR settlement_no ILIKE $5)
+             WHERE ($1::text IS NULL OR status = $1)
+             AND ($2::text IS NULL OR settlement_type = $2)
+             AND ($3::uuid IS NULL OR project_id = $3)
+             AND ($4::text IS NULL OR settlement_no ILIKE $4)
            ORDER BY settlement_date DESC NULLS LAST, created_at DESC
-           LIMIT $6 OFFSET $7"#
+           LIMIT $5 OFFSET $6"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .bind(&query.status)
     .bind(&query.settlement_type)
     .bind(query.project_id)
@@ -440,7 +427,7 @@ pub async fn list_settlements(
 pub async fn get_settlement_detail(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     settlement_id: Uuid,
 ) -> Result<Option<SettlementDetail>, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
@@ -461,10 +448,9 @@ pub async fn get_settlement_detail(
                   approved_at,
                   created_at, updated_at
            FROM finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(settlement_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_optional(&mut scope)
     .await?;
 
@@ -479,11 +465,9 @@ pub async fn get_settlement_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.reconciliation_snapshots r ON r.id = l.reconciliation_id
            WHERE l.settlement_id = $1
-             AND ($2::uuid IS NULL OR l.tenant_id = $2)
              AND l.status != 'cancelled'"#),
     )
     .bind(settlement_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_all(&mut scope)
     .await?;
 
@@ -552,10 +536,9 @@ pub async fn create_settlement(
                   approved_at,
                   created_at, updated_at
            FROM finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_one(&mut scope)
     .await?;
 
@@ -613,10 +596,9 @@ pub async fn approve_reconciliation(
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
            FROM finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(recon_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_optional(&mut scope)
     .await?;
 
@@ -698,10 +680,9 @@ pub async fn approve_settlement(
                   approved_at,
                   created_at, updated_at
            FROM finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1"#
     ))
     .bind(settlement_id)
-    .bind(tenant_id_opt(tenant_id))
     .fetch_optional(&mut scope)
     .await?;
 
@@ -787,7 +768,7 @@ pub async fn cancel_link(
 pub async fn list_links(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &LinkListQuery,
 ) -> Result<Vec<ReconciliationSettlementLink>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -801,15 +782,13 @@ pub async fn list_links(
         r#"SELECT id, tenant_id, reconciliation_id, settlement_id, link_type,
                   amount, status, remark, created_by, created_at, updated_at
            FROM finance.reconciliation_settlement_links
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::uuid IS NULL OR reconciliation_id = $2)
-             AND ($3::uuid IS NULL OR settlement_id = $3)
-             AND ($4::text IS NULL OR link_type = $4)
-             AND ($5::text IS NULL OR status = $5)
+             WHERE ($1::uuid IS NULL OR reconciliation_id = $1)
+             AND ($2::uuid IS NULL OR settlement_id = $2)
+             AND ($3::text IS NULL OR link_type = $3)
+             AND ($4::text IS NULL OR status = $4)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#
+           LIMIT $5 OFFSET $6"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .bind(query.reconciliation_id)
     .bind(query.settlement_id)
     .bind(&query.link_type)
@@ -928,7 +907,7 @@ pub async fn reject_difference(
 pub async fn list_differences(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &DifferenceListQuery,
 ) -> Result<Vec<DifferenceAdjustment>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -944,15 +923,13 @@ pub async fn list_differences(
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
            FROM finance.difference_adjustments
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR source_type = $2)
-             AND ($3::uuid IS NULL OR source_id = $3)
-             AND ($4::text IS NULL OR difference_type = $4)
-             AND ($5::text IS NULL OR status = $5)
+             WHERE ($1::text IS NULL OR source_type = $1)
+             AND ($2::uuid IS NULL OR source_id = $2)
+             AND ($3::text IS NULL OR difference_type = $3)
+             AND ($4::text IS NULL OR status = $4)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#
+           LIMIT $5 OFFSET $6"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .bind(&query.source_type)
     .bind(query.source_id)
     .bind(&query.difference_type)
@@ -991,7 +968,7 @@ pub async fn get_statistics(
 async fn get_reconciliation_statistics(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
 ) -> Result<ReconciliationStatistics, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
     let row: (i64, i64, i64, Decimal, Decimal, Decimal, i64, i64) =
@@ -1006,10 +983,8 @@ async fn get_reconciliation_statistics(
              COALESCE(SUM(difference), 0)::numeric AS total_difference,
              COALESCE(SUM(matched_count), 0)::bigint AS matched_count,
              COALESCE(SUM(unmatched_count), 0)::bigint AS unmatched_count
-           FROM finance.reconciliation_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
+           FROM finance.reconciliation_snapshots"#
         ))
-        .bind(tenant_id_opt(tenant_id))
         .fetch_one(&mut scope)
         .await?;
 
@@ -1028,7 +1003,7 @@ async fn get_reconciliation_statistics(
 async fn get_settlement_statistics(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
 ) -> Result<SettlementStatistics, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
     let row: (i64, i64, i64, i64, Decimal, Decimal, Decimal) =
@@ -1042,10 +1017,8 @@ async fn get_settlement_statistics(
              0::numeric AS total_budget,
              COALESCE(SUM(amount), 0)::numeric AS total_actual,
              0::numeric AS total_variance
-           FROM finance.settlement_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
+           FROM finance.settlement_snapshots"#
         ))
-        .bind(tenant_id_opt(tenant_id))
         .fetch_one(&mut scope)
         .await?;
 
@@ -1063,7 +1036,7 @@ async fn get_settlement_statistics(
 async fn get_difference_statistics(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
 ) -> Result<DifferenceStatistics, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
     let row: (i64, i64, i64, i64, Decimal, Decimal) = sqlx::query_as(
@@ -1074,10 +1047,8 @@ async fn get_difference_statistics(
              COUNT(*) FILTER (WHERE status = 'rejected')::bigint AS rejected_count,
              COALESCE(SUM(difference_amount), 0)::numeric AS total_difference_amount,
              COALESCE(SUM(adjustment_amount) FILTER (WHERE status = 'approved'), 0)::numeric AS total_adjustment_amount
-           FROM finance.difference_adjustments
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#),
+           FROM finance.difference_adjustments"#),
     )
-    .bind(tenant_id_opt(tenant_id))
     .fetch_one(&mut scope)
     .await?;
 
@@ -1094,7 +1065,7 @@ async fn get_difference_statistics(
 async fn get_link_statistics(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
 ) -> Result<LinkStatistics, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
     let row: (i64, i64, i64, Decimal) = sqlx::query_as(only_own_schema_query!(
@@ -1104,10 +1075,8 @@ async fn get_link_statistics(
              COUNT(*) FILTER (WHERE status = 'linked')::bigint AS active_count,
              COUNT(*) FILTER (WHERE status = 'cancelled')::bigint AS cancelled_count,
              COALESCE(SUM(amount) FILTER (WHERE status = 'linked'), 0)::numeric AS total_amount
-           FROM finance.reconciliation_settlement_links
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
+           FROM finance.reconciliation_settlement_links"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .fetch_one(&mut scope)
     .await?;
 
@@ -1137,11 +1106,9 @@ pub async fn get_dashboard_summary(
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
            FROM finance.reconciliation_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
            LIMIT 5"#
         ))
-        .bind(tenant_id_opt(tenant_id))
         .fetch_all(&mut scope)
         .await?;
 
@@ -1162,11 +1129,9 @@ pub async fn get_dashboard_summary(
                   NULL::timestamptz AS approved_at,
                   created_at, updated_at
            FROM finance.settlement_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
            LIMIT 5"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .fetch_all(&mut scope)
     .await?;
 
@@ -1176,12 +1141,10 @@ pub async fn get_dashboard_summary(
                   difference_amount, reason, adjustment_amount, adjustment_type,
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
-           FROM finance.difference_adjustments
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'
+           FROM finance.difference_adjustments WHERE status = 'pending'
            ORDER BY created_at DESC
            LIMIT 5"#
     ))
-    .bind(tenant_id_opt(tenant_id))
     .fetch_all(&mut scope)
     .await?;
 

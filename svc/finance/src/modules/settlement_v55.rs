@@ -925,14 +925,13 @@ impl AutoReconciler {
     pub async fn list_rules(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReconciliationRule>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rules = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"),
+            only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules ORDER BY name"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1214,21 +1213,20 @@ impl AutoReconciler {
     pub async fn get_results(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results",
         );
         if status.is_some() {
-            query.push_str(" AND match_status = $2");
+            query.push_str(" AND match_status = $1");
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, ReconciliationResult>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
@@ -1563,24 +1561,22 @@ impl InvoiceRecognizer {
     pub async fn get_invoice(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let invoice: Invoice = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1"),
         )
         .bind(invoice_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY id"),
+            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 ORDER BY id"),
         )
         .bind(invoice_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1591,21 +1587,20 @@ impl InvoiceRecognizer {
     pub async fn list_invoices(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices",
         );
         if status.is_some() {
-            query.push_str(" AND status = $2");
+            query.push_str(" AND status = $1");
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Invoice>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
@@ -1847,16 +1842,15 @@ impl ElectronicPaymentProcessor {
     pub async fn get_payment_status(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY processed_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1910,15 +1904,15 @@ impl ElectronicPaymentProcessor {
     pub async fn list_payments(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests",
         );
         if status.is_some() {
             query.push_str(
-                " AND id IN (SELECT request_id FROM finance.finance_v55_payment_results WHERE status = $2)",
+                " AND id IN (SELECT request_id FROM finance.finance_v55_payment_results WHERE status = $1)",
             );
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
@@ -1926,7 +1920,6 @@ impl ElectronicPaymentProcessor {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, PaymentRequest>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }

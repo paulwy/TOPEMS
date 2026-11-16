@@ -55,7 +55,7 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 )]
 pub async fn list_expenses(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
@@ -89,19 +89,12 @@ pub async fn list_expenses(
            FROM expenses
            WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_all(&mut scope)
     .await;
 
@@ -111,12 +104,10 @@ pub async fn list_expenses(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)
-                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -246,7 +237,7 @@ pub async fn create_expense(
 )]
 pub async fn get_expense(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
@@ -270,15 +261,9 @@ pub async fn get_expense(
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM expenses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+           FROM expenses WHERE id = $1"#
     ))
     .bind(id)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_optional(&mut scope)
     .await;
 
@@ -467,7 +452,7 @@ pub async fn delete_expense(
 )]
 pub async fn list_budgets(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
@@ -495,17 +480,11 @@ pub async fn list_budgets(
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
-           FROM finance.budgets WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+           FROM finance.budgets WHERE deleted_at IS NULL
            ORDER BY created_at DESC LIMIT $1 OFFSET $2"#
     ))
     .bind(page_size)
     .bind(offset)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_all(&mut scope)
     .await;
 
@@ -514,9 +493,8 @@ pub async fn list_budgets(
             let items: Vec<Value> = rows.iter().map(row_to_budget_json).collect();
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) FROM finance.budgets WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+                "SELECT COUNT(*) FROM finance.budgets WHERE deleted_at IS NULL"
             ))
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -877,7 +855,7 @@ pub async fn delete_budget(
 )]
 pub async fn list_receivables(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
@@ -910,19 +888,12 @@ pub async fn list_receivables(
            FROM receivables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_all(&mut scope)
     .await;
 
@@ -932,12 +903,10 @@ pub async fn list_receivables(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM receivables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)
-                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -1058,7 +1027,7 @@ pub async fn create_receivable(
 )]
 pub async fn get_receivable(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
@@ -1082,15 +1051,9 @@ pub async fn get_receivable(
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
-           FROM receivables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+           FROM receivables WHERE id = $1"#
     ))
     .bind(id)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_optional(&mut scope)
     .await;
 
@@ -1261,7 +1224,7 @@ pub async fn delete_receivable(
 )]
 pub async fn list_payables(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
@@ -1294,19 +1257,12 @@ pub async fn list_payables(
            FROM payables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_all(&mut scope)
     .await;
 
@@ -1316,12 +1272,10 @@ pub async fn list_payables(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM payables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)
-                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -1444,7 +1398,7 @@ pub async fn create_payable(
 )]
 pub async fn get_payable(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
@@ -1468,15 +1422,9 @@ pub async fn get_payable(
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
-           FROM payables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+           FROM payables WHERE id = $1"#
     ))
     .bind(id)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
     .fetch_optional(&mut scope)
     .await;
 

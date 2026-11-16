@@ -343,7 +343,7 @@ impl ControlPoint {
     pub async fn list(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
         risk_level: Option<String>,
@@ -351,22 +351,22 @@ impl ControlPoint {
         let mut query = String::from(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance.finance_control_points WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+             FROM finance.finance_control_points WHERE deleted_at IS NULL",
         );
 
         if category.is_some() {
-            query.push_str(" AND category = $2");
+            query.push_str(" AND category = $1");
         }
         if is_active.is_some() {
-            let idx = if category.is_some() { 3 } else { 2 };
+            let idx = if category.is_some() { 2 } else { 1 };
             query.push_str(&format!(" AND is_active = ${}", idx));
         }
         if risk_level.is_some() {
             let idx = match (category.is_some(), is_active.is_some()) {
-                (true, true) => 4,
-                (true, false) => 3,
-                (false, true) => 3,
-                (false, false) => 2,
+                (true, true) => 3,
+                (true, false) => 2,
+                (false, true) => 2,
+                (false, false) => 1,
             };
             query.push_str(&format!(" AND risk_level = ${}", idx));
         }
@@ -376,7 +376,6 @@ impl ControlPoint {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref cat) = category {
             q = q.bind(cat);
         }
@@ -396,17 +395,17 @@ impl ControlPoint {
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
-        let control = sqlx::query_as::<_, Self>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
+        let control = sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance.finance_control_points WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"),
-        )
+             FROM finance.finance_control_points WHERE id = $1 AND deleted_at IS NULL"
+        ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -553,7 +552,7 @@ impl ControlMatrix {
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
@@ -561,10 +560,9 @@ impl ControlMatrix {
             "finance",
             "SELECT id, tenant_id, name, period, controls, total_controls, \
              effective_controls, compliance_rate, created_by, created_at \
-             FROM finance.finance_control_matrices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+             FROM finance.finance_control_matrices WHERE id = $1"
         ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -574,7 +572,7 @@ impl ControlMatrix {
     pub async fn list(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         period: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
@@ -584,10 +582,9 @@ impl ControlMatrix {
                 "finance",
                 "SELECT id, tenant_id, name, period, controls, total_controls, \
                  effective_controls, compliance_rate, created_by, created_at \
-                 FROM finance.finance_control_matrices WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period = $2 \
+                 FROM finance.finance_control_matrices WHERE period = $1 \
                  ORDER BY created_at DESC"
             ))
-            .bind(tenant_id)
             .bind(p)
             .fetch_all(&mut scope)
             .await?
@@ -596,10 +593,9 @@ impl ControlMatrix {
                 "finance",
                 "SELECT id, tenant_id, name, period, controls, total_controls, \
                  effective_controls, compliance_rate, created_by, created_at \
-                 FROM finance.finance_control_matrices WHERE ($1::uuid IS NULL OR tenant_id = $1) \
+                 FROM finance.finance_control_matrices \
                  ORDER BY created_at DESC"
             ))
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?
         };
@@ -685,7 +681,7 @@ impl RiskAssessment {
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
@@ -694,10 +690,9 @@ impl RiskAssessment {
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance.finance_risk_assessments WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+             FROM finance.finance_risk_assessments WHERE id = $1"
         ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -707,7 +702,7 @@ impl RiskAssessment {
     pub async fn list(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         control_point_id: Option<Uuid>,
         risk_level: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
@@ -715,14 +710,14 @@ impl RiskAssessment {
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance.finance_risk_assessments WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+             FROM finance.finance_risk_assessments",
         );
 
         if control_point_id.is_some() {
-            query.push_str(" AND control_point_id = $2");
+            query.push_str(" AND control_point_id = $1");
         }
         if risk_level.is_some() {
-            let idx = if control_point_id.is_some() { "3" } else { "2" };
+            let idx = if control_point_id.is_some() { "2" } else { "1" };
             query.push_str(&format!(" AND risk_level = ${}", idx));
         }
         query.push_str(" ORDER BY created_at DESC");
@@ -730,7 +725,6 @@ impl RiskAssessment {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(cp_id) = control_point_id {
             q = q.bind(cp_id);
         }
@@ -750,7 +744,7 @@ impl RiskAssessment {
     pub async fn get_summary(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<RiskSummary, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
@@ -759,9 +753,8 @@ impl RiskAssessment {
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance.finance_risk_assessments WHERE ($1::uuid IS NULL OR tenant_id = $1)"
+             FROM finance.finance_risk_assessments"
         ))
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -972,7 +965,7 @@ impl ComplianceReportV51 {
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
@@ -981,10 +974,9 @@ impl ComplianceReportV51 {
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
              controls_checked, issues_found, risk_assessments, executive_summary, \
              recommendations, created_by \
-             FROM finance.finance_compliance_reports WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+             FROM finance.finance_compliance_reports WHERE id = $1"
         ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -994,7 +986,7 @@ impl ComplianceReportV51 {
     pub async fn list(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         report_type: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
@@ -1005,10 +997,9 @@ impl ComplianceReportV51 {
                 "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
                  controls_checked, issues_found, risk_assessments, executive_summary, \
                  recommendations, created_by \
-                 FROM finance.finance_compliance_reports WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 \
+                 FROM finance.finance_compliance_reports WHERE report_type = $1 \
                  ORDER BY generated_at DESC"
             ))
-            .bind(tenant_id)
             .bind(rt)
             .fetch_all(&mut scope)
             .await?
@@ -1018,10 +1009,9 @@ impl ComplianceReportV51 {
                 "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
                  controls_checked, issues_found, risk_assessments, executive_summary, \
                  recommendations, created_by \
-                 FROM finance.finance_compliance_reports WHERE ($1::uuid IS NULL OR tenant_id = $1) \
+                 FROM finance.finance_compliance_reports \
                  ORDER BY generated_at DESC"
             ))
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?
         };

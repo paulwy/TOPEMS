@@ -268,7 +268,7 @@ pub async fn match_template(
 
 pub async fn get_usage_stats(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
@@ -278,19 +278,13 @@ pub async fn get_usage_stats(
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
     let rule_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE mapping_config::jsonb->>'template_id' = $1"),
     )
-    .bind(tenant_id)
     .bind(template_id.to_string())
     .fetch_one(&mut scope)
     .await

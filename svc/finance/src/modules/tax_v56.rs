@@ -616,21 +616,21 @@ impl AutoTaxFiler {
     pub async fn get_forms(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         form_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<TaxForm>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms",
         );
         if form_type.is_some() {
-            query.push_str(" AND form_type = $2");
+            query.push_str(" AND form_type = $1");
         }
         if status.is_some() {
             if form_type.is_some() {
-                query.push_str(" AND status = $3");
-            } else {
                 query.push_str(" AND status = $2");
+            } else {
+                query.push_str(" AND status = $1");
             }
         }
         query.push_str(" ORDER BY period_end DESC LIMIT 500");
@@ -638,7 +638,6 @@ impl AutoTaxFiler {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, TaxForm>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref ft) = form_type {
             q = q.bind(ft);
         }
@@ -659,10 +658,9 @@ impl AutoTaxFiler {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let form: TaxForm = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1"),
         )
         .bind(form_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -780,11 +778,11 @@ impl AutoTaxFiler {
     pub async fn get_tax_summary(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         year: Option<i32>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut sql = String::from(
-            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms",
         );
         if let Some(y) = year {
             sql.push_str(&format!(" AND EXTRACT(YEAR FROM period_end) = {}", y));
@@ -794,7 +792,6 @@ impl AutoTaxFiler {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows: Vec<(String, f64, i64)> = sqlx::query_as(sqlx::AssertSqlSafe(sql))
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?;
         scope.commit().await?;
@@ -831,16 +828,15 @@ impl AutoTaxFiler {
     async fn get_form_lines(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         form_id: Uuid,
     ) -> Result<Vec<TaxLine>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let lines = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 ORDER BY line_no"),
         )
         .bind(form_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -987,21 +983,21 @@ impl TaxRateCalculator {
     pub async fn get_rate_schedule(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         tax_type: Option<String>,
         jurisdiction: Option<String>,
     ) -> Result<Vec<TaxRate>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance.finance_v56_tax_rates WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance.finance_v56_tax_rates",
         );
         if tax_type.is_some() {
-            query.push_str(" AND rate_type = $2");
+            query.push_str(" AND rate_type = $1");
         }
         if jurisdiction.is_some() {
             if tax_type.is_some() {
-                query.push_str(" AND jurisdiction = $3");
-            } else {
                 query.push_str(" AND jurisdiction = $2");
+            } else {
+                query.push_str(" AND jurisdiction = $1");
             }
         }
         query.push_str(" ORDER BY effective_from DESC LIMIT 200");
@@ -1009,7 +1005,6 @@ impl TaxRateCalculator {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, TaxRate>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref tt) = tax_type {
             q = q.bind(tt);
         }
@@ -1087,7 +1082,7 @@ impl TaxRateCalculator {
     async fn lookup_rate_impl(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
         date: Option<DateTime<Utc>>,
@@ -1098,12 +1093,10 @@ impl TaxRateCalculator {
         let mut scope = db.scope_with(txn).await?;
         let rate: Option<f64> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            r#"SELECT rate FROM finance.finance_v56_tax_rates
-               WHERE ($1::uuid IS NULL OR tenant_id = $1) AND rate_type = $2 AND jurisdiction = $3
-               AND effective_from <= $4 AND (effective_to IS NULL OR effective_to >= $4)
+            r#"SELECT rate FROM finance.finance_v56_tax_rates WHERE rate_type = $1 AND jurisdiction = $2
+               AND effective_from <= $3 AND (effective_to IS NULL OR effective_to >= $3)
                ORDER BY effective_from DESC LIMIT 1"#
         ))
-        .bind(tenant_id)
         .bind(tax_type)
         .bind(jurisdiction)
         .bind(effective_date)
@@ -1124,7 +1117,7 @@ impl TaxRateCalculator {
     async fn get_brackets_impl(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
     ) -> Result<Vec<TaxBracket>, sqlx::Error> {
@@ -1134,11 +1127,9 @@ impl TaxRateCalculator {
             "finance",
             r#"SELECT b.id, b.rate_id, b.bracket_order, b.threshold_from, b.threshold_to, b.rate
                FROM finance.finance_v56_tax_brackets b
-               JOIN finance.finance_v56_tax_rates r ON b.rate_id = r.id
-               WHERE ($1::uuid IS NULL OR r.tenant_id = $1) AND r.rate_type = $2 AND r.jurisdiction = $3
+               JOIN finance.finance_v56_tax_rates r ON b.rate_id = r.id WHERE r.rate_type = $1 AND r.jurisdiction = $2
                ORDER BY b.bracket_order"#
         ))
-        .bind(tenant_id)
         .bind(tax_type)
         .bind(jurisdiction)
         .fetch_all(&mut scope)
@@ -1380,16 +1371,15 @@ impl TaxPlanner {
     pub async fn get_suggestions(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         plan_id: Uuid,
     ) -> Result<Vec<TaxSuggestion>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let suggestions = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY estimated_savings DESC"),
+            only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 ORDER BY estimated_savings DESC"),
         )
         .bind(plan_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1431,21 +1421,20 @@ impl TaxPlanner {
     pub async fn list_plans(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<TaxPlan>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans",
         );
         if status.is_some() {
-            query.push_str(" AND status = $2");
+            query.push_str(" AND status = $1");
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, TaxPlan>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
@@ -1480,7 +1469,7 @@ impl TaxPlanner {
     pub async fn get_compliance_check(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         entity: Option<String>,
     ) -> Result<ComplianceCheckResult, sqlx::Error> {
         let mut issues: Vec<String> = Vec::new();
@@ -1488,7 +1477,7 @@ impl TaxPlanner {
         let mut suggestions: Vec<String> = Vec::new();
 
         let mut query = String::from(
-            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'draft'",
+            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE status = 'draft'",
         );
         if entity.is_some() {
             query.push_str(" AND jurisdiction = $2");
@@ -1498,7 +1487,6 @@ impl TaxPlanner {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let draft_forms: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(query))
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?;
 
@@ -1510,9 +1498,8 @@ impl TaxPlanner {
         }
 
         let submitted_forms: Vec<(Uuid, String, String)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
+            only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -1523,10 +1510,10 @@ impl TaxPlanner {
             ));
         }
 
-        let accepted_count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'accepted'"),
-        )
-        .bind(tenant_id)
+        let accepted_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE status = 'accepted'"
+        ))
         .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
@@ -1535,10 +1522,10 @@ impl TaxPlanner {
             warnings.push("尚未有任何税务申报被接受".to_string());
         }
 
-        let rejected_forms: Vec<(Uuid, String)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'rejected'"),
-        )
-        .bind(tenant_id)
+        let rejected_forms: Vec<(Uuid, String)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE status = 'rejected'"
+        ))
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;

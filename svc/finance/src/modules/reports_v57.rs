@@ -476,14 +476,13 @@ impl AutomatedReportEngine {
     pub async fn get_templates(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReportTemplate>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let templates = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -528,21 +527,20 @@ impl AutomatedReportEngine {
     pub async fn list_reports(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL",
         );
         if status.is_some() {
-            query.push_str(" AND status = $2");
+            query.push_str(" AND status = $1");
         }
         query.push_str(" ORDER BY generated_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, GeneratedReport>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
@@ -554,16 +552,15 @@ impl AutomatedReportEngine {
     pub async fn get_report(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let report = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1"),
         )
         .bind(report_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -886,14 +883,13 @@ impl MultiDimensionalAnalyzer {
     pub async fn get_analysis_history(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<AnalysisResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let results = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1177,21 +1173,20 @@ impl PredictiveInsightEngine {
     pub async fn get_insights(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         insight_type: Option<String>,
     ) -> Result<Vec<Insight>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, insight_type, description, confidence, data, created_at FROM finance.finance_v57_insights WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, insight_type, description, confidence, data, created_at FROM finance.finance_v57_insights",
         );
         if insight_type.is_some() {
-            query.push_str(" AND insight_type = $2");
+            query.push_str(" AND insight_type = $1");
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Insight>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref t) = insight_type {
             q = q.bind(t);
         }
@@ -1237,14 +1232,13 @@ impl PredictiveInsightEngine {
     pub async fn list_models(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastModel>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let models = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;

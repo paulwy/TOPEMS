@@ -113,7 +113,7 @@ fn annotate_period_business(
 async fn period_net_total(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     period: &str,
 ) -> (Decimal, Decimal, Decimal) {
     let scope = db.scope_with(txn).await;
@@ -122,9 +122,8 @@ async fn period_net_total(
     };
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
-         FROM finance.core_finance_ledger WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period = $2"),
+         FROM finance.core_finance_ledger WHERE period = $1"),
     )
-    .bind(tenant_id)
     .bind(period)
     .fetch_one(&mut scope)
     .await;
@@ -173,15 +172,10 @@ pub struct ItemDetailsQuery {
 )]
 pub async fn get_report_item_details(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<ItemDetailsQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return ApiResponse::bad_request("account_code 不能为空"),
@@ -198,11 +192,9 @@ pub async fn get_report_item_details(
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         "SELECT account_code, account_name, period, debit, credit, balance
-         FROM finance.core_finance_ledger
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND account_code = $2 AND ($3::text IS NULL OR period = $3)
+         FROM finance.core_finance_ledger WHERE account_code = $1 AND ($2::text IS NULL OR period = $2)
          ORDER BY voucher_date, id"
     ))
-    .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
     .fetch_all(&mut scope)
@@ -242,15 +234,10 @@ pub struct ItemVouchersQuery {
 
 pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<ItemVouchersQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return ApiResponse::bad_request("account_code 不能为空"),
@@ -273,12 +260,10 @@ pub async fn get_report_item_vouchers(
         "finance",
         "SELECT l.id, l.account_code, l.account_name, l.voucher_id, l.voucher_no, l.voucher_date,
                 l.period, l.description, l.debit, l.credit, l.balance
-         FROM finance.core_finance_ledger l
-         WHERE ($1::uuid IS NULL OR l.tenant_id = $1) AND l.account_code = $2 AND ($3::text IS NULL OR l.period = $3)
+         FROM finance.core_finance_ledger l WHERE l.account_code = $1 AND ($2::text IS NULL OR l.period = $2)
          ORDER BY l.voucher_date DESC, l.id DESC
-         LIMIT $4 OFFSET $5"
+         LIMIT $3 OFFSET $4"
     ))
-    .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
     .bind(page_size)
@@ -288,10 +273,8 @@ pub async fn get_report_item_vouchers(
 
     let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance.core_finance_ledger
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND account_code = $2 AND ($3::text IS NULL OR period = $3)"
+        "SELECT COUNT(*) FROM finance.core_finance_ledger WHERE account_code = $1 AND ($2::text IS NULL OR period = $2)"
     ))
-    .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
     .fetch_one(&mut scope)
@@ -1303,7 +1286,7 @@ async fn upsert_report(
 async fn fetch_report(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
     period: &str,
@@ -1312,11 +1295,9 @@ async fn fetch_report(
     let mut scope = db.scope_with(txn).await?;
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
-           FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($5::uuid IS NULL OR company_id = $5)
-             AND report_type = $2 AND period = $3 AND currency_code = $4"#),
+           FROM financial_reports WHERE ($4::uuid IS NULL OR company_id = $4)
+             AND report_type = $1 AND period = $2 AND currency_code = $3"#),
     )
-    .bind(tenant_id)
     .bind(report_type)
     .bind(period)
     .bind(currency_code)
@@ -1345,7 +1326,7 @@ async fn fetch_report(
 async fn fetch_history(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
     start_period: &str,
@@ -1358,14 +1339,12 @@ async fn fetch_history(
     let mut scope = db.scope_with(txn).await?;
     let rows = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
-           FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($8::uuid IS NULL OR company_id = $8)
-             AND report_type = $2 AND period >= $3 AND period <= $4
-             AND ($5::text IS NULL OR currency_code = $5)
+           FROM financial_reports WHERE ($7::uuid IS NULL OR company_id = $7)
+             AND report_type = $1 AND period >= $2 AND period <= $3
+             AND ($4::text IS NULL OR currency_code = $4)
            ORDER BY period DESC
-           LIMIT $6 OFFSET $7"#),
+           LIMIT $5 OFFSET $6"#),
     )
-    .bind(tenant_id)
     .bind(report_type)
     .bind(start_period)
     .bind(end_period)
@@ -1378,12 +1357,10 @@ async fn fetch_history(
 
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        r#"SELECT COUNT(*) FROM financial_reports
-           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($6::uuid IS NULL OR company_id = $6)
-             AND report_type = $2 AND period >= $3 AND period <= $4
-             AND ($5::text IS NULL OR currency_code = $5)"#
+        r#"SELECT COUNT(*) FROM financial_reports WHERE ($5::uuid IS NULL OR company_id = $5)
+             AND report_type = $1 AND period >= $2 AND period <= $3
+             AND ($4::text IS NULL OR currency_code = $4)"#
     ))
-    .bind(tenant_id)
     .bind(report_type)
     .bind(start_period)
     .bind(end_period)

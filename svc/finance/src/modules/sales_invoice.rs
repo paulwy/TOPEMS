@@ -249,7 +249,7 @@ async fn fetch_invoice(
 /// 已收敛到请求事务的 handler 在同一事务内回读，避免提交后再开连接读不到未提交数据。
 async fn fetch_invoice_in<'e, E>(
     executor: E,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<SalesInvoiceOut>, sqlx::Error>
 where
@@ -261,10 +261,9 @@ where
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 amount, tax_amount, total_amount, paid_amount,
                 status, invoice_type, cancel_reason, red_flush_of
-         FROM finance.sales_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+         FROM finance.sales_invoices WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(executor)
     .await?;
     Ok(row.map(|r| SalesInvoiceOut {
@@ -300,13 +299,8 @@ pub async fn list_sales_invoices(
     State(state): State<AppState>,
     Query(params): Query<InvoiceListQuery>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Paginated<SalesInvoiceOut>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -321,17 +315,15 @@ pub async fn list_sales_invoices(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let where_sql = "($1::uuid IS NULL OR tenant_id = $1)
-        AND ($2::uuid IS NULL OR customer_id = $2)
-        AND ($3::text IS NULL OR status = $3)
-        AND ($4::text IS NULL OR invoice_type = $4)
-        AND ($5::date IS NULL OR invoice_date >= $5::date)
-        AND ($6::date IS NULL OR invoice_date <= $6::date)";
+    let where_sql = "($1::uuid IS NULL OR customer_id = $1)
+        AND ($2::text IS NULL OR status = $2)
+        AND ($3::text IS NULL OR invoice_type = $3)
+        AND ($4::date IS NULL OR invoice_date >= $4::date)
+        AND ($5::date IS NULL OR invoice_date <= $5::date)";
 
     let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM finance.sales_invoices WHERE {where_sql}"
     )))
-    .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.status)
     .bind(&params.invoice_type)
@@ -356,9 +348,8 @@ pub async fn list_sales_invoices(
                 amount, tax_amount, total_amount, paid_amount,
                 status, invoice_type, cancel_reason, red_flush_of
          FROM finance.sales_invoices WHERE {where_sql}
-         ORDER BY created_at DESC LIMIT $7 OFFSET $8"
+         ORDER BY created_at DESC LIMIT $6 OFFSET $7"
     )))
-    .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.status)
     .bind(&params.invoice_type)
@@ -825,7 +816,7 @@ pub async fn red_flush_sales_invoice(
 
 async fn fetch_collection<'e, E>(
     executor: E,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<CollectionOut>, sqlx::Error>
 where
@@ -841,10 +832,9 @@ where
                 amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
                 confirmed_at
          FROM finance.erp_collection_records erc
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+         WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(executor)
     .await?;
     Ok(row.map(|r| CollectionOut {
@@ -879,13 +869,8 @@ pub async fn list_collections(
     State(state): State<AppState>,
     Query(params): Query<CollectionListQuery>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Paginated<CollectionOut>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -900,16 +885,15 @@ pub async fn list_collections(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let where_sql = "($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
-        AND ($2::uuid IS NULL OR customer_id = $2)
-        AND ($3::date IS NULL OR collection_date >= $3::date)
-        AND ($4::date IS NULL OR collection_date <= $4::date)
-        AND ($5::text IS NULL OR payment_method = $5)";
+    let where_sql = "deleted_at IS NULL
+        AND ($1::uuid IS NULL OR customer_id = $1)
+        AND ($2::date IS NULL OR collection_date >= $2::date)
+        AND ($3::date IS NULL OR collection_date <= $3::date)
+        AND ($4::text IS NULL OR payment_method = $4)";
 
     let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM finance.erp_collection_records WHERE {where_sql}"
     )))
-    .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -936,9 +920,8 @@ pub async fn list_collections(
                 amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
                 confirmed_at
          FROM finance.erp_collection_records erc WHERE {where_sql}
-         ORDER BY created_at DESC LIMIT $6 OFFSET $7"
+         ORDER BY created_at DESC LIMIT $5 OFFSET $6"
     )))
-    .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -1412,13 +1395,8 @@ fn aging_bucket(days: i64) -> &'static str {
 pub async fn get_receivable_aging(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AgingBucket>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let now = today();
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -1432,9 +1410,8 @@ pub async fn get_receivable_aging(
     let rows = match sqlx::query(
         "SELECT id, due_date, total_amount::float8, paid_amount::float8, status
          FROM finance.sales_invoices
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
+         WHERE status IN ('issued', 'overdue')",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1486,13 +1463,8 @@ pub async fn get_receivable_aging(
 pub async fn get_receivable_summary(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<ReceivableSummary> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let now = today();
     // 口径：draft 未开票计入应收总额（前端应收概览口径），cancelled 红冲/取消票剔除；
     // 账龄/逾期报表只统计 issued/overdue 生效应收（见 get_receivable_aging / get_overdue_receivables）
@@ -1507,9 +1479,8 @@ pub async fn get_receivable_summary(
     };
     let rows = match sqlx::query(
         "SELECT total_amount::float8, paid_amount::float8, due_date, status
-         FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status <> 'cancelled'",
+         FROM finance.sales_invoices WHERE status <> 'cancelled'",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1562,13 +1533,8 @@ pub async fn get_receivable_summary(
 pub async fn get_overdue_receivables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OverdueItem>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let now = today();
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -1584,9 +1550,8 @@ pub async fn get_overdue_receivables(
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 total_amount::float8, paid_amount::float8, due_date AS d
          FROM finance.sales_invoices
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
+         WHERE status IN ('issued', 'overdue')",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1650,13 +1615,8 @@ fn csv_escape(v: &str) -> String {
 pub async fn export_sales_invoices(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<String> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1670,9 +1630,8 @@ pub async fn export_sales_invoices(
         "SELECT invoice_number, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
                 total_amount::float8, paid_amount::float8, status
-         FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at",
+         FROM finance.sales_invoices ORDER BY created_at",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1712,13 +1671,8 @@ pub async fn export_sales_invoices(
 pub async fn export_collections(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<String> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1733,9 +1687,8 @@ pub async fn export_collections(
                 CASE WHEN collection_date IS NULL THEN '' ELSE to_char(collection_date, 'YYYY-MM-DD') END AS d,
                 amount::float8, COALESCE(payment_method, '') AS pm, COALESCE(status, '') AS st
          FROM finance.erp_collection_records
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL ORDER BY created_at",
+         WHERE deleted_at IS NULL ORDER BY created_at",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
@@ -1775,13 +1728,8 @@ pub async fn export_collections(
 pub async fn export_receivable_aging(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<String> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1796,9 +1744,8 @@ pub async fn export_receivable_aging(
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 total_amount::float8, paid_amount::float8, due_date AS d
          FROM finance.sales_invoices
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
+         WHERE status IN ('issued', 'overdue')",
     )
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {

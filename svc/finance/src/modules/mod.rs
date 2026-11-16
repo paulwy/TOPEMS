@@ -121,17 +121,16 @@ async fn count_table_with_tenant(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     table: &str,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
 ) -> i64 {
     // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
     let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM {}",
         table
     )))
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
     let _ = scope.commit().await;
@@ -145,7 +144,7 @@ async fn count_table_with_tenant_and_status(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     table: &str,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
     // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
@@ -153,10 +152,9 @@ async fn count_table_with_tenant_and_status(
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
+        "SELECT COUNT(*) FROM {} WHERE status = $1",
         table
     )))
-    .bind(tenant_id)
     .bind(status)
     .fetch_one(&mut scope)
     .await;
@@ -171,17 +169,16 @@ async fn sum_table_with_tenant(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     table: &str,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
 ) -> i64 {
     // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
     let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COALESCE(SUM(amount), 0) FROM {}",
         table
     )))
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
     let _ = scope.commit().await;
@@ -195,16 +192,18 @@ async fn sum_overdue_with_tenant(
     db: &Db,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     table: &str,
-    tenant_id: Option<Uuid>,
+    _tenant_id: Option<Uuid>,
 ) -> i64 {
     // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
     let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
-    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table)))
-        .bind(tenant_id)
-        .fetch_one(&mut scope)
-        .await;
+    let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE due_date < NOW() AND status = 'unpaid'",
+        table
+    )))
+    .fetch_one(&mut scope)
+    .await;
     let _ = scope.commit().await;
     match result {
         Ok(v) => v,
@@ -2527,12 +2526,11 @@ pub struct UsageStatsQueryParams {
 )]
 pub async fn get_template_usage_stats_handler(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -2548,19 +2546,17 @@ pub async fn get_template_usage_stats_handler(
     };
 
     let rule_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE mapping_config::jsonb->>'template_id' = $1"),
     )
-    .bind(tenant_id)
     .bind(template_id.to_string())
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let generated_voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1"
     ))
     .bind(template_id)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
@@ -2721,10 +2717,9 @@ async fn update_template_entry_handler(
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!(
             "finance",
-            "SELECT * FROM finance_voucher_template_lines WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+            "SELECT * FROM finance_voucher_template_lines WHERE id = $1"
         ))
         .bind(entry_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
         {
@@ -2885,10 +2880,9 @@ pub async fn reorder_template_entries_handler(
         Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
         sqlx::Error,
     > = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
     if lines.is_ok() {
@@ -4769,11 +4763,10 @@ pub struct ArAgingQuery {
 
 pub async fn get_voucher_entries(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -4789,10 +4782,9 @@ pub async fn get_voucher_entries(
     };
 
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY created_at"),
     )
     .bind(voucher_id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
     match rows {
@@ -4819,11 +4811,10 @@ pub async fn get_voucher_entries(
 
 pub async fn get_voucher_items(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -4839,10 +4830,9 @@ pub async fn get_voucher_items(
     };
 
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY created_at"),
     )
     .bind(voucher_id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
     match rows {
@@ -5445,12 +5435,11 @@ pub async fn get_ap_aging(
 
 pub async fn get_account_tree(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -5467,9 +5456,8 @@ pub async fn get_account_tree(
     };
 
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
+        only_own_schema_query!("finance", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::text IS NULL OR category = $1) ORDER BY code"),
     )
-    .bind(tenant_id)
     .bind(category)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut scope)
@@ -5525,14 +5513,10 @@ pub async fn batch_create_account_children(
 
 pub async fn get_opening_balances(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let company_id = params
         .get("company_id")
         .and_then(|v| v.as_str())
@@ -5594,14 +5578,12 @@ pub async fn get_opening_balances(
               AND ($1::uuid IS NULL OR company_id = $1)
               AND ($2::text IS NULL OR period = $2)
               AND ($3::text IS NULL OR subject_code = $3)
-              AND ($4::uuid IS NULL OR tenant_id = $4)
             ORDER BY created_at DESC
-            LIMIT $5 OFFSET $6"#
+            LIMIT $4 OFFSET $5"#
     ))
     .bind(company_id)
     .bind(&period)
     .bind(&subject_code)
-    .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut scope)
@@ -5615,13 +5597,11 @@ pub async fn get_opening_balances(
                    WHERE deleted_at IS NULL
                      AND ($1::uuid IS NULL OR company_id = $1)
                      AND ($2::text IS NULL OR period = $2)
-                     AND ($3::text IS NULL OR subject_code = $3)
-                     AND ($4::uuid IS NULL OR tenant_id = $4)"#
+                     AND ($3::text IS NULL OR subject_code = $3)"#
             ))
             .bind(company_id)
             .bind(&period)
             .bind(&subject_code)
-            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -5653,14 +5633,10 @@ pub async fn get_opening_balances(
 
 pub async fn get_opening_balance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -5694,11 +5670,9 @@ pub async fn get_opening_balance(
         r#"SELECT id, company_id, subject_code, subject_name, period,
                   debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at
            FROM erp.opening_balances
-           WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -5721,15 +5695,11 @@ pub async fn get_opening_balance(
 
 pub async fn update_opening_balance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -5772,18 +5742,16 @@ pub async fn update_opening_balance(
     > = sqlx::query_as(only_own_schema_query!(
         "erp",
         r#"UPDATE erp.opening_balances SET
-               debit_balance = COALESCE($3, debit_balance),
-               credit_balance = COALESCE($4, credit_balance),
-               subject_name = COALESCE($5, subject_name),
-               period = COALESCE($6, period),
+               debit_balance = COALESCE($2, debit_balance),
+               credit_balance = COALESCE($3, credit_balance),
+               subject_name = COALESCE($4, subject_name),
+               period = COALESCE($5, period),
                updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid IS NULL OR tenant_id = $2)
            RETURNING id, company_id, subject_code, subject_name, period,
                      debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at"#
     ))
     .bind(id)
-    .bind(tenant_id)
     .bind(debit_balance)
     .bind(credit_balance)
     .bind(subject_name)
@@ -5813,14 +5781,10 @@ pub async fn update_opening_balance(
 
 pub async fn delete_opening_balance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -5838,11 +5802,9 @@ pub async fn delete_opening_balance(
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"UPDATE erp.opening_balances SET deleted_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid IS NULL OR tenant_id = $2)"#
+           WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     if res.is_ok() {
@@ -5931,9 +5893,8 @@ pub async fn import_opening_balances(
         // P3：期初行必须带 account_id（报表按 id 归集并做一致性校验）。
         let account_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            "SELECT id FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND code = $2 LIMIT 1"
+            "SELECT id FROM finance.core_finance_accounts WHERE code = $1 LIMIT 1"
         ))
-        .bind(tenant_id)
         .bind(&subject_code)
         .fetch_optional(&mut read_scope)
         .await
@@ -6055,9 +6016,8 @@ pub async fn create_opening_balances(
     // P3：期初行必须带 account_id（报表按 id 归集并做一致性校验）。
     let account_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT id FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND code = $2 LIMIT 1"
+        "SELECT id FROM finance.core_finance_accounts WHERE code = $1 LIMIT 1"
     ))
-    .bind(tenant_id)
     .bind(&subject_code)
     .fetch_optional(&mut scope)
     .await
@@ -6228,14 +6188,10 @@ pub async fn set_opening_balance(
 
 pub async fn carry_forward_opening_balance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<String> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -6276,13 +6232,11 @@ pub async fn carry_forward_opening_balance(
            FROM erp.opening_balances
            WHERE period = $2 AND deleted_at IS NULL
              AND ($3::uuid IS NULL OR company_id = $3)
-             AND ($4::uuid IS NULL OR tenant_id = $4)
            ON CONFLICT DO NOTHING"#
     ))
     .bind(&to_period)
     .bind(&from_period)
     .bind(company_id)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     if res.is_ok() {
@@ -6392,7 +6346,7 @@ fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
 
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -6415,11 +6369,6 @@ pub async fn list_expense_approvals(
         .get("status")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -6444,12 +6393,10 @@ pub async fn list_expense_approvals(
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
-           ORDER BY created_at DESC LIMIT $4 OFFSET $5"#
+           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search)
     .bind(&status_filter)
-    .bind(tenant_id)
     .bind(i64::try_from(page_size).unwrap_or(i64::MAX))
     .bind(i64::try_from(offset).unwrap_or(i64::MAX))
     .fetch_all(&mut scope)
@@ -6596,14 +6543,10 @@ pub async fn create_expense_approval(
 
 pub async fn get_expense_approval(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::from(TopemsError::NotFound("无效的ID".to_string())),
@@ -6629,11 +6572,9 @@ pub async fn get_expense_approval(
                       expense_type, total_amount, status, description, approver_id, approver_name,
                       approval_note, created_at, updated_at
                FROM finance.expense_approvals
-               WHERE id = $1 AND deleted_at IS NULL
-                 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+               WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id_uuid)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -6666,15 +6607,11 @@ pub async fn get_expense_approval(
 // gate: admin-only
 pub async fn update_expense_approval(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
@@ -6732,7 +6669,6 @@ pub async fn update_expense_approval(
                approver_name = COALESCE($13, approver_name),
                updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND ($14::uuid IS NULL OR tenant_id = $14::uuid)
            RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
                      expense_type, total_amount, status, description, approver_id, approver_name,
                      approval_note, created_at, updated_at"#
@@ -6750,7 +6686,6 @@ pub async fn update_expense_approval(
     .bind(req.approval_note)
     .bind(approver_id)
     .bind(req.approver_name)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     if row.is_ok() {
@@ -6789,14 +6724,10 @@ pub async fn update_expense_approval(
 // gate: admin-only
 pub async fn delete_expense_approval(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
@@ -6820,11 +6751,9 @@ pub async fn delete_expense_approval(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expense_approvals SET deleted_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL
-             AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+           WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id_uuid)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     if result.is_ok() {

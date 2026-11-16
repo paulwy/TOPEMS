@@ -632,15 +632,14 @@ impl AntiFraudEngine {
     pub async fn get_fraud_decision(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         decision_id: Uuid,
     ) -> Result<FraudDecision, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let decision = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1"),
         )
         .bind(decision_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -650,12 +649,12 @@ impl AntiFraudEngine {
     pub async fn get_signals(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         signal_type: Option<String>,
     ) -> Result<Vec<FraudSignal>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let mut query = String::from(
-            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals",
         );
 
         if signal_type.is_some() {
@@ -665,7 +664,7 @@ impl AntiFraudEngine {
         query.push_str(" ORDER BY detected_at DESC LIMIT 500");
 
         let mut q = sqlx::query_as::<_, FraudSignal>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
+        q = q;
         if let Some(ref st) = signal_type {
             q = q.bind(st);
         }
@@ -733,13 +732,12 @@ impl AntiFraudEngine {
     pub async fn list_blocked_devices(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<DeviceProfile>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let devices = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE ($1::uuid IS NULL OR tenant_id = $1) AND trust_score < 0.5 ORDER BY trust_score ASC"),
+            only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE trust_score < 0.5 ORDER BY trust_score ASC"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -779,13 +777,12 @@ impl AntiFraudEngine {
     pub async fn get_rules(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rules = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY signal_type, name"),
+            only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules ORDER BY signal_type, name"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -928,13 +925,12 @@ impl CreditScoringEngine {
     pub async fn get_scoring_models(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<ScoringModel>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let models = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"),
+            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models ORDER BY created_at DESC LIMIT 100"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1059,7 +1055,7 @@ impl CreditScoringEngine {
     pub async fn get_model_comparison(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         model_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
@@ -1067,10 +1063,9 @@ impl CreditScoringEngine {
 
         for mid in &model_ids {
             let model = sqlx::query_as::<_, ScoringModel>(
-                only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+                only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1"),
             )
             .bind(mid)
-            .bind(tenant_id)
             .fetch_optional(&mut scope)
             .await;
 
@@ -1256,15 +1251,14 @@ impl StressTestEngine {
     pub async fn get_test_result(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         result_id: Uuid,
     ) -> Result<StressResult, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1"),
         )
         .bind(result_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1274,13 +1268,12 @@ impl StressTestEngine {
     pub async fn list_scenarios(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<StressScenario>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let scenarios = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1353,16 +1346,15 @@ impl StressTestEngine {
     pub async fn get_scenario_parameters(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         scenario_id: Option<Uuid>,
     ) -> Result<Vec<ScenarioParameter>, sqlx::Error> {
         if let Some(sid) = scenario_id {
             let mut scope = db.scope_with(txn).await?;
             let scenario = sqlx::query_as::<_, StressScenario>(
-                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1"),
             )
             .bind(sid)
-            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await?;
             let _ = scope.commit().await;
@@ -1452,10 +1444,9 @@ impl StressTestEngine {
 
         for scenario in &scenarios {
             let results: Vec<StressResult> = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+                only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1"),
             )
             .bind(scenario.id)
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
@@ -1580,7 +1571,7 @@ pub async fn create_device_handler(
 pub async fn get_device_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DeviceProfile> {
     let mut txn_guard = txn_arc.lock().await;
@@ -1588,20 +1579,14 @@ pub async fn get_device_handler(
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
     let db = state.db.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1"),
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
     let _ = scope.commit().await;

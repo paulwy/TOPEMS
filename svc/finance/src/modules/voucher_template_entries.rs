@@ -63,11 +63,6 @@ pub async fn list_entries(
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
-    };
     match service
         .get_voucher_template(tenant_id, template_id, txn)
         .await
@@ -78,10 +73,9 @@ pub async fn list_entries(
                 Err(e) => return crate::shared::err_resp(e),
             };
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)  ORDER BY sort_order, created_at"),
+                only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1  ORDER BY sort_order, created_at"),
             )
             .bind(template_id)
-            .bind(tenant_id_opt)
         .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
@@ -94,7 +88,7 @@ pub async fn list_entries(
 
 pub async fn get_entry(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<VoucherTemplateLine> {
@@ -103,19 +97,13 @@ pub async fn get_entry(
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
 
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
     let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND l.template_id = $2 AND l.id = $3"),
+        only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE l.template_id = $1 AND l.id = $2"),
     )
-    .bind(tenant_id)
     .bind(template_id)
     .bind(entry_id)
     .fetch_optional(&mut scope)
@@ -373,10 +361,9 @@ pub async fn reorder_entries(
         }
     }
     let lines: Result<Vec<VoucherTemplateLine>, sqlx::Error> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
     match lines {

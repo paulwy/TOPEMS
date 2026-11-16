@@ -373,27 +373,25 @@ impl AutoAuditEngine {
     pub async fn list_rules(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
     ) -> Result<Vec<AuditRule>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL",
         );
 
         if category.is_some() {
-            query.push_str(" AND category = $2");
+            query.push_str(" AND category = $1");
         }
         if is_active.is_some() {
-            let idx = if category.is_some() { "3" } else { "2" };
+            let idx = if category.is_some() { "2" } else { "1" };
             query.push_str(&format!(" AND is_active = ${}", idx));
         }
         query.push_str(" ORDER BY created_at DESC");
 
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, AuditRule>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref cat) = category {
             q = q.bind(cat);
         }
@@ -1032,7 +1030,7 @@ impl AutoAuditEngine {
     pub async fn get_findings(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         status: Option<String>,
         severity: Option<String>,
         entity_type: Option<String>,
@@ -1042,31 +1040,29 @@ impl AutoAuditEngine {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
+            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE TRUE",
         );
 
         if status.is_some() {
-            count_query.push_str(" AND status = $2");
-            data_query.push_str(" AND status = $2");
+            count_query.push_str(" AND status = $1");
+            data_query.push_str(" AND status = $1");
         }
         if severity.is_some() {
-            let idx = if status.is_some() { "3" } else { "2" };
+            let idx = if status.is_some() { "2" } else { "1" };
             count_query.push_str(&format!(" AND severity = ${}", idx));
             data_query.push_str(&format!(" AND severity = ${}", idx));
         }
         if entity_type.is_some() {
             let base_idx =
-                if status.is_some() { 1 } else { 0 } + if severity.is_some() { 1 } else { 0 } + 2;
+                if status.is_some() { 1 } else { 0 } + if severity.is_some() { 1 } else { 0 } + 1;
             count_query.push_str(&format!(" AND entity_type = ${}", base_idx));
             data_query.push_str(&format!(" AND entity_type = ${}", base_idx));
         }
 
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
-            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await?;
 
@@ -1076,7 +1072,6 @@ impl AutoAuditEngine {
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
         let mut q = sqlx::query_as::<_, AuditFinding>(sqlx::AssertSqlSafe(data_query));
-        q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
         }
@@ -1541,7 +1536,7 @@ impl AnomalyDetector {
     pub async fn get_alerts(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         detection_type: Option<String>,
         severity: Option<String>,
         is_resolved: Option<bool>,
@@ -1551,32 +1546,30 @@ impl AnomalyDetector {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
+            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE TRUE",
         );
 
         if detection_type.is_some() {
-            count_query.push_str(" AND detection_type = $2");
-            data_query.push_str(" AND detection_type = $2");
+            count_query.push_str(" AND detection_type = $1");
+            data_query.push_str(" AND detection_type = $1");
         }
         if severity.is_some() {
-            let idx = if detection_type.is_some() { "3" } else { "2" };
+            let idx = if detection_type.is_some() { "2" } else { "1" };
             count_query.push_str(&format!(" AND severity = ${}", idx));
             data_query.push_str(&format!(" AND severity = ${}", idx));
         }
         if is_resolved.is_some() {
             let base = if detection_type.is_some() { 1 } else { 0 }
                 + if severity.is_some() { 1 } else { 0 }
-                + 2;
+                + 1;
             count_query.push_str(&format!(" AND is_resolved = ${}", base));
             data_query.push_str(&format!(" AND is_resolved = ${}", base));
         }
 
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
-            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await?;
 
@@ -1585,7 +1578,6 @@ impl AnomalyDetector {
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
         let mut q = sqlx::query_as::<_, AnomalyAlert>(sqlx::AssertSqlSafe(data_query));
-        q = q.bind(tenant_id);
         if let Some(ref dt) = detection_type {
             q = q.bind(dt);
         }
@@ -1635,14 +1627,12 @@ impl AnomalyDetector {
     pub async fn get_summary(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<DetectionSummary, sqlx::Error> {
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let alerts: Vec<AnomalyAlert> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1712,14 +1702,12 @@ impl AlertManager {
     pub async fn list_configs(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertConfig>, sqlx::Error> {
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let configs = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 ORDER BY created_at DESC"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1787,7 +1775,7 @@ impl AlertManager {
     pub async fn get_history(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         channel: Option<String>,
         is_delivered: Option<bool>,
         is_acknowledged: Option<bool>,
@@ -1797,32 +1785,30 @@ impl AlertManager {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
+            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE TRUE",
         );
 
         if channel.is_some() {
-            count_query.push_str(" AND channel = $2");
-            data_query.push_str(" AND channel = $2");
+            count_query.push_str(" AND channel = $1");
+            data_query.push_str(" AND channel = $1");
         }
         if is_delivered.is_some() {
-            let idx = if channel.is_some() { "3" } else { "2" };
+            let idx = if channel.is_some() { "2" } else { "1" };
             count_query.push_str(&format!(" AND is_delivered = ${}", idx));
             data_query.push_str(&format!(" AND is_delivered = ${}", idx));
         }
         if is_acknowledged.is_some() {
             let base = if channel.is_some() { 1 } else { 0 }
                 + if is_delivered.is_some() { 1 } else { 0 }
-                + 2;
+                + 1;
             count_query.push_str(&format!(" AND is_acknowledged = ${}", base));
             data_query.push_str(&format!(" AND is_acknowledged = ${}", base));
         }
 
-        // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
-            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await?;
 
@@ -1831,7 +1817,6 @@ impl AlertManager {
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
         let mut q = sqlx::query_as::<_, AlertHistory>(sqlx::AssertSqlSafe(data_query));
-        q = q.bind(tenant_id);
         if let Some(ref ch) = channel {
             q = q.bind(ch);
         }

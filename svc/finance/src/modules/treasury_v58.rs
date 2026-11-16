@@ -466,16 +466,15 @@ impl CashPoolManager {
     pub async fn get_pool(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let row = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1"),
         )
         .bind(pool_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -485,14 +484,13 @@ impl CashPoolManager {
     pub async fn list_pools(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<CashPool>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools ORDER BY created_at DESC LIMIT 500"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -589,15 +587,14 @@ impl CashPoolManager {
     pub async fn get_pool_history(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<Vec<PoolTransfer>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance.finance_v58_pool_transfers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND (from_pool = $2 OR to_pool = $2) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance.finance_v58_pool_transfers WHERE (from_pool = $1 OR to_pool = $1) ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .bind(pool_id)
         .fetch_all(&mut scope)
         .await;
@@ -836,16 +833,15 @@ impl CashFlowPredictor {
     pub async fn get_forecast(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance.finance_v58_forecast_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY date ASC"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance.finance_v58_forecast_results WHERE scenario_id = $1 ORDER BY date ASC"),
         )
         .bind(scenario_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -855,14 +851,13 @@ impl CashFlowPredictor {
     pub async fn list_scenarios(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastScenario>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY horizon_days DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios ORDER BY horizon_days DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1026,9 +1021,8 @@ impl LiquidityOptimizer {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let targets: Vec<LiquidityTarget> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
 
@@ -1233,14 +1227,13 @@ impl LiquidityOptimizer {
     pub async fn get_recommendations(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1270,14 +1263,13 @@ impl LiquidityOptimizer {
     pub async fn get_targets(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<LiquidityTarget>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1324,14 +1316,13 @@ impl LiquidityOptimizer {
     pub async fn get_optimization_history(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results ORDER BY created_at DESC LIMIT 500"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;

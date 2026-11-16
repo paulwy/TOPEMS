@@ -682,10 +682,9 @@ impl DecisionEngine {
     ) -> Result<DecisionResult, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let row = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -699,9 +698,8 @@ impl DecisionEngine {
     ) -> Result<Vec<DecisionScenario>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios ORDER BY created_at DESC LIMIT 200"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -716,10 +714,9 @@ impl DecisionEngine {
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, DecisionResult>(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
-        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await?;
 
@@ -785,9 +782,8 @@ impl DecisionEngine {
     ) -> Result<Vec<DecisionResult>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY decided_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results ORDER BY decided_at DESC LIMIT 500"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -972,9 +968,8 @@ impl AlertEngine {
     ) -> Result<Vec<AlertRule>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY metric_name, name"),
+            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules ORDER BY metric_name, name"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1050,17 +1045,17 @@ impl AlertEngine {
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let mut query = String::from(
-            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE status = 'active'",
         );
 
         if let Some(ref severity) = params.severity {
-            query.push_str(" AND severity = $2");
+            query.push_str(" AND severity = $1");
         }
         if let Some(ref metric) = params.metric_name {
             let placeholder = if params.severity.is_some() {
-                "$3"
-            } else {
                 "$2"
+            } else {
+                "$1"
             };
             query.push_str(&format!(" AND metric_name = {}", placeholder));
         }
@@ -1068,7 +1063,6 @@ impl AlertEngine {
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
         let mut q = sqlx::query_as::<_, AlertV60>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref severity) = params.severity {
             q = q.bind(severity);
         }
@@ -1134,9 +1128,8 @@ impl AlertEngine {
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts ORDER BY created_at DESC LIMIT 500"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1289,17 +1282,17 @@ impl IntelligentScheduler {
     ) -> Result<Vec<ScheduleTask>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let mut query = String::from(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks",
         );
 
         if let Some(ref task_type) = params.task_type {
-            query.push_str(" AND task_type = $2");
+            query.push_str(" AND task_type = $1");
         }
         if let Some(ref status) = params.status {
             let placeholder = if params.task_type.is_some() {
-                "$3"
-            } else {
                 "$2"
+            } else {
+                "$1"
             };
             query.push_str(&format!(" AND status = {}", placeholder));
         }
@@ -1307,7 +1300,6 @@ impl IntelligentScheduler {
         query.push_str(" ORDER BY priority DESC, created_at DESC LIMIT 200");
 
         let mut q = sqlx::query_as::<_, ScheduleTask>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref task_type) = params.task_type {
             q = q.bind(task_type);
         }
@@ -1411,10 +1403,9 @@ impl IntelligentScheduler {
     ) -> Result<ScheduleExecution, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let row = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1"),
         )
         .bind(execution_id)
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1429,17 +1420,16 @@ impl IntelligentScheduler {
     ) -> Result<Vec<ScheduleExecution>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let mut query = String::from(
-            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions",
         );
 
         if task_id.is_some() {
-            query.push_str(" AND task_id = $2");
+            query.push_str(" AND task_id = $1");
         }
 
         query.push_str(" ORDER BY started_at DESC LIMIT 200");
 
         let mut q = sqlx::query_as::<_, ScheduleExecution>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(tid) = task_id {
             q = q.bind(tid);
         }

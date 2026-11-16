@@ -537,7 +537,7 @@ impl RealTimeRiskMonitor {
         let mut scope = db.scope_with(txn).await?;
 
         let mut query = String::from(
-            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators",
         );
         let mut conditions = vec!["$1".to_string()];
 
@@ -547,7 +547,6 @@ impl RealTimeRiskMonitor {
         }
 
         let indicators: Vec<RiskIndicator> = sqlx::query_as(sqlx::AssertSqlSafe(query))
-            .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?;
         let _ = scope.commit().await;
@@ -595,9 +594,8 @@ impl RealTimeRiskMonitor {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let open_alerts: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND acknowledged = false AND resolved = false"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE acknowledged = false AND resolved = false"),
         )
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
         let _ = scope.commit().await;
@@ -744,7 +742,7 @@ impl RealTimeRiskMonitor {
     pub async fn get_alerts_by_category(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         category: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
@@ -752,12 +750,10 @@ impl RealTimeRiskMonitor {
         let alerts = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
-            FROM finance.finance_v54_risk_alerts
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity = $2
+            FROM finance.finance_v54_risk_alerts WHERE entity = $1
             ORDER BY created_at DESC
             LIMIT 100"#
         ))
-        .bind(tenant_id)
         .bind(&category)
         .fetch_all(&mut scope)
         .await;
@@ -768,7 +764,7 @@ impl RealTimeRiskMonitor {
     pub async fn get_alerts_by_entity(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         entity: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
@@ -776,12 +772,10 @@ impl RealTimeRiskMonitor {
         let alerts = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
-            FROM finance.finance_v54_risk_alerts
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity = $2
+            FROM finance.finance_v54_risk_alerts WHERE entity = $1
             ORDER BY created_at DESC
             LIMIT 100"#
         ))
-        .bind(tenant_id)
         .bind(&entity)
         .fetch_all(&mut scope)
         .await;
@@ -977,14 +971,13 @@ impl AntiFraudEngine {
     pub async fn get_fraud_rules(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rules = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY rule_type, name"),
+            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules ORDER BY rule_type, name"),
         )
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await;
         let _ = scope.commit().await;
@@ -1141,28 +1134,27 @@ impl AutoComplianceReviewer {
     pub async fn get_review_results(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let mut query = String::from(
-            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results",
         );
 
         if entity_type.is_some() {
-            query.push_str(" AND entity_type = $2");
+            query.push_str(" AND entity_type = $1");
         }
         if entity_id.is_some() {
-            let idx = if entity_type.is_some() { "3" } else { "2" };
+            let idx = if entity_type.is_some() { "2" } else { "1" };
             query.push_str(&format!(" AND entity_id = ${}", idx));
         }
 
         query.push_str(" ORDER BY reviewed_at DESC LIMIT 500");
 
         let mut q = sqlx::query_as::<_, ReviewResult>(sqlx::AssertSqlSafe(query));
-        q = q.bind(tenant_id);
         if let Some(ref et) = entity_type {
             q = q.bind(et);
         }
@@ -1263,16 +1255,15 @@ impl AutoComplianceReviewer {
     pub async fn get_compliance_status(
         db: &Db,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-        tenant_id: Option<Uuid>,
+        _tenant_id: Option<Uuid>,
         entity_type: String,
         entity_id: String,
     ) -> Result<Vec<ReviewWorkflow>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let workflows = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC"),
+            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC"),
         )
-        .bind(tenant_id)
         .bind(&entity_type)
         .bind(&entity_id)
         .fetch_all(&mut scope)
