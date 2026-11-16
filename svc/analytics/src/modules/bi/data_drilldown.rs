@@ -1,10 +1,12 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::resolve_create_tenant;
 use tracing::info;
 
 use crate::shared::AppState;
@@ -146,9 +148,18 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
 )]
 pub async fn create_drilldown_path(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDrilldownPathRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating drilldown path: {}", req.name);
+
+    // 下钻路径是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -169,7 +180,7 @@ pub async fn create_drilldown_path(
         req.owner_id,
 now,
 now,
-        Uuid::nil(),
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -368,9 +379,18 @@ pub async fn delete_drilldown_path(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn drill_down(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<DrilldownQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Drilling down on path: {}", req.path_id);
+
+    // 下钻历史是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+        }
+    };
 
     let path = match sqlx::query!(
         r#"
@@ -428,7 +448,7 @@ pub async fn drill_down(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        Uuid::nil(),
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -461,9 +481,18 @@ now,
 )]
 pub async fn roll_up(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<DrilldownQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Rolling up on path: {}", req.path_id);
+
+    // 上卷历史是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+        }
+    };
 
     let path = match sqlx::query!(
         r#"
@@ -520,7 +549,7 @@ pub async fn roll_up(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        Uuid::nil(),
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;

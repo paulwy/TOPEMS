@@ -257,7 +257,7 @@ pub async fn create_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("erp", "INSERT INTO erp.suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $16 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULLIF(current_setting('app.tenant_id', true), '')::UUID) RETURNING id, code, CASE WHEN $16 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)

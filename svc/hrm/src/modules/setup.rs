@@ -368,7 +368,7 @@ pub async fn setup_company_info(
             let _ = sqlx::query(
                 only_own_schema_query!("hrm", r#"
                 INSERT INTO hrm.initialization_logs (id, organization_id, tenant_id, step_name, action, new_data, created_at)
-                VALUES ($1, $2, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), 'company_info', 'update', $3, $4)
+                VALUES ($1, $2, NULLIF(current_setting('app.tenant_id', true), '')::UUID, 'company_info', 'update', $3, $4)
                 "#)
             )
             .bind(Uuid::new_v4())

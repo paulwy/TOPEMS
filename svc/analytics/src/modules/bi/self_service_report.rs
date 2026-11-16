@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
@@ -7,6 +7,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::resolve_create_tenant;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 use utoipa::ToSchema;
@@ -165,9 +167,18 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 )]
 pub async fn create_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating self-service report: {}", req.name);
+
+    // 报表是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -190,7 +201,7 @@ pub async fn create_report(
         req.is_public.unwrap_or(false),
 now,
 now,
-        Uuid::nil(),
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

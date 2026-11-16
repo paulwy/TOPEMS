@@ -10,7 +10,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::{resolve_create_tenant, RlsTxnCell};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -231,6 +232,7 @@ pub async fn get_faq(
 )]
 pub async fn create_faq(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateFaqRequest>,
 ) -> ApiResponse<Faq> {
@@ -240,6 +242,12 @@ pub async fn create_faq(
     if req.answer.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed("答案不能为空".to_string()));
     }
+
+    // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
@@ -270,7 +278,7 @@ pub async fn create_faq(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {

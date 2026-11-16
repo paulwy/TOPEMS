@@ -10,7 +10,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::{resolve_create_tenant, RlsTxnCell};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -282,12 +283,19 @@ pub async fn get_guide(
 )]
 pub async fn create_guide(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateGuideRequest>,
 ) -> ApiResponse<Guide> {
     if req.title.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed("标题不能为空".to_string()));
     }
+
+    // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
@@ -320,7 +328,7 @@ pub async fn create_guide(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {
@@ -355,6 +363,7 @@ pub async fn create_guide(
 pub async fn add_lesson(
     State(state): State<AppState>,
     Path(guide_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateLessonRequest>,
 ) -> ApiResponse<GuideLesson> {
@@ -363,6 +372,12 @@ pub async fn add_lesson(
             "课程标题不能为空".to_string(),
         ));
     }
+
+    // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
@@ -393,7 +408,7 @@ pub async fn add_lesson(
     .bind(req.duration)
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {

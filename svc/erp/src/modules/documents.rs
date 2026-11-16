@@ -135,7 +135,7 @@ pub async fn create_document(
 
     let result = sqlx::query_as::<_, Document>(
         "INSERT INTO erp.documents (title, doc_type, status, file_url, file_size, uploader, tenant_id) \
-         VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
+         VALUES ($1, $2, $3, $4, $5, $6, NULLIF(current_setting('app.tenant_id', true), '')::UUID) \
          RETURNING *",
     )
     .bind(&payload.title)

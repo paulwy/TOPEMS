@@ -175,6 +175,15 @@ pub async fn create_serial_number(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    // 序列号是业务数据，必须落调用方租户：缺失或为零租户时拒绝写入，不再以零 UUID 兜底。
+    let tenant_id = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => t,
+        _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建序列号"),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -211,7 +220,7 @@ pub async fn create_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

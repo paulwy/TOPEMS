@@ -224,7 +224,7 @@ pub async fn create_purchase_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("erp", r#"INSERT INTO erp.purchase_orders (order_no, supplier_id, supplier_name, order_date, delivery_date, 
             total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )

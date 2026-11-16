@@ -238,7 +238,7 @@ pub async fn create_payroll_run(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at, tenant_id)
         VALUES ($1, $2, 'draft', 0, 0, $3, $4,
-                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                NULLIF(current_setting('app.tenant_id', true), '')::UUID)
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )

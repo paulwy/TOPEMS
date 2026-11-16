@@ -108,6 +108,16 @@ pub async fn impl_create_todo(
         .scope_with(txn)
         .await
         .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
+    // 待办是业务数据，必须落请求租户：从请求事务的租户 GUC 读取，缺失或为零时拒绝写入。
+    let tenant_id: Option<uuid::Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_one(&mut scope)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("读取租户上下文失败: {}", e)))?;
+    let Some(tenant_id) = tenant_id.filter(|t| !t.is_nil()) else {
+        return Err(async_graphql::Error::new("缺少租户上下文：拒绝创建待办"));
+    };
+
     let row = sqlx::query(
         r#"INSERT INTO portal.portal_todos
            (user_id, title, service_code, service_name, priority, todo_type, tenant_id)
@@ -116,7 +126,7 @@ pub async fn impl_create_todo(
     )
     .bind(&uid)
     .bind(&title)
-    .bind(uuid::Uuid::nil())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;

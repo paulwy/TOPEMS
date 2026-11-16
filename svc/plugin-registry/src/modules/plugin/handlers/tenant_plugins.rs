@@ -1081,7 +1081,7 @@ pub async fn upload_plugin(
             dependencies, author_name, author_url, homepage_url,
             screenshots, tags, category, is_published, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
         RETURNING *
         "#,
     )

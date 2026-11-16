@@ -491,7 +491,7 @@ impl MDMWorkflowEngine {
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -644,7 +644,7 @@ impl MDMWorkflowEngine {
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -706,7 +706,7 @@ impl MDMWorkflowEngine {
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -935,7 +935,7 @@ impl DataProductManager {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
         )))
         .bind(&contract.product_id)
         .bind(serde_json::to_value(&contract.schema).unwrap_or_default())

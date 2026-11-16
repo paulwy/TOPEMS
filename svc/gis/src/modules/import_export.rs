@@ -18,6 +18,20 @@ pub struct ImportRequest {
     pub csv_content: String,
 }
 
+/// 导入写入必须落在请求租户：从请求事务的租户 GUC 读取，缺失或为零租户时拒绝。
+async fn require_import_tenant(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<sqlx::types::Uuid, TopemsError> {
+    let tenant_id: Option<sqlx::types::Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_one(&mut *scope)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("读取租户上下文失败: {}", e)))?;
+    tenant_id
+        .filter(|t| !t.is_nil())
+        .ok_or_else(|| TopemsError::ValidationFailed("缺少租户上下文：拒绝导入".to_string()))
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["gis:write"])),
@@ -137,6 +151,7 @@ async fn insert_device_location(
     let position: serde_json::Value = serde_json::from_str(&record.position)
         .map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
+    let tenant_id = require_import_tenant(scope).await?;
 
     sqlx::query(
         only_own_schema_query!("gis", r#"
@@ -150,7 +165,7 @@ async fn insert_device_location(
     .bind(&position)
     .bind(status)
     .bind(&record.description)
-    .bind(sqlx::types::Uuid::nil())
+    .bind(tenant_id)
     .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
@@ -175,6 +190,7 @@ async fn insert_pipeline(
     let path: serde_json::Value = serde_json::from_str(&record.path)
         .map_err(|e| TopemsError::ValidationFailed(format!("路径解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
+    let tenant_id = require_import_tenant(scope).await?;
 
     sqlx::query(only_own_schema_query!(
         "gis",
@@ -189,7 +205,7 @@ async fn insert_pipeline(
     .bind(&path)
     .bind(status)
     .bind(&record.description)
-    .bind(sqlx::types::Uuid::nil())
+    .bind(tenant_id)
     .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
@@ -213,6 +229,7 @@ async fn insert_warehouse_location(
     let position: serde_json::Value = serde_json::from_str(&record.position)
         .map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
+    let tenant_id = require_import_tenant(scope).await?;
 
     sqlx::query(only_own_schema_query!(
         "gis",
@@ -226,7 +243,7 @@ async fn insert_warehouse_location(
     .bind(&position)
     .bind(status)
     .bind(&record.description)
-    .bind(sqlx::types::Uuid::nil())
+    .bind(tenant_id)
     .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
