@@ -196,16 +196,14 @@ pub async fn list_my_plugins(
             tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
             tp.license_type, tp.license_expires_at, tp.purchase_order_id,
             tp.activated_at, tp.last_used_at, tp.usage_count, tp.created_at, tp.updated_at,
-            p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
+            p.code as plugin_code, CASE WHEN $1 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM iam.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
-        WHERE ($1::uuid IS NULL OR tp.tenant_id = $1)
         ORDER BY tp.is_active DESC, tp.activated_at DESC
         "#,
     )
-    .bind(tenant_id)
     .bind(locale)
     .fetch_all(&mut scope)
     .await
