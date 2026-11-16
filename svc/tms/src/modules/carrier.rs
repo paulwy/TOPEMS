@@ -150,16 +150,14 @@ pub async fn list_carriers(
     };
     let result = sqlx::query_as::<_, Carrier>(
         r#"
-        SELECT id, carrier_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        SELECT id, carrier_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
         FROM tms.tms_carriers
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR carrier_no ILIKE $2 OR name ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR carrier_no ILIKE $1 OR name ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -173,12 +171,10 @@ pub async fn list_carriers(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_carriers
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR carrier_no ILIKE $2 OR name ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE ($1::text IS NULL OR carrier_no ILIKE $1 OR name ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&mut scope)
@@ -317,7 +313,7 @@ pub async fn create_carrier(
 )]
 pub async fn get_carrier(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -335,20 +331,14 @@ pub async fn get_carrier(
             return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Carrier>(
         r#"
-        SELECT id, carrier_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
-        FROM tms.tms_carriers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, carrier_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        FROM tms.tms_carriers WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut scope)
     .await;

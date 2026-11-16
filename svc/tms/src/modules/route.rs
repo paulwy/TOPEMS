@@ -79,7 +79,7 @@ where
 )]
 pub async fn list_routes(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -103,26 +103,19 @@ pub async fn list_routes(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Route>(
         r#"
         SELECT id, route_no,
-               CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                origin, destination, distance_km, estimated_hours, status, tenant_id, created_at, updated_at
         FROM tms.tms_routes
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR route_no ILIKE $2 OR name ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR route_no ILIKE $1 OR name ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -136,12 +129,10 @@ pub async fn list_routes(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_routes
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR route_no ILIKE $2 OR name ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE ($1::text IS NULL OR route_no ILIKE $1 OR name ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&mut scope)
@@ -240,7 +231,7 @@ pub async fn create_route(
 )]
 pub async fn get_route(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -258,22 +249,16 @@ pub async fn get_route(
             return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Route>(
         r#"
         SELECT id, route_no,
-               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                origin, destination, distance_km, estimated_hours, status, tenant_id, created_at, updated_at
-        FROM tms.tms_routes WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM tms.tms_routes WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut scope)
     .await;

@@ -108,9 +108,9 @@ where
 )]
 pub async fn list_shipments(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
@@ -132,11 +132,6 @@ pub async fn list_shipments(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Shipment>(
         r#"
@@ -144,14 +139,12 @@ pub async fn list_shipments(
                status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                notes, tenant_id, created_at, updated_at
         FROM tms.tms_shipments
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR shipment_no ILIKE $2 OR origin ILIKE $2 OR destination ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR shipment_no ILIKE $1 OR origin ILIKE $1 OR destination ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -164,12 +157,10 @@ pub async fn list_shipments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_shipments
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR shipment_no ILIKE $2 OR origin ILIKE $2 OR destination ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE ($1::text IS NULL OR shipment_no ILIKE $1 OR origin ILIKE $1 OR destination ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&mut scope)
@@ -277,9 +268,9 @@ pub async fn create_shipment(
 )]
 pub async fn get_shipment(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Shipment> {
     let mut guard = txn_arc.lock().await;
@@ -295,22 +286,16 @@ pub async fn get_shipment(
             return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Shipment>(
         r#"
         SELECT id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                notes, tenant_id, created_at, updated_at
-        FROM tms.tms_shipments WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM tms.tms_shipments WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 

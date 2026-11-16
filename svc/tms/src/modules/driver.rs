@@ -149,14 +149,12 @@ pub async fn list_drivers(
         r#"
         SELECT id, driver_no, name, phone, license_no, license_type, status, carrier_id, tenant_id, created_at, updated_at
         FROM tms.tms_drivers
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR driver_no ILIKE $2 OR name ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR driver_no ILIKE $1 OR name ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -169,12 +167,10 @@ pub async fn list_drivers(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_drivers
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR driver_no ILIKE $2 OR name ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE ($1::text IS NULL OR driver_no ILIKE $1 OR name ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&mut scope)
@@ -312,9 +308,9 @@ pub async fn create_driver(
 )]
 pub async fn get_driver(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Driver> {
     let mut guard = txn_arc.lock().await;
@@ -330,20 +326,14 @@ pub async fn get_driver(
             return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
 
     let result = sqlx::query_as::<_, Driver>(
         r#"
         SELECT id, driver_no, name, phone, license_no, license_type, status, carrier_id, tenant_id, created_at, updated_at
-        FROM tms.tms_drivers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM tms.tms_drivers WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
