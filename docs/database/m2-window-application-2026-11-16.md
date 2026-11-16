@@ -215,18 +215,20 @@
 | finance | `/api/finance/ledger` | 200 | 4 条（均 `…0001`） | ✅ |
 | unified_core | `/api/core/iam/users` | 200 | 5 条 | ✅ 有数据（前缀实为 `/api/core`） |
 | unified_core | `/api/core/iam/roles` | 200 | 4 条 | ✅ |
-| analytics | `/api/bi/reports` | 200 | **0 条** | ⚠️ 见 §9.7，库内有 1 行 `…0001` 却读不到 |
+| analytics | `/api/bi/reports` | 200 | 1 条（`…0099` Smoke Report） | ✅ 修复后复验通过，见 §9.7 |
 | wms | `/api/wms/audit-logs` | 200 | 0 条 | ✅ 库本无业务数据（全库真实行数扫描：wms 仅 `schema_defense_ledger` 1 行） |
 | mes | `/api/mes/audit-logs` | 200 | 0 条 | ✅ 库本无业务数据（同上，仅 `schema_defense_ledger` 1 行） |
 | crm | `/api/crm/returns` | 200 | 0 条 | ✅ 库本无业务数据（crm 仅 `schema_defense_ledger` 1 行；`reltuples` 17 为统计估算过期，实际 0 行） |
 
 补充：`/api/erp/announcements`、`/api/wms/warehouses`、`/api/wms/inventory-alerts`、`/api/finance/budgets` 均 200 且 0 条，与库内实际 0 行一致，非 RLS 拒绝。
 
-### 9.7 未解决项：analytics report 子系统未带租户上下文
+### 9.7 已修复：analytics report 子系统未带租户上下文
 
-- 现象：`bi.reports` 有 1 行 `tenant_id = …0001`（Smoke Report），`/api/bi/reports` 返回 200 但 `total = 0`。
-- 根因：`svc/analytics/src/modules/report/report.rs:58-66` 的 `list_reports` 直接 `SELECT … FROM bi.reports`，既未 `set_config('app.tenant_id')` 也未走 `scope_with`；收口后 RLS fail-closed，过滤为 0 行。同模块 `dataset.rs`/`datasource.rs` 已有 `set_config` 实现，属 report 子系统遗漏，非全局。
-- 处置：按约定**不放宽策略、不改判据**，仅记录。是否补齐模块侧租户上下文另立任务。
+- 现象（修复前）：`bi.reports` 有 1 行 `tenant_id = …0001`（Smoke Report），`/api/bi/reports` 返回 200 但 `total = 0`。
+- 根因：`svc/analytics/src/modules/report/report.rs` 的 `list_reports` 直接 `SELECT … FROM bi.reports`，既未 `set_config('app.tenant_id')` 也未走 `scope_with`；收口后 RLS fail-closed，过滤为 0 行。同模块 `dataset.rs`/`datasource.rs` 已有 `set_config` 实现，属 report 子系统遗漏，非全局。
+- 修复（2026-11-16，仅 `svc/analytics`）：`modules/report/mod.rs` 新增 `tenant_uuid` / `begin_tenant_txn`，与 `bi/datasource.rs`、`bi/dataset.rs` 同一范式——事务内 `set_config('app.tenant_id', …, true)`，GUC 与 SQL 同连接、随事务结束失效；`report.rs` 9 个入口、`template.rs` 5 个、`schedule.rs` 9 个、`subscription.rs` 7 个全部改走该事务，写入 `tenant_id` 由零 UUID 改为 claims 租户。未新增机制、未改策略、未放宽 fail-closed。
+- 复验：重建 `topems-server` release 并 launchd 重启（备份 `bin/topems-server.bak-20261116-215033`，sha256 `3ce9963f…ec7893`，新 pid 2192，`/health` 200）；`/api/bi/reports` 200 且返回该 1 行；`/api/erp/audit-logs`（13）、`/api/finance/currencies`（16）、`/api/finance/ledger`（4）、`/api/core/iam/users`（5）均 200 未回归。
+- 残留记录（不在本次范围）：`report_subscriptions`、`analytics.report_execution_records` 无 `tenant_id` 列、无 RLS 策略，租户隔离需表结构改造，另行评估。
 - 其它前缀修正：analytics 实际前缀 `/api/bi`（非 `/api/analytics`）；unified_core 实际前缀 `/api/core`（非 `/api/unified-core`）。
 
 ### 9.8 约束遵守与残留
