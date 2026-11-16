@@ -337,16 +337,10 @@ async fn create_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = Utc::now();
     let id = Uuid::new_v4();
     let operator_id = extract_operator_id(&claims);
@@ -522,16 +516,10 @@ async fn update_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Return>(
         r#"
@@ -543,7 +531,7 @@ async fn update_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -668,16 +656,10 @@ async fn delete_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 先查询退换单状态
     let existing = sqlx::query_as::<_, Return>(
@@ -690,7 +672,7 @@ async fn delete_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -802,16 +784,10 @@ pub async fn approve_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -825,7 +801,7 @@ pub async fn approve_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -917,16 +893,10 @@ pub async fn reject_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -940,7 +910,7 @@ pub async fn reject_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1032,16 +1002,10 @@ pub async fn receive_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1055,7 +1019,7 @@ pub async fn receive_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1155,16 +1119,10 @@ pub async fn complete_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1178,7 +1136,7 @@ pub async fn complete_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1357,16 +1315,10 @@ pub async fn cancel_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1380,7 +1332,7 @@ pub async fn cancel_return(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1528,16 +1480,10 @@ async fn add_return_item(
         return ApiResponse::from(TopemsError::ValidationFailed("单价不能为负".to_string()));
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 校验退换单存在
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -2062,16 +2008,10 @@ async fn accept_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2181,16 +2121,10 @@ pub async fn process_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2306,16 +2240,10 @@ pub async fn resolve_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2437,16 +2365,10 @@ pub async fn confirm_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 

@@ -387,16 +387,10 @@ pub async fn create_opportunity(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let opp_no = if req.opp_no.is_empty() {
         format!("OPP-{}", now.timestamp())
@@ -433,7 +427,7 @@ pub async fn create_opportunity(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
@@ -596,16 +590,10 @@ async fn update_opportunity(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
@@ -613,7 +601,7 @@ async fn update_opportunity(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -741,16 +729,10 @@ async fn delete_opportunity(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         "UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -853,16 +835,10 @@ pub async fn batch_delete_opportunities(
         ));
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         "UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
@@ -1349,16 +1325,10 @@ pub async fn advance_opportunity(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
@@ -1367,7 +1337,7 @@ pub async fn advance_opportunity(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -1545,16 +1515,10 @@ pub async fn rollback_opportunity(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
@@ -1563,7 +1527,7 @@ pub async fn rollback_opportunity(
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await
     {

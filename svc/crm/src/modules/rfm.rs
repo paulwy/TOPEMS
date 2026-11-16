@@ -352,16 +352,10 @@ pub async fn analyze_rfm(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let reference_date = req
         .reference_date
         .unwrap_or_else(|| chrono::Utc::now().date_naive());
@@ -388,7 +382,7 @@ pub async fn analyze_rfm(
         "#,
     )
     .bind(reference_date)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .bind(period_start)
     .fetch_all(&mut **txn)
     .await;

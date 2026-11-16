@@ -196,16 +196,10 @@ pub async fn create_contact(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Contact>(
 
@@ -227,7 +221,7 @@ pub async fn create_contact(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -363,16 +357,10 @@ async fn update_contact(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Contact>(
         r#"
@@ -495,16 +483,10 @@ async fn delete_contact(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result =
         sqlx::query("UPDATE crm.contacts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -601,16 +583,10 @@ pub async fn batch_delete_contacts(
         ));
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         "UPDATE crm.contacts SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",

@@ -168,16 +168,10 @@ async fn create_tag(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let color = req.color.clone().unwrap_or_else(|| "#1890ff".to_string());
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Tag>(
 
@@ -196,7 +190,7 @@ async fn create_tag(
     .bind(&req.description)
     .bind(now)
     .bind(now)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
@@ -337,16 +331,10 @@ async fn update_tag(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Tag>(
         r#"
@@ -463,16 +451,10 @@ async fn delete_tag(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result =
         sqlx::query("UPDATE crm.tags SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -620,16 +602,10 @@ async fn add_tag_to_customer(
 
     let customer_id = id;
     let tag_id = req.tag_id;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let exists = sqlx::query_scalar::<_, bool>(
 
         "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3)",
@@ -653,7 +629,7 @@ async fn add_tag_to_customer(
     .bind(customer_id)
     .bind(tag_id)
     .bind(tenant_id)
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .execute(&mut **txn)
     .await;
 
@@ -735,16 +711,10 @@ pub async fn remove_tag_from_customer(
     }
 
     let customer_id = id;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         "DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3",

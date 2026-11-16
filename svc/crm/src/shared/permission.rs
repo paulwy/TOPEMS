@@ -85,6 +85,18 @@ impl std::fmt::Display for CrmPermission {
 
 pub type ModulePermission = CrmPermission;
 
+/// 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止把业务数据写入零 UUID 区间。
+pub fn require_write_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiResponse<T>> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| uuid::Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => Err(ApiResponse::error(400, "缺少租户上下文")),
+    }
+}
+
 pub async fn check_permission<T>(
     db: &PgPool,
     claims: &Claims,

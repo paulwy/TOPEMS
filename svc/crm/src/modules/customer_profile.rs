@@ -16,6 +16,21 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
+/// 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止把业务数据写入零 UUID 区间。
+fn require_tenant_write<T>(claims: &Claims) -> Result<Uuid, ApiResponse<T>> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => Err(ApiResponse::error(
+            400,
+            "缺少租户上下文：拒绝客户标签写操作",
+        )),
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct CustomerProfile {
     pub id: Uuid,
@@ -393,6 +408,10 @@ pub async fn add_profile_tags(
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
+    let tenant_id = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn = match state.db.begin().await {
         Ok(t) => t,
         Err(e) => {
@@ -401,7 +420,7 @@ pub async fn add_profile_tags(
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .bind(tenant_id.to_string())
         .execute(&mut *txn)
         .await
     {
@@ -424,7 +443,7 @@ pub async fn add_profile_tags(
         .bind(id)
         .bind(tag)
         .bind(Utc::now())
-        .bind(topems_shared_auth::middleware::tenant::get_tenant_id_from_claims(&claims))
+        .bind(tenant_id)
         .execute(&mut *txn)
         .await;
 
@@ -460,6 +479,10 @@ pub async fn remove_profile_tags(
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
+    let tenant_id = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn = match state.db.begin().await {
         Ok(t) => t,
         Err(e) => {
@@ -468,7 +491,7 @@ pub async fn remove_profile_tags(
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .bind(tenant_id.to_string())
         .execute(&mut *txn)
         .await
     {
