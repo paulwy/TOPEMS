@@ -324,10 +324,10 @@ grep -rnE '\.scope_(read_)?for_tenant\(' --include='*.rs' svc/<站>/src | grep -
 |---|---|---|---|---|
 | qms（第 1 站） | 请求路径 136 处自开作用域全部改复用请求事务（87 处 `for_tenant` → `scope_with`，49 处 `read_scope_for_claims` 增 `txn` 形参后内部走 `scope_with`）；现存 `scope_with=88`、`for_tenant=0` | 0 | `deny_request_tenant_scope`（`main.rs:230`） | §8.1 |
 | finance（第 2 站） | 243 处租户作用域调用点 → `scope_with`（handler 级 `Extension<RlsTxnCell>` 包装）；本批完成后 `scope_with=357`（含此前已迁的 accounting_subjects / currencies / operational / reconcile_orders 等），`for_tenant=9` | 9 处：全部在 `event_handlers/mod.rs`（232/711/891/1103/1154/1194/1228/1277/1311），后台事件消费无请求上下文，按事件 payload 显式 tenant 自开短事务 | `deny_request_own_txn` + `deny_request_tenant_scope`（`main.rs:229-230`） | §8.2、§8.4、§8.5 |
-| unified-core（第 3 站） | 15 → 3（迁 12 处 iam / tenant / settings / menu / audit 请求路径）；`scope_with=97`（含 iam 既有 5 处） | 2 处：`audit/service.rs:21`、`:66`；spawn 内按显式 tenant 走租户/系统通道，刻意不迁（迁了要依赖 task-local） | `deny_request_own_txn` + `deny_request_tenant_scope`（`main.rs:517-518`、`embedded.rs:206-208`）；操作审计中间件同批补挂载 | §9.1–§9.6 |
+| unified-core（第 3 站） | 15 → 3（迁 12 处 iam / tenant / settings / menu / audit 请求路径）；`scope_with=97`（含 iam 既有 5 处） | 2 处：`audit/service.rs:21`、`:66`；spawn 内按显式 tenant 走租户/系统通道，刻意不迁（迁了要依赖 task-local） | `deny_request_own_txn` + `deny_request_tenant_scope`（`main.rs:517-518`、`embedded.rs:207-208`）；操作审计中间件同批补挂载 | §9.1–§9.6 |
 | wms（第 4 站，C 路线） | 读路径 5 处改 release + 只读短事务；写路径保持独立短事务，`scope_with=0`、`for_tenant=23` | 23 处 = 写 16 + 读空窗 5 + 后台 2；代码登记 18 处标记（W-01..W-10、R-01..R-06、B-01/B-02），逐条对应 §10.2 注册表 | 未开：开了会把 21 处合法短事务打成 500；走 B 的三个前置条件登记在 [TODO.md §8.1](../../TODO.md) | §10.1–§10.7 |
 | mes（尾收） | `work_report` 的 ERP 订单号反查由「提交后 spawn 另开只读事务」迁入请求事务（1 处，提交前完成）；`scope_with=203`、`for_tenant=1` | 1 处：`event_handlers.rs:73` 后台事件消费（`mes-txn-exempt: B4-01`，无请求中间件、无请求上下文，按 payload 显式 tenant，缺失即拒并进 DLQ） | `deny_request_own_txn`（既有）+ 本轮补 `deny_request_tenant_scope`（`main.rs:247-248`） | §11.3 |
-| qms 尾部 | `shared/mod.rs` 的 `read_scope_for_claims(db, _claims, txn)` 统一 `db.scope_with(txn)`，16 个模块调用点全部透传请求事务（与 §8.1 同一改动，本轮复核 `for_tenant=0`） | 0 | `deny_request_tenant_scope`（已开） | §8.1、§11.3 |
+| qms 尾部 | `shared/mod.rs` 的 `read_scope_for_claims(db, _claims, txn)` 统一 `db.scope_with(txn)`，49 处调用点（13 个文件）全部透传请求事务（与 §8.1 同一改动，本轮复核 `for_tenant=0`） | 0 | `deny_request_tenant_scope`（已开） | §8.1、§11.3 |
 
 #### 11.1.2 单列为豁免的后台通道
 
