@@ -1,0 +1,37 @@
+{
+  "_comment": "账本核销元数据（P-1）。check-ledger-staleness.mjs 依赖本文件：未登记的账本、缺字段、超期未复核、存在陈旧条目，都会让 check:ledger 失败。reviewed_at 每次复核后手工更新为当天日期（YYYY-MM-DD），不要用脚本自动刷写——自动刷写等于取消复核。",
+  "ledgers": {
+    "scripts/ci/schema-prefix-baseline.json": {
+      "owner": "db-platform",
+      "reviewed_at": "2026-11-16",
+      "expires_days": 90,
+      "stale_source": "schema-prefix",
+      "evidence_cmd": "node scripts/ci/check-schema-prefix.mjs --json",
+      "delete_rule": "键在当前违规集合中不再出现即为陈旧。删除前需确认对应表已补 schema 前缀，而不是把表名从 SQL 里挪到别处。"
+    },
+    "scripts/ci/request-txn-baseline.json": {
+      "owner": "backend-platform",
+      "reviewed_at": "2026-11-16",
+      "expires_days": 90,
+      "stale_source": "request-txn",
+      "evidence_cmd": "node scripts/ci/check-request-txn.mjs --json",
+      "delete_rule": "基线计数高于当前实测即为可核销。核销必须同步下调计数，不允许基线长期虚高（否则收益不可见）。"
+    },
+    "scripts/ci/tenant-context-baseline.json": {
+      "owner": "backend-platform",
+      "reviewed_at": "2026-11-16",
+      "expires_days": 90,
+      "stale_source": "tenant-context",
+      "evidence_cmd": "grep -rn 'state.pool' --include='*.rs' svc/*/src/modules | wc -l",
+      "delete_rule": "基线中的文件若已被删除或改名，即为陈旧键；需重新生成基线，而不是保留旧路径。"
+    },
+    "scripts/ci/txn-write-non2xx-allowlist.json": {
+      "owner": "backend-platform",
+      "reviewed_at": "2026-11-16",
+      "expires_days": 90,
+      "stale_source": "txn-write-non2xx",
+      "evidence_cmd": "python3 scripts/ci/check-txn-write-non2xx.py",
+      "delete_rule": "allowlist 条目的文件或函数已不存在即为陈旧；新增条目必须写 reason（脚本已强制）。"
+    }
+  }
+}
