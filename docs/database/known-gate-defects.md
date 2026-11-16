@@ -75,6 +75,7 @@
 - **为什么不修**：属**策略定义**缺陷（W7 RLS 收口 + 本文档台账范围），与 §17.2 的「事务复用」是两个变更面；在本批改策略会混淆变更边界，且需要逐表确认业务语义。
 - **为什么暂不阻断**：已作为 §17.2 门禁的**非阻断判据 ②-b**——若纳入阻断，门禁会长期红（382 条），失去信号价值。方案里的判据 ②-a（假租户 UUID → 0 行）对 962 条租户策略均成立，已作为批次门禁使用。
 - **转阻断的前置条件**：W7 把上述 382 条改为「未设即拒」后，再在 `check-request-txn` 或 RLS 专项门禁中把 ②-b 提为阻断项。
+- **定案（2026-11-16，M-2：本轮零 DDL）**：本轮**不执行任何生产 schema 变更**（`ALTER POLICY` 一条不跑，也不做 `ANALYZE` 等写操作）。只出窗口申请材料，见 [m2-window-application-2026-11-16.md](./m2-window-application-2026-11-16.md)：8 批批次表、逐批回滚 SQL 落点（`rls-policy-backup-batch01..08.sql`）、四档验证判据、影响面与耗时预估。窗口时间等业务方确认后单独执行；材料备齐即停在本条。
 
 ## K11 请求事务内「写后返回非 2xx」存量 58 处，且门禁仅对 scm 触发 —— OPEN（2026-11-16 登记，不修，不阻断）
 
@@ -88,6 +89,10 @@
 - **为什么不修**：58 处需要逐函数区分「误报」与「真实丢弃」，属独立变更面（写路径语义），与本次类型统一不同批；且真实风险项改了会影响接口返回码与事务边界，需业务确认。
 - **建议处置（未实施）**：①先按文件+函数把这批登记进 [txn-write-non2xx-allowlist.json](../../scripts/ci/txn-write-non2xx-allowlist.json) 并把 hook 触发范围从 `svc/scm` 扩到 `svc/**`；②再逐条复核 allowlist 里的真实风险项，改为「先回滚再返回」或把失败分支前移。
 - **状态**：OPEN，不阻断；扩触发范围前必须先落地基线，否则门禁会在任何服务提交上直接红。
+- **定案（2026-11-16，口径唯一）**：写后失败统一返回 **500**，禁止用「HTTP 200 + 内层错误码」表达失败；任何「已写、再失败」的分支必须**显式 `rollback()` / `guard.take()`** 后再返回非 2xx，不依赖中间件隐式回滚。据此：
+  - 87 条误报按 [k11-triage-2026-11-16.md](./k11-triage-2026-11-16.md) 登记 allowlist（一条一 `reason`），不因误报改返回码；
+  - 2 条真实风险（mes 批量重排序）改为「先全量校验、再写」，失败分支显式回滚后返回 500；
+  - 该口径是后续复核的唯一口径，不再出现「200 + 内层错误码」的处置建议。
 
 ## K12 finance update_reconcile_item 的「最佳努力」聚合事务无法并入请求事务 —— OPEN（2026-11-16 登记，业务口径未定）
 
@@ -99,6 +104,9 @@
 - **需要的业务判断（未决）**：A. 接受「聚合失败即整体回滚」（口径收紧，需确认对账金额允许因此失败）；B. 改为同一事务内的显式聚合查询（改动 SQL 与失败处理，需确认聚合口径与性能）。
 - **当前处置**：保留原两事务实现，不纳入本批收敛；该文件 `own_txn` 维持 2。
 - **状态**：OPEN，不阻断，等业务口径确认后再动。
+- **定案（2026-11-16，保留现状）**：维持现有「明细事务 + 聚合事务（`let _ =` 忽略聚合失败）」两段式语义，即上述 A/B/C 三方案中的 **C（不改）**，不做 A/B 重构。
+  - 为什么不改：A（并入请求事务）把「忽略聚合失败」变成「整体失败」，直接降低对账录入成功率；B（同事务内聚合）要重写聚合 SQL，并在大单据下把行锁持有时间放大到整段聚合计算。两者都改变业务可观测结果，收益仅 `own_txn -2`，与风险不成比例。
+  - 将来改的触发条件（命中任一再立项）：① 出现因聚合金额滞后导致的账实差异工单；② 业务方要求明细与汇总在同一事务内强一致；③ 连接池容量再次成为瓶颈，且只读观测证实这 2 条独立事务是主要占用。
 
 ## K13 finance settlement_center 的「提交后发布事件」与请求事务复用冲突 —— OPEN（2026-11-16 登记，需定发布时机方案）
 
@@ -114,6 +122,9 @@
   - 未推广：其他服务的发布路径一行未改；`tenant_middleware_no_txn` 不设该队列，行为不变。
 - **验证**：`cargo test -p topems-shared-auth --lib request_finalizer_tests` 7 passed，其中 `discard_drops_post_commit_actions` 证明回滚丢弃后动作不会补发；`cargo check -p topems-finance` 通过；`cargo test -p topems-finance --lib` 1094 passed / 3 failed（forecast_v53 测试库权限，与本改动无关）/ 1 ignored；门禁 finance `own_txn` 64 → 59，settlement_center 归零。
 - **状态**：A 方案试点完成、未推广；推广到其他服务需单独评估（不在本次范围）。
+- **定案（2026-11-16，M-3：不推广）**：`PostCommitQueue` 保持 finance `settlement_center` 5 处试点，**不推广**到其他服务；`tenant_middleware_no_txn` 服务维持「写后立即发布」现状，行为不变。
+  - 推广前置条件（三条同时满足才立项）：① 试点观测窗口 ≥ 4 周且覆盖月末结算高峰，`discarded` 计数为 0（无「回滚丢弃」）；② 试点发布失败率不高于推广前基线（ZSET 重试入队率），且无「事务回滚但事件已发」的幻影事件样本；③ 事件丢失判据成立——消费方（erp / pm）回读不到已发事件的样本数为 0。
+  - 未满足前任一服务不接入；满足后仍需按服务单独评估（每个服务的事件消费语义不同），不随 M-1 一并推进。
 
 ## K14 finance 批量导入/批量删除的「逐行独立事务 + 部分成功」语义 —— RESOLVED（2026-11-16，按「放宽 + SAVEPOINT」落地）
 
@@ -132,5 +143,14 @@
   - `cargo test -p topems-finance --lib`：1094 passed / 3 failed（forecast_v53 测试库权限，改动前即存在）/ 1 ignored，无新增失败。
   - 门禁：finance `own_txn` 12 → 9（本文件 3 处归零）。
 - **状态**：RESOLVED（试点）；`scope_savepoint` 未被其他服务使用。
+
+## K15 `search_logs.duration_ms` 口径未定，写入侧写死 0 —— RESOLVED（2026-11-16，定口径并修写入点）
+
+- **定案**：`duration_ms` 填**服务端处理耗时**，毫秒整数；未采集写 **NULL**，不写 0，也不用客户端耗时冒充。
+- **现状核查**：全仓 `search_logs` 写入点只有 1 处——[svc/search/src/handlers.rs](../../svc/search/src/handlers.rs) 搜索 handler 的后台双写（`tokio::spawn` 内 `INSERT INTO public.search_logs`），原实现 `VALUES ($1,$2,$3,$4, 0)` 写死 0，违反定案。
+- **改动**：在 handler 入口取 `Instant::now()`，在调度后台写之前定格 `elapsed_ms = started_at.elapsed().as_millis()`，以第 5 个参数绑定写入；后台双写与网络传输不计入该值。列本身允许 NULL（`20261115142400_public_platform_3tables_25cols.sql` 中 `duration_ms integer DEFAULT 0`，`is_nullable=YES`），后续若某条路径无法采集，按定案写 `NULL` 而非 0。
+- **读取侧影响**：`/suggestions` 只按 `query` 做 `GROUP BY` 词频，不消费 `duration_ms`，无兼容影响。
+- **验证**：`cargo check -p topems-search --all-targets --offline` 通过。
+- **状态**：RESOLVED（口径 + 唯一写入点）。
 
 
