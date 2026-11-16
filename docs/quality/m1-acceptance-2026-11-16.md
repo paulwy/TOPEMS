@@ -379,4 +379,88 @@ facts 快照（`docs/quality/facts-latest.json`，fingerprint 见文件）已按
 - **B4 到此结束**：qms / finance / unified-core / wms / mes 五站处置完毕，qms 尾部 helper 复核无残留；`own_txn` 全仓为 0；请求内自开租户作用域只剩本表已登记豁免（后台通道九站 + ehs 站级豁免）。
 - 本表不再新增迁移项；若后续要动 ehs 站级豁免或 wms 走 B，属**新波次**，需按各自前置条件单独立项。
 - 下一步**不由本批自行启动**：进入 M-2/B3 执行还是开 B5，由用户决定。
-- 仍停下待问的五个口径：K12 聚合事务口径、K11 真实风险返回码、M-2 上线窗口、M-3 是否推广、`search_logs.duration_ms` 口径。
+- 原「仍停下待问的五个口径」已于 2026-11-16 夜定案并落文档：K11 → 500 + 显式回滚；K12 → 保留聚合事务现状；M-2 → 本轮零 DDL，只出 [窗口申请材料](../database/m2-window-application-2026-11-16.md)；M-3 → 不推广；`search_logs.duration_ms` → 服务端处理耗时。登记见 [known-gate-defects.md](../database/known-gate-defects.md) 与 `TODO.md` §8.1。
+
+## 12. server 站 `web-contract-smoke` 复验（2026-11-16 夜，prod 克隆库）
+
+### 12.1 结论
+
+| 轮次 | 目标库 | 结果 |
+|---|---|---|
+| 修前（克隆库，未刷物化视图） | `topems_smoke_bff` | 4347/4503 PASS，156 FAIL（ticket 64 / mobile 80 / monitor 11 / bi 1） |
+| 修前（克隆库，已刷 `bi.org_stats`） | 同上 | 4348/4503 PASS，**155 FAIL**（ticket 64 / mobile 80 / monitor 11） |
+| 修后（补 `tenant_middleware`） | 同上 | **4503/4503 PASS，0 FAIL**；pre-commit 钩子 `web-contract-smoke` 实跑通过（106.91s） |
+
+- **155 条不是「环境受限」**：根因是 ticket / mobile / monitor 三个单体模块的路由没有挂 `tenant_middleware`，而这批 handler 已改为复用请求事务（`Extension<RlsTxnCell>`），缺扩展即整片 500。修复后全绿。
+- 唯一与环境相关的是 bi 那 1 条：克隆库的物化视图不随 dump 携带数据（`pg_matviews.ispopulated=f`，prod 为 `t`），`REFRESH MATERIALIZED VIEW bi.org_stats` 后 bi 172/172 全过。
+
+### 12.2 根因证据（修复前，两个实例同报错）
+
+```
+$ curl -s -H "Authorization: Bearer <test_admin jwt>" \
+   http://127.0.0.1:18099/api/ticket/tickets/00000000-...-0099/attachments
+HTTP/1.1 500 Internal Server Error
+content-type: text/plain; charset=utf-8
+
+Missing request extension: Extension of type `alloc::sync::Arc<tokio::sync::mutex::Mutex<
+core::option::Option<sqlx_core::transaction::Transaction<'_, sqlx_postgres::database::Postgres>>>>`
+was not found. Perhaps you forgot to add it? See `axum::Extension`.
+```
+
+同一请求对运行中的 8099（prod 实例）返回**完全相同的报错**——说明这是既有的单体集成缺口，被本轮 smoke 首次跑通后暴露，不是本批修复引入。
+
+### 12.3 为什么不能直接对 prod 实例跑 smoke
+
+- 项目 `.env` 的 `DATABASE_URL` 指向 `topems_prod`，脚本 `detect_instance()` 判定为 prod，`WEB_SMOKE_ENV=local` 直接拒绝；
+- 运行中的 8099 用的就是这份 `.env`；对它跑 smoke 会产生写请求，违反「生产库只读」。
+
+因此必须克隆库 + 克隆实例，见 12.4。
+
+### 12.4 可复现命令序列（仓库根逐条执行）
+
+```bash
+set -a && . ./.env && set +a
+CARGO_INCREMENTAL=0 cargo build -p topems-server --offline     # 约 1m35s
+
+# 1) 建克隆库（owner 与 prod 一致，保证 FORCE RLS 语义可比）
+dropdb --if-exists topems_smoke_bff
+createdb -O topems_prod topems_smoke_bff
+
+# 2) 只读导出（本地超户执行；非超户不可行，原因见 12.5）
+pg_dump --format=custom --exclude-table=mes.tenant_backfill_quarantine \
+  -d topems_prod -f /tmp/prod_smoke.dump
+
+# 3) 还原（保留 owner/privileges；row_security=off 防 FORCE RLS 挡 COPY）
+PGOPTIONS='-c row_security=off' pg_restore -d topems_smoke_bff /tmp/prod_smoke.dump
+
+# 4) 物化视图需手工刷新（dump 不携带 matview 数据）
+psql -d topems_smoke_bff -c "REFRESH MATERIALIZED VIEW bi.org_stats;"
+
+# 5) 用克隆库起 BFF（DATABASE_URL 与 MIGRATE_URL 必须同时改，
+#    否则进程环境里残留 *_prod 会让脚本的目标实例探测判 prod 并拒绝）
+export DATABASE_URL="${DATABASE_URL%topems_prod}topems_smoke_bff"
+export MIGRATE_URL="${MIGRATE_URL%topems_prod}topems_smoke_bff"
+export SERVER_PORT=18099 BIND_ADDR=127.0.0.1
+./target/debug/topems-server > /tmp/server_smoke.log 2>&1 &
+
+# 6) 跑 smoke
+export WEB_SMOKE_ENV=local WEB_BFF_URL=http://127.0.0.1:18099
+python3 scripts/web_contract_smoke.py --json /tmp/smoke.json
+```
+
+### 12.5 环境侧真实限制（已在上面的序列里绕开）
+
+1. **非超户 `pg_dump` 不可行**：① `mes.tenant_backfill_quarantine` 的 owner 是本地超户 `xingzhai`，`topems_prod` 无任何权限 → 报 `permission denied`；② `ai.ai_models` 是 `FORCE ROW LEVEL SECURITY`，非超户导出被策略拦。故导出用本地超户，**纯 SELECT**：导出前后 `_sqlx_migrations` 最后一条仍是 `2026-11-15 17:22`，无新增记录。
+2. **排除表必须带 schema**：`--exclude-table=tenant_backfill_quarantine` 不生效，要写 `mes.tenant_backfill_quarantine`。
+3. 克隆库缺 `mes.v_tenant_backfill_gaps`（依赖被排除的表），还原时会有 2 条报错，对 smoke 无影响。
+4. 物化视图不随 dump 携带数据，必须执行第 4 步。
+
+### 12.6 修复内容与落点（提交 `fd72f7d4a`）
+
+按各服务独立部署 `main.rs` 与 mes 模块的同口径写法，在 protected 路由上补一层
+`from_fn_with_state(ctx.db.clone(), tenant_middleware())`，位置在 `auth_middleware` 之内、权限门之外：
+
+- [ticket_real_module.rs](../../svc/server/src/modules/ticket_real_module.rs)：`ticket_routes + feedback_compat + ticket_ext` 合并后补层；
+- [mobile_real_module.rs](../../svc/server/src/modules/mobile_real_module.rs)：`build_protected_routes + contract_fallback` 合并后补层；
+- [monitor_real_module.rs](../../svc/server/src/modules/monitor_real_module.rs)：`nest(api_prefix, create_routes)` 之后补层。
+
