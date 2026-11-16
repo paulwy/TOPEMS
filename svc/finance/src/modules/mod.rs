@@ -1745,6 +1745,7 @@ pub async fn delete_approval_config_handler(
 pub async fn submit_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批提交请求: {:?}", req);
@@ -1767,11 +1768,16 @@ pub async fn submit_approval(
         .unwrap_or("approved");
     let approver_id = claims.user_id().ok().unwrap_or_else(Uuid::nil);
 
-    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
-    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    // 复用 tenant_middleware 的请求事务：审批审计与业务写入同生共死，
+    // 不再为审计另开作用域（M-1/B4）。
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     if let Some(record_id) = record_id {
-        if let Err(e) = topems_shared_db::approval::create_approval_and_log_db(
-            &audit_db,
+        if let Err(e) = topems_shared_db::approval::create_approval_and_log_db_txn(
+            &state.db,
+            txn,
             entity_type,
             record_id,
             from_status,
@@ -1808,6 +1814,7 @@ pub async fn submit_approval(
 pub async fn approve_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批通过请求: {:?}", req);
@@ -1833,11 +1840,16 @@ pub async fn approve_approval(
         .and_then(|v| v.as_str())
         .unwrap_or("approved");
 
-    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
-    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    // 复用 tenant_middleware 的请求事务：审批审计与业务写入同生共死，
+    // 不再为审计另开作用域（M-1/B4）。
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        if let Err(e) = topems_shared_db::approval::execute_transition_and_log_db(
-            &audit_db,
+        if let Err(e) = topems_shared_db::approval::execute_transition_and_log_db_txn(
+            &state.db,
+            txn,
             None,
             entity_type,
             record_id,
@@ -1861,6 +1873,7 @@ pub async fn approve_approval(
 pub async fn reject_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批驳回请求: {:?}", req);
@@ -1883,11 +1896,16 @@ pub async fn reject_approval(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
-    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
+    // 复用 tenant_middleware 的请求事务：审批审计与业务写入同生共死，
+    // 不再为审计另开作用域（M-1/B4）。
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        if let Err(e) = topems_shared_db::approval::reject_and_log_db(
-            &audit_db,
+        if let Err(e) = topems_shared_db::approval::reject_and_log_db_txn(
+            &state.db,
+            txn,
             entity_type,
             record_id,
             approval_id,

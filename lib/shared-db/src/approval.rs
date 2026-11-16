@@ -10,7 +10,8 @@
 //! 使 finance/erp/pm 等服务也可复用。
 
 use serde_json::json;
-use sqlx::postgres::PgPool;
+use sqlx::postgres::{PgPool, Postgres};
+use sqlx::Transaction;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::fsm::{FsmDef, FsmError};
 use uuid::Uuid;
@@ -357,6 +358,116 @@ pub async fn reject_and_log_db(
 ) -> Result<(), sqlx::Error> {
     AuditLogService::from_db(db.clone())
         .log_operation(
+            "approval_reject",
+            entity_type,
+            Some(record_id),
+            None,
+            Some(json!({
+                "approval_id": approval_id,
+                "reason": reason,
+            })),
+            "success",
+            None,
+        )
+        .await?;
+    Ok(())
+}
+
+/// [`create_approval_and_log_db`] 的请求事务版本：复用 `tenant_middleware`
+/// 已开启的事务，审计写入与业务写入同生共死；提交/回滚仍由中间件负责。
+///
+/// 无请求上下文时 `scope_with` 直接报错（fail-closed），后台任务请继续用
+/// [`create_approval_and_log_db`]（自开作用域，行为不变）。
+pub async fn create_approval_and_log_db_txn(
+    db: &Db,
+    txn: &mut Transaction<'_, Postgres>,
+    entity_type: &str,
+    record_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+    approver_id: Uuid,
+) -> Result<Uuid, sqlx::Error> {
+    let approval_id = Uuid::new_v4();
+    let approver_str = approver_id.to_string();
+    AuditLogService::from_db(db.clone())
+        .log_operation_with_txn(
+            txn,
+            "approval_start",
+            entity_type,
+            Some(record_id),
+            Some(&approver_str),
+            Some(json!({
+                "approval_id": approval_id,
+                "from_status": from_status,
+                "to_status": to_status,
+            })),
+            "success",
+            None,
+        )
+        .await?;
+    Ok(approval_id)
+}
+
+/// [`execute_transition_and_log_db`] 的请求事务版本：状态转换与审计都复用
+/// 调用方事务，不再单独 `BEGIN`/`COMMIT`。
+pub async fn execute_transition_and_log_db_txn(
+    db: &Db,
+    txn: &mut Transaction<'_, Postgres>,
+    table: Option<&str>,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+) -> Result<(), sqlx::Error> {
+    if let Some(table) = table {
+        let sql = format!(
+            "UPDATE {} SET status = $1, updated_at = NOW() \
+             WHERE id = $2 AND status = $3 AND deleted_at IS NULL",
+            table
+        );
+        let mut scope = db.scope_with(txn).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(to_status)
+            .bind(record_id)
+            .bind(from_status)
+            .execute(&mut scope)
+            .await?;
+        // 借用事务的 commit 是空操作，收尾仍归请求中间件。
+        scope.commit().await?;
+    }
+
+    AuditLogService::from_db(db.clone())
+        .log_operation_with_txn(
+            txn,
+            "approval_approve",
+            entity_type,
+            Some(record_id),
+            None,
+            Some(json!({
+                "approval_id": approval_id,
+                "from_status": from_status,
+                "to_status": to_status,
+            })),
+            "success",
+            None,
+        )
+        .await?;
+    Ok(())
+}
+
+/// [`reject_and_log_db`] 的请求事务版本。
+pub async fn reject_and_log_db_txn(
+    db: &Db,
+    txn: &mut Transaction<'_, Postgres>,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    reason: &str,
+) -> Result<(), sqlx::Error> {
+    AuditLogService::from_db(db.clone())
+        .log_operation_with_txn(
+            txn,
             "approval_reject",
             entity_type,
             Some(record_id),

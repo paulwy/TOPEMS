@@ -1,7 +1,7 @@
 use crate::scope::Db;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::{FromRow, PgPool, Postgres, Transaction};
 use topems_shared_auth::middleware::tenant::current_request_tenant;
 use topems_shared_auth::security::audit_logger::current_audit_context;
 use topems_shared_core::audit::redact_sensitive_json;
@@ -218,6 +218,34 @@ impl AuditLogService {
         &self,
         request: &CreateAuditLogRequest,
     ) -> Result<AuditLog, sqlx::Error> {
+        let mut scope = self.write_scope().await?;
+        let record = Self::insert_audit_log(&mut scope, request).await?;
+        scope.commit().await?;
+        Ok(record)
+    }
+
+    /// 在既有请求事务上写入审计日志（复用该事务，不再自开作用域）。
+    ///
+    /// 事务提交/回滚由 `tenant_middleware` 统一负责，这里只叠加 schema 与租户 GUC。
+    /// 无请求上下文时 [`Db::scope_with`] 直接报错（fail-closed）：后台任务请继续用
+    /// [`AuditLogService::create_audit_log`]（自动走系统作用域）。
+    pub async fn create_audit_log_with_txn(
+        &self,
+        txn: &mut Transaction<'_, Postgres>,
+        request: &CreateAuditLogRequest,
+    ) -> Result<AuditLog, sqlx::Error> {
+        let mut scope = self.db.scope_with(txn).await?;
+        let record = Self::insert_audit_log(&mut scope, request).await?;
+        // 借用事务的 commit 是空操作，收尾仍归请求中间件。
+        scope.commit().await?;
+        Ok(record)
+    }
+
+    /// 在给定作用域内执行审计写入（INSERT + 可选 origin UPDATE），不负责收尾。
+    async fn insert_audit_log(
+        scope: &mut crate::scope::ScopedTxn<'_>,
+        request: &CreateAuditLogRequest,
+    ) -> Result<AuditLog, sqlx::Error> {
         // request_details/response_details: JSONB 直接写（不再手动 serde_json::to_string）
         // user_id: 字符串 → UUID（解析失败写 NULL，兼容未知格式）
         let user_uuid = request
@@ -248,7 +276,6 @@ impl AuditLogService {
 
         // status: VARCHAR(20) 直接写字符串（"success"/"failed" 等）
         // ip_address: VARCHAR(45) 直接写 TEXT，不再强制 INET cast
-        let mut scope = self.write_scope().await?;
         let record = sqlx::query_as::<_, AuditLogRecord>(
             r#"
             INSERT INTO public.audit_logs (
@@ -289,18 +316,17 @@ impl AuditLogService {
         .bind(request.error_message.as_deref())
         .bind(ip_address)
         .bind(user_agent)
-        .fetch_one(&mut scope)
+        .fetch_one(&mut *scope)
         .await?;
 
         if let Some(origin) = request.origin {
             sqlx::query("UPDATE public.audit_logs SET origin = $1 WHERE id = $2")
                 .bind(origin.as_str())
                 .bind(record.id)
-                .execute(&mut scope)
+                .execute(&mut *scope)
                 .await?;
         }
 
-        scope.commit().await?;
         Ok(record.into_audit_log())
     }
 
@@ -345,6 +371,61 @@ impl AuditLogService {
             req = req.with_error(err.to_string());
         }
         self.create_audit_log(&req).await
+    }
+
+    /// [`AuditLogService::log_operation`] 的请求事务版本：复用调用方事务，
+    /// 不再自开作用域，参数语义与默认版本完全一致。
+    pub async fn log_operation_with_txn(
+        &self,
+        txn: &mut Transaction<'_, Postgres>,
+        action: &str,
+        entity_type: &str,
+        entity_id: Option<Uuid>,
+        user_id: Option<&str>,
+        request_details: Option<serde_json::Value>,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> Result<AuditLog, sqlx::Error> {
+        let req = Self::operation_request(
+            action,
+            entity_type,
+            entity_id,
+            user_id,
+            request_details,
+            status,
+            error_message,
+        );
+        self.create_audit_log_with_txn(txn, &req).await
+    }
+
+    /// 构造 `log_operation` 系列的审计请求（默认/请求事务两个入口共用）。
+    fn operation_request(
+        action: &str,
+        entity_type: &str,
+        entity_id: Option<Uuid>,
+        user_id: Option<&str>,
+        request_details: Option<serde_json::Value>,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> CreateAuditLogRequest {
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            entity_type.to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
+        req
     }
 
     pub async fn query_audit_logs(

@@ -127,13 +127,14 @@ HTTP 400
 - 仅剩 `svc/finance/src/event_handlers/mod.rs` 9 处租户作用域：后台事件消费无请求上下文，守卫不触发，保留原状。
 - `svc/finance/src/main.rs` 开启 `deny_request_tenant_scope()`（与 `deny_request_own_txn()` 并存）。
 - `forecast_v53` 的 3 个 `#[sqlx::test]` 用例补 `scope_request_tenant` + 显式事务；本地无建库权限（`permission denied to create database`）仍无法执行，属环境受限。
-- 数字口径：243 = finance 的租户作用域调用点总数，也等于现在 handler 级 `Extension<RlsTxnCell>` 包装数；357 = `db.scope_with(txn)` 真实调用点（含此前已迁移的 accounting_subjects / currencies / operational / reconcile_orders 等）。
+- 数字口径（可复现口径，正式）：**243 = finance 租户作用域调用点 = handler 级 `Extension<RlsTxnCell>` 包装数**；**357 = `db.scope_with(txn)` 真实调用点**（含此前已迁移的 accounting_subjects / currencies / operational / reconcile_orders 等）。两者是包含关系：243 是本批新迁的租户作用域调用点，357 是本批完成后 finance 代码里 `scope_with` 的全部出现次数。
+- 说明：此前口头提到的「327 处事务包装 / finance 129 处」属**不可复现的口述数**（无法由脚本或代码检索复算出同一分母），自本条起不再作为事实引用，一律以 243 / 357 为准。
 
 ### 8.3 tenant-context 钩子两处 FAIL
 
 - `svc/integration/src/event_handlers/mod.rs:92`：后台同步日志写入，登记 `// tenant-system: 后台事件编排无请求上下文…`。
-- `svc/finance/src/modules/mod.rs` 3 处 `Db::new(state.pool)`：共享审批/审计 helper 内部自开作用域，登记 `// tenant-system:` 并以独立 Db 承载；**双事务仍是登记缺口**（根治需 shared-db helper 支持请求事务，按计划需单独评估）。
-- 结果：`check-tenant-context.cjs` → R1 0 处、R2 972 处（基线 1094），PASS 无新增违规。
+- ~~`svc/finance/src/modules/mod.rs` 3 处 `Db::new(state.pool)`~~ **已关闭（2026-11-16 晚，见 §8.5）**：shared-db helper 支持请求事务后，3 处改为复用 `RlsTxnCell` 并删除 `// tenant-system:` 登记豁免；finance 内该标记 0 命中，双事务缺口关闭。
+- 结果：`check-tenant-context.cjs` → R1 0 处、R2 972 处（基线 1094），PASS 无新增违规。说明：R2 读数不变是因为这 3 处原本带 `// tenant-system:` 登记注释、从未计入 R2（基线也不含该文件）；改造后它们从「登记豁免」变为「结构性消失」，口径上不再需要豁免。
 
 ### 8.4 finance 运行时探针（影子库，只读）
 
@@ -146,3 +147,11 @@ HTTP 400
 | `GET /api/finance/audit-v52/rules`（service 层透传 txn） | 200 |
 | `GET /api/finance/dashboard`（超管无 `x-tenant-id`） | 400「缺少租户上下文」 |
 | `GET /api/finance/audit-v52/anomaly/summary` | 500，日志为 `relation "finance_anomaly_alerts_v52" does not exist`（影子库缺表，非守卫问题） |
+
+### 8.5 shared-db 审批/审计 helper 支持请求事务（关闭 §8.3 的双事务缺口）
+
+- `lib/shared-db/src/audit.rs`：新增 `AuditLogService::create_audit_log_with_txn` / `log_operation_with_txn`，内部 `self.db.scope_with(txn)` 复用请求事务（只叠加 `search_path` 与租户 GUC，不 commit）；默认入口 `create_audit_log` / `log_operation` 拆出共用私有实现，行为不变。
+- `lib/shared-db/src/approval.rs`：新增 `create_approval_and_log_db_txn` / `execute_transition_and_log_db_txn` / `reject_and_log_db_txn`；状态转换 UPDATE 与审计写入同用请求事务。原有 `*_db` 与裸池版本零改动，qms/mes 等既有调用点默认路径不变。
+- `svc/finance/src/modules/mod.rs`：`submit_approval` / `approve_approval` / `reject_approval` 改为取 `Extension<RlsTxnCell>`，用 `state.db` + `*_db_txn`，3 处 `Db::new(state.pool)` 与 `// tenant-system:` 注释全部删除。
+- 兼容性边界：无请求上下文时 `scope_with` 直接报 Protocol（fail-closed），后台任务继续走原 `*_db`（自开作用域，行为不变）。
+- 证据：`cargo check -p topems-shared-db -p topems-finance -p topems-qms --offline` 通过；`check-tenant-context.cjs` PASS（R1 0 / R2 972，无新增）；`check-request-txn.mjs` bare 1656 / own 0（基线 1656）；TXN-2XX 门禁 OK；`pnpm check:ledger`、`pnpm facts:check` 全绿。
