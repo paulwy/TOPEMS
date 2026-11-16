@@ -355,12 +355,10 @@ pub async fn setup_company_info(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE tenant_id = $2 AND step_name = 'company_info'
-                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -502,12 +500,10 @@ pub async fn setup_departments(
         r#"
         SELECT LOWER(name) FROM hrm.departments
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
-          AND LOWER(name) = ANY($2::text[])
+          AND LOWER(name) = ANY($1::text[])
         LIMIT 1
         "#
     ))
-    .bind(tenant_filter)
     .bind(
         requested_names
             .iter()
@@ -566,12 +562,10 @@ pub async fn setup_departments(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE tenant_id = $2 AND step_name = 'departments'
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(org_id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -701,11 +695,9 @@ pub async fn setup_positions(
             r#"
             SELECT COUNT(*) FROM hrm.departments
             WHERE deleted_at IS NULL
-              AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
-              AND id = ANY($2::uuid[])
+              AND id = ANY($1::uuid[])
             "#
         ))
-        .bind(tenant_filter)
         .bind(dept_ids.iter().copied().collect::<Vec<_>>())
         .fetch_optional(&mut **txn)
         .await
@@ -726,12 +718,10 @@ pub async fn setup_positions(
         r#"
         SELECT LOWER(name) FROM hrm.positions
         WHERE deleted_at IS NULL
-          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
-          AND LOWER(name) = ANY($2::text[])
+          AND LOWER(name) = ANY($1::text[])
         LIMIT 1
         "#
     ))
-    .bind(tenant_filter)
     .bind(
         requested_names
             .iter()
@@ -790,12 +780,10 @@ pub async fn setup_positions(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE tenant_id = $2 AND step_name = 'positions'
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(org_id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1029,12 +1017,10 @@ pub async fn setup_admin_user(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE tenant_id = $2 AND step_name = 'admin_user'
-                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -1170,12 +1156,10 @@ pub async fn complete_initialization(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE tenant_id = $2 AND step_name = 'completion'
-                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -1184,10 +1168,9 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.companies
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                WHERE deleted_at IS NULL
                 "#
             ))
-            .bind(tenant_filter)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1197,10 +1180,9 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.departments
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                WHERE deleted_at IS NULL
                 "#
             ))
-            .bind(tenant_filter)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1210,10 +1192,9 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.positions
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                WHERE deleted_at IS NULL
                 "#
             ))
-            .bind(tenant_filter)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1224,10 +1205,8 @@ pub async fn complete_initialization(
                 r#"
                 SELECT COUNT(*) FROM hrm.employees
                 WHERE deleted_at IS NULL AND user_id IS NOT NULL
-                  AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
                 "#
             ))
-            .bind(tenant_filter)
             .fetch_optional(&mut **txn)
             .await
             .ok()

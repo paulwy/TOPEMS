@@ -362,7 +362,7 @@ pub async fn update_review(
             final_rating = COALESCE($6, final_rating),
             comments = COALESCE($7, comments),
             updated_at = $8
-        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $9
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
@@ -495,7 +495,7 @@ pub async fn submit_review(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'submitted', updated_at = $2
-        WHERE id = $1 AND status = 'draft' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'draft'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
@@ -548,7 +548,7 @@ pub async fn approve_review(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'approved', updated_at = $2
-        WHERE id = $1 AND status = 'submitted' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'submitted'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
@@ -807,7 +807,7 @@ pub async fn update_goal(
             status = COALESCE($6, status),
             due_date = COALESCE($7, due_date),
             updated_at = $8
-        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $9
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
         "#)
     )

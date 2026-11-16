@@ -361,17 +361,18 @@ pub async fn update_department(
     // 如果没有提供 parent_id，使用 existing 的值
     let parent_id = req.parent_id.or(existing.parent_id);
 
-    let result = sqlx::query_as::<_, Department>(
-        only_own_schema_query!("hrm", r#"
+    let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
+        "hrm",
+        r#"
         UPDATE hrm.departments SET
             tenant_id = $2, org_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10, name_en = COALESCE($11, name_en)
-        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1
         RETURNING id, tenant_id, org_id,
                   CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, parent_id, manager_id, description, status, created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(existing.tenant_id)
     .bind(org_id)
@@ -462,20 +463,11 @@ pub async fn delete_department(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 

@@ -911,21 +911,13 @@ pub async fn get_renewal(
 pub async fn update_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateRenewalRequest>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
@@ -937,7 +929,7 @@ pub async fn update_renewal(
             new_end_date = COALESCE($5, new_end_date),
             new_salary = COALESCE($6, new_salary),
             updated_at = $7
-        WHERE id = $1 AND status = 'pending' AND ($8::uuid IS NULL OR tenant_id = $8::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -950,7 +942,6 @@ pub async fn update_renewal(
     .bind(req.new_end_date)
     .bind(req.new_salary)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -975,25 +966,16 @@ pub async fn update_renewal(
 pub async fn delete_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1031,20 +1013,12 @@ pub async fn delete_renewal(
 pub async fn approve_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
@@ -1053,7 +1027,7 @@ pub async fn approve_renewal(
             status = 'approved',
             approved_at = $2,
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -1061,7 +1035,6 @@ pub async fn approve_renewal(
     ))
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1099,21 +1072,13 @@ pub async fn approve_renewal(
 pub async fn reject_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RejectRequest>,
 ) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
@@ -1122,7 +1087,7 @@ pub async fn reject_renewal(
             status = 'rejected',
             rejection_reason = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'pending' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -1131,7 +1096,6 @@ pub async fn reject_renewal(
     .bind(id)
     .bind(&req.reason)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1174,30 +1138,21 @@ pub struct RejectRequest {
 pub async fn execute_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let renewal = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
         SELECT id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
-        FROM hrm.contract_renewals WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+        FROM hrm.contract_renewals WHERE id = $1
         "#
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1235,7 +1190,7 @@ pub async fn execute_renewal(
             salary = COALESCE($4, salary),
             status = 'active',
             updated_at = $5
-        WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
+        WHERE id = $1
         "#
     ))
     .bind(renewal.contract_id)
@@ -1243,18 +1198,16 @@ pub async fn execute_renewal(
     .bind(renewal.new_end_date)
     .bind(renewal.new_salary)
     .bind(now)
-    .bind(renewal.tenant_id)
     .execute(&mut **txn)
     .await;
 
     match update_result {
         Ok(_) => {
             let _ = sqlx::query(
-                only_own_schema_query!("hrm", "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
+                only_own_schema_query!("hrm", "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1")
             )
             .bind(id)
             .bind(now)
-            .bind(renewal.tenant_id)
             .execute(&mut **txn)
             .await;
 

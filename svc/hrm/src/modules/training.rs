@@ -270,7 +270,7 @@ pub async fn update_plan(
             status = COALESCE($7, status),
             budget = COALESCE($8, budget),
             updated_at = $9
-        WHERE deleted_at IS NULL AND id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1
         RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
@@ -917,7 +917,7 @@ pub async fn update_record(
             completed_at = COALESCE($6, completed_at),
             feedback = COALESCE($7, feedback),
             updated_at = $8
-        WHERE deleted_at IS NULL AND id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
@@ -1152,7 +1152,7 @@ async fn set_plan_status(
         UPDATE hrm.training_plans SET
             status = $2,
             updated_at = $3
-        WHERE deleted_at IS NULL AND id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1
         RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
@@ -1207,7 +1207,7 @@ pub async fn complete_record(
             completion_status = 'completed',
             completed_at = $2,
             updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date,
                   attendance_status, completion_status, score, certificate_no,
                   completed_at, feedback, created_at, updated_at
