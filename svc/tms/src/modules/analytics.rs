@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
@@ -110,10 +111,17 @@ pub struct FreightCostTrendItem {
 pub async fn get_shipment_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ShipmentTrendItem>> {
     tracing::info!("获取TMS运输趋势数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -148,10 +156,6 @@ pub async fn get_shipment_trend(
         })
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -169,10 +173,17 @@ pub async fn get_shipment_trend(
 pub async fn get_vehicle_ranking(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<VehicleRankingItem>> {
     tracing::info!("获取TMS车辆运单排名");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -204,10 +215,6 @@ pub async fn get_vehicle_ranking(
         )
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -226,10 +233,17 @@ pub async fn get_vehicle_ranking(
 pub async fn get_status_distribution(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<StatusDistributionItem>> {
     tracing::info!("获取TMS运单状态分布");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -269,10 +283,6 @@ pub async fn get_status_distribution(
         })
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -291,10 +301,17 @@ pub async fn get_status_distribution(
 pub async fn get_carrier_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<CarrierPerformanceItem>> {
     tracing::info!("获取TMS承运商绩效数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -347,10 +364,6 @@ pub async fn get_carrier_performance(
         )
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -369,10 +382,17 @@ pub async fn get_route_efficiency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<RouteEfficiencyItem>> {
     tracing::info!("获取TMS路线效率数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -430,10 +450,6 @@ pub async fn get_route_efficiency(
         )
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -452,10 +468,17 @@ pub async fn get_route_efficiency(
 pub async fn get_driver_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<DriverPerformanceItem>> {
     tracing::info!("获取TMS司机绩效数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -508,10 +531,6 @@ pub async fn get_driver_performance(
         )
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -529,10 +548,17 @@ pub async fn get_driver_performance(
 pub async fn get_shipment_trend_enhanced(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ShipmentTrendEnhancedItem>> {
     tracing::info!("获取TMS运单趋势增强数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -594,10 +620,6 @@ pub async fn get_shipment_trend_enhanced(
         )
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -616,10 +638,17 @@ pub async fn get_shipment_trend_enhanced(
 pub async fn get_vehicle_utilization(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<VehicleUtilizationItem>> {
     tracing::info!("获取TMS车辆利用率数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -667,10 +696,6 @@ pub async fn get_vehicle_utilization(
         })
         .collect();
 
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
-
     ApiResponse::success(items, "获取成功")
 }
 
@@ -689,10 +714,17 @@ pub async fn get_vehicle_utilization(
 pub async fn get_freight_cost_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<FreightCostTrendItem>> {
     tracing::info!("获取TMS运费成本趋势数据");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(Vec::new(), "获取成功");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::warn!("建立分析查询作用域失败: {}", e);
@@ -745,10 +777,6 @@ pub async fn get_freight_cost_trend(
             }
         })
         .collect();
-
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("分析查询事务提交失败: {}", e);
-    }
 
     ApiResponse::success(items, "获取成功")
 }
