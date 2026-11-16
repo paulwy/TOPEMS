@@ -396,24 +396,43 @@ pub async fn search_handler(
 
     let (_offset, _total_pages, current_page) = calculate_pagination(page, page_size, total);
 
-    // 记录最近搜索（fire-and-forget，不阻塞响应）——写入 public.search_recent（用户级去重）。
-    // 说明：旧版写 public.search_logs 但该表无 query/result_count 列（INSERT 恒失败被 let _ 吞），
-    // 本批顺手改道 search_recent（有真实列，且支撑 /search/recent 读回）。
+    // 双写（fire-and-forget，不阻塞响应）：
+    //   public.search_recent — 用户级最近搜索，(user_id, keyword) 去重，支撑 /search/recent 读回
+    //   public.search_logs   — 聚合搜索日志，按 query 聚合频次，支撑 /suggestions 词频排序
+    // 两表已在迁移 20261115141800/142400 补齐所需列。
     let recent_user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let recent_tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     let recent_keyword = keyword.clone();
     let recent_db = db.clone();
+    let total_count = total;
     tokio::spawn(async move {
-        let Ok(mut scope) = recent_db.scope().await else {
+        // 后台任务无请求事务：按显式租户短事务写入。
+        let Ok(mut scope) = recent_db.scope_for_tenant(recent_tenant_id).await else {
             return;
         };
+        // 1) 用户级：ON CONFLICT DO UPDATE 刷新 searched_at
         let _ = sqlx::query(
             "INSERT INTO public.search_recent (user_id, keyword, searched_at) VALUES ($1, $2, now()) \
              ON CONFLICT (user_id, keyword) DO UPDATE SET searched_at = now()",
         )
         .bind(recent_user_id)
-        .bind(recent_keyword)
+        .bind(recent_keyword.as_str())
         .execute(&mut scope)
         .await;
+
+        // 2) 聚合级：append-only，无去重（suggestions 侧 GROUP BY 自行聚合）
+        // duration_ms 近似取 0（请求响应耗时不在此路径采集）；created_at 用列默认值 CURRENT_TIMESTAMP
+        let _ = sqlx::query(
+            "INSERT INTO public.search_logs (tenant_id, user_id, query, result_count, duration_ms) \
+             VALUES ($1, $2, $3, $4, 0)",
+        )
+        .bind(recent_tenant_id)
+        .bind(recent_user_id)
+        .bind(recent_keyword.as_str())
+        .bind(total_count as i32)
+        .execute(&mut scope)
+        .await;
+
         let _ = scope.commit().await;
     });
 
@@ -509,11 +528,17 @@ pub(crate) async fn suggest_terms(
 
 pub async fn suggestions_handler(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SuggestionsQuery>,
 ) -> ApiResponse<SuggestionsResponse> {
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => return ApiResponse::server_error(&format!("scope begin failed: {e}")),
     };
@@ -536,9 +561,15 @@ pub async fn suggestions_handler(
 pub async fn list_recent(
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<String>> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
-    let Ok(mut scope) = db.scope_read().await else {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        // 最近搜索为 best-effort 读：无请求事务时返回空列表。
+        return api_success(Vec::new());
+    };
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return api_success(Vec::new());
     };
     let rows = sqlx::query_as::<_, (String,)>(
@@ -564,9 +595,14 @@ pub async fn list_recent(
 pub async fn clear_recent(
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<String> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
-    let Ok(mut scope) = db.scope().await else {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return api_success("cleared".to_string());
+    };
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return api_success("cleared".to_string());
     };
     let _ = sqlx::query("DELETE FROM public.search_recent WHERE user_id = $1")

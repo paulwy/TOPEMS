@@ -6,6 +6,8 @@
 //!   -32001；token 缺失/不匹配 → 401 + JSON-RPC error -32001）
 //! - 工具：`search.global` / `search.suggest` / `search.documents`，桥接 `handlers` 查询函数
 //!   （复用既有 SQL 与投影逻辑，不重复实现）
+//! - 租户隔离：端点不挂租户中间件，工具调用必须显式传 `tenant_id`（UUID，兼容
+//!   `params._meta.tenantId`），一律走 `scope_read_for_tenant`，缺省/非法直接 -32602
 
 use axum::{
     extract::State,
@@ -17,6 +19,7 @@ use serde_json::{json, Value};
 use topems_shared_db::scope::Db;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use topems_shared_mcp::protocol::{McpCapability, McpProtocolVersion, McpTool};
+use uuid::Uuid;
 
 use crate::handlers::{search_all, search_documents, suggest_terms};
 
@@ -147,11 +150,12 @@ fn tool_definitions() -> Vec<McpTool> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
+                    "tenant_id": { "type": "string", "description": "租户 UUID（必填，决定 RLS 查询范围）" },
                     "query": { "type": "string", "description": "搜索关键词（非空）" },
                     "limit": { "type": "integer", "minimum": 1, "maximum": MAX_RESULTS, "description": "返回条数上限，默认 10" },
                     "modules": { "type": "array", "items": { "type": "string" }, "description": "限定搜索模块：user/customer/order/document，默认全部" }
                 },
-                "required": ["query"]
+                "required": ["query", "tenant_id"]
             }),
         },
         McpTool {
@@ -160,9 +164,11 @@ fn tool_definitions() -> Vec<McpTool> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
+                    "tenant_id": { "type": "string", "description": "租户 UUID（必填，决定 RLS 查询范围）" },
                     "q": { "type": "string", "description": "建议词前缀（可选，空则返回 7 天热门）" },
                     "limit": { "type": "integer", "minimum": 1, "maximum": MAX_RESULTS, "description": "返回条数上限，默认 10" }
-                }
+                },
+                "required": ["tenant_id"]
             }),
         },
         McpTool {
@@ -172,10 +178,11 @@ fn tool_definitions() -> Vec<McpTool> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
+                    "tenant_id": { "type": "string", "description": "租户 UUID（必填，决定 RLS 查询范围）" },
                     "query": { "type": "string", "description": "检索关键词（非空）" },
                     "limit": { "type": "integer", "minimum": 1, "maximum": MAX_RESULTS, "description": "返回条数上限，默认 10" }
                 },
-                "required": ["query"]
+                "required": ["query", "tenant_id"]
             }),
         },
     ]
@@ -192,6 +199,31 @@ fn extract_limit(params: &Value) -> i64 {
         .and_then(Value::as_i64)
         .map(|l| l.clamp(1, MAX_RESULTS))
         .unwrap_or(10)
+}
+
+/// 解析租户：优先 `arguments.tenant_id`，兼容 `params._meta.tenantId`（MCP 标准元数据位）
+fn extract_tenant_id(params: &Value, args: &Value) -> Result<Uuid, JsonRpcError> {
+    let raw = args
+        .get("tenant_id")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .or_else(|| {
+            params
+                .get("_meta")
+                .and_then(|m| m.get("tenantId"))
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+        });
+    let Some(raw) = raw else {
+        return Err(JsonRpcError::invalid_params(Some(
+            json!({ "reason": "tenant_id 必填（租户 UUID）" }),
+        )));
+    };
+    Uuid::parse_str(raw).map_err(|_| {
+        JsonRpcError::invalid_params(Some(json!({ "reason": "tenant_id 必须是合法 UUID" })))
+    })
 }
 
 fn text_result(inner: Value) -> Value {
@@ -213,6 +245,20 @@ async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpc
         .cloned()
         .unwrap_or_else(|| json!({}));
 
+    // 先拦未知工具，再统一解析租户：所有工具都必须落在显式租户读作用域内。
+    if !matches!(tool, TOOL_GLOBAL | TOOL_SUGGEST | TOOL_DOCUMENTS) {
+        return JsonRpcResponse::error(
+            id,
+            JsonRpcError::invalid_params(Some(
+                json!({ "reason": format!("unknown tool: {tool}") }),
+            )),
+        );
+    }
+    let tenant_id = match extract_tenant_id(&params, &args) {
+        Ok(t) => t,
+        Err(e) => return JsonRpcResponse::error(id, e),
+    };
+
     match tool {
         TOOL_GLOBAL => {
             let query = args
@@ -233,7 +279,8 @@ async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpc
                     .map(String::from)
                     .collect()
             });
-            let mut scope = match db.scope_read().await {
+            // MCP 端点不挂租户中间件（server token 内网面）：按调用方传入的租户显式隔离。
+            let mut scope = match db.scope_read_for_tenant(tenant_id).await {
                 Ok(s) => s,
                 Err(e) => {
                     return JsonRpcResponse::error(
@@ -269,7 +316,7 @@ async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpc
                 .map(str::trim)
                 .map(String::from);
             let limit = extract_limit(&args);
-            let Ok(mut scope) = db.scope_read().await else {
+            let Ok(mut scope) = db.scope_read_for_tenant(tenant_id).await else {
                 return JsonRpcResponse::error(
                     id,
                     JsonRpcError::internal_error("scope begin failed".to_string(), None),
@@ -291,7 +338,7 @@ async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpc
                 );
             };
             let limit = extract_limit(&args);
-            let mut scope = match db.scope_read().await {
+            let mut scope = match db.scope_read_for_tenant(tenant_id).await {
                 Ok(s) => s,
                 Err(e) => {
                     return JsonRpcResponse::error(
@@ -382,10 +429,42 @@ mod tests {
         assert!(names.contains(&TOOL_GLOBAL));
         assert!(names.contains(&TOOL_SUGGEST));
         assert!(names.contains(&TOOL_DOCUMENTS));
-        // 每个工具都声明 input_schema 且含 type=object
+        // 每个工具都声明 inputSchema 且含 type=object（McpTool 序列化为 camelCase）
         for t in &tools {
-            assert_eq!(t["input_schema"]["type"], "object");
+            assert_eq!(t["inputSchema"]["type"], "object");
+            // MCP 无租户中间件：tenant_id 必须作为显式必填参数出现在 schema 中
+            let required = t["inputSchema"]["required"].as_array().unwrap();
+            assert!(required.iter().any(|v| v == "tenant_id"));
         }
+    }
+
+    #[test]
+    fn tenant_id_required_and_validated() {
+        let tenant = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        let args = json!({ "query": "x", "tenant_id": tenant });
+        assert_eq!(
+            extract_tenant_id(&json!({}), &args).unwrap(),
+            Uuid::parse_str(tenant).unwrap()
+        );
+        // 兼容 params._meta.tenantId
+        let params = json!({ "_meta": { "tenantId": tenant } });
+        assert_eq!(
+            extract_tenant_id(&params, &json!({})).unwrap(),
+            Uuid::parse_str(tenant).unwrap()
+        );
+        // 缺省 / 非法 UUID 均返回 -32602
+        assert_eq!(
+            extract_tenant_id(&json!({}), &json!({ "query": "x" }))
+                .unwrap_err()
+                .code,
+            -32602
+        );
+        assert_eq!(
+            extract_tenant_id(&json!({}), &json!({ "tenant_id": "not-a-uuid" }))
+                .unwrap_err()
+                .code,
+            -32602
+        );
     }
 
     #[test]
