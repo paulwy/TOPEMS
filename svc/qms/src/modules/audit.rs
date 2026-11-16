@@ -9,6 +9,7 @@ use axum::{
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -25,11 +26,16 @@ use topems_shared_core::response::ApiResponse;
 )]
 pub async fn list_audit_plans(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditPlanQuery>,
 ) -> ApiResponse<Vec<AuditPlan>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -85,6 +91,7 @@ pub async fn list_audit_plans(
 )]
 pub async fn create_audit_plan(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateAuditPlanRequest>,
@@ -102,7 +109,11 @@ pub async fn create_audit_plan(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核计划创建事务失败: {}", e);
@@ -164,11 +175,16 @@ pub async fn create_audit_plan(
 )]
 pub async fn get_audit_plan(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<AuditPlan> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -219,6 +235,7 @@ pub async fn get_audit_plan(
 )]
 pub async fn start_audit_plan(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -232,7 +249,11 @@ pub async fn start_audit_plan(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核计划启动事务失败: {}", e);
@@ -275,6 +296,7 @@ pub async fn start_audit_plan(
 )]
 pub async fn complete_audit_plan(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -288,7 +310,11 @@ pub async fn complete_audit_plan(
         Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核计划完成事务失败: {}", e);
@@ -328,11 +354,16 @@ pub async fn complete_audit_plan(
 )]
 pub async fn list_audit_tasks(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditTaskQuery>,
 ) -> ApiResponse<Vec<AuditTask>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -393,6 +424,7 @@ pub async fn list_audit_tasks(
 )]
 pub async fn create_audit_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
@@ -412,7 +444,11 @@ pub async fn create_audit_task(
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核任务创建事务失败: {}", e);
@@ -472,6 +508,7 @@ pub async fn create_audit_task(
 )]
 pub async fn complete_audit_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -485,7 +522,11 @@ pub async fn complete_audit_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核任务完成事务失败: {}", e);
@@ -525,11 +566,16 @@ pub async fn complete_audit_task(
 )]
 pub async fn list_audit_findings(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditFindingQuery>,
 ) -> ApiResponse<Vec<AuditFinding>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -602,6 +648,7 @@ pub async fn list_audit_findings(
 )]
 pub async fn create_audit_finding(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(task_id): axum::extract::Path<String>,
@@ -622,7 +669,11 @@ pub async fn create_audit_finding(
     );
     let severity = req.severity.unwrap_or_else(|| "minor".to_string());
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核发现创建事务失败: {}", e);
@@ -696,6 +747,7 @@ pub async fn create_audit_finding(
 )]
 pub async fn verify_audit_finding(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -709,7 +761,11 @@ pub async fn verify_audit_finding(
         Err(_) => return ApiResponse::bad_request("无效的发现ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启审核发现验证事务失败: {}", e);

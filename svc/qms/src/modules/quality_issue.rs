@@ -10,6 +10,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{get_tenant_id, require_tenant};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
@@ -43,11 +44,16 @@ const STATUS_CANCELLED: &str = "cancelled";
 )]
 pub async fn list_issues(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<IssueQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<QualityIssue>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -154,6 +160,7 @@ pub async fn list_issues(
 )]
 pub async fn create_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateIssueRequest>,
@@ -173,7 +180,11 @@ pub async fn create_issue(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     // 写作用域：事务级 search_path + app.tenant_id（RLS 与显式谓词双层隔离）。
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -282,11 +293,16 @@ pub async fn create_issue(
 )]
 pub async fn get_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityIssue> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -343,6 +359,7 @@ pub async fn get_issue(
 )]
 pub async fn update_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -356,7 +373,11 @@ pub async fn update_issue(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -415,6 +436,7 @@ pub async fn update_issue(
 
 pub async fn resolve_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -428,7 +450,11 @@ pub async fn resolve_issue(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -490,6 +516,7 @@ pub async fn resolve_issue(
 )]
 pub async fn delete_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -502,7 +529,11 @@ pub async fn delete_issue(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -558,6 +589,7 @@ pub struct ApprovalActionRequest {
 
 pub async fn start_issue_approval(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -604,7 +636,11 @@ pub async fn start_issue_approval(
         }
     });
 
-    let mut scope = match state.db.scope_read_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -655,6 +691,7 @@ pub async fn start_issue_approval(
 )]
 pub async fn approve_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -671,7 +708,11 @@ pub async fn approve_issue(
 
     tracing::info!("Approving issue {}", id);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -743,6 +784,7 @@ pub async fn approve_issue(
 )]
 pub async fn reject_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -759,7 +801,11 @@ pub async fn reject_issue(
 
     tracing::info!("Rejecting issue {}", id);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -848,6 +894,7 @@ fn issue_select_cols(locale_placeholder: &str) -> String {
 )]
 pub async fn approve_issue_status(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -862,7 +909,11 @@ pub async fn approve_issue_status(
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -961,6 +1012,7 @@ pub async fn approve_issue_status(
 )]
 pub async fn reject_issue_status(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -975,7 +1027,11 @@ pub async fn reject_issue_status(
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);
@@ -1068,6 +1124,7 @@ pub async fn reject_issue_status(
 )]
 pub async fn cancel_issue(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1082,7 +1139,11 @@ pub async fn cancel_issue(
         Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope: {}", e);

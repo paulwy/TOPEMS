@@ -98,17 +98,21 @@ pub struct AppState {
     pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
-/// 按调用身份选择读作用域：
-/// - 租户用户 → `scope_read_for_tenant`（显式租户，fail-closed）；
-/// - 超管 / 服务身份 → `scope_read_system`（显式 nil 租户 + 系统通道）。
-pub async fn read_scope_for_claims<'a>(db: &'a Db, claims: &Claims) -> sqlx::Result<ScopedTxn<'a>> {
-    if claims.is_superuser || topems_shared_auth::service::is_service_claims(claims) {
-        // tenant-system: 超管/服务身份跨租户读，显式系统通道（联邦读依赖超管带租户头能出数）。
-        db.scope_read_system().await
-    } else {
-        let tenant = topems_shared_auth::get_tenant_id_from_claims(claims);
-        db.scope_read_for_tenant(tenant).await
-    }
+/// 读作用域：统一复用 `tenant_middleware` 的请求事务（M-1/B4）。
+///
+/// 改造前按身份在进程池上自开事务（租户 → `scope_read_for_tenant`，超管/服务身份 →
+/// `scope_read_system`），一个请求会同时占住「请求事务 + 只读事务」两条连接，且外层
+/// 回滚对读路径生效不了。现在身份分支由中间件以事务级 GUC 表达：
+/// - 普通租户 → `app.tenant_id = <租户>`，`app.rls_system = 'off'`；
+/// - service 身份 → nil 租户 + `app.rls_system = 'on'`（系统通道）。
+///
+/// `claims` 仅用于保留调用方语义与后续按身份扩展，当前不再决定事务归属。
+pub async fn read_scope_for_claims<'a>(
+    db: &'a Db,
+    _claims: &Claims,
+    txn: &'a mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> sqlx::Result<ScopedTxn<'a>> {
+    db.scope_with(txn).await
 }
 
 impl FromRef<AppState> for AuthState {

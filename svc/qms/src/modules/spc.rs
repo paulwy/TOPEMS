@@ -10,6 +10,7 @@ use bigdecimal::ToPrimitive;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -142,11 +143,16 @@ fn detect_trend(values: &[f64]) -> Option<String> {
 )]
 pub async fn list_spc_charts(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcChartQuery>,
 ) -> ApiResponse<Vec<SpcChart>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -202,6 +208,7 @@ pub async fn list_spc_charts(
 )]
 pub async fn create_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcChartRequest>,
@@ -221,7 +228,11 @@ pub async fn create_spc_chart(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启SPC控制图创建事务失败: {}", e);
@@ -263,11 +274,16 @@ pub async fn create_spc_chart(
 )]
 pub async fn get_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<SpcChart> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -318,6 +334,7 @@ pub async fn get_spc_chart(
 )]
 pub async fn update_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -332,7 +349,11 @@ pub async fn update_spc_chart(
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启SPC控制图更新事务失败: {}", e);
@@ -375,6 +396,7 @@ pub async fn update_spc_chart(
 )]
 pub async fn delete_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -388,7 +410,11 @@ pub async fn delete_spc_chart(
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启SPC控制图删除事务失败: {}", e);
@@ -433,11 +459,16 @@ pub async fn delete_spc_chart(
 )]
 pub async fn get_spc_data_points(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcDataQuery>,
 ) -> ApiResponse<Vec<SpcDataPoint>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -488,6 +519,7 @@ pub async fn get_spc_data_points(
 )]
 pub async fn add_spc_data_point(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcDataRequest>,
@@ -501,7 +533,11 @@ pub async fn add_spc_data_point(
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启SPC数据点创建事务失败: {}", e);
@@ -769,11 +805,16 @@ pub async fn calculate_control_limits(
 /// GET /spc/charts/{id}/data-points —— 按控制图 chart 作用域查询数据点（前端契约形状 data_points）
 pub async fn get_spc_chart_data_points(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);

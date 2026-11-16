@@ -5,6 +5,7 @@ use bigdecimal::BigDecimal;
 use serde::Serialize;
 use topems_shared_boundary::only_own_schema_query;
 
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64;
 
@@ -35,9 +36,14 @@ pub struct DashboardStats {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_today_quality_pass_rate(
     State(state): State<crate::AppState>,
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     axum::Extension(claims): axum::Extension<topems_shared_auth::auth::Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -104,9 +110,14 @@ pub async fn get_today_quality_pass_rate(
 )]
 pub async fn get_dashboard_stats(
     State(state): State<crate::AppState>,
+    axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     axum::Extension(claims): axum::Extension<topems_shared_auth::auth::Claims>,
 ) -> ApiResponse<DashboardStats> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);

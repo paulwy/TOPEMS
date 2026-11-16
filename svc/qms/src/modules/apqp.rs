@@ -10,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -38,10 +39,15 @@ const APQP_SELECT_COLS: &str = r#"id, tenant_id::TEXT, project_no, project_name,
 )]
 pub async fn list_apqp_projects(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpProjectQuery>,
 ) -> ApiResponse<Vec<ApqpProject>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -128,6 +134,7 @@ pub async fn list_apqp_projects(
 )]
 pub async fn create_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpProjectRequest>,
@@ -150,7 +157,11 @@ pub async fn create_apqp_project(
     let target_dt = req.target_date.map(date_to_utc);
 
     // 项目与其默认阶段同事务：任一环节失败整体回滚，避免“主表 200、子表缺失”。
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP创建事务失败: {}", e);
@@ -245,10 +256,15 @@ async fn init_default_phases(
 )]
 pub async fn get_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpProject> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -293,6 +309,7 @@ pub async fn get_apqp_project(
 )]
 pub async fn update_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -316,7 +333,11 @@ pub async fn update_apqp_project(
     let target_dt = req.target_date.map(date_to_utc);
     let actual_end_dt = req.actual_end_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP更新事务失败: {}", e);
@@ -377,6 +398,7 @@ pub async fn update_apqp_project(
 )]
 pub async fn delete_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -390,7 +412,11 @@ pub async fn delete_apqp_project(
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP删除事务失败: {}", e);
@@ -438,6 +464,7 @@ pub async fn delete_apqp_project(
 )]
 pub async fn transition_project_status(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -458,7 +485,11 @@ pub async fn transition_project_status(
         return ApiResponse::bad_request("无效的状态值");
     }
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP状态流转事务失败: {}", e);
@@ -503,10 +534,15 @@ pub async fn transition_project_status(
 )]
 pub async fn list_apqp_phases(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<ApqpPhase>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -557,6 +593,7 @@ pub async fn list_apqp_phases(
 )]
 pub async fn create_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpPhaseRequest>,
@@ -573,7 +610,11 @@ pub async fn create_apqp_phase(
     let start_dt = req.start_date.map(date_to_utc);
     let end_dt = req.end_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP阶段创建事务失败: {}", e);
@@ -643,10 +684,15 @@ pub async fn create_apqp_phase(
 )]
 pub async fn get_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpPhase> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -691,6 +737,7 @@ pub async fn get_apqp_phase(
 )]
 pub async fn update_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -710,7 +757,11 @@ pub async fn update_apqp_phase(
     let actual_start_dt = req.actual_start_date.map(date_to_utc);
     let actual_end_dt = req.actual_end_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP阶段更新事务失败: {}", e);
@@ -766,6 +817,7 @@ pub async fn update_apqp_phase(
 )]
 pub async fn delete_apqp_phase(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -779,7 +831,11 @@ pub async fn delete_apqp_phase(
         Err(_) => return ApiResponse::bad_request("无效的阶段ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP阶段删除事务失败: {}", e);
@@ -824,10 +880,15 @@ pub async fn delete_apqp_phase(
 )]
 pub async fn list_apqp_tasks(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpTaskQuery>,
 ) -> ApiResponse<Vec<ApqpTask>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -899,6 +960,7 @@ pub async fn list_apqp_tasks(
 )]
 pub async fn create_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpTaskRequest>,
@@ -918,7 +980,11 @@ pub async fn create_apqp_task(
 
     let due_dt = req.due_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP任务创建事务失败: {}", e);
@@ -1007,10 +1073,15 @@ pub async fn create_apqp_task(
 )]
 pub async fn get_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpTask> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -1055,6 +1126,7 @@ pub async fn get_apqp_task(
 )]
 pub async fn update_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1072,7 +1144,11 @@ pub async fn update_apqp_task(
     let due_dt = req.due_date.map(date_to_utc);
     let completed_dt = req.completed_at.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP任务更新事务失败: {}", e);
@@ -1128,6 +1204,7 @@ pub async fn update_apqp_task(
 )]
 pub async fn delete_apqp_task(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1141,7 +1218,11 @@ pub async fn delete_apqp_task(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP任务删除事务失败: {}", e);
@@ -1187,10 +1268,15 @@ pub async fn delete_apqp_task(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_apqp_risks(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ApqpRiskQuery>,
 ) -> ApiResponse<Vec<ApqpRisk>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -1258,6 +1344,7 @@ pub async fn list_apqp_risks(
 )]
 pub async fn create_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpRiskRequest>,
@@ -1274,7 +1361,11 @@ pub async fn create_apqp_risk(
     let rpn = req.severity * req.occurrence * req.detection;
     let target_dt = req.target_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP风险创建事务失败: {}", e);
@@ -1348,10 +1439,15 @@ pub async fn create_apqp_risk(
 )]
 pub async fn get_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpRisk> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -1396,6 +1492,7 @@ pub async fn get_apqp_risk(
 )]
 pub async fn update_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1412,7 +1509,11 @@ pub async fn update_apqp_risk(
 
     let target_dt = req.target_date.map(date_to_utc);
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP风险更新事务失败: {}", e);
@@ -1469,6 +1570,7 @@ pub async fn update_apqp_risk(
 )]
 pub async fn delete_apqp_risk(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1482,7 +1584,11 @@ pub async fn delete_apqp_risk(
         Err(_) => return ApiResponse::bad_request("无效的风险ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP风险删除事务失败: {}", e);
@@ -1531,10 +1637,15 @@ pub async fn delete_apqp_risk(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_apqp_progress(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<ApqpProgressStatistics> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -1664,10 +1775,15 @@ pub async fn get_apqp_progress(
 )]
 pub async fn list_apqp_approvals(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<ApqpApproval>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -1714,6 +1830,7 @@ pub async fn list_apqp_approvals(
 )]
 pub async fn create_apqp_approval(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApqpApprovalRequest>,
@@ -1727,7 +1844,11 @@ pub async fn create_apqp_approval(
         Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP审批创建事务失败: {}", e);
@@ -1794,6 +1915,7 @@ pub async fn create_apqp_approval(
 )]
 pub async fn process_apqp_approval(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1810,7 +1932,11 @@ pub async fn process_apqp_approval(
 
     let status = if req.approved { "approved" } else { "rejected" };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP审批处理事务失败: {}", e);
@@ -1868,6 +1994,7 @@ pub struct ApqpApprovalRequest {
 )]
 pub async fn approve_apqp(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1882,7 +2009,11 @@ pub async fn approve_apqp(
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP审批事务失败: {}", e);
@@ -1970,6 +2101,7 @@ pub async fn approve_apqp(
 )]
 pub async fn complete_apqp(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1984,7 +2116,11 @@ pub async fn complete_apqp(
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP完成事务失败: {}", e);
@@ -2072,6 +2208,7 @@ pub async fn complete_apqp(
 )]
 pub async fn cancel_apqp(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -2086,7 +2223,11 @@ pub async fn cancel_apqp(
         Err(_) => return ApiResponse::bad_request("无效的APQP项目ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启APQP取消事务失败: {}", e);

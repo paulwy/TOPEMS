@@ -9,6 +9,7 @@ use axum::{
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
@@ -48,11 +49,16 @@ fn standards_list_cache_key(
 )]
 pub async fn list_standards(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<StandardQuery>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<ListStandardsResponse> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -180,6 +186,7 @@ pub async fn list_standards(
 )]
 pub async fn create_standard(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateStandardRequest>,
@@ -194,7 +201,11 @@ pub async fn create_standard(
     );
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启质量标准创建事务失败: {}", e);
@@ -271,11 +282,16 @@ pub async fn create_standard(
 )]
 pub async fn get_standard(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityStandard> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -328,6 +344,7 @@ pub async fn get_standard(
 )]
 pub async fn update_standard(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -342,7 +359,11 @@ pub async fn update_standard(
         Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启质量标准更新事务失败: {}", e);
@@ -373,6 +394,11 @@ pub async fn update_standard(
     .await
     {
         tracing::error!("写入质量标准修订记录失败，整体回滚: {}", e);
+        // 请求事务由中间件按响应码收尾；这里显式回滚，让「失败即回滚」在代码路径上可见，
+        // 不依赖外层对非 2xx 的兜底。
+        if let Err(e) = scope.rollback().await {
+            tracing::error!("回滚质量标准更新事务失败: {}", e);
+        }
         return ApiResponse::server_error("质量标准更新失败");
     }
 
@@ -432,6 +458,7 @@ pub async fn update_standard(
 )]
 pub async fn delete_standard(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -444,7 +471,11 @@ pub async fn delete_standard(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启质量标准删除事务失败: {}", e);
@@ -513,11 +544,16 @@ pub async fn delete_standard(
 )]
 pub async fn list_revisions(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<StandardRevision>> {
-    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant read scope: {}", e);
@@ -566,6 +602,7 @@ pub async fn list_revisions(
 )]
 pub async fn create_revision(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
@@ -579,7 +616,11 @@ pub async fn create_revision(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启质量标准版本创建事务失败: {}", e);
@@ -619,6 +660,10 @@ pub async fn create_revision(
         .await
     {
         tracing::error!("写入质量标准修订记录失败，整体回滚: {}", e);
+        // 同 update_standard：显式回滚请求事务，失败分支不依赖外层兜底。
+        if let Err(e) = scope.rollback().await {
+            tracing::error!("回滚质量标准版本创建事务失败: {}", e);
+        }
         return ApiResponse::server_error("质量标准版本创建失败");
     }
 

@@ -224,7 +224,10 @@ async fn main() -> anyhow::Result<()> {
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
-        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "qms, public, shared"),
+        // M-1/B4：qms 请求链路已全部改为复用 tenant_middleware 的请求事务，
+        // 开启守卫后请求内再自开租户作用域会直接报 Protocol 错误（后台任务不受影响）。
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "qms, public, shared")
+            .deny_request_tenant_scope(),
         health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         workflow_client,

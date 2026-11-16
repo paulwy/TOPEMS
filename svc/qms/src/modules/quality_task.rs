@@ -14,6 +14,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -235,6 +236,7 @@ pub async fn get_quality_task(
 /// PUT /quality-tasks/{id}/status —— 更新质检任务状态
 pub async fn update_quality_task_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -252,7 +254,11 @@ pub async fn update_quality_task_status(
         return ApiResponse::bad_request("状态不能为空");
     }
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启质检任务状态更新事务失败: {}", e);
@@ -371,6 +377,7 @@ pub async fn list_defect_records(
 /// POST /defect-records —— 上报缺陷记录
 pub async fn report_defect(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<ReportDefectRequest>,
@@ -391,7 +398,11 @@ pub async fn report_defect(
         None => return ApiResponse::bad_request("检查ID不能为空"),
     };
 
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启缺陷记录创建事务失败: {}", e);
