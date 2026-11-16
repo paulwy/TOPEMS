@@ -2977,7 +2977,7 @@ async fn send_notification_email(
 pub async fn list_channels(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<ChannelQuery>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
@@ -3003,15 +3003,6 @@ pub async fn list_channels(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -3022,17 +3013,15 @@ pub async fn list_channels(
 
     let rows = match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id,
-                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
          FROM notification_channels \
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) \
-           AND ($2::text IS NULL OR type = $2) \
-           AND ($3::text IS NULL OR status = $3) \
-         ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+           WHERE ($1::text IS NULL OR type = $1) \
+           AND ($2::text IS NULL OR status = $2) \
+         ORDER BY created_at DESC LIMIT $4 OFFSET $5",
     )
-    .bind(tenant_id)
     .bind(type_filter)
     .bind(status_filter)
     .bind(locale)
@@ -3052,9 +3041,8 @@ pub async fn list_channels(
 
     let total = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM notification_channels \
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
+         WHERE ($1::text IS NULL OR type = $1) AND ($2::text IS NULL OR status = $2)",
     )
-    .bind(tenant_id)
     .bind(query.r#type)
     .bind(query.status)
     .fetch_one(&mut scope)
@@ -3091,7 +3079,7 @@ pub async fn list_channels(
 pub async fn get_channel(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
@@ -3117,26 +3105,16 @@ pub async fn get_channel(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id,
-                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+         FROM notification_channels WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(locale)
     .fetch_optional(&mut scope)
     .await
@@ -3464,7 +3442,7 @@ pub async fn delete_channel(
 pub async fn test_channel(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let mut txn_guard = txn_arc.lock().await;
@@ -3489,22 +3467,12 @@ pub async fn test_channel(
             }));
         }
     };
-    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+         FROM notification_channels WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -4012,22 +3980,16 @@ pub async fn batch_update_template_status(
             "data": { "updated_count": 0 }
         }));
     }
-    let tenant_bind = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id)
-    };
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
         UPDATE public.core_notification_templates
         SET status = $1, updated_at = NOW()
-        WHERE id = ANY($2) AND ($3::uuid IS NULL OR tenant_id = $3)
+        WHERE id = ANY($2)
         "#
     ))
     .bind(&req.status)
     .bind(&req.ids)
-    .bind(tenant_bind)
     .execute(&mut scope)
     .await;
     match result {
