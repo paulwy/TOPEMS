@@ -1165,16 +1165,10 @@ pub async fn check_schedule_constraints(
             SELECT id, order_number AS order_no, product_name, product_code, quantity::numeric,
                    planned_start_date, planned_end_date
             FROM mes.production_orders
-            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+            WHERE id = $1
             "#,
         )
         .bind(order_id)
-        .bind(
-            claims
-                .tenant_id
-                .as_deref()
-                .and_then(|s| Uuid::parse_str(s).ok()),
-        )
         .fetch_optional(&mut scope)
         .await;
 
@@ -1220,16 +1214,10 @@ pub async fn check_schedule_constraints(
                 FROM mes.bom_items bi
                 JOIN mes.material_boms b ON bi.bom_id = b.id
                 JOIN mes.production_orders po ON po.product_code = b.product_code
-                WHERE po.id = $1 AND ($2::uuid IS NULL OR po.tenant_id = $2::uuid)
+                WHERE po.id = $1
                 "#,
             )
             .bind(order_id)
-            .bind(
-                claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
-            )
             .fetch_all(&mut scope)
             .await;
 
@@ -1263,15 +1251,9 @@ pub async fn check_schedule_constraints(
                 r#"
                 SELECT id, equipment_name, status, next_maintenance_date
                 FROM mes.equipment
-                WHERE status = 'normal' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                WHERE status = 'normal'
                 LIMIT 5
                 "#,
-            )
-            .bind(
-                claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
             )
             .fetch_all(&mut scope)
             .await;
@@ -1313,15 +1295,9 @@ pub async fn check_schedule_constraints(
                 r#"
                 SELECT id, team_name, member_count
                 FROM mes.teams
-                WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                WHERE status = 'active'
                 LIMIT 5
                 "#,
-            )
-            .bind(
-                claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
             )
             .fetch_all(&mut scope)
             .await;
