@@ -68,5 +68,5 @@ pub use schema::{
     INTEGRATION_SCHEMA, LIMS_SCHEMA, MAIL_SCHEMA, MES_SCHEMA, MOBILE_SCHEMA, PDM_SCHEMA, PM_SCHEMA,
     PORTAL_SCHEMA, QMS_SCHEMA, RS_SCHEMA, SCM_SCHEMA, SRM_SCHEMA, WMS_SCHEMA,
 };
-pub use scope::{Db, ScopedTxn};
+pub use scope::{Db, ScopedTxn, PLATFORM_TENANT_ID};
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};

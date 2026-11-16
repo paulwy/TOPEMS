@@ -42,6 +42,12 @@ use sqlx::{Execute, Executor, PgPool, SqlStr, Transaction};
 use std::sync::Arc;
 use uuid::Uuid;
 
+/// 平台共享数据行的保留租户（全零 UUID）。
+///
+/// 与「缺少租户上下文」不同：这是**显式的平台通道标记**，只用于平台级共享数据
+/// （如 `core.ai_faqs` 的内置默认 FAQ）。业务数据不得使用该值。
+pub const PLATFORM_TENANT_ID: Uuid = Uuid::nil();
+
 /// 模块级数据库句柄（进程单池之上的类型化视图）。
 #[derive(Clone)]
 pub struct Db {
@@ -171,6 +177,27 @@ impl Db {
         scope.apply_search_path().await?;
         scope.apply_explicit_tenant(Uuid::nil(), true).await?;
         Ok(scope)
+    }
+
+    /// 平台共享数据只读作用域（系统通道 + 只读事务）。
+    ///
+    /// # 契约（调用方必须遵守）
+    ///
+    /// 1. **只读**：事务以 `SET TRANSACTION READ ONLY` 开启，任何写语句都会被
+    ///    PostgreSQL 拒绝；本入口不提供写能力。
+    /// 2. **必须显式限定平台范围**：调用方 SQL 必须带平台谓词
+    ///    （如 `tenant_id = PLATFORM_TENANT_ID`），不得省略谓词读取全表；
+    ///    系统通道会绕过 RLS，省略谓词等于跨租户全量读取。
+    /// 3. **禁止用于租户业务数据**：禁止在租户业务路径上以本入口替代
+    ///    [`Db::scope_read`] / [`Db::scope_read_for_tenant`] 绕过隔离；
+    ///    租户自身数据一律走租户作用域。
+    /// 4. 适用于「平台内置共享语料」这类归属平台、对所有租户只读的数据
+    ///    （当前仅有 `core.ai_faqs` 的全零租户内置 FAQ）。
+    ///
+    /// 与 [`Db::scope_read_system`] 的区别：后者是后台任务/脚本的通用系统读入口；
+    /// 本入口语义更窄，仅用于平台共享数据，便于审计和代码检索。
+    pub async fn scope_read_platform(&self) -> sqlx::Result<ScopedTxn<'_>> {
+        self.scope_read_system().await
     }
 
     /// 系统写作用域（读写事务 + 显式 nil 租户 + `app.rls_system='on'`）。

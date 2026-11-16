@@ -31,9 +31,6 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
-/// 全局默认 FAQ 行的 tenant_id（全零 UUID，RLS 策略对所有租户放行）。
-const GLOBAL_TENANT_ID: &str = "00000000-0000-0000-0000-000000000000";
-
 /// 应用状态（共享的会话管理器）
 #[derive(Clone)]
 pub struct CopilotAppState {
@@ -797,54 +794,122 @@ pub async fn search_faq(
         .unwrap_or_else(Uuid::nil);
     let q = query.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
 
-    // 1. DB 查询（本租户 ∪ 全局行）
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    };
-    let db_result: Result<Vec<(String, String, serde_json::Value, String)>, sqlx::Error> =
-        match state.db.scope_with(txn).await {
+    // 1. 本租户语料（请求事务内，租户 RLS 通道）
+    type FaqRow = (
+        String,
+        String,
+        serde_json::Value,
+        String,
+        chrono::DateTime<chrono::Utc>,
+    );
+    let tenant_rows: Result<Vec<FaqRow>, sqlx::Error> = {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        };
+        let rows = match state.db.scope_with(txn).await {
             Ok(mut scope) => match q {
                 Some(q) => {
                     sqlx::query_as(
-                        "SELECT question, answer, keywords, category FROM core.ai_faqs
+                        "SELECT question, answer, keywords, category, updated_at FROM core.ai_faqs
                          WHERE deleted_at IS NULL AND status = 'active'
                            AND module = $1
-                           AND (tenant_id = $2 OR tenant_id = $3::uuid)
-                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $4 || '%')
+                           AND tenant_id = $2
+                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $3 || '%')
                          ORDER BY updated_at DESC",
                     )
                     .bind(module_key)
                     .bind(tenant_uuid)
-                    .bind(GLOBAL_TENANT_ID)
                     .bind(q)
                     .fetch_all(&mut scope)
                     .await
                 }
                 None => {
                     sqlx::query_as(
-                        "SELECT question, answer, keywords, category FROM core.ai_faqs
+                        "SELECT question, answer, keywords, category, updated_at FROM core.ai_faqs
                          WHERE deleted_at IS NULL AND status = 'active'
                            AND module = $1
-                           AND (tenant_id = $2 OR tenant_id = $3::uuid)
+                           AND tenant_id = $2
                          ORDER BY updated_at DESC",
                     )
                     .bind(module_key)
                     .bind(tenant_uuid)
-                    .bind(GLOBAL_TENANT_ID)
                     .fetch_all(&mut scope)
                     .await
                 }
             },
             Err(e) => Err(e),
         };
+        rows
+    };
 
-    // 2. DB 有数据 → 直接返回；否则回落 curated 静态语料（与历史行为一致）
+    // 2. 平台内置语料（全零租户）：平台只读作用域，只取平台那批，不跨界
+    let platform_rows: Result<Vec<FaqRow>, sqlx::Error> = match state.db.scope_read_platform().await
+    {
+        Ok(mut scope) => {
+            let rows = match q {
+                Some(q) => {
+                    sqlx::query_as(
+                        "SELECT question, answer, keywords, category, updated_at FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND status = 'active'
+                           AND module = $1
+                           AND tenant_id = $2
+                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $3 || '%')
+                         ORDER BY updated_at DESC",
+                    )
+                    .bind(module_key)
+                    .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+                    .bind(q)
+                    .fetch_all(&mut scope)
+                    .await
+                }
+                None => {
+                    sqlx::query_as(
+                        "SELECT question, answer, keywords, category, updated_at FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND status = 'active'
+                           AND module = $1
+                           AND tenant_id = $2
+                         ORDER BY updated_at DESC",
+                    )
+                    .bind(module_key)
+                    .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+                    .fetch_all(&mut scope)
+                    .await
+                }
+            };
+            let _ = scope.rollback().await;
+            rows
+        }
+        Err(e) => Err(e),
+    };
+
+    // 3. 合并：同一问题文本以租户自身优先，合并后按原排序规则（updated_at DESC）
+    let db_result: Result<Vec<FaqRow>, sqlx::Error> = match (tenant_rows, platform_rows) {
+        (Ok(mut rows), Ok(platform)) => {
+            let mut seen: std::collections::HashSet<String> =
+                rows.iter().map(|r| r.0.trim().to_lowercase()).collect();
+            for row in platform {
+                if seen.insert(row.0.trim().to_lowercase()) {
+                    rows.push(row);
+                }
+            }
+            rows.sort_by(|a, b| b.4.cmp(&a.4));
+            Ok(rows)
+        }
+        // 平台语料读取失败不拖垮本租户结果：降级为仅本租户语料
+        (Ok(rows), Err(e)) => {
+            tracing::warn!("search_faq 平台语料读取失败，仅返回本租户语料: {}", e);
+            Ok(rows)
+        }
+        (Err(e), _) => Err(e),
+    };
+
+    // 4. DB 有数据 → 直接返回；否则回落 curated 静态语料（与历史行为一致）
     match db_result {
         Ok(rows) if !rows.is_empty() => {
             let items = rows
                 .into_iter()
-                .map(|(question, answer, keywords, category)| FaqItem {
+                .map(|(question, answer, keywords, category, _)| FaqItem {
                     question,
                     answer,
                     keywords: jsonb_keywords_to_vec(keywords),
