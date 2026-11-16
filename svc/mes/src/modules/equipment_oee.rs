@@ -510,6 +510,12 @@ pub async fn create_oee_record(
         return e;
     }
 
+    // 写操作必须携带有效租户：缺失/零租户返回 400。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let now = Utc::now();
 
     let (availability, performance, quality_rate, oee) = calculate_oee(
@@ -568,7 +574,7 @@ pub async fn create_oee_record(
         req.operator,
         req.notes,
         now,
-        get_tenant_id(&claims),
+        tenant_id,
     )
     .fetch_one(&mut scope)
     .await;
@@ -584,7 +590,7 @@ pub async fn create_oee_record(
     let equipment = sqlx::query!(
         r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND tenant_id = $2::uuid"#,
         req.equipment_id,
-        get_tenant_id(&claims),
+        tenant_id,
     )
     .fetch_optional(&mut scope)
     .await

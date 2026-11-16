@@ -807,7 +807,10 @@ pub async fn update_work_order(
     let plan_end_date = parse_opt_datetime(&body.plan_end_date);
     let planned_quantity = parse_opt_big_decimal(&body.planned_quantity);
     let completed_quantity = parse_opt_big_decimal(&body.completed_quantity);
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -933,7 +936,10 @@ pub async fn delete_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -1017,7 +1023,10 @@ pub async fn start_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -1107,7 +1116,10 @@ pub async fn complete_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -1199,7 +1211,10 @@ pub async fn cancel_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -1291,7 +1306,10 @@ pub async fn pause_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -1383,7 +1401,10 @@ pub async fn resume_work_order(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"

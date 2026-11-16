@@ -453,6 +453,12 @@ pub async fn create_wip(
         return e;
     }
 
+    // 写操作必须携带有效租户：缺失/零租户返回 400。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let now = Utc::now();
     let wip_no = format!(
         "WIP{}{:04}",
@@ -478,7 +484,7 @@ pub async fn create_wip(
         let order = sqlx::query!(
             r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
-            get_tenant_id(&claims)
+            tenant_id,
         )
         .fetch_optional(&mut scope)
         .await

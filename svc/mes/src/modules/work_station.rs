@@ -354,7 +354,10 @@ pub async fn create_work_station(
         .process_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

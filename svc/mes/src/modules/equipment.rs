@@ -385,7 +385,10 @@ pub async fn create_equipment(
     };
 
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let equipment_no = req.equipment_no.unwrap_or_else(|| {
         format!(
             "EQ{}{:04}",
@@ -1046,7 +1049,10 @@ pub async fn create_maintenance(
     };
 
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let start_time = match DateTime::parse_from_rfc3339(&req.start_time) {
         Ok(dt) => dt.with_timezone(&Utc),
         Err(_) => now,

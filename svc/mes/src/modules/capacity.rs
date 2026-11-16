@@ -284,7 +284,10 @@ pub async fn create_capacity(
 ) -> ApiResponse<Capacity> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let status = req.status.unwrap_or_else(|| "available".to_string());
     let used_hours = req.used_hours.unwrap_or(0.0);
     let utilization_rate = calc_utilization(req.available_hours, Some(used_hours));
@@ -433,7 +436,10 @@ pub async fn delete_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query("DELETE FROM capacities WHERE id = $1 AND tenant_id = $2")
         .bind(id)

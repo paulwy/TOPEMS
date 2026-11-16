@@ -598,7 +598,10 @@ pub async fn create_work_report(
     {
         return e;
     }
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let work_order_id = body
         .work_order_id

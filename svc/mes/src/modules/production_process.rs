@@ -324,7 +324,11 @@ pub async fn create_process(
     // 租户来源统一为 Claims；不再在 pool 连接上设置 session 级 GUC
     // （set_session_tenant_id 取的是池中任意连接，既不能保证与查询同连接，还会把
     // 租户上下文泄漏给后续复用该连接的其它请求）。
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id =
+        match crate::shared::permission::require_write_tenant::<serde_json::Value>(&claims) {
+            Ok(t) => t,
+            Err(resp) => return resp.into_response(),
+        };
 
     let now = Utc::now();
     let process_no = req.code.clone().unwrap_or_else(|| {
@@ -510,7 +514,11 @@ pub async fn update_process(
         return e.into_response();
     }
 
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id =
+        match crate::shared::permission::require_write_tenant::<serde_json::Value>(&claims) {
+            Ok(t) => t,
+            Err(resp) => return resp.into_response(),
+        };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -620,7 +628,10 @@ pub async fn delete_process(
         return e;
     }
 
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -703,7 +714,10 @@ pub async fn deactivate_process(
         return e;
     }
 
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

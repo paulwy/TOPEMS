@@ -347,6 +347,11 @@ pub async fn update_material_plan(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialPlanRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 写操作必须携带有效租户：缺失/零租户返回 400。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return Err((StatusCode::BAD_REQUEST, resp)),
+    };
     let required_date = parse_datetime(&req.required_date);
 
     let mut guard = txn_arc.lock().await;
@@ -392,7 +397,7 @@ pub async fn update_material_plan(
     .bind(required_date)
     .bind(&req.supply_type)
     .bind(&req.status)
-    .bind(get_tenant_id_from_claims(&claims))
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -421,6 +426,11 @@ pub async fn delete_material_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 写操作必须携带有效租户：缺失/零租户返回 400。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return Err((StatusCode::BAD_REQUEST, resp)),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -440,7 +450,7 @@ pub async fn delete_material_plan(
            AND tenant_id = $2::uuid",
     )
     .bind(id)
-    .bind(get_tenant_id_from_claims(&claims))
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 

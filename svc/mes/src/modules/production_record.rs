@@ -333,7 +333,10 @@ pub async fn create_record(
     }
 
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     // P1 修复（第四十六轮遗留）：operator 列 NOT NULL，此前硬编码 NULL 导致创建必 500。
     // 优先用 operator_id 的字符串形式，未提供时回退当前登录用户（Claims.username）。
     let operator_name = req
@@ -527,7 +530,10 @@ pub async fn update_record(
         "in_progress"
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -623,7 +629,10 @@ pub async fn delete_record(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -696,7 +705,10 @@ pub async fn complete_record(
 
     let now = Utc::now();
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

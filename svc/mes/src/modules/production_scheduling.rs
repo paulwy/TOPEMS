@@ -475,7 +475,10 @@ pub async fn create_production_schedule(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     // 写作用域：建成单与回查订单号同属一个租户事务，避免裸 pool 读写受 RLS 拒止。

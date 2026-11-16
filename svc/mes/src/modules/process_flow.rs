@@ -486,7 +486,10 @@ pub async fn create_process_flow(
     let capacity_value = capacity
         .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
         .unwrap_or_default();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -896,7 +899,10 @@ pub async fn add_flow_step(
             .collect()
     });
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
