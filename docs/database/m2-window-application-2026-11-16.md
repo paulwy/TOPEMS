@@ -237,3 +237,84 @@
 - 克隆库 `m2_dryrun_20261116` 保留未动，可作对照。
 - 备份 `backups/m2-pre-apply-20261116-2200.dump` 保留；8 批回滚段 `docs/database/rls-policy-backup-batch01..08.sql` 仍可整批回滚。
 - 服务已原样拉起，`/health` 200，8099 可访问。
+
+## 10. 从表租户列缺口：方案与克隆库演练（2026-11-16，未上生产）
+
+> 状态：**方案 + 迁移 + 克隆库演练完成；`topems_prod` 零 DDL、零写入**。生产应用须待窗口批准后，与二进制同窗口执行（见 §10.6）。
+
+### 10.1 现状核查（superuser 只读实测 `topems_prod`，克隆库同源）
+
+| 表 | 行数 | tenant_id | RLS / FORCE | 策略 | tenant_id 索引 | 父表关联 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `bi.report_subscriptions` | 0 | 无 | f / f | 0 | 无 | `template_id → bi.report_templates.id` |
+| `analytics.report_execution_records` | 0 | 无 | f / f | 0 | 无 | `schedule_id → bi.report_schedules.id` |
+| `bi.report_templates`（父） | 0 | 有，可空 | on / on | 既有 | 既有 | — |
+| `bi.report_schedules`（父） | 0 | 有，可空 | on / on | 既有 | 既有 | — |
+
+- 可推导租户比例：两从表各 0 行 → 天然 100%，**不存在无法由父表推导租户的行**，无需零租户兜底。
+- 代码路径：写入 `svc/analytics/src/modules/report/subscription.rs`（`create_subscription`，有 claims 租户可用）；后台写入与读取 `scheduler.rs`（无 claims，须走系统通道 + 租户事务）。
+
+### 10.2 迁移与回滚文件（新增，未改任何既有迁移）
+
+- `database/migrations/20261116180000_report_subs_exec_records_tenant_id.sql`
+- `database/rollback/20261116180000_report_subs_exec_records_tenant_id.rollback.sql`
+
+内容：① 前置断言（表存在、`tenant_id` 不存在）→ ② 两表 `ADD COLUMN tenant_id uuid`（先可空）→ ③ 按父表回填 → ④ **回填完整性断言**（仍有 NULL 即 `RAISE EXCEPTION` 中止整笔，不降级可空、不零租户兜底）→ ⑤ `SET NOT NULL` → ⑥ 两表各建 `tenant_id` 索引 → ⑦ `ENABLE` + `FORCE` RLS，策略 `rls_tenant_isolation`（USING/WITH CHECK 同构 B 范式）→ ⑧ 后置断言（形状 `(uuid, NO, NULL)`、rls/force=true、策略数=1、索引存在）。
+
+回填口径（只认父表推导）：
+
+| 从表 | 回填来源 | 关联 |
+| --- | --- | --- |
+| `bi.report_subscriptions.tenant_id` | `bi.report_templates.tenant_id` | `template_id = id` |
+| `analytics.report_execution_records.tenant_id` | `bi.report_schedules.tenant_id` | `schedule_id = id` |
+
+父表租户为空或为零 UUID 时不回填；回填后 NULL 行数非 0 即整笔失败。
+
+B 范式策略表达式：
+
+```sql
+COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
+```
+
+### 10.3 NOT NULL 判定依据
+
+- 生产两表均 0 行 → 回填天然完成，NULL 计数断言必为 0 → 直接 `SET NOT NULL`。
+- 该断言同样约束未来有历史行的环境：只要存在无法由父表推导的行就整笔失败，不会出现「可空列 + 静默 NULL」的中间态。
+
+### 10.4 服务侧改造（仅 `svc/analytics`）
+
+- `report/subscription.rs`：`create_subscription` 的 INSERT 增加 `tenant_id`，绑定 claims 租户（`tenant_uuid`）。
+- `report/scheduler.rs`：新增系统通道事务（`app.rls_system='on'`）读取调度与订阅，新增本地租户事务；`execute_schedule_job` 增加 `tenant_id` 参数，执行记录 INSERT 写 `tenant_id`，整作业在同一租户事务内提交；调度 `tenant_id` 为 NULL 时 `warn!` 跳过（不以零租户兜底）；`run_report` / `notify_subscribers` 改为接收 `&mut PgConnection`。
+- 读取不再依赖 JOIN 父表间接过滤：两张从表自身带 `tenant_id` 且受 RLS 约束。
+- 编译：`cargo check -p topems-analytics` 通过（3.51s，无新增 warning）。
+
+### 10.5 克隆库 `m2_dryrun_20261116` 演练记录
+
+演练数据：租户 A `…0001`（模板 2、调度 1）、租户 B `…0002`（模板 1、调度 1）；订阅 3 行（A 2 / B 1）、执行记录 2 行（A 1 / B 1）。
+
+| 步骤 | 操作 | 耗时 | 读数 / 结论 |
+| --- | --- | --- | --- |
+| 0 | 负向断言：插入 1 行挂 `tenant_id IS NULL` 模板的订阅后跑迁移 | — | 在回填断言处 `ERROR: 回填失败：bi.report_subscriptions 仍有 1 行无法由 report_templates 推导租户`，整笔回滚，`tenant_id` 列数=0 ✅ |
+| 1 | 迁移 up | **0.04 s** | `UPDATE 3` / `UPDATE 2`（全部回填），前后置断言通过 |
+| 2 | 回填映射核对 | — | 5 行 `tenant_id` 与父表逐一相等（ok=t）✅ |
+| 3 | ① 结构 | — | 两表：`col_not_null=t`、`rls=t`、`force=t`、策略数=1、缺 `app.rls_system` 的策略数=0、`tenant_id` 索引=1 ✅ |
+| 4 | ② 未设/空 GUC（`topems_prod`，非 superuser/非 BYPASSRLS） | — | subs 0 / exec 0 ✅ |
+| 5 | ③ 假租户 `…00ff` | — | subs 0 / exec 0 ✅ |
+| 6 | ④ 真实租户 | — | A：subs 2（own 2 / other 0）、exec 1（own 1 / other 0）；B：subs 1（own 1 / other 0）、exec 1（own 1 / other 0）✅ |
+| 7 | 双租户抽查（具体 id） | — | A 仅见 `…301/…302` + `…401`；B 仅见 `…303` + `…402`；互不可见 ✅ |
+| 8 | WITH CHECK | — | A 写本租户成功；A 写 B 租户 `ERROR: new row violates row-level security policy` ✅ |
+| 9 | 系统通道 `app.rls_system='on'` | — | subs 3 / exec 2（全量可见）✅ |
+| 10 | down 回滚（有数据） | **0.02 s** | 策略/索引删除、RLS 关闭；`NOTICE: 回滚跳过删列 …有 3 行非空 tenant_id`、`…有 2 行`（数据保护分支按设计生效）✅ |
+| 11 | 清空演练数据后再次 down（幂等） | **0.02 s** | 列已删除；已删策略/索引仅 `NOTICE ... does not exist, skipping` ✅ |
+| 12 | 残留核验 | — | 两表 `tenant_id` 列 0、策略 0、RLS/FORCE 均 f、tenant_id 索引 0；`report_execution_records` 列形状回到原 11 列；四表行数回到基线 0 ✅ |
+
+补充：克隆库的 `topems_prod` 在这两张表上仅有 SELECT（生产为完整 DML），演练期间为完成 WITH CHECK 测试临时授予 INSERT/UPDATE/DELETE，演练后已 REVOKE 复原。此为克隆库授权差异，非迁移内容。
+
+### 10.6 上生产前置条件与影响
+
+1. **二进制与迁移必须同一停机窗口**：新二进制 INSERT 带 `tenant_id`，旧库无该列 → 42703；新二进制对 `SET NOT NULL` 前的旧库同样失败。顺序：停服 → 迁移 → 起新二进制 → 端点复验。
+2. 预计停机：迁移本体在 0 行表上为亚秒级（克隆库实测 0.04 s，含 PL/pgSQL 断言）；停机主要耗时为停/起服务与复验，预计 < 2 min。
+3. 锁影响：`ADD COLUMN` 无默认值（瞬时元数据）；0 行表 `CREATE INDEX`（非 CONCURRENTLY）瞬时；`ENABLE/FORCE RLS` 需 `ACCESS EXCLUSIVE`（瞬时）；`SET NOT NULL` 需全表校验（0 行即瞬时）。均为短事务，无长锁。
+4. 回滚：执行 `database/rollback/20261116180000_...rollback.sql`；有业务数据时列会被保留并 `NOTICE`（不丢租户信息），需回退二进制或停服后再执行。
+5. 生产库当前仍为原状：两表无 `tenant_id`、无策略、0 行（本轮已复核）。
