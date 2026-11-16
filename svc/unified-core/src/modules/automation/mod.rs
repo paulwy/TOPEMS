@@ -13,6 +13,7 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -315,14 +316,10 @@ pub async fn create_rule(
         .clone()
         .unwrap_or_else(|| "draft".to_string());
 
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by, tenant_id)
@@ -339,7 +336,7 @@ pub async fn create_rule(
     .bind(&payload.canvas)
     .bind(&status)
     .bind(user_id)
-    .bind(tenant_bind)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -868,14 +865,10 @@ pub async fn create_variable(
     Json(payload): Json<CreateVariableRequest>,
 ) -> ApiResponse<AutomationVariable> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let scope = payload
         .scope
@@ -901,7 +894,7 @@ pub async fn create_variable(
     .bind(rule_id)
     .bind(is_secret)
     .bind(user_id)
-    .bind(tenant_bind)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1003,14 +996,10 @@ pub async fn bulk_import_variables(
     Json(payload): Json<BulkImportRequest>,
 ) -> ApiResponse<Value> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let tenant_bind = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let mut imported = 0;
     let mut skipped = 0;
@@ -1032,7 +1021,7 @@ pub async fn bulk_import_variables(
         .bind(rule_id)
         .bind(is_secret)
         .bind(user_id)
-        .bind(tenant_bind)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
