@@ -128,6 +128,7 @@ bash scripts/migration/validate.sh
 # 4) 授权基线（全新空库必做，缺则 pre-commit rls-permissions 门禁红）
 #    空库重建会清空 GRANT 与默认权限；lefthook 钩子从 .env MIGRATE_URL 派生
 #    DATABASE_URL 连库校验 iam/mes/wms/crm/erp 关键表授权，未授权即拦截提交。
+#    门禁校验的是 MIGRATE_URL / DATABASE_URL 连接串里的实际运行角色（不再写死 topems_app）。
 #    脚本幂等可重跑（建角色 → 全 schema USAGE → 1271 表 GRANT → 默认权限）
 psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql
 ```

@@ -71,6 +71,40 @@ pub fn rls_request_tenant(claims: &crate::auth::Claims) -> RlsRequestTenant {
     }
 }
 
+/// 请求读作用域（由认证后上下文解析，调用方不再自行判断超管/服务令牌）。
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RequestReadScope {
+    /// 系统通道：后台系统身份/服务令牌，跨租户只读（`app.rls_system='on'`）。
+    System,
+    /// 租户作用域：只能读本租户。
+    Tenant(Uuid),
+}
+
+/// 当前请求的读作用域；无请求上下文（后台任务/脚本）返回 `None`。
+///
+/// 语义与 RLS 一致：超管若未显式选择租户也走租户作用域（fail-closed），
+/// 只有声明为系统身份的服务令牌才会进入 `System`。
+pub fn current_read_scope() -> Option<RequestReadScope> {
+    current_request_tenant().map(|ctx| {
+        if ctx.system {
+            RequestReadScope::System
+        } else {
+            RequestReadScope::Tenant(ctx.tenant)
+        }
+    })
+}
+
+/// 读路径 SQL 的单参数过滤值：`System` → `None`（跨租户），`Tenant(t)` → `Some(t)`。
+///
+/// 仅用于请求链路；无请求上下文时同样返回 `None`，调用方须改用
+/// `Db::scope_read_system()` / `Db::scope_read_for_tenant()` 显式声明作用域。
+pub fn current_read_tenant_filter() -> Option<Uuid> {
+    match current_read_scope() {
+        Some(RequestReadScope::Tenant(t)) => Some(t),
+        _ => None,
+    }
+}
+
 /// 事务/租户上下文初始化失败统一返回 500（fail-closed）。
 ///
 /// 不允许 `return next.run(req)` 继续处理：那会让 handler 在没有租户 GUC 的

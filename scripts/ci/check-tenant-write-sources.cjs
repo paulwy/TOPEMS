@@ -5,10 +5,15 @@
  * 背景：业务写入必须以 claims/GUC 租户落库，零 UUID
  * （00000000-0000-0000-0000-000000000000）只能作为「平台通道」显式常量使用。
  *
- * 判定规则（分两类，避免把读侧守卫混进写源）：
+ * 判定规则（分三类，避免把读侧守卫混进写源）：
  * 1. WRITE（写源疑似）：零 UUID 出现在 INSERT/UPDATE/DELETE 的 tenant 绑定位置；
  * 2. READ-GUARD（读侧隐式全局）：`OR tenant_id` / `tenant_id IS NULL` /
- *    `NULLIF(NULLIF(current_setting('app.tenant_id'...` 等谓词里的零 UUID。
+ *    `NULLIF(NULLIF(current_setting('app.tenant_id'...` 等谓词里的零 UUID；
+ * 3. IMPLICIT-GLOBAL（读侧隐式全局，第二轮新增，始终 report-only）：
+ *    `$N::uuid IS NULL OR tenant_id`、`OR tenant_id IS NULL` 等不带零 UUID
+ *    字面量的隐式全局谓词。超管/服务令牌跨租户读必须走系统作用域
+ *    （`scope_system` / `scope_read_system` / `scope_read_platform`），
+ *    不得在 SQL 里自己写可选租户谓词。
  *
  * 白名单（不报告）：
  * - 显式常量 PLATFORM_TENANT_ID / SYSTEM_TENANT_ID
@@ -38,6 +43,10 @@ const READ_GUARD =
   /OR\s+tenant_id|tenant_id\s+IS\s+NULL|NULLIF\(\s*NULLIF\(\s*current_setting\('app\.tenant_id'/i;
 const BIND_NIL = /\.bind\s*\(\s*(uuid::)?Uuid::nil\s*\(\s*\)\s*\)/;
 const UNWRAP_NIL = /unwrap_or(_else)?\s*\([^)]*Uuid::nil/;
+const IMPLICIT_GLOBAL = [
+  /\$\d+\s*::uuid\s+IS\s+NULL\s+OR\s+tenant_id/i,
+  /\bOR\s+tenant_id\s+IS\s+NULL\b/i,
+];
 const TEST_PATH = /(^|\/)(tests?|examples|benches)(\/|$)|_test\.rs$|_tests\.rs$/;
 const SELF = 'scripts/ci/check-tenant-write-sources.cjs';
 
@@ -72,10 +81,13 @@ function listFiles(changedOnly) {
 }
 
 function scanFile(file) {
-  const hits = { write: [], readGuard: [] };
+  const hits = { write: [], readGuard: [], implicitGlobal: [] };
   if (file === SELF || TEST_PATH.test(file)) return hits;
   const lines = fs.readFileSync(file, 'utf-8').split('\n');
   lines.forEach((line, idx) => {
+    if (IMPLICIT_GLOBAL.some((re) => re.test(line))) {
+      hits.implicitGlobal.push({ file, line: idx + 1, text: line.trim() });
+    }
     const hasNil = line.includes(NIL_LITERAL) || /Uuid::nil\s*\(\s*\)/.test(line);
     if (!hasNil) return;
     if (EXPLICIT_CONST.test(line)) return;
@@ -121,9 +133,10 @@ function main() {
   const results = files.map(scanFile);
   const write = results.flatMap((r) => r.write);
   const readGuard = results.flatMap((r) => r.readGuard);
+  const implicitGlobal = results.flatMap((r) => r.implicitGlobal);
 
   const mode = strict ? 'BLOCKING' : 'REPORT-ONLY';
-  if (write.length === 0 && readGuard.length === 0) {
+  if (write.length === 0 && readGuard.length === 0 && implicitGlobal.length === 0) {
     console.log(`[Gate TWS] PASS (${mode}) 零租户写入源头扫描无命中（${files.length} 文件）`);
     return;
   }
@@ -131,6 +144,7 @@ function main() {
   console.log(`[Gate TWS] ${mode} 零租户扫描命中（${files.length} 文件）：`);
   report('WRITE 写源疑似', write, true);
   report('READ-GUARD 读侧隐式全局（第二阶段清单）', readGuard, false);
+  report('IMPLICIT-GLOBAL 可选租户谓词（始终 report-only）', implicitGlobal, false);
   console.log(
     '说明：平台/系统语料请显式引用 PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 并注明理由；' +
       '业务写入必须使用 claims/GUC 租户；测试代码不纳入扫描。',

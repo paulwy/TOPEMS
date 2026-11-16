@@ -355,11 +355,11 @@ END $$;
 
 注意：原有 25 张表的 CRUD 授权早于本次变更，不应连带撤销；需精确回滚时只撤本次新增的 SELECT/USAGE。
 
-### 11.3 待办：钩子角色与生产运行角色口径错位（只登记，不改钩子）
+### 11.3 已收口：钩子角色与运行角色口径对齐（2026-11-16）
 
-- `scripts/ci/check-rls-permissions.cjs` 校验的运行角色是 `topems_app`；而生产 8099 服务实际以 `topems_prod` 连接（见 launchd plist 中的 DSN），且 `topems_app` 在生产 `rolcanlogin=f`、此前 schema USAGE 为 0。
-- 即：该钩子校验的是一个生产的“遗留/未启用”角色，校验通过不代表生产运行角色授权完整，反之缺授权也不代表服务不可用。本次仅补齐只读授权以解除阻塞，未改钩子逻辑与角色属性。
-- 待办：后续评估钩子应改为按环境取实际运行角色（生产 `topems_prod` / 开发 `topems_app`），或在 `.env` 中显式区分 `MIGRATE_URL` 与运行角色校验目标；调整前不要删除 `topems_app` 的只读授权。
+- `scripts/ci/check-rls-permissions.cjs` 不再写死 `topems_app`：改为从 `MIGRATE_URL`（缺省回退 `DATABASE_URL` / `.env`）解析连接串用户名，按该角色校验关键表 SELECT 与默认权限；解析不到角色或数据库不可达时直接非 0 退出，不再静默通过。
+- 校验目标随环境自动对齐：生产 `.env` 两处 DSN 均为 `topems_prod`，即校验 `topems_prod`；开发样例（`.env.example`）运行角色为 `topems_app`，即校验 `topems_app`。
+- `topems_app` 的只读授权保留不动：本次只改门禁口径，撤销与否另行评估（见第三阶段评估结论）。
 
 ## 12. 生产窗口执行记录：从表迁移 + 新二进制（2026-11-16 23:20 CST）
 
