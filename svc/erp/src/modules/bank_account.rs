@@ -13,7 +13,9 @@ use axum::{
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -222,9 +224,15 @@ pub async fn get_bank_account(
 
 pub async fn create_bank_account(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateBankAccountRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((_, msg)) => return Err((StatusCode::BAD_REQUEST, ApiResponse::error(400, &msg))),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -238,9 +246,7 @@ pub async fn create_bank_account(
     let row = match sqlx::query(only_own_schema_query!("erp",
         "INSERT INTO erp.bank_accounts \
          (bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, tenant_id) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, \
-                 COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, \
-                          '00000000-0000-0000-0000-000000000000'::UUID)) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) \
          RETURNING id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at"))
         .bind(&req.bank_name)
         .bind(&req.account_number)
@@ -250,6 +256,7 @@ pub async fn create_bank_account(
         .bind(balance)
         .bind(is_default)
         .bind(&status)
+        .bind(tenant_id)
         .fetch_one(&mut **txn)
         .await
     {
