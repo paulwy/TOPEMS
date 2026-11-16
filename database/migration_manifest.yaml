@@ -1869,14 +1869,15 @@ pending_forward_patches:
 
   - version: "20261115141800"
     file: "database/migrations/20261115141800_b_class_search_logs_query.sql"
-    status: to_apply
+    status: applied
     effect: "public.search_logs 补 query text NOT NULL"
     destructive_scan: "仅 ADD COLUMN；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     evidence:
-      - { kind: code, ref: "svc/search/src/handlers.rs:478-483", detail: "SELECT query ... WHERE query ILIKE ... GROUP BY query；prod 缺列 42703" }
+      - { kind: code, ref: "svc/search/src/handlers.rs:478-483", detail: "SELECT query ... WHERE query ILIKE ... GROUP BY query；投产前 prod 缺列 42703" }
       - { kind: data, ref: "prod count(*)", detail: "0 行，可直接加 NOT NULL" }
       - { kind: catalog, ref: "prod pg_class", detail: "该表 rls=false、无策略，补列无 RLS 副作用" }
-    note: "同一语句还读 MAX(created_at)，prod 缺 created_at 等 4 列；本迁移后该查询仍会在 created_at 上 42703，不得据此宣称路径已修复"
+      - { kind: catalog, ref: "prod information_schema.columns（2026-11-16 复核）", detail: "public.search_logs 现有 8 列：id/tenant_id/user_id/query/result_count/duration_ms/created_at/deleted_at；query 为 text NOT NULL 已生效" }
+    note: "已投产核销（2026-11-16）。created_at 等其余 4 列由 20261115142400 补齐，两条迁移合并后 /search/suggestions 与 search_logs 写入路径均已可用"
 
   # ===== 空壳表整表对齐（2026-11-15 起，共 6 批，分批单版本投产） =====
   # 口径来源：docs/database/code-schema-gap-2026-11-15.md §7（9 表 / 159 列，prod 全部 0 行）。
@@ -1949,7 +1950,7 @@ pending_forward_patches:
 
   - version: "20261115142400"
     file: "database/migrations/20261115142400_public_platform_3tables_25cols.sql"
-    status: to_apply
+    status: applied
     effect: "public.cqrs_events 补 8 列 + 唯一约束 cqrs_events_aggregate_id_version_key(aggregate_id,version) + 3 索引；public.search_logs 补 5 列 + 3 索引；public.analytics_sync_records 补 12 列 + 4 索引"
     destructive_scan: "仅 ADD COLUMN + ADD CONSTRAINT(UNIQUE) + CREATE INDEX；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     evidence:
@@ -1957,6 +1958,7 @@ pending_forward_patches:
       - { kind: catalog, ref: "prod/dev pg_indexes/pg_constraint", detail: "prod 三表均只有 PK 索引；dev 侧 11 只索引/唯一约束全部缺失，本次一并补齐（含 search_logs 的 idx_search_logs_query，query 列已由 20261115141800 补入）" }
       - { kind: catalog, ref: "prod/dev pg_class/pg_policy", detail: "cqrs_events 两侧均 RLS enable/force 且策略只引用既有 tenant_id；search_logs / analytics_sync_records 两侧 rls=false（dev 亦无策略），无 RLS 行为变化" }
       - { kind: catalog, ref: "dev information_schema/pg_indexes", detail: "25 列类型/长度/精度/可空/默认值与 11 只索引定义逐项取自 dev 实读" }
+      - { kind: catalog, ref: "prod 实查（2026-11-16 复核）", detail: "cqrs_events 12 列 / 5 索引、search_logs 8 列 / 4 索引、analytics_sync_records 14 列 / 5 索引；唯一约束 cqrs_events_aggregate_id_version_key 已存在" }
     note: "cqrs_events 补后 prod 为 12 列（dev 10 列）：prod 独有的 created_at/updated_at 保留不动，不做删列；本批只保证「dev 有、prod 缺」的列齐备"
 
   - version: "20261115142500"

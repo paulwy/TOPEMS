@@ -26282,6 +26282,12 @@ ALTER TABLE ONLY public.search_entity_projections FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE public.search_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    user_id uuid,
+    query text NOT NULL,
+    result_count integer DEFAULT 0,
+    duration_ms integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at timestamp with time zone
 );
 
@@ -53717,6 +53723,27 @@ CREATE INDEX idx_schema_registry_created_at ON public.schema_registry USING btre
 --
 
 CREATE INDEX idx_search_recent_user_time ON public.search_recent USING btree (user_id, searched_at DESC);
+
+
+--
+-- Name: idx_search_logs_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_search_logs_created ON public.search_logs USING btree (created_at DESC);
+
+
+--
+-- Name: idx_search_logs_query; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_search_logs_query ON public.search_logs USING btree (query);
+
+
+--
+-- Name: idx_search_logs_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_search_logs_tenant ON public.search_logs USING btree (tenant_id);
 
 
 --
