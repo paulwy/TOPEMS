@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -237,9 +237,7 @@ async fn invalidate_opportunity_cache(state: &ApiState, reason: &str) {
 )]
 pub async fn list_opportunities(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpportunityPaginationParams>,
     _headers: HeaderMap,
@@ -366,9 +364,7 @@ pub async fn list_opportunities(
 )]
 pub async fn create_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
@@ -512,9 +508,7 @@ pub async fn create_opportunity(
 )]
 pub async fn get_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
@@ -586,9 +580,7 @@ pub async fn get_opportunity(
 
 async fn update_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -734,9 +726,7 @@ async fn update_opportunity(
 
 async fn delete_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -842,9 +832,7 @@ async fn delete_opportunity(
 )]
 pub async fn batch_delete_opportunities(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
@@ -944,9 +932,7 @@ pub async fn batch_delete_opportunities(
 
 async fn get_sales_funnel(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<FunnelStage>> {
@@ -1034,9 +1020,7 @@ async fn get_sales_funnel(
 )]
 pub async fn get_opportunity_stats(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<OpportunityStats> {
@@ -1147,9 +1131,7 @@ pub async fn get_opportunity_stats(
 )]
 pub async fn get_opportunity_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
     _headers: HeaderMap,
@@ -1259,9 +1241,7 @@ pub async fn get_opportunity_forecast(
 )]
 pub async fn get_stage_transitions(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> ApiResponse<Vec<StageTransition>> {
@@ -1353,9 +1333,7 @@ fn prev_stage(from: OppStage) -> OppStage {
 )]
 pub async fn advance_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -1551,9 +1529,7 @@ pub async fn advance_opportunity(
 )]
 pub async fn rollback_opportunity(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -58,9 +58,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_customer_scores(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerScoringQueryParams>,
     _headers: HeaderMap,
@@ -161,9 +159,7 @@ pub async fn list_customer_scores(
 )]
 pub async fn get_customer_score(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
@@ -212,9 +208,7 @@ pub async fn get_customer_score(
 
 async fn create_customer_score(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateCustomerScoreRequest>,
@@ -355,9 +349,7 @@ async fn create_customer_score(
 
 async fn update_customer_score(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -477,9 +469,7 @@ async fn update_customer_score(
 
 async fn delete_customer_score(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -579,9 +569,7 @@ async fn delete_customer_score(
 )]
 pub async fn batch_calculate(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<BatchCalculateRequest>,

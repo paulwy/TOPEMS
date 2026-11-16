@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Query, State},
     http::HeaderMap,
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -98,9 +98,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_segments(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SegmentQueryParams>,
     headers: HeaderMap,
@@ -178,9 +176,7 @@ pub async fn list_segments(
 )]
 pub async fn get_segment(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
@@ -220,9 +216,7 @@ pub async fn get_segment(
 
 async fn create_segment(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSegmentRequest>,
@@ -302,9 +296,7 @@ async fn create_segment(
 )]
 pub async fn delete_segment(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -356,9 +348,7 @@ pub async fn delete_segment(
 )]
 pub async fn get_segment_customers(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Query(params): Query<SegmentQueryParams>,
@@ -425,9 +415,7 @@ pub async fn get_segment_customers(
 )]
 pub async fn auto_segment(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;

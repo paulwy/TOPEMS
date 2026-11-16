@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
 
@@ -513,12 +514,26 @@ pub async fn analytics_segmentation(
 pub async fn analytics_billing(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared");
+    // M-1：请求链路禁止自开事务，复用 tenant_middleware 注入的请求事务。
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
     let tenant = resolve_tenant(&claims);
 
-    match load_billing_analytics(&db, tenant).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({
+                "success": false,
+                "message": "请求事务缺失",
+                "code": 500,
+            })),
+        );
+    };
+
+    match load_billing_analytics(&db, tenant, txn).await {
         Ok(data) => envelope(
             data,
             "Billing 真实聚合：账单状态饼 + Top10 客户应收 + 账龄四桶（按租户过滤；billing_records 写入方待 finance/erp 接通，当前以已落库账单为准）",
@@ -540,13 +555,14 @@ pub async fn analytics_billing(
 /// 账单分析聚合（只读租户作用域）。
 ///
 /// K8：`crm.billing_records` 收紧为 fail-closed 后，裸连接池读取会静默返回 0 行。
-/// 这里统一走 `Db::scope_read()`，由请求级租户上下文写入事务级 GUC；无租户上下文
-/// 直接报错（不再用 `unwrap_or_default()` 把失败伪装成空结果）。
+/// 这里复用请求事务并叠加租户 GUC（`scope_with`）；无请求上下文直接报错
+/// （不再用 `unwrap_or_default()` 把失败伪装成空结果）。
 async fn load_billing_analytics(
     db: &Db,
     tenant: Option<uuid::Uuid>,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Result<serde_json::Value, TopemsError> {
-    let mut scope = db.scope_read().await.map_err(|e| {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
         TopemsError::DatabaseTransaction(format!("CRM 账单分析读作用域打开失败: {}", e))
     })?;
 
@@ -919,24 +935,26 @@ mod billing_scope_tests {
         let db = Db::new(pool.clone(), "crm, public, shared");
 
         // 有租户上下文：只能读到本租户
+        let mut tx_a = pool.begin().await.unwrap();
         let data_a = scope_request_tenant(
             RlsRequestTenant {
                 tenant: tenant_a,
                 system: false,
             },
-            async { load_billing_analytics(&db, Some(tenant_a)).await },
+            async { load_billing_analytics(&db, Some(tenant_a), &mut tx_a).await },
         )
         .await
         .expect("有租户上下文时应能读到本租户账单");
         assert_eq!(sum_count(&data_a["status_pie"]), 2);
         assert!((sum_amount(&data_a["status_pie"]) - 150.0).abs() < f64::EPSILON);
 
+        let mut tx_b = pool.begin().await.unwrap();
         let data_b = scope_request_tenant(
             RlsRequestTenant {
                 tenant: tenant_b,
                 system: false,
             },
-            async { load_billing_analytics(&db, Some(tenant_b)).await },
+            async { load_billing_analytics(&db, Some(tenant_b), &mut tx_b).await },
         )
         .await
         .expect("租户 B 应能读到自己的账单");
@@ -944,7 +962,8 @@ mod billing_scope_tests {
         assert!((sum_amount(&data_b["status_pie"]) - 999.0).abs() < f64::EPSILON);
 
         // 无租户上下文：拒绝（不是返回空聚合）
-        let err = load_billing_analytics(&db, None)
+        let mut tx_none = pool.begin().await.unwrap();
+        let err = load_billing_analytics(&db, None, &mut tx_none)
             .await
             .expect_err("无租户上下文必须拒绝");
         assert!(

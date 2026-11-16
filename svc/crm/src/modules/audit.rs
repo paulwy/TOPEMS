@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -62,9 +62,7 @@ pub struct ListAuditLogsQuery {
 )]
 pub async fn list_audit_logs(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> ApiResponse<serde_json::Value> {
@@ -174,9 +172,7 @@ pub async fn list_audit_logs(
 )]
 pub async fn get_audit_log(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<i64>,
 ) -> ApiResponse<AuditLog> {

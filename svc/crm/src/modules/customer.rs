@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -6,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -125,9 +125,7 @@ async fn invalidate_customer_cache(state: &ApiState, reason: &str) {
 pub async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<CustomerPaginationParams>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<ListResponse<Customer>> {
@@ -235,9 +233,7 @@ pub async fn list_customers(
 )]
 pub async fn create_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateCustomerRequest>,
@@ -373,9 +369,7 @@ pub async fn create_customer(
 )]
 pub async fn get_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -454,9 +448,7 @@ pub async fn get_customer(
 )]
 pub async fn update_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -620,9 +612,7 @@ pub async fn update_customer(
 )]
 pub async fn delete_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -712,9 +702,7 @@ pub async fn delete_customer(
 #[axum::debug_handler]
 pub async fn batch_delete_customers(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
@@ -836,9 +824,7 @@ pub struct ApprovalActionRequest {
 )]
 pub async fn start_customer_approval(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -967,9 +953,7 @@ pub async fn start_customer_approval(
 )]
 pub async fn approve_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -1074,9 +1058,7 @@ pub async fn approve_customer(
 )]
 pub async fn reject_customer(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -1296,9 +1278,7 @@ fn to_bd(v: f64) -> sqlx::types::BigDecimal {
 #[allow(clippy::as_conversions)]
 pub async fn get_customer_finance(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
@@ -1409,9 +1389,7 @@ pub async fn get_customer_finance(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_customer_finance(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,

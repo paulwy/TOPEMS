@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -10,6 +9,7 @@ use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -50,9 +50,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_sales_forecasts(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesForecastQueryParams>,
     _headers: HeaderMap,
@@ -140,9 +138,7 @@ pub async fn list_sales_forecasts(
 
 async fn get_sales_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
@@ -191,9 +187,7 @@ async fn get_sales_forecast(
 
 async fn create_sales_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
@@ -316,9 +310,7 @@ async fn create_sales_forecast(
 )]
 pub async fn generate_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
@@ -408,9 +400,7 @@ pub async fn generate_forecast(
 
 async fn update_sales_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -555,9 +545,7 @@ async fn update_sales_forecast(
 
 async fn delete_sales_forecast(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -666,9 +654,7 @@ pub struct SalesTrendQuery {
 )]
 pub async fn get_sales_trend(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     _headers: HeaderMap,
@@ -797,9 +783,7 @@ pub struct CompareForecastQuery {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn compare_sales_forecasts(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareForecastQuery>,
     _headers: HeaderMap,
@@ -951,9 +935,7 @@ pub async fn compare_sales_forecasts(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_accuracy_report(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     _headers: HeaderMap,

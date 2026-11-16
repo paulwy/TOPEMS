@@ -1,4 +1,3 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -7,6 +6,7 @@ use axum::{
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::ApiState;
 use crate::models::opportunity::Opportunity;
@@ -88,9 +88,7 @@ pub fn create_routes() -> Router<ApiState> {
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn get_stage_opportunities_tail(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((stage, _tail)): Path<(String, String)>,
     Query(params): Query<FunnelQueryParams>,
@@ -117,9 +115,7 @@ async fn get_stage_opportunities_tail(
 )]
 pub async fn get_funnel_data(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<FunnelQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
@@ -197,9 +193,7 @@ pub async fn get_funnel_data(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_funnel_metrics(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<FunnelMetrics> {
     let mut guard = txn_arc.lock().await;
@@ -281,9 +275,7 @@ pub async fn get_funnel_metrics(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_funnel_conversion(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<FunnelConversion>> {
     let mut guard = txn_arc.lock().await;
@@ -346,9 +338,7 @@ pub async fn get_funnel_conversion(
 )]
 pub async fn get_funnel_trend(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FunnelQueryParams>,
 ) -> ApiResponse<Vec<FunnelTrend>> {
@@ -427,9 +417,7 @@ pub async fn get_funnel_trend(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_stage_opportunities(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(stage): Path<String>,
     Query(params): Query<FunnelQueryParams>,

@@ -1,6 +1,6 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, State};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::modules::ApiState;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -121,9 +121,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
 /// 插件健康检查
 pub async fn plugin_health_check(
     State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     // 检查数据库连接
     let mut guard = txn_arc.lock().await;

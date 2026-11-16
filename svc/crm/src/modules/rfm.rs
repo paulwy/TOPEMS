@@ -6,7 +6,6 @@
 //! 数据来源：crm.sales_orders 表（wms ShippingOrderRequested 事件写入）
 //! 缓存表：crm.rfm_results 表（分析结果）
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::{
     extract::{Extension, Path, State},
     routing::{get, post},
@@ -15,6 +14,7 @@ use axum::{
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -337,9 +337,7 @@ pub fn create_routes() -> Router<ApiState> {
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn analyze_rfm(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<RfmConfig>,
@@ -462,9 +460,7 @@ pub async fn analyze_rfm(
 )]
 pub async fn get_segments(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<SegmentStats>> {
@@ -571,9 +567,7 @@ pub async fn get_segments(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn get_customer_rfm(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
