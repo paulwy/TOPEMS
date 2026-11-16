@@ -362,7 +362,7 @@ grep -rnE '\.scope_(read_)?for_tenant\(' --include='*.rs' svc/<站>/src | grep -
 
 facts 快照（`docs/quality/facts-latest.json`，fingerprint 见文件）已按收口终态重生成：
 
-- `docs.todo_lines` **748 → 766 → 773 → 779**：+18 来自 `TODO.md` §8.1「待决事项登记」（table 头 2 行 + 3 条 `DEC-WMS-B-*` 各 1 行 + 触发条件与说明），+7 为 §8.1 后续 DEC 登记，+6 为 2026-11-16 尾收补记 §17.4「请求事务化回归补跑」；快照已按当前工作区重生成，`pnpm facts:check` 与 779 一致。
+- `docs.todo_lines` **748 → 766 → 773 → 779 → 781**：+18 来自 `TODO.md` §8.1「待决事项登记」（table 头 2 行 + 3 条 `DEC-WMS-B-*` 各 1 行 + 触发条件与说明），+7 为 §8.1 后续 DEC 登记，+6 为 2026-11-16 尾收补记 §17.4「请求事务化回归补跑」，+2 为 §8.1 新增 `DEC-M2-02`（RLS 收口 B 范式定案）与 `DEC-M2-03`（零租户数据待清洗）；快照已按当前工作区重生成，`pnpm facts:check` 与 781 一致。
 - `docs.todo_h2_sections=18` 不变（§8.1 是 `###` 三级标题）。
 
 ### 11.3 本轮尾收代码改动明细

@@ -295,6 +295,8 @@
 | DEC-K11-01 | 请求事务内「写后返回非 2xx」的失败表达 | **已定案（2026-11-16）**：统一返回 500，禁「200 + 内层错误码」，失败分支显式 rollback | 架构 | 无需新增证据；87 条误报按 allowlist 登记、2 条真实风险改「先校验后写」 | `docs/database/known-gate-defects.md` K11、`docs/database/k11-triage-2026-11-16.md` §0 |
 | DEC-K12-01 | finance `update_reconcile_item` 聚合事务语义 | **已定案（2026-11-16）**：保留现状（两段式 + 忽略聚合失败 = C 方案），不做 A/B 重构 | 业务方（对账 owner） | 改 A/B 的前置：出现账实差异工单 / 业务要求强一致 / 连接池容量再次告警 | 同上 K12 |
 | DEC-M2-01 | 382 条宽松 RLS 策略收口的生产窗口 | **只记录、不推进**（材料已备，本轮零 DDL） | 业务方（窗口排期）+ DBA | 窗口日期与时段、执行 DBA、是否允许窗口内 `ANALYZE` | `docs/database/m2-window-application-2026-11-16.md` |
+| DEC-M2-02 | 382 条 RLS 收口写法 | **已定案（2026-11-16）**：统一 B 范式 `rls_system='on' OR <租户列> = NULLIF(current_setting('app.tenant_id', true), '')::uuid`，删除「行值 = 零 UUID → true」「GUC 为空/零 → true」「`tenant_id IS NULL` → true」分支；不做表级特例、不按服务分叉（`master_data` 的 10 条按同范式改用 `tenant_uid` 列） | 架构 + 业务方 | 克隆库 `m2_dryrun_20261116` 8 批全量演练：382 条 apply 199 ms / rollback 209 ms，8/8 批回滚后表达式 MD5 一致 | 同上 §8、§8.1 |
+| DEC-M2-03 | `core.ai_faqs` 15 行、`public.core_faqs` / `core_guides` 各 12 行零租户（`tenant_id=00000000-…-0000`）数据归属 | **只记录、不推进**（归属未定，本轮不动数据） | 业务方（数据归属 owner）+ DBA | 逐行确认归属租户；`core.ai_faqs` 收口后真实租户可见数 17→2 属预期，不作回归 | 同上 §8.1 |
 | DEC-M3-01 | `PostCommitQueue` 是否推广 | **已定案（2026-11-16）**：不推广，保持 finance `settlement_center` 5 处试点 | 架构 | 推广前置三条：观测 ≥ 4 周且 `discarded`=0、发布失败率不高于基线、事件丢失样本为 0 | 同上 K13 定案段 |
 | DEC-SRCH-01 | `search_logs.duration_ms` 口径 | **已定案（2026-11-16）**：写服务端处理耗时（毫秒整数），未采集写 NULL，不写 0 | 架构 | 已按此修唯一写入点（search handler 后台双写） | 同上 K15 |
 
