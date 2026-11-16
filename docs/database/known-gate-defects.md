@@ -57,3 +57,36 @@
   - `marketplace` 查的是全局目录表 `core.core_plugins`（按设计无租户谓词），走 system 作用域合理；`navigation-config` 必须保留租户谓词与 RLS。
 - **状态**：OPEN，与 B 类 8 列（代码引用不存在的列）一起在代码轮处理，不在补列迁移内动手；本批只登记。
 
+## K10 382 条 RLS 策略「未设上下文即放行」 —— OPEN（2026-11-16 登记，不修，不阻断）
+
+- **来源**：§17.2 `scope_with` 方案定稿时按「未设 `app.tenant_id` 是否必须 0 行」这一判据（方案文档 §7 判据 ②-b）做全量策略分类时发现。
+- **取数**（只读查 `pg_policies`，`cmd IN ('SELECT','ALL')` 且 `qual` 非空，共 1030 条；其中 962 条谓词含 `app.tenant_id`，68 条为 owner/角色类非租户谓词）：
+
+  | 谓词形态 | 条数 | 含义 |
+  |---|---|---|
+  | 有 `app.rls_system='on'` 逃生口 + 未设即拒 | **579** | 正确态 |
+  | 无逃生口、未设即**放行** | **370** | 跨租户放行风险 |
+  | 既有逃生口、又有未设即放行分支 | **12** | 两种旁路叠加 |
+  | 无逃生口、未设即拒 | **1** | 安全但系统通道不可用 |
+  | 非租户谓词（owner/角色） | **68** | 不适用该判据 |
+
+- **样例**：`pm.projects` 为正确态 `app.rls_system='on' OR tenant_id = current_setting('app.tenant_id')`；`rs.projects` 为 `current_setting(...) IS NULL OR tenant_id IS NULL OR tenant_id = '000…0'`，即**未设 GUC 直接返回全表**。
+- **影响**：只要出现「事务未带 `app.tenant_id` 却查了租户表」，这 382 条策略不会 fail-closed。当前请求链路由 `tenant_middleware` 强制写入 GUC，故线上未观测到实际泄漏；风险集中在后台任务、异常路径、以及未来新增的裸 `pool` 查询。
+- **为什么不修**：属**策略定义**缺陷（W7 RLS 收口 + 本文档台账范围），与 §17.2 的「事务复用」是两个变更面；在本批改策略会混淆变更边界，且需要逐表确认业务语义。
+- **为什么暂不阻断**：已作为 §17.2 门禁的**非阻断判据 ②-b**——若纳入阻断，门禁会长期红（382 条），失去信号价值。方案里的判据 ②-a（假租户 UUID → 0 行）对 962 条租户策略均成立，已作为批次门禁使用。
+- **转阻断的前置条件**：W7 把上述 382 条改为「未设即拒」后，再在 `check-request-txn` 或 RLS 专项门禁中把 ②-b 提为阻断项。
+
+## K11 请求事务内「写后返回非 2xx」存量 58 处，且门禁仅对 scm 触发 —— OPEN（2026-11-16 登记，不修，不阻断）
+
+- **来源**：13 服务请求事务类型统一（`RlsTxnCell`）提交时，pre-commit 的 `[Gate TXN-2XX]`（[check-txn-write-non2xx.py](../../scripts/ci/check-txn-write-non2xx.py)）被触发并报出 58 处命中。
+- **取数**：`python3 scripts/ci/check-txn-write-non2xx.py --changed-only`（暂存 173 个 svc 文件）→ 58 处，分布 tms 24、erp 20、hrm 8、wms 3、crm 2、integration 1，其余服务 0。
+- **是否为本次引入**：**否**。把 29 个命中文件的 `HEAD` 版本取出到独立目录重跑同一脚本，得到**完全相同的 58 处**（差集为空），故全部为存量，与类型统一无关（类型统一只改签名类型名，不改语句顺序）。
+- **命中形态**（两类，需区分）：
+  1. **误报**：`UPDATE/DELETE ... WHERE id=$1` 的 `rows_affected=0` 分支返回 404（如 [dict.rs](../../svc/erp/src/modules/dict.rs) `delete_dict_type`），实际未产生写入，属脚本文档所述「未命中行 → 404」合法分支，应登记 allowlist；
+  2. **真实风险**：写入语句已执行、随后在另一分支返回非 2xx 且中间无 `rollback()`/`guard.take()`，请求事务按非 2xx 回滚，写入被静默丢弃（如 `delete_dict_type` 先 `UPDATE dict_items` 再判断 `dict_types` 是否命中）。
+- **门禁接线缺陷**：[lefthook.yml](../../lefthook.yml) 中该 hook 的触发条件是 `^svc/scm/.*\.rs$`，因此除 scm 外的服务改动不会触发检查，58 处存量长期不可见；「仅 scm」看起来是试点遗留，而非有意收窄。
+- **为什么不修**：58 处需要逐函数区分「误报」与「真实丢弃」，属独立变更面（写路径语义），与本次类型统一不同批；且真实风险项改了会影响接口返回码与事务边界，需业务确认。
+- **建议处置（未实施）**：①先按文件+函数把这批登记进 [txn-write-non2xx-allowlist.json](../../scripts/ci/txn-write-non2xx-allowlist.json) 并把 hook 触发范围从 `svc/scm` 扩到 `svc/**`；②再逐条复核 allowlist 里的真实风险项，改为「先回滚再返回」或把失败分支前移。
+- **状态**：OPEN，不阻断；扩触发范围前必须先落地基线，否则门禁会在任何服务提交上直接红。
+
+
