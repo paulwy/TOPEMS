@@ -44,7 +44,8 @@ async fn main() -> Result<()> {
     };
     let ctx = bootstrap_service_shared(&config).await?;
     // 连接治理 B：模块 schema 作用域固化在 Db 中（事务内 SET LOCAL search_path）。
-    let db = Db::new(ctx.db.clone(), "gis, public");
+    // M-1：请求链路禁止自开事务，统一复用 tenant_middleware 的请求级 RLS 事务（scope_with）。
+    let db = Db::new(ctx.db.clone(), "gis, public").deny_request_own_txn();
 
     // 自定义 Prometheus Gauge
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();

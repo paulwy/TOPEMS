@@ -14,6 +14,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -68,6 +69,7 @@ pub struct TrackingQuery {
 
 /// 注册设备
 pub async fn register_device(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<RegisterDevice>,
@@ -75,7 +77,13 @@ pub async fn register_device(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -122,10 +130,17 @@ pub async fn register_device(
     )
 )]
 pub async fn list_devices(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -176,11 +191,18 @@ pub async fn list_devices(
     )
 )]
 pub async fn get_device(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Device> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -215,6 +237,7 @@ pub async fn get_device(
 
 /// 更新设备信息
 pub async fn update_device(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -223,7 +246,13 @@ pub async fn update_device(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -271,6 +300,7 @@ pub async fn update_device(
 
 /// 删除设备
 pub async fn delete_device(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -278,7 +308,13 @@ pub async fn delete_device(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -313,6 +349,7 @@ pub async fn delete_device(
 
 /// 更新设备位置
 pub async fn update_device_location(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     State(ws_manager): State<SharedWebSocketManager>,
     Extension(claims): Extension<Claims>,
@@ -322,7 +359,13 @@ pub async fn update_device_location(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -377,11 +420,18 @@ pub async fn update_device_location(
 
 /// 获取设备轨迹
 pub async fn get_device_tracking(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -486,11 +536,18 @@ pub async fn get_device_tracking(
 )]
 /// 获取设备历史位置
 pub async fn get_device_history(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -551,11 +608,18 @@ pub async fn get_device_history(
 /// 前端 trackApi.getTrackStatistics(deviceId) → 返回单设备轨迹统计汇总。
 /// 复用 services::track_stats::TrackStatisticsCalculator 计算距离/速度。
 pub async fn get_device_track_statistics(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(_claims): Extension<Claims>,
     Path(device_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -622,10 +686,17 @@ pub async fn get_device_track_statistics(
 /// GET /device-tracks/devices
 /// 前端 trackApi.listDevicesWithTracks() → 返回最近有轨迹上报的设备列表（含最新位置）。
 pub async fn list_devices_with_tracks(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -694,7 +765,10 @@ pub async fn report_device_location(
     Path(device_code): Path<String>,
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> ApiResponse<DeviceLocationRecord> {
-    let mut scope = match db.scope().await {
+    // 本报文路由（/devices/{device_code}/report）是 public，没有 tenant_middleware 提供的请求级事务；
+    // 设备凭证通道由本 handler 自行校验（device_code + device_token），记录租户取设备归属租户，
+    // 故走系统通道（nil 租户 + app.rls_system='on'），与 unified-core 的无请求上下文入口一致。
+    let mut scope = match db.scope_system().await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

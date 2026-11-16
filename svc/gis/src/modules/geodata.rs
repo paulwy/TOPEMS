@@ -8,6 +8,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -43,6 +44,7 @@ pub struct ConvertRequest {
 )]
 /// 上传地理数据
 pub async fn upload_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
@@ -50,7 +52,13 @@ pub async fn upload_geodata(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -201,10 +209,17 @@ async fn insert_feature(
 
 /// 获取地理数据列表
 pub async fn list_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -241,11 +256,18 @@ pub async fn list_geodata(
 
 /// 获取地理数据详情
 pub async fn get_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeoData> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -280,6 +302,7 @@ pub async fn get_geodata(
 
 /// 更新地理数据
 pub async fn update_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -288,7 +311,13 @@ pub async fn update_geodata(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -333,6 +362,7 @@ pub async fn update_geodata(
 
 /// 删除地理数据
 pub async fn delete_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -340,7 +370,13 @@ pub async fn delete_geodata(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -375,6 +411,7 @@ pub async fn delete_geodata(
 
 /// 数据格式转换
 pub async fn convert_geodata(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -383,7 +420,13 @@ pub async fn convert_geodata(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -476,11 +519,18 @@ fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
 
 /// 获取地理要素列表
 pub async fn list_geofeatures(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

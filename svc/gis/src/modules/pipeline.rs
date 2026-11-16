@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -33,11 +34,18 @@ pub struct CreatePipeline {
     tag = "pipeline"
 )]
 pub async fn list_pipelines(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -100,6 +108,7 @@ pub async fn list_pipelines(
     tag = "pipeline"
 )]
 pub async fn create_pipeline(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePipeline>,
@@ -107,7 +116,13 @@ pub async fn create_pipeline(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::PipelineWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -157,11 +172,18 @@ pub async fn create_pipeline(
     tag = "pipeline"
 )]
 pub async fn get_pipeline(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Pipeline> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -208,6 +230,7 @@ pub async fn get_pipeline(
     tag = "pipeline"
 )]
 pub async fn update_pipeline(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -216,7 +239,13 @@ pub async fn update_pipeline(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::PipelineWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -275,6 +304,7 @@ pub async fn update_pipeline(
     tag = "pipeline"
 )]
 pub async fn delete_pipeline(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -282,7 +312,13 @@ pub async fn delete_pipeline(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::PipelineWrite).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -329,11 +365,18 @@ pub async fn delete_pipeline(
     tag = "pipeline"
 )]
 pub async fn list_pipelines_by_map(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

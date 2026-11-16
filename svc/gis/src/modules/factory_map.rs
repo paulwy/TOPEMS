@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
@@ -22,6 +23,7 @@ pub struct CreateFactoryMap {
 }
 
 pub async fn list_factory_maps(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
@@ -35,7 +37,7 @@ pub async fn list_factory_maps(
     };
     let service = TenantService::new(db, tenant_opt);
 
-    match service.list_factory_maps().await {
+    match service.list_factory_maps(&txn_arc).await {
         Ok(maps) => ApiResponse::success(
             serde_json::json!({
                 "factory_maps": maps,
@@ -48,6 +50,7 @@ pub async fn list_factory_maps(
 }
 
 pub async fn create_factory_map(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFactoryMap>,
@@ -64,6 +67,7 @@ pub async fn create_factory_map(
 
     match service
         .create_factory_map(
+            &txn_arc,
             &payload.name,
             &payload.code,
             &payload.map_type,
@@ -79,6 +83,7 @@ pub async fn create_factory_map(
 }
 
 pub async fn get_factory_map(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -93,7 +98,7 @@ pub async fn get_factory_map(
     };
     let service = TenantService::new(db, tenant_opt);
 
-    match service.get_factory_map(id).await {
+    match service.get_factory_map(&txn_arc, id).await {
         Ok(Some(map)) => ApiResponse::success(map, "获取厂区地图成功"),
         Ok(None) => ApiResponse::not_found("厂区地图未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
@@ -111,6 +116,7 @@ pub struct UpdateFactoryMap {
 }
 
 pub async fn update_factory_map(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -132,6 +138,7 @@ pub async fn update_factory_map(
 
     match service
         .update_factory_map(
+            &txn_arc,
             id,
             payload.name.as_deref(),
             payload.code.as_deref(),
@@ -149,6 +156,7 @@ pub async fn update_factory_map(
 }
 
 pub async fn delete_factory_map(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -167,7 +175,7 @@ pub async fn delete_factory_map(
     };
     let service = TenantService::new(db, tenant_opt);
 
-    match service.delete_factory_map(id).await {
+    match service.delete_factory_map(&txn_arc, id).await {
         Ok(true) => ApiResponse::success("".to_string(), "删除厂区地图成功"),
         Ok(false) => ApiResponse::not_found("厂区地图未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),

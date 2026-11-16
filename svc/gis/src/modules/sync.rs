@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -127,11 +128,18 @@ pub struct OfflineDataResponse {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 批量上报设备位置（支持离线同步）- 优化版本
 pub async fn batch_upload_positions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchPositionUpload>,
 ) -> ApiResponse<usize> {
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -178,11 +186,18 @@ pub async fn batch_upload_positions(
 
 /// 批量上传取证记录（支持离线同步）
 pub async fn batch_upload_evidence(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchEvidenceUpload>,
 ) -> ApiResponse<SyncResponse> {
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -272,12 +287,19 @@ pub async fn batch_upload_evidence(
 
 /// 下载离线业务数据
 pub async fn download_offline_data(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<OfflineDataRequest>,
 ) -> ApiResponse<OfflineDataResponse> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -389,11 +411,18 @@ pub struct SyncStatusResponse {
 }
 
 pub async fn get_sync_status(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SyncStatusResponse> {
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

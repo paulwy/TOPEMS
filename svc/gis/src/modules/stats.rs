@@ -5,6 +5,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -34,11 +35,18 @@ pub struct GisStatistics {
     tag = "stats"
 )]
 pub async fn get_statistics(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<GisStatistics> {
     // 只读作用域：10 条统计查询共用同一事务（SET LOCAL search_path=gis, public）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };

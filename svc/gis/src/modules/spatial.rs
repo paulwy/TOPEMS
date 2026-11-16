@@ -10,6 +10,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::Db;
@@ -70,6 +71,7 @@ pub struct ClusterRequest {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 缓冲区分析
 pub async fn buffer_analysis(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BufferRequest>,
@@ -77,7 +79,13 @@ pub async fn buffer_analysis(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -168,6 +176,7 @@ fn create_circle_buffer(x: f64, y: f64, radius: f64) -> Vec<Vec<f64>> {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 相交分析
 pub async fn intersect_analysis(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<IntersectRequest>,
@@ -175,7 +184,13 @@ pub async fn intersect_analysis(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -246,6 +261,7 @@ fn check_intersection(geom1: &serde_json::Value, geom2: &serde_json::Value) -> b
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 合并分析
 pub async fn union_analysis(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UnionRequest>,
@@ -253,7 +269,13 @@ pub async fn union_analysis(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
@@ -456,6 +478,7 @@ fn calculate_distance(geom1: &serde_json::Value, geom2: &serde_json::Value) -> f
 
 /// 最近邻查询
 pub async fn nearest_query(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<NearestRequest>,
@@ -463,7 +486,13 @@ pub async fn nearest_query(
     if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
