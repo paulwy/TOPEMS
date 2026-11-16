@@ -43,10 +43,9 @@ fn require_tenant_for_write(claims: &Claims) -> Option<Uuid> {
 )]
 pub async fn list_connections(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
-    let tid = tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -64,9 +63,8 @@ pub async fn list_connections(
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at, updated_at FROM erp_connections \
-         WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"
+         ORDER BY created_at DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -94,11 +92,10 @@ pub async fn list_connections(
 )]
 pub async fn get_connection(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpConnectionResponse> {
-    let tid = tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -116,10 +113,9 @@ pub async fn get_connection(
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at, updated_at FROM erp_connections \
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+         WHERE id = $1"
     ))
     .bind(id)
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     {
@@ -203,12 +199,11 @@ pub async fn create_connection(
 )]
 pub async fn update_connection(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
-    let tid = tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -235,7 +230,7 @@ pub async fn update_connection(
          isactive = COALESCE($9, isactive), \
          status = COALESCE($10, status), \
          updated_at = NOW() \
-         WHERE id = $11 AND ($12::uuid IS NULL OR tenant_id = $12::uuid) \
+         WHERE id = $11 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -251,7 +246,6 @@ pub async fn update_connection(
     .bind(req.isactive)
     .bind(req.status)
     .bind(id)
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     {
@@ -272,11 +266,10 @@ pub async fn update_connection(
 )]
 pub async fn delete_connection(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let tid = tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -291,10 +284,9 @@ pub async fn delete_connection(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_connections WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "DELETE FROM erp_connections WHERE id = $1"
     ))
     .bind(id)
-    .bind(tid)
     .execute(&mut scope)
     .await
     {

@@ -389,14 +389,9 @@ pub struct SyncStatistics {
 
 pub async fn list_connections(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -413,9 +408,8 @@ pub async fn list_connections(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_connections ORDER BY created_at DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -643,16 +637,11 @@ async fn test_connection(
 
 async fn get_connection(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -669,10 +658,9 @@ async fn get_connection(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id::text = $2)"
+         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1"
     ))
     .bind(uuid)
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     {
@@ -808,16 +796,11 @@ pub async fn delete_connection(
 
 pub async fn list_entity_mappings(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -835,11 +818,10 @@ pub async fn list_entity_mappings(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id::text = $3) ORDER BY created_at DESC"
+         WHERE connection_id = $1 AND mapping_type = $2 ORDER BY created_at DESC"
     ))
     .bind(uuid)
     .bind(&entity)
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -1014,16 +996,11 @@ pub async fn batch_entity_mappings(
 
 pub async fn preview_entity(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1041,12 +1018,11 @@ pub async fn preview_entity(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id::text = $3) \
+         WHERE connection_id = $1 AND mapping_type = $2 \
          ORDER BY created_at DESC LIMIT 20"
     ))
     .bind(uuid)
     .bind(&entity)
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -1494,14 +1470,9 @@ pub async fn sync_entity(
 
 pub async fn sync_logs(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ExternalErpSyncLog>> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1519,9 +1490,8 @@ pub async fn sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC LIMIT 100"
+         FROM external_erp_sync_logs ORDER BY created_at DESC LIMIT 100"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -1534,14 +1504,9 @@ pub async fn sync_logs(
 
 pub async fn sync_statistics(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStatistics> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1557,27 +1522,24 @@ pub async fn sync_statistics(
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
+        "SELECT COUNT(*) FROM external_erp_sync_logs"
     ))
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'success'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE status = 'success'"
     ))
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'failed'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE status = 'failed'"
     ))
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
@@ -1585,9 +1547,8 @@ pub async fn sync_statistics(
     let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
-            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
+            "SELECT MAX(completed_at) FROM external_erp_sync_logs"
         ))
-        .bind(tid)
         .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
@@ -1595,9 +1556,8 @@ pub async fn sync_statistics(
     // 按 entity 分组统计
     let by_entity_rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) GROUP BY entity ORDER BY COUNT(*) DESC"
+        "SELECT entity, COUNT(*) FROM external_erp_sync_logs GROUP BY entity ORDER BY COUNT(*) DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
@@ -1623,14 +1583,9 @@ pub async fn sync_statistics(
 
 pub async fn export_mappings(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1647,9 +1602,8 @@ pub async fn export_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings ORDER BY created_at DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -1667,14 +1621,9 @@ pub async fn export_mappings(
 
 pub async fn export_sync_logs(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1692,9 +1641,8 @@ pub async fn export_sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
+         FROM external_erp_sync_logs ORDER BY created_at DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -1791,16 +1739,11 @@ pub async fn sync_connection_status(
 
 pub async fn list_company_mappings(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -1818,10 +1761,9 @@ pub async fn list_company_mappings(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at \
-         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' AND ($2::text IS NULL OR tenant_id::text = $2) ORDER BY created_at DESC"
+         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' ORDER BY created_at DESC"
     ))
     .bind(uuid)
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {

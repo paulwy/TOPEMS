@@ -259,18 +259,10 @@ pub async fn get_task(
 pub async fn update_status(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<SyncTask> {
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -291,7 +283,7 @@ pub async fn update_status(
                 r#"
                 UPDATE integration.core_inter_module_sync
                 SET status = $2, error_message = $3, finished_at = $4, updated_at = $5
-                WHERE id = $1 AND deleted_at IS NULL AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
+                WHERE id = $1 AND deleted_at IS NULL
                 RETURNING *
                 "#
             ))
@@ -300,7 +292,6 @@ pub async fn update_status(
             .bind(&req.error_message)
             .bind(now)
             .bind(now)
-            .bind(tenant_filter)
             .fetch_one(&mut scope)
             .await
             {
@@ -454,19 +445,11 @@ pub async fn get_statistics(
 )]
 pub async fn retry_failed(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RetryFailedRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let now = chrono::Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -484,13 +467,12 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', updated_at = $1
-            WHERE status = 'failed' AND sync_type = $2 AND source_module = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+            WHERE status = 'failed' AND sync_type = $2 AND source_module = $3
             "#
         ))
         .bind(now)
         .bind(req.sync_type.unwrap_or_default())
         .bind(req.source_module.unwrap_or_default())
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await
     } else if req.sync_type.is_some() {
@@ -499,12 +481,11 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', updated_at = $1
-            WHERE status = 'failed' AND sync_type = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+            WHERE status = 'failed' AND sync_type = $2
             "#
         ))
         .bind(now)
         .bind(req.sync_type.unwrap_or_default())
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await
     } else if req.source_module.is_some() {
@@ -513,12 +494,11 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', updated_at = $1
-            WHERE status = 'failed' AND source_module = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+            WHERE status = 'failed' AND source_module = $2
             "#
         ))
         .bind(now)
         .bind(req.source_module.unwrap_or_default())
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await
     } else {
@@ -527,11 +507,10 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', updated_at = $1
-            WHERE status = 'failed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+            WHERE status = 'failed'
             "#
         ))
         .bind(now)
-        .bind(tenant_filter)
         .execute(&mut scope)
         .await
     };

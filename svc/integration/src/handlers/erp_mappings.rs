@@ -23,14 +23,9 @@ use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMapp
 )]
 pub async fn list_mappings(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpMapping>> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -47,9 +42,8 @@ pub async fn list_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings ORDER BY created_at DESC"
     ))
-    .bind(tid)
     .fetch_all(&mut scope)
     .await
     {
@@ -76,15 +70,10 @@ pub async fn list_mappings(
 )]
 pub async fn get_mapping(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpMapping> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -101,10 +90,9 @@ pub async fn get_mapping(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id::text = $2)"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1"
     ))
     .bind(id)
-    .bind(tid)
     .fetch_optional(&mut scope)
     .await
     {
