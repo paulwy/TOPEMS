@@ -360,3 +360,63 @@ END $$;
 - `scripts/ci/check-rls-permissions.cjs` 校验的运行角色是 `topems_app`；而生产 8099 服务实际以 `topems_prod` 连接（见 launchd plist 中的 DSN），且 `topems_app` 在生产 `rolcanlogin=f`、此前 schema USAGE 为 0。
 - 即：该钩子校验的是一个生产的“遗留/未启用”角色，校验通过不代表生产运行角色授权完整，反之缺授权也不代表服务不可用。本次仅补齐只读授权以解除阻塞，未改钩子逻辑与角色属性。
 - 待办：后续评估钩子应改为按环境取实际运行角色（生产 `topems_prod` / 开发 `topems_app`），或在 `.env` 中显式区分 `MIGRATE_URL` 与运行角色校验目标；调整前不要删除 `topems_app` 的只读授权。
+
+## 12. 生产窗口执行记录：从表迁移 + 新二进制（2026-11-16 23:20 CST）
+
+### 12.1 时间线
+
+| 时刻（CST） | 动作 | 结果 |
+| --- | --- | --- |
+| 23:19 | `cargo build --release -p topems-server` 完成（6m08s） | 新二进制 sha256 `9625d130…3766` |
+| 23:20:07 | `launchctl bootout gui/501/com.topems.server` | 服务退出；`/health` 000；`topems_prod` 服务连接 0（`pg_stat_activity` 核查） |
+| 23:20:52 | 迁移 `20261116180000_report_subs_exec_records_tenant_id.sql` 执行完成 | 耗时 **0.07 s**（单事务，含账本记录） |
+| 23:20:59 | `launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.topems.server.plist` | 拉起新二进制 |
+| 23:21:03 | 起服完成 | pid 13721，`/health` 200 |
+
+**停机总时长：56 秒**（23:20:07 → 23:21:03）。
+
+### 12.2 二进制与备份
+
+| 项 | 值 |
+| --- | --- |
+| 新二进制 | `bin/topems-server`，sha256 `9625d130468c9c634cb5ca0d17d00bdd6d529248ab3837fa595eeb9439183766`（205,943,024 B） |
+| 旧二进制备份 | `/Users/xingzhai/topems-backups/topems-server.bak-20261116-pre-m2`，sha256 `3ce9963fef97bb0551227487923ae05e9633857b47e1ed229be8eca8b1ec7893`（205,958,976 B） |
+
+回退：`cp -p <备份> bin/topems-server` → `bootout` → 执行 `database/rollback/20261116180000_report_subs_exec_records_tenant_id.rollback.sql` → `bootstrap`。
+
+### 12.3 迁移执行方式（含一次未生效的尝试）
+
+- 首次按 `sqlx migrate run --source database/migrations` 执行：sqlx 校验发现该库为既有「半迁移状态」（账本 698 条，缺 `version=0` 等文件），转而补跑历史迁移 `20261103210000`，因 `mes.core_email_queue` 不存在报错。sqlx 按单迁移事务回滚，**账本仍 698 / max `20261115142500`，无任何 DDL 落地**（执行后核查确认）。
+- 随后改用 `scripts/migrate.sh` 的既定手工记账口径：`psql -1 -v ON_ERROR_STOP=1 -f`（单事务执行迁移文件 + 插入 `_sqlx_migrations`），description 取文件名去下划线、`checksum` 为迁移文件的 SHA-384（48 字节），`execution_time=0`，与既有 698 条记录同口径。即 12.1 中 0.07 s 的那次成功执行。
+
+### 12.4 迁移校验
+
+| 项 | 结果 |
+| --- | --- |
+| 账本 | 699 条，max `20261116180000`，`success=t`，checksum 48 字节 |
+| `bi.report_subscriptions.tenant_id` | `uuid` / `NOT NULL` / 无默认值 |
+| `analytics.report_execution_records.tenant_id` | `uuid` / `NOT NULL` / 无默认值 |
+| 索引 | `idx_report_subscriptions_tenant_id`、`idx_report_execution_records_tenant_id` 均存在 |
+| RLS | 两表 `relrowsecurity=t`、`relforcerowsecurity=t`；`rls_tenant_isolation`（ALL）各 1 条 |
+| 迁移内断言 | 前置 / 回填完整性 / 后置断言全部通过（任一失败即整笔回滚） |
+| 数据 | 两表均 0 行；未设 GUC 时租户 A 可见 0 行（fail-closed 生效）；`analytics.report_subscriptions`、`bi.report_execution_records` 两张同名不同 schema 的旧表未被触碰 |
+
+### 12.5 起服后端到端验证（与窗口前基线对比）
+
+| 端点 | 窗口前 | 起服后 | 判定 |
+| --- | --- | --- | --- |
+| `/health` | 200 | 200 | ✅ |
+| `/api/bi/reports` | 200 / 1 条 | 200 / 1 条（Smoke Report，本租户） | ✅ 未回归 |
+| `/api/bi/subscriptions` | 200 / 0 | 200 / 0 | ✅ |
+| `/api/bi/schedules`、`/api/bi/templates`、`/api/bi/dashboard` | 200 / 0 | 200 / 0 | ✅ |
+| `/api/core/iam/users` / `roles` | 200 / 3 / 16 | 200 / 3 / 16 | ✅ |
+| `/api/erp/audit-logs` | 200 / 13 | 200 / 13 | ✅ |
+| `/api/finance/currencies` / `ledger` | 200 / 16 / 4 | 200 / 16 / 4 | ✅ |
+
+说明：两从表在 prod 均为 0 行，`/api/bi/schedules/{id}/history` 无 schedule 可测；按「生产除该迁移外零 DML」约束，未构造订阅/执行记录写入，写入路径由代码评审与克隆库演练覆盖。
+
+### 12.6 约束遵守
+
+- 仅执行 `20261116180000_report_subs_exec_records_tenant_id.sql` 一条迁移，未改既有迁移内容，未做其它 DDL/DML。
+- 未 push、未 amend、未 `--no-verify`。
+- 异常回滚预案（down 脚本 + 旧二进制）未触发，备份保留。
