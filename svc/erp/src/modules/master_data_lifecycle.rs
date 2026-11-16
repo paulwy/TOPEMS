@@ -13,7 +13,6 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
-use uuid::Uuid;
 
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
 use super::ApiState;
@@ -107,7 +106,7 @@ async fn record_lifecycle_audit(
 )]
 pub async fn archive_master_data_ref(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ArchiveRequest>,
@@ -117,22 +116,13 @@ pub async fn archive_master_data_ref(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -156,14 +146,13 @@ pub async fn archive_master_data_ref(
                        archived_by = $2,
                        archive_reason = $3,
                        updated_at = $4
-                   WHERE master_data_id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)"#
+                   WHERE master_data_id = $5"#
             ))
             .bind(now)
             .bind(&req.archived_by)
             .bind(&req.reason)
             .bind(now)
             .bind(&master_data_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -183,10 +172,9 @@ pub async fn archive_master_data_ref(
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
                         "erp",
-                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .bind(tenant_filter)
                     .fetch_one(&mut **txn)
                     .await;
 
@@ -231,7 +219,7 @@ pub async fn archive_master_data_ref(
 )]
 pub async fn restore_master_data_ref(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RestoreRequest>,
@@ -241,22 +229,13 @@ pub async fn restore_master_data_ref(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -277,11 +256,10 @@ pub async fn restore_master_data_ref(
                        archived_by = NULL,
                        archive_reason = NULL,
                        updated_at = $1
-                   WHERE master_data_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#
+                   WHERE master_data_id = $2"#
             ))
             .bind(now)
             .bind(&master_data_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -301,10 +279,9 @@ pub async fn restore_master_data_ref(
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
                         "erp",
-                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .bind(tenant_filter)
                     .fetch_one(&mut **txn)
                     .await;
 
@@ -349,7 +326,7 @@ pub async fn restore_master_data_ref(
 )]
 pub async fn schedule_destruction(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ScheduleDestructionRequest>,
@@ -359,14 +336,6 @@ pub async fn schedule_destruction(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let now = chrono::Utc::now();
     let scheduled_at = req
         .scheduled_at
@@ -374,10 +343,9 @@ pub async fn schedule_destruction(
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -398,14 +366,13 @@ pub async fn schedule_destruction(
                        destroy_reason = $2,
                        destroy_scheduled_by = $3,
                        updated_at = $4
-                   WHERE master_data_id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)"#
+                   WHERE master_data_id = $5"#
             ))
             .bind(scheduled_at)
             .bind(&req.reason)
             .bind(&req.scheduled_by)
             .bind(now)
             .bind(&master_data_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -425,10 +392,9 @@ pub async fn schedule_destruction(
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
                         "erp",
-                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .bind(tenant_filter)
                     .fetch_one(&mut **txn)
                     .await;
 
@@ -473,7 +439,7 @@ pub async fn schedule_destruction(
 )]
 pub async fn cancel_destruction(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MasterDataRef> {
@@ -482,22 +448,13 @@ pub async fn cancel_destruction(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -518,11 +475,10 @@ pub async fn cancel_destruction(
                        destroy_reason = NULL,
                        destroy_scheduled_by = NULL,
                        updated_at = $1
-                   WHERE master_data_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#
+                   WHERE master_data_id = $2"#
             ))
             .bind(now)
             .bind(&master_data_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -542,10 +498,9 @@ pub async fn cancel_destruction(
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
                         "erp",
-                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .bind(tenant_filter)
                     .fetch_one(&mut **txn)
                     .await;
 
@@ -590,7 +545,7 @@ pub async fn cancel_destruction(
 )]
 pub async fn destroy_master_data_ref(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<DestroyRequest>,
@@ -600,22 +555,13 @@ pub async fn destroy_master_data_ref(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -636,14 +582,13 @@ pub async fn destroy_master_data_ref(
                        destroyed_by = $2,
                        destroy_reason = COALESCE($3, destroy_reason),
                        updated_at = $4
-                   WHERE master_data_id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)"#
+                   WHERE master_data_id = $5"#
             ))
             .bind(now)
             .bind(&req.destroyed_by)
             .bind(&req.reason)
             .bind(now)
             .bind(&master_data_id)
-            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -663,10 +608,9 @@ pub async fn destroy_master_data_ref(
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
                         "erp",
-                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+                        r#"SELECT master_data_id, tenant_id, domain, code, name, status, source_service, local_entity_type, local_entity_id, payload_snapshot, last_synced_at, created_at, updated_at FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .bind(tenant_filter)
                     .fetch_one(&mut **txn)
                     .await;
 

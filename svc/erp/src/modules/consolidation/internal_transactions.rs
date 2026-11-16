@@ -205,22 +205,16 @@ pub async fn create_internal_transaction(
         None => unreachable!("rls txn missing"),
     };
 
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
     let company_ids = vec![req.from_company_id, req.to_company_id];
     let companies: Vec<(Uuid, String)> = match sqlx::query_as(only_own_schema_query!(
         "erp",
         r#"
         SELECT id, name FROM hrm.companies
         WHERE id = ANY($1) AND deleted_at IS NULL
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         "hrm"
     ))
     .bind(&company_ids)
-    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await
     {

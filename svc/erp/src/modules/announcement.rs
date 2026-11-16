@@ -56,21 +56,13 @@ pub async fn list_announcements(
     State(_state): State<ApiState>,
     headers: HeaderMap,
     Query(params): Query<AnnouncementQueryParams>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
-    };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -79,25 +71,24 @@ pub async fn list_announcements(
     let status_filter = params.status.clone();
     let priority_filter = params.priority.clone();
     let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query_as::<_, Announcement>(
-        only_own_schema_query!("erp", r#"
+    let result = sqlx::query_as::<_, Announcement>(only_own_schema_query!(
+        "erp",
+        r#"
         SELECT id,
-               CASE WHEN $7 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
-               CASE WHEN $7 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+               CASE WHEN $6 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $6 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR priority = $3)
-          AND ($4::uuid IS NULL OR tenant_id = $4 OR tenant_id = '00000000-0000-0000-0000-000000000001')
         ORDER BY publish_at DESC NULLS LAST, created_at DESC
-        LIMIT $5 OFFSET $6
-        "#),
-    )
+        LIMIT $4 OFFSET $5
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&priority_filter)
-    .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
     .bind(locale)
@@ -111,13 +102,11 @@ pub async fn list_announcements(
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
-                  AND ($4::uuid IS NULL OR tenant_id = $4 OR tenant_id = '00000000-0000-0000-0000-000000000001')
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&priority_filter)
-            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
@@ -257,7 +246,7 @@ pub async fn get_announcement(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
@@ -265,26 +254,17 @@ pub async fn get_announcement(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let result = sqlx::query_as::<_, Announcement>(
-        only_own_schema_query!("erp", r#"
+    let result = sqlx::query_as::<_, Announcement>(only_own_schema_query!(
+        "erp",
+        r#"
         SELECT id,
-               CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
-               CASE WHEN $3 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+               CASE WHEN $2 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $2 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2 OR tenant_id = '00000000-0000-0000-0000-000000000001')
-        "#),
-    )
+        "#
+    ))
     .bind(id)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
@@ -323,14 +303,6 @@ pub async fn update_announcement(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let existing = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -358,10 +330,9 @@ pub async fn update_announcement(
             title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8,
             title_en = COALESCE($9, title_en), content_en = COALESCE($10, content_en)
         WHERE id = $1
-          AND ($11::uuid IS NULL OR tenant_id = $11)
         RETURNING id,
-                  CASE WHEN $12 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
-                  CASE WHEN $12 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+                  CASE WHEN $11 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  CASE WHEN $11 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                   author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
@@ -375,7 +346,6 @@ pub async fn update_announcement(
     .bind(now)
     .bind(&req.title_en)
     .bind(&req.content_en)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -452,20 +422,11 @@ pub async fn delete_announcement(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -545,28 +506,18 @@ pub async fn publish_announcement(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'published', publish_at = $2, updated_at = $3
         WHERE id = $1 AND status = 'draft'
-          AND ($4::uuid IS NULL OR tenant_id = $4)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -649,27 +600,17 @@ pub async fn unpublish_announcement(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'draft', publish_at = NULL, updated_at = $2
         WHERE id = $1 AND status = 'published'
-          AND ($3::uuid IS NULL OR tenant_id = $3)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {

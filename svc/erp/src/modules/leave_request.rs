@@ -160,7 +160,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 pub async fn list_leave_requests(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<LeaveRequestQueryParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<PaginatedResponse<LeaveRequest>> {
@@ -178,14 +178,6 @@ pub async fn list_leave_requests(
     let status_filter = params.status.clone();
     let type_filter = params.leave_type.clone();
     let employee_filter = params.employee_id;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
@@ -198,16 +190,14 @@ pub async fn list_leave_requests(
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR leave_type = $3)
           AND ($4::uuid IS NULL OR employee_id = $4)
-          AND ($5::uuid IS NULL OR tenant_id = $5)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $5 OFFSET $6
         "#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&type_filter)
     .bind(employee_filter)
-    .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -222,14 +212,12 @@ pub async fn list_leave_requests(
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR leave_type = $3)
                   AND ($4::uuid IS NULL OR employee_id = $4)
-                  AND ($5::uuid IS NULL OR tenant_id = $5)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&type_filter)
             .bind(employee_filter)
-            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await;
 
@@ -384,7 +372,7 @@ pub async fn create_leave_request(
 )]
 pub async fn get_leave_request(
     State(_state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LeaveRequest> {
@@ -394,15 +382,6 @@ pub async fn get_leave_request(
         None => unreachable!("rls txn missing"),
     };
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
         r#"
@@ -410,11 +389,10 @@ pub async fn get_leave_request(
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         FROM erp.leave_requests
-        WHERE id::TEXT = $1::TEXT AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id::TEXT = $1::TEXT
         "#
     ))
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

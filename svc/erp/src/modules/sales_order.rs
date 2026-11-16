@@ -358,17 +358,9 @@ pub async fn update_sales_order(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 AND ($10::uuid IS NULL OR tenant_id = $10::uuid) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(body.customer_id)
     .bind(body.delivery_date)
@@ -379,7 +371,6 @@ pub async fn update_sales_order(
     .bind(body.status)
     .bind(body.remark)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -435,21 +426,12 @@ pub async fn delete_sales_order(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE erp.sales_orders SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE erp.sales_orders SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -490,21 +472,12 @@ async fn update_sales_order_status(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(status)
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -855,24 +828,15 @@ async fn batch_update_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let mut updated = Vec::new();
     for item in &body.updates {
         let result = sqlx::query_as::<_, SalesOrder>(only_own_schema_query!(
             "erp",
-            "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
+            "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
         ))
         .bind(item.payload.customer_id).bind(item.payload.delivery_date).bind(dec(item.payload.total_amount))
         .bind(dec(item.payload.tax_amount)).bind(dec(item.payload.discount_amount)).bind(dec(item.payload.payable_amount))
         .bind(&item.payload.status).bind(&item.payload.remark).bind(item.id)
-        .bind(tenant_filter)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(o)) = result {
             updated.push(o);
@@ -898,7 +862,7 @@ async fn batch_update_sales_orders(
 
 async fn batch_update_status(
     _state: &ApiState,
-    claims: &Claims,
+    _claims: &Claims,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ids: &[Uuid],
     status: &str,
@@ -906,21 +870,10 @@ async fn batch_update_status(
     if ids.is_empty() {
         return Ok(vec![]);
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-    };
     let placeholders: Vec<String> = (2..=ids.len() + 1).map(|i| format!("${}", i)).collect();
-    let tenant_idx = ids.len() + 2;
     let sql = format!(
-        "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${}::uuid IS NULL OR tenant_id = ${}::uuid) RETURNING {}",
+        "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING {}",
         placeholders.join(","),
-        tenant_idx,
-        tenant_idx,
         SALES_ORDER_SELECT_COLS
     );
     let mut query = sqlx::query_as::<_, SalesOrder>(sqlx::AssertSqlSafe(sql));
@@ -928,7 +881,6 @@ async fn batch_update_status(
     for id in ids {
         query = query.bind(id);
     }
-    query = query.bind(tenant_filter);
     let orders = query
         .fetch_all(&mut **txn)
         .await

@@ -92,16 +92,10 @@ pub async fn ensure_company_scope(
     company_id: Uuid,
     required: CompanyAccess,
 ) -> Result<(), CompanyScopeError> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
-
     let company_tenant: Option<Uuid> = sqlx::query_scalar(
-        "SELECT tenant_id FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT tenant_id FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(company_id)
-    .bind(tenant_id)
     .fetch_optional(&mut *conn)
     .await
     .map_err(CompanyScopeError::Db)?;

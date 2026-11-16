@@ -267,12 +267,11 @@ pub async fn submit_report(
         r#"
         UPDATE erp.consolidation_reports
         SET approval_status = 'pending'
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+        WHERE id = $1
         RETURNING *
         "#,
     )
     .bind(report_id)
-    .bind(report.tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -362,12 +361,11 @@ pub async fn approve_report(
         r#"
         UPDATE erp.consolidation_reports
         SET approval_status = 'approved', approved_at = NOW()
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+        WHERE id = $1
         RETURNING *
         "#,
     )
     .bind(report_id)
-    .bind(report.tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
