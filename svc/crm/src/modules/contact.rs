@@ -90,30 +90,18 @@ pub async fn list_contacts(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let customer_filter = params.customer_id;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.contacts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR first_name ILIKE $2 OR last_name ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR customer_id = $4)
+        WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR customer_id = $3)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(customer_filter)
@@ -127,13 +115,12 @@ pub async fn list_contacts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.contacts
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR first_name ILIKE $2 OR last_name ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR customer_id = $4)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR customer_id = $3)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(customer_filter)
@@ -307,25 +294,13 @@ pub async fn get_contact(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -697,7 +672,7 @@ pub async fn start_contact_approval(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -735,7 +710,7 @@ pub async fn start_contact_approval(
     });
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'pending', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.contacts SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -827,7 +802,7 @@ pub async fn approve_contact(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -844,7 +819,7 @@ pub async fn approve_contact(
     let new_approval_status = "approved".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'approved', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.contacts SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -933,7 +908,7 @@ pub async fn reject_contact(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -950,7 +925,7 @@ pub async fn reject_contact(
     let new_approval_status = "rejected".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.contacts SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)

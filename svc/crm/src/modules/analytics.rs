@@ -9,7 +9,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::Row;
-use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
@@ -38,19 +37,6 @@ pub struct AnalyticsEnvelope<T: Serialize> {
     pub meta: AnalyticsMeta,
 }
 
-/// 解析当前请求的租户过滤值：超级管理员返回 None（看全量），普通用户绑定 claims.tenant_id。
-/// 与 customer.rs / billing.rs 既有口径一致：SQL 中以 `($1::uuid IS NULL OR tenant_id = $1)` 实现。
-fn resolve_tenant(claims: &Claims) -> Option<uuid::Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    }
-}
-
 /// 真实聚合响应信封：mock_enabled/use_frontend_fallback 一律为 false，
 /// 绝不再以 200+空数组 诱导前端走 useCrmMock seed=42 假数据。
 fn envelope<T: Serialize>(data: T, note: &str) -> (StatusCode, Json<serde_json::Value>) {
@@ -64,6 +50,19 @@ fn envelope<T: Serialize>(data: T, note: &str) -> (StatusCode, Json<serde_json::
         },
     };
     (StatusCode::OK, Json(json!(body)))
+}
+
+/// 查询失败统一返回 500：不再用 `unwrap_or_default()` 把失败伪装成空结果
+/// （空结果会让前端误判为「真的没数据」，也会掩盖租户作用域缺失）。
+fn fail(message: &str) -> (StatusCode, Json<serde_json::Value>) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(json!({
+            "success": false,
+            "message": message,
+            "code": 500,
+        })),
+    )
 }
 
 /// 把 sqlx 行集映射成 `[{name, value}]` 数组（聚合图表通用形状）。
@@ -103,72 +102,90 @@ pub fn create_routes() -> Router<ApiState> {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn dashboard_overview(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
 
-    let total_customers: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL",
-    )
-    .bind(tenant)
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_dashboard_overview(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Overview 真实聚合：客户/商机关键指标与阶段分布（按租户过滤）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] dashboard overview 聚合失败: {}", e);
+            fail("Overview 数据查询失败")
+        }
+    }
+}
+
+/// 仪表盘概览聚合（只读租户作用域）。
+///
+/// M-1：请求链路复用 `tenant_middleware` 注入的请求事务，禁止裸池读取——
+/// 裸池连接没有租户 GUC，严格 RLS 下对任何租户都会静默返回 0 行。
+async fn load_dashboard_overview(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 仪表盘概览读作用域打开失败: {}", e))
+    })?;
+
+    let total_customers: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL")
+            .fetch_one(&mut scope)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 客户总数查询失败: {}", e)))?;
 
     let active_customers: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = 'active'",
+        "SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL AND status = 'active'",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 活跃客户数查询失败: {}", e)))?;
 
-    let total_opportunities: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL",
-    )
-    .bind(tenant)
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let total_opportunities: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL")
+            .fetch_one(&mut scope)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 商机总数查询失败: {}", e)))?;
 
     let open_opportunities: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND stage NOT IN ('closed_won','closed_lost')",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage NOT IN ('closed_won','closed_lost')",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 在途商机数查询失败: {}", e)))?;
 
     let won_opportunities: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND stage = 'closed_won'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'closed_won'",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 赢单商机数查询失败: {}", e)))?;
 
     let stage_rows = sqlx::query(
-        "SELECT stage AS name, COUNT(*)::bigint AS value FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL GROUP BY stage ORDER BY value DESC",
+        "SELECT stage AS name, COUNT(*)::bigint AS value FROM crm.opportunities WHERE deleted_at IS NULL GROUP BY stage ORDER BY value DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 商机阶段分布查询失败: {}", e)))?;
     let opportunity_stages = rows_to_name_value(&stage_rows);
 
-    envelope(
-        json!({
-            "total_customers": total_customers,
-            "active_customers": active_customers,
-            "total_opportunities": total_opportunities,
-            "open_opportunities": open_opportunities,
-            "won_opportunities": won_opportunities,
-            "opportunity_stages": opportunity_stages,
-        }),
-        "Overview 真实聚合：客户/商机关键指标与阶段分布（按租户过滤）",
-    )
+    Ok(json!({
+        "total_customers": total_customers,
+        "active_customers": active_customers,
+        "total_opportunities": total_opportunities,
+        "open_opportunities": open_opportunities,
+        "won_opportunities": won_opportunities,
+        "opportunity_stages": opportunity_stages,
+    }))
 }
 
 // ============ #30: /dashboard 真实聚合端点 ============
@@ -205,33 +222,53 @@ pub struct NameValue {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn dashboard_aggregate(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失").into_response();
+    };
+
+    match load_dashboard_aggregate(&db, txn).await {
+        Ok(stats) => (StatusCode::OK, Json(json!(stats))).into_response(),
+        Err(e) => {
+            tracing::error!("[crm] dashboard 聚合失败: {}", e);
+            fail("仪表盘数据查询失败").into_response()
+        }
+    }
+}
+
+/// `/dashboard` 聚合（只读租户作用域）。
+async fn load_dashboard_aggregate(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<CrmDashboardStats, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 仪表盘读作用域打开失败: {}", e))
+    })?;
 
     let total_opportunities: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)")
-            .bind(tenant)
-            .fetch_one(db)
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL")
+            .fetch_one(&mut scope)
             .await
-            .unwrap_or(0);
+            .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 商机总数查询失败: {}", e)))?;
 
     let won_amount: rust_decimal::Decimal = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(rust_decimal::Decimal::ZERO);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 赢单金额查询失败: {}", e)))?;
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 赢单数查询失败: {}", e)))?;
 
     let conversion_rate = if total_opportunities > 0 {
         (won_count as f64 / total_opportunities as f64) * 100.0
@@ -240,38 +277,34 @@ pub async fn dashboard_aggregate(
     };
 
     let average_cycle: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
     )
-    .bind(tenant)
-    .fetch_one(db)
+    .fetch_one(&mut scope)
     .await
-    .unwrap_or(0.0);
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 平均成交周期查询失败: {}", e)))?;
 
     let opportunity_stages: Vec<NameValue> = sqlx::query_as(
-        "SELECT stage AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) GROUP BY stage ORDER BY value DESC",
+        "SELECT stage AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL GROUP BY stage ORDER BY value DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 商机阶段分布查询失败: {}", e)))?;
 
     let monthly_performance: Vec<NameValue> = sqlx::query_as(
-        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '6 months' GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY name ASC",
+        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY name ASC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 月度业绩查询失败: {}", e)))?;
 
     let industries: Vec<NameValue> = sqlx::query_as(
-        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) GROUP BY COALESCE(industry, 'unknown') ORDER BY value DESC LIMIT 10",
+        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL GROUP BY COALESCE(industry, 'unknown') ORDER BY value DESC LIMIT 10",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 行业分布查询失败: {}", e)))?;
 
-    let stats = CrmDashboardStats {
+    Ok(CrmDashboardStats {
         total_opportunities,
         won_amount,
         conversion_rate,
@@ -279,9 +312,7 @@ pub async fn dashboard_aggregate(
         opportunity_stages,
         monthly_performance,
         industries,
-    };
-
-    (StatusCode::OK, Json(json!(stats))).into_response()
+    })
 }
 
 #[utoipa::path(
@@ -297,11 +328,37 @@ pub async fn dashboard_aggregate(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_funnel(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_funnel(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Funnel 真实聚合：按商机阶段统计数量/金额/加权金额（按租户过滤）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] funnel 聚合失败: {}", e);
+            fail("Funnel 数据查询失败")
+        }
+    }
+}
+
+/// 销售漏斗聚合（只读租户作用域）。
+async fn load_funnel(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 漏斗读作用域打开失败: {}", e))
+    })?;
 
     // 按阶段统计商机数量/金额/加权金额（加权 = value × probability%）。
     let rows = sqlx::query(
@@ -309,13 +366,12 @@ pub async fn analytics_funnel(
                 COALESCE(SUM(value),0)::float8 AS total_value, \
                 COALESCE(SUM(value * COALESCE(probability,0) / 100.0),0)::float8 AS weighted_value \
          FROM crm.opportunities \
-         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
+         WHERE deleted_at IS NULL \
          GROUP BY stage ORDER BY count DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 漏斗阶段聚合失败: {}", e)))?;
 
     let stages: Vec<serde_json::Value> = rows
         .iter()
@@ -329,10 +385,7 @@ pub async fn analytics_funnel(
         })
         .collect();
 
-    envelope(
-        json!({ "stages": stages }),
-        "Funnel 真实聚合：按商机阶段统计数量/金额/加权金额（按租户过滤）",
-    )
+    Ok(json!({ "stages": stages }))
 }
 
 #[utoipa::path(
@@ -348,40 +401,61 @@ pub async fn analytics_funnel(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_scoring(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_scoring(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Scoring 真实聚合：客户评分等级分布 + RFM 分群分布（按租户过滤）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] scoring 聚合失败: {}", e);
+            fail("Scoring 数据查询失败")
+        }
+    }
+}
+
+/// 客户评分/RFM 分布聚合（只读租户作用域）。
+async fn load_scoring(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 评分读作用域打开失败: {}", e))
+    })?;
 
     // A/B/C/D 评分等级分布（取每个客户最新一次评分由 customer_scoring 模块写入）。
     let score_rows = sqlx::query(
         "SELECT COALESCE(score_level,'unknown') AS name, COUNT(*)::bigint AS value \
-         FROM crm.customer_scores WHERE ($1::uuid IS NULL OR tenant_id = $1) \
+         FROM crm.customer_scores \
          GROUP BY COALESCE(score_level,'unknown') ORDER BY value DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 客户评分分布查询失败: {}", e)))?;
     let distribution = rows_to_name_value(&score_rows);
 
     // RFM 三桶分群分布（rfm.rs 写入）。
     let rfm_rows = sqlx::query(
         "SELECT COALESCE(segment,'unknown') AS name, COUNT(*)::bigint AS value \
-         FROM crm.rfm_results WHERE ($1::uuid IS NULL OR tenant_id = $1) \
+         FROM crm.rfm_results \
          GROUP BY COALESCE(segment,'unknown') ORDER BY value DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM RFM 分群分布查询失败: {}", e)))?;
     let rfm = rows_to_name_value(&rfm_rows);
 
-    envelope(
-        json!({ "distribution": distribution, "rfm": rfm }),
-        "Scoring 真实聚合：客户评分等级分布 + RFM 分群分布（按租户过滤）",
-    )
+    Ok(json!({ "distribution": distribution, "rfm": rfm }))
 }
 
 #[utoipa::path(
@@ -397,11 +471,37 @@ pub async fn analytics_scoring(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_forecast(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_forecast(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Forecast 真实聚合：销售预测各期间预测/实际/置信度（按租户过滤）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] forecast 聚合失败: {}", e);
+            fail("Forecast 数据查询失败")
+        }
+    }
+}
+
+/// 销售预测序列聚合（只读租户作用域）。
+async fn load_forecast(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 预测读作用域打开失败: {}", e))
+    })?;
 
     // 各期间预测/实际/置信度（sales_forecast.rs 写入；该表无 deleted_at 列）。
     let rows = sqlx::query(
@@ -410,13 +510,12 @@ pub async fn analytics_forecast(
                 actual_amount::float8 AS actual_amount, \
                 confidence_level::float8 AS confidence_level, \
                 trend \
-         FROM crm.sales_forecasts WHERE ($1::uuid IS NULL OR tenant_id = $1) \
+         FROM crm.sales_forecasts \
          ORDER BY period DESC LIMIT 24",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 销售预测查询失败: {}", e)))?;
 
     let series: Vec<serde_json::Value> = rows
         .iter()
@@ -432,10 +531,7 @@ pub async fn analytics_forecast(
         })
         .collect();
 
-    envelope(
-        json!({ "series": series }),
-        "Forecast 真实聚合：销售预测各期间预测/实际/置信度（按租户过滤）",
-    )
+    Ok(json!({ "series": series }))
 }
 
 #[utoipa::path(
@@ -451,15 +547,39 @@ pub async fn analytics_forecast(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_segmentation(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_segmentation(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Segmentation 真实聚合：价值×活动 四象限客户分布（按租户过滤；本端点由 crm.customers 直算）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] segmentation 聚合失败: {}", e);
+            fail("Segmentation 数据查询失败")
+        }
+    }
+}
+
+/// 价值×活动四象限聚合（只读租户作用域）。
+async fn load_segmentation(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 分群读作用域打开失败: {}", e))
+    })?;
 
     // 价值(客户 revenue) × 活动(近 90 天互动数) 四象限客户分布。
-    // 注：crm.customer_segments 表无 tenant_id 列（租户隔离口径待产品确认），
-    // 本端点不读该表，改为直接基于 crm.customers（有 tenant_id）计算，保证租户隔离。
     let rows = sqlx::query(
         "WITH scored AS ( \
             SELECT c.id, c.revenue, \
@@ -467,7 +587,7 @@ pub async fn analytics_segmentation(
                 WHERE i.customer_id = c.id AND i.deleted_at IS NULL \
                   AND i.created_at >= NOW() - INTERVAL '90 days') AS activity \
             FROM crm.customers c \
-            WHERE ($1::uuid IS NULL OR c.tenant_id = $1) AND c.deleted_at IS NULL \
+            WHERE c.deleted_at IS NULL \
          ) \
          SELECT \
            CASE WHEN revenue IS NULL THEN 'unknown_value' \
@@ -478,10 +598,9 @@ pub async fn analytics_segmentation(
            COUNT(*)::bigint AS customer_count \
          FROM scored GROUP BY 1,2",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 客户四象限聚合失败: {}", e)))?;
 
     let quadrants: Vec<serde_json::Value> = rows
         .iter()
@@ -494,10 +613,7 @@ pub async fn analytics_segmentation(
         })
         .collect();
 
-    envelope(
-        json!({ "quadrants": quadrants }),
-        "Segmentation 真实聚合：价值×活动 四象限客户分布（按租户过滤；crm.customer_segments 表无 tenant_id，租户隔离口径待产品确认，本端点改由 crm.customers 直算）",
-    )
+    Ok(json!({ "quadrants": quadrants }))
 }
 
 #[utoipa::path(
@@ -513,13 +629,12 @@ pub async fn analytics_segmentation(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_billing(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
     // M-1：请求链路禁止自开事务，复用 tenant_middleware 注入的请求事务。
     let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
-    let tenant = resolve_tenant(&claims);
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -533,7 +648,7 @@ pub async fn analytics_billing(
         );
     };
 
-    match load_billing_analytics(&db, tenant, txn).await {
+    match load_billing_analytics(&db, txn).await {
         Ok(data) => envelope(
             data,
             "Billing 真实聚合：账单状态饼 + Top10 客户应收 + 账龄四桶（按租户过滤；billing_records 写入方待 finance/erp 接通，当前以已落库账单为准）",
@@ -559,7 +674,6 @@ pub async fn analytics_billing(
 /// （不再用 `unwrap_or_default()` 把失败伪装成空结果）。
 async fn load_billing_analytics(
     db: &Db,
-    tenant: Option<uuid::Uuid>,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Result<serde_json::Value, TopemsError> {
     let mut scope = db.scope_with(txn).await.map_err(|e| {
@@ -570,10 +684,9 @@ async fn load_billing_analytics(
     let status_rows = sqlx::query(
         "SELECT COALESCE(status,'unknown') AS name, COUNT(*)::bigint AS value, \
                 COALESCE(SUM(amount),0)::float8 AS amount \
-         FROM crm.billing_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
+         FROM crm.billing_records WHERE deleted_at IS NULL \
          GROUP BY COALESCE(status,'unknown') ORDER BY value DESC",
     )
-    .bind(tenant)
     .fetch_all(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单状态聚合失败: {}", e)))?;
@@ -592,10 +705,9 @@ async fn load_billing_analytics(
     let top_rows = sqlx::query(
         "SELECT COALESCE(customer_name,'unknown') AS name, \
                 COALESCE(SUM(amount),0)::float8 AS value \
-         FROM crm.billing_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
+         FROM crm.billing_records WHERE deleted_at IS NULL \
          GROUP BY COALESCE(customer_name,'unknown') ORDER BY value DESC LIMIT 10",
     )
-    .bind(tenant)
     .fetch_all(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单 TopN 聚合失败: {}", e)))?;
@@ -608,10 +720,9 @@ async fn load_billing_analytics(
                      WHEN due_date < NOW() + INTERVAL '30 days' THEN 'due_soon' \
                      ELSE 'current' END AS name, \
                 COUNT(*)::bigint AS value \
-         FROM crm.billing_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
+         FROM crm.billing_records WHERE deleted_at IS NULL \
          GROUP BY 1 ORDER BY value DESC",
     )
-    .bind(tenant)
     .fetch_all(&mut scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 账单账龄聚合失败: {}", e)))?;
@@ -653,11 +764,37 @@ fn rows_to_name_value_f64(rows: &[sqlx::postgres::PgRow]) -> Vec<serde_json::Val
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn analytics_recommendation(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = &state.db;
-    let tenant = resolve_tenant(&claims);
+    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return fail("请求事务缺失");
+    };
+
+    match load_recommendation(&db, txn).await {
+        Ok(data) => envelope(
+            data,
+            "Recommendation 真实聚合：按推荐类型分布 + 最近推荐（按租户过滤）",
+        ),
+        Err(e) => {
+            tracing::error!("[crm] recommendation 聚合失败: {}", e);
+            fail("Recommendation 数据查询失败")
+        }
+    }
+}
+
+/// 推荐分布聚合（只读租户作用域）。
+async fn load_recommendation(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut scope = db.scope_with(txn).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("CRM 推荐读作用域打开失败: {}", e))
+    })?;
 
     // customer_recommendations 表无 tenant_id 列，经 LEFT JOIN crm.customers 按租户过滤。
     let by_type_rows = sqlx::query(
@@ -665,13 +802,11 @@ pub async fn analytics_recommendation(
                 COALESCE(AVG(r.confidence),0)::float8 AS avg_confidence \
          FROM crm.customer_recommendations r \
          LEFT JOIN crm.customers c ON r.customer_id = c.id \
-         WHERE ($1::uuid IS NULL OR c.tenant_id = $1) \
          GROUP BY COALESCE(r.recommendation_type,'unknown') ORDER BY value DESC",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 推荐类型分布查询失败: {}", e)))?;
     let by_type: Vec<serde_json::Value> = by_type_rows
         .iter()
         .map(|r| {
@@ -687,13 +822,11 @@ pub async fn analytics_recommendation(
         "SELECT r.customer_name, r.recommendation_type, r.confidence::float8 AS confidence \
          FROM crm.customer_recommendations r \
          LEFT JOIN crm.customers c ON r.customer_id = c.id \
-         WHERE ($1::uuid IS NULL OR c.tenant_id = $1) \
          ORDER BY r.created_at DESC LIMIT 20",
     )
-    .bind(tenant)
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 最近推荐查询失败: {}", e)))?;
     let recent: Vec<serde_json::Value> = recent_rows
         .iter()
         .map(|r| {
@@ -705,10 +838,7 @@ pub async fn analytics_recommendation(
         })
         .collect();
 
-    envelope(
-        json!({ "by_type": by_type, "recent": recent }),
-        "Recommendation 真实聚合：按推荐类型分布 + 最近推荐（经 customers 关联按租户过滤；customer_recommendations 表无 tenant_id 列）",
-    )
+    Ok(json!({ "by_type": by_type, "recent": recent }))
 }
 
 #[cfg(test)]
@@ -885,7 +1015,6 @@ mod billing_scope_tests {
                VALUES ($1, 'Acme', $2, $3, $4, NOW() - INTERVAL '1 day',
                        CASE WHEN $4 = 'paid' THEN NOW() ELSE NULL END)"#,
         )
-        .bind(tenant)
         .bind(invoice_no)
         .bind(rust_decimal::Decimal::from(amount))
         .bind(status)
@@ -941,7 +1070,7 @@ mod billing_scope_tests {
                 tenant: tenant_a,
                 system: false,
             },
-            async { load_billing_analytics(&db, Some(tenant_a), &mut tx_a).await },
+            async { load_billing_analytics(&db, &mut tx_a).await },
         )
         .await
         .expect("有租户上下文时应能读到本租户账单");
@@ -954,7 +1083,7 @@ mod billing_scope_tests {
                 tenant: tenant_b,
                 system: false,
             },
-            async { load_billing_analytics(&db, Some(tenant_b), &mut tx_b).await },
+            async { load_billing_analytics(&db, &mut tx_b).await },
         )
         .await
         .expect("租户 B 应能读到自己的账单");
@@ -963,7 +1092,7 @@ mod billing_scope_tests {
 
         // 无租户上下文：拒绝（不是返回空聚合）
         let mut tx_none = pool.begin().await.unwrap();
-        let err = load_billing_analytics(&db, None, &mut tx_none)
+        let err = load_billing_analytics(&db, &mut tx_none)
             .await
             .expect_err("无租户上下文必须拒绝");
         assert!(

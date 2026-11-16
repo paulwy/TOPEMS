@@ -85,31 +85,20 @@ pub async fn list_interactions(
     let status_filter = params.status.clone();
     let customer_filter = params.customer_id;
     let contact_filter = params.contact_id;
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         FROM crm.interactions
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
-          AND ($2::text IS NULL OR subject ILIKE $2 OR content ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::uuid IS NULL OR customer_id = $4)
-          AND ($5::uuid IS NULL OR contact_id = $5)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR subject ILIKE $1 OR content ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR customer_id = $3)
+          AND ($4::uuid IS NULL OR contact_id = $4)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(customer_filter)
@@ -124,14 +113,13 @@ pub async fn list_interactions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.interactions
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR subject ILIKE $2 OR content ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::uuid IS NULL OR customer_id = $4)
-                  AND ($5::uuid IS NULL OR contact_id = $5)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR subject ILIKE $1 OR content ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR customer_id = $3)
+                  AND ($4::uuid IS NULL OR contact_id = $4)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(customer_filter)
@@ -183,25 +171,13 @@ pub async fn get_interaction(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
-        FROM crm.interactions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
+        FROM crm.interactions WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

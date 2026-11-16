@@ -71,29 +71,17 @@ pub async fn list_sales_forecasts(
 
     let period_type_filter = params.period_type.clone();
     let status_filter = params.status.clone();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         FROM crm.sales_forecasts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR period_type = $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE ($1::text IS NULL OR period_type = $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY period DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(&period_type_filter)
     .bind(&status_filter)
     .bind(page_size)
@@ -106,12 +94,11 @@ pub async fn list_sales_forecasts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.sales_forecasts
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR period_type = $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR period_type = $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&period_type_filter)
             .bind(&status_filter)
             .fetch_one(&mut **txn)
@@ -153,25 +140,13 @@ async fn get_sales_forecast(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
-        FROM crm.sales_forecasts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.sales_forecasts WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -646,29 +621,17 @@ pub async fn get_sales_trend(
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy::float8, trend
         FROM crm.sales_forecasts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND period_type = $2
-          AND ($3::text IS NULL OR period >= $3)
-          AND ($4::text IS NULL OR period <= $4)
+        WHERE period_type = $1
+          AND ($2::text IS NULL OR period >= $2)
+          AND ($3::text IS NULL OR period <= $3)
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)
@@ -776,16 +739,6 @@ pub async fn compare_sales_forecasts(
 
     let periods = params.periods.unwrap_or_default();
     let period_type = params.period_type.unwrap_or("month".to_string());
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if periods.len() < 2 {
         return ApiResponse::from(TopemsError::ValidationFailed(
@@ -797,11 +750,10 @@ pub async fn compare_sales_forecasts(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy::float8, confidence_level::float8, trend
         FROM crm.sales_forecasts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_type = $2 AND period = ANY($3)
+        WHERE period_type = $1 AND period = ANY($2)
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&periods)
     .fetch_all(&mut **txn)
@@ -927,30 +879,18 @@ pub async fn get_accuracy_report(
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy::float8, confidence_level::float8, trend
         FROM crm.sales_forecasts
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND period_type = $2
-          AND ($3::text IS NULL OR period >= $3)
-          AND ($4::text IS NULL OR period <= $4)
+        WHERE period_type = $1
+          AND ($2::text IS NULL OR period >= $2)
+          AND ($3::text IS NULL OR period <= $3)
           AND actual_amount IS NOT NULL
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)

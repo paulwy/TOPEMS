@@ -69,34 +69,23 @@ pub async fn list_contracts(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let type_filter = params.contract_type.clone();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
         SELECT id, tenant_id, org_id, contract_no,
-               CASE WHEN $7 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $6 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
                customer_name, amount,
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
         FROM crm.contracts
-        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR contract_no ILIKE $2 OR title ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::text IS NULL OR type = $4)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR contract_no ILIKE $1 OR title ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR type = $3)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&type_filter)
@@ -111,13 +100,12 @@ pub async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.contracts
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR contract_no ILIKE $2 OR title ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::text IS NULL OR type = $4)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR contract_no ILIKE $1 OR title ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::text IS NULL OR type = $3)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&type_filter)
@@ -302,29 +290,17 @@ pub async fn get_contract(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Contract>(
         r#"
         SELECT id, tenant_id, org_id, contract_no,
-               CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $2 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
                customer_name, amount,
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
-        FROM crm.contracts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.contracts WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;

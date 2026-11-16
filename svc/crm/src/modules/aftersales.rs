@@ -240,16 +240,6 @@ pub async fn list_returns(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -258,17 +248,15 @@ pub async fn list_returns(
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
         FROM crm.returns
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR return_type = $3)
-          AND ($4::uuid IS NULL OR customer_id = $4)
-          AND ($5::uuid IS NULL OR order_id = $5)
-          AND ($6::text IS NULL OR return_no ILIKE $6 OR reason ILIKE $6)
+        WHERE ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR return_type = $2)
+          AND ($3::uuid IS NULL OR customer_id = $3)
+          AND ($4::uuid IS NULL OR order_id = $4)
+          AND ($5::text IS NULL OR return_no ILIKE $5 OR reason ILIKE $5)
         ORDER BY created_at DESC
-        LIMIT $7 OFFSET $8
+        LIMIT $6 OFFSET $7
         "#,
     )
-    .bind(tenant_opt)
     .bind(&params.status)
     .bind(&params.return_type)
     .bind(params.customer_id)
@@ -284,15 +272,14 @@ pub async fn list_returns(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.returns
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::text IS NULL OR return_type = $3)
-                  AND ($4::uuid IS NULL OR customer_id = $4)
-                  AND ($5::uuid IS NULL OR order_id = $5)
-                  AND ($6::text IS NULL OR return_no ILIKE $6 OR reason ILIKE $6)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR status = $1)
+                  AND ($2::text IS NULL OR return_type = $2)
+                  AND ($3::uuid IS NULL OR customer_id = $3)
+                  AND ($4::uuid IS NULL OR order_id = $4)
+                  AND ($5::text IS NULL OR return_no ILIKE $5 OR reason ILIKE $5)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&params.status)
             .bind(&params.return_type)
             .bind(params.customer_id)
@@ -463,28 +450,16 @@ pub async fn get_return(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -527,11 +502,10 @@ async fn update_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -668,11 +642,10 @@ async fn delete_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -797,11 +770,10 @@ pub async fn approve_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -906,11 +878,10 @@ pub async fn reject_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1015,11 +986,10 @@ pub async fn receive_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1132,11 +1102,10 @@ pub async fn complete_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1328,11 +1297,10 @@ pub async fn cancel_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1422,27 +1390,15 @@ pub async fn list_return_items(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, ReturnItem>(
         r#"
         SELECT id, return_id, tenant_id, product_id, quantity, unit_price, total_amount, created_at
         FROM crm.return_items
-        WHERE return_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE return_id = $1
         ORDER BY created_at ASC
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1490,7 +1446,6 @@ async fn add_return_item(
         "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
@@ -1564,7 +1519,7 @@ pub async fn sync_return_to_finance(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(return_id)
@@ -1630,7 +1585,7 @@ pub async fn sync_return_to_inventory(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(return_id)
@@ -1653,11 +1608,10 @@ pub async fn sync_return_to_inventory(
         r#"
         SELECT id, return_id, tenant_id, product_id, quantity, unit_price, total_amount, created_at
         FROM crm.return_items
-        WHERE return_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE return_id = $1
         "#,
     )
     .bind(return_id)
-    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await?;
 
@@ -1798,27 +1752,14 @@ pub async fn get_return_finance_status(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
-    // 校验退换单存在且属于租户
-    let exists: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
-    )
-    .bind(id)
-    .bind(tenant_opt)
-    .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    // 校验退换单存在（租户隔离由严格 RLS 承担）
+    let exists: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
 
     if exists.is_none() {
         return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
@@ -1899,27 +1840,14 @@ pub async fn get_return_inventory_status(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
-    // 校验退换单存在且属于租户
-    let exists: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
-    )
-    .bind(id)
-    .bind(tenant_opt)
-    .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    // 校验退换单存在（租户隔离由严格 RLS 承担）
+    let exists: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
 
     if exists.is_none() {
         return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
@@ -2021,11 +1949,10 @@ async fn accept_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2134,11 +2061,10 @@ pub async fn process_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2253,11 +2179,10 @@ pub async fn resolve_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2378,11 +2303,10 @@ pub async fn confirm_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.returns WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 

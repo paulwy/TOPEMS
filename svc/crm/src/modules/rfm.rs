@@ -375,14 +375,13 @@ pub async fn analyze_rfm(
         LEFT JOIN crm.sales_orders o
             ON o.customer_id = c.id
            AND o.status = 'completed'
-           AND o.order_date >= $3
-        WHERE ($2::uuid IS NULL OR c.tenant_id = $2) AND c.deleted_at IS NULL
+           AND o.order_date >= $2
+        WHERE c.deleted_at IS NULL
         GROUP BY c.id, c.name
         ORDER BY c.name
         "#,
     )
     .bind(reference_date)
-    .bind(tenant_id)
     .bind(period_start)
     .fetch_all(&mut **txn)
     .await;
@@ -468,17 +467,6 @@ pub async fn get_segments(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     #[derive(sqlx::FromRow)]
     struct SegmentRow {
         segment: String,
@@ -499,11 +487,9 @@ pub async fn get_segments(
             COALESCE(AVG(recency_days), 0)::float8 AS avg_recency_days,
             COALESCE(AVG(rfm_score), 0)::float8 AS avg_rfm_score
         FROM crm.rfm_results
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY segment
         "#,
     )
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -576,17 +562,6 @@ async fn get_customer_rfm(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     #[derive(sqlx::FromRow)]
     struct RfmResultRow {
         customer_id: Uuid,
@@ -605,10 +580,9 @@ async fn get_customer_rfm(
         SELECT customer_id, recency_days, frequency,
                monetary::float8, r_score, f_score, m_score, rfm_score::float8, segment
         FROM crm.rfm_results
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND customer_id = $2
+        WHERE customer_id = $1
         "#,
     )
-    .bind(tenant_opt)
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -616,10 +590,9 @@ async fn get_customer_rfm(
     // 获取客户名称
     let locale = Locale::from_headers(&headers).as_sql();
     let name_result = sqlx::query_scalar::<_, String>(
-        "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1",
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;

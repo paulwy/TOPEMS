@@ -179,25 +179,26 @@ pub async fn list_customers(
 
     let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "crm",
-        "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL"
     ));
     let mut list_qb = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
+        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
     );
-    count_qb = count_qb.bind(tenant_id);
     list_qb = list_qb
-        .bind(tenant_id)
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql());
 
     if let Some(s) = search.clone() {
         let like = format!("%{}%", s.replace('%', "\\%").replace('_', "\\_"));
-        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND name ILIKE $2 AND deleted_at IS NULL"))
-            .bind(tenant_id).bind(like.clone());
+        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "crm",
+            "SELECT COUNT(*) FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL"
+        ))
+        .bind(like.clone());
         list_qb = sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
-        ).bind(tenant_id).bind(like).bind(page_size).bind(offset).bind(Locale::from_headers(&headers).as_sql());
+            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
+        ).bind(like).bind(page_size).bind(offset).bind(Locale::from_headers(&headers).as_sql());
     }
 
     let total: i64 = count_qb.fetch_one(&mut **txn).await.unwrap_or(0);
@@ -411,10 +412,9 @@ pub async fn get_customer(
     }
 
     match sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND deleted_at IS NULL"
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
@@ -822,11 +822,10 @@ pub async fn start_customer_approval(
         Err(e) => return e.0,
     }
 
-    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
-    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
-    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
+    // 预读与下方 UPDATE 均依赖严格 RLS 的租户谓词（app.tenant_id / app.rls_system），
+    // 超管走系统通道可跨租户定位实体；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1",
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -864,7 +863,7 @@ pub async fn start_customer_approval(
     });
 
     let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'pending', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.customers SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -951,11 +950,10 @@ pub async fn approve_customer(
         Err(e) => return e.0,
     }
 
-    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
-    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
-    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
+    // 预读与下方 UPDATE 均依赖严格 RLS 的租户谓词（app.tenant_id / app.rls_system），
+    // 超管走系统通道可跨租户定位实体；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1",
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -972,7 +970,7 @@ pub async fn approve_customer(
     let new_approval_status = "approved".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'approved', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.customers SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -1056,11 +1054,10 @@ pub async fn reject_customer(
         Err(e) => return e.0,
     }
 
-    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
-    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
-    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
+    // 预读与下方 UPDATE 均依赖严格 RLS 的租户谓词（app.tenant_id / app.rls_system），
+    // 超管走系统通道可跨租户定位实体；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1",
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -1077,7 +1074,7 @@ pub async fn reject_customer(
     let new_approval_status = "rejected".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE crm.customers SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -1274,17 +1271,9 @@ pub async fn get_customer_finance(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
     let locale = Locale::from_headers(&headers).as_sql();
 
-    // 超管豁免：tenant_opt 为 None 时 $2::uuid IS NULL 恒真，跨租户可见；非超管按自身租户过滤
+    // 租户隔离由严格 RLS 承担（超管走系统通道，可跨租户查看）
     let row = sqlx::query_as::<_, CustomerFinanceRow>(
         r#"
         SELECT cf.customer_id, cf.customer_name, cf.credit_limit, cf.credit_used,
@@ -1293,14 +1282,13 @@ pub async fn get_customer_finance(
                cf.avg_collection_days, cf.total_sales, cf.total_received,
                cf.last_transaction_date, cf.payment_terms, cf.risklevel, cf.status,
                cf.bank_name, cf.bank_account, cf.account_name, cf.tax_number,
-               COALESCE(CASE WHEN $3 = 'en' THEN COALESCE(c.name_en, c.name) ELSE c.name END, cf.customer_name) AS resolved_name
+               COALESCE(CASE WHEN $2 = 'en' THEN COALESCE(c.name_en, c.name) ELSE c.name END, cf.customer_name) AS resolved_name
         FROM crm.customer_finance cf
         LEFT JOIN crm.customers c ON c.id = cf.customer_id
-        WHERE cf.customer_id = $1 AND ($2::uuid IS NULL OR cf.tenant_id = $2)
+        WHERE cf.customer_id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
@@ -1336,10 +1324,9 @@ pub async fn get_customer_finance(
         Ok(None) => {
             // 无财务记录：返回默认财务信息（前端依赖默认展示，不 404）
             let name = sqlx::query_scalar::<_, String>(
-                "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+                "SELECT CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1",
             )
             .bind(id)
-            .bind(tenant_opt)
             .bind(locale)
             .fetch_optional(&mut **txn)
             .await;

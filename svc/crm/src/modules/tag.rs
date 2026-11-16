@@ -78,30 +78,17 @@ pub async fn list_tags(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id,
-               CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
         FROM crm.tags
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR name ILIKE $2)
+        WHERE ($1::text IS NULL OR name ILIKE $1)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $2 OFFSET $3
         "#,
     )
-    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
@@ -114,11 +101,10 @@ pub async fn list_tags(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.tags
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR name ILIKE $2)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR name ILIKE $1)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(&search_pattern)
             .fetch_one(&mut **txn)
             .await;
@@ -278,27 +264,15 @@ pub async fn get_tag(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id,
-               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
-        FROM crm.tags WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.tags WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
@@ -548,28 +522,16 @@ pub async fn get_customer_tags(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
         FROM crm.tags t
         JOIN crm.customer_tags ct ON t.id = ct.tag_id
-        WHERE ct.customer_id = $1 AND ($2::uuid IS NULL OR t.tenant_id = $2)
+        WHERE ct.customer_id = $1
         ORDER BY t.created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -806,28 +768,16 @@ pub async fn get_tagged_customers(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let customers = sqlx::query(
         r#"
         SELECT c.id as customer_id, c.name as customer_name
         FROM crm.customers c
         JOIN crm.customer_tags ct ON c.id = ct.customer_id
-        WHERE ct.tag_id = $1 AND ($2::uuid IS NULL OR c.tenant_id = $2)
+        WHERE ct.tag_id = $1
         ORDER BY c.created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -842,11 +792,10 @@ pub async fn get_tagged_customers(
                     SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
                     FROM crm.tags t
                     JOIN crm.customer_tags ct ON t.id = ct.tag_id
-                    WHERE ct.customer_id = $1 AND ($2::uuid IS NULL OR t.tenant_id = $2)
+                    WHERE ct.customer_id = $1
                     "#,
                 )
                 .bind(customer_id)
-                .bind(tenant_opt)
                 .fetch_all(&mut **txn)
                 .await
                 .unwrap_or_default();

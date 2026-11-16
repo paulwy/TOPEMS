@@ -104,7 +104,6 @@ pub async fn list_recommendations(
         FROM crm.customer_recommendations
         WHERE ($1::uuid IS NULL OR customer_id = $1)
           AND ($2::text IS NULL OR recommendation_type = $2)
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -123,7 +122,6 @@ pub async fn list_recommendations(
                 SELECT COUNT(*) FROM crm.customer_recommendations
                 WHERE ($1::uuid IS NULL OR customer_id = $1)
                   AND ($2::text IS NULL OR recommendation_type = $2)
-                  AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#,
             )
             .bind(params.customer_id)
@@ -199,7 +197,7 @@ pub async fn get_recommendation(
     let result = sqlx::query(
         r#"
         SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
-        FROM crm.customer_recommendations WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM crm.customer_recommendations WHERE id = $1
         "#,
     )
     .bind(id)

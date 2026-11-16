@@ -79,29 +79,17 @@ pub async fn list_customer_scores(
 
     let customer_id_filter = params.customer_id;
     let score_level_filter = params.score_level.clone();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         FROM crm.customer_scores
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::uuid IS NULL OR customer_id = $2)
-          AND ($3::text IS NULL OR score_level = $3)
+        WHERE ($1::uuid IS NULL OR customer_id = $1)
+          AND ($2::text IS NULL OR score_level = $2)
         ORDER BY scoring_date DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(customer_id_filter)
     .bind(&score_level_filter)
     .bind(page_size)
@@ -114,12 +102,11 @@ pub async fn list_customer_scores(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.customer_scores
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::uuid IS NULL OR customer_id = $2)
-                  AND ($3::text IS NULL OR score_level = $3)
+                WHERE deleted_at IS NULL
+                  AND ($1::uuid IS NULL OR customer_id = $1)
+                  AND ($2::text IS NULL OR score_level = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(customer_id_filter)
             .bind(&score_level_filter)
             .fetch_one(&mut **txn)
@@ -174,25 +161,13 @@ pub async fn get_customer_score(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        FROM crm.customer_scores WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM crm.customer_scores WHERE id = $1
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

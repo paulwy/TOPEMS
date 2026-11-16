@@ -69,29 +69,18 @@ pub async fn list_billing_records(
 
     let customer_id_filter = params.customer_id;
     let status_filter = params.status.clone();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at, deleted_at
         FROM crm.billing_records
-        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
-          AND ($2::uuid IS NULL OR customer_id = $2)
-          AND ($3::text IS NULL OR status = $3)
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR customer_id = $1)
+          AND ($2::text IS NULL OR status = $2)
         ORDER BY due_date DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_opt)
     .bind(customer_id_filter)
     .bind(&status_filter)
     .bind(page_size)
@@ -104,12 +93,11 @@ pub async fn list_billing_records(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.billing_records
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::uuid IS NULL OR customer_id = $2)
-                  AND ($3::text IS NULL OR status = $3)
+                WHERE deleted_at IS NULL
+                  AND ($1::uuid IS NULL OR customer_id = $1)
+                  AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(tenant_opt)
             .bind(customer_id_filter)
             .bind(&status_filter)
             .fetch_one(&mut **txn)
@@ -164,25 +152,13 @@ pub async fn get_billing_record(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at, deleted_at
-        FROM crm.billing_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
+        FROM crm.billing_records WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
-    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
