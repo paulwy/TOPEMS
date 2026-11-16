@@ -49,6 +49,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{
     commit_retry, EventType, PaymentMadePayload, PaymentReceivedPayload,
@@ -116,13 +117,14 @@ pub struct AuxQueryParams {
     pub end_date: Option<DateTime<Utc>>,
 }
 
-async fn count_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scope = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let Ok(mut scope) = scope else {
+async fn count_table_with_tenant(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    table: &str,
+    tenant_id: Option<Uuid>,
+) -> i64 {
+    // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -141,16 +143,13 @@ async fn count_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) 
 
 async fn count_table_with_tenant_and_status(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     table: &str,
     tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scope = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let Ok(mut scope) = scope else {
+    // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -168,13 +167,14 @@ async fn count_table_with_tenant_and_status(
     }
 }
 
-async fn sum_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scope = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let Ok(mut scope) = scope else {
+async fn sum_table_with_tenant(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    table: &str,
+    tenant_id: Option<Uuid>,
+) -> i64 {
+    // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -191,13 +191,14 @@ async fn sum_table_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) ->
     }
 }
 
-async fn sum_overdue_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scope = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let Ok(mut scope) = scope else {
+async fn sum_overdue_with_tenant(
+    db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    table: &str,
+    tenant_id: Option<Uuid>,
+) -> i64 {
+    // 复用请求事务：租户/系统通道由 tenant_middleware 的 GUC 决定（超管未选租户在中间件被拦 400）
+    let Ok(mut scope) = db.scope_with(txn).await else {
         return 0;
     };
     let result = sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table)))
@@ -225,11 +226,20 @@ async fn sum_overdue_with_tenant(db: &Db, table: &str, tenant_id: Option<Uuid>) 
 pub async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<CreateAccountRequest>,
 ) -> ApiResponse<Account> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.create_account(tenant_id, req).await {
+    match service.create_account(tenant_id, req, txn).await {
         Ok(account) => ApiResponse::success(account, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -238,13 +248,25 @@ pub async fn create_account(
 pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(account_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<Account> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.get_account(tenant_id, account_id, locale).await {
+    match service
+        .get_account(tenant_id, account_id, locale, txn)
+        .await
+    {
         Ok(account) => ApiResponse::success(account, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -253,13 +275,25 @@ pub async fn get_account(
 pub async fn get_account_by_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(code): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<Account> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.get_account_by_code(tenant_id, &code, locale).await {
+    match service
+        .get_account_by_code(tenant_id, &code, locale, txn)
+        .await
+    {
         Ok(account) => ApiResponse::success(account, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -278,11 +312,23 @@ pub async fn get_account_by_code(
 pub async fn get_account_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AccountBalanceQueryParams>,
 ) -> ApiResponse<Vec<TrialBalance>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_trial_balance(tenant_id, &params.period).await {
+    match service
+        .get_trial_balance(tenant_id, &params.period, txn)
+        .await
+    {
         Ok(balances) => {
             let filtered = if let Some(account_ids) = params.account_ids {
                 balances
@@ -301,13 +347,22 @@ pub async fn get_account_balances(
 pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(_params): Query<AccountQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<Account>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.list_accounts(tenant_id, locale).await {
+    match service.list_accounts(tenant_id, locale, txn).await {
         Ok(accounts) => ApiResponse::success(accounts, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -316,15 +371,24 @@ pub async fn list_accounts(
 pub async fn create_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     headers: HeaderMap,
     Json(req): Json<CreateVoucherRequest>,
 ) -> ApiResponse<VoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .create_voucher(tenant_id, req, &created_by, locale)
+        .create_voucher(tenant_id, req, &created_by, locale, txn)
         .await
     {
         Ok(voucher) => ApiResponse::success(voucher, "创建成功"),
@@ -335,11 +399,20 @@ pub async fn create_voucher(
 pub async fn get_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<VoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_voucher(tenant_id, voucher_id).await {
+    match service.get_voucher(tenant_id, voucher_id, txn).await {
         Ok(voucher) => ApiResponse::success(voucher, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -359,8 +432,17 @@ pub async fn get_voucher(
 async fn list_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<VoucherQueryParams>,
 ) -> ApiResponse<Vec<Voucher>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let status = params.status.map(|s| match s.as_str() {
@@ -374,7 +456,7 @@ async fn list_vouchers(
     });
 
     match service
-        .list_vouchers(tenant_id, status, params.period)
+        .list_vouchers(tenant_id, status, params.period, txn)
         .await
     {
         Ok(vouchers) => ApiResponse::success(vouchers, "查询成功"),
@@ -385,11 +467,20 @@ async fn list_vouchers(
 pub async fn submit_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.submit_voucher(tenant_id, voucher_id).await {
+    match service.submit_voucher(tenant_id, voucher_id, txn).await {
         Ok(voucher) => ApiResponse::success(voucher, "提交成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -398,13 +489,22 @@ pub async fn submit_voucher(
 pub async fn approve_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
-        .approve_voucher(tenant_id, voucher_id, &approved_by)
+        .approve_voucher(tenant_id, voucher_id, &approved_by, txn)
         .await
     {
         Ok(voucher) => ApiResponse::success(voucher, "审批成功"),
@@ -415,13 +515,22 @@ pub async fn approve_voucher(
 pub async fn post_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
-        .post_voucher(tenant_id, voucher_id, &posted_by)
+        .post_voucher(tenant_id, voucher_id, &posted_by, txn)
         .await
     {
         Ok(voucher) => ApiResponse::success(voucher, "过账成功"),
@@ -433,16 +542,25 @@ pub async fn post_voucher(
 async fn update_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateVoucherRequest>,
 ) -> ApiResponse<VoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .update_voucher(tenant_id, voucher_id, req, &updated_by, locale)
+        .update_voucher(tenant_id, voucher_id, req, &updated_by, locale, txn)
         .await
     {
         Ok(voucher) => ApiResponse::success(voucher, "更新成功"),
@@ -454,11 +572,20 @@ async fn update_voucher(
 pub async fn delete_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_voucher(tenant_id, voucher_id).await {
+    match service.delete_voucher(tenant_id, voucher_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -468,11 +595,20 @@ pub async fn delete_voucher(
 pub async fn unpost_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<Voucher> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.unpost_voucher(tenant_id, voucher_id).await {
+    match service.unpost_voucher(tenant_id, voucher_id, txn).await {
         Ok(voucher) => ApiResponse::success(voucher, "反过账成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -481,8 +617,17 @@ pub async fn unpost_voucher(
 pub async fn get_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<LedgerQueryParams>,
 ) -> ApiResponse<Vec<LedgerEntry>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let ledger_params = crate::models::LedgerQueryParams {
@@ -493,7 +638,7 @@ pub async fn get_ledger(
         period: params.period,
     };
 
-    match service.get_ledger(tenant_id, ledger_params).await {
+    match service.get_ledger(tenant_id, ledger_params, txn).await {
         Ok(entries) => ApiResponse::success(entries, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -515,11 +660,20 @@ pub async fn get_ledger(
 pub async fn get_trial_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<Vec<TrialBalance>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_trial_balance(tenant_id, &period).await {
+    match service.get_trial_balance(tenant_id, &period, txn).await {
         Ok(balance) => ApiResponse::success(balance, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -538,11 +692,20 @@ pub async fn get_trial_balance(
 async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<BalanceSheet> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_balance_sheet(tenant_id, &period).await {
+    match service.get_balance_sheet(tenant_id, &period, txn).await {
         Ok(sheet) => ApiResponse::success(sheet, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -561,11 +724,20 @@ async fn get_balance_sheet(
 async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<IncomeStatement> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_income_statement(tenant_id, &period).await {
+    match service.get_income_statement(tenant_id, &period, txn).await {
         Ok(statement) => ApiResponse::success(statement, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -574,13 +746,22 @@ async fn get_income_statement(
 pub async fn close_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path((year, month)): Path<(i32, i32)>,
 ) -> ApiResponse<Period> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let closed_by = claims.username.clone();
     match service
-        .close_period(tenant_id, year, month, &closed_by)
+        .close_period(tenant_id, year, month, &closed_by, txn)
         .await
     {
         Ok(period) => ApiResponse::success(period, "期间已关闭"),
@@ -610,11 +791,20 @@ pub async fn close_period(
 pub async fn open_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path((year, month)): Path<(i32, i32)>,
 ) -> ApiResponse<Period> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.open_period(tenant_id, year, month).await {
+    match service.open_period(tenant_id, year, month, txn).await {
         Ok(period) => ApiResponse::success(period, "期间已打开"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -623,11 +813,20 @@ pub async fn open_period(
 pub async fn create_aux_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<CreateAuxiliaryAccountRequest>,
 ) -> ApiResponse<AuxiliaryAccount> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.create_aux_account(tenant_id, req).await {
+    match service.create_aux_account(tenant_id, req, txn).await {
         Ok(account) => ApiResponse::success(account, "辅助科目创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -636,9 +835,18 @@ pub async fn create_aux_account(
 async fn list_aux_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxiliaryAccount>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -653,7 +861,10 @@ async fn list_aux_accounts(
         _ => None,
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.list_aux_accounts(tenant_id, aux_type, locale).await {
+    match service
+        .list_aux_accounts(tenant_id, aux_type, locale, txn)
+        .await
+    {
         Ok(accounts) => ApiResponse::success(accounts, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -679,9 +890,18 @@ async fn list_aux_accounts(
 pub async fn get_aux_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxLedgerEntry>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -704,7 +924,7 @@ pub async fn get_aux_ledger(
         end_date: params.end_date,
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.get_aux_ledger(tenant_id, query, locale).await {
+    match service.get_aux_ledger(tenant_id, query, locale, txn).await {
         Ok(entries) => ApiResponse::success(entries, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -713,9 +933,18 @@ pub async fn get_aux_ledger(
 pub async fn get_aux_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AuxBalanceReport>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -738,7 +967,7 @@ pub async fn get_aux_balance(
         end_date: params.end_date,
     };
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.get_aux_balance(tenant_id, query, locale).await {
+    match service.get_aux_balance(tenant_id, query, locale, txn).await {
         Ok(balance) => ApiResponse::success(balance, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -760,11 +989,23 @@ pub async fn get_aux_balance(
 async fn get_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<CashFlowStatement> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_cash_flow_statement(tenant_id, &period).await {
+    match service
+        .get_cash_flow_statement(tenant_id, &period, txn)
+        .await
+    {
         Ok(statement) => ApiResponse::success(statement, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -773,12 +1014,21 @@ async fn get_cash_flow(
 pub async fn batch_submit_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .batch_submit_vouchers(tenant_id, req.voucher_ids)
+        .batch_submit_vouchers(tenant_id, req.voucher_ids, txn)
         .await
     {
         Ok(result) => ApiResponse::success(result, "批量提交完成"),
@@ -789,13 +1039,22 @@ pub async fn batch_submit_vouchers(
 pub async fn batch_approve_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
-        .batch_approve_vouchers(tenant_id, req.voucher_ids, &approved_by)
+        .batch_approve_vouchers(tenant_id, req.voucher_ids, &approved_by, txn)
         .await
     {
         Ok(result) => ApiResponse::success(result, "批量审批完成"),
@@ -806,13 +1065,22 @@ pub async fn batch_approve_vouchers(
 pub async fn batch_post_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<BatchVoucherRequest>,
 ) -> ApiResponse<BatchVoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
-        .batch_post_vouchers(tenant_id, req.voucher_ids, &posted_by)
+        .batch_post_vouchers(tenant_id, req.voucher_ids, &posted_by, txn)
         .await
     {
         Ok(result) => ApiResponse::success(result, "批量过账完成"),
@@ -834,11 +1102,20 @@ pub async fn batch_post_vouchers(
 pub async fn export_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<ExportVoucherRequest>,
 ) -> ApiResponse<ExportVoucherResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.export_vouchers(tenant_id, req).await {
+    match service.export_vouchers(tenant_id, req, txn).await {
         Ok(result) => ApiResponse::success(result, "导出成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -847,15 +1124,31 @@ pub async fn export_vouchers(
 pub async fn year_end_close(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     headers: HeaderMap,
     Json(req): Json<YearEndCloseRequest>,
 ) -> ApiResponse<YearEndCloseResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .year_end_close(tenant_id, req.year, &created_by, req.description, locale)
+        .year_end_close(
+            tenant_id,
+            req.year,
+            &created_by,
+            req.description,
+            locale,
+            txn,
+        )
         .await
     {
         Ok(result) => ApiResponse::success(result, "年末结转成功"),
@@ -867,9 +1160,18 @@ pub async fn year_end_close(
 pub async fn create_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -877,7 +1179,7 @@ pub async fn create_payment_handler(
     let payment_method = req.payment_method.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .create_payment(tenant_id, req, &created_by, locale)
+        .create_payment(tenant_id, req, &created_by, locale, txn)
         .await
     {
         Ok(payment) => {
@@ -925,11 +1227,20 @@ pub async fn create_payment_handler(
 pub async fn get_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_payment(tenant_id, payment_id).await {
+    match service.get_payment(tenant_id, payment_id, txn).await {
         Ok(payment) => ApiResponse::success(payment, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -954,8 +1265,17 @@ pub struct PaymentListParams {
 pub async fn list_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<PaymentListParams>,
 ) -> ApiResponse<PaymentListResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -968,7 +1288,7 @@ pub async fn list_payments_handler(
         page: params.page,
         page_size: params.page_size,
     };
-    match service.list_payments(tenant_id, query).await {
+    match service.list_payments(tenant_id, query, txn).await {
         Ok((items, total)) => ApiResponse::success(
             PaymentListResponse {
                 items,
@@ -986,16 +1306,25 @@ pub async fn list_payments_handler(
 pub async fn update_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .update_payment(tenant_id, payment_id, req, &updated_by, locale)
+        .update_payment(tenant_id, payment_id, req, &updated_by, locale, txn)
         .await
     {
         Ok(payment) => ApiResponse::success(payment, "更新成功"),
@@ -1006,11 +1335,20 @@ pub async fn update_payment_handler(
 pub async fn delete_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_payment(tenant_id, payment_id).await {
+    match service.delete_payment(tenant_id, payment_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1020,13 +1358,22 @@ pub async fn delete_payment_handler(
 pub async fn submit_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let _submitted_by = claims.username.clone();
 
-    let payment = match service.get_payment(tenant_id, payment_id).await {
+    let payment = match service.get_payment(tenant_id, payment_id, txn).await {
         Ok(p) => p,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1040,8 +1387,8 @@ pub async fn submit_payment_handler(
         }
     };
 
-    match service.submit_voucher(tenant_id, voucher_id).await {
-        Ok(_) => match service.get_payment(tenant_id, payment_id).await {
+    match service.submit_voucher(tenant_id, voucher_id, txn).await {
+        Ok(_) => match service.get_payment(tenant_id, payment_id, txn).await {
             Ok(p) => ApiResponse::success(p, "提交成功"),
             Err(e) => crate::shared::err_resp(e),
         },
@@ -1052,13 +1399,22 @@ pub async fn submit_payment_handler(
 pub async fn approve_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
 
-    let payment = match service.get_payment(tenant_id, payment_id).await {
+    let payment = match service.get_payment(tenant_id, payment_id, txn).await {
         Ok(p) => p,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1073,10 +1429,10 @@ pub async fn approve_payment_handler(
     };
 
     match service
-        .approve_voucher(tenant_id, voucher_id, &approved_by)
+        .approve_voucher(tenant_id, voucher_id, &approved_by, txn)
         .await
     {
-        Ok(_) => match service.get_payment(tenant_id, payment_id).await {
+        Ok(_) => match service.get_payment(tenant_id, payment_id, txn).await {
             Ok(p) => ApiResponse::success(p, "审批通过"),
             Err(e) => crate::shared::err_resp(e),
         },
@@ -1087,13 +1443,22 @@ pub async fn approve_payment_handler(
 pub async fn reject_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rejected_by = claims.username.clone();
 
-    let payment = match service.get_payment(tenant_id, payment_id).await {
+    let payment = match service.get_payment(tenant_id, payment_id, txn).await {
         Ok(p) => p,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1108,10 +1473,10 @@ pub async fn reject_payment_handler(
     };
 
     match service
-        .reject_voucher(tenant_id, voucher_id, &rejected_by)
+        .reject_voucher(tenant_id, voucher_id, &rejected_by, txn)
         .await
     {
-        Ok(_) => match service.get_payment(tenant_id, payment_id).await {
+        Ok(_) => match service.get_payment(tenant_id, payment_id, txn).await {
             Ok(p) => ApiResponse::success(p, "已拒绝"),
             Err(e) => crate::shared::err_resp(e),
         },
@@ -1123,16 +1488,25 @@ pub async fn reject_payment_handler(
 pub async fn execute_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<Uuid>,
     Json(req): Json<crate::models::ExecutePaymentRequest>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     // executed_by 列为 uuid，按 JWT sub 绑定；用户名仅供日志/文本列使用。
     let executed_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     match service
-        .execute_payment(tenant_id, payment_id, req, executed_by)
+        .execute_payment(tenant_id, payment_id, req, executed_by, txn)
         .await
     {
         Ok(p) => ApiResponse::success(p, "执行成功"),
@@ -1150,14 +1524,29 @@ pub struct WriteOffRequest {
 pub async fn write_off_payment_item_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<WriteOffRequest>,
 ) -> ApiResponse<PaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let write_off_by = claims.username.clone();
 
     match service
-        .write_off_payment_item(tenant_id, req.item_id, req.write_off_amount, &write_off_by)
+        .write_off_payment_item(
+            tenant_id,
+            req.item_id,
+            req.write_off_amount,
+            &write_off_by,
+            txn,
+        )
         .await
     {
         Ok(p) => ApiResponse::success(p, "核销成功"),
@@ -1180,12 +1569,21 @@ pub async fn write_off_payment_item_handler(
 pub async fn export_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<ExportPaymentRequest>,
 ) -> ApiResponse<ExportPaymentResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.export_payments(tenant_id, req).await {
+    match service.export_payments(tenant_id, req, txn).await {
         Ok(r) => ApiResponse::success(r, "导出成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1195,7 +1593,15 @@ pub async fn export_payments_handler(
 pub async fn list_approval_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<Vec<ApprovalConfigResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     if !claims.has_permission("finance:admin") {
         return ApiResponse::forbidden("没有权限访问审批配置");
     }
@@ -1203,7 +1609,7 @@ pub async fn list_approval_configs_handler(
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.list_approval_configs(tenant_id).await {
+    match service.list_approval_configs(tenant_id, txn).await {
         Ok(configs) => ApiResponse::success(configs, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1213,8 +1619,17 @@ pub async fn list_approval_configs_handler(
 pub async fn create_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<CreateApprovalConfigRequest>,
 ) -> ApiResponse<ApprovalConfigResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     if !claims.has_permission("finance:admin") {
         return ApiResponse::forbidden("没有权限创建审批配置");
     }
@@ -1224,7 +1639,7 @@ pub async fn create_approval_config_handler(
     let created_by = claims.username.clone();
 
     match service
-        .create_approval_config(tenant_id, req, &created_by)
+        .create_approval_config(tenant_id, req, &created_by, txn)
         .await
     {
         Ok(config) => ApiResponse::success(config, "创建成功"),
@@ -1236,8 +1651,17 @@ pub async fn create_approval_config_handler(
 pub async fn get_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(config_id): Path<Uuid>,
 ) -> ApiResponse<ApprovalConfigResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     if !claims.has_permission("finance:admin") {
         return ApiResponse::forbidden("没有权限访问审批配置");
     }
@@ -1245,7 +1669,7 @@ pub async fn get_approval_config_handler(
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.get_approval_config(tenant_id, config_id).await {
+    match service.get_approval_config(tenant_id, config_id, txn).await {
         Ok(config) => ApiResponse::success(config, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1255,9 +1679,18 @@ pub async fn get_approval_config_handler(
 pub async fn update_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(config_id): Path<Uuid>,
     Json(req): Json<CreateApprovalConfigRequest>,
 ) -> ApiResponse<ApprovalConfigResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     if !claims.has_permission("finance:admin") {
         return ApiResponse::forbidden("没有权限更新审批配置");
     }
@@ -1267,7 +1700,7 @@ pub async fn update_approval_config_handler(
     let updated_by = claims.username.clone();
 
     match service
-        .update_approval_config(tenant_id, config_id, req, &updated_by)
+        .update_approval_config(tenant_id, config_id, req, &updated_by, txn)
         .await
     {
         Ok(config) => ApiResponse::success(config, "更新成功"),
@@ -1279,8 +1712,17 @@ pub async fn update_approval_config_handler(
 pub async fn delete_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(config_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     if !claims.has_permission("finance:admin") {
         return ApiResponse::forbidden("没有权限删除审批配置");
     }
@@ -1288,7 +1730,10 @@ pub async fn delete_approval_config_handler(
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.delete_approval_config(tenant_id, config_id).await {
+    match service
+        .delete_approval_config(tenant_id, config_id, txn)
+        .await
+    {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1322,9 +1767,11 @@ pub async fn submit_approval(
         .unwrap_or("approved");
     let approver_id = claims.user_id().ok().unwrap_or_else(Uuid::nil);
 
+    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
+    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
     if let Some(record_id) = record_id {
         if let Err(e) = topems_shared_db::approval::create_approval_and_log_db(
-            &state.db,
+            &audit_db,
             entity_type,
             record_id,
             from_status,
@@ -1386,9 +1833,11 @@ pub async fn approve_approval(
         .and_then(|v| v.as_str())
         .unwrap_or("approved");
 
+    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
+    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
         if let Err(e) = topems_shared_db::approval::execute_transition_and_log_db(
-            &state.db,
+            &audit_db,
             None,
             entity_type,
             record_id,
@@ -1434,9 +1883,11 @@ pub async fn reject_approval(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
+    // tenant-system: 共享审批/审计 helper（shared-db）自开作用域且暂不支持请求事务，审计走独立 Db（租户仍由请求 GUC 收敛，双事务为 B4 登记缺口）。
+    let audit_db = topems_shared_db::scope::Db::new(state.pool.clone(), "finance, public, shared");
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
         if let Err(e) = topems_shared_db::approval::reject_and_log_db(
-            &state.db,
+            &audit_db,
             entity_type,
             record_id,
             approval_id,
@@ -1485,37 +1936,49 @@ pub struct FinanceDashboardStats {
 
 pub async fn get_dashboard_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<FinanceDashboardStats> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
 
-    let total_vouchers = count_table_with_tenant(&state.db, "vouchers", tenant_id).await;
+    let total_vouchers = count_table_with_tenant(&state.db, txn, "vouchers", tenant_id).await;
     let draft_vouchers =
-        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "draft").await;
+        count_table_with_tenant_and_status(&state.db, txn, "vouchers", tenant_id, "draft").await;
     let submitted_vouchers =
-        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "submitted").await;
-    let approved_vouchers =
-        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "approved").await;
-    let posted_vouchers =
-        count_table_with_tenant_and_status(&state.db, "vouchers", tenant_id, "posted").await;
-
-    let total_payments = count_table_with_tenant(&state.db, "payments", tenant_id).await;
-    let pending_payments =
-        count_table_with_tenant_and_status(&state.db, "payments", tenant_id, "pending").await;
-
-    let total_receivables = sum_table_with_tenant(&state.db, "receivables", tenant_id).await;
-    let overdue_receivables = sum_overdue_with_tenant(&state.db, "receivables", tenant_id).await;
-
-    let total_payables = sum_table_with_tenant(&state.db, "payables", tenant_id).await;
-    let overdue_payables = sum_overdue_with_tenant(&state.db, "payables", tenant_id).await;
-
-    let pending_approvals =
-        count_table_with_tenant_and_status(&state.db, "approval_workflows", tenant_id, "pending")
+        count_table_with_tenant_and_status(&state.db, txn, "vouchers", tenant_id, "submitted")
             .await;
+    let approved_vouchers =
+        count_table_with_tenant_and_status(&state.db, txn, "vouchers", tenant_id, "approved").await;
+    let posted_vouchers =
+        count_table_with_tenant_and_status(&state.db, txn, "vouchers", tenant_id, "posted").await;
+
+    let total_payments = count_table_with_tenant(&state.db, txn, "payments", tenant_id).await;
+    let pending_payments =
+        count_table_with_tenant_and_status(&state.db, txn, "payments", tenant_id, "pending").await;
+
+    let total_receivables = sum_table_with_tenant(&state.db, txn, "receivables", tenant_id).await;
+    let overdue_receivables =
+        sum_overdue_with_tenant(&state.db, txn, "receivables", tenant_id).await;
+
+    let total_payables = sum_table_with_tenant(&state.db, txn, "payables", tenant_id).await;
+    let overdue_payables = sum_overdue_with_tenant(&state.db, txn, "payables", tenant_id).await;
+
+    let pending_approvals = count_table_with_tenant_and_status(
+        &state.db,
+        txn,
+        "approval_workflows",
+        tenant_id,
+        "pending",
+    )
+    .await;
 
     let stats = FinanceDashboardStats {
         total_vouchers,
@@ -1557,12 +2020,21 @@ pub struct VoucherTemplateQueryParams {
 pub async fn list_voucher_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<VoucherTemplateQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .list_voucher_templates(tenant_id, params.voucher_type, params.status)
+        .list_voucher_templates(tenant_id, params.voucher_type, params.status, txn)
         .await
     {
         Ok(templates) => {
@@ -1579,11 +2051,23 @@ pub async fn list_voucher_templates_handler(
 pub async fn get_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_voucher_template(tenant_id, template_id).await {
+    match service
+        .get_voucher_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "查询成功",
@@ -1595,8 +2079,17 @@ pub async fn get_voucher_template_handler(
 pub async fn create_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -1608,7 +2101,7 @@ pub async fn create_voucher_template_handler(
             }
         };
     match service
-        .create_voucher_template(tenant_id, req, &created_by)
+        .create_voucher_template(tenant_id, req, &created_by, txn)
         .await
     {
         Ok(template) => ApiResponse::success(
@@ -1622,9 +2115,18 @@ pub async fn create_voucher_template_handler(
 async fn update_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
@@ -1635,7 +2137,7 @@ async fn update_voucher_template_handler(
             }
         };
     match service
-        .update_voucher_template(tenant_id, template_id, req)
+        .update_voucher_template(tenant_id, template_id, req, txn)
         .await
     {
         Ok(template) => ApiResponse::success(
@@ -1649,12 +2151,21 @@ async fn update_voucher_template_handler(
 pub async fn delete_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .delete_voucher_template(tenant_id, template_id)
+        .delete_voucher_template(tenant_id, template_id, txn)
         .await
     {
         Ok(_) => ApiResponse::success((), "删除成功"),
@@ -1665,11 +2176,23 @@ pub async fn delete_voucher_template_handler(
 pub async fn set_default_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.set_default_template(tenant_id, template_id).await {
+    match service
+        .set_default_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "设置成功",
@@ -1696,8 +2219,17 @@ pub async fn set_default_template_handler(
 pub async fn apply_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
@@ -1707,7 +2239,7 @@ pub async fn apply_template_handler(
                 return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
-    match service.apply_template(tenant_id, req).await {
+    match service.apply_template(tenant_id, req, txn).await {
         Ok(result) => ApiResponse::success(result, "应用成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1724,13 +2256,25 @@ pub struct CopyTemplateRequest {
 async fn copy_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
     Json(req): Json<CopyTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    let source = match service.get_voucher_template(tenant_id, template_id).await {
+    let source = match service
+        .get_voucher_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(t) => t,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1757,7 +2301,7 @@ async fn copy_template_handler(
         lines,
     };
     match service
-        .create_voucher_template(tenant_id, create_req, &created_by)
+        .create_voucher_template(tenant_id, create_req, &created_by, txn)
         .await
     {
         Ok(template) => ApiResponse::success(
@@ -1789,16 +2333,27 @@ pub struct ToggleTemplateRequest {
 pub async fn toggle_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ToggleTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
@@ -1811,14 +2366,17 @@ pub async fn toggle_template_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 return ApiResponse::not_found("凭证模板不存在");
             }
+            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
+            // 释放写作用域：模板读取复用同一请求事务。
             if let Err(e) = scope.commit().await {
                 return crate::shared::err_resp(e);
             }
-            let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-            match service.get_voucher_template(tenant_id, template_id).await {
+            match service
+                .get_voucher_template(tenant_id, template_id, txn)
+                .await
+            {
                 Ok(template) => {
                     let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
                     if let Some(obj) = val.as_object_mut() {
@@ -1829,10 +2387,7 @@ pub async fn toggle_template_handler(
                 Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1858,6 +2413,7 @@ pub struct MatchTemplateRequest {
 pub async fn match_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<MatchTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -1865,10 +2421,20 @@ pub async fn match_template_handler(
         Some(s) => s,
         None => return ApiResponse::bad_request("source_type 为必填"),
     };
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
@@ -1879,11 +2445,9 @@ pub async fn match_template_handler(
     {
         Ok(r) => r,
         Err(e) => {
-            let _ = scope.commit().await;
             return crate::shared::err_resp(e);
         }
     };
-    let _ = scope.commit().await;
     match rule {
         Some(r) => {
             let template_id_opt = r
@@ -1893,7 +2457,11 @@ pub async fn match_template_handler(
                 .and_then(|s| Uuid::parse_str(s).ok());
             let template_val = if let Some(tid) = template_id_opt {
                 let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-                match service.get_voucher_template(tenant_id, tid).await {
+                // 释放读作用域：模板读取复用同一请求事务。
+                if let Err(e) = scope.commit().await {
+                    return crate::shared::err_resp(e);
+                }
+                match service.get_voucher_template(tenant_id, tid, txn).await {
                     Ok(t) => serde_json::to_value(t).unwrap_or(serde_json::json!(null)),
                     Err(_) => serde_json::json!(null),
                 }
@@ -1942,14 +2510,25 @@ pub struct UsageStatsQueryParams {
 pub async fn get_template_usage_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rule_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
     )
@@ -1975,7 +2554,6 @@ pub async fn get_template_usage_stats_handler(
     .fetch_one(&mut scope)
     .await
     .unwrap_or(None);
-    let _ = scope.commit().await;
     ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
@@ -2001,14 +2579,25 @@ pub struct AddTemplateEntryRequest {
 async fn add_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
@@ -2019,7 +2608,6 @@ async fn add_template_entry_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        let _ = scope.commit().await;
         return ApiResponse::not_found("凭证模板不存在");
     }
     let sort_order: i32 = match req.sort_order {
@@ -2058,11 +2646,7 @@ async fn add_template_entry_handler(
     .fetch_one(&mut scope)
     .await;
     if line.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
     match line {
         Ok(l) => ApiResponse::success(
@@ -2085,14 +2669,25 @@ pub struct UpdateTemplateEntryRequest {
 async fn update_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let owns: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
@@ -2103,7 +2698,6 @@ async fn update_template_entry_handler(
     .await
     .unwrap_or(0);
     if owns == 0 {
-        let _ = scope.commit().await;
         return ApiResponse::not_found("模板分录不存在");
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
@@ -2118,7 +2712,6 @@ async fn update_template_entry_handler(
         {
             Ok(l) => l,
             Err(e) => {
-                let _ = scope.commit().await;
                 return crate::shared::err_resp(e);
             }
         };
@@ -2145,11 +2738,7 @@ async fn update_template_entry_handler(
         .fetch_one(&mut scope)
         .await;
     if line.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
     match line {
         Ok(l) => ApiResponse::success(
@@ -2163,13 +2752,24 @@ async fn update_template_entry_handler(
 async fn delete_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(
         only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
@@ -2181,21 +2781,14 @@ async fn delete_template_entry_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 return ApiResponse::not_found("模板分录不存在");
-            }
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
             }
             ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
                 "删除分录成功",
             )
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2225,14 +2818,25 @@ pub struct ReorderEntriesRequest {
 pub async fn reorder_template_entries_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
@@ -2243,7 +2847,6 @@ pub async fn reorder_template_entries_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        let _ = scope.commit().await;
         return ApiResponse::not_found("凭证模板不存在");
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
@@ -2257,7 +2860,6 @@ pub async fn reorder_template_entries_handler(
         .execute(&mut scope)
         .await
         {
-            let _ = scope.commit().await;
             return crate::shared::err_resp(e);
         }
     }
@@ -2272,11 +2874,7 @@ pub async fn reorder_template_entries_handler(
     .fetch_all(&mut scope)
     .await;
     if lines.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
     match lines {
         Ok(ls) => {
@@ -2316,12 +2914,25 @@ pub struct ExportQueryParams {
 pub async fn export_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
     Query(_params): Query<ExportQueryParams>,
 ) -> axum::response::Response {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp::<serde_json::Value, _>(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ))
+        .into_response();
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let template = match service.get_voucher_template(tenant_id, template_id).await {
+    let template = match service
+        .get_voucher_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(t) => t,
         Err(e) => return crate::shared::err_resp::<serde_json::Value, _>(e).into_response(),
     };
@@ -2350,8 +2961,17 @@ pub async fn export_template_handler(
 pub async fn import_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     mut multipart: Multipart,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2395,7 +3015,7 @@ pub async fn import_template_handler(
             }
         };
     match service
-        .create_voucher_template(tenant_id, create_req, &created_by)
+        .create_voucher_template(tenant_id, create_req, &created_by, txn)
         .await
     {
         Ok(template) => ApiResponse::success(
@@ -2428,12 +3048,21 @@ pub struct GenerationRuleQueryParams {
 pub async fn list_generation_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<GenerationRuleQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .list_generation_rules(tenant_id, params.source_type, params.status)
+        .list_generation_rules(tenant_id, params.source_type, params.status, txn)
         .await
     {
         Ok(rules) => {
@@ -2450,11 +3079,20 @@ pub async fn list_generation_rules_handler(
 pub async fn get_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(rule_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_generation_rule(tenant_id, rule_id).await {
+    match service.get_generation_rule(tenant_id, rule_id, txn).await {
         Ok(rule) => ApiResponse::success(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "查询成功",
@@ -2466,8 +3104,17 @@ pub async fn get_generation_rule_handler(
 pub async fn create_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2479,7 +3126,7 @@ pub async fn create_generation_rule_handler(
             }
         };
     match service
-        .create_generation_rule(tenant_id, req, &created_by)
+        .create_generation_rule(tenant_id, req, &created_by, txn)
         .await
     {
         Ok(rule) => ApiResponse::success(
@@ -2493,9 +3140,18 @@ pub async fn create_generation_rule_handler(
 pub async fn update_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(rule_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
@@ -2506,7 +3162,7 @@ pub async fn update_generation_rule_handler(
             }
         };
     match service
-        .update_generation_rule(tenant_id, rule_id, req)
+        .update_generation_rule(tenant_id, rule_id, req, txn)
         .await
     {
         Ok(rule) => ApiResponse::success(
@@ -2520,11 +3176,23 @@ pub async fn update_generation_rule_handler(
 pub async fn delete_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(rule_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_generation_rule(tenant_id, rule_id).await {
+    match service
+        .delete_generation_rule(tenant_id, rule_id, txn)
+        .await
+    {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2538,16 +3206,27 @@ pub struct ToggleRuleRequest {
 pub async fn toggle_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<ToggleRuleRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(
         only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
@@ -2560,7 +3239,6 @@ pub async fn toggle_generation_rule_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 return ApiResponse::not_found("生成规则不存在");
             }
             let rule: Result<
@@ -2575,11 +3253,7 @@ pub async fn toggle_generation_rule_handler(
             .fetch_one(&mut scope)
             .await;
             if rule.is_ok() {
-                if let Err(e) = scope.commit().await {
-                    return crate::shared::err_resp(e);
-                }
             } else {
-                let _ = scope.commit().await;
             }
             match rule {
                 Ok(r) => {
@@ -2592,10 +3266,7 @@ pub async fn toggle_generation_rule_handler(
                 Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -2617,8 +3288,17 @@ pub async fn toggle_generation_rule_handler(
 pub async fn test_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
@@ -2628,7 +3308,7 @@ pub async fn test_rule_handler(
                 return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
-    match service.test_rule(tenant_id, req).await {
+    match service.test_rule(tenant_id, req, txn).await {
         Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "测试完成",
@@ -2640,8 +3320,17 @@ pub async fn test_rule_handler(
 pub async fn generate_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
@@ -2653,7 +3342,7 @@ pub async fn generate_vouchers_handler(
             }
         };
     match service
-        .generate_vouchers(tenant_id, req, &generated_by)
+        .generate_vouchers(tenant_id, req, &generated_by, txn)
         .await
     {
         Ok(result) => ApiResponse::success(
@@ -2690,8 +3379,17 @@ pub struct U8ImportQueryParams {
 pub async fn import_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let imported_by = claims.username.clone();
@@ -2702,7 +3400,10 @@ pub async fn import_vouchers_handler(
                 return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
-    match service.import_vouchers(tenant_id, req, &imported_by).await {
+    match service
+        .import_vouchers(tenant_id, req, &imported_by, txn)
+        .await
+    {
         Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "导入成功",
@@ -2714,11 +3415,20 @@ pub async fn import_vouchers_handler(
 pub async fn get_import_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_import_status(tenant_id, import_id).await {
+    match service.get_import_status(tenant_id, import_id, txn).await {
         Ok(status) => ApiResponse::success(
             serde_json::to_value(status).unwrap_or(serde_json::json!({})),
             "查询成功",
@@ -2730,8 +3440,17 @@ pub async fn get_import_status_handler(
 pub async fn list_import_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<U8ImportQueryParams>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let query = crate::services::finance::u8_import::ImportRecordQuery {
@@ -2740,7 +3459,7 @@ pub async fn list_import_records_handler(
         start_date: None,
         end_date: None,
     };
-    match service.list_import_records(tenant_id, query).await {
+    match service.list_import_records(tenant_id, query, txn).await {
         Ok(records) => {
             let json_records: Vec<serde_json::Value> = records
                 .into_iter()
@@ -2772,11 +3491,20 @@ pub async fn list_import_records_handler(
 pub async fn get_import_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_import_record(tenant_id, import_id).await {
+    match service.get_import_record(tenant_id, import_id, txn).await {
         Ok(record) => ApiResponse::success(
             serde_json::to_value(record).unwrap_or(serde_json::json!({})),
             "查询成功",
@@ -2788,11 +3516,20 @@ pub async fn get_import_record_handler(
 pub async fn rollback_import_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(import_id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.rollback_import(tenant_id, import_id).await {
+    match service.rollback_import(tenant_id, import_id, txn).await {
         Ok(_) => ApiResponse::success((), "回滚成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2811,8 +3548,17 @@ pub struct ReceivableQueryParams {
 pub async fn list_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<ReceivableQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -2822,7 +3568,7 @@ pub async fn list_receivables_handler(
         .as_deref()
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
     match service
-        .list_receivables(tenant_id, page, page_size, params.status, customer_id)
+        .list_receivables(tenant_id, page, page_size, params.status, customer_id, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2833,11 +3579,20 @@ pub async fn list_receivables_handler(
 async fn get_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_receivable(tenant_id, receivable_id).await {
+    match service.get_receivable(tenant_id, receivable_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2846,12 +3601,24 @@ async fn get_receivable_handler(
 async fn create_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match service.create_receivable(tenant_id, req, &created_by).await {
+    match service
+        .create_receivable(tenant_id, req, &created_by, txn)
+        .await
+    {
         Ok(data) => ApiResponse::success(data, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2860,13 +3627,22 @@ async fn create_receivable_handler(
 async fn update_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(receivable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .update_receivable(tenant_id, receivable_id, req)
+        .update_receivable(tenant_id, receivable_id, req, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "更新成功"),
@@ -2877,11 +3653,23 @@ async fn update_receivable_handler(
 async fn delete_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_receivable(tenant_id, receivable_id).await {
+    match service
+        .delete_receivable(tenant_id, receivable_id, txn)
+        .await
+    {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2904,10 +3692,18 @@ async fn delete_receivable_handler(
 pub async fn get_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_receivable_aging(tenant_id).await {
+    match service.get_receivable_aging(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2916,8 +3712,17 @@ pub async fn get_receivable_aging_handler(
 pub async fn batch_create_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2927,7 +3732,7 @@ pub async fn batch_create_receivables_handler(
         .cloned()
         .unwrap_or_default();
     match service
-        .batch_create_receivables(tenant_id, items, &created_by)
+        .batch_create_receivables(tenant_id, items, &created_by, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "批量创建完成"),
@@ -2948,8 +3753,17 @@ pub struct PayableQueryParams {
 pub async fn list_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<PayableQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -2959,7 +3773,7 @@ pub async fn list_payables_handler(
         .as_deref()
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
     match service
-        .list_payables(tenant_id, page, page_size, params.status, supplier_id)
+        .list_payables(tenant_id, page, page_size, params.status, supplier_id, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -2970,11 +3784,20 @@ pub async fn list_payables_handler(
 async fn get_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_payable(tenant_id, payable_id).await {
+    match service.get_payable(tenant_id, payable_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2983,12 +3806,24 @@ async fn get_payable_handler(
 async fn create_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match service.create_payable(tenant_id, req, &created_by).await {
+    match service
+        .create_payable(tenant_id, req, &created_by, txn)
+        .await
+    {
         Ok(data) => ApiResponse::success(data, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2997,12 +3832,24 @@ async fn create_payable_handler(
 async fn update_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.update_payable(tenant_id, payable_id, req).await {
+    match service
+        .update_payable(tenant_id, payable_id, req, txn)
+        .await
+    {
         Ok(data) => ApiResponse::success(data, "更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3011,11 +3858,20 @@ async fn update_payable_handler(
 async fn delete_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payable_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_payable(tenant_id, payable_id).await {
+    match service.delete_payable(tenant_id, payable_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3038,10 +3894,18 @@ async fn delete_payable_handler(
 pub async fn get_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_payable_aging(tenant_id).await {
+    match service.get_payable_aging(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3060,8 +3924,17 @@ pub async fn get_payable_aging_handler(
 pub async fn batch_create_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -3071,7 +3944,7 @@ pub async fn batch_create_payables_handler(
         .cloned()
         .unwrap_or_default();
     match service
-        .batch_create_payables(tenant_id, items, &created_by)
+        .batch_create_payables(tenant_id, items, &created_by, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "批量创建完成"),
@@ -3092,8 +3965,17 @@ pub struct CollectionQueryParams {
 pub async fn list_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<CollectionQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -3103,7 +3985,7 @@ pub async fn list_collections_handler(
         .as_deref()
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
     match service
-        .list_collections(tenant_id, page, page_size, params.status, customer_id)
+        .list_collections(tenant_id, page, page_size, params.status, customer_id, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3131,11 +4013,20 @@ pub async fn list_collections_handler(
 pub async fn get_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(collection_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_collection(tenant_id, collection_id).await {
+    match service.get_collection(tenant_id, collection_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3240,13 +4131,22 @@ pub async fn create_collection_handler(
 async fn update_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(collection_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .update_collection(tenant_id, collection_id, req)
+        .update_collection(tenant_id, collection_id, req, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "更新成功"),
@@ -3257,11 +4157,23 @@ async fn update_collection_handler(
 async fn delete_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(collection_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_collection(tenant_id, collection_id).await {
+    match service
+        .delete_collection(tenant_id, collection_id, txn)
+        .await
+    {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3285,8 +4197,17 @@ async fn delete_collection_handler(
 pub async fn write_off_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let collection_id_str = req
@@ -3305,7 +4226,7 @@ pub async fn write_off_collection_handler(
     ) {
         (Ok(cid), Ok(rid)) => {
             match service
-                .write_off_collection(tenant_id, cid, rid, amount)
+                .write_off_collection(tenant_id, cid, rid, amount, txn)
                 .await
             {
                 Ok(data) => ApiResponse::success(data, "核销成功"),
@@ -3319,8 +4240,17 @@ pub async fn write_off_collection_handler(
 pub async fn batch_write_off_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
@@ -3328,7 +4258,7 @@ pub async fn batch_write_off_collections_handler(
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
-    match service.batch_write_off(tenant_id, items).await {
+    match service.batch_write_off(tenant_id, items, txn).await {
         Ok(data) => ApiResponse::success(data, "批量核销完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3362,8 +4292,17 @@ pub struct PaymentRecordQueryParams {
 pub async fn list_payment_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<PaymentRecordQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -3373,7 +4312,7 @@ pub async fn list_payment_records_handler(
         .as_deref()
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
     match service
-        .list_payment_records(tenant_id, page, page_size, params.status, supplier_id)
+        .list_payment_records(tenant_id, page, page_size, params.status, supplier_id, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3384,11 +4323,20 @@ pub async fn list_payment_records_handler(
 pub async fn get_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_payment_record(tenant_id, payment_id).await {
+    match service.get_payment_record(tenant_id, payment_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3398,13 +4346,22 @@ pub async fn get_payment_record_handler(
 pub async fn create_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service
-        .create_payment_record(tenant_id, req, &created_by)
+        .create_payment_record(tenant_id, req, &created_by, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "创建成功"),
@@ -3415,8 +4372,17 @@ pub async fn create_payment_record_handler(
 pub async fn approve_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -3424,6 +4390,7 @@ pub async fn approve_payment_record_handler(
             tenant_id,
             payment_id,
             serde_json::json!({ "status": "approved" }),
+            txn,
         )
         .await
     {
@@ -3435,8 +4402,17 @@ pub async fn approve_payment_record_handler(
 pub async fn reject_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -3444,6 +4420,7 @@ pub async fn reject_payment_record_handler(
             tenant_id,
             payment_id,
             serde_json::json!({ "status": "rejected" }),
+            txn,
         )
         .await
     {
@@ -3456,13 +4433,22 @@ pub async fn reject_payment_record_handler(
 async fn update_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
-        .update_payment_record(tenant_id, payment_id, req)
+        .update_payment_record(tenant_id, payment_id, req, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "更新成功"),
@@ -3474,11 +4460,23 @@ async fn update_payment_record_handler(
 async fn delete_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(payment_id): Path<uuid::Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.delete_payment_record(tenant_id, payment_id).await {
+    match service
+        .delete_payment_record(tenant_id, payment_id, txn)
+        .await
+    {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3488,8 +4486,17 @@ async fn delete_payment_record_handler(
 pub async fn write_off_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let payment_id_str = req.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
@@ -3500,7 +4507,10 @@ pub async fn write_off_payment_record_handler(
         uuid::Uuid::parse_str(payment_id_str),
         uuid::Uuid::parse_str(payable_id_str),
     ) {
-        (Ok(pid), Ok(rid)) => match service.write_off_payment(tenant_id, pid, rid, amount).await {
+        (Ok(pid), Ok(rid)) => match service
+            .write_off_payment(tenant_id, pid, rid, amount, txn)
+            .await
+        {
             Ok(data) => ApiResponse::success(data, "核销成功"),
             Err(e) => crate::shared::err_resp(e),
         },
@@ -3526,8 +4536,17 @@ pub async fn write_off_payment_record_handler(
 pub async fn batch_write_off_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
@@ -3535,7 +4554,10 @@ pub async fn batch_write_off_payments_handler(
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
-    match service.batch_write_off_payments(tenant_id, items).await {
+    match service
+        .batch_write_off_payments(tenant_id, items, txn)
+        .await
+    {
         Ok(data) => ApiResponse::success(data, "批量核销完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3553,10 +4575,18 @@ pub struct AgingQueryParams {
 pub async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.calculate_receivable_aging(tenant_id).await {
+    match service.calculate_receivable_aging(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "计算成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3565,10 +4595,18 @@ pub async fn calculate_receivable_aging_handler(
 pub async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.calculate_payable_aging(tenant_id).await {
+    match service.calculate_payable_aging(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "计算成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3577,10 +4615,18 @@ pub async fn calculate_payable_aging_handler(
 pub async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_aging_summary(tenant_id).await {
+    match service.get_aging_summary(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3606,13 +4652,22 @@ pub async fn get_aging_summary_handler(
 pub async fn get_aging_detail_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     match service
-        .get_aging_detail(tenant_id, &direction, params.bucket)
+        .get_aging_detail(tenant_id, &direction, params.bucket, txn)
         .await
     {
         Ok(data) => ApiResponse::success(data, "查询成功"),
@@ -3623,13 +4678,25 @@ pub async fn get_aging_detail_handler(
 pub async fn get_aging_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     let months = params.months.unwrap_or(6);
-    match service.get_aging_trend(tenant_id, &direction, months).await {
+    match service
+        .get_aging_trend(tenant_id, &direction, months, txn)
+        .await
+    {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -3685,13 +4752,24 @@ pub struct ArAgingQuery {
 pub async fn get_voucher_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
@@ -3699,7 +4777,6 @@ pub async fn get_voucher_entries(
     .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
-    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -3725,13 +4802,24 @@ pub async fn get_voucher_entries(
 pub async fn get_voucher_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
@@ -3739,7 +4827,6 @@ pub async fn get_voucher_items(
     .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
-    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -3795,13 +4882,24 @@ pub async fn batch_create_vouchers(
 pub async fn batch_delete_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<BatchDeleteVouchersRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mut deleted = 0i64;
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     for id_str in &req.ids {
         if let Ok(id) = Uuid::parse_str(id_str) {
-            let mut scope = match state.db.scope().await {
+            // 逐 id 独立 SAVEPOINT：保留原「单个失败只影响自己、其余照常提交」语义（K14）。
+            let mut scope = match state.db.scope_savepoint(&mut *txn).await {
                 Ok(s) => s,
                 Err(e) => return crate::shared::err_resp(e),
             };
@@ -3821,7 +4919,7 @@ pub async fn batch_delete_vouchers(
                     }
                 }
                 Err(_) => {
-                    let _ = scope.commit().await;
+                    let _ = scope.rollback().await;
                 }
             }
         }
@@ -3835,13 +4933,24 @@ pub async fn batch_delete_vouchers(
 pub async fn unapprove_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
         .bind(voucher_id)
         .bind(tenant_id)
@@ -3850,37 +4959,41 @@ pub async fn unapprove_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 ApiResponse::not_found("凭证不存在或状态不允许反审核")
             } else {
-                if let Err(e) = scope.commit().await {
-                    return crate::shared::err_resp(e);
-                }
                 ApiResponse::success(
                     serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
                     "反审核成功",
                 )
             }
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn reverse_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
     Json(req): Json<ReverseVoucherRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, company_id, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
         .bind(reversal_id)
         .bind(tenant_id)
@@ -3890,28 +5003,22 @@ pub async fn reverse_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 ApiResponse::not_found("凭证不存在")
             } else {
-                if let Err(e) = scope.commit().await {
-                    return crate::shared::err_resp(e);
-                }
                 ApiResponse::success(
                     serde_json::json!({"reversal_voucher_id": reversal_id, "original_voucher_id": voucher_id, "reason": req.reason}),
                     "红冲成功",
                 )
             }
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_next_voucher_no(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<NextVoucherNoQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -3919,10 +5026,20 @@ pub async fn get_next_voucher_no(
         "{}-",
         params.voucher_type.unwrap_or_else(|| "GEN".to_string())
     );
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1"
@@ -3931,7 +5048,6 @@ pub async fn get_next_voucher_no(
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
-    let _ = scope.commit().await;
     let voucher_no = format!("{}{:06}", prefix, count + 1);
     ApiResponse::success(serde_json::json!({"voucher_no": voucher_no}), "查询成功")
 }
@@ -3939,15 +5055,27 @@ pub async fn get_next_voucher_no(
 pub async fn generate_voucher_by_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<GenerateVoucherRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let template_id = match Uuid::parse_str(&req.template_id) {
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的模板ID"),
     };
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_voucher_template(tenant_id, template_id).await {
+    match service
+        .get_voucher_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(template) => {
             let voucher_id = Uuid::new_v4();
             ApiResponse::success(
@@ -4076,13 +5204,24 @@ pub async fn list_periods(
 pub async fn open_period_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；核心表以 (tenant_id, year, month) 为唯一键。
     let period = req.period.unwrap_or_default();
     let Some((year, month)) = parse_period_ym(&period) else {
@@ -4101,33 +5240,36 @@ pub async fn open_period_v2(
         .execute(&mut scope)
         .await;
     match res {
-        Ok(_) => {
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
-            }
-            ApiResponse::success(
-                serde_json::json!({"period": period_name, "status": "open"}),
-                "开启成功",
-            )
-        }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Ok(_) => ApiResponse::success(
+            serde_json::json!({"period": period_name, "status": "open"}),
+            "开启成功",
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn close_period_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     // period 兼容 "YYYYMM" 与旧 "YYYY-MM"；target 表列为 year/month，按 (tenant_id, year, month) 定位。
     let Some((year, month)) = parse_period_ym(&period) else {
         return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
@@ -4142,31 +5284,33 @@ pub async fn close_period_v2(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                let _ = scope.commit().await;
                 ApiResponse::not_found("会计期间不存在")
             } else {
-                if let Err(e) = scope.commit().await {
-                    return crate::shared::err_resp(e);
-                }
                 ApiResponse::success(
                     serde_json::json!({"period": period_name, "status": "closed"}),
                     "关闭成功",
                 )
             }
         }
-        Err(e) => {
-            let _ = scope.commit().await;
-            crate::shared::err_resp(e)
-        }
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn close_income_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let period = req.period.unwrap_or_default();
@@ -4175,7 +5319,7 @@ pub async fn close_income_period(
     }
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .close_income_period(tenant_id, &period, &claims.username, None, locale)
+        .close_income_period(tenant_id, &period, &claims.username, None, locale, txn)
         .await
     {
         Ok(result) => ApiResponse::success(serde_json::json!(result), "损益结转成功"),
@@ -4197,15 +5341,24 @@ pub async fn close_income_period(
 pub async fn year_end_close_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     headers: HeaderMap,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let year = req.year.unwrap_or_else(|| Utc::now().year());
     let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .year_end_close(tenant_id, year, &claims.username, None, locale)
+        .year_end_close(tenant_id, year, &claims.username, None, locale, txn)
         .await
     {
         Ok(result) => ApiResponse::success(serde_json::json!(result), "年结成功"),
@@ -4218,11 +5371,20 @@ pub async fn year_end_close_v2(
 pub async fn get_ar_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(_params): Query<ArAgingQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_aging_summary(tenant_id).await {
+    match service.get_aging_summary(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -4242,11 +5404,20 @@ pub async fn get_ar_aging(
 pub async fn get_ap_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(_params): Query<ArAgingQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_aging_summary(tenant_id).await {
+    match service.get_aging_summary(tenant_id, txn).await {
         Ok(data) => ApiResponse::success(data, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -4257,15 +5428,26 @@ pub async fn get_ap_aging(
 pub async fn get_account_tree(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
     )
@@ -4274,7 +5456,6 @@ pub async fn get_account_tree(
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut scope)
     .await;
-    let _ = scope.commit().await;
     match rows {
         Ok(rs) => {
             let items: Vec<serde_json::Value> = rs
@@ -4327,6 +5508,7 @@ pub async fn batch_create_account_children(
 pub async fn get_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
@@ -4357,10 +5539,20 @@ pub async fn get_opening_balances(
         .unwrap_or(20);
     let offset = (page - 1).max(0) * page_size;
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rows: Result<
         Vec<(
             Uuid,
@@ -4415,7 +5607,6 @@ pub async fn get_opening_balances(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            let _ = scope.commit().await;
 
             let list: Vec<serde_json::Value> = items
                 .into_iter()
@@ -4445,16 +5636,27 @@ pub async fn get_opening_balances(
 pub async fn get_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let row: Result<
         Option<(
             Uuid,
@@ -4481,7 +5683,6 @@ pub async fn get_opening_balance(
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
-    let _ = scope.commit().await;
 
     match row {
         Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
@@ -4503,6 +5704,7 @@ pub async fn get_opening_balance(
 pub async fn update_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -4510,10 +5712,20 @@ pub async fn update_opening_balance(
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let period = req
         .get("period")
         .and_then(|v| v.as_str())
@@ -4561,11 +5773,7 @@ pub async fn update_opening_balance(
     .fetch_optional(&mut scope)
     .await;
     if row.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match row {
@@ -4588,16 +5796,27 @@ pub async fn update_opening_balance(
 pub async fn delete_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"UPDATE erp.opening_balances SET deleted_at = NOW()
@@ -4609,11 +5828,7 @@ pub async fn delete_opening_balance(
     .execute(&mut scope)
     .await;
     if res.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match res {
@@ -4626,6 +5841,7 @@ pub async fn delete_opening_balance(
 pub async fn import_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(rows): Json<Vec<serde_json::Value>>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
@@ -4635,6 +5851,16 @@ pub async fn import_opening_balances(
     let mut success_count = 0;
     let mut failed_count = 0;
     let mut errors: Vec<String> = Vec::new();
+
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
 
     for (idx, row) in rows.iter().enumerate() {
         let Some(company_id) = row
@@ -4669,7 +5895,8 @@ pub async fn import_opening_balances(
             .get("credit_balance")
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0);
-        let mut read_scope = match state.db.scope_read().await {
+        // 逐行 SAVEPOINT：单行失败只回滚该行，其余行照常提交（K14）。
+        let mut read_scope = match state.db.scope_savepoint(&mut *txn).await {
             Ok(s) => s,
             Err(e) => return crate::shared::err_resp(e),
         };
@@ -4694,9 +5921,11 @@ pub async fn import_opening_balances(
         .await
         .ok()
         .flatten();
-        let _ = read_scope.commit().await;
+        // 只读校验：用回滚收尾保存点，等价于原 read-only 事务「无写入即结束」，
+        // 且即使查询报错也能把连接从 aborted 状态恢复，不影响后续行。
+        let _ = read_scope.rollback().await;
 
-        let mut write_scope = match state.db.scope().await {
+        let mut write_scope = match state.db.scope_savepoint(&mut *txn).await {
             Ok(s) => s,
             Err(e) => return crate::shared::err_resp(e),
         };
@@ -4717,11 +5946,15 @@ pub async fn import_opening_balances(
         .bind(tenant_id)
         .execute(&mut write_scope)
         .await;
-        let _ = write_scope.commit().await;
 
         match res {
-            Ok(_) => success_count += 1,
+            Ok(_) => {
+                success_count += 1;
+                let _ = write_scope.commit().await;
+            }
             Err(e) => {
+                // 回滚到本行保存点，保证后续行仍可写入（原「独立事务」语义）。
+                let _ = write_scope.rollback().await;
                 failed_count += 1;
                 errors.push(format!("第 {} 行: {}", idx + 1, e));
             }
@@ -4741,16 +5974,27 @@ pub async fn import_opening_balances(
 pub async fn create_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let company_id = req
         .get("company_id")
         .and_then(|v| v.as_str())
@@ -4824,11 +6068,7 @@ pub async fn create_opening_balances(
     .execute(&mut scope)
     .await;
     if res.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match res {
@@ -4846,6 +6086,7 @@ pub async fn create_opening_balances(
 pub async fn set_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -4856,10 +6097,20 @@ pub async fn set_opening_balance(
     else {
         return ApiResponse::bad_request("缺少租户上下文");
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     // 由科目 id 解析 code/name
     let subject: Option<(String, Option<String>)> = sqlx::query_as(
         only_own_schema_query!(
@@ -4873,7 +6124,6 @@ pub async fn set_opening_balance(
     .ok()
     .flatten();
     let Some((subject_code, subject_name)) = subject else {
-        let _ = scope.commit().await;
         return ApiResponse::not_found("科目不存在");
     };
     // 记账主体：显式传入优先；否则按租户解析唯一公司（多主体 fail-closed）
@@ -4889,7 +6139,6 @@ pub async fn set_opening_balance(
             {
                 Ok(v) => v,
                 Err(e) => {
-                    let _ = scope.commit().await;
                     return ApiResponse::from(e);
                 }
             }
@@ -4944,11 +6193,7 @@ pub async fn set_opening_balance(
     .execute(&mut scope)
     .await;
     if res.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match res {
@@ -4966,16 +6211,27 @@ pub async fn set_opening_balance(
 pub async fn carry_forward_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<String> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let from_period = req
         .get("from_period")
         .and_then(|v| v.as_str())
@@ -5012,11 +6268,7 @@ pub async fn carry_forward_opening_balance(
     .execute(&mut scope)
     .await;
     if res.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match res {
@@ -5123,6 +6375,7 @@ fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let page = params
@@ -5150,10 +6403,20 @@ pub async fn list_expense_approvals(
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
@@ -5202,7 +6465,6 @@ pub async fn list_expense_approvals(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            let _ = scope.commit().await;
             ApiResponse::success(
                 serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
                 "查询成功",
@@ -5227,6 +6489,7 @@ pub async fn list_expense_approvals(
 pub async fn create_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
@@ -5262,10 +6525,20 @@ pub async fn create_expense_approval(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let description = req.description;
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let result = sqlx::query(
         only_own_schema_query!(
             "finance",
@@ -5288,11 +6561,7 @@ pub async fn create_expense_approval(
     .fetch_one(&mut scope)
     .await;
     if result.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match result {
@@ -5310,6 +6579,7 @@ pub async fn create_expense_approval(
 pub async fn get_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
@@ -5321,10 +6591,20 @@ pub async fn get_expense_approval(
         Err(_) => return ApiResponse::from(TopemsError::NotFound("无效的ID".to_string())),
     };
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     let row = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
@@ -5338,7 +6618,6 @@ pub async fn get_expense_approval(
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
-    let _ = scope.commit().await;
 
     match row {
         Ok(Some(row)) => ApiResponse::success(
@@ -5370,6 +6649,7 @@ pub async fn get_expense_approval(
 pub async fn update_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
@@ -5402,10 +6682,20 @@ pub async fn update_expense_approval(
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     // 此前该 handler 是纯回显桩：返回 {id,data} 但不落库（GET 复核仍为 draft）。
     let row = sqlx::query(only_own_schema_query!(
         "finance",
@@ -5446,11 +6736,7 @@ pub async fn update_expense_approval(
     .fetch_optional(&mut scope)
     .await;
     if row.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match row {
@@ -5486,6 +6772,7 @@ pub async fn update_expense_approval(
 pub async fn delete_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
     let tenant_id = claims
@@ -5497,10 +6784,20 @@ pub async fn delete_expense_approval(
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
     };
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
+
     // 此前是空桩：无论 ID 是否存在/已删都返回 200。
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -5513,11 +6810,7 @@ pub async fn delete_expense_approval(
     .execute(&mut scope)
     .await;
     if result.is_ok() {
-        if let Err(e) = scope.commit().await {
-            return crate::shared::err_resp(e);
-        }
     } else {
-        let _ = scope.commit().await;
     }
 
     match result {
@@ -5583,8 +6876,17 @@ pub async fn reject_expense_approval(
 pub async fn get_account_balance_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let Some(tenant_id) = claims
         .tenant_id
         .as_deref()
@@ -5615,7 +6917,7 @@ pub async fn get_account_balance_report(
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
-        .get_account_balance_report(tenant_id, company_id, &period)
+        .get_account_balance_report(tenant_id, company_id, &period, txn)
         .await
     {
         Ok(report) if report.balanced => {

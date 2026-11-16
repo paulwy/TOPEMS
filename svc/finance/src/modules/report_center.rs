@@ -35,6 +35,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
@@ -807,21 +808,30 @@ pub struct ExportReportResponse {
 pub async fn get_enhanced_balance_sheet_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<BalanceSheetEnhanced> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let current = service
-        .get_balance_sheet(tenant_id, &period)
+        .get_balance_sheet(tenant_id, &period, txn)
         .await
         .unwrap_or_else(|_| empty_balance_sheet(&period));
     let previous = match previous_period(&period) {
-        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        Some(p) => service.get_balance_sheet(tenant_id, &p, txn).await.ok(),
         None => None,
     };
     let last_year = match last_year_period(&period) {
-        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        Some(p) => service.get_balance_sheet(tenant_id, &p, txn).await.ok(),
         None => None,
     };
 
@@ -832,17 +842,26 @@ pub async fn get_enhanced_balance_sheet_handler(
 pub async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<IncomeStatementEnhanced> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let current = service
-        .get_income_statement(tenant_id, &period)
+        .get_income_statement(tenant_id, &period, txn)
         .await
         .unwrap_or_else(|_| empty_income_statement(&period));
     let previous = match previous_period(&period) {
-        Some(p) => service.get_income_statement(tenant_id, &p).await.ok(),
+        Some(p) => service.get_income_statement(tenant_id, &p, txn).await.ok(),
         None => None,
     };
 
@@ -864,30 +883,39 @@ pub async fn get_enhanced_cash_flow_handler(
 pub async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(period): Path<String>,
 ) -> ApiResponse<FinancialAnalysisReport> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let balance_cur = service
-        .get_balance_sheet(tenant_id, &period)
+        .get_balance_sheet(tenant_id, &period, txn)
         .await
         .unwrap_or_else(|_| empty_balance_sheet(&period));
     let income_cur = service
-        .get_income_statement(tenant_id, &period)
+        .get_income_statement(tenant_id, &period, txn)
         .await
         .unwrap_or_else(|_| empty_income_statement(&period));
 
     let balance_prev = match previous_period(&period) {
-        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        Some(p) => service.get_balance_sheet(tenant_id, &p, txn).await.ok(),
         None => None,
     };
     let balance_ly = match last_year_period(&period) {
-        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        Some(p) => service.get_balance_sheet(tenant_id, &p, txn).await.ok(),
         None => None,
     };
     let income_ly = match last_year_period(&period) {
-        Some(p) => service.get_income_statement(tenant_id, &p).await.ok(),
+        Some(p) => service.get_income_statement(tenant_id, &p, txn).await.ok(),
         None => None,
     };
 

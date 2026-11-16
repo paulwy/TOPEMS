@@ -1493,15 +1493,20 @@ mod p2a_e2e_tests {
             TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
                 .expect("构造 workflow 客户端失败"),
         );
-        service.submit_voucher(tenant_id, voucher.0).await.unwrap();
+        let mut txn = pool.begin().await.expect("开启事务失败");
         service
-            .approve_voucher(tenant_id, voucher.0, "tester")
+            .submit_voucher(tenant_id, voucher.0, &mut txn)
+            .await
+            .unwrap();
+        service
+            .approve_voucher(tenant_id, voucher.0, "tester", &mut txn)
             .await
             .unwrap();
         let posted = service
-            .post_voucher(tenant_id, voucher.0, "tester")
+            .post_voucher(tenant_id, voucher.0, "tester", &mut txn)
             .await
             .unwrap();
+        txn.commit().await.expect("提交事务失败");
         assert_eq!(posted.status.to_string(), "posted");
 
         let ledger_count: i64 = sqlx::query_scalar(

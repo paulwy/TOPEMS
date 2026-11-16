@@ -8,6 +8,7 @@ use axum::{
 };
 use serde_json::json;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -40,10 +41,20 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 pub async fn list_reconciliations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ReconciliationListQuery>,
 ) -> ApiResponse<Vec<UnifiedReconciliation>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_reconciliations(&state.db, tenant_id, &query).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::list_reconciliations(&state.db, txn, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_reconciliations 失败: {}", e);
@@ -56,6 +67,7 @@ pub async fn list_reconciliations(
 pub async fn create_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateReconciliationRequest>,
 ) -> ApiResponse<UnifiedReconciliation> {
     if req.recon_name.is_empty() {
@@ -77,8 +89,18 @@ pub async fn create_reconciliation(
     let tenant_id = current_tenant_id(&claims);
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     match service::create_reconciliation(
         &state.db,
+        txn,
         state.event_publisher.as_ref(),
         tenant_id,
         &req,
@@ -98,10 +120,20 @@ pub async fn create_reconciliation(
 pub async fn get_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationDetail> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_reconciliation_detail(&state.db, tenant_id, id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::get_reconciliation_detail(&state.db, txn, tenant_id, id).await {
         Ok(Some(detail)) => api_success(detail),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("对账单不存在".to_string())),
         Err(e) => {
@@ -115,12 +147,23 @@ pub async fn get_reconciliation(
 pub async fn reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<ReconcileRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = current_tenant_id(&claims);
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     match service::manual_reconcile(
         &state.db,
+        txn,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -140,13 +183,23 @@ pub async fn reconcile(
 pub async fn auto_reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AutoReconcileRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if req.period.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed("期间不能为空".to_string()));
     }
     let tenant_id = current_tenant_id(&claims);
-    match service::auto_reconcile(&state.db, tenant_id, &req).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::auto_reconcile(&state.db, txn, tenant_id, &req).await {
         Ok(affected) => api_success(json!({ "matched_count": affected })),
         Err(e) => {
             tracing::error!("[SettlementCenter] auto_reconcile 失败: {}", e);
@@ -163,10 +216,20 @@ pub async fn auto_reconcile(
 pub async fn list_settlements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<SettlementListQuery>,
 ) -> ApiResponse<Vec<UnifiedSettlement>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_settlements(&state.db, tenant_id, &query).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::list_settlements(&state.db, txn, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_settlements 失败: {}", e);
@@ -179,6 +242,7 @@ pub async fn list_settlements(
 pub async fn create_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSettlementRequest>,
 ) -> ApiResponse<UnifiedSettlement> {
     if req.settlement_name.is_empty() {
@@ -195,8 +259,18 @@ pub async fn create_settlement(
     let tenant_id = current_tenant_id(&claims);
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     match service::create_settlement(
         &state.db,
+        txn,
         state.event_publisher.as_ref(),
         tenant_id,
         &req,
@@ -216,10 +290,20 @@ pub async fn create_settlement(
 pub async fn get_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<SettlementDetail> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_settlement_detail(&state.db, tenant_id, id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::get_settlement_detail(&state.db, txn, tenant_id, id).await {
         Ok(Some(detail)) => api_success(detail),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("结算单不存在".to_string())),
         Err(e) => {
@@ -233,12 +317,23 @@ pub async fn get_settlement(
 pub async fn approve_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<UnifiedReconciliation> {
     let tenant_id = current_tenant_id(&claims);
     let approver = claims.sub.clone();
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     match service::approve_reconciliation(
         &state.db,
+        txn,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -261,12 +356,23 @@ pub async fn approve_reconciliation(
 pub async fn approve_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<UnifiedSettlement> {
     let tenant_id = current_tenant_id(&claims);
     let approver = claims.sub.clone();
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
     match service::approve_settlement(
         &state.db,
+        txn,
         state.event_publisher.as_ref(),
         tenant_id,
         id,
@@ -293,6 +399,7 @@ pub async fn approve_settlement(
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateLinkRequest>,
 ) -> ApiResponse<ReconciliationSettlementLink> {
     if !["pre_settlement", "post_settlement", "adjustment"].contains(&req.link_type.as_str()) {
@@ -303,7 +410,16 @@ pub async fn create_link(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::create_link(&state.db, tenant_id, &req, creator).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::create_link(&state.db, txn, tenant_id, &req, creator).await {
         Ok(link) => api_success(link),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_link 失败: {}", e);
@@ -316,10 +432,20 @@ pub async fn create_link(
 pub async fn delete_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = current_tenant_id(&claims);
-    match service::cancel_link(&state.db, tenant_id, id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::cancel_link(&state.db, txn, tenant_id, id).await {
         Ok(true) => api_success(json!({ "cancelled": true })),
         Ok(false) => ApiResponse::from(TopemsError::ResourceNotFound(
             "关联不存在或已解除".to_string(),
@@ -335,10 +461,20 @@ pub async fn delete_link(
 pub async fn list_links(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<LinkListQuery>,
 ) -> ApiResponse<Vec<ReconciliationSettlementLink>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_links(&state.db, tenant_id, &query).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::list_links(&state.db, txn, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_links 失败: {}", e);
@@ -355,10 +491,20 @@ pub async fn list_links(
 pub async fn list_differences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<DifferenceListQuery>,
 ) -> ApiResponse<Vec<DifferenceAdjustment>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_differences(&state.db, tenant_id, &query).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::list_differences(&state.db, txn, tenant_id, &query).await {
         Ok(items) => api_success(items),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_differences 失败: {}", e);
@@ -371,6 +517,7 @@ pub async fn list_differences(
 pub async fn create_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateDifferenceRequest>,
 ) -> ApiResponse<DifferenceAdjustment> {
     if !["reconciliation", "settlement"].contains(&req.source_type.as_str()) {
@@ -395,7 +542,16 @@ pub async fn create_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::create_difference(&state.db, tenant_id, &req, creator).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::create_difference(&state.db, txn, tenant_id, &req, creator).await {
         Ok(item) => api_success(item),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_difference 失败: {}", e);
@@ -408,6 +564,7 @@ pub async fn create_difference(
 pub async fn approve_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DifferenceAdjustment> {
     let tenant_id = current_tenant_id(&claims);
@@ -415,7 +572,16 @@ pub async fn approve_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::approve_difference(&state.db, tenant_id, id, approver).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::approve_difference(&state.db, txn, tenant_id, id, approver).await {
         Ok(Some(item)) => api_success(item),
         Ok(None) => ApiResponse::from(TopemsError::ValidationFailed(
             "差异调整不存在或当前状态不允许审批".to_string(),
@@ -431,6 +597,7 @@ pub async fn approve_difference(
 pub async fn reject_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DifferenceAdjustment> {
     let tenant_id = current_tenant_id(&claims);
@@ -438,7 +605,16 @@ pub async fn reject_difference(
         return ApiResponse::from(TopemsError::Unauthorized);
     };
 
-    match service::reject_difference(&state.db, tenant_id, id, approver).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::reject_difference(&state.db, txn, tenant_id, id, approver).await {
         Ok(Some(item)) => api_success(item),
         Ok(None) => ApiResponse::from(TopemsError::ValidationFailed(
             "差异调整不存在或当前状态不允许拒绝".to_string(),
@@ -458,9 +634,19 @@ pub async fn reject_difference(
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DashboardSummary> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_dashboard_summary(&state.db, tenant_id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::get_dashboard_summary(&state.db, txn, tenant_id).await {
         Ok(summary) => api_success(summary),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_dashboard 失败: {}", e);
@@ -473,9 +659,19 @@ pub async fn get_dashboard(
 pub async fn get_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<CenterStatistics> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_statistics(&state.db, tenant_id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    match service::get_statistics(&state.db, txn, tenant_id).await {
         Ok(stats) => api_success(stats),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_statistics 失败: {}", e);

@@ -10,6 +10,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -49,8 +50,17 @@ pub struct ReorderEntriesRequest {
 pub async fn list_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<Vec<VoucherTemplateLine>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
@@ -58,14 +68,12 @@ pub async fn list_entries(
     } else {
         Some(tenant_id)
     };
-    match service.get_voucher_template(tenant_id, template_id).await {
+    match service
+        .get_voucher_template(tenant_id, template_id, txn)
+        .await
+    {
         Ok(_) => {
-            // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-            let scope_result = match tenant_id_opt {
-                Some(tenant) => state.db.scope_read_for_tenant(tenant).await,
-                None => state.db.scope_read_system().await,
-            };
-            let mut scope = match scope_result {
+            let mut scope = match state.db.scope_with(&mut *txn).await {
                 Ok(s) => s,
                 Err(e) => return crate::shared::err_resp(e),
             };
@@ -87,19 +95,20 @@ pub async fn list_entries(
 pub async fn get_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<VoucherTemplateLine> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scope_result = match tenant_id {
-        Some(tenant) => state.db.scope_read_for_tenant(tenant).await,
-        None => state.db.scope_read_system().await,
-    };
-    let mut scope = match scope_result {
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -122,11 +131,17 @@ pub async fn get_entry(
 pub async fn create_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> ApiResponse<VoucherTemplateLine> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+    let mut read_scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -158,7 +173,7 @@ pub async fn create_entry(
     let _ = read_scope.commit().await;
     let line_id = Uuid::new_v4();
     let now = Utc::now();
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -193,11 +208,17 @@ pub async fn create_entry(
 pub async fn update_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> ApiResponse<VoucherTemplateLine> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+    let mut read_scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -228,7 +249,7 @@ pub async fn update_entry(
     let direction = req.direction.unwrap_or(existing.direction);
     let amount_formula = req.amount_formula.or(existing.amount_formula);
     let sort_order = req.sort_order.unwrap_or(existing.sort_order);
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -261,10 +282,16 @@ pub async fn update_entry(
 pub async fn delete_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -300,11 +327,17 @@ pub async fn delete_entry(
 pub async fn reorder_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut read_scope = match state.db.scope_read_for_tenant(tenant_id).await {
+    let mut read_scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -321,7 +354,7 @@ pub async fn reorder_entries(
         return ApiResponse::not_found("凭证模板不存在");
     }
     let _ = read_scope.commit().await;
-    let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+    let mut scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };

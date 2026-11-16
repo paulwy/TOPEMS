@@ -93,13 +93,25 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn create_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<CreateReconciliationSessionRequest>,
 ) -> ApiResponse<ReconciliationSession> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
-    match service.create_session(tenant_id, req, &created_by).await {
+    match service
+        .create_session(tenant_id, req, &created_by, txn)
+        .await
+    {
         Ok(session) => ApiResponse::success(session, "对账会话创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -108,12 +120,21 @@ pub async fn create_session_handler(
 pub async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSession> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.get_session(tenant_id, session_id).await {
+    match service.get_session(tenant_id, session_id, txn).await {
         Ok(session) => ApiResponse::success(session, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -122,15 +143,31 @@ pub async fn get_session_handler(
 pub async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<ReconciliationSessionListQuery>,
 ) -> ApiResponse<ReconciliationSessionListResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
     match service
-        .list_sessions(tenant_id, params.reco_type, params.status, page, page_size)
+        .list_sessions(
+            tenant_id,
+            params.reco_type,
+            params.status,
+            page,
+            page_size,
+            txn,
+        )
         .await
     {
         Ok((items, total)) => ApiResponse::success(
@@ -167,14 +204,23 @@ pub async fn list_sessions_handler(
 pub async fn import_items_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
     Json(mut req): Json<ImportReconciliationItemsRequest>,
 ) -> ApiResponse<i32> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     req.session_id = session_id;
 
-    match service.import_items(tenant_id, req).await {
+    match service.import_items(tenant_id, req, txn).await {
         Ok(count) => ApiResponse::success(count, "导入成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -183,12 +229,21 @@ pub async fn import_items_handler(
 pub async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<MatchResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.auto_match(tenant_id, session_id).await {
+    match service.auto_match(tenant_id, session_id, txn).await {
         Ok(result) => ApiResponse::success(result, "自动匹配完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -197,12 +252,21 @@ pub async fn auto_match_handler(
 pub async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSession> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.complete_session(tenant_id, session_id).await {
+    match service.complete_session(tenant_id, session_id, txn).await {
         Ok(session) => ApiResponse::success(session, "对账会话已完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -229,9 +293,18 @@ pub async fn complete_session_handler(
 pub async fn get_items_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
     Query(params): Query<ItemsQueryParams>,
 ) -> ApiResponse<Vec<ReconciliationItem>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -249,7 +322,7 @@ pub async fn get_items_handler(
     });
 
     match service
-        .get_items(tenant_id, session_id, source_type, match_status)
+        .get_items(tenant_id, session_id, source_type, match_status, txn)
         .await
     {
         Ok(items) => ApiResponse::success(items, "查询成功"),
@@ -260,12 +333,21 @@ pub async fn get_items_handler(
 pub async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationSummary> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.get_summary(tenant_id, session_id).await {
+    match service.get_summary(tenant_id, session_id, txn).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -291,14 +373,23 @@ pub async fn get_summary_handler(
 pub async fn update_diff_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(item_id): Path<Uuid>,
     Json(req): Json<UpdateDiffRequest>,
 ) -> ApiResponse<ReconciliationItem> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service
-        .update_diff(tenant_id, item_id, req.diff_reason, req.notes)
+        .update_diff(tenant_id, item_id, req.diff_reason, req.notes, txn)
         .await
     {
         Ok(item) => ApiResponse::success(item, "差异标记成功"),
@@ -321,12 +412,21 @@ pub struct AgingQueryParams {
 pub async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationReport> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.get_report(tenant_id, session_id).await {
+    match service.get_report(tenant_id, session_id, txn).await {
         Ok(report) => {
             // V15 Phase 5+: 差异项 > 0 时自动创建工单
             if report.diff_items > 0 {
@@ -442,12 +542,21 @@ async fn create_ticket_for_reconciliation(
 pub async fn batch_update_diff_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<BatchDiffRequest>,
 ) -> ApiResponse<BatchDiffResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.batch_update_diff(tenant_id, req).await {
+    match service.batch_update_diff(tenant_id, req, txn).await {
         Ok(resp) => ApiResponse::success(resp, "批量差异处理完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -456,12 +565,24 @@ pub async fn batch_update_diff_handler(
 pub async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Path(session_id): Path<Uuid>,
 ) -> ApiResponse<DiffStatistics> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match service.get_diff_statistics(tenant_id, session_id).await {
+    match service
+        .get_diff_statistics(tenant_id, session_id, txn)
+        .await
+    {
         Ok(stats) => ApiResponse::success(stats, "差异统计查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -470,8 +591,17 @@ pub async fn get_diff_statistics_handler(
 pub async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<AgingQueryParams>,
 ) -> ApiResponse<AgingReport> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let service = ReconciliationService::new(state.db.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -486,7 +616,10 @@ pub async fn get_aging_handler(
         _ => "payable".to_string(), // 默认应付
     };
 
-    match service.get_aging(tenant_id, as_of_date, &direction).await {
+    match service
+        .get_aging(tenant_id, as_of_date, &direction, txn)
+        .await
+    {
         Ok(report) => ApiResponse::success(report, "账龄分析查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }

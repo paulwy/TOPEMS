@@ -55,6 +55,7 @@ async fn test_create_account() {
             .expect("Failed to create workflow client"),
     );
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let req = CreateAccountRequest {
         code: "1001".to_string(),
         name: "现金".to_string(),
@@ -66,9 +67,10 @@ async fn test_create_account() {
     };
 
     let account = service
-        .create_account(tenant_id, req)
+        .create_account(tenant_id, req, &mut txn)
         .await
         .expect("Failed to create account");
+    txn.commit().await.expect("Failed to commit transaction");
 
     assert_eq!(account.code, "1001");
     assert_eq!(account.name, "现金");
@@ -100,14 +102,16 @@ async fn test_get_account() {
         name_en: None,
     };
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let created = service
-        .create_account(tenant_id, req)
+        .create_account(tenant_id, req, &mut txn)
         .await
         .expect("Failed to create account");
     let retrieved = service
-        .get_account(tenant_id, created.id, "zh")
+        .get_account(tenant_id, created.id, "zh", &mut txn)
         .await
         .expect("Failed to get account");
+    txn.commit().await.expect("Failed to commit transaction");
 
     assert_eq!(retrieved.code, "1002");
     assert_eq!(retrieved.name, "银行存款");
@@ -137,8 +141,9 @@ async fn test_voucher_lifecycle() {
         description: None,
         name_en: None,
     };
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     service
-        .create_account(tenant_id, cash_req)
+        .create_account(tenant_id, cash_req, &mut txn)
         .await
         .expect("Failed to create cash account");
 
@@ -152,7 +157,7 @@ async fn test_voucher_lifecycle() {
         name_en: None,
     };
     service
-        .create_account(tenant_id, revenue_req)
+        .create_account(tenant_id, revenue_req, &mut txn)
         .await
         .expect("Failed to create revenue account");
 
@@ -189,28 +194,29 @@ async fn test_voucher_lifecycle() {
     };
 
     let voucher = service
-        .create_voucher(tenant_id, req, "test_user", "zh")
+        .create_voucher(tenant_id, req, "test_user", "zh", &mut txn)
         .await
         .expect("Failed to create voucher");
     assert_eq!(voucher.status, VoucherStatus::Draft);
 
     let submitted = service
-        .submit_voucher(tenant_id, voucher.id)
+        .submit_voucher(tenant_id, voucher.id, &mut txn)
         .await
         .expect("Failed to submit voucher");
     assert_eq!(submitted.status, VoucherStatus::Submitted);
 
     let approved = service
-        .approve_voucher(tenant_id, voucher.id, "approver")
+        .approve_voucher(tenant_id, voucher.id, "approver", &mut txn)
         .await
         .expect("Failed to approve voucher");
     assert_eq!(approved.status, VoucherStatus::Approved);
 
     let posted = service
-        .post_voucher(tenant_id, voucher.id, "poster")
+        .post_voucher(tenant_id, voucher.id, "poster", &mut txn)
         .await
         .expect("Failed to post voucher");
     assert_eq!(posted.status, VoucherStatus::Posted);
+    txn.commit().await.expect("Failed to commit transaction");
 }
 
 #[tokio::test]
@@ -228,8 +234,9 @@ async fn test_period_management() {
             .expect("Failed to create workflow client"),
     );
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let period = service
-        .open_period(tenant_id, 2024, 1)
+        .open_period(tenant_id, 2024, 1, &mut txn)
         .await
         .expect("Failed to open period");
 
@@ -238,10 +245,11 @@ async fn test_period_management() {
     assert_eq!(period.status, PeriodStatus::Open);
 
     let closed = service
-        .close_period(tenant_id, 2024, 1, "closer")
+        .close_period(tenant_id, 2024, 1, "closer", &mut txn)
         .await
         .expect("Failed to close period");
     assert_eq!(closed.status, PeriodStatus::Closed);
+    txn.commit().await.expect("Failed to commit transaction");
 }
 
 #[tokio::test]
@@ -267,10 +275,12 @@ async fn test_auxiliary_account() {
         description: None,
     };
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let aux_account = service
-        .create_aux_account(tenant_id, req)
+        .create_aux_account(tenant_id, req, &mut txn)
         .await
         .expect("Failed to create auxiliary account");
+    txn.commit().await.expect("Failed to commit transaction");
 
     assert_eq!(aux_account.code, "PRJ001");
     assert_eq!(aux_account.name, "测试项目");
@@ -376,10 +386,12 @@ async fn test_account_balance_report_unposted_not_in_totals() {
     .await
     .expect("Failed to create draft voucher");
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let report = service
-        .get_account_balance_report(tenant_id, company_id, period)
+        .get_account_balance_report(tenant_id, company_id, period, &mut txn)
         .await
         .expect("Failed to get account balance report");
+    txn.commit().await.expect("Failed to commit transaction");
 
     assert_eq!(report.unposted.count, 1, "应提示 1 张未过账凭证");
     assert_eq!(
@@ -416,8 +428,9 @@ async fn test_nil_tenant_rejected_on_business_reads() {
             .expect("Failed to create workflow client"),
     );
 
+    let mut txn = pool.begin().await.expect("Failed to begin transaction");
     let err = service
-        .list_receivables(Uuid::nil(), 1, 20, None, None)
+        .list_receivables(Uuid::nil(), 1, 20, None, None, &mut txn)
         .await
         .expect_err("nil 租户必须被拒绝");
     assert!(
@@ -426,7 +439,7 @@ async fn test_nil_tenant_rejected_on_business_reads() {
     );
 
     let err = service
-        .get_trial_balance(Uuid::nil(), "202611")
+        .get_trial_balance(Uuid::nil(), "202611", &mut txn)
         .await
         .expect_err("nil 租户必须被拒绝");
     assert!(

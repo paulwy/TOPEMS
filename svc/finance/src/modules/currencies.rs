@@ -8,9 +8,10 @@
 
 use axum::{
     extract::{Path, Query, State},
-    Json,
+    Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
@@ -116,6 +117,7 @@ const TABLE: &str = "finance.core_finance_currencies";
 )]
 pub async fn list_currencies(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<CurrencyQuery>,
 ) -> Json<ApiResponse<PaginatedCurrencies>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -150,7 +152,15 @@ pub async fn list_currencies(
     for p in &params {
         count_qb = count_qb.bind(p);
     }
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建币种查询作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建币种查询作用域失败: {}", e);
@@ -186,10 +196,6 @@ pub async fn list_currencies(
             return Json(ApiResponse::error("查询失败"));
         }
     };
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交币种查询作用域失败: {}", e);
-        return Json(ApiResponse::error("查询失败"));
-    }
     Json(ApiResponse::success(PaginatedCurrencies {
         items,
         total,
@@ -208,6 +214,7 @@ pub async fn list_currencies(
 )]
 pub async fn create_currency(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCurrencyRequest>,
 ) -> Json<ApiResponse<Currency>> {
     let code = req.code.trim().to_uppercase();
@@ -224,7 +231,15 @@ pub async fn create_currency(
          VALUES (NULL, $1, $2, $3, $4, $5) RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建币种写入作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("创建失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建币种写入作用域失败: {}", e);
@@ -239,10 +254,6 @@ pub async fn create_currency(
         .bind(req.is_active)
         .fetch_one(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交创建币种作用域失败: {}", e);
-        return Json(ApiResponse::error("创建失败"));
-    }
     match result {
         Ok(c) => Json(ApiResponse::success(c)),
         Err(e) => {
@@ -272,6 +283,7 @@ pub async fn create_currency(
 )]
 pub async fn update_currency(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCurrencyRequest>,
 ) -> Json<ApiResponse<Currency>> {
@@ -286,7 +298,15 @@ pub async fn update_currency(
          RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建币种写入作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("更新失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建币种写入作用域失败: {}", e);
@@ -301,10 +321,6 @@ pub async fn update_currency(
         .bind(req.is_active)
         .fetch_optional(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交更新币种作用域失败: {}", e);
-        return Json(ApiResponse::error("更新失败"));
-    }
     match result {
         Ok(Some(c)) => Json(ApiResponse::success(c)),
         Ok(None) => Json(ApiResponse::error_with_code(404, "币种不存在")),
@@ -326,10 +342,19 @@ pub async fn update_currency(
 )]
 pub async fn delete_currency(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let sql = format!("DELETE FROM {} WHERE id = $1", TABLE);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建币种写入作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("删除失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建币种写入作用域失败: {}", e);
@@ -340,10 +365,6 @@ pub async fn delete_currency(
         .bind(id)
         .execute(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交删除币种作用域失败: {}", e);
-        return Json(ApiResponse::error("删除失败"));
-    }
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(())),
         Ok(_) => Json(ApiResponse::error("币种不存在")),

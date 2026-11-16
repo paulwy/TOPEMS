@@ -120,8 +120,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: String,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let period_status: Option<(PeriodStatus,)> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND period_name = $2"),
@@ -146,9 +147,10 @@ impl FinanceService {
         tenant_id: Uuid,
         year: i32,
         month: i32,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Period, TopemsError> {
         let period_name = format!("{:04}{:02}", year, month);
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: Option<Period> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
@@ -229,6 +231,7 @@ impl FinanceService {
         year: i32,
         month: i32,
         closed_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Period, TopemsError> {
         let period_name = format!("{:04}{:02}", year, month);
 
@@ -253,7 +256,7 @@ impl FinanceService {
         .and_hms_opt(23, 59, 59)
         .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: Option<Period> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
@@ -341,12 +344,15 @@ impl FinanceService {
         created_by: &str,
         description: Option<String>,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<YearEndCloseResult, TopemsError> {
         let period = format!("{:04}{:02}", year, 12);
         let year_pattern = format!("{:04}%", year);
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
-        let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
+        // 释放写作用域借用，后续结转复用同一请求事务。
+        scope.commit().await?;
+        let profit_account = self.resolve_profit_account(tenant_id, locale, txn).await?;
 
         // 第一步：全年未结转损益（含此前月结遗留净额）结转到 4103 本年利润。
         // 若损益已按月结平，这一步自然没有分录，只做第二步的利润分配结转。
@@ -357,6 +363,7 @@ impl FinanceService {
                 &year_pattern,
                 &profit_account,
                 locale,
+                txn,
             )
             .await?;
         let mut profit_voucher: Option<Voucher> = None;
@@ -370,6 +377,7 @@ impl FinanceService {
                     description.unwrap_or_else(|| format!("{year}年度损益结转")),
                     created_by,
                     &plan.entries,
+                    txn,
                 )
                 .await?;
             profit_voucher = Some(v);
@@ -381,11 +389,11 @@ impl FinanceService {
         let mut transfer_ledger_rows = 0_i32;
         if profit_account.code.starts_with("4103") {
             let balance = self
-                .account_credit_balance(tenant_id, company_id, profit_account.id, &period)
+                .account_credit_balance(tenant_id, company_id, profit_account.id, &period, txn)
                 .await?;
             if balance != Decimal::ZERO {
                 let distribution = self
-                    .get_account_by_code(tenant_id, "4104", locale)
+                    .get_account_by_code(tenant_id, "4104", locale, txn)
                     .await
                     .map_err(|_| {
                         TopemsError::ValidationFailed("未找到利润分配科目(4104)".to_string())
@@ -424,6 +432,7 @@ impl FinanceService {
                         format!("{year}年度利润分配结转"),
                         created_by,
                         &transfer_entries,
+                        txn,
                     )
                     .await?;
                 transfer_voucher = Some(tv);
@@ -437,7 +446,6 @@ impl FinanceService {
             ));
         }
 
-        scope.commit().await?;
         Ok(YearEndCloseResult {
             year,
             period,
@@ -475,9 +483,10 @@ impl FinanceService {
         period_like: &str,
         profit_account: &Account,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ProfitClosePlan, TopemsError> {
         let rows = self
-            .profit_balances(tenant_id, company_id, period_like, locale)
+            .profit_balances(tenant_id, company_id, period_like, locale, txn)
             .await?;
 
         let mut entries: Vec<ClosingEntry> = Vec::with_capacity(rows.len() + 1);
@@ -546,11 +555,15 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Account, TopemsError> {
-        match self.get_account_by_code(tenant_id, "4103", locale).await {
+        match self
+            .get_account_by_code(tenant_id, "4103", locale, txn)
+            .await
+        {
             Ok(account) => Ok(account),
             Err(_) => self
-                .get_account_by_code(tenant_id, "4104", locale)
+                .get_account_by_code(tenant_id, "4104", locale, txn)
                 .await
                 .map_err(|_| {
                     TopemsError::ValidationFailed("未找到本年利润科目(4103或4104)".to_string())
@@ -565,8 +578,9 @@ impl FinanceService {
         company_id: Uuid,
         period_like: &str,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<ProfitBalanceRow>, TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows: Vec<(Uuid, String, String, String, Option<String>, Option<Uuid>, Decimal)> =
             sqlx::query_as(only_own_schema_query!(
@@ -632,8 +646,9 @@ impl FinanceService {
         company_id: Uuid,
         account_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Decimal, TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let (balance,): (Decimal,) = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -656,9 +671,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<String, TopemsError> {
         let prefix = format!("记{}", period);
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let count: (i64,) = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -682,6 +698,7 @@ impl FinanceService {
         description: String,
         created_by: &str,
         entries: &[ClosingEntry],
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(Voucher, i32), TopemsError> {
         let total_debit: Decimal = entries.iter().map(|e| e.debit).sum();
         let total_credit: Decimal = entries.iter().map(|e| e.credit).sum();
@@ -693,10 +710,12 @@ impl FinanceService {
             ));
         }
 
-        let voucher_no = self.generate_period_voucher_no(tenant_id, period).await?;
+        let voucher_no = self
+            .generate_period_voucher_no(tenant_id, period, txn)
+            .await?;
         let voucher_date = Utc::now();
 
-        let mut tx = self.write_scope().await?;
+        let mut tx = self.write_scope(txn).await?;
         let voucher: Voucher = sqlx::query_as(only_own_schema_query!(
             "finance",
             "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, source_module)
@@ -800,14 +819,24 @@ impl FinanceService {
         created_by: &str,
         description: Option<String>,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<IncomeCloseResult, TopemsError> {
         let (year, month) = parse_period_str(period)?;
         let period_code = format!("{:04}{:02}", year, month);
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
-        let profit_account = self.resolve_profit_account(tenant_id, locale).await?;
+        // 释放写作用域借用，后续结转复用同一请求事务。
+        scope.commit().await?;
+        let profit_account = self.resolve_profit_account(tenant_id, locale, txn).await?;
         let plan = self
-            .build_profit_close_plan(tenant_id, company_id, &period_code, &profit_account, locale)
+            .build_profit_close_plan(
+                tenant_id,
+                company_id,
+                &period_code,
+                &profit_account,
+                locale,
+                txn,
+            )
             .await?;
         if plan.entries.is_empty() {
             return Err(TopemsError::ValidationFailed(
@@ -822,10 +851,10 @@ impl FinanceService {
                 description.unwrap_or_else(|| format!("{year}年{month}月损益结转")),
                 created_by,
                 &plan.entries,
+                txn,
             )
             .await?;
 
-        scope.commit().await?;
         Ok(IncomeCloseResult {
             period: period_code,
             voucher_id: voucher.id,

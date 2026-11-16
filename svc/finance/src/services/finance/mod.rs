@@ -52,17 +52,21 @@ impl FinanceService {
         }
     }
 
-    pub(crate) fn db(&self) -> &Db {
-        &self.db
+    /// 写作用域：复用请求事务（`scope_with`），租户上下文由请求中间件注入。
+    ///
+    /// M-1：请求链路禁止自开事务；事务归 `tenant_middleware` 所有。
+    async fn write_scope<'a>(
+        &'a self,
+        txn: &'a mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<topems_shared_db::scope::ScopedTxn<'a>, TopemsError> {
+        Ok(self.db.scope_with(txn).await?)
     }
 
-    /// 写作用域：租户上下文取自请求中间件，缺失即 `Protocol` 错误（不兜底）。
-    async fn write_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
-        Ok(self.db.scope().await?)
-    }
-
-    /// 读作用域：同上，只读事务。
-    async fn read_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
-        Ok(self.db.scope_read().await?)
+    /// 读作用域：同 [`FinanceService::write_scope`]，复用请求事务。
+    async fn read_scope<'a>(
+        &'a self,
+        txn: &'a mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<topems_shared_db::scope::ScopedTxn<'a>, TopemsError> {
+        Ok(self.db.scope_with(txn).await?)
     }
 }

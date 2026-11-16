@@ -19,6 +19,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::resolve_create_tenant;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -170,6 +171,7 @@ fn item_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 )]
 pub async fn list_reconcile_orders(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListReconcileQuery>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -182,7 +184,12 @@ pub async fn list_reconcile_orders(
         &claims,
     ))?;
 
-    let mut scope = state.db.scope_read().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("创建对账订单查询作用域失败: {}", e);
         internal_error("统计对账订单失败")
     })?;
@@ -267,13 +274,19 @@ pub async fn list_reconcile_orders(
 )]
 pub async fn get_reconcile_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
     ))?;
-    let mut scope = state.db.scope_read().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("创建对账订单查询作用域失败: {}", e);
         internal_error("查询对账订单失败")
     })?;
@@ -348,13 +361,19 @@ pub async fn get_reconcile_order(
 )]
 pub async fn get_reconcile_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
     ))?;
-    let mut scope = state.db.scope_read().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("创建对账明细查询作用域失败: {}", e);
         internal_error("查询对账明细失败")
     })?;
@@ -390,6 +409,7 @@ pub async fn get_reconcile_items(
 
 pub async fn create_reconcile_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -416,7 +436,12 @@ pub async fn create_reconcile_order(
     let start_date = parse_date(&req.start_date);
     let end_date = parse_date(&req.end_date);
 
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("创建对账订单写入作用域失败: {}", e);
         internal_error("创建对账订单失败")
     })?;
@@ -467,6 +492,7 @@ pub async fn create_reconcile_order(
 /// 匹配明细通过 updateItem 写入，差异实时聚合。
 pub async fn auto_reconcile(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
@@ -486,7 +512,12 @@ pub async fn auto_reconcile(
         ));
     }
 
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("自动对账写入作用域失败: {}", e);
         internal_error("自动对账失败")
     })?;
@@ -551,13 +582,19 @@ pub async fn auto_reconcile(
 )]
 pub async fn confirm_reconcile_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
     ))?;
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("确认对账订单写入作用域失败: {}", e);
         internal_error("确认对账订单失败")
     })?;
@@ -607,6 +644,7 @@ pub async fn confirm_reconcile_order(
 )]
 pub async fn dispute_reconcile_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
     Json(req): Json<DisputeReconcileRequest>,
@@ -615,7 +653,12 @@ pub async fn dispute_reconcile_order(
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
     ))?;
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("争议对账订单写入作用域失败: {}", e);
         internal_error("争议对账订单失败")
     })?;
@@ -665,13 +708,19 @@ pub async fn dispute_reconcile_order(
 )]
 pub async fn cancel_reconcile_order(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
     ))?;
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("取消对账订单写入作用域失败: {}", e);
         internal_error("取消对账订单失败")
     })?;
@@ -723,6 +772,7 @@ pub async fn cancel_reconcile_order(
 )]
 pub async fn update_reconcile_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateItemRequest>,
@@ -735,7 +785,13 @@ pub async fn update_reconcile_item(
     let match_amount = req.match_amount;
     let status = req.status.clone();
 
-    let mut scope = state.db.scope().await.map_err(|e| {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("请求事务缺失")),
+    };
+
+    let mut scope = state.db.scope_with(txn).await.map_err(|e| {
         tracing::error!("更新对账明细写入作用域失败: {}", e);
         internal_error("更新对账明细失败")
     })?;
@@ -785,8 +841,8 @@ pub async fn update_reconcile_item(
         internal_error("更新对账明细失败")
     })?;
 
-    // 重算订单聚合金额（独立作用域：原实现忽略该步失败，不影响明细更新结果）
-    let mut agg_scope = match state.db.scope().await {
+    // 重算订单聚合金额（同一请求事务：原实现忽略该步失败，不影响明细更新结果）
+    let mut agg_scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建对账订单聚合写入作用域失败: {}", e);

@@ -20,6 +20,7 @@ impl FinanceService {
         page_size: i64,
         status: Option<String>,
         supplier_id: Option<Uuid>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let offset = (page - 1) * page_size;
@@ -75,7 +76,7 @@ impl FinanceService {
 
         query = query.bind(page_size).bind(offset);
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = query.fetch_all(&mut scope).await?;
         let total = count_query.fetch_one(&mut scope).await.unwrap_or(0);
@@ -113,9 +114,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         payment_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let row = sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
             .bind(tenant_id)
@@ -144,6 +146,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: Value,
         created_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let supplier_name = req
             .get("supplier_name")
@@ -152,7 +155,7 @@ impl FinanceService {
         let amount = decimal_from_value(req.get("amount")).unwrap_or(Decimal::ZERO);
         let payment_no = req.get("payment_no").and_then(|v| v.as_str()).unwrap_or("");
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
@@ -189,12 +192,13 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
         req: Value,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let supplier_name = req.get("supplier_name").and_then(|v| v.as_str());
         let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -235,8 +239,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         payment_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let result = sqlx::query(only_own_schema_query!(
             "finance",
@@ -262,8 +267,9 @@ impl FinanceService {
         payment_id: Uuid,
         payable_id: Uuid,
         write_off_amount: f64,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -296,6 +302,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         items: Vec<Value>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let mut results = Vec::new();
         let mut success_count = 0;
@@ -317,7 +324,10 @@ impl FinanceService {
                 Uuid::parse_str(payable_id_str),
             ) {
                 (Ok(pid), Ok(rid)) => {
-                    match self.write_off_payment(tenant_id, pid, rid, amount).await {
+                    match self
+                        .write_off_payment(tenant_id, pid, rid, amount, txn)
+                        .await
+                    {
                         Ok(data) => {
                             success_count += 1;
                             results.push(json!({

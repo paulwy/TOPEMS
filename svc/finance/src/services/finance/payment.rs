@@ -21,6 +21,7 @@ impl FinanceService {
         req: CreatePaymentRequest,
         created_by: &str,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment_date = req.payment_date.unwrap_or_else(|| Utc::now().date_naive());
         let voucher_date = chrono::DateTime::<Utc>::from_naive_utc_and_offset(
@@ -30,7 +31,8 @@ impl FinanceService {
         let period = format!("{:04}{:02}", payment_date.year(), payment_date.month());
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
 
-        self.check_period_open(tenant_id, period.clone()).await?;
+        self.check_period_open(tenant_id, period.clone(), txn)
+            .await?;
 
         let total_amount: Decimal = req.items.iter().map(|i| i.payment_amount).sum();
         if (total_amount - req.total_amount).abs() > Decimal::new(1, 4) {
@@ -39,7 +41,10 @@ impl FinanceService {
             ));
         }
 
-        let mut tx = self.write_scope().await?;
+        // 先取付款单号（复用请求事务），再开启写作用域，避免同一事务双重可变借用。
+        let payment_no = self.generate_payment_no(tenant_id, txn).await?;
+
+        let mut tx = self.write_scope(txn).await?;
 
         let voucher_lines = vec![
             VoucherLineRequest {
@@ -81,8 +86,6 @@ impl FinanceService {
         let voucher = self
             .create_voucher_with_tx(&mut tx, tenant_id, voucher_req, created_by, locale)
             .await?;
-
-        let payment_no = self.generate_payment_no(tenant_id).await?;
 
         let payment: Payment = sqlx::query_as(
             only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by)
@@ -155,9 +158,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         payment_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
@@ -166,8 +170,18 @@ impl FinanceService {
                 .fetch_one(&mut scope)
                 .await?;
 
+        let items: Vec<PaymentItem> = sqlx::query_as(
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_all(&mut scope)
+        .await?;
+        // 释放读作用域借用，凭证读取复用同一请求事务。
+        scope.commit().await?;
+
         let voucher = match payment.voucher_id {
-            Some(vid) => match self.get_voucher(tenant_id, vid).await {
+            Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
                 Ok(v) => Some(v),
                 Err(e) => {
                     tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
@@ -180,14 +194,6 @@ impl FinanceService {
             .as_ref()
             .map(|v| v.status.clone())
             .unwrap_or(VoucherStatus::Draft);
-
-        let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
-        )
-        .bind(tenant_id)
-        .bind(payment_id)
-        .fetch_all(&mut scope)
-        .await?;
 
         Ok(PaymentResponse {
             id: payment.id,
@@ -214,13 +220,14 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         params: PaymentQueryParams,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(Vec<PaymentResponse>, i64), TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let page = params.page.unwrap_or(1);
         let page_size = params.page_size.unwrap_or(20);
         let offset = (page - 1) * page_size;
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let total: (i64,) =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"))
@@ -236,11 +243,13 @@ impl FinanceService {
         .bind(offset)
         .fetch_all(&mut scope)
         .await?;
+        // 释放读作用域借用，循环内凭证读取复用同一请求事务。
+        scope.commit().await?;
 
         let mut results = Vec::new();
         for payment in payments {
             let voucher = match payment.voucher_id {
-                Some(vid) => match self.get_voucher(tenant_id, vid).await {
+                Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
                     Ok(v) => Some(v),
                     Err(e) => {
                         tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
@@ -281,9 +290,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         payment_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
@@ -292,8 +302,18 @@ impl FinanceService {
                 .fetch_one(&mut scope)
                 .await?;
 
+        let items: Vec<PaymentItem> = sqlx::query_as(
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_all(&mut scope)
+        .await?;
+        // 释放读作用域借用，凭证读取复用同一请求事务。
+        scope.commit().await?;
+
         let voucher = match payment.voucher_id {
-            Some(vid) => match self.get_voucher(tenant_id, vid).await {
+            Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
                 Ok(v) => Some(v),
                 Err(e) => {
                     tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
@@ -306,14 +326,6 @@ impl FinanceService {
             .as_ref()
             .map(|v| v.status.clone())
             .unwrap_or(VoucherStatus::Draft);
-
-        let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
-        )
-        .bind(tenant_id)
-        .bind(payment_id)
-        .fetch_all(&mut scope)
-        .await?;
 
         Ok(PaymentResponse {
             id: payment.id,
@@ -348,8 +360,9 @@ impl FinanceService {
         req: CreatePaymentRequest,
         updated_by: &str,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
-        let mut tx = self.write_scope().await?;
+        let mut tx = self.write_scope(txn).await?;
 
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -361,12 +374,15 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        // 释放写作用域借用，凭证读取复用同一请求事务后再继续写入。
+        tx.commit().await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Draft {
             return Err(TopemsError::ValidationFailed(
                 "仅草稿状态的付款单可编辑".to_string(),
             ));
         }
+        let mut tx = self.write_scope(txn).await?;
 
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -465,15 +481,16 @@ impl FinanceService {
 
         tx.commit().await?;
 
-        self.get_payment(tenant_id, payment_id).await
+        self.get_payment(tenant_id, payment_id, txn).await
     }
 
     pub async fn delete_payment(
         &self,
         tenant_id: Uuid,
         payment_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -485,13 +502,16 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        // 释放读作用域借用，凭证读取复用同一请求事务后再继续写入。
+        scope.commit().await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Draft {
             return Err(TopemsError::ValidationFailed(
                 "仅草稿状态的付款单可删除".to_string(),
             ));
         }
 
+        let mut scope = self.write_scope(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE finance.core_finance_payments SET deleted_at = NOW() WHERE id = $1"
@@ -505,12 +525,16 @@ impl FinanceService {
         Ok(())
     }
 
-    pub(super) async fn generate_payment_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
+    pub(super) async fn generate_payment_no(
+        &self,
+        tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<String, TopemsError> {
         let today = Utc::now();
         let date_str = format!("{}{:02}{:02}", today.year(), today.month(), today.day());
         let prefix = format!("FK{}", date_str);
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let count: (i64,) = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND payment_no LIKE $2"),
@@ -527,6 +551,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         req: ExportPaymentRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ExportPaymentResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         tracing::info!(
@@ -538,7 +563,7 @@ impl FinanceService {
             req.end_date.as_deref().unwrap_or("None")
         );
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let mut query =
             "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
@@ -564,6 +589,8 @@ impl FinanceService {
             .bind(tenant_id)
             .fetch_all(&mut scope)
             .await?;
+        // 释放读作用域借用，循环内凭证读取复用同一请求事务。
+        scope.commit().await?;
 
         tracing::info!("查询付款单数据成功, 共{}条记录", rows.len());
 
@@ -577,7 +604,7 @@ impl FinanceService {
                 tracing::warn!("付款单未关联凭证，跳过导出, payment_id={}", payment.id);
                 continue;
             };
-            let voucher = match self.get_voucher(tenant_id, voucher_id).await {
+            let voucher = match self.get_voucher(tenant_id, voucher_id, txn).await {
                 Ok(v) => v,
                 Err(_) => {
                     tracing::warn!(

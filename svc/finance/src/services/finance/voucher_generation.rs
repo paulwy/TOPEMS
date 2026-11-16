@@ -82,9 +82,10 @@ impl FinanceService {
         tenant_id: Uuid,
         source_type: Option<String>,
         status: Option<String>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let mut query =
             "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
@@ -115,9 +116,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         rule_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rule: VoucherGenerationRule = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
@@ -135,11 +137,12 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateGenerationRuleRequest,
         created_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let id = Uuid::new_v4();
         let now = Utc::now();
         let priority = req.priority.unwrap_or(100);
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let rule: VoucherGenerationRule = sqlx::query_as(
             only_own_schema_query!("finance", r#"
@@ -176,8 +179,9 @@ impl FinanceService {
         tenant_id: Uuid,
         rule_id: Uuid,
         req: UpdateGenerationRuleRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherGenerationRule, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: VoucherGenerationRule = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
@@ -233,8 +237,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         rule_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
@@ -264,8 +269,11 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         req: TestRuleRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<TestRuleResult, TopemsError> {
-        let rule = self.get_generation_rule(tenant_id, req.rule_id).await?;
+        let rule = self
+            .get_generation_rule(tenant_id, req.rule_id, txn)
+            .await?;
 
         let mut errors = Vec::new();
 
@@ -318,8 +326,11 @@ impl FinanceService {
         tenant_id: Uuid,
         req: GenerateVouchersRequest,
         generated_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<GenerationResult, TopemsError> {
-        let rule = self.get_generation_rule(tenant_id, req.rule_id).await?;
+        let rule = self
+            .get_generation_rule(tenant_id, req.rule_id, txn)
+            .await?;
 
         if rule.status != "active" {
             return Err(TopemsError::ValidationFailed("生成规则未启用".to_string()));
@@ -349,7 +360,7 @@ impl FinanceService {
 
         // Query source records based on source_type
         // Currently supports "payment" source type
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let source_rows: Vec<(Uuid, String, f64)> = match rule.source_type.as_str() {
             "payment" => {
                 let mut query = String::from(

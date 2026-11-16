@@ -51,6 +51,7 @@ impl FinanceService {
         req: CreateVoucherRequest,
         created_by: &str,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherResponse, TopemsError> {
         let period = format!(
             "{:04}{:02}",
@@ -58,9 +59,10 @@ impl FinanceService {
             req.voucher_date.month()
         );
 
-        self.check_period_open(tenant_id, period.clone()).await?;
+        self.check_period_open(tenant_id, period.clone(), txn)
+            .await?;
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         // 记账主体：凭证必须归属确定公司，多主体/无主体 fail-closed
         let company_id = resolve_tenant_company(&mut scope, tenant_id).await?;
@@ -72,9 +74,22 @@ impl FinanceService {
             return Err(TopemsError::ValidationFailed("借贷不平".to_string()));
         }
 
+        // 释放写作用域：凭证号生成与科目校验各自复用同一请求事务的读写作用域。
+        scope.commit().await?;
+
         let voucher_no = self
-            .generate_voucher_no(tenant_id, req.voucher_type.clone())
+            .generate_voucher_no(tenant_id, req.voucher_type.clone(), txn)
             .await?;
+
+        let mut accounts = Vec::with_capacity(req.lines.len());
+        for line in &req.lines {
+            accounts.push(
+                self.get_account_by_code(tenant_id, &line.account_code, locale, txn)
+                    .await?,
+            );
+        }
+
+        let mut scope = self.write_scope(txn).await?;
 
         let voucher: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, company_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
@@ -96,9 +111,7 @@ impl FinanceService {
 
         let mut lines = Vec::new();
         for (i, line) in req.lines.iter().enumerate() {
-            let account = self
-                .get_account_by_code(tenant_id, &line.account_code, locale)
-                .await?;
+            let account = &accounts[i];
 
             let voucher_line = sqlx::query_as(
                 only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, tenant_id, company_id)
@@ -108,8 +121,8 @@ impl FinanceService {
             .bind(voucher.id)
             .bind(i as i32 + 1)
             .bind(account.id)
-            .bind(account.code)
-            .bind(account.name)
+            .bind(&account.code)
+            .bind(&account.name)
             .bind(line.description.clone())
             .bind(line.debit)
             .bind(line.credit)
@@ -145,6 +158,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_type: VoucherType,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<String, TopemsError> {
         let today = Utc::now();
         let prefix = match voucher_type {
@@ -157,7 +171,7 @@ impl FinanceService {
         let year = today.year();
         let month = today.month();
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let period_prefix = format!("{:04}{:02}", year, month);
         let count: (i64,) = sqlx::query_as(only_own_schema_query!(
@@ -178,8 +192,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Voucher, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'draft'"),
@@ -214,8 +229,9 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
         approved_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Voucher, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
@@ -251,8 +267,9 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
         _rejected_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Voucher, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let before: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
@@ -287,8 +304,9 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
         posted_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Voucher, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let voucher: Voucher = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'"),
@@ -471,9 +489,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let voucher: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
@@ -508,9 +527,10 @@ impl FinanceService {
         tenant_id: Uuid,
         status: Option<VoucherStatus>,
         period: Option<String>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<Voucher>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let mut query =
             "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
@@ -545,13 +565,14 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_ids: Vec<Uuid>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<BatchVoucherResponse, TopemsError> {
         let mut results = Vec::new();
         let mut success_count = 0;
         let mut fail_count = 0;
 
         for voucher_id in voucher_ids {
-            match self.submit_voucher(tenant_id, voucher_id).await {
+            match self.submit_voucher(tenant_id, voucher_id, txn).await {
                 Ok(voucher) => {
                     success_count += 1;
                     results.push(BatchVoucherResult {
@@ -585,6 +606,7 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_ids: Vec<Uuid>,
         approved_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<BatchVoucherResponse, TopemsError> {
         let mut results = Vec::new();
         let mut success_count = 0;
@@ -592,7 +614,7 @@ impl FinanceService {
 
         for voucher_id in voucher_ids {
             match self
-                .approve_voucher(tenant_id, voucher_id, approved_by)
+                .approve_voucher(tenant_id, voucher_id, approved_by, txn)
                 .await
             {
                 Ok(voucher) => {
@@ -628,13 +650,17 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_ids: Vec<Uuid>,
         posted_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<BatchVoucherResponse, TopemsError> {
         let mut results = Vec::new();
         let mut success_count = 0;
         let mut fail_count = 0;
 
         for voucher_id in voucher_ids {
-            match self.post_voucher(tenant_id, voucher_id, posted_by).await {
+            match self
+                .post_voucher(tenant_id, voucher_id, posted_by, txn)
+                .await
+            {
                 Ok(voucher) => {
                     success_count += 1;
                     results.push(BatchVoucherResult {
@@ -667,9 +693,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         req: ExportVoucherRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ExportVoucherResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE (v.tenant_id = $1::uuid)".to_string();
         let mut param_idx = 2i32;
@@ -773,8 +800,9 @@ impl FinanceService {
         req: UpdateVoucherRequest,
         _updated_by: &str,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<VoucherResponse, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -837,11 +865,22 @@ impl FinanceService {
                 TopemsError::ValidationFailed("凭证缺少公司归属，拒绝更新分录".to_string())
             })?;
 
+            // 释放写作用域：科目校验各自复用同一请求事务的读作用域。
+            scope.commit().await?;
+
+            let mut accounts = Vec::with_capacity(lines.len());
+            for line in lines {
+                accounts.push(
+                    self.get_account_by_code(tenant_id, &line.account_code, locale, txn)
+                        .await?,
+                );
+            }
+
+            let mut scope = self.write_scope(txn).await?;
+
             let mut new_lines = Vec::new();
             for (i, line) in lines.iter().enumerate() {
-                let account = self
-                    .get_account_by_code(tenant_id, &line.account_code, locale)
-                    .await?;
+                let account = &accounts[i];
 
                 let voucher_line = sqlx::query_as(
                     only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id, company_id)
@@ -851,8 +890,8 @@ impl FinanceService {
                 .bind(voucher_id)
                 .bind(i as i32 + 1)
                 .bind(account.id)
-                .bind(account.code)
-                .bind(account.name)
+                .bind(&account.code)
+                .bind(&account.name)
                 .bind(line.description.clone())
                 .bind(line.debit)
                 .bind(line.credit)
@@ -930,8 +969,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -973,8 +1013,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         voucher_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Voucher, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))

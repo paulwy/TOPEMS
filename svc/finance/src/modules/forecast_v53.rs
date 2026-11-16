@@ -29,6 +29,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -251,6 +252,7 @@ impl CashFlowPredictor {
     #[allow(clippy::as_conversions)]
     pub async fn predict(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: PredictCashFlowRequest,
     ) -> Result<PredictionResult, sqlx::Error> {
@@ -277,7 +279,7 @@ impl CashFlowPredictor {
         })?;
 
         let (historical, is_synthetic) =
-            Self::fetch_historical_data(db, tenant_id, Some(entity_id)).await?;
+            Self::fetch_historical_data(db, &mut *txn, tenant_id, Some(entity_id)).await?;
         // 无真实历史凭证时，旧实现会静默用合成序列（500k 基数 + 正弦噪声）生成预测并落库，
         // 让"预测"看起来正常。合成数据不可用于决策，这里直接拒绝，不落任何行。
         if is_synthetic {
@@ -300,7 +302,7 @@ impl CashFlowPredictor {
         let prediction_id = Uuid::new_v4();
         let model_version = format!("v53.0-{}", model_type.as_str());
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
                 (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id, is_synthetic)
@@ -353,10 +355,11 @@ impl CashFlowPredictor {
     /// 此时第一个元素为空集合——不再伪造历史序列。调用方必须据此拒绝生成预测/精度。
     async fn fetch_historical_data(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         entity_id: Option<Uuid>,
     ) -> Result<(Vec<(f64, f64)>, bool), sqlx::Error> {
-        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         // K5：已核生产库（topems_prod）实际列型：finance.vouchers.entity_id 为 text（可空）、
         // tenant_id 为 uuid、voucher_lines.amount 为 numeric、account_code 为 text。
         // 按 uuid 绑定 entity_id 会触发 `operator does not exist: text = uuid` 让 predict 500，
@@ -586,6 +589,7 @@ impl CashFlowPredictor {
 
     pub async fn get_predictions(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         entity_id: Option<String>,
         period: Option<String>,
         scenario: Option<String>,
@@ -593,7 +597,7 @@ impl CashFlowPredictor {
         page_size: i64,
     ) -> Result<(Vec<CashFlowPrediction>, i64), sqlx::Error> {
         let offset = (page - 1) * page_size;
-        let mut scope = db.scope_read().await?;
+        let mut scope = db.scope_with(txn).await?;
 
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
@@ -637,13 +641,13 @@ impl CashFlowPredictor {
             q = q.bind(s);
         }
         let items = q.fetch_all(&mut scope).await?;
-        scope.commit().await?;
 
         Ok((items, total))
     }
 
     pub async fn retrain_model(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         model_type: PredictionModel,
     ) -> Result<PredictionModelRecord, sqlx::Error> {
@@ -651,10 +655,10 @@ impl CashFlowPredictor {
         let model_str = model_type.as_str();
 
         let (accuracy_value, sample_months) =
-            Self::compute_retrain_accuracy(db, tenant_id, &model_type).await?;
+            Self::compute_retrain_accuracy(db, &mut *txn, tenant_id, &model_type).await?;
         let accuracy = decimal_from_f64(accuracy_value);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let record = sqlx::query_as::<_, PredictionModelRecord>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
                 (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id, is_synthetic)
@@ -693,12 +697,13 @@ impl CashFlowPredictor {
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn compute_retrain_accuracy(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         model: &PredictionModel,
     ) -> Result<(f64, usize), sqlx::Error> {
         // 精度必须基于真实历史凭证；旧实现在此处无条件使用合成序列，等价于把伪造样本
         // 包装成可信精度。无真实历史时直接报错，不落模型行。
-        let (sample, is_synthetic) = Self::fetch_historical_data(db, tenant_id, None).await?;
+        let (sample, is_synthetic) = Self::fetch_historical_data(db, txn, tenant_id, None).await?;
         if is_synthetic {
             return Err(sqlx::Error::Protocol(NO_SAMPLE_MARKER.to_string()));
         }
@@ -721,9 +726,10 @@ impl CashFlowPredictor {
 
     pub async fn get_accuracy(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         model_type: Option<String>,
     ) -> Result<Vec<PredictionAccuracy>, sqlx::Error> {
-        let mut scope = db.scope_read().await?;
+        let mut scope = db.scope_with(txn).await?;
         // 只返回基于真实历史训练的模型精度；is_synthetic=true 的历史合成行一律排除。
         let records: Vec<PredictionModelRecord> = if let Some(ref mt) = model_type {
             sqlx::query_as(
@@ -739,7 +745,6 @@ impl CashFlowPredictor {
             .fetch_all(&mut scope)
             .await?
         };
-        scope.commit().await?;
 
         let mut accuracies = Vec::new();
         for record in &records {
@@ -835,6 +840,7 @@ pub struct VarianceTrendAnalysis {
 impl BudgetAnalyzer {
     pub async fn analyze(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: AnalyzeBudgetRequest,
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
@@ -904,7 +910,7 @@ impl BudgetAnalyzer {
         let recommendations = Self::generate_recommendations(&variances, &root_causes);
         let anomalies = Self::detect_anomalies_internal(&variances);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         for v in &variances {
             sqlx::query(
                 only_own_schema_query!("finance", r#"INSERT INTO finance_budget_variances_v53
@@ -1121,6 +1127,7 @@ impl BudgetAnalyzer {
 
     pub async fn get_variance(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         entity_id: Option<String>,
         period: Option<String>,
         classification: Option<String>,
@@ -1162,18 +1169,18 @@ impl BudgetAnalyzer {
             q = q.bind(c);
         }
 
-        let mut scope = db.scope_read().await?;
+        let mut scope = db.scope_with(txn).await?;
         let variances = q.fetch_all(&mut scope).await;
-        scope.commit().await?;
         variances
     }
 
     pub async fn get_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         entity_id: Option<String>,
         period: Option<String>,
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
-        let variances = Self::get_variance(db, entity_id, period, None).await?;
+        let variances = Self::get_variance(db, txn, entity_id, period, None).await?;
 
         // 金额聚合在 Decimal 域完成（v.*_amount 来自 numeric(18,2) 列）。
         let total_budget: Decimal = variances.iter().map(|v| v.budget_amount).sum();
@@ -1213,19 +1220,21 @@ impl BudgetAnalyzer {
 
     pub async fn detect_anomalies(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         entity_id: Option<String>,
         period: Option<String>,
     ) -> Result<Vec<AnomalyDetection>, sqlx::Error> {
-        let variances = Self::get_variance(db, entity_id, period, None).await?;
+        let variances = Self::get_variance(db, txn, entity_id, period, None).await?;
         Ok(Self::detect_anomalies_internal(&variances))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_trends(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         entity_id: Option<String>,
     ) -> Result<VarianceTrendAnalysis, sqlx::Error> {
-        let variances = Self::get_variance(db, entity_id, None, None).await?;
+        let variances = Self::get_variance(db, txn, entity_id, None, None).await?;
 
         let mut period_data: HashMap<String, Vec<&BudgetVariance>> = HashMap::new();
         for v in &variances {
@@ -1365,12 +1374,18 @@ fn map_predict_error(e: sqlx::Error) -> ApiResponse<PredictionResult> {
 pub async fn predict_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<PredictCashFlowRequest>,
 ) -> ApiResponse<PredictionResult> {
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match CashFlowPredictor::predict(&db, tenant_id, req).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    match CashFlowPredictor::predict(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "预测完成"),
         Err(e) => map_predict_error(e),
     }
@@ -1379,6 +1394,7 @@ pub async fn predict_cash_flow_handler(
 pub async fn get_predictions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PredictionsQueryParams>,
 ) -> ApiResponse<Vec<CashFlowPrediction>> {
     let db = state.db.clone();
@@ -1386,8 +1402,19 @@ pub async fn get_predictions_handler(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
     match CashFlowPredictor::get_predictions(
         &db,
+        txn,
         params.entity_id,
         params.period,
         params.scenario,
@@ -1415,6 +1442,7 @@ fn map_retrain_error(e: sqlx::Error) -> ApiResponse<PredictionModelRecord> {
 pub async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<PredictionModelRecord> {
     let db = state.db.clone();
@@ -1426,7 +1454,12 @@ pub async fn retrain_model_handler(
         .unwrap_or("exponential_smoothing");
     let model = PredictionModel::from_str(model_str);
 
-    match CashFlowPredictor::retrain_model(&db, tenant_id, model).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    match CashFlowPredictor::retrain_model(&db, txn, tenant_id, model).await {
         Ok(record) => ApiResponse::success(record, "模型重训练完成"),
         Err(e) => map_retrain_error(e),
     }
@@ -1449,6 +1482,7 @@ pub async fn retrain_model_handler(
 pub async fn get_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<Vec<PredictionAccuracy>> {
     let db = state.db.clone();
@@ -1459,7 +1493,17 @@ pub async fn get_accuracy_handler(
         .and_then(|v| v.as_str())
         .map(String::from);
 
-    match CashFlowPredictor::get_accuracy(&db, model_type).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
+    match CashFlowPredictor::get_accuracy(&db, txn, model_type).await {
         Ok(accuracies) => ApiResponse::success(accuracies, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1470,12 +1514,18 @@ pub async fn get_accuracy_handler(
 pub async fn analyze_budget_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<AnalyzeBudgetRequest>,
 ) -> ApiResponse<VarianceAnalysisResult> {
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::analyze(&db, tenant_id, req).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    match BudgetAnalyzer::analyze(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1484,13 +1534,30 @@ pub async fn analyze_budget_handler(
 pub async fn get_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<VarianceQueryParams>,
 ) -> ApiResponse<Vec<BudgetVariance>> {
     let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::get_variance(&db, params.entity_id, params.period, params.classification)
-        .await
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
+    match BudgetAnalyzer::get_variance(
+        &db,
+        txn,
+        params.entity_id,
+        params.period,
+        params.classification,
+    )
+    .await
     {
         Ok(variances) => ApiResponse::success(variances, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1517,12 +1584,23 @@ pub async fn get_variance_handler(
 pub async fn get_variance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<VarianceQueryParams>,
 ) -> ApiResponse<VarianceAnalysisResult> {
     let db = state.db.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
-    match BudgetAnalyzer::get_report(&db, params.entity_id, params.period).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
+    match BudgetAnalyzer::get_report(&db, txn, params.entity_id, params.period).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1531,6 +1609,7 @@ pub async fn get_variance_report_handler(
 pub async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Vec<AnomalyDetection>> {
     let db = state.db.clone();
@@ -1542,7 +1621,17 @@ pub async fn detect_anomalies_handler(
         .map(String::from);
     let period = req.get("period").and_then(|v| v.as_str()).map(String::from);
 
-    match BudgetAnalyzer::detect_anomalies(&db, entity_id, period).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
+    match BudgetAnalyzer::detect_anomalies(&db, txn, entity_id, period).await {
         Ok(anomalies) => ApiResponse::success(anomalies, "异常检测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1551,6 +1640,7 @@ pub async fn detect_anomalies_handler(
 pub async fn get_variance_trends_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<VarianceTrendAnalysis> {
     let db = state.db.clone();
@@ -1561,7 +1651,17 @@ pub async fn get_variance_trends_handler(
         .and_then(|v| v.as_str())
         .map(String::from);
 
-    match BudgetAnalyzer::get_trends(&db, entity_id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+
+    match BudgetAnalyzer::get_trends(&db, txn, entity_id).await {
         Ok(trends) => ApiResponse::success(trends, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1940,17 +2040,26 @@ mod tests {
         }
 
         let db = Db::new(pool.clone(), "finance, public, shared");
-        let result = CashFlowPredictor::predict(
-            &db,
-            tenant_id,
-            PredictCashFlowRequest {
-                entity_id: entity_id.to_string(),
-                period: "2026-11".into(),
-                model: Some("exponential_smoothing".into()),
-                scenario: Some("realistic".into()),
-                horizon_months: Some(1),
-            },
-        )
+        let mut txn = pool.begin().await.unwrap();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: tenant_id,
+            system: false,
+        };
+        let result = topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+            CashFlowPredictor::predict(
+                &db,
+                &mut txn,
+                tenant_id,
+                PredictCashFlowRequest {
+                    entity_id: entity_id.to_string(),
+                    period: "2026-11".into(),
+                    model: Some("exponential_smoothing".into()),
+                    scenario: Some("realistic".into()),
+                    horizon_months: Some(1),
+                },
+            )
+            .await
+        })
         .await
         .expect("entity_id 为 text 时 predict 应成功");
 
@@ -1975,17 +2084,26 @@ mod tests {
         let tenant_id = Uuid::new_v4();
         let entity_id = Uuid::new_v4();
         let db = Db::new(pool.clone(), "finance, public, shared");
-        let err = CashFlowPredictor::predict(
-            &db,
-            tenant_id,
-            PredictCashFlowRequest {
-                entity_id: entity_id.to_string(),
-                period: "2026-11".into(),
-                model: Some("exponential_smoothing".into()),
-                scenario: Some("realistic".into()),
-                horizon_months: Some(1),
-            },
-        )
+        let mut txn = pool.begin().await.unwrap();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: tenant_id,
+            system: false,
+        };
+        let err = topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+            CashFlowPredictor::predict(
+                &db,
+                &mut txn,
+                tenant_id,
+                PredictCashFlowRequest {
+                    entity_id: entity_id.to_string(),
+                    period: "2026-11".into(),
+                    model: Some("exponential_smoothing".into()),
+                    scenario: Some("realistic".into()),
+                    horizon_months: Some(1),
+                },
+            )
+            .await
+        })
         .await
         .expect_err("无历史凭证时应拒绝预测，不得回落到合成数据");
 
@@ -2021,10 +2139,22 @@ mod tests {
 
         let tenant_id = Uuid::new_v4();
         let db = Db::new(pool.clone(), "finance, public, shared");
-        let err =
-            CashFlowPredictor::retrain_model(&db, tenant_id, PredictionModel::ExponentialSmoothing)
-                .await
-                .expect_err("无真实历史时应拒绝重训练，不得用合成样本计算精度");
+        let mut txn = pool.begin().await.unwrap();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: tenant_id,
+            system: false,
+        };
+        let err = topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+            CashFlowPredictor::retrain_model(
+                &db,
+                &mut txn,
+                tenant_id,
+                PredictionModel::ExponentialSmoothing,
+            )
+            .await
+        })
+        .await
+        .expect_err("无真实历史时应拒绝重训练，不得用合成样本计算精度");
 
         let resp = map_retrain_error(err);
         assert_eq!(

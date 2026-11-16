@@ -12,8 +12,8 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
-use topems_shared_db::scope::Db;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -130,6 +130,7 @@ const TABLE: &str = "finance.accounting_subjects";
 )]
 pub async fn list_accounting_subjects(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<AccountingSubjectQuery>,
 ) -> Json<ApiResponse<PaginatedAccountingSubjects>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -159,7 +160,15 @@ pub async fn list_accounting_subjects(
 
     let where_clause = conditions.join(" AND ");
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建会计科目查询作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目查询作用域失败: {}", e);
@@ -202,10 +211,6 @@ pub async fn list_accounting_subjects(
             return Json(ApiResponse::error("查询失败"));
         }
     };
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交会计科目查询作用域失败: {}", e);
-        return Json(ApiResponse::error("查询失败"));
-    }
     Json(ApiResponse::success(PaginatedAccountingSubjects {
         items,
         total,
@@ -228,6 +233,7 @@ pub async fn list_accounting_subjects(
 )]
 pub async fn get_accounting_subject(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AccountingSubject>> {
     let sql = format!(
@@ -235,7 +241,15 @@ pub async fn get_accounting_subject(
         TABLE
     );
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建会计科目查询作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目查询作用域失败: {}", e);
@@ -246,10 +260,6 @@ pub async fn get_accounting_subject(
         .bind(id)
         .fetch_optional(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交会计科目查询作用域失败: {}", e);
-        return Json(ApiResponse::error("查询失败"));
-    }
     match result {
         Ok(Some(subject)) => Json(ApiResponse::success(subject)),
         Ok(None) => Json(ApiResponse::error("会计科目不存在")),
@@ -273,6 +283,7 @@ pub async fn get_accounting_subject(
 )]
 pub async fn create_accounting_subject(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
@@ -290,7 +301,15 @@ pub async fn create_accounting_subject(
         TABLE
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建会计科目写入作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("创建失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目写入作用域失败: {}", e);
@@ -310,10 +329,6 @@ pub async fn create_accounting_subject(
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交创建会计科目作用域失败: {}", e);
-        return Json(ApiResponse::error("创建失败"));
-    }
     match result {
         Ok(subject) => Json(ApiResponse::success(subject)),
         Err(e) => {
@@ -337,6 +352,7 @@ pub async fn create_accounting_subject(
 )]
 pub async fn update_accounting_subject(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
@@ -345,7 +361,15 @@ pub async fn update_accounting_subject(
         "SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL",
         TABLE
     );
-    let mut read_scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建会计科目查询作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("查询失败"));
+        }
+    };
+    let mut read_scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目查询作用域失败: {}", e);
@@ -364,10 +388,7 @@ pub async fn update_accounting_subject(
                 return Json(ApiResponse::error("查询失败"));
             }
         };
-    if let Err(e) = read_scope.commit().await {
-        tracing::error!("提交会计科目查询作用域失败: {}", e);
-        return Json(ApiResponse::error("查询失败"));
-    }
+    drop(read_scope);
 
     let Some(existing) = existing else {
         return Json(ApiResponse::error("会计科目不存在"));
@@ -388,7 +409,7 @@ pub async fn update_accounting_subject(
         TABLE
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut scope = match state.db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目写入作用域失败: {}", e);
@@ -406,10 +427,6 @@ pub async fn update_accounting_subject(
         .bind(id)
         .fetch_one(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交更新会计科目作用域失败: {}", e);
-        return Json(ApiResponse::error("更新失败"));
-    }
     match result {
         Ok(subject) => Json(ApiResponse::success(subject)),
         Err(e) => {
@@ -432,6 +449,7 @@ pub async fn update_accounting_subject(
 )]
 pub async fn delete_accounting_subject(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let sql = format!(
@@ -439,7 +457,15 @@ pub async fn delete_accounting_subject(
         TABLE
     );
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            tracing::error!("创建会计科目写入作用域失败: 请求事务缺失");
+            return Json(ApiResponse::error("删除失败"));
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("创建会计科目写入作用域失败: {}", e);
@@ -450,10 +476,6 @@ pub async fn delete_accounting_subject(
         .bind(id)
         .execute(&mut scope)
         .await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交删除会计科目作用域失败: {}", e);
-        return Json(ApiResponse::error("删除失败"));
-    }
     match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -499,21 +521,21 @@ pub fn create_routes() -> axum::Router<AppState> {
 // 工具函数：根据 code 查询科目名称（供 ERP opening_balance 等跨服务调用）
 // ============================================================================
 
-pub async fn get_subject_name_by_code(db: &Db, code: &str) -> Option<String> {
+pub async fn get_subject_name_by_code<'e, E>(executor: E, code: &str) -> Option<String>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
     let sql = format!(
         "SELECT name FROM {} WHERE code = $1 AND deleted_at IS NULL LIMIT 1",
         TABLE
     );
 
-    let mut scope = db.scope_read().await.ok()?;
-    let name = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
         .bind(code)
-        .fetch_optional(&mut scope)
+        .fetch_optional(executor)
         .await
         .ok()
-        .flatten();
-    let _ = scope.commit().await;
-    name
+        .flatten()
 }
 
 #[cfg(test)]

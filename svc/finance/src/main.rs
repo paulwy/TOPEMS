@@ -223,7 +223,11 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
-        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),
+        // M-1/B4：请求链路已全部复用 tenant_middleware 的请求事务；守卫开启后
+        // 请求内再自开租户作用域会直接报 Protocol 错误（事件消费等后台路径不受影响）。
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
         workflow_client,
         event_publisher: ctx.event_publisher.clone(),
     };

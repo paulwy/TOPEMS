@@ -17,6 +17,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 /// 期间解析：兼容 `YYYYMM` 与旧格式 `YYYY-MM`
@@ -68,11 +69,12 @@ fn normalize_report_period(raw: &str) -> Result<String, ApiResponse<serde_json::
 /// “该期间确实无业务”（200 + has_data=false）与“期间参数无法解析”（400）。
 async fn period_has_business(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Uuid,
     company_id: Uuid,
     period: &str,
 ) -> Result<bool, sqlx::Error> {
-    let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+    let mut scope = db.scope_with(txn).await?;
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_ledger
@@ -105,18 +107,16 @@ fn annotate_period_business(
 
 /// 期间借贷/净额汇总，全程 Decimal（NUMERIC(18,4)），不经 f64，避免尾差。
 ///
-/// 租户维度 `Some(tenant)` 走该租户只读作用域；超管全局视图 `None` 走显式
-/// [`Db::scope_read_system`]（系统通道例外，见 w7-b5 冻结文档 §2.1）。
+/// 作用域复用请求事务（[`Db::scope_with`]），租户维度由 mid-ware 写入的
+/// 请求上下文统一收口；`tenant_id` 仅用于 SQL 租户谓词。
 /// 不能再用裸池：裸池无 GUC 在 fail-closed 策略下是静默 0 行。
 async fn period_net_total(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Option<Uuid>,
     period: &str,
 ) -> (Decimal, Decimal, Decimal) {
-    let scope = match tenant_id {
-        Some(tenant) => db.scope_read_for_tenant(tenant).await,
-        None => db.scope_read_system().await,
-    };
+    let scope = db.scope_with(txn).await;
     let Ok(mut scope) = scope else {
         return (Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
     };
@@ -174,6 +174,7 @@ pub struct ItemDetailsQuery {
 pub async fn get_report_item_details(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<ItemDetailsQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -185,12 +186,12 @@ pub async fn get_report_item_details(
         Some(c) if !c.is_empty() => c,
         _ => return ApiResponse::bad_request("account_code 不能为空"),
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scoped = match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
     };
-    let mut scope = match scoped {
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -242,6 +243,7 @@ pub struct ItemVouchersQuery {
 pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<ItemVouchersQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -257,12 +259,12 @@ pub async fn get_report_item_vouchers(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scoped = match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
     };
-    let mut scope = match scoped {
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -362,6 +364,7 @@ pub struct ComparisonQuery {
 pub async fn get_report_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<ComparisonQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -369,6 +372,11 @@ pub async fn get_report_comparison(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let report_type = params.report_type.clone().unwrap_or_default();
     let period_from = match params.period_from.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -378,8 +386,10 @@ pub async fn get_report_comparison(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("period_to 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, period_to).await;
-    let (prev_d, prev_c, prev_net) = period_net_total(&state.db, tenant_id, period_from).await;
+    let (cur_d, cur_c, cur_net) =
+        period_net_total(&state.db, &mut *txn, tenant_id, period_to).await;
+    let (prev_d, prev_c, prev_net) =
+        period_net_total(&state.db, &mut *txn, tenant_id, period_from).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -419,6 +429,7 @@ pub struct TrendQuery {
 pub async fn get_report_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<TrendQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -426,6 +437,11 @@ pub async fn get_report_trend(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
         None => {
@@ -442,7 +458,7 @@ pub async fn get_report_trend(
     let mut cur = start;
     loop {
         let p_str = period_string(cur);
-        let (_, _, net) = period_net_total(&state.db, tenant_id, &p_str).await;
+        let (_, _, net) = period_net_total(&state.db, &mut *txn, tenant_id, &p_str).await;
         let growth_rate = match prev_net {
             Some(pv) => decimal_growth_rate(net, pv),
             None => 0.0,
@@ -489,6 +505,7 @@ pub struct YearOverYearQuery {
 pub async fn get_report_year_over_year(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<YearOverYearQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -496,6 +513,11 @@ pub async fn get_report_year_over_year(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -505,9 +527,10 @@ pub async fn get_report_year_over_year(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("previous_year_period 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, current_period).await;
+    let (cur_d, cur_c, cur_net) =
+        period_net_total(&state.db, &mut *txn, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
-        period_net_total(&state.db, tenant_id, previous_year_period).await;
+        period_net_total(&state.db, &mut *txn, tenant_id, previous_year_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -546,6 +569,7 @@ pub struct PeriodOverPeriodQuery {
 pub async fn get_report_period_over_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PeriodOverPeriodQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -553,6 +577,11 @@ pub async fn get_report_period_over_period(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -562,8 +591,10 @@ pub async fn get_report_period_over_period(
         Some(p) if !p.is_empty() => p,
         _ => return ApiResponse::bad_request("previous_period 不能为空"),
     };
-    let (cur_d, cur_c, cur_net) = period_net_total(&state.db, tenant_id, current_period).await;
-    let (prev_d, prev_c, prev_net) = period_net_total(&state.db, tenant_id, previous_period).await;
+    let (cur_d, cur_c, cur_net) =
+        period_net_total(&state.db, &mut *txn, tenant_id, current_period).await;
+    let (prev_d, prev_c, prev_net) =
+        period_net_total(&state.db, &mut *txn, tenant_id, previous_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
     ApiResponse::success(
@@ -1223,6 +1254,7 @@ pub struct HistoryReportQuery {
 
 async fn upsert_report(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Uuid,
     company_id: Uuid,
     report_type: &str,
@@ -1231,7 +1263,7 @@ async fn upsert_report(
     data: serde_json::Value,
     generated_by: &str,
 ) -> Result<serde_json::Value, sqlx::Error> {
-    let mut scope = db.scope_for_tenant(tenant_id).await?;
+    let mut scope = db.scope_with(txn).await?;
     // org_id 承接公司维度（历史唯一键 (report_type, org_id, period, currency_code) 不重建），
     // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
@@ -1270,18 +1302,14 @@ async fn upsert_report(
 
 async fn fetch_report(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
     period: &str,
     currency_code: &str,
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scoped = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let mut scope = scoped?;
+    let mut scope = db.scope_with(txn).await?;
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
@@ -1316,6 +1344,7 @@ async fn fetch_report(
 
 async fn fetch_history(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Option<Uuid>,
     company_id: Uuid,
     report_type: &str,
@@ -1326,12 +1355,7 @@ async fn fetch_history(
     page_size: i64,
 ) -> Result<(Vec<serde_json::Value>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let scoped = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await,
-        None => db.scope_read_system().await,
-    };
-    let mut scope = scoped?;
+    let mut scope = db.scope_with(txn).await?;
     let rows = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
@@ -1410,8 +1434,17 @@ fn required_company_id(raw: Option<&str>) -> Result<Uuid, ApiResponse<serde_json
 pub async fn generate_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let company_id = match required_company_id(req.company_id.as_deref()) {
@@ -1425,12 +1458,14 @@ pub async fn generate_balance_sheet(
     };
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
-        .get_statutory_reports(tenant_id, company_id, &period)
+        .get_statutory_reports(tenant_id, company_id, &period, txn)
         .await
     {
         Ok((sheet, _)) if sheet.balanced => {
             let has_business =
-                match period_has_business(&state.db, tenant_id, company_id, &period).await {
+                match period_has_business(&state.db, &mut *txn, tenant_id, company_id, &period)
+                    .await
+                {
                     Ok(v) => v,
                     Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
                 };
@@ -1441,6 +1476,7 @@ pub async fn generate_balance_sheet(
             );
             match upsert_report(
                 &state.db,
+                &mut *txn,
                 tenant_id,
                 company_id,
                 "balance_sheet",
@@ -1518,8 +1554,17 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<GetReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1533,6 +1578,7 @@ pub async fn get_balance_sheet(
     };
     match fetch_report(
         &state.db,
+        &mut *txn,
         tenant_id_opt,
         company_id,
         "balance_sheet",
@@ -1547,7 +1593,10 @@ pub async fn get_balance_sheet(
         ),
         Ok(None) => {
             let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-            match service.get_balance_sheet(tenant_id, &params.period).await {
+            match service
+                .get_balance_sheet(tenant_id, &params.period, txn)
+                .await
+            {
                 Ok(sheet) => {
                     let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
                     ApiResponse::success(enrich_balance_percentage(data), "查询成功(实时)")
@@ -1573,8 +1622,14 @@ pub async fn get_balance_sheet(
 pub async fn get_balance_sheet_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<HistoryReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1588,6 +1643,7 @@ pub async fn get_balance_sheet_history(
     };
     match fetch_history(
         &state.db,
+        &mut *txn,
         tenant_id,
         company_id,
         "balance_sheet",
@@ -1610,8 +1666,17 @@ pub async fn get_balance_sheet_history(
 pub async fn generate_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let company_id = match required_company_id(req.company_id.as_deref()) {
@@ -1625,12 +1690,14 @@ pub async fn generate_income_statement(
     };
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
-        .get_statutory_reports(tenant_id, company_id, &period)
+        .get_statutory_reports(tenant_id, company_id, &period, txn)
         .await
     {
         Ok((_, stmt)) if stmt.balanced => {
             let has_business =
-                match period_has_business(&state.db, tenant_id, company_id, &period).await {
+                match period_has_business(&state.db, &mut *txn, tenant_id, company_id, &period)
+                    .await
+                {
                     Ok(v) => v,
                     Err(e) => return ApiResponse::from(TopemsError::internal("生成失败", e)),
                 };
@@ -1641,6 +1708,7 @@ pub async fn generate_income_statement(
             );
             match upsert_report(
                 &state.db,
+                &mut *txn,
                 tenant_id,
                 company_id,
                 "income_statement",
@@ -1681,8 +1749,17 @@ pub async fn generate_income_statement(
 pub async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<GetReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1696,6 +1773,7 @@ pub async fn get_income_statement(
     };
     match fetch_report(
         &state.db,
+        &mut *txn,
         tenant_id_opt,
         company_id,
         "income_statement",
@@ -1710,7 +1788,7 @@ pub async fn get_income_statement(
         Ok(None) => {
             let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service
-                .get_income_statement(tenant_id, &params.period)
+                .get_income_statement(tenant_id, &params.period, txn)
                 .await
             {
                 Ok(stmt) => {
@@ -1738,8 +1816,14 @@ pub async fn get_income_statement(
 pub async fn get_income_statement_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<HistoryReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1753,6 +1837,7 @@ pub async fn get_income_statement_history(
     };
     match fetch_history(
         &state.db,
+        &mut *txn,
         tenant_id,
         company_id,
         "income_statement",
@@ -1775,8 +1860,17 @@ pub async fn get_income_statement_history(
 pub async fn generate_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let company_id = match required_company_id(req.company_id.as_deref()) {
@@ -1785,13 +1879,14 @@ pub async fn generate_cash_flow(
     };
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     match service
-        .get_cash_flow_statement(tenant_id, &req.period)
+        .get_cash_flow_statement(tenant_id, &req.period, txn)
         .await
     {
         Ok(stmt) => {
             let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
             match upsert_report(
                 &state.db,
+                &mut *txn,
                 tenant_id,
                 company_id,
                 "cash_flow",
@@ -1824,8 +1919,17 @@ pub async fn generate_cash_flow(
 pub async fn get_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+
     Query(params): Query<GetReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1839,6 +1943,7 @@ pub async fn get_cash_flow(
     };
     match fetch_report(
         &state.db,
+        &mut *txn,
         tenant_id_opt,
         company_id,
         "cash_flow",
@@ -1853,7 +1958,7 @@ pub async fn get_cash_flow(
         Ok(None) => {
             let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
             match service
-                .get_cash_flow_statement(tenant_id, &params.period)
+                .get_cash_flow_statement(tenant_id, &params.period, txn)
                 .await
             {
                 Ok(stmt) => {
@@ -1870,8 +1975,14 @@ pub async fn get_cash_flow(
 pub async fn get_cash_flow_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<HistoryReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1885,6 +1996,7 @@ pub async fn get_cash_flow_history(
     };
     match fetch_history(
         &state.db,
+        &mut *txn,
         tenant_id,
         company_id,
         "cash_flow",
@@ -1929,6 +2041,7 @@ pub struct ApprovalRequest {
 )]
 pub async fn submit_report_for_approval(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1936,7 +2049,14 @@ pub async fn submit_report_for_approval(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1961,6 +2081,7 @@ pub async fn submit_report_for_approval(
 
 pub async fn approve_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1968,7 +2089,14 @@ pub async fn approve_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1995,6 +2123,7 @@ pub async fn approve_report(
 
 pub async fn reject_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2002,7 +2131,14 @@ pub async fn reject_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2041,6 +2177,7 @@ pub async fn reject_report(
 )]
 pub async fn lock_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2048,7 +2185,14 @@ pub async fn lock_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2073,6 +2217,7 @@ pub async fn lock_report(
 
 pub async fn unlock_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -2080,7 +2225,14 @@ pub async fn unlock_report(
         Ok(id) => id,
         Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2169,6 +2321,7 @@ pub async fn export_report(
 )]
 pub async fn get_business_overview(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     // 凭证表 period 存 YYYYMM，前端可能传 YYYY-MM，统一去符号按 YYYYMM 精确匹配
@@ -2178,7 +2331,14 @@ pub async fn get_business_overview(
     });
     let period: String = period_raw.chars().filter(|c| c.is_ascii_digit()).collect();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2248,11 +2408,19 @@ pub async fn get_business_overview(
 /// 项目汇总报表：按项目维度汇总凭证金额
 pub async fn get_project_summary(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2307,8 +2475,18 @@ pub async fn get_project_summary(
     ),
     tag = "FinancialReports"
 )]
-pub async fn get_monthly_trend(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.db.scope_read().await {
+pub async fn get_monthly_trend(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2360,11 +2538,19 @@ pub async fn get_monthly_trend(State(state): State<AppState>) -> ApiResponse<ser
 )]
 pub async fn get_department_summary(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2418,11 +2604,19 @@ pub async fn get_department_summary(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_aging_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let _period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2472,11 +2666,19 @@ pub async fn get_aging_analysis(
 /// 凭证统计报表：按状态/类型统计凭证数量和金额
 pub async fn get_voucher_statistics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2527,11 +2729,19 @@ pub async fn get_voucher_statistics(
 )]
 pub async fn get_cash_flow_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2585,11 +2795,19 @@ pub async fn get_cash_flow_analysis(
 /// 费用分析报表：按费用类科目汇总费用
 pub async fn get_expense_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2645,11 +2863,19 @@ pub async fn get_expense_analysis(
 )]
 pub async fn get_profit_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -2741,6 +2967,7 @@ pub async fn get_profit_analysis(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_financial_overview(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_else(|| {
@@ -2748,7 +2975,14 @@ pub async fn get_financial_overview(
         now.format("%Y-%m").to_string()
     });
 
-    let mut scope = match state.db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction("请求事务缺失".into()))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };

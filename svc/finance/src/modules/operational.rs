@@ -56,6 +56,7 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 pub async fn list_expenses(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -64,9 +65,19 @@ pub async fn list_expenses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let mut scope = match state.db.scope_read().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -109,9 +120,6 @@ pub async fn list_expenses(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
-            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取费用报销列表成功",
@@ -128,6 +136,7 @@ pub async fn list_expenses(
 pub async fn create_expense(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
@@ -156,9 +165,19 @@ pub async fn create_expense(
         return ApiResponse::bad_request("申请人不能为空");
     };
 
-    let mut scope = match state.db.scope().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -210,9 +229,6 @@ pub async fn create_expense(
             return ApiResponse::server_error("费用报销创建失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_expense_json(&row), "费用报销创建成功")
 }
 
@@ -231,11 +247,22 @@ pub async fn create_expense(
 pub async fn get_expense(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
-    let mut scope = match state.db.scope_read().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -262,9 +289,6 @@ pub async fn get_expense(
             return ApiResponse::server_error("获取费用报销失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     match result {
         Some(row) => ApiResponse::success(row_to_expense_json(&row), "获取费用报销成功"),
         None => ApiResponse::not_found("费用报销不存在"),
@@ -275,14 +299,26 @@ pub async fn get_expense(
 pub async fn update_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE expenses SET
@@ -355,9 +391,6 @@ pub async fn update_expense(
         Ok(row) => row,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功")
 }
 
@@ -375,12 +408,24 @@ pub async fn update_expense(
 pub async fn delete_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE expenses SET deleted_at = NOW() WHERE id = $1"
@@ -395,9 +440,6 @@ pub async fn delete_expense(
             return ApiResponse::server_error("删除费用报销失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     if r.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "费用报销删除成功")
     } else {
@@ -426,15 +468,26 @@ pub async fn delete_expense(
 pub async fn list_budgets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut scope = match state.db.scope_read().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -467,9 +520,6 @@ pub async fn list_budgets(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
-            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取预算列表成功",
@@ -627,12 +677,24 @@ pub async fn create_budget(
 pub async fn get_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
-    let mut scope = match state.db.scope_read().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
@@ -651,9 +713,6 @@ pub async fn get_budget(
             return ApiResponse::server_error("获取预算失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     match result {
         Some(row) => ApiResponse::success(row_to_budget_json(&row), "获取预算成功"),
         None => ApiResponse::not_found("预算不存在"),
@@ -663,6 +722,7 @@ pub async fn get_budget(
 pub async fn update_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
@@ -684,10 +744,21 @@ pub async fn update_budget(
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
 
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.budgets SET
@@ -728,9 +799,6 @@ pub async fn update_budget(
         Ok(row) => row,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_budget_json(&row), "预算更新成功")
 }
 
@@ -748,13 +816,25 @@ pub async fn update_budget(
 pub async fn delete_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
@@ -770,9 +850,6 @@ pub async fn delete_budget(
             return ApiResponse::server_error("预算删除失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     if r.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "预算删除成功")
     } else {
@@ -801,6 +878,7 @@ pub async fn delete_budget(
 pub async fn list_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -809,9 +887,19 @@ pub async fn list_receivables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let mut scope = match state.db.scope_read().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -853,9 +941,6 @@ pub async fn list_receivables(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
-            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应收列表成功",
@@ -871,6 +956,7 @@ pub async fn list_receivables(
 pub async fn create_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
@@ -888,10 +974,21 @@ pub async fn create_receivable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
@@ -944,9 +1041,6 @@ pub async fn create_receivable(
             return ApiResponse::server_error("创建应收失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_receivable_json(&row), "应收创建成功")
 }
 
@@ -965,12 +1059,24 @@ pub async fn create_receivable(
 pub async fn get_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
-    let mut scope = match state.db.scope_read().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
@@ -995,9 +1101,6 @@ pub async fn get_receivable(
             return ApiResponse::server_error("获取应收失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     match result {
         Some(row) => ApiResponse::success(row_to_receivable_json(&row), "获取应收成功"),
         None => ApiResponse::not_found("应收不存在"),
@@ -1007,6 +1110,7 @@ pub async fn get_receivable(
 pub async fn update_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
@@ -1015,10 +1119,21 @@ pub async fn update_receivable(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE receivables SET
@@ -1064,9 +1179,6 @@ pub async fn update_receivable(
         Ok(row) => row,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_receivable_json(&row), "应收更新成功")
 }
 
@@ -1085,16 +1197,28 @@ pub async fn update_receivable(
 pub async fn delete_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let tenant_id = match resolve_write_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE receivables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
@@ -1110,9 +1234,6 @@ pub async fn delete_receivable(
             return ApiResponse::server_error("删除应收失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     if r.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "应收删除成功")
     } else {
@@ -1141,6 +1262,7 @@ pub async fn delete_receivable(
 pub async fn list_payables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -1149,9 +1271,19 @@ pub async fn list_payables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let mut scope = match state.db.scope_read().await {
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
         Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
     };
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -1193,9 +1325,6 @@ pub async fn list_payables(
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
-            if let Err(e) = scope.commit().await {
-                return crate::shared::err_resp(e);
-            }
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应付列表成功",
@@ -1211,6 +1340,7 @@ pub async fn list_payables(
 pub async fn create_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     // 超管/服务身份落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400
@@ -1230,10 +1360,21 @@ pub async fn create_payable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
@@ -1286,9 +1427,6 @@ pub async fn create_payable(
             return ApiResponse::server_error("创建应付失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_payable_json(&row), "应付创建成功")
 }
 
@@ -1307,12 +1445,24 @@ pub async fn create_payable(
 pub async fn get_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
-    let mut scope = match state.db.scope_read().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
@@ -1337,9 +1487,6 @@ pub async fn get_payable(
             return ApiResponse::server_error("获取应付失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     match result {
         Some(row) => ApiResponse::success(row_to_payable_json(&row), "获取应付成功"),
         None => ApiResponse::not_found("应付不存在"),
@@ -1349,6 +1496,7 @@ pub async fn get_payable(
 pub async fn update_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
@@ -1357,10 +1505,21 @@ pub async fn update_payable(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let now = Utc::now();
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE payables SET
@@ -1406,9 +1565,6 @@ pub async fn update_payable(
         Ok(row) => row,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     ApiResponse::success(row_to_payable_json(&row), "应付更新成功")
 }
 
@@ -1427,16 +1583,28 @@ pub async fn update_payable(
 pub async fn delete_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let tenant_id = match resolve_write_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
-    let mut scope = match state.db.scope().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
+    // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE payables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
@@ -1452,9 +1620,6 @@ pub async fn delete_payable(
             return ApiResponse::server_error("删除应付失败");
         }
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     if r.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "应付删除成功")
     } else {

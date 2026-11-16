@@ -10,6 +10,7 @@ use axum::{extract::State, Extension, Json};
 use serde::Deserialize;
 use serde_json::json;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::{err_resp, AppState};
@@ -38,9 +39,14 @@ pub struct BootstrapRequest {
 )]
 pub async fn bootstrap_defaults(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BootstrapRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     // 目标租户：请求显式指定优先，否则取会话租户
     let target = match req.tenant_id {
         Some(t) if !t.trim().is_empty() => Some(t),
@@ -54,7 +60,7 @@ pub async fn bootstrap_defaults(
                 Ok(u) => u,
                 Err(_) => return ApiResponse::bad_request("tenant_id 格式无效"),
             };
-            let mut scope = match state.db.scope_for_tenant(uuid).await {
+            let mut scope = match state.db.scope_with(txn).await {
                 Ok(s) => s,
                 Err(e) => return err_resp(e),
             };
@@ -71,8 +77,9 @@ pub async fn bootstrap_defaults(
             }
         }
         None => {
-            // 系统通道：超管全局补播无租户上下文（启动/后台例外，登记 §2.1）
-            let mut scope = match state.db.scope_system().await {
+            // 请求事务的通道由 tenant_middleware 写入的 GUC 决定：
+            // 服务身份 → 系统通道；超管未选租户已被中间件拦成 400，不会走到这里。
+            let mut scope = match state.db.scope_with(txn).await {
                 Ok(s) => s,
                 Err(e) => return err_resp(e),
             };

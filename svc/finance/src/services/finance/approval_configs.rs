@@ -10,9 +10,10 @@ impl FinanceService {
     pub async fn list_approval_configs(
         &self,
         tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<ApprovalConfigResponse>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let configs: Vec<PaymentApprovalConfig> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) ORDER BY priority DESC, amount_threshold ASC"),
@@ -20,10 +21,12 @@ impl FinanceService {
         .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
+        // 释放读作用域借用，后续逐条读取审批节点复用同一请求事务。
+        scope.commit().await?;
 
         let mut results = Vec::new();
         for config in configs {
-            let nodes = self.get_approval_nodes(config.id).await?;
+            let nodes = self.get_approval_nodes(config.id, txn).await?;
             results.push(ApprovalConfigResponse {
                 id: config.id,
                 name: config.name,
@@ -47,9 +50,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         config_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
@@ -58,8 +62,10 @@ impl FinanceService {
         .bind(config_id)
         .fetch_one(&mut scope)
         .await?;
+        // 释放读作用域借用，读取审批节点复用同一请求事务。
+        scope.commit().await?;
 
-        let nodes = self.get_approval_nodes(config.id).await?;
+        let nodes = self.get_approval_nodes(config.id, txn).await?;
 
         Ok(ApprovalConfigResponse {
             id: config.id,
@@ -82,8 +88,9 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateApprovalConfigRequest,
         created_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
-        let mut tx = self.write_scope().await?;
+        let mut tx = self.write_scope(txn).await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
             only_own_schema_query!("finance", "INSERT INTO core_finance_payment_approval_config (tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, priority, is_active, created_by)
@@ -127,7 +134,7 @@ impl FinanceService {
 
         tx.commit().await?;
 
-        let nodes = self.get_approval_nodes(config.id).await?;
+        let nodes = self.get_approval_nodes(config.id, txn).await?;
 
         Ok(ApprovalConfigResponse {
             id: config.id,
@@ -151,8 +158,9 @@ impl FinanceService {
         config_id: Uuid,
         req: CreateApprovalConfigRequest,
         _updated_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
-        let mut tx = self.write_scope().await?;
+        let mut tx = self.write_scope(txn).await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE core_finance_payment_approval_config SET name = $1, description = $2, amount_threshold = $3, max_amount = $4, workflow_id = $5, approval_levels = $6, priority = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
@@ -205,7 +213,7 @@ impl FinanceService {
 
         tx.commit().await?;
 
-        let nodes = self.get_approval_nodes(config.id).await?;
+        let nodes = self.get_approval_nodes(config.id, txn).await?;
 
         Ok(ApprovalConfigResponse {
             id: config.id,
@@ -227,8 +235,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         config_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut tx = self.write_scope().await?;
+        let mut tx = self.write_scope(txn).await?;
 
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -255,8 +264,9 @@ impl FinanceService {
     pub(super) async fn get_approval_nodes(
         &self,
         config_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<ApprovalNode>, TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let nodes: Vec<ApprovalNode> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active, created_at, updated_at FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC"),

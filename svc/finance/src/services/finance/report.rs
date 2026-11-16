@@ -14,6 +14,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         params: LedgerQueryParams,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<LedgerEntry>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE (tenant_id = $1::uuid)".to_string();
@@ -40,7 +41,7 @@ impl FinanceService {
 
         query.push_str(" ORDER BY voucher_date, id");
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let mut query_builder = sqlx::query_as(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(account_id) = params.account_id {
@@ -62,9 +63,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<TrialBalance>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let balances = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT 
@@ -92,15 +94,16 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<BalanceSheet, TopemsError> {
         let assets = self
-            .get_balance_items(tenant_id, period, AccountType::Asset)
+            .get_balance_items(tenant_id, period, AccountType::Asset, txn)
             .await?;
         let liabilities = self
-            .get_balance_items(tenant_id, period, AccountType::Liability)
+            .get_balance_items(tenant_id, period, AccountType::Liability, txn)
             .await?;
         let equity = self
-            .get_balance_items(tenant_id, period, AccountType::Equity)
+            .get_balance_items(tenant_id, period, AccountType::Equity, txn)
             .await?;
 
         let total_assets: Decimal = assets.iter().map(|i| i.amount).sum();
@@ -123,6 +126,7 @@ impl FinanceService {
         tenant_id: Uuid,
         period: &str,
         account_type: AccountType,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<BalanceItem>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = account_type.to_string();
@@ -146,7 +150,7 @@ impl FinanceService {
             amount_expr
         );
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
@@ -179,12 +183,13 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<IncomeStatement, TopemsError> {
         let revenues = self
-            .get_income_items(tenant_id, period, AccountType::Income)
+            .get_income_items(tenant_id, period, AccountType::Income, txn)
             .await?;
         let expenses = self
-            .get_income_items(tenant_id, period, AccountType::Expense)
+            .get_income_items(tenant_id, period, AccountType::Expense, txn)
             .await?;
 
         let total_revenue: Decimal = revenues.iter().map(|i| i.amount).sum();
@@ -206,6 +211,7 @@ impl FinanceService {
         tenant_id: Uuid,
         period: &str,
         account_type: AccountType,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<IncomeItem>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = account_type.to_string();
@@ -227,7 +233,7 @@ impl FinanceService {
              ORDER BY a.code",
             amount_expr
         );
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
@@ -252,9 +258,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<CashFlowStatement, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(only_own_schema_query!(
             "finance",
@@ -339,10 +346,11 @@ impl FinanceService {
         tenant_id: Uuid,
         company_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<AccountBalanceReport, TopemsError> {
         let year_start = format!("{}01", &period[..4]);
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(only_own_schema_query!(
             "finance",
@@ -519,8 +527,10 @@ impl FinanceService {
         let balanced = checks.is_empty();
 
         // 未过账凭证只做提示，不计入 items 与各合计。
+        // 释放读作用域借用，未过账提示复用同一请求事务。
+        scope.commit().await?;
         let unposted = self
-            .get_unposted_info(tenant_id, company_id, period)
+            .get_unposted_info(tenant_id, company_id, period, txn)
             .await?;
 
         Ok(AccountBalanceReport {
@@ -605,8 +615,9 @@ impl FinanceService {
         tenant_id: Uuid,
         company_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(StatutoryBalanceSheet, StatutoryIncomeStatement), TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let bs_rows = sqlx::query(only_own_schema_query!(
             "finance",
@@ -818,8 +829,10 @@ impl FinanceService {
         let total_expense: Decimal = expenses.iter().map(|i| i.amount).sum();
         let net_income = total_revenue - total_expense;
 
+        // 释放读作用域借用，未过账提示复用同一请求事务。
+        scope.commit().await?;
         let unposted = self
-            .get_unposted_info(tenant_id, company_id, period)
+            .get_unposted_info(tenant_id, company_id, period, txn)
             .await?;
 
         let mut checks = Vec::new();
@@ -895,8 +908,9 @@ impl FinanceService {
         tenant_id: Uuid,
         company_id: Uuid,
         period: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<UnpostedInfo, TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let row = sqlx::query(
             r#"SELECT COUNT(*) AS cnt, COALESCE(SUM(total_debit), 0) AS amount

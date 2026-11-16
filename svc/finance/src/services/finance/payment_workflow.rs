@@ -14,6 +14,7 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
         submitted_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         tracing::info!(
             "开始提交付款单, payment_id={}, tenant_id={}, submitted_by={}",
@@ -22,7 +23,7 @@ impl FinanceService {
             submitted_by
         );
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
@@ -32,6 +33,8 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_one(&mut scope)
         .await?;
+        // 释放写作用域借用，后续凭证/审批流读取复用同一请求事务。
+        scope.commit().await?;
 
         tracing::info!(
             "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
@@ -43,7 +46,7 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Draft {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Draft",
@@ -61,7 +64,7 @@ impl FinanceService {
         );
 
         let workflow_id = self
-            .get_approval_workflow(tenant_id, payment.total_amount)
+            .get_approval_workflow(tenant_id, payment.total_amount, txn)
             .await?;
 
         tracing::info!(
@@ -99,6 +102,7 @@ impl FinanceService {
                         instance.title
                     );
 
+                    let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
                         only_own_schema_query!("finance", "INSERT INTO core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
                          VALUES ($1, $2, $3, $4, $5, $6, $7)"),
@@ -112,6 +116,7 @@ impl FinanceService {
                     .bind("pending")
                     .execute(&mut scope)
                     .await?;
+                    scope.commit().await?;
 
                     tracing::info!(
                         "付款单工作流关联记录创建成功, payment_id={}, workflow_instance_id={}",
@@ -148,21 +153,19 @@ impl FinanceService {
             voucher_id,
             payment_id
         );
-        self.submit_voucher(tenant_id, voucher_id).await?;
+        self.submit_voucher(tenant_id, voucher_id, txn).await?;
         tracing::info!(
             "凭证提交成功, voucher_id={}, payment_id={}",
             voucher_id,
             payment_id
         );
 
-        let result = self.get_payment_response(tenant_id, payment_id).await;
+        let result = self.get_payment_response(tenant_id, payment_id, txn).await;
         tracing::info!(
             "付款单提交流程完成, payment_id={}, payment_no={}",
             payment_id,
             payment.payment_no
         );
-
-        scope.commit().await?;
 
         result
     }
@@ -171,8 +174,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         amount: Decimal,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Option<Uuid>, TopemsError> {
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let workflow_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
@@ -195,6 +199,7 @@ impl FinanceService {
         payment_id: Uuid,
         approved_by: &str,
         approver_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         tracing::info!(
             "开始审批付款单, payment_id={}, tenant_id={}, approved_by={}",
@@ -203,7 +208,7 @@ impl FinanceService {
             approved_by
         );
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
@@ -213,6 +218,8 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_one(&mut scope)
         .await?;
+        // 释放写作用域借用，后续凭证/审批流读取复用同一请求事务。
+        scope.commit().await?;
 
         tracing::info!(
             "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
@@ -224,7 +231,7 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Submitted {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
@@ -241,6 +248,7 @@ impl FinanceService {
             voucher.status
         );
 
+        let mut scope = self.read_scope(txn).await?;
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
@@ -248,6 +256,7 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         tracing::info!(
             "查询工作流实例关联, payment_id={}, workflow_instance_id={}",
@@ -296,6 +305,7 @@ impl FinanceService {
                     }
 
                     let instance_status = instance.status;
+                    let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
                         only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
@@ -305,6 +315,7 @@ impl FinanceService {
                     .bind(payment_id)
                     .execute(&mut scope)
                     .await?;
+                    scope.commit().await?;
 
                     tracing::info!(
                         "付款单工作流关联记录更新成功, payment_id={}, current_approver={}, current_status={}",
@@ -341,7 +352,7 @@ impl FinanceService {
                 payment_id,
                 approved_by
             );
-            self.approve_voucher(tenant_id, voucher_id, approved_by)
+            self.approve_voucher(tenant_id, voucher_id, approved_by, txn)
                 .await?;
             tracing::info!(
                 "凭证审批成功, voucher_id={}, payment_id={}",
@@ -349,6 +360,7 @@ impl FinanceService {
                 payment_id
             );
 
+            let mut scope = self.write_scope(txn).await?;
             sqlx::query(
                 only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
             )
@@ -357,6 +369,7 @@ impl FinanceService {
             .bind(payment_id)
             .execute(&mut scope)
             .await?;
+            scope.commit().await?;
 
             tracing::info!(
                 "付款单审批信息更新成功, payment_id={}, approved_by={}",
@@ -371,15 +384,13 @@ impl FinanceService {
             );
         }
 
-        let result = self.get_payment_response(tenant_id, payment_id).await;
+        let result = self.get_payment_response(tenant_id, payment_id, txn).await;
         tracing::info!(
             "付款单审批流程完成, payment_id={}, payment_no={}, workflow_approved={}",
             payment_id,
             payment.payment_no,
             workflow_approved
         );
-
-        scope.commit().await?;
 
         result
     }
@@ -389,6 +400,7 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
         rejected_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         tracing::info!(
             "开始拒绝付款单, payment_id={}, tenant_id={}, rejected_by={}",
@@ -397,7 +409,7 @@ impl FinanceService {
             rejected_by
         );
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
@@ -407,6 +419,8 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_one(&mut scope)
         .await?;
+        // 释放写作用域借用，后续凭证/审批流读取复用同一请求事务。
+        scope.commit().await?;
 
         tracing::info!(
             "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
@@ -418,7 +432,7 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Submitted {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
@@ -435,6 +449,7 @@ impl FinanceService {
             voucher.status
         );
 
+        let mut scope = self.read_scope(txn).await?;
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
@@ -442,6 +457,7 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         tracing::info!(
             "查询工作流实例关联, payment_id={}, workflow_instance_id={}",
@@ -472,6 +488,7 @@ impl FinanceService {
                     );
 
                     let instance_status = instance.status;
+                    let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
                         only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
@@ -481,6 +498,7 @@ impl FinanceService {
                     .bind(payment_id)
                     .execute(&mut scope)
                     .await?;
+                    scope.commit().await?;
 
                     tracing::info!(
                         "付款单工作流关联记录更新成功, payment_id={}, current_approver={}, current_status={}",
@@ -510,7 +528,7 @@ impl FinanceService {
             payment_id,
             rejected_by
         );
-        self.reject_voucher(tenant_id, voucher_id, rejected_by)
+        self.reject_voucher(tenant_id, voucher_id, rejected_by, txn)
             .await?;
         tracing::info!(
             "凭证拒绝成功, voucher_id={}, payment_id={}",
@@ -518,14 +536,12 @@ impl FinanceService {
             payment_id
         );
 
-        let result = self.get_payment_response(tenant_id, payment_id).await;
+        let result = self.get_payment_response(tenant_id, payment_id, txn).await;
         tracing::info!(
             "付款单拒绝流程完成, payment_id={}, payment_no={}",
             payment_id,
             payment.payment_no
         );
-
-        scope.commit().await?;
 
         result
     }
@@ -536,8 +552,9 @@ impl FinanceService {
         payment_id: Uuid,
         req: ExecutePaymentRequest,
         executed_by: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
@@ -547,17 +564,20 @@ impl FinanceService {
         .bind(payment_id)
         .fetch_one(&mut scope)
         .await?;
+        // 释放写作用域借用，凭证读取复用同一请求事务。
+        scope.commit().await?;
 
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
-        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
+        let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Approved {
             return Err(TopemsError::ValidationFailed(
                 "仅已审批状态的付款单可执行付款".to_string(),
             ));
         }
 
+        let mut scope = self.write_scope(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5"),
         )
@@ -571,7 +591,7 @@ impl FinanceService {
 
         scope.commit().await?;
 
-        self.get_payment_response(tenant_id, payment_id).await
+        self.get_payment_response(tenant_id, payment_id, txn).await
     }
 
     pub async fn write_off_payment_item(
@@ -580,8 +600,9 @@ impl FinanceService {
         item_id: Uuid,
         write_off_amount: Decimal,
         write_off_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(only_own_schema_query!(
             "finance",
@@ -613,6 +634,6 @@ impl FinanceService {
 
         scope.commit().await?;
 
-        self.get_payment_response(tenant_id, payment_id).await
+        self.get_payment_response(tenant_id, payment_id, txn).await
     }
 }

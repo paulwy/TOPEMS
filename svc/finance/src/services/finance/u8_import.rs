@@ -72,6 +72,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ImportVouchersRequest,
         imported_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ImportVouchersResponse, TopemsError> {
         let import_id = Uuid::new_v4();
         let now = Utc::now();
@@ -85,7 +86,7 @@ impl FinanceService {
         let source_system = req.source_system.unwrap_or_else(|| "U8".to_string());
         let total_count = req.vouchers.len() as i32;
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let _record: U8ImportRecord = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"
@@ -183,9 +184,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         import_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ImportStatusResponse, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let record: U8ImportRecord = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
@@ -209,6 +211,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         query: ImportRecordQuery,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<U8ImportRecord>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid)".to_string();
@@ -234,7 +237,7 @@ impl FinanceService {
             query_builder = query_builder.bind(sys);
         }
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let records = query_builder.fetch_all(&mut scope).await?;
         Ok(records)
     }
@@ -243,9 +246,10 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         import_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<U8ImportRecord, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let record: U8ImportRecord = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
@@ -261,14 +265,15 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         import_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let record = self.get_import_record(tenant_id, import_id).await?;
+        let record = self.get_import_record(tenant_id, import_id, txn).await?;
 
         if record.status == "rolled_back" {
             return Err(TopemsError::ValidationFailed("该导入已回滚".to_string()));
         }
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"

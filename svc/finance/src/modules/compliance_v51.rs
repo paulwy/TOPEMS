@@ -37,6 +37,7 @@ use uuid::Uuid;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
@@ -302,6 +303,7 @@ pub struct ExportedComplianceReport {
 impl ControlPoint {
     pub async fn create(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreateControlPointRequest,
         created_by: &str,
@@ -309,7 +311,7 @@ impl ControlPoint {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let created = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_control_points
@@ -340,6 +342,7 @@ impl ControlPoint {
 
     pub async fn list(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
@@ -371,10 +374,7 @@ impl ControlPoint {
         query.push_str(" ORDER BY code, created_at DESC");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref cat) = category {
@@ -392,12 +392,14 @@ impl ControlPoint {
         Ok(items)
     }
 
-    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let control = sqlx::query_as::<_, Self>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
@@ -413,13 +415,14 @@ impl ControlPoint {
 
     pub async fn update(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
         tenant_id: Uuid,
         req: UpdateControlPointRequest,
     ) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let updated = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_control_points
@@ -451,8 +454,13 @@ impl ControlPoint {
         Ok(updated)
     }
 
-    pub async fn delete(db: &Db, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+    pub async fn delete(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        id: Uuid,
+        tenant_id: Uuid,
+    ) -> Result<(), sqlx::Error> {
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"),
         )
@@ -473,11 +481,12 @@ impl ControlMatrix {
     )]
     pub async fn generate(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: GenerateControlMatrixRequest,
         created_by: &str,
     ) -> Result<Self, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let active_controls = sqlx::query_as::<_, ControlPoint>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
@@ -540,12 +549,14 @@ impl ControlMatrix {
         Ok(matrix)
     }
 
-    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let matrix = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, name, period, controls, total_controls, \
@@ -562,14 +573,12 @@ impl ControlMatrix {
 
     pub async fn list(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         period: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let items = if let Some(ref p) = period {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
@@ -632,6 +641,7 @@ impl RiskAssessment {
 
     pub async fn assess(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreateRiskAssessmentRequest,
         assessed_by: &str,
@@ -641,7 +651,7 @@ impl RiskAssessment {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let assessment = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_risk_assessments
@@ -671,12 +681,14 @@ impl RiskAssessment {
         Ok(assessment)
     }
 
-    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let assessment = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
@@ -694,6 +706,7 @@ impl RiskAssessment {
 
     pub async fn list(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         control_point_id: Option<Uuid>,
         risk_level: Option<String>,
@@ -715,10 +728,7 @@ impl RiskAssessment {
         query.push_str(" ORDER BY created_at DESC");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(cp_id) = control_point_id {
@@ -737,12 +747,13 @@ impl RiskAssessment {
         clippy::cast_possible_wrap,
         clippy::cast_precision_loss
     )]
-    pub async fn get_summary(db: &Db, tenant_id: Option<Uuid>) -> Result<RiskSummary, sqlx::Error> {
+    pub async fn get_summary(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        tenant_id: Option<Uuid>,
+    ) -> Result<RiskSummary, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let assessments = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
@@ -790,11 +801,12 @@ impl ComplianceReportV51 {
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn generate(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: GenerateComplianceReportRequest,
         created_by: &str,
     ) -> Result<(Self, Vec<ComplianceIssueV51>), sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let controls = sqlx::query_as::<_, ControlPoint>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
@@ -956,12 +968,14 @@ impl ComplianceReportV51 {
         Ok((report, saved_issues))
     }
 
-    pub async fn get(db: &Db, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let report = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
@@ -979,14 +993,12 @@ impl ComplianceReportV51 {
 
     pub async fn list(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         report_type: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let items = if let Some(ref rt) = report_type {
             sqlx::query_as::<_, Self>(only_own_schema_query!(
                 "finance",
@@ -1019,11 +1031,12 @@ impl ComplianceReportV51 {
 
     pub async fn export(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<ExportedComplianceReport, sqlx::Error> {
-        let report = Self::get(db, id, Some(tenant_id)).await?;
-        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let report = Self::get(db, txn, id, Some(tenant_id)).await?;
+        let mut scope = db.scope_with(txn).await?;
         let issues = sqlx::query_as::<_, ComplianceIssueV51>(only_own_schema_query!(
             "finance",
             "SELECT id, report_id, severity, category, control_point_code, \
@@ -1052,12 +1065,17 @@ impl ComplianceReportV51 {
 )]
 pub async fn create_control_point_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateControlPointRequest>,
 ) -> ApiResponse<ControlPoint> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ControlPoint::create(&state.db, tenant_id, req, &created_by).await {
+    match ControlPoint::create(&state.db, txn, tenant_id, req, &created_by).await {
         Ok(cp) => ApiResponse::success(cp, "控制点创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1065,9 +1083,14 @@ pub async fn create_control_point_handler(
 
 pub async fn list_control_points_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlPointQueryParams>,
 ) -> ApiResponse<Vec<ControlPoint>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1075,6 +1098,7 @@ pub async fn list_control_points_handler(
     };
     match ControlPoint::list(
         &state.db,
+        txn,
         tenant_id,
         params.category,
         params.is_active,
@@ -1089,15 +1113,20 @@ pub async fn list_control_points_handler(
 
 pub async fn get_control_point_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ControlPoint> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlPoint::get(&state.db, id, tenant_id).await {
+    match ControlPoint::get(&state.db, txn, id, tenant_id).await {
         Ok(cp) => ApiResponse::success(cp, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1105,12 +1134,17 @@ pub async fn get_control_point_handler(
 
 pub async fn update_control_point_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateControlPointRequest>,
 ) -> ApiResponse<ControlPoint> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ControlPoint::update(&state.db, id, tenant_id, req).await {
+    match ControlPoint::update(&state.db, txn, id, tenant_id, req).await {
         Ok(cp) => ApiResponse::success(cp, "更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1118,11 +1152,16 @@ pub async fn update_control_point_handler(
 
 pub async fn delete_control_point_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ControlPoint::delete(&state.db, id, tenant_id).await {
+    match ControlPoint::delete(&state.db, txn, id, tenant_id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1138,12 +1177,17 @@ pub async fn delete_control_point_handler(
 )]
 pub async fn generate_control_matrix_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateControlMatrixRequest>,
 ) -> ApiResponse<ControlMatrix> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ControlMatrix::generate(&state.db, tenant_id, req, &created_by).await {
+    match ControlMatrix::generate(&state.db, txn, tenant_id, req, &created_by).await {
         Ok(cm) => ApiResponse::success(cm, "内控矩阵生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1151,15 +1195,20 @@ pub async fn generate_control_matrix_handler(
 
 pub async fn get_control_matrix_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ControlMatrix> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlMatrix::get(&state.db, id, tenant_id).await {
+    match ControlMatrix::get(&state.db, txn, id, tenant_id).await {
         Ok(cm) => ApiResponse::success(cm, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1167,15 +1216,20 @@ pub async fn get_control_matrix_handler(
 
 pub async fn list_control_matrices_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlMatrixQueryParams>,
 ) -> ApiResponse<Vec<ControlMatrix>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ControlMatrix::list(&state.db, tenant_id, params.period).await {
+    match ControlMatrix::list(&state.db, txn, tenant_id, params.period).await {
         Ok(cms) => ApiResponse::success(cms, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1183,12 +1237,17 @@ pub async fn list_control_matrices_handler(
 
 pub async fn assess_risk_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskAssessmentRequest>,
 ) -> ApiResponse<RiskAssessment> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
     let assessed_by = claims.username.clone();
-    match RiskAssessment::assess(&state.db, tenant_id, req, &assessed_by).await {
+    match RiskAssessment::assess(&state.db, txn, tenant_id, req, &assessed_by).await {
         Ok(ra) => ApiResponse::success(ra, "风险评估创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1196,15 +1255,20 @@ pub async fn assess_risk_handler(
 
 pub async fn get_risk_assessment_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<RiskAssessment> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match RiskAssessment::get(&state.db, id, tenant_id).await {
+    match RiskAssessment::get(&state.db, txn, id, tenant_id).await {
         Ok(ra) => ApiResponse::success(ra, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1229,9 +1293,14 @@ pub async fn get_risk_assessment_handler(
 
 pub async fn list_risk_assessments_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RiskAssessmentQueryParams>,
 ) -> ApiResponse<Vec<RiskAssessment>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1239,6 +1308,7 @@ pub async fn list_risk_assessments_handler(
     };
     match RiskAssessment::list(
         &state.db,
+        txn,
         tenant_id,
         params.control_point_id,
         params.risk_level,
@@ -1252,14 +1322,19 @@ pub async fn list_risk_assessments_handler(
 
 pub async fn get_risk_summary_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<RiskSummary> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match RiskAssessment::get_summary(&state.db, tenant_id).await {
+    match RiskAssessment::get_summary(&state.db, txn, tenant_id).await {
         Ok(summary) => ApiResponse::success(summary, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1267,12 +1342,17 @@ pub async fn get_risk_summary_handler(
 
 async fn generate_compliance_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateComplianceReportRequest>,
 ) -> ApiResponse<(ComplianceReportV51, Vec<ComplianceIssueV51>)> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match ComplianceReportV51::generate(&state.db, tenant_id, req, &created_by).await {
+    match ComplianceReportV51::generate(&state.db, txn, tenant_id, req, &created_by).await {
         Ok((report, issues)) => ApiResponse::success((report, issues), "合规报告生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1280,15 +1360,20 @@ async fn generate_compliance_report_handler(
 
 pub async fn get_compliance_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ComplianceReportV51> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ComplianceReportV51::get(&state.db, id, tenant_id).await {
+    match ComplianceReportV51::get(&state.db, txn, id, tenant_id).await {
         Ok(report) => ApiResponse::success(report, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1313,15 +1398,20 @@ pub async fn get_compliance_report_handler(
 
 pub async fn list_compliance_reports_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,
 ) -> ApiResponse<Vec<ComplianceReportV51>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ComplianceReportV51::list(&state.db, tenant_id, params.report_type).await {
+    match ComplianceReportV51::list(&state.db, txn, tenant_id, params.report_type).await {
         Ok(reports) => ApiResponse::success(reports, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1329,11 +1419,16 @@ pub async fn list_compliance_reports_handler(
 
 pub async fn export_compliance_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ExportedComplianceReport> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ComplianceReportV51::export(&state.db, id, tenant_id).await {
+    match ComplianceReportV51::export(&state.db, txn, id, tenant_id).await {
         Ok(exported) => ApiResponse::success(exported, "导出成功"),
         Err(e) => crate::shared::err_resp(e),
     }

@@ -13,8 +13,9 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         req: CreateAuxiliaryAccountRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<AuxiliaryAccount, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
 
         let level = if let Some(parent_id) = req.parent_id {
             let parent: (i32,) = sqlx::query_as(only_own_schema_query!(
@@ -54,9 +55,10 @@ impl FinanceService {
         tenant_id: Uuid,
         aux_type: Option<AuxType>,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<AuxiliaryAccount>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
@@ -86,9 +88,10 @@ impl FinanceService {
         tenant_id: Uuid,
         aux_id: Uuid,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let account = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE (tenant_id = $1::uuid) AND id = $2"),
@@ -107,6 +110,7 @@ impl FinanceService {
         tenant_id: Uuid,
         query: AuxLedgerQuery,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<AuxLedgerEntry>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = query.aux_type.to_string();
@@ -116,7 +120,7 @@ impl FinanceService {
         let start_date = query.start_date;
         let end_date = query.end_date;
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let entries = sqlx::query_as(only_own_schema_query!(
             "finance",
@@ -167,6 +171,7 @@ impl FinanceService {
         tenant_id: Uuid,
         query: AuxLedgerQuery,
         locale: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<AuxBalanceReport>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let type_str = query.aux_type.to_string();
@@ -174,7 +179,7 @@ impl FinanceService {
         let account_id = query.account_id;
         let period = query.period;
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(only_own_schema_query!(
             "finance",

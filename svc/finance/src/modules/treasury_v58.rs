@@ -35,6 +35,7 @@ use uuid::Uuid;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 枚举类型 ====================
@@ -428,10 +429,11 @@ pub struct ConsolidateRequest {
 impl CashPoolManager {
     pub async fn create_pool(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreatePoolRequest,
     ) -> Result<CashPool, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let id = Uuid::new_v4();
         let pool_type = req
             .pool_type
@@ -463,14 +465,12 @@ impl CashPoolManager {
 
     pub async fn get_pool(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let row = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
@@ -484,13 +484,11 @@ impl CashPoolManager {
 
     pub async fn list_pools(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<CashPool>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
@@ -503,10 +501,11 @@ impl CashPoolManager {
 
     pub async fn allocate_funds(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: AllocateFundsRequest,
     ) -> Result<Vec<PoolAllocation>, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let mut allocations = Vec::new();
         let now = Utc::now();
 
@@ -542,6 +541,7 @@ impl CashPoolManager {
 
     pub async fn transfer_between_pools(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: TransferRequest,
     ) -> Result<PoolTransfer, sqlx::Error> {
@@ -549,12 +549,12 @@ impl CashPoolManager {
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let now = Utc::now();
 
-        let from_pool = Self::get_pool(db, Some(tenant_id), req.from_pool).await?;
+        let from_pool = Self::get_pool(db, txn, Some(tenant_id), req.from_pool).await?;
         if from_pool.balance < req.amount {
             return Err(sqlx::Error::PoolClosed);
         }
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let transfer = sqlx::query_as::<_, PoolTransfer>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v58_pool_transfers
@@ -579,22 +579,21 @@ impl CashPoolManager {
 
     pub async fn get_pool_balance(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
-        Self::get_pool(db, tenant_id, pool_id).await
+        Self::get_pool(db, txn, tenant_id, pool_id).await
     }
 
     pub async fn get_pool_history(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         pool_id: Uuid,
     ) -> Result<Vec<PoolTransfer>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance.finance_v58_pool_transfers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND (from_pool = $2 OR to_pool = $2) ORDER BY created_at DESC LIMIT 200"),
         )
@@ -608,14 +607,15 @@ impl CashPoolManager {
 
     pub async fn consolidate_cash(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: ConsolidateRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let pool_info = Self::get_pool(db, Some(tenant_id), req.pool_id).await?;
+        let pool_info = Self::get_pool(db, txn, Some(tenant_id), req.pool_id).await?;
 
         let entities = req.entity_ids.unwrap_or_else(|| pool_info.entities.clone());
 
-        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
 
         let mut total_consolidated = 0.0_f64;
         let mut entity_details = Vec::new();
@@ -684,10 +684,11 @@ pub struct UpdateAssumptionsRequest {
 impl CashFlowPredictor {
     pub async fn create_scenario(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreateScenarioRequest,
     ) -> Result<ForecastScenario, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let id = Uuid::new_v4();
         let scenario_type = req
             .scenario_type
@@ -718,10 +719,11 @@ impl CashFlowPredictor {
     #[allow(clippy::as_conversions)]
     pub async fn run_forecast(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: RunForecastRequest,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let scenario = sqlx::query_as::<_, ForecastScenario>(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
@@ -833,14 +835,12 @@ impl CashFlowPredictor {
 
     pub async fn get_forecast(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance.finance_v58_forecast_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY date ASC"),
         )
@@ -854,13 +854,11 @@ impl CashFlowPredictor {
 
     pub async fn list_scenarios(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastScenario>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY horizon_days DESC LIMIT 200"),
         )
@@ -873,13 +871,14 @@ impl CashFlowPredictor {
 
     pub async fn compare_scenarios(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         scenario_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut comparison = Vec::new();
 
         for sid in &scenario_ids {
-            let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+            let mut scope = db.scope_with(txn).await?;
             let scenario = sqlx::query_as::<_, ForecastScenario>(
                 only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
@@ -894,7 +893,7 @@ impl CashFlowPredictor {
                 Err(_) => continue,
             };
 
-            let results = Self::get_forecast(db, Some(tenant_id), scenario.id).await?;
+            let results = Self::get_forecast(db, txn, Some(tenant_id), scenario.id).await?;
 
             let total_inflow: f64 = results.iter().map(|r| r.inflow).sum();
             let total_outflow: f64 = results.iter().map(|r| r.outflow).sum();
@@ -926,16 +925,17 @@ impl CashFlowPredictor {
 
     pub async fn get_forecast_summary(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let scenarios = Self::list_scenarios(db, tenant_id).await?;
+        let scenarios = Self::list_scenarios(db, txn, tenant_id).await?;
 
         let mut summary_data = Vec::new();
         let mut total_inflow_all = 0.0_f64;
         let mut total_outflow_all = 0.0_f64;
 
         for scenario in &scenarios {
-            let results = Self::get_forecast(db, tenant_id, scenario.id).await?;
+            let results = Self::get_forecast(db, txn, tenant_id, scenario.id).await?;
             let inflow: f64 = results.iter().map(|r| r.inflow).sum();
             let outflow: f64 = results.iter().map(|r| r.outflow).sum();
             let net: f64 = results.iter().map(|r| r.net).sum();
@@ -966,11 +966,12 @@ impl CashFlowPredictor {
 
     pub async fn update_assumptions(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         scenario_id: Uuid,
         req: UpdateAssumptionsRequest,
     ) -> Result<ForecastScenario, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let updated = sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v58_forecast_scenarios
@@ -1019,13 +1020,11 @@ pub struct SetTargetRequest {
 impl LiquidityOptimizer {
     pub async fn get_liquidity_snapshot(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let targets: Vec<LiquidityTarget> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
@@ -1083,10 +1082,11 @@ impl LiquidityOptimizer {
 
     pub async fn optimize_liquidity(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: OptimizeRequest,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let targets: Vec<LiquidityTarget> = if let Some(ref entity_ids) = req.entity_ids {
             let mut results = Vec::new();
             for eid in entity_ids {
@@ -1232,13 +1232,11 @@ impl LiquidityOptimizer {
 
     pub async fn get_recommendations(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
@@ -1271,13 +1269,11 @@ impl LiquidityOptimizer {
 
     pub async fn get_targets(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<LiquidityTarget>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
@@ -1290,11 +1286,12 @@ impl LiquidityOptimizer {
 
     pub async fn set_target(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         target_id: Uuid,
         req: SetTargetRequest,
     ) -> Result<LiquidityTarget, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
 
         let updated = sqlx::query_as::<_, LiquidityTarget>(only_own_schema_query!(
@@ -1326,13 +1323,11 @@ impl LiquidityOptimizer {
 
     pub async fn get_optimization_history(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(tenant) => db.scope_read_for_tenant(tenant).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rows = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
@@ -1350,11 +1345,16 @@ impl LiquidityOptimizer {
 
 pub async fn create_pool_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePoolRequest>,
 ) -> ApiResponse<CashPool> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::create_pool(&state.db, tenant_id, req).await {
+    match CashPoolManager::create_pool(&state.db, txn, tenant_id, req).await {
         Ok(p) => ApiResponse::success(p, "现金池创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1362,15 +1362,20 @@ pub async fn create_pool_handler(
 
 pub async fn get_pool_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<CashPool> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool(&state.db, tenant_id, id).await {
+    match CashPoolManager::get_pool(&state.db, txn, tenant_id, id).await {
         Ok(p) => ApiResponse::success(p, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1378,14 +1383,19 @@ pub async fn get_pool_handler(
 
 pub async fn list_pools_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<CashPool>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::list_pools(&state.db, tenant_id).await {
+    match CashPoolManager::list_pools(&state.db, txn, tenant_id).await {
         Ok(pools) => ApiResponse::success(pools, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1393,11 +1403,16 @@ pub async fn list_pools_handler(
 
 pub async fn allocate_funds_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AllocateFundsRequest>,
 ) -> ApiResponse<Vec<PoolAllocation>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::allocate_funds(&state.db, tenant_id, req).await {
+    match CashPoolManager::allocate_funds(&state.db, txn, tenant_id, req).await {
         Ok(a) => ApiResponse::success(a, "资金分配成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1405,11 +1420,16 @@ pub async fn allocate_funds_handler(
 
 pub async fn transfer_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<TransferRequest>,
 ) -> ApiResponse<PoolTransfer> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::transfer_between_pools(&state.db, tenant_id, req).await {
+    match CashPoolManager::transfer_between_pools(&state.db, txn, tenant_id, req).await {
         Ok(t) => ApiResponse::success(t, "资金调拨成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1417,15 +1437,20 @@ pub async fn transfer_handler(
 
 pub async fn get_pool_balance_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<CashPool> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool_balance(&state.db, tenant_id, id).await {
+    match CashPoolManager::get_pool_balance(&state.db, txn, tenant_id, id).await {
         Ok(b) => ApiResponse::success(b, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1433,15 +1458,20 @@ pub async fn get_pool_balance_handler(
 
 pub async fn get_pool_history_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<PoolTransfer>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashPoolManager::get_pool_history(&state.db, tenant_id, id).await {
+    match CashPoolManager::get_pool_history(&state.db, txn, tenant_id, id).await {
         Ok(h) => ApiResponse::success(h, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1449,11 +1479,16 @@ pub async fn get_pool_history_handler(
 
 pub async fn consolidate_cash_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConsolidateRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashPoolManager::consolidate_cash(&state.db, tenant_id, req).await {
+    match CashPoolManager::consolidate_cash(&state.db, txn, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "现金归集完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1463,11 +1498,16 @@ pub async fn consolidate_cash_handler(
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
 ) -> ApiResponse<ForecastScenario> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::create_scenario(&state.db, tenant_id, req).await {
+    match CashFlowPredictor::create_scenario(&state.db, txn, tenant_id, req).await {
         Ok(s) => ApiResponse::success(s, "场景创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1475,11 +1515,16 @@ async fn create_scenario_handler(
 
 pub async fn run_forecast_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunForecastRequest>,
 ) -> ApiResponse<Vec<ForecastResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::run_forecast(&state.db, tenant_id, req).await {
+    match CashFlowPredictor::run_forecast(&state.db, txn, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "预测运行完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1487,15 +1532,20 @@ pub async fn run_forecast_handler(
 
 pub async fn get_forecast_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ForecastResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::get_forecast(&state.db, tenant_id, id).await {
+    match CashFlowPredictor::get_forecast(&state.db, txn, tenant_id, id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1503,14 +1553,19 @@ pub async fn get_forecast_handler(
 
 async fn list_scenarios_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ForecastScenario>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::list_scenarios(&state.db, tenant_id).await {
+    match CashFlowPredictor::list_scenarios(&state.db, txn, tenant_id).await {
         Ok(s) => ApiResponse::success(s, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1533,11 +1588,16 @@ async fn list_scenarios_handler(
 
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::compare_scenarios(&state.db, tenant_id, req.scenario_ids).await {
+    match CashFlowPredictor::compare_scenarios(&state.db, txn, tenant_id, req.scenario_ids).await {
         Ok(r) => ApiResponse::success(r, "对比完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1545,14 +1605,19 @@ async fn compare_scenarios_handler(
 
 pub async fn get_forecast_summary_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match CashFlowPredictor::get_forecast_summary(&state.db, tenant_id).await {
+    match CashFlowPredictor::get_forecast_summary(&state.db, txn, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1560,12 +1625,17 @@ pub async fn get_forecast_summary_handler(
 
 pub async fn update_assumptions_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAssumptionsRequest>,
 ) -> ApiResponse<ForecastScenario> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match CashFlowPredictor::update_assumptions(&state.db, tenant_id, id, req).await {
+    match CashFlowPredictor::update_assumptions(&state.db, txn, tenant_id, id, req).await {
         Ok(s) => ApiResponse::success(s, "假设更新成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1575,14 +1645,19 @@ pub async fn update_assumptions_handler(
 
 pub async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_liquidity_snapshot(&state.db, tenant_id).await {
+    match LiquidityOptimizer::get_liquidity_snapshot(&state.db, txn, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1590,11 +1665,16 @@ pub async fn get_liquidity_snapshot_handler(
 
 pub async fn optimize_liquidity_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<OptimizeRequest>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match LiquidityOptimizer::optimize_liquidity(&state.db, tenant_id, req).await {
+    match LiquidityOptimizer::optimize_liquidity(&state.db, txn, tenant_id, req).await {
         Ok(r) => ApiResponse::success(r, "优化完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1602,14 +1682,19 @@ pub async fn optimize_liquidity_handler(
 
 pub async fn get_recommendations_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_recommendations(&state.db, tenant_id).await {
+    match LiquidityOptimizer::get_recommendations(&state.db, txn, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1629,14 +1714,19 @@ pub async fn execute_action_handler(
 
 pub async fn get_targets_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<LiquidityTarget>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_targets(&state.db, tenant_id).await {
+    match LiquidityOptimizer::get_targets(&state.db, txn, tenant_id).await {
         Ok(t) => ApiResponse::success(t, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1644,12 +1734,17 @@ pub async fn get_targets_handler(
 
 pub async fn set_target_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<SetTargetRequest>,
 ) -> ApiResponse<LiquidityTarget> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match LiquidityOptimizer::set_target(&state.db, tenant_id, id, req).await {
+    match LiquidityOptimizer::set_target(&state.db, txn, tenant_id, id, req).await {
         Ok(t) => ApiResponse::success(t, "目标设置成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1657,14 +1752,19 @@ pub async fn set_target_handler(
 
 pub async fn get_optimization_history_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OptimizationResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match LiquidityOptimizer::get_optimization_history(&state.db, tenant_id).await {
+    match LiquidityOptimizer::get_optimization_history(&state.db, txn, tenant_id).await {
         Ok(r) => ApiResponse::success(r, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }

@@ -35,6 +35,7 @@ use axum::{
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
@@ -234,14 +235,26 @@ fn days_overdue(due: Option<chrono::NaiveDate>, now: chrono::NaiveDate) -> i64 {
 
 async fn fetch_invoice(
     db: &Db,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<SalesInvoiceOut>, sqlx::Error> {
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match tenant_id {
-        Some(t) => db.scope_read_for_tenant(t).await?,
-        None => db.scope_read_system().await?,
-    };
+    let mut scope = db.scope_with(txn).await?;
+    let invoice = fetch_invoice_in(&mut scope, tenant_id, id).await?;
+    scope.commit().await?;
+    Ok(invoice)
+}
+
+/// 与 `fetch_invoice` 同一条查询，但由调用方提供 executor：
+/// 已收敛到请求事务的 handler 在同一事务内回读，避免提交后再开连接读不到未提交数据。
+async fn fetch_invoice_in<'e, E>(
+    executor: E,
+    tenant_id: Option<Uuid>,
+    id: Uuid,
+) -> Result<Option<SalesInvoiceOut>, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
     let row = sqlx::query(
         "SELECT id, invoice_number, customer_id, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
@@ -252,9 +265,9 @@ async fn fetch_invoice(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut scope)
+    .fetch_optional(executor)
     .await?;
-    let invoice = row.map(|r| SalesInvoiceOut {
+    Ok(row.map(|r| SalesInvoiceOut {
         id: r.get("id"),
         invoice_number: r.get("invoice_number"),
         customer_id: r.get("customer_id"),
@@ -269,9 +282,7 @@ async fn fetch_invoice(
         invoice_type: r.get("invoice_type"),
         cancel_reason: r.get("cancel_reason"),
         red_flush_of: r.get("red_flush_of"),
-    });
-    scope.commit().await?;
-    Ok(invoice)
+    }))
 }
 
 /// GET /sales-invoices
@@ -288,6 +299,7 @@ async fn fetch_invoice(
 pub async fn list_sales_invoices(
     State(state): State<AppState>,
     Query(params): Query<InvoiceListQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Paginated<SalesInvoiceOut>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -299,11 +311,12 @@ pub async fn list_sales_invoices(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -421,6 +434,7 @@ pub async fn list_sales_invoices(
 pub async fn get_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -428,7 +442,12 @@ pub async fn get_sales_invoice(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match fetch_invoice(&state.db, tenant_id, id).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    match fetch_invoice(&state.db, txn, tenant_id, id).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         Ok(None) => ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
         Err(e) => crate::shared::err_resp(e),
@@ -443,6 +462,7 @@ fn validate_invoice_type(v: &str) -> bool {
 /// POST /sales-invoices
 pub async fn create_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<InvoiceCreatePayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
@@ -465,7 +485,12 @@ pub async fn create_sales_invoice(
     let inv_date = payload.invoice_date.unwrap_or_else(|| today().to_string());
     let due = payload.due_date.clone();
 
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<SalesInvoiceOut>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -499,11 +524,7 @@ pub async fn create_sales_invoice(
         }
     };
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    match fetch_invoice(&state.db, Some(tenant_id), created).await {
+    match fetch_invoice_in(&mut scope, Some(tenant_id), created).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Created"),
         _ => ApiResponse::<SalesInvoiceOut>::server_error("创建后读取失败"),
     }
@@ -512,6 +533,7 @@ pub async fn create_sales_invoice(
 /// PUT /sales-invoices/{id}（仅 draft 可编辑）
 pub async fn update_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<InvoiceUpdatePayload>,
@@ -524,7 +546,12 @@ pub async fn update_sales_invoice(
             );
         }
     }
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<SalesInvoiceOut>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -556,11 +583,7 @@ pub async fn update_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    match fetch_invoice(&state.db, Some(tenant_id), updated).await {
+    match fetch_invoice_in(&mut scope, Some(tenant_id), updated).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         _ => ApiResponse::<SalesInvoiceOut>::server_error("更新后读取失败"),
     }
@@ -569,11 +592,17 @@ pub async fn update_sales_invoice(
 /// DELETE /sales-invoices/{id}（仅 draft）
 pub async fn delete_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<String>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -588,9 +617,6 @@ pub async fn delete_sales_invoice(
         Ok(r) => r,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     if result.rows_affected() > 0 {
         ApiResponse::success(id.to_string(), "Success")
     } else {
@@ -614,11 +640,17 @@ pub async fn delete_sales_invoice(
 )]
 pub async fn issue_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<SalesInvoiceOut>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -637,11 +669,7 @@ pub async fn issue_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    match fetch_invoice(&state.db, Some(tenant_id), issued).await {
+    match fetch_invoice_in(&mut scope, Some(tenant_id), issued).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         _ => ApiResponse::<SalesInvoiceOut>::server_error("开具后读取失败"),
     }
@@ -663,12 +691,18 @@ pub async fn issue_sales_invoice(
 )]
 pub async fn cancel_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CancelPayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<SalesInvoiceOut>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -689,11 +723,7 @@ pub async fn cancel_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    match fetch_invoice(&state.db, Some(tenant_id), cancelled).await {
+    match fetch_invoice_in(&mut scope, Some(tenant_id), cancelled).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         _ => ApiResponse::<SalesInvoiceOut>::server_error("取消后读取失败"),
     }
@@ -715,6 +745,7 @@ pub async fn cancel_sales_invoice(
 )]
 pub async fn red_flush_sales_invoice(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<RedFlushPayload>,
@@ -722,7 +753,13 @@ pub async fn red_flush_sales_invoice(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = today();
 
-    let original = match fetch_invoice(&state.db, Some(tenant_id), id).await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<SalesInvoiceOut>::server_error("请求事务缺失"),
+    };
+
+    let original = match fetch_invoice(&state.db, txn, Some(tenant_id), id).await {
         Ok(Some(inv)) => inv,
         _ => return ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
     };
@@ -730,7 +767,7 @@ pub async fn red_flush_sales_invoice(
         return ApiResponse::<SalesInvoiceOut>::conflict("仅已开具发票可红冲");
     }
 
-    let mut scope = match state.db.scope().await {
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -778,11 +815,7 @@ pub async fn red_flush_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    match fetch_invoice(&state.db, Some(tenant_id), red_id).await {
+    match fetch_invoice_in(&mut scope, Some(tenant_id), red_id).await {
         Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
         _ => ApiResponse::<SalesInvoiceOut>::server_error("红冲后读取失败"),
     }
@@ -845,6 +878,7 @@ where
 pub async fn list_collections(
     State(state): State<AppState>,
     Query(params): Query<CollectionListQuery>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Paginated<CollectionOut>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -856,11 +890,12 @@ pub async fn list_collections(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -977,6 +1012,7 @@ pub async fn list_collections(
 pub async fn get_collection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<CollectionOut> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -984,11 +1020,12 @@ pub async fn get_collection(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1101,6 +1138,7 @@ pub async fn create_collection(
 )]
 pub async fn confirm_collection(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<CollectionOut> {
@@ -1109,7 +1147,12 @@ pub async fn confirm_collection(
     // 整段在单事务内完成：FOR UPDATE 锁定回款记录 + 关联发票余额，
     // 消除先读后写的 TOCTOU 窗口；并在 UPDATE 上叠加原子谓词防并发重复确认，
     // 回写发票前校验确认额不得超过应收余额（超收封顶）。
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::<CollectionOut>::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1197,21 +1240,10 @@ pub async fn confirm_collection(
         }
     }
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
-    let mut read_scope = match state.db.scope_read().await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    let fetched = match fetch_collection(&mut read_scope, Some(tenant_id), id).await {
+    let fetched = match fetch_collection(&mut scope, Some(tenant_id), id).await {
         Ok(v) => v,
         Err(e) => return crate::shared::err_resp(e),
     };
-    if let Err(e) = read_scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
     match fetched {
         Some(c) => ApiResponse::success(c, "Success"),
         _ => ApiResponse::<CollectionOut>::server_error("确认后读取失败"),
@@ -1231,6 +1263,7 @@ pub async fn confirm_collection(
 )]
 pub async fn batch_confirm_collections(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BatchConfirmPayload>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1241,7 +1274,12 @@ pub async fn batch_confirm_collections(
     // 整批单事务：与单条 confirm_collection 同一口径——确认回款 + 回写发票
     // paid_amount/状态（原子增量 paid_amount = paid_amount + $amount，按余额翻 'paid'）。
     // 同一张发票多笔回款在同一事务内逐笔累加，自身写入对自身可见；任一笔 DB 错误整体回滚。
-    let mut scope = match state.db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("请求事务缺失"),
+    };
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1343,10 +1381,6 @@ pub async fn batch_confirm_collections(
         success += 1;
     }
 
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-
     ApiResponse::success(
         serde_json::json!({ "success": success, "failed": failed }),
         "Success",
@@ -1377,6 +1411,7 @@ fn aging_bucket(days: i64) -> &'static str {
 )]
 pub async fn get_receivable_aging(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AgingBucket>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1385,11 +1420,12 @@ pub async fn get_receivable_aging(
         Some(get_tenant_id_from_claims(&claims))
     };
     let now = today();
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1449,6 +1485,7 @@ pub async fn get_receivable_aging(
 )]
 pub async fn get_receivable_summary(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<ReceivableSummary> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1459,11 +1496,12 @@ pub async fn get_receivable_summary(
     let now = today();
     // 口径：draft 未开票计入应收总额（前端应收概览口径），cancelled 红冲/取消票剔除；
     // 账龄/逾期报表只统计 issued/overdue 生效应收（见 get_receivable_aging / get_overdue_receivables）
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1523,6 +1561,7 @@ pub async fn get_receivable_summary(
 )]
 pub async fn get_overdue_receivables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<OverdueItem>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1531,11 +1570,12 @@ pub async fn get_overdue_receivables(
         Some(get_tenant_id_from_claims(&claims))
     };
     let now = today();
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1609,6 +1649,7 @@ fn csv_escape(v: &str) -> String {
 )]
 pub async fn export_sales_invoices(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1616,11 +1657,12 @@ pub async fn export_sales_invoices(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1669,6 +1711,7 @@ pub async fn export_sales_invoices(
 )]
 pub async fn export_collections(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1676,11 +1719,12 @@ pub async fn export_collections(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
@@ -1730,6 +1774,7 @@ pub async fn export_collections(
 )]
 pub async fn export_receivable_aging(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1737,11 +1782,12 @@ pub async fn export_receivable_aging(
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-    let mut scope = match match tenant_id {
-        Some(t) => state.db.scope_read_for_tenant(t).await,
-        None => state.db.scope_read_system().await,
-    } {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };

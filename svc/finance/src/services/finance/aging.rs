@@ -5,17 +5,29 @@ use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
 impl FinanceService {
-    pub async fn calculate_receivable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
-        self.get_receivable_aging(tenant_id).await
+    pub async fn calculate_receivable_aging(
+        &self,
+        tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<Value, TopemsError> {
+        self.get_receivable_aging(tenant_id, txn).await
     }
 
-    pub async fn calculate_payable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
-        self.get_payable_aging(tenant_id).await
+    pub async fn calculate_payable_aging(
+        &self,
+        tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<Value, TopemsError> {
+        self.get_payable_aging(tenant_id, txn).await
     }
 
-    pub async fn get_aging_summary(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
-        let receivable_aging = self.get_receivable_aging(tenant_id).await?;
-        let payable_aging = self.get_payable_aging(tenant_id).await?;
+    pub async fn get_aging_summary(
+        &self,
+        tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<Value, TopemsError> {
+        let receivable_aging = self.get_receivable_aging(tenant_id, txn).await?;
+        let payable_aging = self.get_payable_aging(tenant_id, txn).await?;
 
         let receivable_total = receivable_aging
             .get("total_overdue_amount")
@@ -43,6 +55,7 @@ impl FinanceService {
         tenant_id: Uuid,
         direction: &str,
         bucket: Option<String>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
@@ -74,7 +87,7 @@ impl FinanceService {
 
         sql.push_str(" ORDER BY due_date ASC LIMIT 100");
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
@@ -115,6 +128,7 @@ impl FinanceService {
         tenant_id: Uuid,
         direction: &str,
         months: i32,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
@@ -125,7 +139,7 @@ impl FinanceService {
 
         let mut trend_data = Vec::new();
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
 
         for i in 0..months {
             let month_offset = months - i - 1;

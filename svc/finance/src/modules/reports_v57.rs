@@ -27,6 +27,7 @@ use uuid::Uuid;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 枚举类型 ====================
@@ -439,6 +440,7 @@ pub struct ScheduleReportRequest {
 impl AutomatedReportEngine {
     pub async fn create_template(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreateTemplateRequest,
     ) -> Result<ReportTemplate, sqlx::Error> {
@@ -450,7 +452,7 @@ impl AutomatedReportEngine {
             .layout
             .unwrap_or_else(|| ReportLayout::JSON.as_str().to_string());
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_report_templates
@@ -473,13 +475,11 @@ impl AutomatedReportEngine {
 
     pub async fn get_templates(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReportTemplate>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let templates = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
@@ -492,6 +492,7 @@ impl AutomatedReportEngine {
 
     pub async fn generate_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: GenerateReportRequest,
     ) -> Result<GeneratedReport, sqlx::Error> {
@@ -503,7 +504,7 @@ impl AutomatedReportEngine {
 
         let data = Self::build_report_data(&req.report_type, req.period_start, req.period_end);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let report = sqlx::query_as::<_, GeneratedReport>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v57_generated_reports
                 (id, tenant_id, template_id, period_start, period_end, data, generated_at, status, format)
@@ -526,6 +527,7 @@ impl AutomatedReportEngine {
 
     pub async fn list_reports(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
@@ -538,10 +540,7 @@ impl AutomatedReportEngine {
         query.push_str(" ORDER BY generated_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, GeneratedReport>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
@@ -554,14 +553,12 @@ impl AutomatedReportEngine {
 
     pub async fn get_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let report = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
@@ -575,18 +572,20 @@ impl AutomatedReportEngine {
 
     pub async fn download_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
-        Self::get_report(db, tenant_id, report_id).await
+        Self::get_report(db, txn, tenant_id, report_id).await
     }
 
     pub async fn delete_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         report_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(report_id)
             .bind(tenant_id)
@@ -598,10 +597,11 @@ impl AutomatedReportEngine {
 
     pub async fn schedule_report(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: ScheduleReportRequest,
     ) -> Result<ReportTemplate, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let template = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v57_report_templates
@@ -682,6 +682,7 @@ pub struct DiceRequest {
 impl MultiDimensionalAnalyzer {
     pub async fn analyze(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: AnalyzeRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
@@ -691,7 +692,7 @@ impl MultiDimensionalAnalyzer {
         let data = Self::build_pivot_data(&req.dimensions, &req.measures);
         let aggregations = Self::compute_aggregations(&data, &req.measures);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -713,6 +714,7 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn pivot(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: PivotRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
@@ -723,7 +725,7 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&data, &[req.measure.clone()]);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -745,10 +747,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn drill_down(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: DrillDownRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, txn, tenant_id, req.result_id).await?;
         let new_data = Self::apply_drill_down(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -757,7 +760,7 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -779,10 +782,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn roll_up(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: RollUpRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, txn, tenant_id, req.result_id).await?;
         let new_data = Self::apply_roll_up(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -790,7 +794,7 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -812,10 +816,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn slice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: SliceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, txn, tenant_id, req.result_id).await?;
         let new_data = Self::apply_slice(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.dimension,
@@ -824,7 +829,7 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -846,10 +851,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn dice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: DiceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let parent = Self::get_result(db, tenant_id, req.result_id).await?;
+        let parent = Self::get_result(db, txn, tenant_id, req.result_id).await?;
         let new_data = Self::apply_dice(
             parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
             &req.filters,
@@ -857,7 +863,7 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -879,13 +885,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn get_analysis_history(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<AnalysisResult>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let results = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
@@ -898,10 +902,11 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn save_analysis(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         result: &AnalysisResult,
     ) -> Result<(), sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_analysis_results
@@ -923,10 +928,11 @@ impl MultiDimensionalAnalyzer {
 
     async fn get_result(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<AnalysisResult, sqlx::Error> {
-        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE id = $1 AND tenant_id = $2"),
         )
@@ -1108,6 +1114,7 @@ pub struct TrainModelRequest {
 impl PredictiveInsightEngine {
     pub async fn generate_forecast(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: GenerateForecastRequest,
     ) -> Result<Insight, sqlx::Error> {
@@ -1117,7 +1124,7 @@ impl PredictiveInsightEngine {
 
         let forecast_data = Self::compute_forecast(&req.target_metric, periods);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
@@ -1138,6 +1145,7 @@ impl PredictiveInsightEngine {
 
     pub async fn detect_anomalies(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: DetectAnomaliesRequest,
     ) -> Result<Insight, sqlx::Error> {
@@ -1147,7 +1155,7 @@ impl PredictiveInsightEngine {
 
         let anomaly_data = Self::detect_outliers(&req.metric, threshold);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
@@ -1168,6 +1176,7 @@ impl PredictiveInsightEngine {
 
     pub async fn get_insights(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         insight_type: Option<String>,
     ) -> Result<Vec<Insight>, sqlx::Error> {
@@ -1180,10 +1189,7 @@ impl PredictiveInsightEngine {
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Insight>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref t) = insight_type {
@@ -1196,6 +1202,7 @@ impl PredictiveInsightEngine {
 
     pub async fn train_model(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: TrainModelRequest,
     ) -> Result<ForecastModel, sqlx::Error> {
@@ -1206,7 +1213,7 @@ impl PredictiveInsightEngine {
             .unwrap_or_else(|| ForecastModelType::LinearRegression.as_str().to_string());
         let accuracy = Self::estimate_accuracy(&model_type);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let model = sqlx::query_as::<_, ForecastModel>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_forecast_models
@@ -1229,13 +1236,11 @@ impl PredictiveInsightEngine {
 
     pub async fn list_models(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastModel>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let models = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
         )
@@ -1248,10 +1253,11 @@ impl PredictiveInsightEngine {
 
     pub async fn get_model_accuracy(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         model_id: Uuid,
     ) -> Result<ForecastModel, sqlx::Error> {
-        let mut scope = db.scope_read_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let model = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE id = $1 AND tenant_id = $2"),
         )
@@ -1265,6 +1271,7 @@ impl PredictiveInsightEngine {
 
     pub async fn get_trend_analysis(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         metric: Option<String>,
     ) -> Result<Insight, sqlx::Error> {
@@ -1274,7 +1281,7 @@ impl PredictiveInsightEngine {
 
         let trend_data = Self::analyze_trend(&target);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let insight = sqlx::query_as::<_, Insight>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v57_insights
@@ -1406,12 +1413,17 @@ pub struct ReportListQueryParams {
 
 pub async fn create_template_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
 ) -> ApiResponse<ReportTemplate> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::create_template(&db, tenant_id, req).await {
+    match AutomatedReportEngine::create_template(&db, txn, tenant_id, req).await {
         Ok(template) => ApiResponse::success(template, "模板创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1419,15 +1431,20 @@ pub async fn create_template_handler(
 
 pub async fn get_templates_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ReportTemplate>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::get_templates(&db, tenant_id).await {
+    match AutomatedReportEngine::get_templates(&db, txn, tenant_id).await {
         Ok(templates) => ApiResponse::success(templates, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1437,12 +1454,17 @@ pub async fn get_templates_handler(
 
 pub async fn generate_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResponse<GeneratedReport> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::generate_report(&db, tenant_id, req).await {
+    match AutomatedReportEngine::generate_report(&db, txn, tenant_id, req).await {
         Ok(report) => ApiResponse::success(report, "报表生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1450,16 +1472,21 @@ pub async fn generate_report_handler(
 
 pub async fn list_reports_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportListQueryParams>,
 ) -> ApiResponse<Vec<GeneratedReport>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::list_reports(&db, tenant_id, params.status).await {
+    match AutomatedReportEngine::list_reports(&db, txn, tenant_id, params.status).await {
         Ok(reports) => ApiResponse::success(reports, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1467,16 +1494,21 @@ pub async fn list_reports_handler(
 
 async fn get_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeneratedReport> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::get_report(&db, tenant_id, id).await {
+    match AutomatedReportEngine::get_report(&db, txn, tenant_id, id).await {
         Ok(report) => ApiResponse::success(report, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1484,16 +1516,21 @@ async fn get_report_handler(
 
 pub async fn download_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeneratedReport> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutomatedReportEngine::download_report(&db, tenant_id, id).await {
+    match AutomatedReportEngine::download_report(&db, txn, tenant_id, id).await {
         Ok(report) => ApiResponse::success(report, "下载成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1501,12 +1538,17 @@ pub async fn download_report_handler(
 
 pub async fn delete_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::delete_report(&db, tenant_id, id).await {
+    match AutomatedReportEngine::delete_report(&db, txn, tenant_id, id).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1514,12 +1556,17 @@ pub async fn delete_report_handler(
 
 pub async fn schedule_report_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScheduleReportRequest>,
 ) -> ApiResponse<ReportTemplate> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutomatedReportEngine::schedule_report(&db, tenant_id, req).await {
+    match AutomatedReportEngine::schedule_report(&db, txn, tenant_id, req).await {
         Ok(template) => ApiResponse::success(template, "调度设置成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1534,12 +1581,17 @@ pub struct AnalysisHistoryQueryParams {
 
 pub async fn analyze_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::analyze(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::analyze(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1547,12 +1599,17 @@ pub async fn analyze_handler(
 
 pub async fn pivot_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PivotRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::pivot(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::pivot(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Pivot 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1560,12 +1617,17 @@ pub async fn pivot_handler(
 
 pub async fn drill_down_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DrillDownRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::drill_down(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::drill_down(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Drill-down 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1573,12 +1635,17 @@ pub async fn drill_down_handler(
 
 pub async fn roll_up_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RollUpRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::roll_up(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::roll_up(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Roll-up 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1586,12 +1653,17 @@ pub async fn roll_up_handler(
 
 pub async fn slice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SliceRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::slice(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::slice(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Slice 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1599,12 +1671,17 @@ pub async fn slice_handler(
 
 pub async fn dice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DiceRequest>,
 ) -> ApiResponse<AnalysisResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match MultiDimensionalAnalyzer::dice(&db, tenant_id, req).await {
+    match MultiDimensionalAnalyzer::dice(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "Dice 完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1612,15 +1689,20 @@ pub async fn dice_handler(
 
 pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<AnalysisResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match MultiDimensionalAnalyzer::get_analysis_history(&db, tenant_id).await {
+    match MultiDimensionalAnalyzer::get_analysis_history(&db, txn, tenant_id).await {
         Ok(results) => ApiResponse::success(results, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1640,12 +1722,17 @@ pub struct TrendQueryParams {
 
 pub async fn generate_forecast_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateForecastRequest>,
 ) -> ApiResponse<Insight> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::generate_forecast(&db, tenant_id, req).await {
+    match PredictiveInsightEngine::generate_forecast(&db, txn, tenant_id, req).await {
         Ok(insight) => ApiResponse::success(insight, "预测生成成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1653,12 +1740,17 @@ pub async fn generate_forecast_handler(
 
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DetectAnomaliesRequest>,
 ) -> ApiResponse<Insight> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::detect_anomalies(&db, tenant_id, req).await {
+    match PredictiveInsightEngine::detect_anomalies(&db, txn, tenant_id, req).await {
         Ok(insight) => ApiResponse::success(insight, "异常检测完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1666,16 +1758,21 @@ async fn detect_anomalies_handler(
 
 pub async fn get_insights_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InsightsQueryParams>,
 ) -> ApiResponse<Vec<Insight>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match PredictiveInsightEngine::get_insights(&db, tenant_id, params.insight_type).await {
+    match PredictiveInsightEngine::get_insights(&db, txn, tenant_id, params.insight_type).await {
         Ok(insights) => ApiResponse::success(insights, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1683,12 +1780,17 @@ pub async fn get_insights_handler(
 
 pub async fn train_model_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<TrainModelRequest>,
 ) -> ApiResponse<ForecastModel> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::train_model(&db, tenant_id, req).await {
+    match PredictiveInsightEngine::train_model(&db, txn, tenant_id, req).await {
         Ok(model) => ApiResponse::success(model, "模型训练成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1696,15 +1798,20 @@ pub async fn train_model_handler(
 
 pub async fn list_models_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ForecastModel>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match PredictiveInsightEngine::list_models(&db, tenant_id).await {
+    match PredictiveInsightEngine::list_models(&db, txn, tenant_id).await {
         Ok(models) => ApiResponse::success(models, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -1712,12 +1819,17 @@ pub async fn list_models_handler(
 
 pub async fn get_trend_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQueryParams>,
 ) -> ApiResponse<Insight> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match PredictiveInsightEngine::get_trend_analysis(&db, tenant_id, params.metric).await {
+    match PredictiveInsightEngine::get_trend_analysis(&db, txn, tenant_id, params.metric).await {
         Ok(insight) => ApiResponse::success(insight, "趋势分析完成"),
         Err(e) => crate::shared::err_resp(e),
     }

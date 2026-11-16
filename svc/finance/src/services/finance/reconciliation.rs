@@ -16,12 +16,20 @@ impl ReconciliationService {
         Self { db }
     }
 
-    async fn read_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
-        Ok(self.db.scope_read().await?)
+    /// 读作用域：复用请求事务（M-1）。
+    async fn read_scope<'a>(
+        &'a self,
+        txn: &'a mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<topems_shared_db::scope::ScopedTxn<'a>, TopemsError> {
+        Ok(self.db.scope_with(txn).await?)
     }
 
-    async fn write_scope(&self) -> Result<topems_shared_db::scope::ScopedTxn<'_>, TopemsError> {
-        Ok(self.db.scope().await?)
+    /// 写作用域：复用请求事务（M-1）。
+    async fn write_scope<'a>(
+        &'a self,
+        txn: &'a mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<topems_shared_db::scope::ScopedTxn<'a>, TopemsError> {
+        Ok(self.db.scope_with(txn).await?)
     }
 
     pub async fn create_session(
@@ -29,8 +37,9 @@ impl ReconciliationService {
         tenant_id: Uuid,
         req: CreateReconciliationSessionRequest,
         created_by: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationSession, TopemsError> {
-        let session_no = self.generate_session_no(tenant_id).await?;
+        let session_no = self.generate_session_no(tenant_id, txn).await?;
 
         let period_start = req
             .period_start
@@ -41,7 +50,7 @@ impl ReconciliationService {
             .parse::<chrono::NaiveDate>()
             .map_err(|e| TopemsError::Validation(format!("Invalid period_end: {}", e)))?;
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
             only_own_schema_query!("finance", r#"
             INSERT INTO finance.core_finance_reconciliation_sessions
@@ -67,9 +76,13 @@ impl ReconciliationService {
         Ok(session)
     }
 
-    async fn generate_session_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
+    async fn generate_session_no(
+        &self,
+        tenant_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<String, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let count: i64 = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)"),
         )
@@ -86,9 +99,10 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationSession, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
             only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid)"),
         )
@@ -108,6 +122,7 @@ impl ReconciliationService {
         status: Option<ReconciliationStatus>,
         page: i64,
         page_size: i64,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut query =
@@ -150,7 +165,7 @@ impl ReconciliationService {
         }
         sessions_qb = sessions_qb.bind(page_size).bind((page - 1) * page_size);
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let sessions = sessions_qb
             .fetch_all(&mut scope)
             .await
@@ -173,8 +188,9 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         req: ImportReconciliationItemsRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<i32, TopemsError> {
-        let session = self.get_session(tenant_id, req.session_id).await?;
+        let session = self.get_session(tenant_id, req.session_id, txn).await?;
 
         if session.status == ReconciliationStatus::Completed {
             return Err(TopemsError::Validation(
@@ -183,7 +199,7 @@ impl ReconciliationService {
         }
 
         let mut imported = 0;
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         for item in req.items {
             let transaction_date = item
                 .transaction_date
@@ -216,10 +232,10 @@ impl ReconciliationService {
             imported += 1;
         }
 
-        self.update_session_counts(tenant_id, req.session_id)
-            .await?;
-
+        // 释放写作用域借用，会话统计更新复用同一请求事务。
         scope.commit().await?;
+        self.update_session_counts(tenant_id, req.session_id, txn)
+            .await?;
 
         Ok(imported)
     }
@@ -228,8 +244,9 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<MatchResult, TopemsError> {
-        let session = self.get_session(tenant_id, session_id).await?;
+        let session = self.get_session(tenant_id, session_id, txn).await?;
 
         if session.status == ReconciliationStatus::Completed {
             return Err(TopemsError::Validation(
@@ -237,14 +254,14 @@ impl ReconciliationService {
             ));
         }
 
-        self.set_session_status(tenant_id, session_id, ReconciliationStatus::Processing)
+        self.set_session_status(tenant_id, session_id, ReconciliationStatus::Processing, txn)
             .await?;
 
         let bank_items = self
-            .get_unmatched_items(tenant_id, session_id, ItemSource::Bank)
+            .get_unmatched_items(tenant_id, session_id, ItemSource::Bank, txn)
             .await?;
         let erp_items = self
-            .get_unmatched_items(tenant_id, session_id, ItemSource::Erp)
+            .get_unmatched_items(tenant_id, session_id, ItemSource::Erp, txn)
             .await?;
 
         let mut matched_pairs = Vec::new();
@@ -264,7 +281,7 @@ impl ReconciliationService {
 
                 if let Some(mt) = self.classify_match(bank_item, erp_item) {
                     if Self::is_high_confidence_match(&mt) {
-                        self.mark_matched(tenant_id, bank_item.id, erp_item.id)
+                        self.mark_matched(tenant_id, bank_item.id, erp_item.id, txn)
                             .await?;
                         matched_pairs.push(MatchedPair {
                             bank_item_id: bank_item.id,
@@ -289,7 +306,7 @@ impl ReconciliationService {
             // 拆分匹配：一笔银行流水对应多笔 ERP 发票
             let split_matches = self.find_split_matches(bank_item, &erp_items, &matched_erp_ids);
             for erp_item in split_matches {
-                self.mark_matched(tenant_id, bank_item.id, erp_item.id)
+                self.mark_matched(tenant_id, bank_item.id, erp_item.id, txn)
                     .await?;
                 matched_pairs.push(MatchedPair {
                     bank_item_id: bank_item.id,
@@ -336,8 +353,9 @@ impl ReconciliationService {
             }
         }
 
-        self.update_session_counts(tenant_id, session_id).await?;
-        self.set_session_status(tenant_id, session_id, ReconciliationStatus::Pending)
+        self.update_session_counts(tenant_id, session_id, txn)
+            .await?;
+        self.set_session_status(tenant_id, session_id, ReconciliationStatus::Pending, txn)
             .await?;
 
         let unmatched_bank: Vec<ReconciliationItem> = bank_items
@@ -497,8 +515,9 @@ impl ReconciliationService {
         item_id: Uuid,
         diff_reason: DiffReason,
         notes: Option<String>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationItem, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let item = sqlx::query_as::<_, ReconciliationItem>(only_own_schema_query!(
             "finance",
             r#"
@@ -516,11 +535,12 @@ impl ReconciliationService {
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        if let Some(session_id) = self.get_session_id_by_item(item_id).await? {
-            self.update_session_counts(tenant_id, session_id).await?;
-        }
-
+        // 释放写作用域借用，会话统计更新复用同一请求事务。
         scope.commit().await?;
+        if let Some(session_id) = self.get_session_id_by_item(item_id, txn).await? {
+            self.update_session_counts(tenant_id, session_id, txn)
+                .await?;
+        }
 
         Ok(item)
     }
@@ -531,6 +551,7 @@ impl ReconciliationService {
         session_id: Uuid,
         source_type: Option<ItemSource>,
         match_status: Option<MatchStatus>,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut query = String::from(
@@ -561,7 +582,7 @@ impl ReconciliationService {
             qb = qb.bind(ms);
         }
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let items = qb
             .fetch_all(&mut scope)
             .await
@@ -575,8 +596,9 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationSummary, TopemsError> {
-        let session = self.get_session(tenant_id, session_id).await?;
+        let session = self.get_session(tenant_id, session_id, txn).await?;
         let total = session.total_items;
         let matched = session.matched_items;
         let rate = if total > 0 {
@@ -599,8 +621,9 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationSession, TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(only_own_schema_query!(
             "finance",
             r#"
@@ -626,9 +649,10 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
         source_type: ItemSource,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         let items = sqlx::query_as::<_, ReconciliationItem>(
             only_own_schema_query!("finance", r#"
             SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items
@@ -651,9 +675,10 @@ impl ReconciliationService {
         tenant_id: Uuid,
         bank_item_id: Uuid,
         erp_item_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
@@ -693,9 +718,10 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         let total: i32 = sqlx::query_scalar(
             only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid)"),
         )
@@ -752,8 +778,9 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
         status: ReconciliationStatus,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3"),
         )
@@ -769,8 +796,12 @@ impl ReconciliationService {
         Ok(())
     }
 
-    async fn get_session_id_by_item(&self, item_id: Uuid) -> Result<Option<Uuid>, TopemsError> {
-        let mut scope = self.read_scope().await?;
+    async fn get_session_id_by_item(
+        &self,
+        item_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    ) -> Result<Option<Uuid>, TopemsError> {
+        let mut scope = self.read_scope(txn).await?;
         let session_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             "SELECT session_id FROM finance.core_finance_reconciliation_items WHERE id = $1"
@@ -791,11 +822,12 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationReport, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let session = self.get_session(tenant_id, session_id).await?;
+        let session = self.get_session(tenant_id, session_id, txn).await?;
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         // 银行端总金额（所有银行流水）
         let bank_total: Decimal = sqlx::query_scalar(only_own_schema_query!(
             "finance",
@@ -903,6 +935,7 @@ impl ReconciliationService {
         tenant_id: Uuid,
         as_of_date: chrono::NaiveDate,
         direction: &str,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<AgingReport, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let buckets = vec![
@@ -918,7 +951,7 @@ impl ReconciliationService {
         let mut total_amount = Decimal::ZERO;
         let mut total_count: i64 = 0;
 
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         for (bucket_name, from_days, to_days) in buckets {
             // 仅统计未对账（unmatched/diff）的项目作为账龄对象
             let (amount, count): (Decimal, i64) = match direction {
@@ -1003,13 +1036,15 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         req: BatchDiffRequest,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<BatchDiffResponse, TopemsError> {
         let mut success_count = 0i32;
         let mut failed_count = 0i32;
         let mut failed_ids = Vec::new();
         let mut touched_sessions = std::collections::HashSet::new();
+        let mut succeeded_items = Vec::new();
 
-        let mut scope = self.write_scope().await?;
+        let mut scope = self.write_scope(txn).await?;
         for item in req.items {
             let result = sqlx::query(only_own_schema_query!(
                 "finance",
@@ -1029,9 +1064,7 @@ impl ReconciliationService {
             match result {
                 Ok(r) if r.rows_affected() > 0 => {
                     success_count += 1;
-                    if let Ok(Some(sid)) = self.get_session_id_by_item(item.item_id).await {
-                        touched_sessions.insert(sid);
-                    }
+                    succeeded_items.push(item.item_id);
                 }
                 _ => {
                     failed_count += 1;
@@ -1040,12 +1073,18 @@ impl ReconciliationService {
             }
         }
 
-        // 重新统计受影响的会话
-        for sid in touched_sessions {
-            let _ = self.update_session_counts(tenant_id, sid).await;
+        // 释放写作用域借用，会话重新统计复用同一请求事务。
+        scope.commit().await?;
+        for item_id in succeeded_items {
+            if let Ok(Some(sid)) = self.get_session_id_by_item(item_id, txn).await {
+                touched_sessions.insert(sid);
+            }
         }
 
-        scope.commit().await?;
+        // 重新统计受影响的会话
+        for sid in touched_sessions {
+            let _ = self.update_session_counts(tenant_id, sid, txn).await;
+        }
 
         Ok(BatchDiffResponse {
             success_count,
@@ -1059,9 +1098,10 @@ impl ReconciliationService {
         &self,
         tenant_id: Uuid,
         session_id: Uuid,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<DiffStatistics, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut scope = self.read_scope().await?;
+        let mut scope = self.read_scope(txn).await?;
         // 总差异项
         let total_diff_items: i32 = sqlx::query_scalar(only_own_schema_query!(
             "finance",

@@ -43,6 +43,7 @@ use uuid::Uuid;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== ValidationError ====================
@@ -892,6 +893,7 @@ pub struct ReconciliationResponse {
 impl AutoReconciler {
     pub async fn create_rule(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: CreateRuleRequest,
     ) -> Result<ReconciliationRule, sqlx::Error> {
@@ -900,7 +902,7 @@ impl AutoReconciler {
         let tolerance = req.tolerance.unwrap_or(0.0);
         let enabled = req.enabled.unwrap_or(true);
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let rule = sqlx::query_as::<_, ReconciliationRule>(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v55_reconciliation_rules
@@ -922,13 +924,11 @@ impl AutoReconciler {
 
     pub async fn list_rules(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReconciliationRule>, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let rules = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"),
         )
@@ -941,15 +941,16 @@ impl AutoReconciler {
 
     pub async fn reconcile_batch(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: ReconcileBatchRequest,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate_reconciliation(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(db, Some(tenant_id)).await?;
+        let rules = Self::list_rules(db, txn, Some(tenant_id)).await?;
         let mut results = Vec::new();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
 
         for bank_tx in &req.bank_transactions {
             for sys_rec in &req.system_records {
@@ -990,17 +991,18 @@ impl AutoReconciler {
 
     pub async fn reconcile_single(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: ReconcileSingleRequest,
     ) -> Result<ReconciliationResult, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(db, Some(tenant_id)).await?;
+        let rules = Self::list_rules(db, txn, Some(tenant_id)).await?;
         let result = Self::try_match(&req.bank_transaction, &req.system_record, &rules);
 
         let id = Uuid::new_v4();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_reconciliation_results
                 (id, tenant_id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes)
@@ -1211,6 +1213,7 @@ impl AutoReconciler {
 
     pub async fn get_results(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
@@ -1223,10 +1226,7 @@ impl AutoReconciler {
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, ReconciliationResult>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
@@ -1239,10 +1239,11 @@ impl AutoReconciler {
 
     pub async fn approve_match(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET approved = true
@@ -1259,10 +1260,11 @@ impl AutoReconciler {
 
     pub async fn dispute_match(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET disputed = true, match_status = 'discrepancy'
@@ -1311,6 +1313,7 @@ pub struct RecognizedInvoice {
 impl InvoiceRecognizer {
     pub async fn recognize_invoice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: RecognizeInvoiceRequest,
     ) -> Result<RecognizedInvoice, sqlx::Error> {
@@ -1359,7 +1362,7 @@ impl InvoiceRecognizer {
             Self::extract_items(&req.raw_text)
         };
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_invoices
                 (id, tenant_id, number, vendor, invoice_date, total_amount, tax_amount, status, recognized_at)
@@ -1511,10 +1514,11 @@ impl InvoiceRecognizer {
 
     pub async fn validate_invoice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
@@ -1558,14 +1562,12 @@ impl InvoiceRecognizer {
 
     pub async fn get_invoice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
@@ -1588,6 +1590,7 @@ impl InvoiceRecognizer {
 
     pub async fn list_invoices(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
@@ -1600,10 +1603,7 @@ impl InvoiceRecognizer {
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, Invoice>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
@@ -1616,10 +1616,11 @@ impl InvoiceRecognizer {
 
     pub async fn post_invoice(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let invoice: Invoice = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
@@ -1662,11 +1663,12 @@ impl InvoiceRecognizer {
 
     pub async fn match_invoice_to_purchase(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         invoice_id: Uuid,
         purchase_order_id: String,
     ) -> Result<Invoice, sqlx::Error> {
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let invoice = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
@@ -1770,6 +1772,7 @@ pub struct PaymentInitiationResult {
 impl ElectronicPaymentProcessor {
     pub async fn initiate_payment(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
     ) -> Result<PaymentInitiationResult, sqlx::Error> {
@@ -1784,7 +1787,7 @@ impl ElectronicPaymentProcessor {
         let request_id = Uuid::new_v4();
         let result_id = Uuid::new_v4();
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.finance_v55_payment_requests
@@ -1843,14 +1846,12 @@ impl ElectronicPaymentProcessor {
 
     pub async fn get_payment_status(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY processed_at DESC LIMIT 1"),
         )
@@ -1864,11 +1865,12 @@ impl ElectronicPaymentProcessor {
 
     pub async fn reverse_payment(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         let now = Utc::now();
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let original: PaymentResult = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1"),
         )
@@ -1907,6 +1909,7 @@ impl ElectronicPaymentProcessor {
 
     pub async fn list_payments(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
@@ -1921,10 +1924,7 @@ impl ElectronicPaymentProcessor {
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
-        let mut scope = match tenant_id {
-            Some(t) => db.scope_read_for_tenant(t).await?,
-            None => db.scope_read_system().await?,
-        };
+        let mut scope = db.scope_with(txn).await?;
         let mut q = sqlx::query_as::<_, PaymentRequest>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
@@ -1937,6 +1937,7 @@ impl ElectronicPaymentProcessor {
 
     pub async fn schedule_payment(
         db: &Db,
+        txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
         scheduled_at: DateTime<Utc>,
@@ -1950,7 +1951,7 @@ impl ElectronicPaymentProcessor {
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let request_id = Uuid::new_v4();
 
-        let mut scope = db.scope_for_tenant(tenant_id).await?;
+        let mut scope = db.scope_with(txn).await?;
         let payment = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_payment_requests
                 (id, tenant_id, amount, currency, from_account, to_account, method, reference, scheduled_at)
@@ -2052,9 +2053,14 @@ pub struct ReconRuleQueryParams {
 
 pub async fn reconcile_batch_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
 ) -> ApiResponse<Vec<ReconciliationResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
     let validated = match validate_reverse_settlement_prepare(&req, &state.db).await {
         Ok(v) => v,
@@ -2080,7 +2086,7 @@ pub async fn reconcile_batch_handler(
     }
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::reconcile_batch(&db, tenant_id, req).await {
+    match AutoReconciler::reconcile_batch(&db, txn, tenant_id, req).await {
         Ok(results) => ApiResponse::success(results, "批量对账完成"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2089,16 +2095,21 @@ pub async fn reconcile_batch_handler(
 
 pub async fn reconcile_single_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileSingleRequest>,
 ) -> ApiResponse<ReconciliationResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let now = Utc::now();
     if let Err(ve) = req.prevalidate(now, Some(180), true) {
         return ve.into_api_response();
     }
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::reconcile_single(&db, tenant_id, req).await {
+    match AutoReconciler::reconcile_single(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "对账完成"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2107,16 +2118,21 @@ pub async fn reconcile_single_handler(
 
 pub async fn get_recon_results_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconResultQueryParams>,
 ) -> ApiResponse<Vec<ReconciliationResult>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoReconciler::get_results(&db, tenant_id, params.status).await {
+    match AutoReconciler::get_results(&db, txn, tenant_id, params.status).await {
         Ok(results) => ApiResponse::success(results, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2124,12 +2140,17 @@ pub async fn get_recon_results_handler(
 
 pub async fn create_recon_rule_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRuleRequest>,
 ) -> ApiResponse<ReconciliationRule> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::create_rule(&db, tenant_id, req).await {
+    match AutoReconciler::create_rule(&db, txn, tenant_id, req).await {
         Ok(rule) => ApiResponse::success(rule, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2137,15 +2158,20 @@ pub async fn create_recon_rule_handler(
 
 pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ReconciliationRule>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match AutoReconciler::list_rules(&db, tenant_id).await {
+    match AutoReconciler::list_rules(&db, txn, tenant_id).await {
         Ok(rules) => ApiResponse::success(rules, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2153,12 +2179,17 @@ pub async fn list_recon_rules_handler(
 
 pub async fn approve_match_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::approve_match(&db, tenant_id, id).await {
+    match AutoReconciler::approve_match(&db, txn, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "审批通过"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2166,12 +2197,17 @@ pub async fn approve_match_handler(
 
 pub async fn dispute_match_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReconciliationResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match AutoReconciler::dispute_match(&db, tenant_id, id).await {
+    match AutoReconciler::dispute_match(&db, txn, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "已标记争议"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2191,9 +2227,14 @@ pub struct MatchInvoiceRequest {
 
 pub async fn recognize_invoice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecognizeInvoiceRequest>,
 ) -> ApiResponse<RecognizedInvoice> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // OCR 识别层不强制校验未来日期（允许识别后走审批流修正），只在 prevalidate_recognize 之前先兜底：
@@ -2208,7 +2249,7 @@ pub async fn recognize_invoice_handler(
             return ValidationError::EmptyField("invoice.vendor".into()).into_api_response();
         }
     }
-    match InvoiceRecognizer::recognize_invoice(&db, tenant_id, req).await {
+    match InvoiceRecognizer::recognize_invoice(&db, txn, tenant_id, req).await {
         Ok(invoice) => ApiResponse::success(invoice, "识别完成"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2216,16 +2257,21 @@ pub async fn recognize_invoice_handler(
 
 pub async fn get_invoice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<InvoiceWithItems> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match InvoiceRecognizer::get_invoice(&db, tenant_id, id).await {
+    match InvoiceRecognizer::get_invoice(&db, txn, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2233,16 +2279,21 @@ pub async fn get_invoice_handler(
 
 pub async fn list_invoices_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InvoiceListQueryParams>,
 ) -> ApiResponse<Vec<Invoice>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match InvoiceRecognizer::list_invoices(&db, tenant_id, params.status).await {
+    match InvoiceRecognizer::list_invoices(&db, txn, tenant_id, params.status).await {
         Ok(invoices) => ApiResponse::success(invoices, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2250,14 +2301,19 @@ pub async fn list_invoices_handler(
 
 pub async fn validate_invoice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Invoice> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
     // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/409）。
-    match InvoiceRecognizer::validate_invoice(&db, tenant_id, id).await {
+    match InvoiceRecognizer::validate_invoice(&db, txn, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "验证通过"),
         Err(sqlx::Error::Decode(msg)) => {
             // 保守：无法从 Box<dyn Error> 直接下钻时，以 400 抛出完整消息（已包含 ValidationError Display）
@@ -2269,14 +2325,19 @@ pub async fn validate_invoice_handler(
 
 pub async fn post_invoice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Invoice> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 默认 strict：不允许未来日期发票直接过账（allow_future_date=false）；
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
-    match InvoiceRecognizer::post_invoice(&db, tenant_id, id).await {
+    match InvoiceRecognizer::post_invoice(&db, txn, tenant_id, id).await {
         Ok(invoice) => ApiResponse::success(invoice, "过账成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2285,14 +2346,25 @@ pub async fn post_invoice_handler(
 
 pub async fn match_invoice_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<MatchInvoiceRequest>,
 ) -> ApiResponse<Invoice> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match InvoiceRecognizer::match_invoice_to_purchase(&db, tenant_id, id, req.purchase_order_id)
-        .await
+    match InvoiceRecognizer::match_invoice_to_purchase(
+        &db,
+        txn,
+        tenant_id,
+        id,
+        req.purchase_order_id,
+    )
+    .await
     {
         Ok(invoice) => ApiResponse::success(invoice, "匹配成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -2327,9 +2399,14 @@ impl SchedulePaymentRequest {
 // gate: admin-only
 pub async fn initiate_payment_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
 ) -> ApiResponse<PaymentInitiationResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
     let validated = match validate_settlement_prepare(&req, &state.db).await {
         Ok(v) => v,
@@ -2346,7 +2423,7 @@ pub async fn initiate_payment_handler(
     }
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ElectronicPaymentProcessor::initiate_payment(&db, tenant_id, req).await {
+    match ElectronicPaymentProcessor::initiate_payment(&db, txn, tenant_id, req).await {
         Ok(result) => ApiResponse::success(result, "支付发起成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2355,16 +2432,21 @@ pub async fn initiate_payment_handler(
 
 pub async fn get_payment_status_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<PaymentResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ElectronicPaymentProcessor::get_payment_status(&db, tenant_id, id).await {
+    match ElectronicPaymentProcessor::get_payment_status(&db, txn, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2372,13 +2454,18 @@ pub async fn get_payment_status_handler(
 
 pub async fn reverse_payment_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<PaymentResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 400 返回精确语义错误。
-    match ElectronicPaymentProcessor::reverse_payment(&db, tenant_id, id).await {
+    match ElectronicPaymentProcessor::reverse_payment(&db, txn, tenant_id, id).await {
         Ok(result) => ApiResponse::success(result, "冲正成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
         Err(e) => crate::shared::err_resp(e),
@@ -2387,16 +2474,21 @@ pub async fn reverse_payment_handler(
 
 pub async fn list_payments_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListQueryParams>,
 ) -> ApiResponse<Vec<PaymentRequest>> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
-    match ElectronicPaymentProcessor::list_payments(&db, tenant_id, params.status).await {
+    match ElectronicPaymentProcessor::list_payments(&db, txn, tenant_id, params.status).await {
         Ok(payments) => ApiResponse::success(payments, "查询成功"),
         Err(e) => crate::shared::err_resp(e),
     }
@@ -2405,9 +2497,14 @@ pub async fn list_payments_handler(
 // gate: admin-only
 pub async fn schedule_payment_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
 ) -> ApiResponse<PaymentRequest> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 db，不开启作用域) · Equiv-refactor discipline
     let validated = match validate_unsettlement_prepare(&req, &state.db).await {
         Ok(v) => v,
@@ -2436,8 +2533,14 @@ pub async fn schedule_payment_handler(
     }
     let db = state.db.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match ElectronicPaymentProcessor::schedule_payment(&db, tenant_id, init_req, req.scheduled_at)
-        .await
+    match ElectronicPaymentProcessor::schedule_payment(
+        &db,
+        txn,
+        tenant_id,
+        init_req,
+        req.scheduled_at,
+    )
+    .await
     {
         Ok(request) => ApiResponse::success(request, "调度成功"),
         Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
