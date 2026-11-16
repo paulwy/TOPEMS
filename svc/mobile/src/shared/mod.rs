@@ -1,6 +1,7 @@
 pub mod permission;
 
 use axum::extract::State;
+use axum::Extension;
 use axum::Json;
 use serde_json::json;
 use uuid::Uuid;
@@ -12,6 +13,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 use axum::extract::FromRef;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{
@@ -933,8 +935,20 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn list_patrol_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_patrol_records(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取巡逻记录成功",
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取巡逻记录失败: {}", e);
@@ -960,8 +974,20 @@ async fn list_patrol_records(State(state): State<AppState>) -> ApiResponse<serde
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn list_scan_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_scan_records(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取扫码记录成功",
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取扫码记录失败: {}", e);
@@ -988,10 +1014,17 @@ async fn list_scan_records(State(state): State<AppState>) -> ApiResponse<serde_j
 
 async fn create_scan_record(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateScanRecord>,
 ) -> ApiResponse<ScanRecord> {
     let tenant_id = Uuid::new_v4();
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal("创建扫码记录失败", "RLS 事务缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建扫码记录失败: {}", e);
@@ -1011,8 +1044,20 @@ async fn create_scan_record(
     }
 }
 
-async fn list_photo_evidences(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_photo_evidences(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取照片记录成功",
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取照片记录失败: {}", e);
@@ -1038,10 +1083,17 @@ async fn list_photo_evidences(State(state): State<AppState>) -> ApiResponse<serd
 
 async fn create_photo_evidence(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreatePhotoEvidence>,
 ) -> ApiResponse<PhotoEvidence> {
     let tenant_id = Uuid::new_v4();
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal("创建照片记录失败", "RLS 事务缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建照片记录失败: {}", e);
@@ -1061,8 +1113,20 @@ async fn create_photo_evidence(
     }
 }
 
-async fn list_audio_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_audio_recordings(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取音频记录成功",
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取音频记录失败: {}", e);
@@ -1088,10 +1152,17 @@ async fn list_audio_recordings(State(state): State<AppState>) -> ApiResponse<ser
 
 async fn create_audio_recording(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateAudioRecording>,
 ) -> ApiResponse<AudioRecording> {
     let tenant_id = Uuid::new_v4();
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal("创建音频记录失败", "RLS 事务缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建音频记录失败: {}", e);
@@ -1111,8 +1182,20 @@ async fn create_audio_recording(
     }
 }
 
-async fn list_video_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_video_recordings(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取视频记录成功",
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取视频记录失败: {}", e);
@@ -1138,10 +1221,17 @@ async fn list_video_recordings(State(state): State<AppState>) -> ApiResponse<ser
 
 async fn create_video_recording(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateVideoRecording>,
 ) -> ApiResponse<VideoRecording> {
     let tenant_id = Uuid::new_v4();
-    let mut scope = match state.pool.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::internal("创建视频记录失败", "RLS 事务缺失"));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("创建视频记录失败: {}", e);

@@ -9,7 +9,7 @@ mod shared;
 
 use anyhow::Result;
 use axum::response::IntoResponse;
-use axum::{extract::State, Json, Router};
+use axum::{extract::State, Extension, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use serde_json::json;
 use std::sync::Arc;
@@ -17,6 +17,7 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::auth::auth_middleware;
 use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_auth::Claims;
 use topems_shared_bootstrap::{
@@ -81,7 +82,9 @@ async fn main() -> Result<()> {
     ) = crate::shared::build_service_clients(&jwt_secret).await;
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: Db::new(ctx.db.clone(), "mobile, public, shared"),
+        // M-1：请求链路内禁止自开事务，handler 复用 tenant_middleware 的请求事务；
+        // 后台事件订阅（无请求上下文）不受影响，仍可自开事务。
+        pool: Db::new(ctx.db.clone(), "mobile, public, shared").deny_request_own_txn(),
         event_publisher: ctx.event_publisher.clone(),
         wms_client,
         hrm_client,
@@ -193,8 +196,20 @@ async fn health_check() -> ServiceHealth {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let mut scope = match state.pool.scope_read().await {
+async fn list_mobile_tasks(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::success(
+            json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+            "获取移动任务成功",
+        ));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.pool.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("获取移动任务失败: {}", e);

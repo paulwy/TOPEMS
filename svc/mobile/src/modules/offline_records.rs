@@ -13,6 +13,7 @@ use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 fn tenant_filter(claims: &Claims) -> Option<Uuid> {
@@ -62,10 +63,17 @@ pub struct MobileSyncFailedItem {
 )]
 pub async fn sync_records(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<MobileSyncRequest>,
 ) -> ApiResponse<MobileSyncResponse> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -139,9 +147,18 @@ pub async fn sync_records(
     responses((status = 200, description = "get_pending_records OK")),
     tag = "offline_records"
 )]
-pub async fn get_pending_records(State(db): State<Db>) -> ApiResponse<Vec<serde_json::Value>> {
+pub async fn get_pending_records(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<serde_json::Value>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -204,10 +221,17 @@ pub async fn get_pending_records(State(db): State<Db>) -> ApiResponse<Vec<serde_
 )]
 pub async fn mark_synced(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(record_id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -257,9 +281,16 @@ pub async fn mark_synced(
 pub async fn clear_synced(
     Extension(claims): Extension<Claims>,
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);

@@ -3,9 +3,11 @@
 //! meetings / calendar/events / tasks / announcements / oa/stats
 
 use axum::extract::{Path, Query, State};
+use axum::Extension;
 use axum::Json;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::{Db, ScopedTxn};
@@ -167,10 +169,17 @@ pub struct AnnouncementQuery {
 )]
 pub async fn list_meetings(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(q): Query<MeetingQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -228,9 +237,19 @@ pub async fn list_meetings(
     ),
     tag = "meetings"
 )]
-pub async fn get_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
+pub async fn get_meeting(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -257,10 +276,17 @@ pub async fn get_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiRespo
 
 pub async fn create_meeting(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateMeetingRequest>,
 ) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -311,11 +337,18 @@ pub async fn create_meeting(
 
 pub async fn update_meeting(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -363,9 +396,19 @@ pub async fn update_meeting(
     __mobile_response
 }
 
-pub async fn delete_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn delete_meeting(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -407,9 +450,19 @@ pub async fn delete_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiRe
     ),
     tag = "meetings"
 )]
-pub async fn join_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
+pub async fn join_meeting(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -452,9 +505,19 @@ pub async fn join_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResp
     ),
     tag = "meetings"
 )]
-pub async fn leave_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaMeeting> {
+pub async fn leave_meeting(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaMeeting> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -498,10 +561,17 @@ pub async fn leave_meeting(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiRes
 )]
 pub async fn list_calendar_events(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_q): Query<CalendarEventQuery>,
 ) -> ApiResponse<Vec<OaCalendarEvent>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -544,10 +614,17 @@ async fn fetch_events_in_range(
 /// 事件详情（前端 GET /schedule/events/{id}）
 pub async fn get_schedule_event(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> ApiResponse<Option<OaCalendarEvent>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -572,9 +649,18 @@ pub async fn get_schedule_event(
 }
 
 /// 今日事件（前端 GET /schedule/events/today）
-pub async fn list_today_events(State(db): State<Db>) -> ApiResponse<Vec<OaCalendarEvent>> {
+pub async fn list_today_events(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<OaCalendarEvent>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -599,9 +685,18 @@ pub async fn list_today_events(State(db): State<Db>) -> ApiResponse<Vec<OaCalend
 }
 
 /// 本周事件（前端 GET /schedule/events/week）
-pub async fn list_week_events(State(db): State<Db>) -> ApiResponse<Vec<OaCalendarEvent>> {
+pub async fn list_week_events(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<OaCalendarEvent>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -635,10 +730,17 @@ pub struct MonthEventParams {
 /// 本月事件（前端 GET /schedule/events/month?year=&month=）
 pub async fn list_month_events(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<MonthEventParams>,
 ) -> ApiResponse<Vec<OaCalendarEvent>> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -702,10 +804,17 @@ pub struct MyEventsParams {
 /// 我的事件（前端 GET /schedule/events/my → 查表全量分页）
 pub async fn list_my_events(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<MyEventsParams>,
 ) -> ApiResponse<serde_json::Value> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -756,11 +865,18 @@ pub async fn list_attending_events() -> ApiResponse<Vec<OaCalendarEvent>> {
 /// 更新事件状态（前端 PUT /schedule/events/{id}/status → 占位兜底）
 pub async fn update_event_status(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -798,11 +914,18 @@ pub async fn update_event_status(
 /// 添加参与者（前端 POST /schedule/events/{id}/attendees → 占位兜底）
 pub async fn add_event_attendee(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(_payload): Json<serde_json::Value>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -833,10 +956,17 @@ pub async fn add_event_attendee(
 /// 移除参与者（前端 DELETE /schedule/events/{id}/attendees/{userId} → 占位兜底）
 pub async fn remove_event_attendee(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path((id, _user_id)): axum::extract::Path<(Uuid, String)>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -866,10 +996,17 @@ pub async fn remove_event_attendee(
 
 pub async fn create_calendar_event(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateCalendarEventRequest>,
 ) -> ApiResponse<OaCalendarEvent> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -931,11 +1068,18 @@ pub async fn create_calendar_event(
 )]
 pub async fn update_calendar_event(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaCalendarEvent> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -978,9 +1122,19 @@ pub async fn update_calendar_event(
     __mobile_response
 }
 
-pub async fn delete_calendar_event(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn delete_calendar_event(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1023,10 +1177,17 @@ pub async fn delete_calendar_event(State(db): State<Db>, Path(id): Path<Uuid>) -
 )]
 pub async fn list_oa_tasks(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(q): Query<OaTaskQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1083,9 +1244,19 @@ pub async fn list_oa_tasks(
     ),
     tag = "tasks"
 )]
-pub async fn get_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
+pub async fn get_oa_task(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1112,10 +1283,17 @@ pub async fn get_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiRespo
 
 pub async fn create_oa_task(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateOaTaskRequest>,
 ) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1164,11 +1342,18 @@ pub async fn create_oa_task(
 
 pub async fn update_oa_task(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1216,9 +1401,19 @@ pub async fn update_oa_task(
     __mobile_response
 }
 
-pub async fn delete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn delete_oa_task(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1260,9 +1455,19 @@ pub async fn delete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiRe
     ),
     tag = "tasks"
 )]
-pub async fn complete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
+pub async fn complete_oa_task(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaTask> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1306,10 +1511,17 @@ pub async fn complete_oa_task(State(db): State<Db>, Path(id): Path<Uuid>) -> Api
 )]
 pub async fn list_announcements(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(q): Query<AnnouncementQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1366,10 +1578,17 @@ pub async fn list_announcements(
 )]
 pub async fn get_announcement(
     State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaAnnouncement> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1407,9 +1626,19 @@ pub async fn get_announcement(
     ),
     tag = "announcements"
 )]
-pub async fn mark_announcement_read(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn mark_announcement_read(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -1443,9 +1672,18 @@ pub async fn mark_announcement_read(State(db): State<Db>, Path(id): Path<Uuid>) 
     ),
     tag = "task"
 )]
-pub async fn get_oa_stats(State(db): State<Db>) -> ApiResponse<serde_json::Value> {
+pub async fn get_oa_stats(
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库作用域创建失败");
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);

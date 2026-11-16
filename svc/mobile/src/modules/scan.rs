@@ -2,6 +2,7 @@ use axum::{
     extract::{Json, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
+    Extension,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,7 @@ use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -199,11 +201,21 @@ pub fn extract_url_from_qr(qr_data: &str) -> Option<&str> {
 pub async fn scan_barcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<BarcodeScanRequest>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -276,11 +288,21 @@ pub async fn scan_barcode(
 pub async fn scan_qrcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<QrCodeScanRequest>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -359,11 +381,21 @@ pub async fn scan_qrcode(
 pub async fn image_ocr(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<ImageOcrRequest>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);

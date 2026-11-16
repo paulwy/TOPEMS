@@ -144,7 +144,9 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     tag = "mobile_plugin"
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceHealth> {
-    let db_status = match state.pool.scope_read().await {
+    // 插件健康探针挂在 public 路由（不经过 tenant_middleware，无请求租户上下文），
+    // 且只执行 SELECT 1，因此走系统只读作用域而非请求事务。
+    let db_status = match state.pool.scope_read_system().await {
         Ok(mut scope) => match sqlx::query(only_own_schema_query!("mobile", "SELECT 1"))
             .fetch_one(&mut scope)
             .await

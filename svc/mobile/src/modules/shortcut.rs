@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 
 fn tenant_filter(claims: &Claims) -> Option<Uuid> {
@@ -79,10 +80,20 @@ pub async fn get_shortcuts(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope_read().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -143,11 +154,21 @@ pub async fn create_shortcut(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<CreateShortcutRequest>,
 ) -> impl IntoResponse {
     // 数据库作用域（事务级 search_path）。
-    let mut scope = match db.scope().await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
