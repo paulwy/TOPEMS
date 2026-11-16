@@ -7,7 +7,7 @@ use topems_shared_core::cache::{
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
+    require_event_tenant, CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
     PermissionChangedPayload, PositionCreatedPayload, PositionDeletedPayload,
     PositionUpdatedPayload,
 };
@@ -46,6 +46,7 @@ impl HrmEventHandlers {
 
     async fn record_cache_invalidation(
         &self,
+        tenant_id: uuid::Uuid,
         cache_type: &str,
         cache_key: &str,
         operation: &str,
@@ -56,7 +57,7 @@ impl HrmEventHandlers {
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO hrm_cache_invalidation_logs (id, cache_type, cache_key, operation, source_event, invalidated_at, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, '00000000-0000-0000-0000-000000000000')
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id",
         )
         .bind(log_id)
@@ -65,6 +66,7 @@ impl HrmEventHandlers {
         .bind(operation)
         .bind(source_event)
         .bind(now)
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await;
 
@@ -93,6 +95,15 @@ impl HrmEventHandlers {
             event.trace_id
         );
 
+        // 缓存失效日志表有租户维度且事件本应携带租户：缺失时告警并跳过记录，禁止写零 UUID 共享行。
+        let tenant_id = match require_event_tenant(&event) {
+            Ok(t) => t.get(),
+            Err(e) => {
+                tracing::warn!("[hrm] 跳过缓存失效记录：事件缺少租户上下文（{}）", e);
+                return Ok(());
+            }
+        };
+
         match event.event_type {
             EventType::PermissionChanged => {
                 let payload: PermissionChangedPayload = event.parse_payload().map_err(|e| {
@@ -109,6 +120,7 @@ impl HrmEventHandlers {
                 let cache_key = format!("user_permissions:{}", payload.user_id);
                 let _ = self
                     .record_cache_invalidation(
+                        tenant_id,
                         "user_permissions",
                         &cache_key,
                         "invalidate",
@@ -132,6 +144,7 @@ impl HrmEventHandlers {
 
                 let _ = self
                     .record_cache_invalidation(
+                        tenant_id,
                         "positions",
                         "all_positions",
                         "refresh",
@@ -157,11 +170,18 @@ impl HrmEventHandlers {
 
                 let cache_key = format!("position:{}", payload.position_id);
                 let _ = self
-                    .record_cache_invalidation("position", &cache_key, "update", "PositionUpdated")
+                    .record_cache_invalidation(
+                        tenant_id,
+                        "position",
+                        &cache_key,
+                        "update",
+                        "PositionUpdated",
+                    )
                     .await;
 
                 let _ = self
                     .record_cache_invalidation(
+                        tenant_id,
                         "positions",
                         "all_positions",
                         "refresh",
@@ -180,11 +200,18 @@ impl HrmEventHandlers {
 
                 let cache_key = format!("position:{}", payload.position_id);
                 let _ = self
-                    .record_cache_invalidation("position", &cache_key, "delete", "PositionDeleted")
+                    .record_cache_invalidation(
+                        tenant_id,
+                        "position",
+                        &cache_key,
+                        "delete",
+                        "PositionDeleted",
+                    )
                     .await;
 
                 let _ = self
                     .record_cache_invalidation(
+                        tenant_id,
                         "positions",
                         "all_positions",
                         "refresh",
