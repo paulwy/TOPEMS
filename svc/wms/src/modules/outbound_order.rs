@@ -443,14 +443,6 @@ pub async fn update_outbound_order(
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -465,7 +457,7 @@ pub async fn update_outbound_order(
                          AT TIME ZONE 'Asia/Shanghai'
                 END,
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
+        WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -485,7 +477,6 @@ pub async fn update_outbound_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -567,20 +558,11 @@ pub async fn delete_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -892,7 +874,7 @@ pub async fn update_outbound_order_item(
         only_own_schema_query!("wms", r#"
         UPDATE wms.outbound_order_items SET
             shipped_quantity = $1, notes = $2, updated_at = $3
-        WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity::float8, unit, 
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
@@ -1079,21 +1061,13 @@ pub async fn confirm_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'confirmed', updated_at = $2
-        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1106,7 +1080,6 @@ pub async fn confirm_outbound_order(
     ))
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1192,19 +1165,11 @@ pub async fn pick_outbound_order(
     }
     let now = Utc::now();
 
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
     let result = sqlx::query_as::<_, OutboundOrder>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.outbound_orders SET
             status = 'picking', picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1217,7 +1182,6 @@ pub async fn pick_outbound_order(
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1302,14 +1266,6 @@ pub async fn pack_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -1317,7 +1273,7 @@ pub async fn pack_outbound_order(
         UPDATE wms.outbound_orders SET
             status = 'packing', picking_status = 'completed', picking_end_time = $2, 
             packing_status = 'in_progress', packing_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1330,7 +1286,6 @@ pub async fn pack_outbound_order(
     ))
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1951,21 +1906,13 @@ pub async fn complete_outbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'completed', shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
-        WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1978,7 +1925,6 @@ pub async fn complete_outbound_order(
     ))
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

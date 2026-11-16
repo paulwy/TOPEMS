@@ -556,14 +556,6 @@ pub async fn adjust_inventory(
     }
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     // 获取已审批的差异处理记录
     let record = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
@@ -575,11 +567,9 @@ pub async fn adjust_inventory(
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND adjustment_status = 'approved' AND deleted_at IS NULL
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 

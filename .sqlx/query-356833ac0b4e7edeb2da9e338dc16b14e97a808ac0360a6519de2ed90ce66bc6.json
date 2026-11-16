@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE wms.cycle_count_configs\n                SET last_count_date = $2, next_count_date = $3, updated_at = $4\n                WHERE id = $1\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "356833ac0b4e7edeb2da9e338dc16b14e97a808ac0360a6519de2ed90ce66bc6"
+}

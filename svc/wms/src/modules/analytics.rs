@@ -139,14 +139,10 @@ fn format_period(date: NaiveDate, group_by: &str) -> String {
 )]
 async fn get_inventory_turnover(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<InventoryTurnoverResponse> {
     // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
-    let tenant_id: Option<Uuid> = Some(match resolve_tenant_id(&claims) {
-        Ok(id) => id,
-        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
-    });
 
     let (start, end) = parse_date_range(&params);
     let group_by = params.group_by.as_deref().unwrap_or("month");
@@ -164,11 +160,10 @@ async fn get_inventory_turnover(
             COUNT(*) AS outbound_count,
             COALESCE(SUM(quantity), 0) AS total_quantity
         FROM wms.inventory_movements
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND movement_type = 'outbound'
+          WHERE movement_type = 'outbound'
           AND status = 'completed'
-          AND performed_at >= $2
-          AND performed_at <= $3
+          AND performed_at >= $1
+          AND performed_at <= $2
           {}
         GROUP BY period_date
         ORDER BY period_date
@@ -177,7 +172,6 @@ async fn get_inventory_turnover(
     );
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(tenant_id)
         .bind(start.and_hms_opt(0, 0, 0).unwrap())
         .bind(end.and_hms_opt(23, 59, 59).unwrap());
 
@@ -194,13 +188,11 @@ async fn get_inventory_turnover(
     };
 
     // 计算平均库存（简化：用当前库存作为平均库存的近似）
-    let avg_inventory: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory WHERE ($1::uuid IS NULL OR tenant_id = $1)",
-    )
-    .bind(tenant_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0.0);
+    let avg_inventory: f64 =
+        sqlx::query_scalar("SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0.0);
 
     let mut data = Vec::new();
     let mut total_turnover = 0.0;

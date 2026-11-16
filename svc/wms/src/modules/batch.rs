@@ -333,14 +333,6 @@ pub async fn update_batch(
     };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
         "wms",
@@ -364,7 +356,7 @@ pub async fn update_batch(
             unit_price = COALESCE($16, unit_price),
             remark = COALESCE($17, remark),
             updated_at = $18
-        WHERE id = $19 AND ($20::uuid IS NULL OR tenant_id = $20::uuid)
+        WHERE id = $19
         RETURNING *
         "#
     ))
@@ -387,7 +379,6 @@ pub async fn update_batch(
     .bind(&req.remark)
     .bind(now)
     .bind(batch_id)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -445,21 +436,12 @@ pub async fn delete_batch(
             return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(batch_id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -707,14 +689,6 @@ pub async fn adjust_quantity(
     };
 
     let quantity = data.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0);
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
         "wms",
@@ -723,13 +697,12 @@ pub async fn adjust_quantity(
             quantity = quantity + $1,
             available_quantity = available_quantity + $1,
             updated_at = NOW()
-        WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2
         RETURNING *
         "#
     ))
     .bind(quantity)
     .bind(batch_id)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -797,14 +770,6 @@ pub async fn transfer_location(
         },
         _ => None,
     };
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
         "wms",
@@ -812,13 +777,12 @@ pub async fn transfer_location(
         UPDATE wms.batches SET
             location_id = COALESCE($1::uuid, location_id),
             updated_at = NOW()
-        WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $2
         RETURNING *
         "#
     ))
     .bind(to_location_id)
     .bind(batch_id)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

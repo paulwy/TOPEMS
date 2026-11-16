@@ -367,14 +367,6 @@ pub async fn update_wave_pick(
     }
     let request_data = Some(req.clone());
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let priority: Option<String> = req
         .get("priority")
@@ -392,7 +384,7 @@ pub async fn update_wave_pick(
             priority = COALESCE($2, priority),
             remarks = COALESCE($3, remarks),
             updated_at = $4
-        WHERE id = $1 AND deleted_at IS NULL AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
+        WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -403,7 +395,6 @@ pub async fn update_wave_pick(
     .bind(priority)
     .bind(remarks)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -482,21 +473,12 @@ pub async fn delete_wave_pick(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -659,14 +641,6 @@ pub async fn assign_wave_pick(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
@@ -674,7 +648,7 @@ pub async fn assign_wave_pick(
         UPDATE wms.wave_picks SET
             assigned_to = $2,
             updated_at = $3
-        WHERE id = $1 AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+        WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -684,7 +658,6 @@ pub async fn assign_wave_pick(
     .bind(id)
     .bind(req.assigned_to)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -764,14 +737,6 @@ pub async fn start_wave_pick(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
@@ -781,7 +746,6 @@ pub async fn start_wave_pick(
             start_time = $2,
             updated_at = $3
         WHERE id = $1 AND deleted_at IS NULL AND status = 'pending'
-          AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -791,7 +755,6 @@ pub async fn start_wave_pick(
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -873,14 +836,6 @@ pub async fn complete_wave_pick(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
@@ -890,7 +845,6 @@ pub async fn complete_wave_pick(
             end_time = $2,
             updated_at = $3
         WHERE id = $1 AND deleted_at IS NULL AND status = 'picking'
-          AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -900,7 +854,6 @@ pub async fn complete_wave_pick(
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -982,14 +935,6 @@ pub async fn cancel_wave_pick(
         Err(e) => return e.0,
     }
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
@@ -998,7 +943,6 @@ pub async fn cancel_wave_pick(
             status = 'cancelled',
             updated_at = $2
         WHERE id = $1 AND deleted_at IS NULL AND status IN ('pending', 'picking')
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -1007,7 +951,6 @@ pub async fn cancel_wave_pick(
     ))
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

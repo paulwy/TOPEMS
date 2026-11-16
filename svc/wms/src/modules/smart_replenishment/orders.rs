@@ -319,14 +319,6 @@ pub async fn update_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(
         r#"
@@ -335,7 +327,7 @@ pub async fn update_order(
             warehouse_name = COALESCE($3, warehouse_name),
             status = COALESCE($4, status),
             updated_at = $5
-        WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
+        WHERE id = $1
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount::float8, created_at, updated_at
         "#,
@@ -345,7 +337,6 @@ pub async fn update_order(
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
     .bind(req.get("status").and_then(|v| v.as_str()))
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -555,27 +546,18 @@ pub async fn confirm_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
             status = 'confirmed',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'pending'
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -635,27 +617,18 @@ pub async fn complete_order(
     }
 
     let now = Utc::now().naive_utc();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
             status = 'completed',
             updated_at = $2
-        WHERE id = $1 AND status = 'confirmed' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1 AND status = 'confirmed'
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

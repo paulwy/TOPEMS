@@ -412,14 +412,6 @@ pub async fn update_transfer(
     };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -436,7 +428,7 @@ pub async fn update_transfer(
             priority = COALESCE($9, priority),
             remarks = COALESCE($10, remarks),
             updated_at = $11
-        WHERE id = $12 AND ($13::uuid IS NULL OR tenant_id = $13::uuid)
+        WHERE id = $12
         RETURNING *
         "#
     ))
@@ -468,7 +460,6 @@ pub async fn update_transfer(
     .bind(req.get("remarks").and_then(|v| v.as_str()))
     .bind(now)
     .bind(transfer_id)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -521,14 +512,6 @@ pub async fn delete_transfer(
             return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -545,10 +528,9 @@ pub async fn delete_transfer(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
+        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(transfer_id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -601,14 +583,6 @@ pub async fn confirm_transfer(
     };
 
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -617,14 +591,13 @@ pub async fn confirm_transfer(
             status = 'confirmed',
             approved_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'pending' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+        WHERE id = $3 AND status = 'pending'
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

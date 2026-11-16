@@ -615,7 +615,7 @@ pub async fn delete_serial_number(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(serial_id)
     .execute(&mut **txn)
@@ -748,7 +748,7 @@ pub async fn transfer_location(
         UPDATE wms.serial_numbers SET
             location_id = $1,
             updated_at = NOW()
-        WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $2
         RETURNING *
         "#
     ))

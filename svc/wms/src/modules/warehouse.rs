@@ -140,17 +140,15 @@ pub async fn list_warehouses(
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, CASE WHEN $6 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        SELECT id, tenant_id, CASE WHEN $5 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
-          AND ($3::text IS NULL OR status = $3)
+          WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $3 OFFSET $4
         "#),
     )
-    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -165,13 +163,11 @@ pub async fn list_warehouses(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.warehouses
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
-                  AND ($3::text IS NULL OR status = $3)
+                  WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
                 "#
             ))
-            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&mut **txn)
@@ -366,12 +362,11 @@ pub async fn get_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
+        SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
         "#),
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
@@ -430,11 +425,10 @@ pub async fn update_warehouse(
     let existing = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
+        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
         "#),
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -457,9 +451,9 @@ pub async fn update_warehouse(
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.warehouses SET
-            warehouse_name = $2, name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8, warehouse_name_en = COALESCE($10, warehouse_name_en)
-        WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9) AND deleted_at IS NULL
-        RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+            warehouse_name = $2, name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8, warehouse_name_en = COALESCE($9, warehouse_name_en)
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, tenant_id, CASE WHEN $10 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -470,7 +464,6 @@ pub async fn update_warehouse(
     .bind(&phone)
     .bind(&status)
     .bind(now)
-    .bind(tenant_id)
     .bind(&req.warehouse_name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
@@ -572,11 +565,11 @@ pub async fn delete_warehouse(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let result = sqlx::query(
-        only_own_schema_query!("wms", r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"#),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+    ))
     .bind(id)
-    .bind(tenant_id)
     .execute(&mut **txn)
     .await;
 

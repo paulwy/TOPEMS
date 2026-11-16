@@ -338,14 +338,6 @@ pub async fn update_cycle_count_config(
 
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     // 计算新的下次盘点日期
     let next_count_date = match req.count_frequency.as_str() {
@@ -361,7 +353,7 @@ pub async fn update_cycle_count_config(
         UPDATE wms.cycle_count_configs SET
             warehouse_id = $2, location_id = $3, material_category = $4, count_frequency = $5,
             priority_level = $6, next_count_date = $7, updated_at = $8
-        WHERE id = $1 AND deleted_at IS NULL AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
+        WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                   last_count_date, next_count_date, is_active, created_at, updated_at
         "#
@@ -374,7 +366,6 @@ pub async fn update_cycle_count_config(
     .bind(&req.priority_level)
     .bind(next_count_date)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -445,24 +436,15 @@ pub async fn delete_cycle_count_config(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let result = sqlx::query!(
         r#"
         UPDATE wms.cycle_count_configs
         SET deleted_at = $2, is_active = false, updated_at = $2
-        WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE id = $1
         "#,
         id,
-        Utc::now(),
-        tenant_filter
+        Utc::now()
     )
     .execute(&mut **txn)
     .await;
@@ -633,13 +615,12 @@ pub async fn generate_cycle_count(
         r#"
         UPDATE wms.cycle_count_configs
         SET last_count_date = $2, next_count_date = $3, updated_at = $4
-        WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
+        WHERE id = $1
         "#,
         id,
         now,
         next_count_date,
-        now,
-        tenant_id
+        now
     )
     .execute(&mut **txn)
     .await;
@@ -785,13 +766,12 @@ pub async fn generate_all_cycle_counts(
                 r#"
                 UPDATE wms.cycle_count_configs
                 SET last_count_date = $2, next_count_date = $3, updated_at = $4
-                WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
+                WHERE id = $1
                 "#,
                 config.id,
                 now,
                 next_count_date,
-                now,
-                tenant_id
+                now
             )
             .execute(&mut **txn)
             .await;

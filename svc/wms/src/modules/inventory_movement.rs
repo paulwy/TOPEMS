@@ -84,19 +84,6 @@ async fn list_inventory_movements(
     }
 
     // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
-    let tenant_id: Option<Uuid> = Some(match &claims.tenant_id {
-        Some(id) => match Uuid::parse_str(id) {
-            Ok(id) => id,
-            Err(_) => {
-                return ApiResponse::from(TopemsError::AuthenticationFailed(
-                    "无效的租户ID".to_string(),
-                ))
-            }
-        },
-        None => {
-            return ApiResponse::from(TopemsError::AuthenticationFailed("缺少租户ID".to_string()))
-        }
-    });
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -114,17 +101,15 @@ async fn list_inventory_movements(
                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
                status, performed_by, performed_at, notes, created_at, updated_at
         FROM wms.inventory_movements
-        WHERE ($1::uuid IS NULL OR tenant_id = $1)
-          AND ($2::text IS NULL OR movement_type = $2)
-          AND ($3::text IS NULL OR status = $3)
-          AND ($4::text IS NULL OR reference_id = $4)
-          AND ($5::text IS NULL OR reference_type = $5)
-          AND ($6::uuid IS NULL OR material_id = $6)
+          WHERE ($1::text IS NULL OR movement_type = $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR reference_id = $3)
+          AND ($4::text IS NULL OR reference_type = $4)
+          AND ($5::uuid IS NULL OR material_id = $5)
         ORDER BY created_at DESC
-        LIMIT $7 OFFSET $8
+        LIMIT $6 OFFSET $7
         "#
     ))
-    .bind(tenant_id)
     .bind(&params.movement_type)
     .bind(&params.status)
     .bind(&reference_filter)
@@ -141,15 +126,13 @@ async fn list_inventory_movements(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_movements
-                WHERE ($1::uuid IS NULL OR tenant_id = $1)
-                  AND ($2::text IS NULL OR movement_type = $2)
-                  AND ($3::text IS NULL OR status = $3)
-                  AND ($4::text IS NULL OR reference_id = $4)
-                  AND ($5::text IS NULL OR reference_type = $5)
-                  AND ($6::uuid IS NULL OR material_id = $6)
+                  WHERE ($1::text IS NULL OR movement_type = $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::text IS NULL OR reference_id = $3)
+                  AND ($4::text IS NULL OR reference_type = $4)
+                  AND ($5::uuid IS NULL OR material_id = $5)
                 "#
             ))
-            .bind(tenant_id)
             .bind(&params.movement_type)
             .bind(&params.status)
             .bind(&reference_filter)
@@ -308,19 +291,6 @@ async fn get_inventory_movement(
     }
 
     // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
-    let tenant_id: Option<Uuid> = Some(match &claims.tenant_id {
-        Some(id) => match Uuid::parse_str(id) {
-            Ok(id) => id,
-            Err(_) => {
-                return ApiResponse::from(TopemsError::AuthenticationFailed(
-                    "无效的租户ID".to_string(),
-                ))
-            }
-        },
-        None => {
-            return ApiResponse::from(TopemsError::AuthenticationFailed("缺少租户ID".to_string()))
-        }
-    });
 
     let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
         "wms",
@@ -330,11 +300,10 @@ async fn get_inventory_movement(
                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
                status, performed_by, performed_at, notes, created_at, updated_at
         FROM wms.inventory_movements
-        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1
         "#
     ))
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 

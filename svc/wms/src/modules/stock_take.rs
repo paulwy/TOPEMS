@@ -402,25 +402,16 @@ pub async fn update_stock_take(
         Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
 
     let existing = sqlx::query_as::<_, StockTake>(only_own_schema_query!(
         "wms",
         r#"
         SELECT id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at 
-        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
-    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -443,7 +434,7 @@ pub async fn update_stock_take(
         only_own_schema_query!("wms", r#"
         UPDATE wms.stock_takes SET
             warehouse_id = $2, location_id = $3, status = $4, actual_date = $5, remarks = $6, updated_at = $7
-        WHERE id = $1 AND deleted_at IS NULL AND ($8::uuid IS NULL OR tenant_id = $8::uuid)
+        WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                   planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
         "#),
@@ -455,7 +446,6 @@ pub async fn update_stock_take(
     .bind(end_time)
     .bind(&remarks)
     .bind(now)
-    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -533,20 +523,11 @@ pub async fn delete_stock_take(
         Ok(_) => {}
         Err(e) => return e.0,
     }
-    let tenant_filter: Option<Uuid> = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => Some(t),
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1335,7 +1316,7 @@ pub async fn update_stock_take_item(
         UPDATE wms.stock_take_items SET
             counted_quantity = $1, discrepancy_quantity = $2, discrepancy_type = $3, 
             status = $4, notes = $5, updated_at = $6
-        WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
